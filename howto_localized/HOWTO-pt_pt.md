@@ -2711,6 +2711,33 @@ Uma variante que não define nenhuma destas condições surge como antes, e uma 
 | `trackVelocity`     | não         | booleano       | `true`       | Envia a sua velocidade além da posição. Desligado, poupa tráfego em coisas que quase não se movem |
 | `trackingFrequency` | não         | número inteiro | `3`          | Com que frequência, em ticks                                                                      |
 
+### Barra de chefe
+
+*variantes de entidades*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Chave           | Obrigatório | Valor  | Predefinição          | O que faz                                                                        |
+| --------------- | ----------- | ------ | --------------------- | -------------------------------------------------------------------------------- |
+| `bossBar`       | não         | objeto | nenhum                | Mostra uma barra de chefe aos jogadores próximos enquanto a criatura viver       |
+| `bossBar.name`  | não         | texto  | o nome da criatura    | O título da barra                                                                |
+| `bossBar.color` | não         | texto  | `purple`              | `pink`, `blue`, `red`, `green`, `yellow`, `purple` ou `white`                    |
+| `bossBar.style` | não         | texto  | `progress`            | `progress`, `notched_6`, `notched_10`, `notched_12` ou `notched_20`              |
+| `bossBar.background` | não    | objeto | nenhum                | Uma textura desenhada atrás da barra e do título: `texture` (`namespace:caminho.png`, obrigatória), `width` e `height` (predefinição 182 e a altura da linha da barra), `x` e `y` (deslocamento a partir do canto superior esquerdo da linha do título, predefinição 0) |
+
+Cada criatura tem a sua própria barra, mostrada a todos os jogadores dentro do seu `trackingRange`. A barra acompanha a vida da criatura, por isso esvazia à medida que ela sofre dano, e desaparece quando a criatura morre, é removida ou o seu chunk é descarregado. Os espectadores não a veem. Um `color` ou `style` desconhecido é registado no log e usa-se a predefinição. Sem `bossBar`, nada muda.
+
 ### Armazenamento
 
 *variantes de entidades*
@@ -5373,6 +5400,34 @@ Um objetivo é um objetivo real no quadro de pontuação do próprio jogo, pelo 
 | `ends.locksTeams`   | booleano       | `true`                             | Entrar num lado enquanto decorre uma ronda fica à espera de que a ronda acabe, para que ninguém caia a meio numa ronda com pontuação                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
 `ends` termina a partida, no momento em que um lado atinge `atScore` ou quando passaram `afterMinutes`. As classificações são então mostradas, ordenadas pelo próprio jogo: como chat, ou como carta se `results` pedir uma. Um jogador sem este mod recebe as mesmas classificações em linhas de chat, para que ninguém fique sem resultado. Com `resets`, esse fim é o de uma ronda: as classificações ficam durante `intermissionSeconds` enquanto uma contagem decrescente corre na barra de ação, o mapa repõe-se nas boas-vindas, e a ronda seguinte abre depois de uma contagem de cinco segundos. `awardsTo` entrega a ronda ao lado que liderou, num objetivo que `carries` através da reposição. Um objetivo transportado pode terminar por si (`atScore` para uma melhor de vários, `afterRounds` para um número fixo) e a sua classificação é limpa na reposição seguinte, pelo que abre uma partida nova.
+
+### Barra de chefe da ronda
+
+*pontuação*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Definição       | Tipo   | Predefinição                 | O que faz                                                            |
+| --------------- | ------ | ---------------------------- | -------------------------------------------------------------------- |
+| `bossBar`       | objeto | nenhum                       | Mostra uma barra de chefe a todos os jogadores enquanto a ronda decorre |
+| `bossBar.name`  | texto  | o `displayName` do objetivo  | O título da barra                                                    |
+| `bossBar.color` | texto  | `purple`                     | `pink`, `blue`, `red`, `green`, `yellow`, `purple` ou `white`        |
+| `bossBar.style` | texto  | `progress`                   | `progress`, `notched_6`, `notched_10`, `notched_12` ou `notched_20`  |
+| `bossBar.background` | objeto | nenhum                  | Uma textura desenhada atrás da barra e do título: `texture` (`namespace:caminho.png`, obrigatória), `width` e `height` (predefinição 182 e a altura da linha da barra), `x` e `y` (deslocamento a partir do canto superior esquerdo da linha do título, predefinição 0) |
+
+A barra aparece quando a ronda começa e desaparece quando termina. Com `ends.afterMinutes`, esvazia à medida que o tempo passa. Caso contrário, com `ends.atScore`, enche à medida que o lado na frente se aproxima dessa pontuação. Sem nenhum dos dois, fica cheia. Um `color` ou `style` desconhecido é registado no log e usa-se a predefinição.
 
 ### Entre rondas
 

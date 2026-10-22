@@ -2711,6 +2711,33 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 | `trackVelocity`     | いいえ | 真偽値 | `true`     | 位置に加えて速度も送ります。オフにすると、ほとんど動かないものの通信量を節約できます |
 | `trackingFrequency` | いいえ | 整数   | `3`        | 送信の頻度（ティック）                                                               |
 
+### ボスバー
+
+*エンティティのバリアント*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| キー            | 必須   | 値           | デフォルト       | 説明                                                                 |
+| --------------- | ------ | ------------ | ---------------- | -------------------------------------------------------------------- |
+| `bossBar`       | いいえ | オブジェクト | なし             | クリーチャーが生きている間、近くのプレイヤーにボスバーを表示します   |
+| `bossBar.name`  | いいえ | テキスト     | クリーチャーの名前 | バーのタイトル                                                     |
+| `bossBar.color` | いいえ | テキスト     | `purple`         | `pink`、`blue`、`red`、`green`、`yellow`、`purple`、`white`          |
+| `bossBar.style` | いいえ | テキスト     | `progress`       | `progress`、`notched_6`、`notched_10`、`notched_12`、`notched_20`    |
+| `bossBar.background` | いいえ | オブジェクト | なし        | バーとそのタイトルの背後に描画するテクスチャ。`texture`(`namespace:パス.png`、必須)、`width` と `height`(初期値は 182 とバーの行の高さ)、`x` と `y`(タイトル行の左上からのずれ、初期値 0) |
+
+バーはクリーチャーごとに1本あり、`trackingRange` の範囲内にいるすべてのプレイヤーに表示されます。バーはクリーチャーの体力に連動し、ダメージを受けるにつれて減っていきます。クリーチャーが死んだとき、削除されたとき、またはチャンクがアンロードされたときに消えます。スペクテイターには表示されません。未知の `color` や `style` はログに記録され、デフォルトが使われます。`bossBar` がなければ何も変わりません。
+
 ### ストレージ
 
 *エンティティのバリアント*
@@ -5373,6 +5400,34 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `ends.locksTeams`   | 真偽値   | `true`                             | ラウンド中のサイドへの参加はラウンドが終わるまで待たされるため、得点が付くラウンドの途中で誰かが入ってくることはありません                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 `ends` は試合を終わらせます。サイドが `atScore` に達した瞬間か、`afterMinutes` が経過したときです。その後、順位がゲーム自身によって並べられて表示されます。チャットとして、または `results` が求める場合はカードとして表示されます。このModを導入していないプレイヤーにも同じ順位がチャットの行として伝えられるため、結果を受け取れない人はいません。`resets` を使うと、その終了はラウンドの終了になります。順位は `intermissionSeconds` の間表示され、その間アクションバーにクールダウンがカウントダウンされ、マップがウェルカムの状態にリセットされ、5秒のカウントの後に次のラウンドが開きます。`awardsTo` は、リセットをまたいで `carries` される目標について、リードしていたサイドにラウンドを与えます。引き継がれる目標は単独で終わらせることもでき、ベスト・オブ・シリーズなら `atScore`、固定回数なら `afterRounds` を使います。その順位はその後のリセットで消去され、新しい試合が始まります。
+
+### ラウンドのボスバー
+
+*得点計算*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| 設定            | 種類         | デフォルト             | 説明                                                                 |
+| --------------- | ------------ | ---------------------- | -------------------------------------------------------------------- |
+| `bossBar`       | オブジェクト | なし                   | ラウンドの進行中、すべてのプレイヤーにボスバーを表示します           |
+| `bossBar.name`  | テキスト     | 目標の `displayName`   | バーのタイトル                                                       |
+| `bossBar.color` | テキスト     | `purple`               | `pink`、`blue`、`red`、`green`、`yellow`、`purple`、`white`          |
+| `bossBar.style` | テキスト     | `progress`             | `progress`、`notched_6`、`notched_10`、`notched_12`、`notched_20`    |
+| `bossBar.background` | オブジェクト | なし               | バーとそのタイトルの背後に描画するテクスチャ。`texture`(`namespace:パス.png`、必須)、`width` と `height`(初期値は 182 とバーの行の高さ)、`x` と `y`(タイトル行の左上からのずれ、初期値 0) |
+
+バーはラウンドの開始時に現れ、終了時に消えます。`ends.afterMinutes` があれば、時間が経つにつれて減っていきます。なければ `ends.atScore` があるとき、先頭のサイドがそのスコアに近づくにつれて増えていきます。どちらもなければ満タンのままです。未知の `color` や `style` はログに記録され、デフォルトが使われます。
 
 ### ラウンドの間
 

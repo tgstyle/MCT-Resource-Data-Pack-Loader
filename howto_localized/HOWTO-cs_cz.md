@@ -2711,6 +2711,33 @@ Varianta, která žádnou z těchto podmínek nenastaví, se objevuje jako dří
 | `trackVelocity`     | ne      | boolean    | `true`  | Posílat i její rychlost, nejen polohu. Vypnuto šetří provoz u věcí, které se sotva hýbou |
 | `trackingFrequency` | ne      | celé číslo | `3`     | Jak často, v ticích                                                                      |
 
+### Ukazatel bosse
+
+*varianty entit*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Klíč            | Povinný | Hodnota | Výchozí     | Co dělá                                                                  |
+| --------------- | ------- | ------- | ----------- | ------------------------------------------------------------------------ |
+| `bossBar`       | ne      | objekt  | žádný       | Ukazuje hráčům poblíž ukazatel bosse, dokud tvor žije                    |
+| `bossBar.name`  | ne      | text    | jméno tvora | Název na ukazateli                                                       |
+| `bossBar.color` | ne      | text    | `purple`    | `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white`          |
+| `bossBar.style` | ne      | text    | `progress`  | `progress`, `notched_6`, `notched_10`, `notched_12` nebo `notched_20`    |
+| `bossBar.background` | ne | objekt  | žádný       | Textura vykreslená za ukazatelem a jeho názvem: `texture` (`namespace:cesta.png`, povinná), `width` a `height` (výchozí 182 a výška řádku ukazatele), `x` a `y` (posun od levého horního rohu řádku s názvem, výchozí 0) |
+
+Každý tvor má vlastní ukazatel, který vidí všichni hráči v dosahu jeho `trackingRange`. Ukazatel sleduje zdraví tvora, takže se při zranění vyprazdňuje, a zmizí, když tvor zemře, je odstraněn nebo se uvolní jeho chunk. Pozorovatelé (spectator) ho nevidí. Neznámá hodnota `color` nebo `style` se zapíše do logu a použije se výchozí. Bez `bossBar` se nic nemění.
+
 ### Úložiště
 
 *varianty entit*
@@ -5373,6 +5400,34 @@ Cíl je skutečný cíl na tabulce skóre samotné hry, takže ho čte `/scorebo
 | `ends.locksTeams`   | boolean    | `true`                             | Připojení ke straně během běžícího kola počká, dokud kolo neskončí, takže nikdo nespadne do bodovaného kola uprostřed                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 `ends` ukončí zápas, buď ve chvíli, kdy strana dosáhne `atScore`, nebo po uplynutí `afterMinutes`. Pořadí se pak zobrazí, seřazené samotnou hrou: jako chat, nebo jako karta, pokud o ni `results` žádá. Hráč bez tohoto módu dostane stejné pořadí jako řádky chatu, takže nikdo nezůstane bez výsledku. S `resets` je tento konec koncem kola: pořadí zůstane stát po `intermissionSeconds`, zatímco se na action baru odpočítává pauza, mapa se resetuje na uvítání a další kolo se otevře po pětisekundovém odpočtu. `awardsTo` předá kolo straně, která vedla, v cíli, který `carries` přes reset. Přenášený cíl může skončit sám -- `atScore` pro nejlepší z několika, `afterRounds` pro pevný počet -- a jeho stav se vymaže při následujícím resetu, takže se otevře nový zápas.
+
+### Ukazatel bosse kola
+
+*bodování*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Nastavení       | Typ    | Výchozí                  | Co dělá                                                              |
+| --------------- | ------ | ------------------------ | -------------------------------------------------------------------- |
+| `bossBar`       | objekt | žádný                    | Ukazuje všem hráčům ukazatel bosse, dokud kolo běží                  |
+| `bossBar.name`  | text   | `displayName` cíle       | Název na ukazateli                                                   |
+| `bossBar.color` | text   | `purple`                 | `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white`      |
+| `bossBar.style` | text   | `progress`               | `progress`, `notched_6`, `notched_10`, `notched_12` nebo `notched_20` |
+| `bossBar.background` | objekt | žádný              | Textura vykreslená za ukazatelem a jeho názvem: `texture` (`namespace:cesta.png`, povinná), `width` a `height` (výchozí 182 a výška řádku ukazatele), `x` a `y` (posun od levého horního rohu řádku s názvem, výchozí 0) |
+
+Ukazatel se objeví, když kolo začne, a zmizí, když skončí. S `ends.afterMinutes` se vyprazdňuje s uplývajícím časem. Jinak se s `ends.atScore` plní, jak se vedoucí strana tomuto skóre blíží. Bez obou zůstává plný. Neznámá hodnota `color` nebo `style` se zapíše do logu a použije se výchozí.
 
 ### Mezi koly
 
