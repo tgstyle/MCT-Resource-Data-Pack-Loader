@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.network;
 
+import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
+import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
@@ -18,6 +20,8 @@ import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import java.util.UUID;
+import javax.annotation.Nullable;
 
 public final class RDPLNetwork {
     private static final String VERSION = "1";
@@ -29,6 +33,7 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageCard.TYPE, MessageCard.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { CardOverlay.show(message); } });
         registrar.playToClient(MessageHold.TYPE, MessageHold.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { HoldView.set(message.held(), message.warning(), message.fog(), message.backdrop(), message.font()); } });
         registrar.playToClient(MessageNote.TYPE, MessageNote.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { HoldView.note(message.said(), message.backdrop(), message.font()); } });
+        registrar.playToClient(MessageBossBackground.TYPE, MessageBossBackground.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { BossBackgrounds.set(message); } });
         registrar.playToClient(MessageToasts.TYPE, MessageToasts.CODEC, (message, _) -> Toasts.show(message.kinds()));
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } });
         registrar.playToClient(MessageIntroLandMade.TYPE, MessageIntroLandMade.CODEC, (_, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WorldIntroScreen.landMade(); } });
@@ -55,6 +60,11 @@ public final class RDPLNetwork {
     public static void playIntro(ServerPlayer player, boolean landBeingMade) { send(player, new MessageIntroPlay(landBeingMade)); }
 
     public static void introLandMade(ServerPlayer player) { send(player, new MessageIntroLandMade()); }
+
+    public static void sendBossBackground(ServerPlayer player, UUID bar, @Nullable BossBackgroundDef background) {
+        if (background == null) { send(player, new MessageBossBackground(bar, "", 0, 0, 0, 0)); }
+        else { send(player, new MessageBossBackground(bar, background.texture(), background.width(), background.height(), background.x(), background.y())); }
+    }
 
     public static void sendToasts(ServerPlayer player, int kinds) { send(player, new MessageToasts(kinds)); }
 

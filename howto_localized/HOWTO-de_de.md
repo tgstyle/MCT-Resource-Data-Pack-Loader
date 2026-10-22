@@ -2715,6 +2715,33 @@ Eine Variante, die nichts davon setzt, spawnt wie zuvor; setzt sie mehrere, spaw
 | `trackVelocity`     | nein    | boolean | `true`   | Schickt neben der Position auch die Geschwindigkeit. Aus spart Traffic bei Dingen, die sich kaum bewegen |
 | `trackingFrequency` | nein    | int     | `3`      | Wie oft, in Ticks                                                                                        |
 
+### Bossleiste
+
+*entity-varianten*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Schlüssel       | Pflicht | Wert   | Standard           | Was er macht                                                              |
+| --------------- | ------- | ------ | ------------------ | ------------------------------------------------------------------------- |
+| `bossBar`       | nein    | Objekt | keiner             | Zeigt Spielern in der Nähe eine Bossleiste, solange die Kreatur lebt      |
+| `bossBar.name`  | nein    | Text   | Name der Kreatur   | Der Titel der Leiste                                                      |
+| `bossBar.color` | nein    | Text   | `purple`           | `pink`, `blue`, `red`, `green`, `yellow`, `purple` oder `white`           |
+| `bossBar.style` | nein    | Text   | `progress`         | `progress`, `notched_6`, `notched_10`, `notched_12` oder `notched_20`     |
+| `bossBar.background` | nein | Objekt | keiner          | Eine Textur hinter der Leiste und ihrem Titel: `texture` (`namespace:pfad.png`, erforderlich), `width` und `height` (Standard 182 und die Zeilenhöhe der Leiste), `x` und `y` (Versatz von der linken oberen Ecke der Titelzeile, Standard 0) |
+
+Jede Kreatur hat ihre eigene Leiste, die allen Spielern innerhalb ihrer `trackingRange` angezeigt wird. Die Leiste folgt der Gesundheit der Kreatur und leert sich, wenn sie Schaden nimmt; sie verschwindet, wenn die Kreatur stirbt, entfernt wird oder ihr Chunk entladen wird. Zuschauer sehen sie nicht. Ein unbekanntes `color` oder `style` wird protokolliert und der Standard verwendet. Ohne `bossBar` ändert sich nichts.
+
 ### Lager
 
 *entity-varianten*
@@ -5375,6 +5402,34 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 | `ends.locksTeams`   | boolean | `true`                             | Wer während einer laufenden Runde einer Seite beitritt, wartet bis zum Rundenende, damit niemand mitten in eine gewertete Runde fällt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 `ends` beendet die Partie, entweder in dem Moment, in dem eine Seite `atScore` erreicht, oder sobald `afterMinutes` vergangen sind. Der Stand wird dann gezeigt, vom Spiel selbst sortiert: als Chat oder als Karte, wenn `results` danach fragt. Einem Spieler ohne diesen Mod wird derselbe Stand als Chatzeilen mitgeteilt, sodass niemand ohne Ergebnis bleibt. Mit `resets` ist dieses Ende das einer Runde: Der Stand steht `intermissionSeconds` lang, während eine Abklingzeit in der Aktionsleiste herunterzählt, die Karte wird auf die Begrüßung zurückgesetzt, und die nächste Runde beginnt nach einem Countdown von fünf Sekunden. `awardsTo` gibt die Runde der führenden Seite, bei einem Ziel, das den Reset dank `carries` übersteht. Ein Ziel mit `carries` kann von sich aus enden, `atScore` für ein Best-of, `afterRounds` für eine feste Zahl, und sein Stand wird beim Reset danach gelöscht, sodass eine neue Partie beginnt.
+
+### Bossleiste der Runde
+
+*wertung*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Einstellung     | Typ    | Standard                 | Was sie macht                                                         |
+| --------------- | ------ | ------------------------ | --------------------------------------------------------------------- |
+| `bossBar`       | Objekt | keine                    | Zeigt allen Spielern eine Bossleiste, solange die Runde läuft         |
+| `bossBar.name`  | Text   | `displayName` des Ziels  | Der Titel der Leiste                                                  |
+| `bossBar.color` | Text   | `purple`                 | `pink`, `blue`, `red`, `green`, `yellow`, `purple` oder `white`       |
+| `bossBar.style` | Text   | `progress`               | `progress`, `notched_6`, `notched_10`, `notched_12` oder `notched_20` |
+| `bossBar.background` | Objekt | keine              | Eine Textur hinter der Leiste und ihrem Titel: `texture` (`namespace:pfad.png`, erforderlich), `width` und `height` (Standard 182 und die Zeilenhöhe der Leiste), `x` und `y` (Versatz von der linken oberen Ecke der Titelzeile, Standard 0) |
+
+Die Leiste erscheint, wenn die Runde beginnt, und verschwindet, wenn sie endet. Mit `ends.afterMinutes` leert sie sich mit ablaufender Zeit. Sonst füllt sie sich mit `ends.atScore`, je näher die führende Seite diesem Punktestand kommt. Ohne beides bleibt sie voll. Ein unbekanntes `color` oder `style` wird protokolliert und der Standard verwendet.
 
 ### Zwischen den Runden
 

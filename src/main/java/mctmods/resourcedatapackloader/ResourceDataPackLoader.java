@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.client.ChatHistoryKeeper;
+import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.CenterCard;
 import mctmods.resourcedatapackloader.client.ContentFogSampler;
@@ -376,6 +377,7 @@ import java.util.Set;
             modBus.addListener((AddClientReloadListenersEvent held) -> held.addListener(id("face_cache_reset"), FaceCacheReset.INSTANCE));
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
             NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
+            NeoForge.EVENT_BUS.addListener(BossBackgrounds::onBar);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
             modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(id("cards"), CardOverlay::onLayer));
             modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(id("center_cards"), CenterCard::onLayer));
@@ -400,6 +402,7 @@ import java.util.Set;
             NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, _ -> {
                 HoldView.reset();
                 CenterCard.reset();
+                BossBackgrounds.reset();
                 Toasts.leave();
                 ContentEnvironments.clear();
             });

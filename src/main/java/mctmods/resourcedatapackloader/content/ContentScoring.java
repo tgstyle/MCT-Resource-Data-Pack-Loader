@@ -69,7 +69,7 @@ public final class ContentScoring {
     private static final Set<String> IN_PLAY = new LinkedHashSet<>();
     private static final int OPENS_IN = 5;
     private static final int SETTLE_TICKS = 3;
-    private static final int MINUTE_TICKS = SharedConstants.TICKS_PER_MINUTE;
+    static final int MINUTE_TICKS = SharedConstants.TICKS_PER_MINUTE;
     private static final String PLAYER = "minecraft:player";
     private static final String RESET = "reset";
     private static final String LAST_STANDING = "last standing";
@@ -86,6 +86,7 @@ public final class ContentScoring {
     private ContentScoring() {}
 
     public static void load() {
+        ContentScoringBar.clear();
         BY_NAME.clear();
         FINISHED.clear();
         ContentRoundReset.clear();
@@ -212,6 +213,7 @@ public final class ContentScoring {
             if (def.endsAfterMinutes() <= 0 || FINISHED.contains(def.name())) { continue; }
             if (ticks >= def.endsAfterMinutes() * MINUTE_TICKS) { finish(server, def, "time", null); }
         }
+        ContentScoringBar.second(server, BY_NAME.values(), FINISHED, ticks);
         if (starting == 0) { standing(server); }
     }
 
@@ -222,6 +224,7 @@ public final class ContentScoring {
 
     static void finish(MinecraftServer server, ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name())) { return; }
+        ContentScoringBar.over(def);
         ContentTurns.over(server, def, winner);
         List<String> lines = standings(server, def);
         if (def.endsLastStanding()) { backIn(server); }

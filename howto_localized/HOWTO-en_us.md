@@ -2715,6 +2715,33 @@ A variant that sets none of these spawns as before, and one that sets several sp
 | `trackVelocity`     | no       | boolean | `true`  | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no       | int     | `3`     | How often, in ticks                                                                  |
 
+### Boss bar
+
+*entity variants*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Key              | Required | Value  | Default             | What it does                                                                 |
+| ---------------- | -------- | ------ | ------------------- | ---------------------------------------------------------------------------- |
+| `bossBar`        | no       | object | none                | Shows a boss bar to players near the creature for as long as it lives        |
+| `bossBar.name`   | no       | text   | the creature's name | The title on the bar                                                         |
+| `bossBar.color`  | no       | text   | `purple`            | `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`                |
+| `bossBar.style`  | no       | text   | `progress`          | `progress`, `notched_6`, `notched_10`, `notched_12` or `notched_20`          |
+| `bossBar.background` | no   | object | none                | A texture drawn behind the bar and its title: `texture` (`namespace:path.png`, required), `width` and `height` (default 182 and the bar's row height), `x` and `y` (offset from the top left of the title row, default 0) |
+
+Each creature has its own bar, shown to every player within its `trackingRange`. The bar tracks the creature's health, so it empties as the creature is hurt, and it goes when the creature dies, is removed or its chunk unloads. Spectators are not shown it. An unknown `color` or `style` is logged and the default is used. Without `bossBar` nothing changes.
+
 ### Storage
 
 *entity variants*
@@ -5375,6 +5402,34 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `ends.locksTeams`   | boolean | `true`                             | Joining a side while a round is running waits until the round is over, so nobody drops into a scored round partway                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 `ends` finishes the match, either the moment a side reaches `atScore` or once `afterMinutes` have passed. The standings are then shown, ranked by the game itself: as chat, or as a card if `results` asks for one. A player without this mod is told the same standings as chat lines, so nobody is left without a result. With `resets`, that end is a round's: the standings stand for `intermissionSeconds` while a cooldown counts down on the action bar, the map resets to the welcome, and the next round opens after a five-second count. `awardsTo` hands the round to the side that led, on an objective that `carries` across the reset. A carried objective can end on its own -- `atScore` for a best-of, `afterRounds` for a fixed count -- and its standing is cleared at the reset after, so a fresh match opens.
+
+### Round boss bar
+
+*scoring*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Setting         | Type   | Default                | What it does                                                        |
+| --------------- | ------ | ---------------------- | ------------------------------------------------------------------- |
+| `bossBar`       | object | none                   | Shows a boss bar to every player while the round runs               |
+| `bossBar.name`  | text   | the objective's `displayName` | The title on the bar                                         |
+| `bossBar.color` | text   | `purple`               | `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`       |
+| `bossBar.style` | text   | `progress`             | `progress`, `notched_6`, `notched_10`, `notched_12` or `notched_20` |
+| `bossBar.background` | object | none              | A texture drawn behind the bar and its title: `texture` (`namespace:path.png`, required), `width` and `height` (default 182 and the bar's row height), `x` and `y` (offset from the top left of the title row, default 0) |
+
+The bar appears when the round opens and goes when it ends. With `ends.afterMinutes` it drains as the time runs out. Otherwise, with `ends.atScore`, it fills as the leading side nears that score. With neither it stays full. An unknown `color` or `style` is logged and the default is used.
 
 ### Between rounds
 
