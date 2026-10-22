@@ -54,6 +54,12 @@ public final class CardEvents {
         }
     }
 
+    public static void orderDone(ServerPlayer player, String sign) {
+        for (CardRule rule : CardRules.on(CardRule.ORDER_DONE)) {
+            if (rule.order.isEmpty() || rule.order.equalsIgnoreCase(sign)) { CardFire.fire(rule, player); }
+        }
+    }
+
     public static void rolled(ServerPlayer player, String what, int total) {
         if (what.isEmpty()) { return; }
         String named = ContentDice.notation(what);

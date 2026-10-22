@@ -7,7 +7,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public record OrderDef(String name, Job job, @Nullable TagKey<Item> blocks, int area, List<Integer> areaByTier, boolean deliversToSelf, int limit, int standing, int workers, int priority, List<String> takers, String sign,
-                       float speed, String tool) {
+                       float speed, String tool, String wins, int points, String loot) {
     public int widest() {
         int widest = area;
         for (int radius : areaByTier) { widest = Math.max(widest, radius); }

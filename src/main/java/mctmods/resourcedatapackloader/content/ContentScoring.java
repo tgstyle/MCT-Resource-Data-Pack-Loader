@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentScoring {
@@ -143,10 +144,14 @@ public final class ContentScoring {
 
     private static String kindOf(Entity entity) { return entity instanceof Player ? PLAYER : EntityType.getKey(entity.getType()).toString(); }
 
-    public static void raidWon(ServerPlayer player, int points) {
+    public static void raidWon(ServerPlayer player, int points) { awarded(player, points, ScoreDef::raidPoints); }
+
+    public static void orderDone(ServerPlayer player, int points) { awarded(player, points, ScoreDef::orderPoints); }
+
+    private static void awarded(ServerPlayer player, int points, Predicate<ScoreDef> takes) {
         if (points == 0 || BY_NAME.isEmpty()) { return; }
         for (ScoreDef def : BY_NAME.values()) {
-            if (def.raidPoints()) { credit(player.serverLevel(), def, player, points); }
+            if (takes.test(def)) { credit(player.serverLevel(), def, player, points); }
         }
     }
 
