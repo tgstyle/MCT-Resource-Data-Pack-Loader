@@ -58,7 +58,9 @@ public final class ActiveRaid {
     private final RaidDef def;
     private final ServerBossEvent bar;
     private final Set<UUID> raiders = new LinkedHashSet<>();
+    private final boolean free;
     private BlockPos center;
+    private int villageRadius = VILLAGE_SEARCH;
     private int wave;
     private int cooldown;
     private long ticksActive;
@@ -71,11 +73,17 @@ public final class ActiveRaid {
 
     enum Status { ONGOING, VICTORY, LOSS, STOPPED }
 
-    public ActiveRaid(RaidDef def, BlockPos center) {
+    private ActiveRaid(RaidDef def, BlockPos center, boolean free) {
         this.def = def;
         this.center = center;
+        this.free = free;
         this.cooldown = def.waveDelay();
         this.bar = new ServerBossEvent(Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10);
+    }
+
+    public static void start(ServerLevel level, RaidDef def, BlockPos center, boolean free) {
+        RaidStorage.get(level).add(new ActiveRaid(def, center, free));
+        ContentLog.LOGGER.info("Raid {} begins {} {}, {}, {}", def.key(), free ? "with no village at" : "on the village at", center.getX(), center.getY(), center.getZ());
     }
 
     BlockPos center() { return center; }
@@ -97,16 +105,19 @@ public final class ActiveRaid {
             stop("the world is peaceful");
             return;
         }
-        if (village == null || ticksActive % LOOK_EVERY == 0) { village = RaidVillage.nearest(level, center, VILLAGE_SEARCH); }
-        if (village == null) {
-            if (wave > 0) { end(level, Status.LOSS); }
-            else { stop("the village is gone before the first wave"); }
-            return;
-        }
-        center = village.center();
-        if (wave > 0 && ticksActive % LOOK_EVERY == 0 && village.villagers(level) == 0) {
-            end(level, Status.LOSS);
-            return;
+        if (!free) {
+            if (village == null || ticksActive % LOOK_EVERY == 0) { village = RaidVillage.nearest(level, center, VILLAGE_SEARCH); }
+            if (village == null) {
+                if (wave > 0) { end(level, Status.LOSS); }
+                else { stop("the village is gone before the first wave"); }
+                return;
+            }
+            center = village.center();
+            villageRadius = village.radius();
+            if (wave > 0 && ticksActive % LOOK_EVERY == 0 && village.villagers(level) == 0) {
+                end(level, Status.LOSS);
+                return;
+            }
         }
         ticksActive++;
         if (def.timeout() > 0 && ticksActive >= def.timeout()) {
@@ -123,7 +134,7 @@ public final class ActiveRaid {
                 return;
             }
             if (spawnWave(level)) {
-                for (BlockPos bell : bells(level, village)) { ContentRaids.ring(level, bell); }
+                for (BlockPos bell : bells(level)) { ContentRaids.ring(level, bell); }
                 cooldown = def.waveDelay();
                 alive = alive(level);
             }
@@ -194,10 +205,10 @@ public final class ActiveRaid {
         return true;
     }
 
-    private List<BlockPos> bells(ServerLevel level, RaidVillage around) {
+    private List<BlockPos> bells(ServerLevel level) {
         if (bells != null) { return bells; }
         List<BlockPos> found = new ArrayList<>();
-        int reach = around.radius();
+        int reach = villageRadius;
         for (BlockPos at : BlockPos.betweenClosed(center.offset(-reach, -BELL_RISE, -reach), center.offset(reach, BELL_RISE, reach))) {
             if (level.isLoaded(at) && ContentRaids.isBell(level.getBlockState(at))) { found.add(at.immutable()); }
         }
@@ -316,6 +327,7 @@ public final class ActiveRaid {
         tag.putInt("Celebration", celebration);
         tag.putFloat("WaveHealth", waveHealth);
         tag.putString("Status", status.name());
+        if (free) { tag.putBoolean("Free", true); }
         ListTag ids = new ListTag();
         for (UUID id : raiders) { ids.add(NbtUtils.createUUID(id)); }
         tag.put("Raiders", ids);
@@ -327,7 +339,7 @@ public final class ActiveRaid {
             ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString("Raid"));
             return null;
         }
-        ActiveRaid raid = new ActiveRaid(def, PosTags.read(tag.getCompound("Center")));
+        ActiveRaid raid = new ActiveRaid(def, PosTags.read(tag.getCompound("Center")), tag.getBoolean("Free"));
         raid.wave = tag.getInt("Wave");
         raid.cooldown = tag.getInt("Cooldown");
         raid.ticksActive = tag.getLong("Ticks");
