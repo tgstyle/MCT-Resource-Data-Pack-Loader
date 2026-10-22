@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -20,7 +21,9 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -31,6 +34,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     private static final Vector3f BOSS_SHADE = new Vector3f(0.7F, 0.6F, 0.6F);
     private static final Vector3f GRAY = new Vector3f(0.75F, 0.75F, 0.75F);
     private static final DimensionSpecialEffects DAYLIT = new OverworldEffects();
+    private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> SKIES = new IdentityHashMap<>();
     @Nullable private final DimensionDef def;
     private final DimensionSpecialEffects base;
     @Nullable private final ContentSkyRenderer sky;
@@ -42,7 +46,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
         super(cloudHeight, base.hasGround(), skyType, base.forceBrightLightmap(), base.constantAmbientLight());
         this.def = def;
         this.base = base;
-        this.sky = def == null || def.traits().sky() == null || !drawsWholeSky(def) ? null : new ContentSkyRenderer(def.traits().sky(), def.traits().moon());
+        this.sky = def == null || def.traits().sky() == null || !drawsWholeSky(def) ? null : SKIES.computeIfAbsent(def.traits().sky(), held -> new ContentSkyRenderer(held, def.traits().moon()));
         this.rain = def == null ? null : def.traits().rain();
         this.weather = rain == null ? null : new ContentWeatherRenderer(rain);
     }
