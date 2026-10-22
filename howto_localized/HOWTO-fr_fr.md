@@ -2823,6 +2823,35 @@ C'est un mécanisme à part, et non un complément aux règles que gouvernent `d
 
 L'horloge suit le temps du monde : elle s'arrête quand personne ne joue et ne compte pas les minutes pendant lesquelles un chunk est resté déchargé.
 
+### Conditions d'apparition
+
+*variantes d'entités*
+
+```json
+{
+  "dimensions": [-1],
+  "structures": ["Fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Clé                         | Requis | Valeur                                        | Défaut                | Rôle                                                                                                                                                                                                                                                      |
+| --------------------------- | ------ | --------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimensions`                | non    | liste d'identifiants ou de noms de dimensions | toutes les dimensions | Les dimensions où elle peut apparaître d'elle-même, par identifiant ou par nom, comme `-1` ou `the_nether`                                                                                                                                                |
+| `structures`                | non    | liste                                         | aucun                 | Où elle peut apparaître d'elle-même : à l'intérieur de `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` ou `EndCity`, ou dans le `radius` autour d'une structure qu'un pack place via `structures`, désignée par son nom |
+| `radius`                    | non    | entier                                        | `32`                  | À quelle distance on compte encore à l'intérieur d'une structure propre à un pack                                                                                                                                                                         |
+| `timeFrom`, `timeTo`        | non    | entier, ticks                                 | aucun                 | La plage de l'horloge du jour où elle peut apparaître, qui peut passer minuit, par exemple de `13000` à `1000`. Les deux sont nécessaires                                                                                                                 |
+| `dayAtLeast`                | non    | entier                                        | aucun                 | Le numéro de jour à partir duquel elle peut apparaître                                                                                                                                                                                                    |
+| `advancement`               | non    | `namespace:path`                              | aucun                 | Elle n'apparaît que tant qu'un joueur à moins de 128 blocs a ce progrès                                                                                                                                                                                   |
+| `objective`, `scoreAtLeast` | non    | texte, entier                                 | aucun                 | Elle n'apparaît que tant qu'un joueur à moins de 128 blocs a au moins ce score dans l'objectif. Les deux sont nécessaires                                                                                                                                 |
+
+Une variante qui n'en définit aucune apparaît comme avant, et celle qui en définit plusieurs n'apparaît que là et quand toutes sont vérifiées. Ces conditions retiennent les apparitions naturelles, y compris celles qu'un chunk produit à sa génération ; un œuf, `/summon`, un spawner et `becomes` ne sont pas retenus. `advancement`, `objective` et `scoreAtLeast` sont jugés ensemble pour chaque joueur à moins de 128 blocs du point d'apparition, spectateurs exclus : un seul joueur doit les remplir toutes, et si personne n'est aussi près, une variante qui en définit une n'apparaît pas.
+
 ### Réseau
 
 *variantes d'entités*

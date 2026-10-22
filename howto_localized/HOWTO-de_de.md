@@ -2823,6 +2823,35 @@ Sie ist eine Sache für sich und kein Anstupsen der Regeln, über die `despawns`
 
 Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und zählt die Minuten nicht mit, die ein Chunk entladen verbracht hat.
 
+### Spawn-Bedingungen
+
+*entity-varianten*
+
+```json
+{
+  "dimensions": [-1],
+  "structures": ["Fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Schlüssel                   | Pflicht | Wert                                 | Standard       | Was er macht                                                                                                                                                                                                                                  |
+| --------------------------- | ------- | ------------------------------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimensions`                | nein    | Liste von Dimensions-IDs oder -Namen | jede Dimension | Die Dimensionen, in denen sie von selbst spawnen darf, nach ID oder Name, etwa `-1` oder `the_nether`                                                                                                                                         |
+| `structures`                | nein    | Liste                                | keine          | Wo sie von selbst spawnen darf: innerhalb von `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` oder `EndCity`, oder im `radius` um eine Struktur, die ein Pack über `structures` platziert, nach ihrem Namen |
+| `radius`                    | nein    | int                                  | `32`           | Wie nah noch als innerhalb einer Pack-eigenen Struktur gilt                                                                                                                                                                                   |
+| `timeFrom`, `timeTo`        | nein    | int, Ticks                           | keine          | Das Fenster der Tagesuhr, in dem sie spawnen darf; es darf über Mitternacht reichen, etwa `13000` bis `1000`. Beide werden gebraucht                                                                                                          |
+| `dayAtLeast`                | nein    | int                                  | keine          | Die Tagesnummer, ab der sie spawnen darf                                                                                                                                                                                                      |
+| `advancement`               | nein    | `namespace:path`                     | keiner         | Sie spawnt nur, solange ein Spieler im Umkreis von 128 Blöcken diesen Fortschritt hat                                                                                                                                                         |
+| `objective`, `scoreAtLeast` | nein    | Text, int                            | keine          | Sie spawnt nur, solange ein Spieler im Umkreis von 128 Blöcken in dem Ziel mindestens diese Punktzahl hat. Beide werden gebraucht                                                                                                             |
+
+Eine Variante, die nichts davon setzt, spawnt wie zuvor; setzt sie mehrere, spawnt sie nur dort und dann, wo alle zutreffen. Sie halten natürliche Spawns zurück, auch die, die ein Chunk bei der Erzeugung macht; ein Ei, `/summon`, ein Spawner und `becomes` werden nicht zurückgehalten. `advancement`, `objective` und `scoreAtLeast` werden gemeinsam für jeden Spieler im Umkreis von 128 Blöcken um den Spawnpunkt geprüft, Zuschauer ausgenommen: Ein Spieler muss alle erfüllen, und ist niemand so nah, spawnt eine Variante, die eines davon setzt, nicht.
+
 ### Netzwerk
 
 *entity-varianten*

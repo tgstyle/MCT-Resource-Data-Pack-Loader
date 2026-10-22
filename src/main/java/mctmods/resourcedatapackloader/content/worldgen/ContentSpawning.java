@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.entity.ContentSpawnGate;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
@@ -95,7 +96,7 @@ public final class ContentSpawning {
             deny(event);
             return;
         }
-        if (event.getSpawner() == null && ContentThreat.barred(event.getEntity())) {
+        if (event.getSpawner() == null && (ContentThreat.barred(event.getEntity()) || ContentSpawnGate.barred(event.getEntity()))) {
             deny(event);
             return;
         }

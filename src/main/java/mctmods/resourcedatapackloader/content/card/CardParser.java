@@ -18,7 +18,6 @@ import java.util.List;import javax.annotation.Nullable;
 final class CardParser {
     private static final int MOST_LINES = 16;
     private static final int TICKS_IN_DAY = (int) DimensionTraitsDef.VANILLA_DAY;
-    private static final int DEFAULT_RADIUS = 32;
 
     private CardParser() {}
 
@@ -36,7 +35,7 @@ final class CardParser {
         rule.dimension = Json.getString(json, "dimension", "").trim();
         rule.biomes = Json.strings(json, "biomes");
         rule.structures = Json.strings(json, "structures");
-        rule.radius = Math.max(1, Json.getInt(json, "radius", DEFAULT_RADIUS));
+        rule.radius = Math.max(1, Json.getInt(json, "radius", CardPlace.NEAR));
         rule.advancement = Json.getString(json, "advancement", "").trim();
         rule.item = Json.getString(json, "item", "").trim();
         rule.entity = Json.getString(json, "entity", "").trim();
@@ -73,8 +72,8 @@ final class CardParser {
     private static CardWhen when(JsonObject json) {
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
-        when.timeFrom = json.has("timeFrom") ? Math.floorMod(Json.getInt(json, "timeFrom"), TICKS_IN_DAY) : -1;
-        when.timeTo = json.has("timeTo") ? Math.floorMod(Json.getInt(json, "timeTo"), TICKS_IN_DAY) : -1;
+        when.timeFrom = CardPlace.tickOf(json, "timeFrom");
+        when.timeTo = CardPlace.tickOf(json, "timeTo");
         when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;
         when.advancement = Json.getString(json, "advancement", "").trim();
         when.gameMode = Json.getString(json, "gameMode", "").trim();

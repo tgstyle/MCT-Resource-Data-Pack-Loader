@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentParserEntities;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
+import mctmods.resourcedatapackloader.content.def.SpawnGateDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -157,6 +158,11 @@ public final class ContentEntities {
     public static int threatHostile(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());
         return def == null ? 0 : def.threatHostile;
+    }
+
+    public static SpawnGateDef spawnGate(Entity entity) {
+        EntityVariantDef def = BY_CLASS.get(entity.getClass());
+        return def == null ? SpawnGateDef.NONE : def.gate;
     }
 
     public static boolean leashable(Entity entity) {

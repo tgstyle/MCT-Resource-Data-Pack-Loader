@@ -2823,6 +2823,35 @@ It is its own thing, not a nudge to the rules `despawns` and `persistent` govern
 
 The clock runs on world time, so it pauses when nobody is playing and it does not count the minutes a chunk spent unloaded.
 
+### Spawn conditions
+
+*entity variants*
+
+```json
+{
+  "dimensions": [-1],
+  "structures": ["Fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Key                         | Required | Value                          | Default         | What it does                                                                                                                                                                                                            |
+| --------------------------- | -------- | ------------------------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimensions`                | no       | list of dimension ids or names | every dimension | The dimensions it may spawn in on its own, by id or name, such as `-1` or `the_nether`                                                                                                                                  |
+| `structures`                | no       | list                           | none            | Where it may spawn on its own: inside `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` or `EndCity`, or within `radius` of a structure a pack places through `structures`, by its name |
+| `radius`                    | no       | int                            | `32`            | How close counts as inside a pack's own structure                                                                                                                                                                       |
+| `timeFrom`, `timeTo`        | no       | int, ticks                     | none            | The window of the day clock it may spawn in, which may run past midnight, such as `13000` to `1000`. Both are needed                                                                                                    |
+| `dayAtLeast`                | no       | int                            | none            | The day number from which it may spawn                                                                                                                                                                                  |
+| `advancement`               | no       | `namespace:path`               | none            | It spawns only while a player within 128 blocks has this advancement                                                                                                                                                    |
+| `objective`, `scoreAtLeast` | no       | text, int                      | none            | It spawns only while a player within 128 blocks has at least this score in the objective. Both are needed                                                                                                               |
+
+A variant that sets none of these spawns as before, and one that sets several spawns only where and when all of them hold. They hold back natural spawns, the ones a chunk makes as it generates included; an egg, `/summon`, a spawner and `becomes` are not held back. `advancement`, `objective` and `scoreAtLeast` are judged together for each player within 128 blocks of the spawn point, spectators left out, so one player has to meet all of them, and with nobody that near a variant that sets any of them does not spawn.
+
 ### Network
 
 *entity variants*

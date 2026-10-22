@@ -2823,6 +2823,35 @@ La colonna `List` indica dove si trova il compito. `tasks` è ciò che fa la cre
 
 L'orologio scorre sul tempo del mondo, quindi si ferma quando nessuno gioca e non conta i minuti in cui un chunk è rimasto scaricato.
 
+### Condizioni di spawn
+
+*varianti delle entità*
+
+```json
+{
+  "dimensions": [-1],
+  "structures": ["Fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Chiave                      | Obbligatorio | Valore                            | Predefinito     | Cosa fa                                                                                                                                                                                                                                 |
+| --------------------------- | ------------ | --------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimensions`                | no           | elenco di id o nomi di dimensioni | ogni dimensione | Le dimensioni in cui può comparire da sola, per id o per nome, come `-1` o `the_nether`                                                                                                                                                 |
+| `structures`                | no           | elenco                            | nessuna         | Dove può comparire da sola: dentro `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` o `EndCity`, oppure entro `radius` da una struttura che un pack piazza tramite `structures`, indicata col suo nome |
+| `radius`                    | no           | intero                            | `32`            | Quanto vicino conta ancora come dentro una struttura propria di un pack                                                                                                                                                                 |
+| `timeFrom`, `timeTo`        | no           | intero, tick                      | nessuno         | La fascia dell'orologio del giorno in cui può comparire, che può superare la mezzanotte, per esempio da `13000` a `1000`. Servono entrambi                                                                                              |
+| `dayAtLeast`                | no           | intero                            | nessuno         | Il numero del giorno da cui può comparire                                                                                                                                                                                               |
+| `advancement`               | no           | `namespace:path`                  | nessuno         | Compare solo finché un giocatore entro 128 blocchi ha questo progresso                                                                                                                                                                  |
+| `objective`, `scoreAtLeast` | no           | testo, intero                     | nessuno         | Compare solo finché un giocatore entro 128 blocchi ha almeno questo punteggio nell'obiettivo. Servono entrambi                                                                                                                          |
+
+Una variante che non imposta nessuna di queste condizioni compare come prima, e una che ne imposta più compare solo dove e quando valgono tutte. Trattengono gli spawn naturali, compresi quelli che un chunk produce mentre si genera; un uovo, `/summon`, uno spawner e `becomes` non vengono trattenuti. `advancement`, `objective` e `scoreAtLeast` si valutano insieme per ogni giocatore entro 128 blocchi dal punto di spawn, spettatori esclusi: lo stesso giocatore deve soddisfarli tutti, e se nessuno è così vicino una variante che ne imposta uno non compare.
+
 ### Rete
 
 *varianti delle entità*

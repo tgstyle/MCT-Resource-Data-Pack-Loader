@@ -2823,6 +2823,35 @@ A coluna `Lista` diz onde vive a tarefa. `tasks` é o que a criatura faz; `targe
 
 O relógio corre no tempo do mundo, pelo que para quando ninguém está a jogar e não conta os minutos que um chunk passou descarregado.
 
+### Condições de spawn
+
+*variantes de entidades*
+
+```json
+{
+  "dimensions": [-1],
+  "structures": ["Fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Chave                       | Obrigatório | Valor                              | Predefinição       | O que faz                                                                                                                                                                                                                             |
+| --------------------------- | ----------- | ---------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimensions`                | não         | lista de ids ou nomes de dimensões | todas as dimensões | As dimensões em que pode surgir sozinha, por id ou por nome, como `-1` ou `the_nether`                                                                                                                                                |
+| `structures`                | não         | lista                              | nenhuma            | Onde pode surgir sozinha: dentro de `Village`, `Temple`, `Mansion`, `Monument`, `Mineshaft`, `Stronghold`, `Fortress` ou `EndCity`, ou dentro do `radius` de uma estrutura que um pack coloca através de `structures`, pelo nome dela |
+| `radius`                    | não         | número inteiro                     | `32`               | A que distância ainda conta como dentro de uma estrutura própria de um pack                                                                                                                                                           |
+| `timeFrom`, `timeTo`        | não         | número inteiro, ticks              | nenhum             | A faixa do relógio do dia em que pode surgir, que pode passar da meia-noite, como de `13000` a `1000`. São precisos os dois                                                                                                           |
+| `dayAtLeast`                | não         | número inteiro                     | nenhum             | O número do dia a partir do qual pode surgir                                                                                                                                                                                          |
+| `advancement`               | não         | `namespace:path`                   | nenhum             | Só surge enquanto um jogador a menos de 128 blocos tiver este progresso                                                                                                                                                               |
+| `objective`, `scoreAtLeast` | não         | texto, número inteiro              | nenhum             | Só surge enquanto um jogador a menos de 128 blocos tiver pelo menos esta pontuação no objetivo. São precisos os dois                                                                                                                  |
+
+Uma variante que não define nenhuma destas condições surge como antes, e uma que define várias só surge onde e quando todas se verificam. Seguram os spawns naturais, incluindo os que um chunk faz ao ser gerado; um ovo, `/summon`, um spawner e `becomes` não são seguros. `advancement`, `objective` e `scoreAtLeast` são avaliados em conjunto para cada jogador a menos de 128 blocos do ponto de spawn, sem contar espectadores: o mesmo jogador tem de cumprir todos, e sem ninguém tão perto uma variante que defina algum deles não surge.
+
 ### Rede
 
 *variantes de entidades*

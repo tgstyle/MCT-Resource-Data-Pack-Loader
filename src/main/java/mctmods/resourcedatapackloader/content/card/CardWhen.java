@@ -18,12 +18,10 @@ final class CardWhen {
 
     boolean fails(EntityPlayerMP player) {
         if (!biomes.isEmpty() && !CardPlace.biomeMatches(biomes, player.world.getBiome(player.getPosition()))) { return true; }
-        if (timeFrom >= 0 && timeTo >= 0 && !within(CardPlace.timeOfDay(player.world))) { return true; }
+        if (timeFrom >= 0 && timeTo >= 0 && !CardPlace.within(CardPlace.timeOfDay(player.world), timeFrom, timeTo)) { return true; }
         if (dayAtLeast >= 0L && CardPlace.day(player.world) < dayAtLeast) { return true; }
         if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return true; }
         if (!gameMode.isEmpty() && !gameMode.equalsIgnoreCase(player.interactionManager.getGameType().getName())) { return true; }
         return !standing.met(player);
     }
-
-    private boolean within(int time) { return timeFrom <= timeTo ? time >= timeFrom && time <= timeTo : time >= timeFrom || time <= timeTo; }
 }
