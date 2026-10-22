@@ -21,6 +21,7 @@ import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
 import mctmods.resourcedatapackloader.content.item.ContentBannerItem;
+import mctmods.resourcedatapackloader.content.item.ContentLocatorItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -31,6 +32,9 @@ import net.minecraft.util.FastColor;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.item.CompassItemPropertyFunction;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.world.item.component.LodestoneTracker;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
@@ -119,6 +123,14 @@ public final class ContentClient {
     private static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             SplashDark.apply();
+            for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+                if (entry.item() instanceof ContentLocatorItem) {
+                    ItemProperties.register(entry.item(), ResourceLocation.parse("angle"), new CompassItemPropertyFunction((level, stack, holder) -> {
+                        LodestoneTracker tracker = stack.get(DataComponents.LODESTONE_TRACKER);
+                        return tracker == null ? null : tracker.target().orElse(null);
+                    }));
+                }
+            }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());
