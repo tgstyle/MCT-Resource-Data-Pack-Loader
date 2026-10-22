@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 
 import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandLocate;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -15,7 +18,15 @@ import java.lang.ref.WeakReference;
 import javax.annotation.Nonnull;
 
 @Mixin(CommandBase.class) public class MixinCommandBase {
+    @Unique private static final int VANILLA_LOCATE_LEVEL = 2;
     @Unique @Nonnull private static WeakReference<IRubicWorld> rdpl$commandWorld = new WeakReference<>(null);
+
+    @Inject(method = "checkPermission", at = @At("HEAD"), cancellable = true) private void rdpl$locateLevel(MinecraftServer server, ICommandSender sender, CallbackInfoReturnable<Boolean> cir) {
+        CommandBase self = (CommandBase) (Object) this;
+        if (!(self instanceof CommandLocate)) { return; }
+        int level = ServerCommands.locateLevel();
+        if (level != VANILLA_LOCATE_LEVEL) { cir.setReturnValue(level <= 0 || sender.canUseCommand(level, "locate")); }
+    }
 
     @Inject(method = "parseBlockPos", at = @At(value = "HEAD")) private static void rdpl$parseBlockPosPre(ICommandSender sender, String[] args, int startIndex, boolean centerBlock, CallbackInfoReturnable<?> cbi) {
         World world = sender.getEntityWorld();

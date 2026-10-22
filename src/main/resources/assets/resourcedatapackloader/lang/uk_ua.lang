@@ -27,6 +27,7 @@ rdpl.command.gotolooking=Шукаємо найближчий незаймани�
 rdpl.command.gotomakingland=Світ ще створюється, зачекайте, доки створення завершиться
 rdpl.command.gotonoback=Немає попереднього %s, куди можна повернутися
 rdpl.command.gotonoground=Знайдено %s за %d, %d, але там немає опори, щоб стати
+rdpl.compass.set=Стрілка вказує на найближчу ціль: %s, координати %s, %s
 rdpl.command.gotonothing=Поблизу немає відомого %s і не очікується
 rdpl.command.groupnote=Файли, додані або видалені після запуску, потребують /rdpl reload без групи
 rdpl.command.here='%s' %s, id %d

@@ -17,6 +17,7 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -30,6 +31,7 @@ import javax.annotation.Nullable;
         setTranslationKey(def.registryName.toString());
         setHasSubtypes(true);
         setMaxDamage(0);
+        if (!def.locates.isEmpty()) { addPropertyOverride(new ResourceLocation("angle"), new ContentCompassNeedle()); }
         ContentSetup.apply(this, def.creativeTab);
     }
 
@@ -52,9 +54,10 @@ import javax.annotation.Nullable;
     @Override public int getMetadata(int damage) { return damage; }
 
     @Override @Nonnull public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
-        if (def.rolls.isEmpty() && !def.passesTurn) { return super.onItemRightClick(world, player, hand); }
+        if (def.rolls.isEmpty() && !def.passesTurn && def.locates.isEmpty()) { return super.onItemRightClick(world, player, hand); }
         if (!world.isRemote && player instanceof EntityPlayerMP) {
-            if (def.passesTurn) { ContentTurns.byItem((EntityPlayerMP) player); }
+            if (!def.locates.isEmpty()) { ContentCompass.use((EntityPlayerMP) player, hand, def.locates); }
+            else if (def.passesTurn) { ContentTurns.byItem((EntityPlayerMP) player); }
             else { ContentDice.byItem((EntityPlayerMP) player, def.rolls, def.rollStore); }
         }
         if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }

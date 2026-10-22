@@ -1510,31 +1510,67 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 
 A `rocket` names the entity variant it places with `rocket`. It needs Galacticraft, and without it or without `rocket` it registers nothing, and the log says so. See Galacticraft rockets under Entity variants.
 
+A plain item with `locates` is a locator compass. A right-click searches for the nearest place of that name and points the item at it, and the holder is told where the needle settled. The name is a vanilla structure such as `Village`, a biome id such as `minecraft:river`, or a name registered with `locateAs`. The item stacks to 1, and `cooldown` sets how long it refuses another search.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "locates": "Village",
+  "cooldown": 100,
+  "variants": {
+    "seeker": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+The target is kept in the stack, so the item keeps pointing at it until the next right-click, and it spins in any other dimension. The needle is drawn by the item's own model, which takes the same `angle` override as the vanilla compass, one entry per frame:
+
+`assets/mypack/models/item/seeker/seeker.json`
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mypack:items/seeker_16"
+  },
+  "overrides": [
+    { "predicate": { "angle": 0.0 }, "model": "mypack:item/seeker_16" },
+    { "predicate": { "angle": 0.03125 }, "model": "mypack:item/seeker_17" },
+    { "predicate": { "angle": 0.0625 }, "model": "mypack:item/seeker_18" }
+  ]
+}
+```
+
 ### Item file keys
 
 *items*
 
-| Key            | Required      | Value                                | Default                | What it does                                                                                                                                                                                  |
-| -------------- | ------------- | ------------------------------------ | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | yes           | object of variant name to variant    |                        | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path                                   |
-| `type`         | no            | one of the types above               | `basic`                | Which type the item takes                                                                                                                                                                     |
-| `creativeTab`  | no            | tab name                             | none                   | The tab it appears in                                                                                                                                                                         |
-| `material`     | tool, armor   | material name                        | none                   | Which of your materials it is made from                                                                                                                                                       |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`  | none                   | Which tool it is                                                                                                                                                                              |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`      | none                   | Where it is worn. `helmet`, `chestplate`, `leggings` and `boots` also work                                                                                                                    |
-| `eat`          | food          | boolean                              | `false`                | Uses the eating animation                                                                                                                                                                     |
-| `alwaysEdible` | food          | boolean                              | `false`                | Can be eaten on a full hunger bar                                                                                                                                                             |
-| `useDuration`  | drink, potion | int, ticks                           | `32`                   | For `drink` and `potion`: how long drinking it takes, in ticks (20 ticks = 1 second). Other types ignore it                                                                                   |
-| `attackSpeed`  | no            | float                                | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                                                             |
-| `cooldown`     | no            | int, ticks                           | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed; for an item that `rolls`, how long between rolls                                                     |
-| `container`    | drink         | item name                            | none                   | What is left behind, such as a bottle                                                                                                                                                         |
-| `crop`         | seed          | block name                           | none                   | The crop it plants                                                                                                                                                                            |
-| `soil`         | seed          | block name                           | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                     |
-| `rocket`       | rocket        | `namespace:name`                     | none                   | The entity variant it places                                                                                                                                                                  |
-| `rolls`        | no            | `coin`, `d6`, `2d6+1`, a die or deck | none                   | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks)                                             |
-| `rollStore`    | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line |
-| `passesTurn`   | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                   |
-| `requires`     | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                                                    |
+| Key            | Required      | Value                                | Default                | What it does                                                                                                                                                                                                                                                  |
+| -------------- | ------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | yes           | object of variant name to variant    |                        | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path                                                                                                   |
+| `type`         | no            | one of the types above               | `basic`                | Which type the item takes                                                                                                                                                                                                                                     |
+| `creativeTab`  | no            | tab name                             | none                   | The tab it appears in                                                                                                                                                                                                                                         |
+| `material`     | tool, armor   | material name                        | none                   | Which of your materials it is made from                                                                                                                                                                                                                       |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`  | none                   | Which tool it is                                                                                                                                                                                                                                              |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`      | none                   | Where it is worn. `helmet`, `chestplate`, `leggings` and `boots` also work                                                                                                                                                                                    |
+| `eat`          | food          | boolean                              | `false`                | Uses the eating animation                                                                                                                                                                                                                                     |
+| `alwaysEdible` | food          | boolean                              | `false`                | Can be eaten on a full hunger bar                                                                                                                                                                                                                             |
+| `useDuration`  | drink, potion | int, ticks                           | `32`                   | For `drink` and `potion`: how long drinking it takes, in ticks (20 ticks = 1 second). Other types ignore it                                                                                                                                                   |
+| `attackSpeed`  | no            | float                                | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                                                                                                                             |
+| `cooldown`     | no            | int, ticks                           | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed; for an item that `rolls`, how long between rolls                                                                                                                     |
+| `container`    | drink         | item name                            | none                   | What is left behind, such as a bottle                                                                                                                                                                                                                         |
+| `crop`         | seed          | block name                           | none                   | The crop it plants                                                                                                                                                                                                                                            |
+| `soil`         | seed          | block name                           | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                                                                                     |
+| `rocket`       | rocket        | `namespace:name`                     | none                   | The entity variant it places                                                                                                                                                                                                                                  |
+| `rolls`        | no            | `coin`, `d6`, `2d6+1`, a die or deck | none                   | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks)                                                                                                             |
+| `rollStore`    | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line                                                                 |
+| `locates`      | no            | `Village`, `minecraft:river`         | none                   | For a plain item, a right-click finds the nearest place of that name and points the item at it, as a compass does. The name is a vanilla structure or biome, or one registered with `locateAs`. The item stacks to 1. See the locator compass paragraph above |
+| `passesTurn`   | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                                                                                   |
+| `requires`     | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
 
 ### Item variant keys
 
@@ -8481,13 +8517,17 @@ Any roll can end with `store <objective>`, which writes its number to the sender
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "locateLevel": 3
   }
 }
 ```
 
+`locateLevel` sits in the same group and decides who may run the vanilla `/locate`. The default `2` is vanilla's own, so nothing changes until a pack sets it. `0` lets any player run it, `3` leaves it to operators, and `4` limits it to operators of level 4.
+
 | Setting           | What it governs                     |
 | ----------------- | ----------------------------------- |
+| `locateLevel`     | The vanilla `/locate`               |
 | `gotoLevel`       | `goto <structure>`                  |
 | `gotoNextLevel`   | `goto <structure> next`             |
 | `gotoBackLevel`   | `goto <structure> back`             |

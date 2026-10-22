@@ -27,6 +27,7 @@ rdpl.command.gotolooking=Recherche du %s intact le plus proche, vous y serez ame
 rdpl.command.gotomakingland=Le monde est encore en cours de génération, attendez la fin
 rdpl.command.gotonoback=Il n'y a aucun %s précédent où retourner
 rdpl.command.gotonoground=%s trouvé en %d, %d, mais rien où se tenir
+rdpl.compass.set=L'aiguille indique la destination la plus proche, %s, en %s, %s
 rdpl.command.gotonothing=Aucun %s n'est connu ni attendu près d'ici
 rdpl.command.groupnote=Les fichiers ajoutés ou supprimés depuis le démarrage nécessitent /rdpl reload sans groupe
 rdpl.command.here=« %s » %s id %d

@@ -1510,31 +1510,67 @@ Ein `potion_bottle` listet mit `potionTypes` auf, was es fassen kann, als Liste 
 
 Ein `rocket` nennt mit `rocket` die Entity-Variante, die es aufstellt. Es braucht Galacticraft, und ohne Galacticraft oder ohne `rocket` registriert es nichts, und das Log sagt es. Siehe Galacticraft-Raketen unter Entity-Varianten.
 
+Ein schlichtes Item mit `locates` ist ein Ortungskompass. Ein Rechtsklick sucht den nächsten Ort dieses Namens und richtet das Item darauf aus; der Halter erfährt, wo sich die Nadel eingependelt hat. Der Name ist eine Vanilla-Struktur wie `Village`, eine Biom-ID wie `minecraft:river` oder ein per `locateAs` registrierter Name. Das Item stapelt sich nur einzeln, und `cooldown` legt fest, wie lange es eine weitere Suche verweigert.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "locates": "Village",
+  "cooldown": 100,
+  "variants": {
+    "seeker": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+Das Ziel wird im Stack gespeichert, das Item zeigt also bis zum nächsten Rechtsklick darauf und dreht sich in jeder anderen Dimension. Die Nadel zeichnet das eigene Modell des Items, das dieselbe `angle`-Überschreibung wie der Vanilla-Kompass nutzt, einen Eintrag pro Bild:
+
+`assets/mypack/models/item/seeker/seeker.json`
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mypack:items/seeker_16"
+  },
+  "overrides": [
+    { "predicate": { "angle": 0.0 }, "model": "mypack:item/seeker_16" },
+    { "predicate": { "angle": 0.03125 }, "model": "mypack:item/seeker_17" },
+    { "predicate": { "angle": 0.0625 }, "model": "mypack:item/seeker_18" }
+  ]
+}
+```
+
 ### Item-Dateischlüssel
 
 *items*
 
-| Schlüssel      | Pflicht       | Wert                                            | Standard                   | Was er macht                                                                                                                                                                                                |
-| -------------- | ------------- | ----------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | ja            | Objekt aus Variantenname zu Variante            |                            | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst                                 |
-| `type`         | nein          | einer der Typen oben                            | `basic`                    | Welchen Typ das Item annimmt                                                                                                                                                                                |
-| `creativeTab`  | nein          | Tab-Name                                        | keiner                     | Der Tab, in dem es auftaucht                                                                                                                                                                                |
-| `material`     | tool, armor   | Materialname                                    | keiner                     | Aus welchem deiner Materialien es gemacht ist                                                                                                                                                               |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`             | keiner                     | Welches Werkzeug es ist                                                                                                                                                                                     |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                 | keiner                     | Wo es getragen wird. `helmet`, `chestplate`, `leggings` und `boots` gehen auch                                                                                                                              |
-| `eat`          | food          | boolean                                         | `false`                    | Nutzt die Ess-Animation                                                                                                                                                                                     |
-| `alwaysEdible` | food          | boolean                                         | `false`                    | Lässt sich auch bei voller Hungerleiste essen                                                                                                                                                               |
-| `useDuration`  | drink, potion | int, Ticks                                      | `32`                       | Für `drink` und `potion`: wie lange das Trinken dauert, in Ticks (20 Ticks = 1 Sekunde). Andere Typen ignorieren es                                                                                         |
-| `attackSpeed`  | nein          | float                                           | passend zur Werkzeugklasse | Für `tool` das Angriffstempo-Attribut, ein Schwert liegt bei `-2.4`                                                                                                                                         |
-| `cooldown`     | nein          | int, Ticks                                      | `0`                        | Für `food`, `drink` und `potion`: wie lange das Item nach dem Verzehr die erneute Benutzung verweigert; bei einem Item mit `rolls` die Zeit zwischen zwei Würfen                                            |
-| `container`    | drink         | Itemname                                        | keiner                     | Was übrig bleibt, etwa eine Flasche                                                                                                                                                                         |
-| `crop`         | seed          | Blockname                                       | keiner                     | Die Feldfrucht, die es pflanzt                                                                                                                                                                              |
-| `soil`         | seed          | Blockname                                       | `minecraft:farmland`       | Worauf es gepflanzt werden kann                                                                                                                                                                             |
-| `rocket`       | rocket        | `namespace:name`                                | keine                      | Die Entity-Variante, die es aufstellt                                                                                                                                                                       |
-| `rolls`        | nein          | `coin`, `d6`, `2d6+1`, ein Würfel oder ein Deck | keine                      | Bei einem einfachen Item würfelt ein Rechtsklick wie `/rdplserver game` und sagt es dem Standardpublikum des Packs. Siehe [Würfel und Decks](#würfel-und-decks)                                             |
-| `rollStore`    | nein          | Name eines Punkteziels                          | keine                      | Für einen Gegenstand mit `rolls` das Punkteziel, das bei jeder Benutzung die Summe des Wurfs als Punktestand des Besitzers übernimmt. Existiert das Ziel nicht, wird der Wurf mit einer Chatzeile abgelehnt |
-| `passesTurn`   | nein          | boolean                                         | `false`                    | Bei einem einfachen Item gibt ein Rechtsklick den Zug seines Halters ab, wie `/rdplserver game pass`. Siehe [Züge](#züge)                                                                                   |
-| `requires`     | nein          | Liste von Mod-IDs oder Pack-Namespaces          | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                        |
+| Schlüssel      | Pflicht       | Wert                                            | Standard                   | Was er macht                                                                                                                                                                                                                                                                                                          |
+| -------------- | ------------- | ----------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | ja            | Objekt aus Variantenname zu Variante            |                            | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst                                                                                                                                           |
+| `type`         | nein          | einer der Typen oben                            | `basic`                    | Welchen Typ das Item annimmt                                                                                                                                                                                                                                                                                          |
+| `creativeTab`  | nein          | Tab-Name                                        | keiner                     | Der Tab, in dem es auftaucht                                                                                                                                                                                                                                                                                          |
+| `material`     | tool, armor   | Materialname                                    | keiner                     | Aus welchem deiner Materialien es gemacht ist                                                                                                                                                                                                                                                                         |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`             | keiner                     | Welches Werkzeug es ist                                                                                                                                                                                                                                                                                               |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                 | keiner                     | Wo es getragen wird. `helmet`, `chestplate`, `leggings` und `boots` gehen auch                                                                                                                                                                                                                                        |
+| `eat`          | food          | boolean                                         | `false`                    | Nutzt die Ess-Animation                                                                                                                                                                                                                                                                                               |
+| `alwaysEdible` | food          | boolean                                         | `false`                    | Lässt sich auch bei voller Hungerleiste essen                                                                                                                                                                                                                                                                         |
+| `useDuration`  | drink, potion | int, Ticks                                      | `32`                       | Für `drink` und `potion`: wie lange das Trinken dauert, in Ticks (20 Ticks = 1 Sekunde). Andere Typen ignorieren es                                                                                                                                                                                                   |
+| `attackSpeed`  | nein          | float                                           | passend zur Werkzeugklasse | Für `tool` das Angriffstempo-Attribut, ein Schwert liegt bei `-2.4`                                                                                                                                                                                                                                                   |
+| `cooldown`     | nein          | int, Ticks                                      | `0`                        | Für `food`, `drink` und `potion`: wie lange das Item nach dem Verzehr die erneute Benutzung verweigert; bei einem Item mit `rolls` die Zeit zwischen zwei Würfen                                                                                                                                                      |
+| `container`    | drink         | Itemname                                        | keiner                     | Was übrig bleibt, etwa eine Flasche                                                                                                                                                                                                                                                                                   |
+| `crop`         | seed          | Blockname                                       | keiner                     | Die Feldfrucht, die es pflanzt                                                                                                                                                                                                                                                                                        |
+| `soil`         | seed          | Blockname                                       | `minecraft:farmland`       | Worauf es gepflanzt werden kann                                                                                                                                                                                                                                                                                       |
+| `rocket`       | rocket        | `namespace:name`                                | keine                      | Die Entity-Variante, die es aufstellt                                                                                                                                                                                                                                                                                 |
+| `rolls`        | nein          | `coin`, `d6`, `2d6+1`, ein Würfel oder ein Deck | keine                      | Bei einem einfachen Item würfelt ein Rechtsklick wie `/rdplserver game` und sagt es dem Standardpublikum des Packs. Siehe [Würfel und Decks](#würfel-und-decks)                                                                                                                                                       |
+| `rollStore`    | nein          | Name eines Punkteziels                          | keine                      | Für einen Gegenstand mit `rolls` das Punkteziel, das bei jeder Benutzung die Summe des Wurfs als Punktestand des Besitzers übernimmt. Existiert das Ziel nicht, wird der Wurf mit einer Chatzeile abgelehnt                                                                                                           |
+| `locates`      | nein          | `Village`, `minecraft:river`                    | keine                      | Bei einem schlichten Item sucht ein Rechtsklick den nächsten Ort dieses Namens und richtet das Item wie einen Kompass darauf aus. Der Name ist eine Vanilla-Struktur oder ein Vanilla-Biom oder ein per `locateAs` registrierter Name. Das Item stapelt sich nur einzeln. Siehe den Absatz zum Ortungskompass darüber |
+| `passesTurn`   | nein          | boolean                                         | `false`                    | Bei einem einfachen Item gibt ein Rechtsklick den Zug seines Halters ab, wie `/rdplserver game pass`. Siehe [Züge](#züge)                                                                                                                                                                                             |
+| `requires`     | nein          | Liste von Mod-IDs oder Pack-Namespaces          | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                                                  |
 
 ### Item-Variantenschlüssel
 
@@ -8481,13 +8517,17 @@ Jeder Wurf kann mit `store <objective>` enden, das seine Zahl in den eigenen Pun
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "locateLevel": 3
   }
 }
 ```
 
+`locateLevel` gehört zur selben Gruppe und bestimmt, wer den Vanilla-Befehl `/locate` ausführen darf. Der Standard `2` ist der von Vanilla, es ändert sich also nichts, bis ein Pack ihn setzt. `0` erlaubt ihn jedem Spieler, `3` überlässt ihn den Operatoren, und `4` beschränkt ihn auf Operatoren der Stufe 4.
+
 | Einstellung       | Wofür sie gilt                                    |
 | ----------------- | ------------------------------------------------- |
+| `locateLevel`     | Der Vanilla-Befehl `/locate`                      |
 | `gotoLevel`       | `goto <struktur>`                                 |
 | `gotoNextLevel`   | `goto <struktur> next`                            |
 | `gotoBackLevel`   | `goto <struktur> back`                            |

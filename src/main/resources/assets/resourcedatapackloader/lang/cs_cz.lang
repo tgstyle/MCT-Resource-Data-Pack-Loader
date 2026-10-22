@@ -27,6 +27,7 @@ rdpl.command.gotolooking=Hledám nejbližší nedotčený %s, až bude nalezen, 
 rdpl.command.gotomakingland=Svět se pořád vytváří, počkej, až bude hotov
 rdpl.command.gotonoback=Není žádný dřívější %s, kam by ses mohl vrátit
 rdpl.command.gotonoground=Nalezeno %s na %d, %d, ale není tam kde stát
+rdpl.compass.set=Střelka ukazuje na nejbližší cíl %s na souřadnicích %s, %s
 rdpl.command.gotonothing=Poblíž není znám ani nečekán žádný %s
 rdpl.command.groupnote=Soubory přidané nebo odebrané od spuštění potřebují /rdpl reload bez skupiny
 rdpl.command.here='%s' %s, id %d

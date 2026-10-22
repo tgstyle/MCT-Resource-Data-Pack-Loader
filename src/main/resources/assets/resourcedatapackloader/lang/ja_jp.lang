@@ -27,6 +27,7 @@ rdpl.command.gotolooking=まだ手つかずの最寄りの %s を探していま
 rdpl.command.gotomakingland=ワールドはまだ生成中です。完了するまでお待ちください
 rdpl.command.gotonoback=戻れる前の %s はありません
 rdpl.command.gotonoground=%s を %d, %d で見つけましたが、立てる地面がありません
+rdpl.compass.set=針が最寄りの %s（%s, %s）を指しました
 rdpl.command.gotonothing=この付近に %s は確認されておらず、存在も予想されていません
 rdpl.command.groupnote=起動後に追加・削除されたファイルは、グループなしの /rdpl reload が必要です
 rdpl.command.here='%s' %s ID %d

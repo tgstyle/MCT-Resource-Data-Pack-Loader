@@ -1510,31 +1510,67 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 同时存在，就使
 
 `rocket` 用 `rocket` 指定它所放置的实体变种。它需要 Galacticraft，没有 Galacticraft 或没有 `rocket` 时不会注册任何东西，日志会说明这一点。参见实体变种中的 Galacticraft 火箭。
 
+带有 `locates` 的普通物品就是定位指南针。右键会查找该名称最近的地点并让物品指向那里，持有者会得知指针停在了哪里。名称可以是像 `Village` 这样的原版结构、像 `minecraft:river` 这样的生物群系 ID，或用 `locateAs` 注册的名称。该物品的堆叠上限为 1，`cooldown` 决定它在多长时间内拒绝再次搜索。
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "locates": "Village",
+  "cooldown": 100,
+  "variants": {
+    "seeker": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+目标保存在物品堆中，因此物品会一直指向它，直到下一次右键，在其他维度则会旋转。指针由物品自己的模型绘制，使用与原版指南针相同的 `angle` 覆盖，每帧一项：
+
+`assets/mypack/models/item/seeker/seeker.json`
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mypack:items/seeker_16"
+  },
+  "overrides": [
+    { "predicate": { "angle": 0.0 }, "model": "mypack:item/seeker_16" },
+    { "predicate": { "angle": 0.03125 }, "model": "mypack:item/seeker_17" },
+    { "predicate": { "angle": 0.0625 }, "model": "mypack:item/seeker_18" }
+  ]
+}
+```
+
 ### 物品文件键
 
 *物品*
 
-| 键             | 必需          | 值                                        | 默认值               | 作用                                                                                                                          |
-| -------------- | ------------- | ----------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | 是            | 变种名称到变种的对象                      |                      | 每个元数据值一个条目。键为该值在方块状态、模型路径和语言键中命名。注册名来自文件自身的路径                                    |
-| `type`         | 否            | 上述类型之一                              | `basic`              | 物品采用的类型                                                                                                                |
-| `creativeTab`  | 否            | 标签页名称                                | 无                   | 它出现在哪个标签页中                                                                                                          |
-| `material`     | tool、armor   | 材料名称                                  | 无                   | 它由你的哪种材料制成                                                                                                          |
-| `toolClass`    | tool          | `pickaxe`、`axe`、`shovel`、`sword`       | 无                   | 它是哪种工具                                                                                                                  |
-| `slot`         | armor         | `head`、`chest`、`legs`、`feet`           | 无                   | 穿戴的位置。`helmet`、`chestplate`、`leggings` 和 `boots` 也可以                                                              |
-| `eat`          | food          | 布尔值                                    | `false`              | 使用进食动画                                                                                                                  |
-| `alwaysEdible` | food          | 布尔值                                    | `false`              | 饥饿条已满时也可以食用                                                                                                        |
-| `useDuration`  | drink、potion | 整数，单位为刻                            | `32`                 | 对 `drink` 和 `potion` 而言，是喝下它所需的时间，单位为刻（20 刻 = 1 秒）。其他类型会忽略它                                   |
-| `attackSpeed`  | 否            | 浮点数                                    | 视工具类别而定       | 对 `tool` 而言，是攻击速度属性，剑的值是 `-2.4`                                                                               |
-| `cooldown`     | 否            | 整数，单位为刻                            | `0`                  | 对 `food`、`drink` 和 `potion` 而言，物品被消耗后多长时间内拒绝再次使用；对带 `rolls` 的物品而言，两次掷骰之间的间隔          |
-| `container`    | drink         | 物品名称                                  | 无                   | 留下什么，比如一个瓶子                                                                                                        |
-| `crop`         | seed          | 方块名称                                  | 无                   | 它种下的作物                                                                                                                  |
-| `soil`         | seed          | 方块名称                                  | `minecraft:farmland` | 它可以种在什么上面                                                                                                            |
-| `rocket`       | rocket        | `namespace:name`                          | 无                   | 它放置的实体变种                                                                                                              |
-| `rolls`        | 否            | `coin`、`d6`、`2d6+1`、一个骰子或一个牌堆 | 无                   | 在普通物品上，右键会像 `/rdplserver game` 那样掷骰，并告知资源包的默认听众。参见[骰子与牌堆](#骰子与牌堆)                     |
-| `rollStore`    | 否            | 目标名称                                  | 无                   | 用于带 `rolls` 的物品：每次使用时，把投掷总和作为持有者的分数记入这个计分板目标。目标不存在时，投掷会被拒绝并在聊天栏提示一行 |
-| `passesTurn`   | 否            | 布尔值                                    | `false`              | 在普通物品上，右键会像 `/rdplserver game pass` 那样结束持有者的行动。参见[轮流行动](#轮流行动)                                |
-| `requires`     | 否            | 模组 id 或资源包命名空间的列表            | 无                   | 除非全部存在，否则跳过该文件                                                                                                  |
+| 键             | 必需          | 值                                        | 默认值               | 作用                                                                                                                                                                                     |
+| -------------- | ------------- | ----------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | 是            | 变种名称到变种的对象                      |                      | 每个元数据值一个条目。键为该值在方块状态、模型路径和语言键中命名。注册名来自文件自身的路径                                                                                               |
+| `type`         | 否            | 上述类型之一                              | `basic`              | 物品采用的类型                                                                                                                                                                           |
+| `creativeTab`  | 否            | 标签页名称                                | 无                   | 它出现在哪个标签页中                                                                                                                                                                     |
+| `material`     | tool、armor   | 材料名称                                  | 无                   | 它由你的哪种材料制成                                                                                                                                                                     |
+| `toolClass`    | tool          | `pickaxe`、`axe`、`shovel`、`sword`       | 无                   | 它是哪种工具                                                                                                                                                                             |
+| `slot`         | armor         | `head`、`chest`、`legs`、`feet`           | 无                   | 穿戴的位置。`helmet`、`chestplate`、`leggings` 和 `boots` 也可以                                                                                                                         |
+| `eat`          | food          | 布尔值                                    | `false`              | 使用进食动画                                                                                                                                                                             |
+| `alwaysEdible` | food          | 布尔值                                    | `false`              | 饥饿条已满时也可以食用                                                                                                                                                                   |
+| `useDuration`  | drink、potion | 整数，单位为刻                            | `32`                 | 对 `drink` 和 `potion` 而言，是喝下它所需的时间，单位为刻（20 刻 = 1 秒）。其他类型会忽略它                                                                                              |
+| `attackSpeed`  | 否            | 浮点数                                    | 视工具类别而定       | 对 `tool` 而言，是攻击速度属性，剑的值是 `-2.4`                                                                                                                                          |
+| `cooldown`     | 否            | 整数，单位为刻                            | `0`                  | 对 `food`、`drink` 和 `potion` 而言，物品被消耗后多长时间内拒绝再次使用；对带 `rolls` 的物品而言，两次掷骰之间的间隔                                                                     |
+| `container`    | drink         | 物品名称                                  | 无                   | 留下什么，比如一个瓶子                                                                                                                                                                   |
+| `crop`         | seed          | 方块名称                                  | 无                   | 它种下的作物                                                                                                                                                                             |
+| `soil`         | seed          | 方块名称                                  | `minecraft:farmland` | 它可以种在什么上面                                                                                                                                                                       |
+| `rocket`       | rocket        | `namespace:name`                          | 无                   | 它放置的实体变种                                                                                                                                                                         |
+| `rolls`        | 否            | `coin`、`d6`、`2d6+1`、一个骰子或一个牌堆 | 无                   | 在普通物品上，右键会像 `/rdplserver game` 那样掷骰，并告知资源包的默认听众。参见[骰子与牌堆](#骰子与牌堆)                                                                                |
+| `rollStore`    | 否            | 目标名称                                  | 无                   | 用于带 `rolls` 的物品：每次使用时，把投掷总和作为持有者的分数记入这个计分板目标。目标不存在时，投掷会被拒绝并在聊天栏提示一行                                                            |
+| `locates`      | 否            | `Village`, `minecraft:river`              | 无                   | 对普通物品而言，右键会查找该名称最近的地点，并像指南针一样让物品指向那里。名称可以是原版结构或生物群系，也可以是用 `locateAs` 注册的名称。该物品的堆叠上限为 1。参见上方的定位指南针段落 |
+| `passesTurn`   | 否            | 布尔值                                    | `false`              | 在普通物品上，右键会像 `/rdplserver game pass` 那样结束持有者的行动。参见[轮流行动](#轮流行动)                                                                                           |
+| `requires`     | 否            | 模组 id 或资源包命名空间的列表            | 无                   | 除非全部存在，否则跳过该文件                                                                                                                                                             |
 
 ### 物品变种键
 
@@ -8481,13 +8517,17 @@ Blast Plaster（本模组的依赖）负责爆炸后的行为：逐方块修复�
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "locateLevel": 3
   }
 }
 ```
 
+`locateLevel` 位于同一设置组，决定谁可以执行原版的 `/locate`。默认值 `2` 就是原版的等级，因此在资源包设置它之前不会有任何变化。`0` 让任何玩家都能执行，`3` 只留给管理员，`4` 则限定为 4 级管理员。
+
 | 设置              | 所控制的内容                     |
 | ----------------- | -------------------------------- |
+| `locateLevel`     | 原版的 `/locate`                 |
 | `gotoLevel`       | `goto <structure>`               |
 | `gotoNextLevel`   | `goto <structure> next`          |
 | `gotoBackLevel`   | `goto <structure> back`          |

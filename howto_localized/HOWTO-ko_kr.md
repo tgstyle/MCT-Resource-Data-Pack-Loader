@@ -1510,31 +1510,67 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 
 `rocket`은 `rocket`으로 설치할 엔티티 변형의 이름을 지정합니다. Galacticraft가 필요하며, Galacticraft가 없거나 `rocket`이 없으면 아무것도 등록되지 않고 로그에 그 사실이 남습니다. 엔티티 변형의 Galacticraft 로켓을 참고하세요.
 
+`locates`가 있는 일반 아이템은 위치 탐색 나침반입니다. 오른쪽 클릭하면 그 이름의 가장 가까운 장소를 찾아 아이템이 그쪽을 가리키고, 들고 있는 플레이어에게 바늘이 어디에 멈췄는지 알려 줍니다. 이름은 `Village` 같은 바닐라 구조물, `minecraft:river` 같은 바이옴 ID, 또는 `locateAs`로 등록한 이름입니다. 아이템은 1개까지만 겹쳐지며, `cooldown`은 다음 탐색을 거부하는 시간을 정합니다.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "locates": "Village",
+  "cooldown": 100,
+  "variants": {
+    "seeker": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+목표는 스택에 저장되므로 다음에 오른쪽 클릭할 때까지 아이템이 계속 그곳을 가리키고, 다른 차원에서는 바늘이 빙빙 돕니다. 바늘은 아이템 자체의 모델이 그리며, 바닐라 나침반과 같은 `angle` 오버라이드를 써서 프레임마다 항목 하나씩 둡니다.
+
+`assets/mypack/models/item/seeker/seeker.json`
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mypack:items/seeker_16"
+  },
+  "overrides": [
+    { "predicate": { "angle": 0.0 }, "model": "mypack:item/seeker_16" },
+    { "predicate": { "angle": 0.03125 }, "model": "mypack:item/seeker_17" },
+    { "predicate": { "angle": 0.0625 }, "model": "mypack:item/seeker_18" }
+  ]
+}
+```
+
 ### 아이템 파일 키
 
 *아이템*
 
-| 키             | 필수          | 값                                    | 기본값               | 설명                                                                                                                                                 |
-| -------------- | ------------- | ------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | 예            | 변형 이름에서 변형으로 가는 객체      |                      | 메타데이터 값마다 항목 하나. 키는 블록 상태, 모델 경로, 언어 키에서 그 값의 이름이 됩니다. 레지스트리 이름은 파일 자체의 경로에서 가져옵니다         |
-| `type`         | 아니요        | 위의 유형 중 하나                     | `basic`              | 아이템이 갖는 유형                                                                                                                                   |
-| `creativeTab`  | 아니요        | 탭 이름                               | 없음                 | 아이템이 나타나는 탭                                                                                                                                 |
-| `material`     | tool, armor   | 재질 이름                             | 없음                 | 만들어지는 재질 중 하나                                                                                                                              |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`   | 없음                 | 어떤 도구인지                                                                                                                                        |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`       | 없음                 | 착용 위치. `helmet`, `chestplate`, `leggings`, `boots`도 작동합니다                                                                                  |
-| `eat`          | food          | 불리언                                | `false`              | 먹는 애니메이션을 사용합니다                                                                                                                         |
-| `alwaysEdible` | food          | 불리언                                | `false`              | 허기 막대가 가득 차 있어도 먹을 수 있습니다                                                                                                          |
-| `useDuration`  | drink, potion | 정수, 틱                              | `32`                 | `drink`와 `potion`용입니다. 마시는 데 걸리는 시간(틱, 20틱 = 1초)입니다. 다른 유형은 무시합니다                                                      |
-| `attackSpeed`  | 아니요        | 소수                                  | 도구 종류에 맞게     | `tool`의 공격 속도 속성이며, 검은 `-2.4`입니다                                                                                                       |
-| `cooldown`     | 아니요        | 정수, 틱                              | `0`                  | `food`, `drink`, `potion`에서는 소비한 뒤 아이템을 다시 쓸 수 없는 시간이고, `rolls`가 있는 아이템에서는 굴림 사이의 시간입니다                      |
-| `container`    | drink         | 아이템 이름                           | 없음                 | 남는 것, 예를 들어 병                                                                                                                                |
-| `crop`         | seed          | 블록 이름                             | 없음                 | 심는 작물                                                                                                                                            |
-| `soil`         | seed          | 블록 이름                             | `minecraft:farmland` | 심을 수 있는 땅                                                                                                                                      |
-| `rocket`       | rocket        | `namespace:name`                      | 없음                 | 설치하는 엔티티 변형                                                                                                                                 |
-| `rolls`        | 아니요        | `coin`, `d6`, `2d6+1`, 주사위 또는 덱 | 없음                 | 일반 아이템에서 우클릭하면 `/rdplserver game`이 하는 것처럼 굴리고 팩의 기본 대상에게 알립니다. [주사위와 덱](#주사위와-덱)을 참고하세요             |
-| `rollStore`    | 아니요        | 목표 이름                             | 없음                 | `rolls`가 있는 아이템에서, 사용할 때마다 굴림 합계를 들고 있는 사람의 점수로 받는 스코어보드 목표. 없는 목표를 적으면 채팅 한 줄로 굴림을 거부합니다 |
-| `passesTurn`   | 아니요        | 불리언                                | `false`              | 일반 아이템에서 우클릭하면 `/rdplserver game pass`처럼 소지자의 차례를 넘깁니다. [번갈아 진행하기](#번갈아-진행하기)를 참고하세요                    |
-| `requires`     | 아니요        | 모드 id 또는 팩 네임스페이스 목록     | 없음                 | 모두 있지 않으면 파일을 건너뜁니다                                                                                                                   |
+| 키             | 필수          | 값                                    | 기본값               | 설명                                                                                                                                                                                                                                                  |
+| -------------- | ------------- | ------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | 예            | 변형 이름에서 변형으로 가는 객체      |                      | 메타데이터 값마다 항목 하나. 키는 블록 상태, 모델 경로, 언어 키에서 그 값의 이름이 됩니다. 레지스트리 이름은 파일 자체의 경로에서 가져옵니다                                                                                                          |
+| `type`         | 아니요        | 위의 유형 중 하나                     | `basic`              | 아이템이 갖는 유형                                                                                                                                                                                                                                    |
+| `creativeTab`  | 아니요        | 탭 이름                               | 없음                 | 아이템이 나타나는 탭                                                                                                                                                                                                                                  |
+| `material`     | tool, armor   | 재질 이름                             | 없음                 | 만들어지는 재질 중 하나                                                                                                                                                                                                                               |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`   | 없음                 | 어떤 도구인지                                                                                                                                                                                                                                         |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`       | 없음                 | 착용 위치. `helmet`, `chestplate`, `leggings`, `boots`도 작동합니다                                                                                                                                                                                   |
+| `eat`          | food          | 불리언                                | `false`              | 먹는 애니메이션을 사용합니다                                                                                                                                                                                                                          |
+| `alwaysEdible` | food          | 불리언                                | `false`              | 허기 막대가 가득 차 있어도 먹을 수 있습니다                                                                                                                                                                                                           |
+| `useDuration`  | drink, potion | 정수, 틱                              | `32`                 | `drink`와 `potion`용입니다. 마시는 데 걸리는 시간(틱, 20틱 = 1초)입니다. 다른 유형은 무시합니다                                                                                                                                                       |
+| `attackSpeed`  | 아니요        | 소수                                  | 도구 종류에 맞게     | `tool`의 공격 속도 속성이며, 검은 `-2.4`입니다                                                                                                                                                                                                        |
+| `cooldown`     | 아니요        | 정수, 틱                              | `0`                  | `food`, `drink`, `potion`에서는 소비한 뒤 아이템을 다시 쓸 수 없는 시간이고, `rolls`가 있는 아이템에서는 굴림 사이의 시간입니다                                                                                                                       |
+| `container`    | drink         | 아이템 이름                           | 없음                 | 남는 것, 예를 들어 병                                                                                                                                                                                                                                 |
+| `crop`         | seed          | 블록 이름                             | 없음                 | 심는 작물                                                                                                                                                                                                                                             |
+| `soil`         | seed          | 블록 이름                             | `minecraft:farmland` | 심을 수 있는 땅                                                                                                                                                                                                                                       |
+| `rocket`       | rocket        | `namespace:name`                      | 없음                 | 설치하는 엔티티 변형                                                                                                                                                                                                                                  |
+| `rolls`        | 아니요        | `coin`, `d6`, `2d6+1`, 주사위 또는 덱 | 없음                 | 일반 아이템에서 우클릭하면 `/rdplserver game`이 하는 것처럼 굴리고 팩의 기본 대상에게 알립니다. [주사위와 덱](#주사위와-덱)을 참고하세요                                                                                                              |
+| `rollStore`    | 아니요        | 목표 이름                             | 없음                 | `rolls`가 있는 아이템에서, 사용할 때마다 굴림 합계를 들고 있는 사람의 점수로 받는 스코어보드 목표. 없는 목표를 적으면 채팅 한 줄로 굴림을 거부합니다                                                                                                  |
+| `locates`      | 아니요        | `Village`, `minecraft:river`          | 없음                 | 일반 아이템에서 오른쪽 클릭하면 그 이름의 가장 가까운 장소를 찾아 나침반처럼 아이템이 그쪽을 가리킵니다. 이름은 바닐라 구조물이나 바이옴, 또는 `locateAs`로 등록한 이름입니다. 아이템은 1개까지만 겹쳐집니다. 위의 위치 탐색 나침반 문단을 참고하세요 |
+| `passesTurn`   | 아니요        | 불리언                                | `false`              | 일반 아이템에서 우클릭하면 `/rdplserver game pass`처럼 소지자의 차례를 넘깁니다. [번갈아 진행하기](#번갈아-진행하기)를 참고하세요                                                                                                                     |
+| `requires`     | 아니요        | 모드 id 또는 팩 네임스페이스 목록     | 없음                 | 모두 있지 않으면 파일을 건너뜁니다                                                                                                                                                                                                                    |
 
 ### 아이템 변형 키
 
@@ -8481,13 +8517,17 @@ Blast Plaster(이 모드의 의존성)는 폭발 이후의 동작을 처리합�
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "locateLevel": 3
   }
 }
 ```
 
+`locateLevel`은 같은 그룹에 있으며 바닐라 `/locate`를 실행할 수 있는 사람을 정합니다. 기본값 `2`는 바닐라 본래의 값이므로 팩이 설정하기 전에는 아무것도 바뀌지 않습니다. `0`은 모든 플레이어가 실행할 수 있게 하고, `3`은 운영자에게만 맡기며, `4`는 레벨 4 운영자로 제한합니다.
+
 | 설정              | 적용 대상                             |
 | ----------------- | ------------------------------------- |
+| `locateLevel`     | 바닐라 `/locate`                      |
 | `gotoLevel`       | `goto <structure>`                    |
 | `gotoNextLevel`   | `goto <structure> next`               |
 | `gotoBackLevel`   | `goto <structure> back`               |

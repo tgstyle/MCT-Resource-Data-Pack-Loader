@@ -67,6 +67,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -123,6 +124,17 @@ public class ServerCommands extends CommandBase {
     }
 
     private static int neededFor(String place, String key, int fallback) { return listedLevel("gotoPlaceLevels", Config.commands.gotoPlaceLevels, place, level(key, fallback)); }
+
+    public static int locateLevel() { return level("locateLevel", Config.commands.locateLevel); }
+
+    public static void point(EntityPlayerMP player, String asked, Consumer<BlockPos> found) {
+        World world = player.world;
+        String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        Biome biome = biomeFor(world, name);
+        if (biome != null) { ContentBiomeSearch.start(player, String.valueOf(biome.getRegistryName()), biome, false, found); }
+        else if (ContentLocate.names(world).contains(name)) { found.accept(ContentLocate.nearest(world, name, player.getPosition())); }
+        else { ContentStructureSearch.start(player, name, keyFor(name), false, false, found); }
+    }
 
     private static int lowestGotoLevel() {
         int lowest = OPERATOR;

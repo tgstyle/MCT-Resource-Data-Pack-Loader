@@ -51,6 +51,7 @@ import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public final class ContentStructureSearch implements WorldWorkerManager.IWorker {
@@ -71,6 +72,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private final int middleZ;
     private final boolean findUnexplored;
     private final boolean skipHere;
+    private final Consumer<BlockPos> delivery;
     private final List<BlockPos> been;
     private int ring;
     private int step;
@@ -79,8 +81,9 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private long bestAway = Long.MAX_VALUE;
     private boolean over;
 
-    private ContentStructureSearch(EntityPlayerMP player, String name, MapGenStructure generator, boolean cells, int spacing, boolean findUnexplored, boolean skipHere) {
+    private ContentStructureSearch(EntityPlayerMP player, String name, MapGenStructure generator, boolean cells, int spacing, boolean findUnexplored, boolean skipHere, @Nullable Consumer<BlockPos> delivery) {
         this.been = skipHere ? been(player, name) : new ArrayList<>();
+        this.delivery = delivery;
         this.player = player;
         this.world = player.world;
         this.name = name;
@@ -106,28 +109,31 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return looking();
     }
 
-    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored, boolean skipHere) {
+    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored, boolean skipHere) { start(player, name, key, findUnexplored, skipHere, null); }
+
+    public static void start(EntityPlayerMP player, String name, String key, boolean findUnexplored, boolean skipHere, @Nullable Consumer<BlockPos> delivery) {
         World world = player.world;
         if (key != null) {
             List<long[]> pinned = ContentStructurePlacement.pins(key);
             if (pinned != null) {
-                settleOnPins(player, name, pinned, ContentStructurePlacement.VILLAGES.equals(key) ? ContentBeard.BESIDE_WELL : 0, findUnexplored, skipHere);
+                settleOnPins(player, name, pinned, ContentStructurePlacement.VILLAGES.equals(key) ? ContentBeard.BESIDE_WELL : 0, findUnexplored, skipHere, delivery);
                 return;
             }
         }
         MapGenStructure generator = generatorFor(world, name);
         if (generator == null) {
-            tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name));
+            if (delivery != null) { delivery.accept(null); }
+            else { tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotonothing", name)); }
             return;
         }
         generator = theRealOne(generator);
         if (((IMapGenBase) generator).rdpl$getWorld() == null) { ((IMapGenBase) generator).rdpl$setWorld(world); }
         boolean cells = generator instanceof MapGenVillage && ContentBeard.wanted() && ContentBeard.adapts(world);
         int spacing = cells ? ContentSites.of(world, ContentBeard.villageSpacing(world)).spacing() : 0;
-        ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored, skipHere);
+        ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored, skipHere, delivery);
         running = worker;
         WorldWorkerManager.addWorker(worker);
-        tell(player, TextFormatting.GREEN, Lang.tr(player, reporting ? "rdpl.command.locatelooking" : "rdpl.command.gotolooking", name));
+        tell(player, TextFormatting.GREEN, Lang.tr(player, reporting || delivery != null ? "rdpl.command.locatelooking" : "rdpl.command.gotolooking", name));
     }
 
     @Override public boolean hasWork() { return !over; }
@@ -210,7 +216,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         if (foundOn == Integer.MAX_VALUE) { foundOn = ring; }
     }
 
-    private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, int beside, boolean findUnexplored, boolean skipHere) {
+    private static void settleOnPins(EntityPlayerMP player, String name, List<long[]> pinned, int beside, boolean findUnexplored, boolean skipHere, @Nullable Consumer<BlockPos> delivery) {
         BlockPos best = null;
         long bestAway = Long.MAX_VALUE;
         List<BlockPos> visited = skipHere ? been(player, name) : Collections.emptyList();
@@ -227,12 +233,14 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             bestAway = away;
             best = new BlockPos((int) pin[0] + beside, 64, (int) pin[1] + beside);
         }
-        arrive(player, name, best);
+        if (delivery != null) { delivery.accept(best); }
+        else { arrive(player, name, best); }
     }
 
     private void settle() {
         finish();
-        if (report) { point(player, name, best); }
+        if (delivery != null) { delivery.accept(best); }
+        else if (report) { point(player, name, best); }
         else { arrive(player, name, best); }
     }
 

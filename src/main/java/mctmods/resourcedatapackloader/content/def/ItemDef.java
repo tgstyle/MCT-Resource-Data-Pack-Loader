@@ -30,9 +30,10 @@ public final class ItemDef {
     public final String rolls;
     public final String rollStore;
     public final boolean passesTurn;
+    public final String locates;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -56,6 +57,7 @@ public final class ItemDef {
         this.rolls = rolls;
         this.rollStore = rollStore;
         this.passesTurn = passesTurn;
+        this.locates = locates;
     }
 
     @Nullable public ItemVariant at(int meta) { return byMeta.get(meta); }

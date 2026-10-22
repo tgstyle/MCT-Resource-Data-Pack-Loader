@@ -27,6 +27,7 @@ rdpl.command.gotolooking=아직 건드리지 않은 가장 가까운 %s을(를) 
 rdpl.command.gotomakingland=월드를 아직 만드는 중입니다. 끝날 때까지 기다리세요
 rdpl.command.gotonoback=돌아갈 이전 %s이(가) 없습니다
 rdpl.command.gotonoground=%s을(를) %d, %d 위치에서 찾았지만 설 곳이 없습니다
+rdpl.compass.set=바늘이 가장 가까운 %s의 위치(%s, %s)를 가리킵니다
 rdpl.command.gotonothing=이 근처에는 %s이(가) 있다고 알려져 있지도, 있을 것으로 예상되지도 않습니다
 rdpl.command.groupnote=시작 후 추가되거나 삭제된 파일은 그룹 없이 /rdpl reload를 해야 반영됩니다
 rdpl.command.here='%s' %s, id %d

@@ -27,6 +27,7 @@ rdpl.command.gotolooking=A procurar o %s mais próximo ainda intocado; serás le
 rdpl.command.gotomakingland=O mundo ainda está a ser gerado, espera até ficar pronto
 rdpl.command.gotonoback=Não há nenhum %s anterior para onde voltar
 rdpl.command.gotonoground=Encontrado %s em %d, %d, mas não há nada ali onde ficar de pé
+rdpl.compass.set=A agulha aponta para o destino mais próximo, %s, em %s, %s
 rdpl.command.gotonothing=Não se conhece nem se espera nenhum %s perto daqui
 rdpl.command.groupnote=Os ficheiros adicionados ou removidos desde o arranque precisam de /rdpl reload sem grupo
 rdpl.command.here='%s' %s id %d

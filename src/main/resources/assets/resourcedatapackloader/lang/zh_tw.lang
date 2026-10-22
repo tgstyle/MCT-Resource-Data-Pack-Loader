@@ -27,6 +27,7 @@ rdpl.command.gotolooking=正在搜尋最近的未開發 %s，找到後會把你�
 rdpl.command.gotomakingland=世界仍在生成中，請等它完成
 rdpl.command.gotonoback=沒有更早的 %s 可以回去
 rdpl.command.gotonoground=已找到 %s（位於 %d, %d），但那裡沒有可以站立的地面
+rdpl.compass.set=指針指向最近的 %s，位於 %s, %s
 rdpl.command.gotonothing=這附近已知或預期都沒有 %s
 rdpl.command.groupnote=啟動後新增或移除的檔案，需要不帶群組執行 /rdpl reload
 rdpl.command.here='%s' %s ID %d

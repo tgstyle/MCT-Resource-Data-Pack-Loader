@@ -1510,31 +1510,67 @@ Un `potion_bottle` énumère ce qu'il peut contenir avec `potionTypes`, un table
 
 Un `rocket` nomme avec `rocket` la variante d'entité qu'il place. Il a besoin de Galacticraft ; sans lui, ou sans `rocket`, il n'enregistre rien, et le journal le signale. Voir Fusées de Galacticraft sous Variantes d'entités.
 
+Un objet simple doté de `locates` est une boussole de repérage. Un clic droit cherche le lieu le plus proche portant ce nom et oriente l'objet vers lui, et le porteur est informé de l'endroit où l'aiguille s'est arrêtée. Le nom est une structure vanilla comme `Village`, l'identifiant d'un biome comme `minecraft:river`, ou un nom enregistré avec `locateAs`. L'objet ne se cumule pas, et `cooldown` fixe le temps pendant lequel il refuse une nouvelle recherche.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "locates": "Village",
+  "cooldown": 100,
+  "variants": {
+    "seeker": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+La cible est conservée dans la pile : l'objet continue de la montrer jusqu'au prochain clic droit, et tourne sur lui-même dans toute autre dimension. L'aiguille est dessinée par le modèle propre à l'objet, qui reprend la même surcharge `angle` que la boussole vanilla, une entrée par image :
+
+`assets/mypack/models/item/seeker/seeker.json`
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mypack:items/seeker_16"
+  },
+  "overrides": [
+    { "predicate": { "angle": 0.0 }, "model": "mypack:item/seeker_16" },
+    { "predicate": { "angle": 0.03125 }, "model": "mypack:item/seeker_17" },
+    { "predicate": { "angle": 0.0625 }, "model": "mypack:item/seeker_18" }
+  ]
+}
+```
+
 ### Clés de fichier d'objet
 
 *objets*
 
-| Clé            | Requis        | Valeur                                        | Défaut                     | Rôle                                                                                                                                                                                                                  |
-| -------------- | ------------- | --------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | oui           | objet de nom de variante vers variante        |                            | Une entrée par valeur de métadonnée. La clé nomme cette valeur dans l'état de bloc, le chemin du modèle et la clé de langue. Le nom de registre vient du chemin du fichier lui-même                                   |
-| `type`         | non           | l'un des types ci-dessus                      | `basic`                    | Le type que prend l'objet                                                                                                                                                                                             |
-| `creativeTab`  | non           | nom d'onglet                                  | aucun                      | L'onglet où il apparaît                                                                                                                                                                                               |
-| `material`     | tool, armor   | nom de matériau                               | aucun                      | Celui de vos matériaux dont il est fait                                                                                                                                                                               |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`           | aucun                      | De quel outil il s'agit                                                                                                                                                                                               |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`               | aucun                      | Où il se porte. `helmet`, `chestplate`, `leggings` et `boots` fonctionnent aussi                                                                                                                                      |
-| `eat`          | food          | booléen                                       | `false`                    | Utilise l'animation de repas                                                                                                                                                                                          |
-| `alwaysEdible` | food          | booléen                                       | `false`                    | Peut être mangé avec une barre de faim pleine                                                                                                                                                                         |
-| `useDuration`  | drink, potion | entier, ticks                                 | `32`                       | Pour `drink` et `potion` : combien de temps il faut pour le boire, en ticks (20 ticks = 1 seconde). Les autres types l'ignorent                                                                                       |
-| `attackSpeed`  | non           | flottant                                      | adapté à la classe d'outil | Pour `tool`, l'attribut de vitesse d'attaque, comme `-2.4` pour une épée                                                                                                                                              |
-| `cooldown`     | non           | entier, ticks                                 | `0`                        | Pour `food`, `drink` et `potion`, durée pendant laquelle l'objet refuse d'être réutilisé après avoir été consommé ; pour un objet avec `rolls`, le délai entre deux lancers                                           |
-| `container`    | drink         | nom d'objet                                   | aucun                      | Ce qui reste, comme une bouteille                                                                                                                                                                                     |
-| `crop`         | seed          | nom de bloc                                   | aucun                      | La culture qu'il plante                                                                                                                                                                                               |
-| `soil`         | seed          | nom de bloc                                   | `minecraft:farmland`       | Sur quoi il peut être planté                                                                                                                                                                                          |
-| `rocket`       | rocket        | `namespace:name`                              | aucun                      | La variante d'entité qu'il place                                                                                                                                                                                      |
-| `rolls`        | non           | `coin`, `d6`, `2d6+1`, un dé ou un paquet     | aucun                      | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets)                                                        |
-| `rollStore`    | non           | nom d'un objectif                             | aucun                      | Pour un objet avec `rolls`, l'objectif du tableau des scores qui reçoit le total du lancer comme score de son porteur à chaque utilisation. Un objectif qui n'existe pas fait refuser le lancer par une ligne de chat |
-| `passesTurn`   | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours)                                                                                  |
-| `requires`     | non           | liste d'ids de mods ou de namespaces de packs | aucun                      | Le fichier est ignoré sauf si tous sont présents                                                                                                                                                                      |
+| Clé            | Requis        | Valeur                                        | Défaut                     | Rôle                                                                                                                                                                                                                                                                                                             |
+| -------------- | ------------- | --------------------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | oui           | objet de nom de variante vers variante        |                            | Une entrée par valeur de métadonnée. La clé nomme cette valeur dans l'état de bloc, le chemin du modèle et la clé de langue. Le nom de registre vient du chemin du fichier lui-même                                                                                                                              |
+| `type`         | non           | l'un des types ci-dessus                      | `basic`                    | Le type que prend l'objet                                                                                                                                                                                                                                                                                        |
+| `creativeTab`  | non           | nom d'onglet                                  | aucun                      | L'onglet où il apparaît                                                                                                                                                                                                                                                                                          |
+| `material`     | tool, armor   | nom de matériau                               | aucun                      | Celui de vos matériaux dont il est fait                                                                                                                                                                                                                                                                          |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`           | aucun                      | De quel outil il s'agit                                                                                                                                                                                                                                                                                          |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`               | aucun                      | Où il se porte. `helmet`, `chestplate`, `leggings` et `boots` fonctionnent aussi                                                                                                                                                                                                                                 |
+| `eat`          | food          | booléen                                       | `false`                    | Utilise l'animation de repas                                                                                                                                                                                                                                                                                     |
+| `alwaysEdible` | food          | booléen                                       | `false`                    | Peut être mangé avec une barre de faim pleine                                                                                                                                                                                                                                                                    |
+| `useDuration`  | drink, potion | entier, ticks                                 | `32`                       | Pour `drink` et `potion` : combien de temps il faut pour le boire, en ticks (20 ticks = 1 seconde). Les autres types l'ignorent                                                                                                                                                                                  |
+| `attackSpeed`  | non           | flottant                                      | adapté à la classe d'outil | Pour `tool`, l'attribut de vitesse d'attaque, comme `-2.4` pour une épée                                                                                                                                                                                                                                         |
+| `cooldown`     | non           | entier, ticks                                 | `0`                        | Pour `food`, `drink` et `potion`, durée pendant laquelle l'objet refuse d'être réutilisé après avoir été consommé ; pour un objet avec `rolls`, le délai entre deux lancers                                                                                                                                      |
+| `container`    | drink         | nom d'objet                                   | aucun                      | Ce qui reste, comme une bouteille                                                                                                                                                                                                                                                                                |
+| `crop`         | seed          | nom de bloc                                   | aucun                      | La culture qu'il plante                                                                                                                                                                                                                                                                                          |
+| `soil`         | seed          | nom de bloc                                   | `minecraft:farmland`       | Sur quoi il peut être planté                                                                                                                                                                                                                                                                                     |
+| `rocket`       | rocket        | `namespace:name`                              | aucun                      | La variante d'entité qu'il place                                                                                                                                                                                                                                                                                 |
+| `rolls`        | non           | `coin`, `d6`, `2d6+1`, un dé ou un paquet     | aucun                      | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets)                                                                                                                                                   |
+| `rollStore`    | non           | nom d'un objectif                             | aucun                      | Pour un objet avec `rolls`, l'objectif du tableau des scores qui reçoit le total du lancer comme score de son porteur à chaque utilisation. Un objectif qui n'existe pas fait refuser le lancer par une ligne de chat                                                                                            |
+| `locates`      | non           | `Village`, `minecraft:river`                  | aucun                      | Sur un objet simple, un clic droit cherche le lieu le plus proche de ce nom et oriente l'objet vers lui, comme une boussole. Le nom est une structure ou un biome vanilla, ou un nom enregistré avec `locateAs`. L'objet ne se cumule pas (pile de 1). Voir le paragraphe sur la boussole de repérage, plus haut |
+| `passesTurn`   | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours)                                                                                                                                                                             |
+| `requires`     | non           | liste d'ids de mods ou de namespaces de packs | aucun                      | Le fichier est ignoré sauf si tous sont présents                                                                                                                                                                                                                                                                 |
 
 ### Clés de variantes d'objet
 
@@ -8481,13 +8517,17 @@ Tout lancer peut finir par `store <objective>`, qui écrit son nombre dans le sc
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "locateLevel": 3
   }
 }
 ```
 
+`locateLevel` se trouve dans le même groupe et décide qui peut exécuter le `/locate` vanilla. La valeur par défaut `2` est celle de vanilla : rien ne change tant qu'un pack ne la définit pas. `0` l'ouvre à tous les joueurs, `3` la réserve aux opérateurs et `4` la limite aux opérateurs de niveau 4.
+
 | Réglage           | Ce qu'il régit                       |
 | ----------------- | ------------------------------------ |
+| `locateLevel`     | Le `/locate` vanilla                 |
 | `gotoLevel`       | `goto <structure>`                   |
 | `gotoNextLevel`   | `goto <structure> next`              |
 | `gotoBackLevel`   | `goto <structure> back`              |

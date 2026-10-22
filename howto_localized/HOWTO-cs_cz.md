@@ -1510,31 +1510,67 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 
 `rocket` uvádí variantu entity, kterou umisťuje, pomocí `rocket`. Potřebuje Galacticraft, a bez něj nebo bez `rocket` nic nezaregistruje a log to oznámí. Viz rakety Galacticraftu v části Varianty entit.
 
+Prostý předmět s `locates` je lokátorový kompas. Pravé kliknutí vyhledá nejbližší místo tohoto jména a namíří na ně předmět, přičemž držitel se dozví, kde se střelka usadila. Název je vanilla struktura jako `Village`, id biomu jako `minecraft:river` nebo název zaregistrovaný přes `locateAs`. Předmět se skládá po 1 a `cooldown` určuje, jak dlouho odmítá další hledání.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "locates": "Village",
+  "cooldown": 100,
+  "variants": {
+    "seeker": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do dalšího pravého kliknutí a v jiné dimenzi se točí. Střelku kreslí vlastní model předmětu, který přebírá stejné přepsání `angle` jako vanilla kompas, po jednom záznamu na snímek:
+
+`assets/mypack/models/item/seeker/seeker.json`
+
+```json
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "mypack:items/seeker_16"
+  },
+  "overrides": [
+    { "predicate": { "angle": 0.0 }, "model": "mypack:item/seeker_16" },
+    { "predicate": { "angle": 0.03125 }, "model": "mypack:item/seeker_17" },
+    { "predicate": { "angle": 0.0625 }, "model": "mypack:item/seeker_18" }
+  ]
+}
+```
+
 ### Klíče souboru předmětu
 
 *předměty*
 
-| Klíč           | Povinné       | Hodnota                                          | Výchozí              | Co dělá                                                                                                                                                                       |
-| -------------- | ------------- | ------------------------------------------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | ano           | objekt s názvem varianty a variantou             |                      | Jedna položka na hodnotu metadat. Klíč pojmenovává tuto hodnotu v blockstate, v cestě k modelu a v klíči lang. Registrační název pochází z cesty souboru                      |
-| `type`         | ne            | jeden z typů výše                                | `basic`              | Jaký typ předmět nabývá                                                                                                                                                       |
-| `creativeTab`  | ne            | název karty                                      | žádný                | Karta, na které se objeví                                                                                                                                                     |
-| `material`     | tool, armor   | název materiálu                                  | žádný                | Z kterého z tvých materiálů je vyroben                                                                                                                                        |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`              | žádný                | Který je to nástroj                                                                                                                                                           |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                  | žádný                | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots`                                                                                                           |
-| `eat`          | food          | boolean                                          | `false`              | Používá animaci jedení                                                                                                                                                        |
-| `alwaysEdible` | food          | boolean                                          | `false`              | Lze jíst při plné liště hladu                                                                                                                                                 |
-| `useDuration`  | drink, potion | celé číslo, ticky                                | `32`                 | Pro `drink` a `potion`: jak dlouho trvá pití, v ticích (20 ticků = 1 sekunda). Ostatní typy ji ignorují                                                                       |
-| `attackSpeed`  | ne            | desetinné číslo                                  | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                   |
-| `cooldown`     | ne            | celé číslo, ticky                                | `0`                  | U `food`, `drink` a `potion` jak dlouho předmět po spotřebování odmítá další použití; u předmětu s `rolls` jak dlouho mezi hody                                               |
-| `container`    | drink         | název předmětu                                   | žádný                | Co zbude, například láhev                                                                                                                                                     |
-| `crop`         | seed          | název bloku                                      | žádný                | Plodina, kterou zasadí                                                                                                                                                        |
-| `soil`         | seed          | název bloku                                      | `minecraft:farmland` | Na co lze zasadit                                                                                                                                                             |
-| `rocket`       | rocket        | `namespace:name`                                 | žádný                | Varianta entity, kterou umístí                                                                                                                                                |
-| `rolls`        | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček karet | žádný                | U obyčejného předmětu pravé kliknutí hodí, jako by to udělal `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet) |
-| `rollStore`    | ne            | název cíle skóre                                 | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                         |
-| `passesTurn`   | ne            | boolean                                          | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                            |
-| `requires`     | ne            | seznam id módů nebo namespace balíčků            | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                             |
+| Klíč           | Povinné       | Hodnota                                          | Výchozí              | Co dělá                                                                                                                                                                                                                                                        |
+| -------------- | ------------- | ------------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | ano           | objekt s názvem varianty a variantou             |                      | Jedna položka na hodnotu metadat. Klíč pojmenovává tuto hodnotu v blockstate, v cestě k modelu a v klíči lang. Registrační název pochází z cesty souboru                                                                                                       |
+| `type`         | ne            | jeden z typů výše                                | `basic`              | Jaký typ předmět nabývá                                                                                                                                                                                                                                        |
+| `creativeTab`  | ne            | název karty                                      | žádný                | Karta, na které se objeví                                                                                                                                                                                                                                      |
+| `material`     | tool, armor   | název materiálu                                  | žádný                | Z kterého z tvých materiálů je vyroben                                                                                                                                                                                                                         |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`              | žádný                | Který je to nástroj                                                                                                                                                                                                                                            |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                  | žádný                | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots`                                                                                                                                                                                            |
+| `eat`          | food          | boolean                                          | `false`              | Používá animaci jedení                                                                                                                                                                                                                                         |
+| `alwaysEdible` | food          | boolean                                          | `false`              | Lze jíst při plné liště hladu                                                                                                                                                                                                                                  |
+| `useDuration`  | drink, potion | celé číslo, ticky                                | `32`                 | Pro `drink` a `potion`: jak dlouho trvá pití, v ticích (20 ticků = 1 sekunda). Ostatní typy ji ignorují                                                                                                                                                        |
+| `attackSpeed`  | ne            | desetinné číslo                                  | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                                                                                                    |
+| `cooldown`     | ne            | celé číslo, ticky                                | `0`                  | U `food`, `drink` a `potion` jak dlouho předmět po spotřebování odmítá další použití; u předmětu s `rolls` jak dlouho mezi hody                                                                                                                                |
+| `container`    | drink         | název předmětu                                   | žádný                | Co zbude, například láhev                                                                                                                                                                                                                                      |
+| `crop`         | seed          | název bloku                                      | žádný                | Plodina, kterou zasadí                                                                                                                                                                                                                                         |
+| `soil`         | seed          | název bloku                                      | `minecraft:farmland` | Na co lze zasadit                                                                                                                                                                                                                                              |
+| `rocket`       | rocket        | `namespace:name`                                 | žádný                | Varianta entity, kterou umístí                                                                                                                                                                                                                                 |
+| `rolls`        | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček karet | žádný                | U obyčejného předmětu pravé kliknutí hodí, jako by to udělal `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                                  |
+| `rollStore`    | ne            | název cíle skóre                                 | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                                                                                                          |
+| `locates`      | ne            | `Village`, `minecraft:river`                     | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše |
+| `passesTurn`   | ne            | boolean                                          | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                                                                                                             |
+| `requires`     | ne            | seznam id módů nebo namespace balíčků            | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                              |
 
 ### Klíče variant předmětů
 
@@ -8481,13 +8517,17 @@ Každý hod může končit na `store <objective>`, které zapíše jeho číslo 
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "locateLevel": 3
   }
 }
 ```
 
+`locateLevel` patří do stejné skupiny a určuje, kdo smí spustit vanilla `/locate`. Výchozí `2` je původní hodnota vanilly, takže se nic nemění, dokud ji pack nenastaví. `0` dovolí příkaz každému hráči, `3` jej nechá operátorům a `4` jej omezí na operátory úrovně 4.
+
 | Nastavení         | Co řídí                                         |
 | ----------------- | ----------------------------------------------- |
+| `locateLevel`     | Vanilla `/locate`                               |
 | `gotoLevel`       | `goto <structure>`                              |
 | `gotoNextLevel`   | `goto <structure> next`                         |
 | `gotoBackLevel`   | `goto <structure> back`                         |

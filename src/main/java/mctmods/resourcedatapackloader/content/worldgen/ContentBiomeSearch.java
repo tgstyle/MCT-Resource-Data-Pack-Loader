@@ -10,6 +10,8 @@ import net.minecraft.world.biome.BiomeProvider;
 import net.minecraftforge.common.WorldWorkerManager;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
 
 public final class ContentBiomeSearch implements WorldWorkerManager.IWorker {
     private static final int CHUNK_REACH = 400;
@@ -18,6 +20,7 @@ public final class ContentBiomeSearch implements WorldWorkerManager.IWorker {
     private final EntityPlayerMP player;
     private final World world;
     private final String name;
+    private final Consumer<BlockPos> delivery;
     private final Biome target;
     private final List<BlockPos> been;
     private final int middleX;
@@ -29,7 +32,8 @@ public final class ContentBiomeSearch implements WorldWorkerManager.IWorker {
     private long bestAway = Long.MAX_VALUE;
     private boolean over;
 
-    private ContentBiomeSearch(EntityPlayerMP player, String name, Biome target, boolean next) {
+    private ContentBiomeSearch(EntityPlayerMP player, String name, Biome target, boolean next, @Nullable Consumer<BlockPos> delivery) {
+        this.delivery = delivery;
         this.player = player;
         this.world = player.world;
         this.name = name;
@@ -45,8 +49,10 @@ public final class ContentBiomeSearch implements WorldWorkerManager.IWorker {
 
     public static boolean looking() { return running != null; }
 
-    public static void start(EntityPlayerMP player, String name, Biome target, boolean next) {
-        running = new ContentBiomeSearch(player, name, target, next);
+    public static void start(EntityPlayerMP player, String name, Biome target, boolean next) { start(player, name, target, next, null); }
+
+    public static void start(EntityPlayerMP player, String name, Biome target, boolean next, @Nullable Consumer<BlockPos> delivery) {
+        running = new ContentBiomeSearch(player, name, target, next, delivery);
         WorldWorkerManager.addWorker(running);
     }
 
@@ -70,7 +76,8 @@ public final class ContentBiomeSearch implements WorldWorkerManager.IWorker {
             if (best != null) { break; }
         }
         finish();
-        ContentStructureSearch.arrive(player, name, best);
+        if (delivery != null) { delivery.accept(best); }
+        else { ContentStructureSearch.arrive(player, name, best); }
         return false;
     }
 
