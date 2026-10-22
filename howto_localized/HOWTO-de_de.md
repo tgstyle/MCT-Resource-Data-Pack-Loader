@@ -57,6 +57,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
 - [Blockdrops](#blockdrops)
+- [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Spielerbeute](#spielerbeute)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
 
@@ -188,6 +189,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/cards/*.json`                                                                      | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die dieser Mod selbst ausgibt. [Karten](#karten)                                         |
 | `<namespace>/dice/*.json`                                                                       | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks)                   |
 | `<namespace>/games/*.json`                                                                      | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                        |
+| `<namespace>/harvests/*.json`                                                                   | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                             |
 | `<namespace>/player_loot/*.json`                                                                | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                |
 | `<namespace>/advancements/*.json`                                                               | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                      |
 | `<namespace>/functions/*.mcfunction`                                                            | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                  |
@@ -2258,6 +2260,33 @@ Jeder Drop:
 | `silkTouch`  | nein                       | `either`, `only` oder `never` | `either` | Ob der Drop ein Werkzeug mit Behutsamkeit braucht, eines ablehnt oder sich nicht darum kümmert                                                             |
 
 Regeln sehen nur den Abbau durch einen Spieler; Explosionen, Kolben und Mob-Zerstörung würfeln nichts. Mehrere Regeln für einen Block gelten alle, ein `replace` auf irgendeiner davon leert zuerst die üblichen Drops.
+
+## Ernten per Rechtsklick
+
+*herstellung, beute und handel*
+
+`<namespace>/harvests/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Ein Rechtsklick auf eine reife Pflanze bewirkt normalerweise nichts. Eine Datei hier sorgt dafür, dass die genannten Pflanzen geerntet werden, wenn ein Spieler sie reif mit Rechtsklick anklickt: Die Pflanze gibt ihre üblichen Drops und wird an Ort und Stelle mit Alter 0 neu gepflanzt, sodass ein Klick das Abbauen und das Säen eines Samens erledigt. Ohne Datei ändert sich nichts, und ein Pack, das die Wahl dem Spieler überlassen will, setzt einen `config:`-Eintrag in `requires`, wie unter Pack-Optionen beschrieben.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Schlüssel  | Pflicht | Wert                | Standard                                 | Was er macht                                                                                                                                                  |
+| ---------- | ------- | ------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crops`    | ja      | Liste von Block-IDs |                                          | Die Pflanzenblöcke, die per Rechtsklick geerntet werden, aus Vanilla oder einem Pack. Ein Block, den nichts registriert, wird mit einer Logzeile übersprungen |
+| `age`      | nein    | int                 | das höchste `age`, das der Block erlaubt | Das Alter, ab dem eine Pflanze als reif gilt, für jede Pflanze in der Datei                                                                                   |
+| `replant`  | nein    | boolean             | `true`                                   | Ob die Pflanze an Ort und Stelle auf Alter 0 zurückgeht oder entfernt wird, sobald ihre Drops draußen sind                                                    |
+| `requires` | nein    | Liste von Strings   | keine                                    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                        |
+
+Genannt werden kann jeder Block mit einer ganzzahligen Eigenschaft `age`. Eine unreife Pflanze, ein schleichender Spieler und ein Zuschauer bleiben beim üblichen Rechtsklick. Die Drops sind die, die das Abbauen der Pflanze ergäbe, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und beim Neupflanzen wird ihnen ein Samen der Pflanze entnommen, wenn sie einen enthalten. Die Aufgabe `harvestFarmland` eines Dorfbewohners ist davon getrennt und unverändert.
 
 ## Spielerbeute
 

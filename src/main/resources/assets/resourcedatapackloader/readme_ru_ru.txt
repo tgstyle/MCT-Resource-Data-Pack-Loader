@@ -284,6 +284,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 Блоки бывают таких видов, вид задаёт поле "type":
 

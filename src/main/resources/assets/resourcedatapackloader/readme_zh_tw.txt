@@ -261,6 +261,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方應當放在旁邊
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 方塊有以下幾種型態，由「type」欄位決定：
 

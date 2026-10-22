@@ -292,6 +292,7 @@ Cada um destes é uma pasta em assets/<yourpack>:
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 Os blocos existem nestas formas, definidas pelo campo "type":
 

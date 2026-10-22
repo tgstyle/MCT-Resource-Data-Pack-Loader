@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.ContentExposures;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentHarvests;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
@@ -163,6 +164,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
         MinecraftForge.EVENT_BUS.register(BlockDrops.class);
+        MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
         LootTableList.register(ContentPierCargo.LOOT_TABLE);

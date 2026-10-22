@@ -296,6 +296,7 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 

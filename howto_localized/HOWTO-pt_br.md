@@ -57,6 +57,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Poções, tipos de poção e fermentação](#poções-tipos-de-poção-e-fermentação)
 - [Trabalho na bigorna](#trabalho-na-bigorna)
 - [Drops de blocos](#drops-de-blocos)
+- [Colheita com clique direito](#colheita-com-clique-direito)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Aldeões e trocas](#aldeões-e-trocas)
 
@@ -188,6 +189,7 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/cards/*.json`                                                                      | Cartas na tela exibidas por um gatilho e as mensagens que este mod diz por conta própria. [Cartas](#cartas)                                              |
 | `<namespace>/dice/*.json`                                                                       | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve uma rolagem e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos)          |
 | `<namespace>/games/*.json`                                                                      | Jogos de tabuleiro com criaturas como peças: o tabuleiro, as peças e como se movem, e o que um resultado paga. [Jogos de tabuleiro](#jogos-de-tabuleiro) |
+| `<namespace>/harvests/*.json`                                                                   | Plantações colhidas e replantadas com o clique direito. [Colheita com clique direito](#colheita-com-clique-direito)                                      |
 | `<namespace>/player_loot/*.json`                                                                | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                          |
 | `<namespace>/advancements/*.json`                                                               | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                       |
 | `<namespace>/functions/*.mcfunction`                                                            | Arquivos de função. [O que você pode substituir](#o-que-você-pode-substituir)                                                                            |
@@ -2258,6 +2260,33 @@ Cada drop:
 | `silkTouch`  | não                                | `either`, `only` ou `never` | `either` | Se o drop exige uma ferramenta com Toque Suave, a recusa, ou tanto faz                                                                                      |
 
 As regras só enxergam a colheita de um jogador; explosões, pistões e o grief de mobs não sorteiam nada. Várias regras para um mesmo bloco se aplicam todas, e um `replace` em qualquer uma delas limpa antes os drops habituais.
+
+## Colheita com clique direito
+
+*criação, saque e comércio*
+
+`<namespace>/harvests/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Clicar com o botão direito numa plantação madura normalmente não faz nada. Um arquivo aqui faz as plantações citadas serem colhidas quando um jogador clica nelas com o botão direito já maduras: a plantação solta seus drops de sempre e é replantada no lugar com idade 0, de modo que um clique faz o trabalho de quebrá-la e plantar uma semente. Sem arquivo nada muda, e um pack que queira deixar a escolha para o jogador coloca uma entrada `config:` em `requires`, como descrito em Opções de pack.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Chave      | Obrigatória | Valor                 | Padrão                           | O que faz                                                                                                                                  |
+| ---------- | ----------- | --------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `crops`    | sim         | lista de ids de bloco |                                  | Os blocos de plantação colhidos com o clique direito, do vanilla ou de um pack. Um bloco que nada registra é ignorado com uma linha no log |
+| `age`      | não         | int                   | o maior `age` que o bloco admite | A idade a partir da qual uma plantação conta como madura, para todas as plantações do arquivo                                              |
+| `replant`  | não         | boolean               | `true`                           | Se a plantação volta à idade 0 onde está, ou é removida depois de soltar os drops                                                          |
+| `requires` | não         | lista de strings      | nenhum                           | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição                                |
+
+Qualquer bloco com uma propriedade inteira `age` pode ser citado. Uma plantação que não está madura, um jogador agachado e um espectador ficam com o clique direito de sempre. Os drops são os que quebrar a plantação daria, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e o replantio tira deles uma semente da plantação, se houver. A tarefa `harvestFarmland` do aldeão é separada e não muda.
 
 ## Saque de jogadores
 

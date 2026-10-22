@@ -281,6 +281,7 @@ Každá z těchto věcí je složka pod assets/<yourpack>:
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 Bloky existují v těchto tvarech, nastavených polem "type":
 

@@ -57,6 +57,7 @@
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Dropy z bloků](#dropy-z-bloků)
+- [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Kořist hráčů](#kořist-hráčů)
 - [Vesničané a obchody](#vesničané-a-obchody)
 
@@ -188,6 +189,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/cards/*.json`                                                                      | Karty na obrazovce zobrazené při spouštěči a zprávy, které tento mód říká sám. [Karty](#karty)                                                              |
 | `<namespace>/dice/*.json`                                                                       | Kostky balíčku s váženými stranami, balíčky karet, kdo slyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)                        |
 | `<namespace>/games/*.json`                                                                      | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                               |
+| `<namespace>/harvests/*.json`                                                                   | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                |
 | `<namespace>/player_loot/*.json`                                                                | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                    |
 | `<namespace>/advancements/*.json`                                                               | Advancementy. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                         |
 | `<namespace>/functions/*.mcfunction`                                                            | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                       |
@@ -2258,6 +2260,33 @@ Každý drop:
 | `silkTouch`  | ne                           | `either`, `only` nebo `never` | `either` | Zda drop potřebuje nástroj s Hedvábným dotekem, takový nástroj odmítá, nebo je mu to jedno                                   |
 
 Pravidla vidí jen těžbu hráče; výbuchy, písty a ničení moby nelosují nic. Několik pravidel pro jeden blok se uplatní všechna, přičemž `replace` na kterémkoli z nich nejdřív smaže obvyklé dropy.
+
+## Sklizeň pravým tlačítkem
+
+*výroba, kořist a obchod*
+
+`<namespace>/harvests/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Pravý klik na zralou plodinu normálně nic neudělá. Soubor tady způsobí, že se vyjmenované plodiny sklidí, když na ně hráč klikne pravým tlačítkem ve zralém stavu: plodina dá své obvyklé dropy a znovu se vysadí na místě ve věku 0, takže jeden klik udělá práci rozbití i zasazení semínka. Bez souboru se nic nemění a balíček, který chce nechat volbu na hráči, dá do `requires` položku `config:`, jak je popsáno v části Volby balíčku.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Klíč       | Povinný | Hodnota         | Výchozí                            | Co dělá                                                                                                                         |
+| ---------- | ------- | --------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `crops`    | ano     | seznam id bloků |                                    | Bloky plodin, které se sklízejí pravým klikem, vanilkové i z balíčku. Blok, který nic neregistruje, se přeskočí s řádkem v logu |
+| `age`      | ne      | int             | nejvyšší `age`, jaké blok dovoluje | Věk, od kterého plodina platí za zralou, pro všechny plodiny v souboru                                                          |
+| `replant`  | ne      | boolean         | `true`                             | Zda se plodina vrátí na věk 0 tam, kde stojí, nebo zmizí, jakmile padnou její dropy                                             |
+| `requires` | ne      | seznam řetězců  | žádný                              | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice                           |
+
+Pojmenovat jde libovolný blok s celočíselnou vlastností `age`. Nezralá plodina, hráč v plížení a divák zůstanou u obvyklého pravého kliku. Dropy jsou ty, které by dalo rozbití plodiny, s Fortunou drženého nástroje a všemi pravidly z části Dropy z bloků, a při opětovném zasazení se z nich odebere jedno semínko plodiny, pokud je v nich. Úkol `harvestFarmland` vesničana je samostatný a beze změny.
 
 ## Kořist hráčů
 

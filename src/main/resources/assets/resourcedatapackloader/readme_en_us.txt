@@ -276,6 +276,7 @@ Each of these is a folder under assets/<yourpack>:
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 Blocks come in these shapes, set by the "type" field:
 

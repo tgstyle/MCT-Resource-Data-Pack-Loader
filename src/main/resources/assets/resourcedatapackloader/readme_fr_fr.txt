@@ -300,6 +300,7 @@ Chacun de ceux-ci est un dossier sous assets/<yourpack> :
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
+    celestial        raids            harvests
 
 Les blocs existent sous ces formes, fixées par le champ "type" :
 
