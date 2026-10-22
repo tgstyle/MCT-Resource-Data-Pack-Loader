@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRaidSwitch;
+import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.PosTags;
@@ -78,7 +79,7 @@ public final class ActiveRaid {
         this.waves = waves;
         this.points = points;
         this.cooldown = def.waveDelay();
-        this.bar = new ServerBossEvent(Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10);
+        this.bar = BossBars.create(Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10);
     }
 
     public static void start(ServerLevel level, RaidDef def, BlockPos center, boolean free) {
@@ -287,27 +288,14 @@ public final class ActiveRaid {
         else { bar.setName(Component.literal(def.name() + " - Defeat")); }
     }
 
-    private void players(ServerLevel level) {
-        List<ServerPlayer> present = inReach(level);
-        for (ServerPlayer watching : new ArrayList<>(bar.getPlayers())) {
-            if (!present.contains(watching)) { bar.removePlayer(watching); }
-        }
-        for (ServerPlayer player : present) { bar.addPlayer(player); }
-    }
+    private void players(ServerLevel level) { BossBars.sync(bar, inReach(level)); }
 
-    private List<ServerPlayer> inReach(ServerLevel level) {
-        List<ServerPlayer> present = new ArrayList<>();
-        double reach = (double) def.reach() * def.reach();
-        for (ServerPlayer player : level.players()) {
-            if (player.isAlive() && !player.isSpectator() && center.distToLowCornerSqr(player.getX(), player.getY(), player.getZ()) < reach) { present.add(player); }
-        }
-        return present;
-    }
+    private List<ServerPlayer> inReach(ServerLevel level) { return BossBars.near(level, center.getX(), center.getY(), center.getZ(), def.reach()); }
 
     void stop(@Nullable String why) {
         if (why != null) { ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} stops: {}", def.key(), center.getX(), center.getY(), center.getZ(), why); }
         status = Status.STOPPED;
-        for (ServerPlayer watching : new ArrayList<>(bar.getPlayers())) { bar.removePlayer(watching); }
+        BossBars.clear(bar);
     }
 
     CompoundTag write() {

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.client.PouchKey;
+import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.CenterCard;
 import mctmods.resourcedatapackloader.client.ContentFogSampler;
@@ -377,6 +378,7 @@ import java.util.Set;
             modBus.addListener((RegisterClientReloadListenersEvent held) -> held.registerReloadListener(FaceCacheReset.INSTANCE));
             MinecraftForge.EVENT_BUS.addListener(ClientCommands::register);
             MinecraftForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
+            MinecraftForge.EVENT_BUS.addListener(BossBackgrounds::onBar);
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onHud);
             MinecraftForge.EVENT_BUS.addListener(CardOverlay::onScreen);
@@ -400,6 +402,7 @@ import java.util.Set;
             MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> {
                 HoldView.reset();
                 CenterCard.reset();
+                BossBackgrounds.reset();
                 Toasts.leave();
                 ContentEnvironments.clear();
             });

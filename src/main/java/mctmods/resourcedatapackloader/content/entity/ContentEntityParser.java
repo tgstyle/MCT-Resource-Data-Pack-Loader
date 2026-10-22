@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.def.SpawnGateDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
+import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Json;
@@ -114,7 +115,7 @@ public final class ContentEntityParser {
                 equipment(key, json),
                 spawns(key, json),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
-                ContentTasks.parse(key, json), storage(key, json), gate(key, json));
+                ContentTasks.parse(key, json), storage(key, json), gate(key, json), BossBars.read("Entity variant " + key, json));
     }
 
     private static SpawnGateDef gate(ResourceLocation key, JsonObject json) {

@@ -2,10 +2,12 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.BlastHush;
+import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentRuleClient;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
+import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
@@ -21,6 +23,7 @@ import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
+import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class RDPLNetwork {
@@ -40,6 +43,7 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { BlastHush.mark(message); }
             return true;
         }).add();
+        channel.messageBuilder(MessageBossBackground.class, 9, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageBossBackground::write).decoder(MessageBossBackground::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { BossBackgrounds.set(message); } }).add();
         channel.messageBuilder(MessageToasts.class, 7, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageToasts::write).decoder(MessageToasts::read).consumerMainThread((message, context) -> Toasts.show(message.kinds())).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } }).add();
         channel.messageBuilder(MessageIntroLandMade.class, 8, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroLandMade()).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); } }).add();
@@ -74,6 +78,11 @@ public final class RDPLNetwork {
     public static void playIntro(ServerPlayer player, boolean landBeingMade) { toPlayer(player, new MessageIntroPlay(landBeingMade)); }
 
     public static void introLandMade(ServerPlayer player) { toPlayer(player, new MessageIntroLandMade()); }
+
+    public static void sendBossBackground(ServerPlayer player, UUID bar, @Nullable BossBackgroundDef background) {
+        if (background == null) { toPlayer(player, new MessageBossBackground(bar, "", 0, 0, 0, 0)); }
+        else { toPlayer(player, new MessageBossBackground(bar, background.texture(), background.width(), background.height(), background.x(), background.y())); }
+    }
 
     public static void sendToasts(ServerPlayer player, int kinds) { toPlayer(player, new MessageToasts(kinds)); }
 
