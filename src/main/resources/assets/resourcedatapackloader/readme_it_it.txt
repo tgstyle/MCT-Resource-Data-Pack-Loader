@@ -232,6 +232,9 @@ risultato che l'incudine offre per i livelli indicati. Estrarlo può far
 ottenere un progresso, e l'oggetto può restare inutilizzabile finché quel
 progresso non viene ottenuto.
 
+Un file in tooltips aggiunge righe grigie di descrizione a oggetti e blocchi, e
+una descrizione sotto il nome di un incantesimo.
+
 Un file hardness imposta il tempo di estrazione e la resistenza alle esplosioni
 per un gruppo di blocchi, e un file exposures definisce un pericolo come la
 radiazione: colpisce i giocatori vicino a blocchi indicati, che portano oggetti
@@ -292,7 +295,7 @@ Ognuna di queste è una cartella sotto assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 I blocchi hanno queste forme, definite dal campo "type":
 

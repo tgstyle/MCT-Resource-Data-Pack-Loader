@@ -230,6 +230,9 @@ rollOnKeepInventoryは、持ち物を保持するワールドで、そもそも�
 ンチャントか結果を指定します。取り出すことで進捗を得られるようにでき、その進
 捗を得るまでアイテムを使えないままにもできます。
 
+tooltipsの中のファイルは、アイテムとブロックに灰色のツールチップ行を追加し、
+エンチャント名の下に説明を表示します。
+
 hardnessファイルは、ブロックのグループの採掘時間と爆発耐性を設定します。
 exposuresファイルは、放射線のような危険要素を定義します。名前を指定したブロ
 ックの近くにいる、名前を指定したアイテムを持っている、または名前を指定した
@@ -290,7 +293,7 @@ mypack:copper_oreとして登録されます。記入したり間違えたりす
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 ブロックには、「type」フィールドで決まる次の形があります。
 

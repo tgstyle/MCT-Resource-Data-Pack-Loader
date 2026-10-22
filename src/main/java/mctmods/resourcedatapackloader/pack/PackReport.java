@@ -17,6 +17,7 @@ final class PackReport {
         clientSide(off, Config.content.load, "content.load", PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS);
         clientSide(off, Config.content.sounds, "content.sounds", PackManager.SOUNDS);
         collect(off, Config.content.fuels, "content.fuels", PackManager.JSON, PackManager.FUELS);
+        collect(off, Config.content.tooltips, "content.tooltips", PackManager.JSON, PackManager.TOOLTIPS);
         collect(off, Config.content.oreDictionary, "content.oreDictionary", PackManager.JSON, PackManager.OREDICT);
         collect(off, Config.content.disabled, "content.disabled", PackManager.JSON, PackManager.DISABLED);
         clientSide(off, Config.content.potions, "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);

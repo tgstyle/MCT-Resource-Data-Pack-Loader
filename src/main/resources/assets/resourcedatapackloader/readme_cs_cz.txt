@@ -219,6 +219,9 @@ který k němu patří v pravém slotu, a kouzla nebo výsledek, které kovadlin
 nabízí pro uvedené úrovně. Vyjmutí může získat úspěch a předmět může zůstat
 nepoužitelný, dokud tento úspěch nezískáš.
 
+Soubor v tooltips přidává předmětům a blokům šedé řádky popisku a pod název
+kouzla vloží popis.
+
 Soubor v hardness nastaví dobu těžby a odolnost proti výbuchu pro skupinu
 bloků a soubor v exposures definuje nebezpečí, třeba záření: působí na hráče
 poblíž uvedených bloků, nesoucí uvedené předměty nebo v uvedených dimenzích,
@@ -277,7 +280,7 @@ Každá z těchto věcí je složka pod assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 Bloky existují v těchto tvarech, nastavených polem "type":
 

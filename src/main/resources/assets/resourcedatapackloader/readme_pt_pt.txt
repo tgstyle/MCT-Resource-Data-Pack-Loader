@@ -229,6 +229,9 @@ o item que o acompanha na ranhura da direita e os encantamentos ou o resultado
 que a bigorna oferece pelos níveis indicados. Retirá-lo pode render um
 progresso, e o item pode ficar inutilizável até esse progresso ser obtido.
 
+Um ficheiro em tooltips acrescenta linhas cinzentas de dica a itens e blocos e
+uma descrição sob o nome de um encantamento.
+
 Um ficheiro hardness define o tempo de mineração e a resistência a explosões de
 um grupo de blocos, e um ficheiro exposures define um perigo como a radiação:
 afeta jogadores perto de blocos indicados, que transportem itens indicados ou
@@ -288,7 +291,7 @@ Cada um destes é uma pasta em assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 Os blocos existem nestas formas, definidas pelo campo "type":
 

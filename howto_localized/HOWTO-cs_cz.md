@@ -53,6 +53,7 @@
 **Výroba, kořist a obchod**
 - [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
+- [Popisky předmětů](#popisky-předmětů)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Dropy z bloků](#dropy-z-bloků)
@@ -173,6 +174,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/recipe_removals/*.json`                                                            | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                  |
 | `<namespace>/disabled/*.json`                                                                   | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                   |
 | `<namespace>/furnace/*.json`                                                                    | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                   |
+| `<namespace>/tooltips/*.json`                                                                   | Další řádky popisků. [Popisky předmětů](#popisky-předmětů)                                                                                                  |
 | `<namespace>/fuels/*.json`                                                                      | Doby hoření. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                          |
 | `<namespace>/brewing/*.json`                                                                    | Recepty pro varný stojan. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                              |
 | `<namespace>/potions/*.json`                                                                    | Efekty lektvarů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                       |
@@ -1528,7 +1530,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 | `soil`         | seed          | název bloku                                      | `minecraft:farmland` | Na co lze zasadit                                                                                                                                                             |
 | `rocket`       | rocket        | `namespace:name`                                 | žádný                | Varianta entity, kterou umístí                                                                                                                                                |
 | `rolls`        | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček karet | žádný                | U obyčejného předmětu pravé kliknutí hodí, jako by to udělal `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet) |
-| `rollStore`    | ne            | název cíle skóre                     | žádný                  | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu |
+| `rollStore`    | ne            | název cíle skóre                                 | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                         |
 | `passesTurn`   | ne            | boolean                                          | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                            |
 | `requires`     | ne            | seznam id módů nebo namespace balíčků            | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                             |
 
@@ -2065,6 +2067,38 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 | `item`     | jedno ze dvou | název předmětu     | žádný   | Předmět, který hoří       |
 | `oreDict`  | jedno ze dvou | název slovníku rud | žádný   | Hoří vše pod tímto názvem |
 | `burnTime` | ano           | celé číslo, ticky  | `0`     | Uhlí má 1600, prkno 300   |
+
+## Popisky předmětů
+
+*předměty, bloky a kouzla*
+
+`<namespace>/tooltips/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Každý řádek je klíč jazyka, pokud jej načtené jazykové soubory obsahují, jinak prostý text. Řádky předmětu se přidají na konec šedě; řádky kouzla stojí hned pod jeho názvem na kouzelné knize i na kouzelném předmětu. `content.tooltips` v konfiguraci složku vypne.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Klíč           | Povinný | Hodnota        | Výchozí | Co dělá                          |
+| -------------- | ------- | -------------- | ------- | -------------------------------- |
+| `items`        | ne      | seznam objektů | žádný   | Řádky přidané předmětům a blokům |
+| `enchantments` | ne      | seznam objektů | žádný   | Řádky přidané pod název kouzla   |
+
+Záznam v `items` nebo `enchantments` přijímá tyto klíče.
+
+| Klíč          | Povinný | Hodnota        | Výchozí | Co dělá                                                                            |
+| ------------- | ------- | -------------- | ------- | ---------------------------------------------------------------------------------- |
+| `item`        | ano     | název předmětu | žádný   | Předmět, nebo předmět bloku. `:meta` za názvem vybere jednu variantu, `:*` všechny |
+| `enchantment` | ano     | název kouzla   | žádný   | Kouzlo, které řádky dostane                                                        |
+| `lines`       | ano     | seznam textů   | žádný   | Klíče jazyka nebo prostý text, v tomto pořadí                                      |
 
 ## Lektvary, typy lektvarů a vaření
 
@@ -5910,12 +5944,12 @@ Cíl je skutečný cíl na vlastní tabulce skóre hry, takže ho čte `/scorebo
 
 *bodování*
 
-| Nastavení        | Typ        | Výchozí | Co dělá                                                                                                          |
-| ---------------- | ---------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | objekt     | prázdný | Id entity na body, připsané straně zabijáka. `minecraft:player` boduje zabití hráče                              |
-| `points.death`   | celé číslo | `0`     | Body, kdykoli člen zemře, ať už jakkoli. Může být záporné                                                        |
-| `points.raid`    | boolean | `false` | Přebírá `points` každého vyhraného [nájezdu](#nájezdy): každému hráči v dosahu se tolik připíše na řádek jeho strany a s `individuals` i na jeho vlastní |
-| `points.ownKill` | celé číslo | `0`     | Body za zabití člena vlastní strany zabijáka, místo hodnoty `kill`. 0 za to nebodují nic; záporné číslo je trest |
+| Nastavení        | Typ        | Výchozí | Co dělá                                                                                                                                                  |
+| ---------------- | ---------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | objekt     | prázdný | Id entity na body, připsané straně zabijáka. `minecraft:player` boduje zabití hráče                                                                      |
+| `points.death`   | celé číslo | `0`     | Body, kdykoli člen zemře, ať už jakkoli. Může být záporné                                                                                                |
+| `points.raid`    | boolean    | `false` | Přebírá `points` každého vyhraného [nájezdu](#nájezdy): každému hráči v dosahu se tolik připíše na řádek jeho strany a s `individuals` i na jeho vlastní |
+| `points.ownKill` | celé číslo | `0`     | Body za zabití člena vlastní strany zabijáka, místo hodnoty `kill`. 0 za to nebodují nic; záporné číslo je trest                                         |
 
 `points` je to, co tento mód přidává nad to, co hra počítá, přivedené do téhož cíle, takže ho `/scoreboard` pořád čte. `kill` má hodnotu tolika bodů za každé zabité id entity, připsaných straně zabijáka; `death` má hodnotu tolika bodů, kdykoli zemře člen strany, a může být záporné. S `teamTotals` body dopadají na řádek pojmenovaný podle týmu, díky čemuž postranní panel ukáže čtyři strany místo řádku pro každého moba. `individuals` přidá i řádek pro každého člena a je ve výchozím stavu vypnuté, protože řádek na UUID moba působí jako šum.
 
@@ -6099,8 +6133,8 @@ Zatímco je vlna ve vesnici, její vesničané běží dovnitř k nejbližším 
 | `sound`         | název zvuku             | žádný          | Přehrává se každému hráči v dosahu, ze strany, odkud vlna přichází, když každá vlna dorazí                                                                                                      |
 | `wins`          | funkce                  | žádná          | Spustí se jako každý hráč v dosahu, když je nájezd vyhrán                                                                                                                                       |
 | `loses`         | funkce                  | žádná          | Spustí se jako každý hráč v dosahu, když je nájezd prohrán                                                                                                                                      |
-| `points`        | celé číslo | `0`            | Body, které se připíšou každému hráči v dosahu, když je nájezd vyhrán, v každém cíli, který má zapnuté `points.raid`. Za prohru se nic neplatí |
-| `loot`          | tabulka kořisti | žádná     | Tabulka kořisti, která se vylosuje jednou pro každého hráče v dosahu, když je nájezd vyhrán. Předměty přijdou do jeho inventáře, nebo mu spadnou k nohám, když je plný |
+| `points`        | celé číslo              | `0`            | Body, které se připíšou každému hráči v dosahu, když je nájezd vyhrán, v každém cíli, který má zapnuté `points.raid`. Za prohru se nic neplatí                                                  |
+| `loot`          | tabulka kořisti         | žádná          | Tabulka kořisti, která se vylosuje jednou pro každého hráče v dosahu, když je nájezd vyhrán. Předměty přijdou do jeho inventáře, nebo mu spadnou k nohám, když je plný                          |
 | `bell`          | název bloku nebo seznam | žádný          | Jiné bloky, které zvoní jako zvon, když je hráč použije a kdykoli dorazí vlna. Blok typu `bell` zvoní, i když není jmenován. Umísti ho do vesnice přes strukturu NBT, protože ho nic negeneruje |
 
 ### Jedna skupina
@@ -6183,7 +6217,7 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 | `death`           | nic                  | Hráč zemře                                                                                                                                                                                                                                               |
 | `y_level`         | `below` nebo `above` | Hráč klesne pod tuto výšku nebo vystoupí nad ni                                                                                                                                                                                                          |
 | `play_time`       | `minutes`            | Čas hráče ve světě dosáhne tolika minut, počítáno od zavření úvodu do světa, nebo od připojení, když se mu žádný úvod nezobrazuje                                                                                                                        |
-| `roll`            | nic, nebo `roll`   | Hráč hodí příkazem `/rdplserver game` nebo předmětem s `rolls`. S `roll` pravidlo spustí jen tento hod a `atLeast` a `atMost` omezují součet |
+| `roll`            | nic, nebo `roll`     | Hráč hodí příkazem `/rdplserver game` nebo předmětem s `rolls`. S `roll` pravidlo spustí jen tento hod a `atLeast` a `atMost` omezují součet                                                                                                             |
 | `score`           | `objective`          | Skóre hráče v tomto cíli dosáhne `score`                                                                                                                                                                                                                 |
 
 Biom, struktura, výška, herní čas a skóre se kontrolují jednou za sekundu u každého hráče a spouštějí se při změně zvenčí dovnitř, nikdy při první kontrole po připojení. Pravidlo `time_of_day` nebo `day`, jehož publikum není `player`, se spustí jednou pro dimenzi místo jednou pro každého hráče v ní.
@@ -6209,8 +6243,8 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `time`               | celé číslo                            | `0`            | Pro `time_of_day`: tick dne                                                                                                                                                                                                      |
 | `day`                | celé číslo                            | žádný          | Pro `day`: jediný den, kdy se spustí. Bez něj každý den                                                                                                                                                                          |
 | `minutes`            | celé číslo                            | žádný          | Pro `play_time`                                                                                                                                                                                                                  |
-| `roll`               | text                               | žádný          | Pro `roll`: `coin`, zápis jako `2d6` (`d6` a `1d6` jsou totéž) nebo název kostky či balíčku karet z datového balíčku. Bez něj pravidlo spustí každý hod |
-| `atLeast`, `atMost`  | celé číslo                         | žádný          | Pro `roll`: nejnižší a nejvyšší součet, který pravidlo spustí. Mince se počítá jako 1 za líc a 0 za rub, kostka či balíček z datového balíčku jako pořadí výsledku v jeho souboru od 1 |
+| `roll`               | text                                  | žádný          | Pro `roll`: `coin`, zápis jako `2d6` (`d6` a `1d6` jsou totéž) nebo název kostky či balíčku karet z datového balíčku. Bez něj pravidlo spustí každý hod                                                                          |
+| `atLeast`, `atMost`  | celé číslo                            | žádný          | Pro `roll`: nejnižší a nejvyšší součet, který pravidlo spustí. Mince se počítá jako 1 za líc a 0 za rub, kostka či balíček z datového balíčku jako pořadí výsledku v jeho souboru od 1                                           |
 | `objective`, `score` | text, celé číslo                      | žádný, `1`     | Pro `score`: cíl a hodnota, které je třeba dosáhnout                                                                                                                                                                             |
 | `requires`           | seznam id módů nebo namespace balíčků | žádný          | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                |
 

@@ -217,6 +217,9 @@ textures/blocks/panel.png.json처럼 파일 이름을 짓고, 16x16이나 16x32 
 마법 부여나 결과물을 지정합니다. 결과물을 꺼내면 발전 과제를 달성하게 할 수
 있고, 그 발전 과제를 달성할 때까지 아이템을 사용할 수 없게 둘 수도 있습니다.
 
+tooltips 안의 파일은 아이템과 블록에 회색 툴팁 줄을 추가하고, 마법 부여
+이름 아래에 설명을 붙입니다.
+
 hardness 안의 파일은 블록 그룹의 채굴 시간과 폭발 저항을 정하고, exposures
 안의 파일은 방사선 같은 위험 요소를 정의합니다. 이는 지정한 블록 근처에 있는
 플레이어, 지정한 아이템을 가진 플레이어, 지정한 차원에 있는 플레이어에게
@@ -274,7 +277,7 @@ mypack:copper_ore로 등록됩니다. 채우거나 잘못 쓸 이름 필드는 �
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 블록은 "type" 필드로 정하는 다음 모양으로 나뉩니다:
 

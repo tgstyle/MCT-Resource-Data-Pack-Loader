@@ -232,6 +232,9 @@ Ergebnis, die der Amboss für die genannten Stufen anbietet. Das Entnehmen kann
 einen Fortschritt einbringen, und das Item kann unbenutzbar bleiben, bis dieser
 Fortschritt erreicht ist.
 
+Eine Datei in tooltips fügt Items und Blöcken graue Tooltip-Zeilen hinzu und
+setzt unter den Namen einer Verzauberung eine Beschreibung.
+
 Eine Datei in hardness setzt Abbauzeit und Explosionswiderstand für eine Gruppe
 von Blöcken, und eine Datei in exposures beschreibt eine Gefahr wie Strahlung:
 Sie trifft Spieler in der Nähe genannter Blöcke, mit genannten Items im
@@ -292,7 +295,7 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 

@@ -228,6 +228,9 @@ A un yunque se le puede enseñar trabajo nuevo. Un archivo en anvils nombra un
 resultado que el yunque ofrece por los niveles indicados. Sacarlo puede dar un
 logro, y el ítem puede quedar inutilizable hasta ganar ese logro.
 
+Un archivo en tooltips añade líneas grises de descripción emergente a ítems y
+bloques, y una descripción bajo el nombre de un encantamiento.
+
 Un archivo hardness fija el tiempo de minado y la resistencia a explosiones de
 un grupo de bloques, y un archivo exposures define un peligro como la
 radiación: afecta a los jugadores cerca de bloques con nombre, que lleven
@@ -288,7 +291,7 @@ Cada una de estas es una carpeta bajo assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 Los bloques vienen en estas formas, fijadas por el campo "type":
 

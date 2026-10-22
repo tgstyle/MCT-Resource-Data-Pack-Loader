@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.client.CenterCard;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.PackListEntries;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
+import mctmods.resourcedatapackloader.client.PackTooltips;
 import mctmods.resourcedatapackloader.client.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.command.ClientCommands;
@@ -50,6 +51,7 @@ import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
+import mctmods.resourcedatapackloader.content.extra.ContentTooltips;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
@@ -277,6 +279,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentHeatShimmer.class);
             MinecraftForge.EVENT_BUS.register(ContentDimensionAmbience.class);
             MinecraftForge.EVENT_BUS.register(ProspectTooltip.class);
+            if (ContentTooltips.load()) { MinecraftForge.EVENT_BUS.register(PackTooltips.class); }
             MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
             if (ContentItemContainer.baubled()) { PouchKey.register(); }
         }

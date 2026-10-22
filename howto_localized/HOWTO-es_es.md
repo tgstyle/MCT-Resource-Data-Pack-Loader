@@ -53,6 +53,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 **Fabricación, botín y comercio**
 - [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)
 - [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)
+- [Descripciones emergentes](#descripciones-emergentes)
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
 - [Drops de bloques](#drops-de-bloques)
@@ -173,6 +174,7 @@ Todas las rutas de esta guía se escriben desde `assets/` en adelante, así que 
 | `<namespace>/recipe_removals/*.json`                                                            | Recetas eliminadas por nombre, espacio de nombres o resultado. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                         |
 | `<namespace>/disabled/*.json`                                                                   | Bloques e ítems sacados del juego. [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)                                                           |
 | `<namespace>/furnace/*.json`                                                                    | Recetas de horno añadidas y eliminadas. [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)                                                |
+| `<namespace>/tooltips/*.json`                                                                   | Líneas extra de descripción emergente. [Descripciones emergentes](#descripciones-emergentes)                                                               |
 | `<namespace>/fuels/*.json`                                                                      | Tiempos de combustión. [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)                                                                 |
 | `<namespace>/brewing/*.json`                                                                    | Recetas del soporte para pociones. [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)                                      |
 | `<namespace>/potions/*.json`                                                                    | Efectos de poción. [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)                                                      |
@@ -1510,27 +1512,27 @@ Un `rocket` nombra con `rocket` la variante de entidad que coloca. Necesita Gala
 
 *ítems*
 
-| Clave          | Obligatorio   | Valor                                               | Por defecto                   | Qué hace                                                                                                                                                                               |
-| -------------- | ------------- | --------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | sí            | objeto de nombre de variante a variante             |                               | Una entrada por valor de metadatos. La clave da nombre a ese valor en el blockstate, la ruta del modelo y la clave de idioma. El nombre de registro sale de la propia ruta del archivo |
-| `type`         | no            | uno de los tipos anteriores                         | `basic`                       | Qué tipo adopta el ítem                                                                                                                                                                |
-| `creativeTab`  | no            | nombre de pestaña                                   | ninguno                       | La pestaña en la que aparece                                                                                                                                                           |
-| `material`     | tool, armor   | nombre de material                                  | ninguno                       | De cuál de tus materiales está hecho                                                                                                                                                   |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`                 | ninguno                       | Qué herramienta es                                                                                                                                                                     |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                     | ninguno                       | Dónde se lleva puesto. También valen `helmet`, `chestplate`, `leggings` y `boots`                                                                                                      |
-| `eat`          | food          | booleano                                            | `false`                       | Usa la animación de comer                                                                                                                                                              |
-| `alwaysEdible` | food          | booleano                                            | `false`                       | Se puede comer con la barra de hambre llena                                                                                                                                            |
-| `useDuration`  | drink, potion | entero, ticks                                       | `32`                          | Para `drink` y `potion`: cuánto tarda en beberse, en ticks (20 ticks = 1 segundo). Los demás tipos lo ignoran                                                                          |
-| `attackSpeed`  | no            | decimal                                             | según la clase de herramienta | Para `tool`, el atributo de velocidad de ataque, como el `-2.4` de una espada                                                                                                          |
-| `cooldown`     | no            | entero, ticks                                       | `0`                           | Para `food`, `drink` y `potion`, cuánto tiempo rechaza el ítem volver a usarse tras consumirse; en un ítem con `rolls`, el tiempo entre tiradas                                        |
-| `container`    | drink         | nombre de ítem                                      | ninguno                       | Lo que queda atrás, como una botella                                                                                                                                                   |
-| `crop`         | seed          | nombre de bloque                                    | ninguno                       | El cultivo que planta                                                                                                                                                                  |
-| `soil`         | seed          | nombre de bloque                                    | `minecraft:farmland`          | Sobre qué se puede plantar                                                                                                                                                             |
-| `rocket`       | rocket        | `namespace:name`                                    | ninguno                       | La variante de entidad que coloca                                                                                                                                                      |
-| `rolls`        | no            | `coin`, `d6`, `2d6+1`, un dado o un mazo            | ninguno                       | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos)                    |
-| `rollStore`    | no            | nombre de un objetivo                | ninguno                | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat |
-| `passesTurn`   | no            | booleano                                            | `false`                       | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                   |
-| `requires`     | no            | lista de ids de mods o espacios de nombres de packs | ninguno                       | El archivo se omite a menos que estén presentes todos                                                                                                                                  |
+| Clave          | Obligatorio   | Valor                                               | Por defecto                   | Qué hace                                                                                                                                                                                                             |
+| -------------- | ------------- | --------------------------------------------------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | sí            | objeto de nombre de variante a variante             |                               | Una entrada por valor de metadatos. La clave da nombre a ese valor en el blockstate, la ruta del modelo y la clave de idioma. El nombre de registro sale de la propia ruta del archivo                               |
+| `type`         | no            | uno de los tipos anteriores                         | `basic`                       | Qué tipo adopta el ítem                                                                                                                                                                                              |
+| `creativeTab`  | no            | nombre de pestaña                                   | ninguno                       | La pestaña en la que aparece                                                                                                                                                                                         |
+| `material`     | tool, armor   | nombre de material                                  | ninguno                       | De cuál de tus materiales está hecho                                                                                                                                                                                 |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`                 | ninguno                       | Qué herramienta es                                                                                                                                                                                                   |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                     | ninguno                       | Dónde se lleva puesto. También valen `helmet`, `chestplate`, `leggings` y `boots`                                                                                                                                    |
+| `eat`          | food          | booleano                                            | `false`                       | Usa la animación de comer                                                                                                                                                                                            |
+| `alwaysEdible` | food          | booleano                                            | `false`                       | Se puede comer con la barra de hambre llena                                                                                                                                                                          |
+| `useDuration`  | drink, potion | entero, ticks                                       | `32`                          | Para `drink` y `potion`: cuánto tarda en beberse, en ticks (20 ticks = 1 segundo). Los demás tipos lo ignoran                                                                                                        |
+| `attackSpeed`  | no            | decimal                                             | según la clase de herramienta | Para `tool`, el atributo de velocidad de ataque, como el `-2.4` de una espada                                                                                                                                        |
+| `cooldown`     | no            | entero, ticks                                       | `0`                           | Para `food`, `drink` y `potion`, cuánto tiempo rechaza el ítem volver a usarse tras consumirse; en un ítem con `rolls`, el tiempo entre tiradas                                                                      |
+| `container`    | drink         | nombre de ítem                                      | ninguno                       | Lo que queda atrás, como una botella                                                                                                                                                                                 |
+| `crop`         | seed          | nombre de bloque                                    | ninguno                       | El cultivo que planta                                                                                                                                                                                                |
+| `soil`         | seed          | nombre de bloque                                    | `minecraft:farmland`          | Sobre qué se puede plantar                                                                                                                                                                                           |
+| `rocket`       | rocket        | `namespace:name`                                    | ninguno                       | La variante de entidad que coloca                                                                                                                                                                                    |
+| `rolls`        | no            | `coin`, `d6`, `2d6+1`, un dado o un mazo            | ninguno                       | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos)                                                  |
+| `rollStore`    | no            | nombre de un objetivo                               | ninguno                       | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat |
+| `passesTurn`   | no            | booleano                                            | `false`                       | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                                                 |
+| `requires`     | no            | lista de ids de mods o espacios de nombres de packs | ninguno                       | El archivo se omite a menos que estén presentes todos                                                                                                                                                                |
 
 ### Claves de variantes de ítems
 
@@ -2065,6 +2067,38 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 | `item`     | una de las dos | nombre de ítem                      | ninguno     | El ítem que arde                     |
 | `oreDict`  | una de las dos | nombre del diccionario de minerales | ninguno     | Todo lo que hay bajo ese nombre arde |
 | `burnTime` | sí             | entero, ticks                       | `0`         | El carbón es 1600, una tabla 300     |
+
+## Descripciones emergentes
+
+*ítems, bloques y encantamientos*
+
+`<namespace>/tooltips/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Cada línea es una clave de idioma si los archivos de idioma cargados la tienen, y texto plano si no. Las líneas de un ítem se añaden al final, en gris; las de un encantamiento van justo debajo de su nombre, tanto en un libro encantado como en un ítem encantado. `content.tooltips` en la configuración desactiva la carpeta.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Clave          | Obligatorio | Valor            | Por defecto | Qué hace                                           |
+| -------------- | ----------- | ---------------- | ----------- | -------------------------------------------------- |
+| `items`        | no          | lista de objetos | ninguno     | Líneas añadidas a ítems y bloques                  |
+| `enchantments` | no          | lista de objetos | ninguno     | Líneas añadidas bajo el nombre de un encantamiento |
+
+Una entrada de `items` o `enchantments` admite estas claves.
+
+| Clave         | Obligatorio | Valor                   | Por defecto | Qué hace                                                                               |
+| ------------- | ----------- | ----------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| `item`        | sí          | nombre de ítem          | ninguno     | El ítem, o el ítem de un bloque. `:meta` tras el nombre elige una variante, `:*` todas |
+| `enchantment` | sí          | nombre de encantamiento | ninguno     | El encantamiento que recibe las líneas                                                 |
+| `lines`       | sí          | lista de textos         | ninguno     | Claves de idioma o texto plano, en orden                                               |
 
 ## Pociones, tipos de poción y elaboración
 
@@ -5910,12 +5944,12 @@ Un objetivo es un objetivo real en el marcador propio del juego, así que `/scor
 
 *puntuación*
 
-| Ajuste           | Tipo   | Por defecto | Qué hace                                                                                                                                               |
-| ---------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `points.kill`    | objeto | vacío       | Id de entidad a puntos, acreditados al bando del autor de la muerte. `minecraft:player` puntúa la muerte de un jugador                                 |
-| `points.death`   | entero | `0`         | Puntos cada vez que muere un miembro, muera como muera. Puede ser negativo                                                                             |
-| `points.raid`    | booleano | `false` | Recoge los `points` de cada [asalto](#asaltos) ganado: cada jugador al alcance recibe esa cantidad en la fila de su bando y, con `individuals`, también en la suya |
-| `points.ownKill` | entero | `0`         | Puntos por matar a alguien del propio bando del autor, en lugar del valor de `kill`. 0 no puntúa nada por ello; un número negativo es una penalización |
+| Ajuste           | Tipo     | Por defecto | Qué hace                                                                                                                                                           |
+| ---------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `points.kill`    | objeto   | vacío       | Id de entidad a puntos, acreditados al bando del autor de la muerte. `minecraft:player` puntúa la muerte de un jugador                                             |
+| `points.death`   | entero   | `0`         | Puntos cada vez que muere un miembro, muera como muera. Puede ser negativo                                                                                         |
+| `points.raid`    | booleano | `false`     | Recoge los `points` de cada [asalto](#asaltos) ganado: cada jugador al alcance recibe esa cantidad en la fila de su bando y, con `individuals`, también en la suya |
+| `points.ownKill` | entero   | `0`         | Puntos por matar a alguien del propio bando del autor, en lugar del valor de `kill`. 0 no puntúa nada por ello; un número negativo es una penalización             |
 
 `points` es lo que este mod añade a lo que cuenta el juego, alimentado en el mismo objetivo para que `/scoreboard` lo siga leyendo. `kill` vale tantos puntos por cada id de entidad abatida, acreditados al bando del autor; `death` vale tantos cada vez que muere un miembro de un bando, y puede ser negativo. Con `teamTotals` los puntos se anotan en una fila con el nombre del equipo, que es lo que permite que la barra lateral muestre cuatro bandos en lugar de una fila por cada mob. `individuals` añade además una fila por miembro, y está desactivado por defecto porque una fila por UUID de mob se lee como ruido.
 
@@ -6099,8 +6133,8 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a refugiarse en la
 | `sound`         | nombre de sonido         | ninguno              | Se reproduce a cada jugador al alcance, desde el lado por el que llega la oleada, cuando llega cada oleada                                                                                                                              |
 | `wins`          | función                  | ninguno              | Se ejecuta como cada jugador al alcance cuando se gana el asalto                                                                                                                                                                        |
 | `loses`         | función                  | ninguno              | Se ejecuta como cada jugador al alcance cuando se pierde el asalto                                                                                                                                                                      |
-| `points`        | entero | `0`            | Puntos que se acreditan a cada jugador al alcance cuando se gana el asalto, en cada objetivo que tenga activado `points.raid`. Una derrota no paga nada |
-| `loot`          | tabla de botín | ninguno | Una tabla de botín que se sortea una vez por cada jugador al alcance cuando se gana el asalto. Los objetos van a su inventario, o caen a sus pies si está lleno |
+| `points`        | entero                   | `0`                  | Puntos que se acreditan a cada jugador al alcance cuando se gana el asalto, en cada objetivo que tenga activado `points.raid`. Una derrota no paga nada                                                                                 |
+| `loot`          | tabla de botín           | ninguno              | Una tabla de botín que se sortea una vez por cada jugador al alcance cuando se gana el asalto. Los objetos van a su inventario, o caen a sus pies si está lleno                                                                         |
 | `bell`          | nombre de bloque o lista | ninguno              | Otros bloques que suenan como una campana, cuando un jugador los usa y siempre que llega una oleada. Un bloque de tipo `bell` suena sin necesidad de nombrarlo. Colócalo en la aldea mediante una estructura NBT, ya que nada lo genera |
 
 ### Un grupo
@@ -6183,7 +6217,7 @@ El tercero saluda a un jugador en su primera entrada con una tarjeta central sin
 | `death`           | nada              | Un jugador muere                                                                                                                                                                                                                                                                    |
 | `y_level`         | `below` o `above` | Un jugador baja por debajo o sube por encima de esa altura                                                                                                                                                                                                                          |
 | `play_time`       | `minutes`         | El tiempo de un jugador en el mundo alcanza esa cantidad de minutos, contados desde que se cierra la introducción al mundo, o desde la entrada cuando no se le muestra ninguna introducción                                                                                         |
-| `roll`            | nada, o `roll`     | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total |
+| `roll`            | nada, o `roll`    | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total                                                                                                                                  |
 | `score`           | `objective`       | La puntuación de un jugador en ese objetivo alcanza `score`                                                                                                                                                                                                                         |
 
 El bioma, la estructura, la altura, el tiempo de juego y la puntuación se comprueban una vez por segundo para cada jugador, y se activan con el cambio de fuera a dentro, nunca en la primera comprobación tras una entrada. Una regla `time_of_day` o `day` cuya audiencia no es `player` se activa una vez para la dimensión en lugar de una vez por cada jugador en ella.
@@ -6209,8 +6243,8 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 | `time`               | entero                                            | `0`                  | Para `time_of_day`: el tick del día                                                                                                                                                                                     |
 | `day`                | entero                                            | ninguno              | Para `day`: el único día en que se activa. Sin él, todos los días                                                                                                                                                       |
 | `minutes`            | entero                                            | ninguno              | Para `play_time`                                                                                                                                                                                                        |
-| `roll`               | texto                              | ninguno        | Para `roll`: `coin`, una notación como `2d6` (`d6` y `1d6` son lo mismo) o el nombre de un dado o un mazo de un pack. Sin ella, toda tirada activa la regla |
-| `atLeast`, `atMost`  | entero                             | ninguno        | Para `roll`: el total más bajo y el más alto que activa la regla. Una moneda cuenta 1 por cara y 0 por cruz; un dado o un mazo de un pack, la posición del resultado en su archivo, desde 1 |
+| `roll`               | texto                                             | ninguno              | Para `roll`: `coin`, una notación como `2d6` (`d6` y `1d6` son lo mismo) o el nombre de un dado o un mazo de un pack. Sin ella, toda tirada activa la regla                                                             |
+| `atLeast`, `atMost`  | entero                                            | ninguno              | Para `roll`: el total más bajo y el más alto que activa la regla. Una moneda cuenta 1 por cara y 0 por cruz; un dado o un mazo de un pack, la posición del resultado en su archivo, desde 1                             |
 | `objective`, `score` | texto, entero                                     | ninguno, `1`         | Para `score`: el objetivo y el valor que hay que alcanzar                                                                                                                                                               |
 | `requires`           | lista de ids de mod o espacios de nombres de pack | ninguno              | El archivo se omite a menos que estén presentes todos                                                                                                                                                                   |
 

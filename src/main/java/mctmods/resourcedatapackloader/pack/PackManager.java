@@ -73,6 +73,7 @@ public final class PackManager {
     public static final String DICE = "dice";
     public static final String GAMES = "games";
     public static final String FUELS = "fuels";
+    public static final String TOOLTIPS = "tooltips";
     public static final String OREDICT = "oredict";
     public static final String SOUNDS = "sounds";
     public static final String RECIPE_REMOVALS = "recipe_removals";
@@ -99,7 +100,7 @@ public final class PackManager {
     public static final String JSON = "json";
     public static final String JSON_SUFFIX = "." + JSON;
     public static final String MCFUNCTION = "mcfunction";
-    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, ORDERS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, BREWING, FUELS, FURNACE, RECIPE_REMOVALS, LOOT_INJECTIONS, CARDS, CELESTIAL, DISABLED)));
+    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, ORDERS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, BREWING, FUELS, TOOLTIPS, FURNACE, RECIPE_REMOVALS, LOOT_INJECTIONS, CARDS, CELESTIAL, DISABLED)));
     private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();

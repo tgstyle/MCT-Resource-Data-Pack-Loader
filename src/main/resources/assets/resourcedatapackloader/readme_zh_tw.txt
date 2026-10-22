@@ -203,6 +203,9 @@ minecraft:stone，原版或模組方塊皆可。方塊可設定硬度、爆炸�
 右側欄位的物品，以及鐵砧在指定等級下提供的附魔或結果。取出成品
 可以獲得一項進度，物品也可以在獲得這項進度之前一直無法使用。
 
+tooltips 裡的檔案會為物品和方塊加上灰色的提示行，並在附魔名稱下方
+加上一段說明。
+
 hardness 檔案為一組方塊設定挖掘時間和爆炸抗性，exposures 檔案
 則定義輻射之類的危險：它作用於靠近指定方塊、攜帶指定物品或
 處於指定維度的玩家，分為若干等級，每級施加效果和傷害，
@@ -257,7 +260,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方應當放在旁邊
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids
+    celestial        raids            tooltips
 
 方塊有以下幾種型態，由「type」欄位決定：
 

@@ -53,6 +53,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 **Artisanat, butin et commerce**
 - [Blocs et objets désactivés](#blocs-et-objets-désactivés)
 - [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)
+- [Infobulles](#infobulles)
 - [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)
 - [Travail à l'enclume](#travail-à-lenclume)
 - [Butins des blocs](#butins-des-blocs)
@@ -173,6 +174,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/recipe_removals/*.json`                                                            | Recettes supprimées par nom, namespace ou résultat. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                        |
 | `<namespace>/disabled/*.json`                                                                   | Blocs et objets retirés du jeu. [Blocs et objets désactivés](#blocs-et-objets-désactivés)                                                                                  |
 | `<namespace>/furnace/*.json`                                                                    | Recettes de fourneau ajoutées et retirées. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                   |
+| `<namespace>/tooltips/*.json`                                                                   | Lignes d'infobulle supplémentaires. [Infobulles](#infobulles)                                                                                                              |
 | `<namespace>/fuels/*.json`                                                                      | Durées de combustion. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                                        |
 | `<namespace>/brewing/*.json`                                                                    | Recettes du pupitre d'alchimie. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                             |
 | `<namespace>/potions/*.json`                                                                    | Effets de potion. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                           |
@@ -1510,27 +1512,27 @@ Un `rocket` nomme avec `rocket` la variante d'entité qu'il place. Il a besoin d
 
 *objets*
 
-| Clé            | Requis        | Valeur                                        | Défaut                     | Rôle                                                                                                                                                                                |
-| -------------- | ------------- | --------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | oui           | objet de nom de variante vers variante        |                            | Une entrée par valeur de métadonnée. La clé nomme cette valeur dans l'état de bloc, le chemin du modèle et la clé de langue. Le nom de registre vient du chemin du fichier lui-même |
-| `type`         | non           | l'un des types ci-dessus                      | `basic`                    | Le type que prend l'objet                                                                                                                                                           |
-| `creativeTab`  | non           | nom d'onglet                                  | aucun                      | L'onglet où il apparaît                                                                                                                                                             |
-| `material`     | tool, armor   | nom de matériau                               | aucun                      | Celui de vos matériaux dont il est fait                                                                                                                                             |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`           | aucun                      | De quel outil il s'agit                                                                                                                                                             |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`               | aucun                      | Où il se porte. `helmet`, `chestplate`, `leggings` et `boots` fonctionnent aussi                                                                                                    |
-| `eat`          | food          | booléen                                       | `false`                    | Utilise l'animation de repas                                                                                                                                                        |
-| `alwaysEdible` | food          | booléen                                       | `false`                    | Peut être mangé avec une barre de faim pleine                                                                                                                                       |
-| `useDuration`  | drink, potion | entier, ticks                                 | `32`                       | Pour `drink` et `potion` : combien de temps il faut pour le boire, en ticks (20 ticks = 1 seconde). Les autres types l'ignorent                                                     |
-| `attackSpeed`  | non           | flottant                                      | adapté à la classe d'outil | Pour `tool`, l'attribut de vitesse d'attaque, comme `-2.4` pour une épée                                                                                                            |
-| `cooldown`     | non           | entier, ticks                                 | `0`                        | Pour `food`, `drink` et `potion`, durée pendant laquelle l'objet refuse d'être réutilisé après avoir été consommé ; pour un objet avec `rolls`, le délai entre deux lancers         |
-| `container`    | drink         | nom d'objet                                   | aucun                      | Ce qui reste, comme une bouteille                                                                                                                                                   |
-| `crop`         | seed          | nom de bloc                                   | aucun                      | La culture qu'il plante                                                                                                                                                             |
-| `soil`         | seed          | nom de bloc                                   | `minecraft:farmland`       | Sur quoi il peut être planté                                                                                                                                                        |
-| `rocket`       | rocket        | `namespace:name`                              | aucun                      | La variante d'entité qu'il place                                                                                                                                                    |
-| `rolls`        | non           | `coin`, `d6`, `2d6+1`, un dé ou un paquet     | aucun                      | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets)                      |
-| `rollStore`    | non           | nom d'un objectif                    | aucun                  | Pour un objet avec `rolls`, l'objectif du tableau des scores qui reçoit le total du lancer comme score de son porteur à chaque utilisation. Un objectif qui n'existe pas fait refuser le lancer par une ligne de chat |
-| `passesTurn`   | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours)                                                |
-| `requires`     | non           | liste d'ids de mods ou de namespaces de packs | aucun                      | Le fichier est ignoré sauf si tous sont présents                                                                                                                                    |
+| Clé            | Requis        | Valeur                                        | Défaut                     | Rôle                                                                                                                                                                                                                  |
+| -------------- | ------------- | --------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`     | oui           | objet de nom de variante vers variante        |                            | Une entrée par valeur de métadonnée. La clé nomme cette valeur dans l'état de bloc, le chemin du modèle et la clé de langue. Le nom de registre vient du chemin du fichier lui-même                                   |
+| `type`         | non           | l'un des types ci-dessus                      | `basic`                    | Le type que prend l'objet                                                                                                                                                                                             |
+| `creativeTab`  | non           | nom d'onglet                                  | aucun                      | L'onglet où il apparaît                                                                                                                                                                                               |
+| `material`     | tool, armor   | nom de matériau                               | aucun                      | Celui de vos matériaux dont il est fait                                                                                                                                                                               |
+| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`           | aucun                      | De quel outil il s'agit                                                                                                                                                                                               |
+| `slot`         | armor         | `head`, `chest`, `legs`, `feet`               | aucun                      | Où il se porte. `helmet`, `chestplate`, `leggings` et `boots` fonctionnent aussi                                                                                                                                      |
+| `eat`          | food          | booléen                                       | `false`                    | Utilise l'animation de repas                                                                                                                                                                                          |
+| `alwaysEdible` | food          | booléen                                       | `false`                    | Peut être mangé avec une barre de faim pleine                                                                                                                                                                         |
+| `useDuration`  | drink, potion | entier, ticks                                 | `32`                       | Pour `drink` et `potion` : combien de temps il faut pour le boire, en ticks (20 ticks = 1 seconde). Les autres types l'ignorent                                                                                       |
+| `attackSpeed`  | non           | flottant                                      | adapté à la classe d'outil | Pour `tool`, l'attribut de vitesse d'attaque, comme `-2.4` pour une épée                                                                                                                                              |
+| `cooldown`     | non           | entier, ticks                                 | `0`                        | Pour `food`, `drink` et `potion`, durée pendant laquelle l'objet refuse d'être réutilisé après avoir été consommé ; pour un objet avec `rolls`, le délai entre deux lancers                                           |
+| `container`    | drink         | nom d'objet                                   | aucun                      | Ce qui reste, comme une bouteille                                                                                                                                                                                     |
+| `crop`         | seed          | nom de bloc                                   | aucun                      | La culture qu'il plante                                                                                                                                                                                               |
+| `soil`         | seed          | nom de bloc                                   | `minecraft:farmland`       | Sur quoi il peut être planté                                                                                                                                                                                          |
+| `rocket`       | rocket        | `namespace:name`                              | aucun                      | La variante d'entité qu'il place                                                                                                                                                                                      |
+| `rolls`        | non           | `coin`, `d6`, `2d6+1`, un dé ou un paquet     | aucun                      | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets)                                                        |
+| `rollStore`    | non           | nom d'un objectif                             | aucun                      | Pour un objet avec `rolls`, l'objectif du tableau des scores qui reçoit le total du lancer comme score de son porteur à chaque utilisation. Un objectif qui n'existe pas fait refuser le lancer par une ligne de chat |
+| `passesTurn`   | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours)                                                                                  |
+| `requires`     | non           | liste d'ids de mods ou de namespaces de packs | aucun                      | Le fichier est ignoré sauf si tous sont présents                                                                                                                                                                      |
 
 ### Clés de variantes d'objet
 
@@ -2065,6 +2067,38 @@ Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs f
 | `item`     | l'un des deux | nom d'objet                      | aucun  | L'objet qui brûle                       |
 | `oreDict`  | l'un des deux | nom du dictionnaire des minerais | aucun  | Tout ce qui se trouve sous ce nom brûle |
 | `burnTime` | oui           | entier, ticks                    | `0`    | Le charbon vaut 1600, une planche 300   |
+
+## Infobulles
+
+*objets, blocs et enchantements*
+
+`<namespace>/tooltips/*.json`
+
+Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs fichiers se cumulent. Chaque ligne est une clé de langue si les fichiers de langue chargés la contiennent, et du texte brut sinon. Les lignes d'un objet sont ajoutées en dernier, en gris ; celles d'un enchantement se placent juste sous son nom, sur un livre enchanté comme sur un objet enchanté. `content.tooltips` dans la configuration désactive le dossier.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby:1", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Clé            | Requis | Valeur          | Défaut | Rôle                                          |
+| -------------- | ------ | --------------- | ------ | --------------------------------------------- |
+| `items`        | non    | liste d'entrées | aucun  | Lignes ajoutées aux objets et aux blocs       |
+| `enchantments` | non    | liste d'entrées | aucun  | Lignes ajoutées sous le nom d'un enchantement |
+
+Une entrée de `items` ou `enchantments` accepte ces clés.
+
+| Clé           | Requis | Valeur             | Défaut | Rôle                                                                                  |
+| ------------- | ------ | ------------------ | ------ | ------------------------------------------------------------------------------------- |
+| `item`        | oui    | nom d'objet        | aucun  | L'objet, ou l'objet d'un bloc. `:meta` après le nom choisit une variante, `:*` toutes |
+| `enchantment` | oui    | nom d'enchantement | aucun  | L'enchantement qui reçoit les lignes                                                  |
+| `lines`       | oui    | liste de textes    | aucun  | Clés de langue ou texte brut, dans l'ordre                                            |
 
 ## Potions, types de potions et alchimie
 
@@ -5910,12 +5944,12 @@ Un objectif est un véritable objectif du tableau des scores du jeu : `/scoreboa
 
 *score*
 
-| Réglage          | Type   | Défaut | Rôle                                                                                                                                         |
-| ---------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | objet  | vide   | Id d'entité vers des points, crédités au camp du tueur. `minecraft:player` marque une victoire sur un joueur                                 |
-| `points.death`   | entier | `0`    | Des points chaque fois qu'un membre meurt, quelle qu'en soit la cause. Peut être négatif                                                     |
+| Réglage          | Type    | Défaut  | Rôle                                                                                                                                                          |
+| ---------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | objet   | vide    | Id d'entité vers des points, crédités au camp du tueur. `minecraft:player` marque une victoire sur un joueur                                                  |
+| `points.death`   | entier  | `0`     | Des points chaque fois qu'un membre meurt, quelle qu'en soit la cause. Peut être négatif                                                                      |
 | `points.raid`    | booléen | `false` | Reprend les `points` de chaque [raid](#raids) gagné : chaque joueur à portée en reçoit autant, sur la ligne de son camp et, avec `individuals`, sur la sienne |
-| `points.ownKill` | entier | `0`    | Des points pour un meurtre du propre camp du tueur, à la place de la valeur de `kill`. 0 ne marque rien ; un nombre négatif est une pénalité |
+| `points.ownKill` | entier  | `0`     | Des points pour un meurtre du propre camp du tueur, à la place de la valeur de `kill`. 0 ne marque rien ; un nombre négatif est une pénalité                  |
 
 `points` est ce que ce mod ajoute à ce que le jeu compte, versé dans le même objectif afin que `/scoreboard` le lise toujours. `kill` vaut tant de points par id d'entité tuée, crédités au camp du tueur ; `death` vaut tant chaque fois qu'un membre d'un camp meurt, et peut être négatif. Avec `teamTotals`, les points vont sur une ligne portant le nom de l'équipe, ce qui permet à la barre latérale d'afficher quatre camps plutôt qu'une ligne par mob. `individuals` ajoute aussi une ligne par membre, et est désactivé par défaut parce qu'une ligne par UUID de mob ressemble à du bruit.
 
@@ -6099,8 +6133,8 @@ Tant qu'une vague est sur le village, ses villageois courent s'abriter à l'int�
 | `sound`         | nom de son           | aucun         | Joué à chaque joueur à portée, depuis le côté d'où vient la vague, à l'arrivée de chaque vague                                                                                                                                    |
 | `wins`          | fonction             | aucun         | S'exécute en tant que chaque joueur à portée quand le raid est gagné                                                                                                                                                              |
 | `loses`         | fonction             | aucun         | S'exécute en tant que chaque joueur à portée quand le raid est perdu                                                                                                                                                              |
-| `points`        | entier | `0`            | Points crédités à chaque joueur à portée quand le raid est gagné, dans chaque objectif dont `points.raid` est activé. Une défaite ne rapporte rien |
-| `loot`          | table de butin | aucun  | Une table de butin tirée une fois pour chaque joueur à portée quand le raid est gagné. Les objets vont dans son inventaire, ou tombent à ses pieds s'il est plein |
+| `points`        | entier               | `0`           | Points crédités à chaque joueur à portée quand le raid est gagné, dans chaque objectif dont `points.raid` est activé. Une défaite ne rapporte rien                                                                                |
+| `loot`          | table de butin       | aucun         | Une table de butin tirée une fois pour chaque joueur à portée quand le raid est gagné. Les objets vont dans son inventaire, ou tombent à ses pieds s'il est plein                                                                 |
 | `bell`          | nom de bloc ou liste | aucun         | D'autres blocs qui sonnent comme une cloche, quand un joueur les utilise et à l'arrivée de chaque vague. Un bloc de type `bell` sonne sans être nommé. Placez-le dans le village via une structure NBT, puisque rien ne le génère |
 
 ### Un groupe
@@ -6183,7 +6217,7 @@ Le troisième accueille un joueur à sa première connexion avec une carte centr
 | `death`           | rien               | Un joueur meurt                                                                                                                                                                                                                                                                                     |
 | `y_level`         | `below` ou `above` | Un joueur passe sous ou au-dessus de cette hauteur                                                                                                                                                                                                                                                  |
 | `play_time`       | `minutes`          | Le temps d'un joueur dans le monde atteint ce nombre de minutes, compté depuis la fermeture de l'introduction au monde, ou depuis la connexion quand aucune introduction ne lui est montrée                                                                                                         |
-| `roll`            | rien, ou `roll`    | Un joueur lance avec `/rdplserver game` ou avec un objet avec `rolls`. Avec `roll`, seul ce lancer la déclenche, et `atLeast` et `atMost` bornent le total |
+| `roll`            | rien, ou `roll`    | Un joueur lance avec `/rdplserver game` ou avec un objet avec `rolls`. Avec `roll`, seul ce lancer la déclenche, et `atLeast` et `atMost` bornent le total                                                                                                                                          |
 | `score`           | `objective`        | Le score d'un joueur dans cet objectif atteint `score`                                                                                                                                                                                                                                              |
 
 Le biome, la structure, la hauteur, le temps de jeu et le score sont vérifiés une fois par seconde pour chaque joueur, et se déclenchent au passage de l'extérieur à l'intérieur, jamais à la première vérification après une connexion. Une règle `time_of_day` ou `day` dont le public n'est pas `player` se déclenche une fois pour la dimension au lieu d'une fois pour chaque joueur qui s'y trouve.
@@ -6209,8 +6243,8 @@ Une carte qui se déclenche alors qu'un joueur a encore l'introduction au monde 
 | `time`               | entier                                        | `0`           | Pour `time_of_day` : le tick du jour                                                                                                                                                                                             |
 | `day`                | entier                                        | aucun         | Pour `day` : l'unique jour où se déclencher. Sans lui, chaque jour                                                                                                                                                               |
 | `minutes`            | entier                                        | aucun         | Pour `play_time`                                                                                                                                                                                                                 |
-| `roll`               | texte                              | aucun          | Pour `roll` : `coin`, une notation comme `2d6` (`d6` et `1d6` sont identiques) ou le nom d'un dé ou d'un paquet d'un pack. Sans lui, tout lancer déclenche la règle |
-| `atLeast`, `atMost`  | entier                             | aucun          | Pour `roll` : le total le plus bas et le plus haut qui déclenche la règle. Une pièce compte 1 pour face et 0 pour pile, un dé ou un paquet d'un pack la place du résultat dans son fichier, à partir de 1 |
+| `roll`               | texte                                         | aucun         | Pour `roll` : `coin`, une notation comme `2d6` (`d6` et `1d6` sont identiques) ou le nom d'un dé ou d'un paquet d'un pack. Sans lui, tout lancer déclenche la règle                                                              |
+| `atLeast`, `atMost`  | entier                                        | aucun         | Pour `roll` : le total le plus bas et le plus haut qui déclenche la règle. Une pièce compte 1 pour face et 0 pour pile, un dé ou un paquet d'un pack la place du résultat dans son fichier, à partir de 1                        |
 | `objective`, `score` | texte, entier                                 | aucun, `1`    | Pour `score` : l'objectif et la valeur à atteindre                                                                                                                                                                               |
 | `requires`           | liste d'ids de mods ou de namespaces de packs | aucun         | Le fichier est ignoré sauf si tous sont présents                                                                                                                                                                                 |
 
