@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.DerivedLevelData;
 import net.minecraft.world.level.storage.ServerLevelData;
@@ -49,19 +52,42 @@ public final class ContentWeatherCycle {
         level.thunderLevel = Math.max(0.0F, level.thunderLevel - THUNDER_STEP);
     }
 
-    public void tick(Level level, DimensionTraitsDef.Cycle cycle) {
+    public static void force(Level level, int kind) {
+        if (kind == RuleSwitchDef.CLEAR) {
+            dry(level);
+            return;
+        }
+        level.oRainLevel = level.rainLevel;
+        level.rainLevel = Mth.clamp(level.rainLevel + THUNDER_STEP, 0.0F, 1.0F);
+        level.oThunderLevel = level.thunderLevel;
+        level.thunderLevel = Mth.clamp(level.thunderLevel + (kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
+    }
+
+    public static void hurry(ServerLevel level, ServerLevelData data, int steps) {
+        if (steps == 1 || level.dimension() != Level.OVERWORLD || !data.getGameRules().getBoolean(GameRules.RULE_WEATHER_CYCLE)) { return; }
+        data.setClearWeatherTime(hasten(data.getClearWeatherTime(), steps));
+        data.setRainTime(hasten(data.getRainTime(), steps));
+        data.setThunderTime(hasten(data.getThunderTime(), steps));
+    }
+
+    private static int hasten(int time, int steps) {
+        if (time <= 0) { return time; }
+        return steps == 0 ? time + 1 : Math.max(1, time - (steps - 1));
+    }
+
+    public void tick(Level level, DimensionTraitsDef.Cycle cycle, int steps) {
         if (level.isClientSide()) { return; }
         RandomSource random = level.random;
         if (!started) {
             started = true;
             left = Mth.randomBetweenInclusive(random, cycle.clearMin(), cycle.clearMax());
         }
-        else if (--left <= 0) {
+        else if ((left -= steps) <= 0) {
             raining = !raining;
             left = raining ? Mth.randomBetweenInclusive(random, cycle.rainMin(), cycle.rainMax()) : Mth.randomBetweenInclusive(random, cycle.clearMin(), cycle.clearMax());
         }
         if (cycle.thunderMax() <= 0) { thundering = false; }
-        else if (--thunderLeft <= 0) {
+        else if ((thunderLeft -= steps) <= 0) {
             thundering = !thundering;
             thunderLeft = thundering ? Mth.randomBetweenInclusive(random, cycle.thunderMin(), cycle.thunderMax()) : Mth.randomBetweenInclusive(random, cycle.calmMin(), cycle.calmMax());
         }

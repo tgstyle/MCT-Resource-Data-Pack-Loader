@@ -1,0 +1,96 @@
+package mctmods.resourcedatapackloader.content.worldgen;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
+
+import com.google.gson.JsonElement;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
+import net.neoforged.neoforge.common.loot.LootModifier;
+import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
+public final class ContentLootSwitch extends LootModifier {
+    private static final ResourceLocation EMPTY = ResourceLocation.parse("minecraft:empty");
+    public static final MapCodec<ContentLootSwitch> CODEC = RecordCodecBuilder.mapCodec(instance -> codecStart(instance).apply(instance, ContentLootSwitch::new));
+    public static final DeferredRegister<MapCodec<? extends IGlobalLootModifier>> REGISTER = DeferredRegister.create(NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, ResourceDataPackLoader.MOD_ID);
+
+    static { REGISTER.register("environment_loot", () -> CODEC); }
+
+    public ContentLootSwitch(LootItemCondition[] conditions) { super(conditions); }
+
+    @Override @Nonnull public MapCodec<? extends IGlobalLootModifier> codec() { return CODEC; }
+
+    @Nullable static Map<ResourceLocation, ResourceLocation> parse(String owner, @Nullable JsonElement element) {
+        if (element == null) { return null; }
+        if (!element.isJsonObject()) {
+            ContentLog.LOGGER.error("{} gives loot that is not an object of loot table ids, ignoring it", owner);
+            return null;
+        }
+        Map<ResourceLocation, ResourceLocation> swaps = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+            ResourceLocation from = id(entry.getKey());
+            JsonElement value = entry.getValue();
+            ResourceLocation to = value.isJsonPrimitive() && value.getAsJsonPrimitive().isString() ? id(value.getAsString()) : null;
+            if (from == null || to == null) { ContentLog.LOGGER.error("{} gives loot for '{}' as {}, which is not a pair of loot table ids, ignoring it", owner, entry.getKey(), value); }
+            else if (from.equals(to)) { ContentLog.LOGGER.error("{} swaps loot table {} for itself, ignoring it", owner, from); }
+            else { swaps.put(from, to); }
+        }
+        return swaps;
+    }
+
+    @Nullable private static ResourceLocation id(String text) {
+        String lowered = Settings.lower(text);
+        return lowered.isEmpty() ? null : ResourceLocation.tryParse(lowered.indexOf(':') < 0 ? "minecraft:" + lowered : lowered);
+    }
+
+    static void start(MinecraftServer server, Collection<Map<ResourceLocation, ResourceLocation>> maps) {
+        Set<ResourceLocation> missing = new HashSet<>();
+        for (Map<ResourceLocation, ResourceLocation> swaps : maps) {
+            for (Map.Entry<ResourceLocation, ResourceLocation> swap : swaps.entrySet()) {
+                check(server, swap.getKey(), missing);
+                check(server, swap.getValue(), missing);
+            }
+        }
+    }
+
+    private static void check(MinecraftServer server, ResourceLocation id, Set<ResourceLocation> missing) {
+        if (!EMPTY.equals(id) && table(server, id) == LootTable.EMPTY && missing.add(id)) { ContentLog.LOGGER.error("Environment loot {} names no loot table, so swapping it does nothing", id); }
+    }
+
+    private static LootTable table(MinecraftServer server, ResourceLocation id) { return server.reloadableRegistries().getLootTable(ResourceKey.create(Registries.LOOT_TABLE, id)); }
+
+    @SuppressWarnings("deprecation") @Override @Nonnull protected ObjectArrayList<ItemStack> doApply(@Nonnull ObjectArrayList<ItemStack> generatedLoot, @Nonnull LootContext context) {
+        Vec3 origin = context.getParamOrNull(LootContextParams.ORIGIN);
+        Entity entity = context.getParamOrNull(LootContextParams.THIS_ENTITY);
+        if (origin == null && entity != null) { origin = entity.position(); }
+        if (origin == null) { return generatedLoot; }
+        ResourceLocation to = ContentEnvironments.loot(context.getLevel(), BlockPos.containing(origin)).get(context.getQueriedLootTableId());
+        if (to == null) { return generatedLoot; }
+        ObjectArrayList<ItemStack> out = new ObjectArrayList<>();
+        table(context.getLevel().getServer(), to).getRandomItemsRaw(context, LootTable.createStackSplitter(context.getLevel(), out::add));
+        return out;
+    }
+}

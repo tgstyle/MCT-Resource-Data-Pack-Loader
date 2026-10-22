@@ -11,7 +11,7 @@ public final class ContentTimeWindows {
     private ContentTimeWindows() {}
 
     public static long clock(Level level, @Nullable DimensionDef def) {
-        long length = def == null ? DimensionTraitsDef.VANILLA_DAY : def.traits().dayLength();
+        long length = def == null ? DimensionTraitsDef.VANILLA_DAY : ContentRuleSwitch.dayLength(level);
         return Math.floorDiv(level.dimensionType().fixedTime().orElse(level.getDayTime()) * DimensionTraitsDef.VANILLA_DAY, length);
     }
 

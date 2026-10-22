@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 
 public final class ContentServer {
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
-    private static final DimensionValues<Difficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", named -> Difficulty.byName(named.toLowerCase(Locale.ROOT)), "which is not one of peaceful, easy, normal or hard");
+    private static final DimensionValues<Difficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", ContentServer::difficultyFrom, "which is not one of peaceful, easy, normal or hard");
 
     private ContentServer() {}
 
@@ -45,6 +45,8 @@ public final class ContentServer {
     public static String worldGameMode() { return text("worldGameMode", Config.worldgen.worldGameMode()); }
 
     public static boolean lanCommands() { return ContentControl.off(ContentControl.SERVER) || ContentControl.flag(ContentControl.SERVER, "worldLanCommands", Config.worldgen.worldLanCommands()); }
+
+    @Nullable public static Difficulty difficultyFrom(String named) { return Difficulty.byName(named.toLowerCase(Locale.ROOT)); }
 
     @Nullable public static Difficulty difficultyFor(String dimension) {
         if (ContentControl.off(ContentControl.SERVER)) { return null; }

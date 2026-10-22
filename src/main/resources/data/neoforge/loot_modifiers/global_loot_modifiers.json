@@ -1,6 +1,7 @@
 {
   "replace": false,
   "entries": [
+    "resourcedatapackloader:environment_loot",
     "resourcedatapackloader:block_drops"
   ]
 }

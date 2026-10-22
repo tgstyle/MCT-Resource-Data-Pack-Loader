@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.content.worldgen.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.util.Rgb;
 
@@ -31,6 +32,10 @@ public final class ContentFogSampler {
     private static final double EASE = 0.1D;
     private static final float NEAR = 8.0F;
     private static final float START = 0.75F;
+    private static final float SHOWN_START = 0.05F;
+    private static final float SHOWN_REACH = 192.0F;
+    private static final float SHOWN_END = 0.5F;
+    private static final float TERRAIN_MIN = 32.0F;
     @Nullable private static Vec3 target;
     @Nullable private static Vec3 current;
     @Nullable private static ResourceKey<Level> sampledIn;
@@ -62,10 +67,11 @@ public final class ContentFogSampler {
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
+        Entity camera = mc.getCameraEntity();
+        if (level != null && camera != null) { ContentEnvironments.view(level.getBiome(camera.blockPosition())); }
         ContentWindowLook.tick(level);
         DimensionDef def = ContentDimensions.def(level);
         SkyLookDef look = def == null ? null : def.look();
-        Entity camera = mc.getCameraEntity();
         if (level == null || def == null || camera == null || !(look != null && look.sampleFog() || ContentWindowLook.samples(def))) {
             sampledIn = null;
             target = null;
@@ -110,12 +116,19 @@ public final class ContentFogSampler {
         DimensionDef def = ContentDimensions.def(Minecraft.getInstance().level);
         SkyLookDef look = def == null ? null : def.look();
         float density = ContentWindowLook.fogDensity(def, look == null ? 0.0F : look.fogDensity());
-        if (density <= 0.0F || event.getType() != FogType.NONE) { return; }
+        if ((density <= 0.0F && (def == null || !def.showFog() || event.getMode() == FogRenderer.FogMode.FOG_SKY)) || event.getType() != FogType.NONE) { return; }
         if (event.getCamera().getEntity() instanceof LivingEntity living && (living.hasEffect(MobEffects.BLINDNESS) || living.hasEffect(MobEffects.DARKNESS))) { return; }
-        float far = event.getFarPlaneDistance();
-        float end = far + (NEAR - far) * density;
-        event.setNearPlaneDistance(event.getMode() == FogRenderer.FogMode.FOG_SKY ? 0.0F : end * START);
-        event.setFarPlaneDistance(end);
+        if (density > 0.0F) {
+            float far = event.getFarPlaneDistance();
+            float end = far + (NEAR - far) * density;
+            event.setNearPlaneDistance(event.getMode() == FogRenderer.FogMode.FOG_SKY ? 0.0F : end * START);
+            event.setFarPlaneDistance(end);
+        }
+        else {
+            float far = Math.max(event.getRenderer().getRenderDistance(), TERRAIN_MIN);
+            event.setNearPlaneDistance(far * SHOWN_START);
+            event.setFarPlaneDistance(Math.min(far, SHOWN_REACH) * SHOWN_END);
+        }
         event.setFogShape(FogShape.SPHERE);
         event.setCanceled(true);
     }

@@ -119,43 +119,47 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
             }
-            JsonObject entry = element.getAsJsonObject();
-            int level = Json.getInt(entry, "level", 1);
-            if (level < 1) {
-                ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
-                continue;
-            }
-            if (level > HIGHEST_LEVEL) {
-                ContentLog.LOGGER.warn("A trade in {} has level {}, past the highest a villager reaches, so it joins level {}", key, level, HIGHEST_LEVEL);
-                level = HIGHEST_LEVEL;
-            }
-            String profession = Json.getString(entry, "profession", "").trim();
-            String career = Json.getString(entry, "career", "").trim();
-            if (!career.isEmpty() && CAREERED.contains(profession)) {
-                String moved = CAREERS.get(profession + "/" + career);
-                if (moved == null) {
-                    ContentLog.LOGGER.error("A trade in {} names career '{}' of profession '{}', which has no such career, skipping it", key, career, profession);
-                    continue;
-                }
-                profession = moved;
-            }
-            else if (RETIRED.contains(profession)) {
-                ContentLog.LOGGER.error("A trade in {} names profession '{}' without a career, and that profession only exists through its careers now, skipping it", key, profession);
-                continue;
-            }
-            else if (!career.isEmpty()) { ContentLog.LOGGER.warn("A trade in {} names a career, which this line does not read. Name the profession itself in 'profession'", key); }
-            TradeStackDef sell = stack(entry, "sell");
-            TradeStackDef buy = stack(entry, "buy");
-            if (sell.isEmpty() || buy.isEmpty()) {
-                ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
-                continue;
-            }
-            TRADES.add(new TradeDef(key, profession,
-                    level, buy, stack(entry, "buySecondary"), sell,
-                    Math.max(1, Json.getInt(entry, "maxUses", 12)),
-                    Math.max(0, Json.getInt(entry, "xp", 2)),
-                    Json.strings(entry, "requires")));
+            TradeDef def = trade(key, element.getAsJsonObject());
+            if (def != null) { TRADES.add(def); }
         }
+    }
+
+    @Nullable public static TradeDef trade(ResourceLocation key, JsonObject entry) {
+        int level = Json.getInt(entry, "level", 1);
+        if (level < 1) {
+            ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
+            return null;
+        }
+        if (level > HIGHEST_LEVEL) {
+            ContentLog.LOGGER.warn("A trade in {} has level {}, past the highest a villager reaches, so it joins level {}", key, level, HIGHEST_LEVEL);
+            level = HIGHEST_LEVEL;
+        }
+        String profession = Json.getString(entry, "profession", "").trim();
+        String career = Json.getString(entry, "career", "").trim();
+        if (!career.isEmpty() && CAREERED.contains(profession)) {
+            String moved = CAREERS.get(profession + "/" + career);
+            if (moved == null) {
+                ContentLog.LOGGER.error("A trade in {} names career '{}' of profession '{}', which has no such career, skipping it", key, career, profession);
+                return null;
+            }
+            profession = moved;
+        }
+        else if (RETIRED.contains(profession)) {
+            ContentLog.LOGGER.error("A trade in {} names profession '{}' without a career, and that profession only exists through its careers now, skipping it", key, profession);
+            return null;
+        }
+        else if (!career.isEmpty()) { ContentLog.LOGGER.warn("A trade in {} names a career, which this line does not read. Name the profession itself in 'profession'", key); }
+        TradeStackDef sell = stack(entry, "sell");
+        TradeStackDef buy = stack(entry, "buy");
+        if (sell.isEmpty() || buy.isEmpty()) {
+            ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
+            return null;
+        }
+        return new TradeDef(key, profession,
+                level, buy, stack(entry, "buySecondary"), sell,
+                Math.max(1, Json.getInt(entry, "maxUses", 12)),
+                Math.max(0, Json.getInt(entry, "xp", 2)),
+                Json.strings(entry, "requires"));
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
@@ -244,29 +248,41 @@ public final class ContentVillagers {
         ResourceLocation profession = BuiltInRegistries.VILLAGER_PROFESSION.getKey(event.getType());
         int count = 0;
         for (TradeDef def : TRADES) {
-            if (!profession.toString().equals(def.profession()) || !ContentRegistry.available(def.requires(), def.key())) { continue; }
-            ItemStack buy = ContentStacks.parse(def.key(), def.buy().item(), def.buy().min());
-            ItemStack sell = ContentStacks.parse(def.key(), def.sell().item(), def.sell().min());
-            if (buy.isEmpty() || sell.isEmpty()) { continue; }
-            ItemStack buySecondary = def.buySecondary().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(def.key(), def.buySecondary().item(), def.buySecondary().min());
+            if (!profession.toString().equals(def.profession())) { continue; }
+            ContentTrade listing = listing(def);
+            if (listing == null) { continue; }
             List<VillagerTrades.ItemListing> listings = event.getTrades().get(def.level());
             if (listings == null) {
                 ContentLog.LOGGER.error("Trade in {} asks for level {} of profession '{}', which that profession does not offer, skipping it", def.key(), def.level(), def.profession());
                 continue;
             }
-            listings.add(new ContentTrade(def, buy, buySecondary, sell));
+            listings.add(listing);
             count++;
         }
         if (count > 0) { Summary.info("content_trades." + profession, "Added " + count + " villager trade(s) from packs to " + profession); }
+    }
+
+    @Nullable public static ContentTrade listing(TradeDef def) {
+        if (!ContentRegistry.available(def.requires(), def.key())) { return null; }
+        ItemStack buy = ContentStacks.parse(def.key(), def.buy().item(), def.buy().min());
+        ItemStack sell = ContentStacks.parse(def.key(), def.sell().item(), def.sell().min());
+        if (buy.isEmpty() || sell.isEmpty()) { return null; }
+        ItemStack buySecondary = def.buySecondary().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(def.key(), def.buySecondary().item(), def.buySecondary().min());
+        return new ContentTrade(def, buy, buySecondary, sell);
+    }
+
+    public static boolean known(TradeDef def) {
+        ResourceLocation named = ResourceLocation.tryParse(def.profession());
+        if (named != null && named.toString().equals(def.profession()) && BuiltInRegistries.VILLAGER_PROFESSION.containsKey(named)) { return true; }
+        ContentLog.LOGGER.error("Trade in {} names profession '{}', which is not registered, skipping it", def.key(), def.profession());
+        return false;
     }
 
     private static void checkProfessions() {
         if (professionsChecked) { return; }
         professionsChecked = true;
         for (TradeDef def : TRADES) {
-            if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            ResourceLocation named = ResourceLocation.tryParse(def.profession());
-            if (named == null || !named.toString().equals(def.profession()) || !BuiltInRegistries.VILLAGER_PROFESSION.containsKey(named)) { ContentLog.LOGGER.error("Trade in {} names profession '{}', which is not registered, skipping it", def.key(), def.profession()); }
+            if (ContentRegistry.available(def.requires(), def.key())) { known(def); }
         }
     }
 

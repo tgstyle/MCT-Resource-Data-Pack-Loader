@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Toasts;
@@ -29,6 +31,10 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageToasts.TYPE, MessageToasts.CODEC, (message, context) -> Toasts.show(message.kinds()));
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } });
         registrar.playToClient(MessageIntroLandMade.TYPE, MessageIntroLandMade.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); } });
+        registrar.playToClient(MessageEnvironments.TYPE, MessageEnvironments.CODEC, (message, context) -> {
+            ContentEnvironments.receive(message.active(), message.whole());
+            ContentRuleSwitch.settle(context.player().level());
+        });
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); } });
         registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); } });
     }
@@ -36,7 +42,7 @@ public final class RDPLNetwork {
     public static void openWorn() { PacketDistributor.sendToServer(new MessageOpenWorn()); }
 
     private static boolean send(ServerPlayer player, CustomPacketPayload payload) {
-        if (!reaches(player)) { return false; }
+        if (!player.connection.hasChannel(payload.type())) { return false; }
         PacketDistributor.sendToPlayer(player, payload);
         return true;
     }
@@ -56,4 +62,6 @@ public final class RDPLNetwork {
     public static boolean reaches(ServerPlayer player) { return player.connection.hasChannel(MessageCard.TYPE); }
 
     public static void sendCard(ServerPlayer player, MessageCard card) { send(player, card); }
+
+    public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { send(player, environments); }
 }

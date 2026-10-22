@@ -59,9 +59,11 @@ public final class ContentDimensions {
         if (Config.definitionsOff() || !Config.content.dimensions()) { return; }
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
-            DimensionDef def = ContentDimensionParser.parse(key, contents);
-            if (def == null) { return; }
+            JsonObject json = Json.object(key, contents, "dimension");
+            if (json == null) { return; }
+            DimensionDef def = ContentDimensionParser.parse(key, json);
             DEFS.put(key, def);
+            ContentEnvironments.parse(key, contents);
             if (VANILLA.contains(key) || GameData.has(ResourceLocation.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + PackManager.JSON_SUFFIX))) { EXISTING.add(key); }
         });
         if (!DEFS.isEmpty()) { Summary.info("dimensions", "Loaded " + DEFS.size() + " dimension definition(s) from packs"); }
@@ -75,9 +77,11 @@ public final class ContentDimensions {
 
     public static boolean shapes(DimensionDef def) { return sets(def, TERRAIN_TYPE); }
 
-    @Nullable public static DimensionDef def(ResourceLocation dimension) { return DEFS.get(dimension); }
+    @Nullable public static DimensionDef def(ResourceLocation dimension) { return ContentEnvironments.resolve(dimension, DEFS.get(dimension)); }
 
-    @Nullable public static DimensionDef def(@Nullable Level level) { return level == null ? null : DEFS.get(level.dimension().location()); }
+    @Nullable public static DimensionDef base(@Nullable Level level) { return level == null ? null : DEFS.get(level.dimension().location()); }
+
+    @Nullable public static DimensionDef def(@Nullable Level level) { return level == null ? null : def(level.dimension().location()); }
 
     public static boolean spawnsOff(Level level) {
         DimensionDef def = def(level);
@@ -97,7 +101,7 @@ public final class ContentDimensions {
             JsonObject type = GameData.json(ResourceLocation.withDefaultNamespace("dimension_type/" + def.base() + PackManager.JSON_SUFFIX));
             if (type == null) { continue; }
             retype(def, type);
-            type.addProperty("effects", def.hasEffects() ? def.key().toString() : OVERWORLD.toString());
+            type.addProperty("effects", ContentEnvironments.hasEffects(def.key(), def) ? def.key().toString() : OVERWORLD.toString());
             GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + PackManager.JSON_SUFFIX, type.toString());
             stem(def, def.key());
             made.add(def.key().toString());

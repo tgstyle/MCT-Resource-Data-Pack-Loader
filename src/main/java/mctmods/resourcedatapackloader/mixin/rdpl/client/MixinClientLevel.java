@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Unique private DimensionDef rdpl$def() { return ContentDimensions.def((ClientLevel) (Object) this); }
 
-    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$existingEffects(CallbackInfo ci) { effects = ContentDimensionEffects.existing(effects, rdpl$def()); }
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$existingEffects(CallbackInfo ci) { effects = ContentDimensionEffects.existing(effects, ContentDimensions.base((ClientLevel) (Object) this)); }
 
     @Redirect(method = "getSkyColor", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;")) private Vec3 rdpl$skyColor(Vec3 vec, CubicSampler.Vec3Fetcher fetcher) {
         DimensionDef def = rdpl$def();
