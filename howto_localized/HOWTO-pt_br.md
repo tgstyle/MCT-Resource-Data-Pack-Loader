@@ -2608,6 +2608,35 @@ A coluna `Lista` diz onde a tarefa fica. `tasks` é o que a criatura faz; `targe
 
 O relógio corre no tempo do mundo, então ele para quando ninguém está jogando e não conta os minutos que um chunk passou descarregado.
 
+### Condições de spawn
+
+*variantes de entidades*
+
+```json
+{
+  "dimensions": ["minecraft:the_nether"],
+  "structures": ["minecraft:fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Chave                       | Obrigatória | Valor                     | Padrão             | O que faz                                                                                                                                                                                                                                                                                                                            |
+| --------------------------- | ----------- | ------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dimensions`                | não         | lista de ids de dimensões | todas as dimensões | As dimensões em que ela pode surgir sozinha, como `minecraft:the_nether`; um id sem namespace é lido como `minecraft:`                                                                                                                                                                                                               |
+| `structures`                | não         | lista                     | nenhuma            | Onde ela pode surgir sozinha: ids de estruturas como `minecraft:fortress`, ou `#tag` para uma tag de estruturas como `#minecraft:village`, que contam enquanto o ponto de spawn está dentro de uma peça de alguma; ou o nome de uma estrutura que um pack coloca por `structures`, que conta dentro do `radius` de onde foi colocada |
+| `radius`                    | não         | int                       | `32`               | A que distância ainda conta como dentro de uma estrutura própria de um pack                                                                                                                                                                                                                                                          |
+| `timeFrom`, `timeTo`        | não         | int, ticks                | nenhum             | A faixa do relógio do dia em que ela pode surgir, que pode passar da meia-noite, como de `13000` a `1000`. Os dois são necessários                                                                                                                                                                                                   |
+| `dayAtLeast`                | não         | int                       | nenhum             | O número do dia a partir do qual ela pode surgir                                                                                                                                                                                                                                                                                     |
+| `advancement`               | não         | `namespace:caminho`       | nenhum             | Ela só surge enquanto um jogador a até 128 blocos tiver este progresso                                                                                                                                                                                                                                                               |
+| `objective`, `scoreAtLeast` | não         | texto, int                | nenhum             | Ela só surge enquanto um jogador a até 128 blocos tiver pelo menos esta pontuação no objetivo. Os dois são necessários                                                                                                                                                                                                               |
+
+Uma variante que não define nenhuma dessas condições surge como antes, e uma que define várias só surge onde e quando todas valem. Elas seguram os spawns naturais, inclusive os que um chunk faz ao ser gerado; um ovo, `/summon`, um spawner e `becomes` não são seguros. `advancement`, `objective` e `scoreAtLeast` são julgados juntos para cada jogador a até 128 blocos do ponto de spawn, sem contar espectadores: um mesmo jogador precisa atender a todos, e sem ninguém tão perto uma variante que defina algum deles não surge.
+
 ### Rede
 
 *variantes de entidades*

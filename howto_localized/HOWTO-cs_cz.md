@@ -2608,6 +2608,35 @@ Je to samostatná věc, ne postrčení pravidel, která řídí `despawns` a `pe
 
 Hodiny běží na světovém čase, takže se zastaví, když nikdo nehraje, a nepočítají minuty, které chunk strávil vyložený.
 
+### Podmínky spawnu
+
+*varianty entit*
+
+```json
+{
+  "dimensions": ["minecraft:the_nether"],
+  "structures": ["minecraft:fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Klíč                        | Povinný | Hodnota           | Výchozí         | Co dělá                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ------- | ----------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimensions`                | ne      | seznam id dimenzí | všechny dimenze | Dimenze, ve kterých se může objevit sama, například `minecraft:the_nether`; id bez namespace se čte jako `minecraft:`                                                                                                                                                                                       |
+| `structures`                | ne      | seznam            | žádné           | Kde se může objevit sama: id struktur jako `minecraft:fortress`, nebo `#tag` pro štítek struktur jako `#minecraft:village`, které platí, dokud je místo spawnu uvnitř některého jejich dílu; nebo název struktury, kterou balíček umístí přes `structures`, která platí v okruhu `radius` od místa umístění |
+| `radius`                    | ne      | celé číslo        | `32`            | Jak daleko ještě platí jako uvnitř struktury z balíčku                                                                                                                                                                                                                                                      |
+| `timeFrom`, `timeTo`        | ne      | celé číslo, ticky | žádné           | Úsek denních hodin, ve kterém se může objevit; může přesahovat půlnoc, třeba od `13000` do `1000`. Nutné jsou obě                                                                                                                                                                                           |
+| `dayAtLeast`                | ne      | celé číslo        | žádné           | Číslo dne, od kterého se může objevit                                                                                                                                                                                                                                                                       |
+| `advancement`               | ne      | `namespace:path`  | žádné           | Objeví se, jen když má tento postup hráč do 128 bloků                                                                                                                                                                                                                                                       |
+| `objective`, `scoreAtLeast` | ne      | text, celé číslo  | žádné           | Objeví se, jen když má hráč do 128 bloků v tomto cíli alespoň toto skóre. Nutné jsou obě                                                                                                                                                                                                                    |
+
+Varianta, která žádnou z těchto podmínek nenastaví, se objevuje jako dřív, a varianta s více podmínkami se objeví jen tam a tehdy, kdy platí všechny. Omezují přirozený spawn, včetně toho, který provádí chunk při generování; vejce, `/summon`, spawner a `becomes` omezené nejsou. `advancement`, `objective` a `scoreAtLeast` se posuzují společně pro každého hráče do 128 bloků od místa spawnu, bez pozorovatelů: všechny musí splnit tentýž hráč, a když nikdo takhle blízko není, varianta, která některou z nich nastaví, se neobjeví.
+
 ### Síť
 
 *varianty entit*

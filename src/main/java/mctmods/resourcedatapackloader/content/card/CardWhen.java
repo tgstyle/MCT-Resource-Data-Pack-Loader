@@ -17,12 +17,10 @@ final class CardWhen {
 
     boolean fails(ServerPlayer player) {
         if (!biomes.isEmpty() && !CardPlace.biomeMatches(biomes, player.level().getBiome(player.blockPosition()))) { return true; }
-        if (timeFrom >= 0 && timeTo >= 0 && !within(CardPlace.timeOfDay(player.level()))) { return true; }
+        if (timeFrom >= 0 && timeTo >= 0 && !CardPlace.within(CardPlace.timeOfDay(player.level()), timeFrom, timeTo)) { return true; }
         if (dayAtLeast >= 0L && CardPlace.day(player.level()) < dayAtLeast) { return true; }
         if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return true; }
         if (!gameMode.isEmpty() && !gameMode.equalsIgnoreCase(player.gameMode.getGameModeForPlayer().getName())) { return true; }
         return !standing.met(player);
     }
-
-    private boolean within(int time) { return timeFrom <= timeTo ? time >= timeFrom && time <= timeTo : time >= timeFrom || time <= timeTo; }
 }
