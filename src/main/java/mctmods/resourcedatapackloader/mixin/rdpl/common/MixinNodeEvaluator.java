@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.entity.ai.PathNodeMemo;
-import mctmods.resourcedatapackloader.util.IPathKindMemo;
+import mctmods.resourcedatapackloader.util.interfaces.IPathKindMemo;
 
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;

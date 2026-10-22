@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.pack.port;
+package mctmods.resourcedatapackloader.pack.interfaces;
 
 import net.minecraft.server.packs.PackType;
 import java.io.IOException;

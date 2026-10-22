@@ -13,13 +13,13 @@ final class CityCourtSearch {
 
     record Seat(Verdict verdict, int radius, int stem, @Nullable BoundingBox box) {}
 
-    interface Crowded { boolean at(int x, int z, int radius); }
+    interface ICrowded { boolean at(int x, int z, int radius); }
 
-    interface Blocked { boolean at(int x, int z, int radius, BoundingBox box); }
+    interface IBlocked { boolean at(int x, int z, int radius, BoundingBox box); }
 
     private CityCourtSearch() {}
 
-    static Seat seat(CityGround ground, Line line, boolean low, int level, @Nullable Crowded heartCrowded, Blocked blocked) {
+    static Seat seat(CityGround ground, Line line, boolean low, int level, @Nullable ICrowded heartCrowded, IBlocked blocked) {
         int end = low ? line.from() : line.to();
         int dir = low ? -1 : 1;
         int least = (line.width() + 1) / 2 + 1;

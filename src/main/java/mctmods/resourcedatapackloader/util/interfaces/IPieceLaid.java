@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.util;
+package mctmods.resourcedatapackloader.util.interfaces;
 
 public interface IPieceLaid {
     void rdpl$laying(boolean laying);

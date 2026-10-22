@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 public final class ContentContainerMenu extends AbstractContainerMenu {
     public static final int SLOT = 18;
 
-    public interface Merge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
+    public interface IMerge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
 
     private final Container held;
     private final ContainerDef def;
@@ -59,9 +59,9 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
         for (Slot slot : playerSlots(inventory, width(def), height(def), this::locking)) { addSlot(slot); }
     }
 
-    public interface PlayerSlot { Slot create(Inventory inventory, int index, int x, int y); }
+    public interface IPlayerSlot { Slot create(Inventory inventory, int index, int x, int y); }
 
-    public static List<Slot> playerSlots(Inventory inventory, int wide, int tall, PlayerSlot factory) {
+    public static List<Slot> playerSlots(Inventory inventory, int wide, int tall, IPlayerSlot factory) {
         List<Slot> slots = new ArrayList<>();
         int left = (wide - 9 * SLOT) / 2 + 1;
         for (int row = 0; row < 3; row++) {
@@ -123,7 +123,7 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
         return transfer(this, player, index, size, this::moveItemStackTo, stack -> moveItemStackTo(stack, 0, size, false));
     }
 
-    @Nonnull public static ItemStack transfer(AbstractContainerMenu menu, Player player, int index, int mine, Merge merge, Predicate<ItemStack> store) {
+    @Nonnull public static ItemStack transfer(AbstractContainerMenu menu, Player player, int index, int mine, IMerge merge, Predicate<ItemStack> store) {
         Slot slot = menu.slots.get(index);
         if (!slot.hasItem()) { return ItemStack.EMPTY; }
         ItemStack stack = slot.getItem();

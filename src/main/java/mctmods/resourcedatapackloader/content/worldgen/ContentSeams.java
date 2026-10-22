@@ -172,7 +172,7 @@ public final class ContentSeams {
         return null;
     }
 
-    @Nullable private static BlockPos ring(int x, int y, int z, int least, int most, Spot spot) {
+    @Nullable private static BlockPos ring(int x, int y, int z, int least, int most, ISpot spot) {
         for (int reach = least; reach <= most; reach++) {
             for (int dx = -reach; dx <= reach; dx++) {
                 for (int dz = -reach; dz <= reach; dz++) {
@@ -184,7 +184,7 @@ public final class ContentSeams {
         return null;
     }
 
-    private interface Spot {
+    private interface ISpot {
         boolean fits(int x, int z);
     }
 

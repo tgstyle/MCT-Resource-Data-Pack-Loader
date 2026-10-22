@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.util;
 import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
 
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -44,7 +46,7 @@ public final class FeatureForms {
 
     private FeatureForms() {}
 
-    private static JsonElement up(JsonElement element, LineNote note) {
+    private static JsonElement up(JsonElement element, ILineNote note) {
         load();
         if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> up(item, note)); }
         if (!element.isJsonObject()) { return element.deepCopy(); }
@@ -63,7 +65,7 @@ public final class FeatureForms {
         return out;
     }
 
-    public static JsonElement down(JsonElement element, LineNote note) {
+    public static JsonElement down(JsonElement element, ILineNote note) {
         load();
         if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> down(item, note)); }
         if (!element.isJsonObject()) { return element.deepCopy(); }
@@ -94,7 +96,7 @@ public final class FeatureForms {
         return out;
     }
 
-    @Nullable private static JsonObject matched(JsonObject in, LineNote note) {
+    @Nullable private static JsonObject matched(JsonObject in, ILineNote note) {
         for (Map.Entry<String, JsonObject> form : FORMS.entrySet()) {
             Map<String, JsonElement> caught = new HashMap<>();
             if (!Json.text(form.getValue(), TYPE).equals(Json.text(in, TYPE)) || differs(form.getValue(), in, caught)) { continue; }
@@ -162,7 +164,7 @@ public final class FeatureForms {
         return base;
     }
 
-    @Nullable private static Map<String, JsonElement> params(String type, JsonObject config, LineNote note) {
+    @Nullable private static Map<String, JsonElement> params(String type, JsonObject config, ILineNote note) {
         Map<String, JsonElement> out = new HashMap<>();
         switch (type) {
             case "minecraft:basalt_columns" -> {
@@ -243,7 +245,7 @@ public final class FeatureForms {
         return out;
     }
 
-    private static void stripped(JsonObject placed, LineNote note) {
+    private static void stripped(JsonObject placed, ILineNote note) {
         String reference = referenced(placed);
         if (reference == null || REMOVED.contains(reference) || !VANILLA.containsKey(reference) || note.carried(CONFIGURED, reference) != null) { return; }
         List<JsonElement> extras = extras(up(VANILLA.get(reference), note).getAsJsonObject()).asList();

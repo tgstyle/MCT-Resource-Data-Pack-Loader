@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
-import mctmods.resourcedatapackloader.pack.port.IPackPort;
+import mctmods.resourcedatapackloader.pack.interfaces.IPackPort;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.FileMoves;
 

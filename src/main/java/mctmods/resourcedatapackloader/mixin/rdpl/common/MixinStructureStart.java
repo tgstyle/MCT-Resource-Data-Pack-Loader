@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.IPieceLaid;
+import mctmods.resourcedatapackloader.util.interfaces.IPieceLaid;
 
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;

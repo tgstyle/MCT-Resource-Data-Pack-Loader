@@ -59,7 +59,7 @@ public final class Ported extends PortBase<Ported.Source> {
 
     private record Variants(String main, Map<Integer, String> byMeta) {}
 
-    record Source(Path real, Port.Kind kind) implements Served {}
+    record Source(Path real, Port.Kind kind) implements IServed {}
 
     private record Banner(String name, String property, List<String> values, String layer) {}
 

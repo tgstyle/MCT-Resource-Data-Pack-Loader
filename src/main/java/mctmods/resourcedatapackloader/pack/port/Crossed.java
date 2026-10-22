@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackMeta;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.LineNote;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -46,7 +46,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
         this.lined = from == Port.Line.V26_3;
     }
 
-    record Source(Path real, String file, Port.Kind kind, boolean same) implements Served {}
+    record Source(Path real, String file, Port.Kind kind, boolean same) implements IServed {}
 
     private record Target(String namespace, String path) {}
 
@@ -189,8 +189,8 @@ public final class Crossed extends PortBase<Crossed.Source> {
         }
     }
 
-    private LineNote said(Source source) {
-        return new LineNote() {
+    private ILineNote said(Source source) {
+        return new ILineNote() {
             @Override public void accept(String said) { note("'" + source.file() + "' " + said); }
 
             @Override @Nullable public JsonElement carried(String folder, String id) { return Crossed.this.carried(folder, id); }
