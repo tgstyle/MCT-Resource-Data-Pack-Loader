@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
+import mctmods.resourcedatapackloader.content.entity.ContentSpawnGate;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMobCategory;
 import mctmods.resourcedatapackloader.util.Config;
@@ -59,10 +60,10 @@ public final class ContentSpawning {
             return;
         }
         if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
-            if (ContentThreat.deniedAtGeneration(mob)) { fail(event); }
+            if (ContentThreat.deniedAtGeneration(mob) || ContentSpawnGate.barred(mob)) { fail(event); }
             return;
         }
-        if (!spawner && ContentThreat.barred(mob)) {
+        if (!spawner && (ContentThreat.barred(mob) || ContentSpawnGate.barred(mob))) {
             fail(event);
             return;
         }
