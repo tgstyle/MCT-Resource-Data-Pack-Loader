@@ -32,7 +32,9 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -65,9 +67,9 @@ public final class ContentAnvils {
     private static final float BREAK_CHANCE = 0.12F;
     private static final List<AnvilDef> DEFS = new ArrayList<>();
     private static final int MOST_LEVEL = 255;
-    private static final Map<AnvilDef, List<ItemStack>> ITEMS = new IdentityHashMap<>();
-    private static final Map<AnvilDef, List<ItemStack>> WITH = new IdentityHashMap<>();
-    private static final Map<AnvilDef, ItemStack> RESULTS = new IdentityHashMap<>();
+    private static final Map<AnvilDef, List<Item>> ITEMS = new IdentityHashMap<>();
+    private static final Map<AnvilDef, List<Item>> WITH = new IdentityHashMap<>();
+    private static final Map<AnvilDef, Item> RESULTS = new IdentityHashMap<>();
     private static final Set<String> UNKNOWN = new HashSet<>();
     private static final TellThrottle TOLD = new TellThrottle(TOLD_EVERY);
 
@@ -83,12 +85,12 @@ public final class ContentAnvils {
         Json.eachFile(PackManager.ANVILS, "anvil file", (key, contents) -> {
             AnvilDef def = read(key, contents);
             if (def == null) { return; }
-            List<ItemStack> stack = stacks(key, def.item());
-            List<ItemStack> with = stacks(key, def.with());
+            List<Item> stack = stacks(key, def.item());
+            List<Item> with = stacks(key, def.with());
             if (stack.isEmpty() || with.isEmpty()) { return; }
             if (!def.result().isEmpty()) {
-                ItemStack result = ContentStacks.parse(key, def.result(), def.resultCount());
-                if (result.isEmpty()) { return; }
+                Item result = ContentStacks.find(key, def.result());
+                if (result == null || result == Items.AIR) { return; }
                 RESULTS.put(def, result);
             }
             DEFS.add(def);
@@ -142,19 +144,19 @@ public final class ContentAnvils {
         return single.isEmpty() ? List.of() : List.of(single);
     }
 
-    private static List<ItemStack> stacks(Identifier key, List<String> names) {
-        List<ItemStack> found = new ArrayList<>();
+    private static List<Item> stacks(Identifier key, List<String> names) {
+        List<Item> found = new ArrayList<>();
         for (String name : names) {
-            ItemStack stack = ContentStacks.parse(key, name, 1);
-            if (stack.isEmpty()) { return List.of(); }
-            found.add(stack);
+            Item item = ContentStacks.find(key, name);
+            if (item == null || item == Items.AIR) { return List.of(); }
+            found.add(item);
         }
         return found;
     }
 
-    private static boolean any(ItemStack held, List<ItemStack> wanted) {
-        for (ItemStack each : wanted) {
-            if (ItemStack.isSameItem(held, each)) { return true; }
+    private static boolean any(ItemStack held, List<Item> wanted) {
+        for (Item each : wanted) {
+            if (held.is(each)) { return true; }
         }
         return false;
     }
@@ -179,9 +181,10 @@ public final class ContentAnvils {
     private static ItemStack worked(Level level, AnvilDef def, ItemStack left) {
         ItemStack output = left.copy();
         output.setCount(def.itemCount());
-        ItemStack result = RESULTS.get(def);
+        Item resultItem = RESULTS.get(def);
+        ItemStack result = resultItem == null ? null : new ItemStack(resultItem, def.resultCount());
         if (result != null) {
-            output = result.copy();
+            output = result;
             if (!left.getComponentsPatch().isEmpty()) {
                 output = new ItemStack(result.typeHolder(), result.getCount(), left.getComponentsPatch());
                 if (result.has(DataComponents.DAMAGE)) { output.set(DataComponents.DAMAGE, result.getDamageValue()); }

@@ -32,7 +32,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -72,7 +74,7 @@ public final class ContentHardness {
     private static final Map<BlockState, List<HardnessDef>> EXACT = new IdentityHashMap<>();
     private static final Map<Block, HardnessDef> DENIED = new IdentityHashMap<>();
     private static final Map<BlockState, HardnessDef> DENIED_EXACT = new IdentityHashMap<>();
-    private static final Map<HardnessDef, List<ItemStack>> TOOLS = new IdentityHashMap<>();
+    private static final Map<HardnessDef, List<Item>> TOOLS = new IdentityHashMap<>();
     private static final Map<HardnessDef, BlockState> BECOMES = new IdentityHashMap<>();
     private static final Map<ResourceKey<Level>, Deque<ChunkPos>> SWAPS = new HashMap<>();
     private static final int SWAP_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
@@ -116,10 +118,10 @@ public final class ContentHardness {
                 continue;
             }
             if (def.rolls()) { rolls = true; }
-            List<ItemStack> tools = new ArrayList<>();
+            List<Item> tools = new ArrayList<>();
             for (String name : def.tools()) {
-                ItemStack stack = ContentStacks.parse(def.key(), name, 1);
-                if (!stack.isEmpty()) { tools.add(stack); }
+                Item tool = ContentStacks.find(def.key(), name);
+                if (tool != null && tool != Items.AIR) { tools.add(tool); }
             }
             TOOLS.put(def, tools);
             if (def.swaps()) {
@@ -204,11 +206,11 @@ public final class ContentHardness {
     public static boolean mayBreak(@Nullable LivingEntity who, @Nullable BlockState state, ItemStack held) {
         HardnessDef def = groupFor(state, who);
         if (def == null || !def.adventure() || who == null || held.isEmpty()) { return false; }
-        List<ItemStack> tools = TOOLS.get(def);
+        List<Item> tools = TOOLS.get(def);
         if (tools != null && !tools.isEmpty()) {
             boolean carried = false;
-            for (ItemStack tool : tools) {
-                if (ItemStack.isSameItem(held, tool)) {
+            for (Item tool : tools) {
+                if (held.is(tool)) {
                     carried = true;
                     break;
                 }
