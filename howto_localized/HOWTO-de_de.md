@@ -55,6 +55,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 **Herstellung, Beute und Handel**
 - [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
+- [Tooltips](#tooltips)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
 - [Blockdrops](#blockdrops)
@@ -171,6 +172,7 @@ Unter `data/`:
 | `<namespace>/recipe_removals/*.json`         | Handwerksrezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                     |
 | `<namespace>/disabled/*.json`                | Blöcke und Items, aus dem Spiel genommen. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                      |
 | `<namespace>/furnace/*.json`                 | Ofenrezepte, hinzugefügt und entfernt. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                             |
+| `<namespace>/tooltips/*.json`                | Zusätzliche Tooltip-Zeilen. [Tooltips](#tooltips)                                                                                                              |
 | `<namespace>/fuels/*.json`                   | Brenndauern. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                                                       |
 | `<namespace>/brewing/*.json`                 | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                      |
 | `<namespace>/potions/*.json`                 | Trankeffekte. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                   |
@@ -1357,7 +1359,7 @@ Ein `potion_bottle` listet mit `potionTypes` auf, was es fassen kann, als Liste 
 | `crop`         | seed          | Blockname                                       | keiner                     | Die Feldfrucht, die es pflanzt                                                                                                                                                                                                                                                                |
 | `soil`         | seed          | Blockname                                       | `minecraft:farmland`       | Worauf es gepflanzt werden kann                                                                                                                                                                                                                                                               |
 | `rolls`        | nein          | `coin`, `d6`, `2d6+1`, ein Würfel oder ein Deck | keine                      | Bei einem einfachen Item würfelt ein Rechtsklick wie `/rdplserver game` und sagt es dem Standardpublikum des Packs. Siehe [Würfel und Decks](#würfel-und-decks)                                                                                                                               |
-| `rollStore`    | nein          | Name eines Punkteziels               | keine                  | Für einen Gegenstand mit `rolls` das Punkteziel, das bei jeder Benutzung die Summe des Wurfs als Punktestand des Besitzers übernimmt. Existiert das Ziel nicht, wird der Wurf mit einer Chatzeile abgelehnt |
+| `rollStore`    | nein          | Name eines Punkteziels                          | keine                      | Für einen Gegenstand mit `rolls` das Punkteziel, das bei jeder Benutzung die Summe des Wurfs als Punktestand des Besitzers übernimmt. Existiert das Ziel nicht, wird der Wurf mit einer Chatzeile abgelehnt                                                                                   |
 | `passesTurn`   | nein          | boolean                                         | `false`                    | Bei einem einfachen Item gibt ein Rechtsklick den Zug seines Halters ab, wie `/rdplserver game pass`. Siehe [Züge](#züge)                                                                                                                                                                     |
 | `requires`     | nein          | Liste von Mod-IDs oder Pack-Namespaces          | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                          |
 
@@ -1880,6 +1882,38 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 | `item`     | eines von beiden | Itemname   | keiner   | Das Item, das brennt          |
 | `tag`      | eines von beiden | Tag-ID     | keiner   | Alles in diesem Tag brennt    |
 | `burnTime` | ja               | int, Ticks | `0`      | Kohle ist 1600, ein Brett 300 |
+
+## Tooltips
+
+*items, blöcke und verzauberungen*
+
+`<namespace>/tooltips/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Jede Zeile ist ein Sprachschlüssel, wenn die geladenen Sprachdateien ihn enthalten, sonst Klartext. Item-Zeilen kommen zuletzt und in Grau; die Zeilen einer Verzauberung stehen direkt unter ihrem Namen, auf einem verzauberten Buch wie auf einem verzauberten Item. `content.tooltips` in der Konfiguration schaltet den Ordner ab.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Schlüssel      | Pflicht | Wert               | Standard | Was er macht                                          |
+| -------------- | ------- | ------------------ | -------- | ----------------------------------------------------- |
+| `items`        | nein    | Liste von Objekten | keiner   | Zeilen, die Items und Blöcken hinzugefügt werden      |
+| `enchantments` | nein    | Liste von Objekten | keiner   | Zeilen, die unter dem Namen einer Verzauberung stehen |
+
+Ein Eintrag in `items` oder `enchantments` nimmt diese Schlüssel.
+
+| Schlüssel     | Pflicht | Wert              | Standard | Was er macht                                         |
+| ------------- | ------- | ----------------- | -------- | ---------------------------------------------------- |
+| `item`        | ja      | Itemname          | keiner   | Das Item oder das Item eines Blocks                  |
+| `enchantment` | ja      | Verzauberungsname | keiner   | Die Verzauberung, die die Zeilen bekommt             |
+| `lines`       | ja      | Liste von Texten  | keiner   | Sprachschlüssel oder Klartext, in dieser Reihenfolge |
 
 ## Tränke, Trankarten und Brauen
 
@@ -5116,12 +5150,12 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 
 *wertung*
 
-| Einstellung      | Typ    | Standard | Was sie macht                                                                                                              |
-| ---------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | Objekt | leer     | Entity-ID zu Punkten, der Seite des Tötenden gutgeschrieben. `minecraft:player` wertet einen Spielerkill                   |
-| `points.death`   | int    | `0`      | Punkte, wann immer ein Mitglied stirbt, gleich woran. Darf negativ sein                                                    |
-| `points.raid`    | boolean | `false` | Übernimmt die `points` jedes gewonnenen [Raids](#raids): Jeder Spieler in Reichweite bekommt so viele gutgeschrieben, auf der Zeile seiner Seite und mit `individuals` auch auf seiner eigenen |
-| `points.ownKill` | int    | `0`      | Punkte für einen Kill der eigenen Seite, anstelle des `kill`-Werts. 0 wertet ihn nicht; eine negative Zahl ist eine Strafe |
+| Einstellung      | Typ     | Standard | Was sie macht                                                                                                                                                                                  |
+| ---------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | Objekt  | leer     | Entity-ID zu Punkten, der Seite des Tötenden gutgeschrieben. `minecraft:player` wertet einen Spielerkill                                                                                       |
+| `points.death`   | int     | `0`      | Punkte, wann immer ein Mitglied stirbt, gleich woran. Darf negativ sein                                                                                                                        |
+| `points.raid`    | boolean | `false`  | Übernimmt die `points` jedes gewonnenen [Raids](#raids): Jeder Spieler in Reichweite bekommt so viele gutgeschrieben, auf der Zeile seiner Seite und mit `individuals` auch auf seiner eigenen |
+| `points.ownKill` | int     | `0`      | Punkte für einen Kill der eigenen Seite, anstelle des `kill`-Werts. 0 wertet ihn nicht; eine negative Zahl ist eine Strafe                                                                     |
 
 `points` sind die Punkte, die dieser Mod zusätzlich zu dem zählt, was das Spiel selbst zählt, eingespeist in dasselbe Ziel, sodass `/scoreboard` es weiterhin liest. `kill` ist so viele Punkte je getöteter Entity-ID wert, der Seite des Tötenden gutgeschrieben; `death` ist so viele Punkte wert, wann immer ein Mitglied einer Seite stirbt, und darf negativ sein. Mit `teamTotals` landen die Punkte auf einer Zeile mit dem Namen des Teams, und genau das lässt die Sidebar vier Seiten zeigen statt einer Zeile je Mob. `individuals` fügt zusätzlich eine Zeile je Mitglied hinzu und ist standardmäßig aus, weil eine Zeile je Mob-UUID wie Rauschen wirkt.
 
@@ -5291,22 +5325,22 @@ Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner nach Hause und 
 
 *raids*
 
-| Einstellung     | Typ                  | Standard        | Was sie macht                                                                                                                                                                         |
-| --------------- | -------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `omen`          | Effektname           | keiner, Pflicht | Der Effekt, der den Raid startet, wenn sein Träger in einem Dorf ist. Jeder registrierte Effekt ist möglich, auch ein eigener Trank eines Packs                                       |
-| `name`          | Text                 | `Raid`          | Der Titel der Bossleiste                                                                                                                                                              |
-| `color`         | Text                 | `red`           | Die Farbe der Leiste: `pink`, `blue`, `red`, `green`, `yellow`, `purple` oder `white`                                                                                                 |
-| `waves`         | Liste von Wellen     | keine, Pflicht  | Jede Welle ist eine Liste von Gruppen, und die Wellen kommen der Reihe nach                                                                                                           |
-| `waveDelay`     | int                  | `300`           | Ticks vor der ersten Welle und zwischen dem Ende einer Welle und der nächsten                                                                                                         |
-| `spawnDistance` | int                  | `32`            | Wie weit von der Dorfmitte eine Welle eintrifft. Zuerst wird das Doppelte versucht, dann dieser Wert, dann innerhalb des Dorfs                                                        |
-| `reach`         | int                  | `96`            | Spieler innerhalb so vieler Blöcke um die Mitte sehen die Leiste, und die Abschlussfunktion läuft als sie. Ein Angreifer, der sich sechzehn Blöcke weiter entfernt, verlässt den Raid |
-| `timeout`       | int                  | `48000`         | Ticks, nach denen ein unfertiger Raid ohne Ausgang endet. `0` beendet ihn nie                                                                                                         |
-| `sound`         | Geräuschname         | keiner          | Wird jedem Spieler in Reichweite von der Seite vorgespielt, aus der die Welle kommt, sobald sie eintrifft                                                                             |
-| `wins`          | Funktion             | keine           | Läuft als jeder Spieler in Reichweite, wenn der Raid gewonnen ist                                                                                                                     |
-| `loses`         | Funktion             | keine           | Läuft als jeder Spieler in Reichweite, wenn der Raid verloren ist                                                                                                                     |
-| `points`        | int | `0`            | Punkte, die jedem Spieler in Reichweite gutgeschrieben werden, wenn der Raid gewonnen ist, in jedem Ziel, bei dem `points.raid` eingeschaltet ist. Eine Niederlage zahlt nichts |
-| `loot`          | Beutetabelle | keine | Eine Beutetabelle, die für jeden Spieler in Reichweite einmal gewürfelt wird, wenn der Raid gewonnen ist. Die Gegenstände landen im Inventar oder fallen vor seine Füße, wenn es voll ist |
-| `bell`          | Blockname oder Liste | keiner          | Andere Blöcke, die als Glocke läuten, wenn ein Spieler sie benutzt und immer wenn eine Welle eintrifft. Ein Block vom Typ `bell` läutet, ohne genannt zu sein                         |
+| Einstellung     | Typ                  | Standard        | Was sie macht                                                                                                                                                                             |
+| --------------- | -------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `omen`          | Effektname           | keiner, Pflicht | Der Effekt, der den Raid startet, wenn sein Träger in einem Dorf ist. Jeder registrierte Effekt ist möglich, auch ein eigener Trank eines Packs                                           |
+| `name`          | Text                 | `Raid`          | Der Titel der Bossleiste                                                                                                                                                                  |
+| `color`         | Text                 | `red`           | Die Farbe der Leiste: `pink`, `blue`, `red`, `green`, `yellow`, `purple` oder `white`                                                                                                     |
+| `waves`         | Liste von Wellen     | keine, Pflicht  | Jede Welle ist eine Liste von Gruppen, und die Wellen kommen der Reihe nach                                                                                                               |
+| `waveDelay`     | int                  | `300`           | Ticks vor der ersten Welle und zwischen dem Ende einer Welle und der nächsten                                                                                                             |
+| `spawnDistance` | int                  | `32`            | Wie weit von der Dorfmitte eine Welle eintrifft. Zuerst wird das Doppelte versucht, dann dieser Wert, dann innerhalb des Dorfs                                                            |
+| `reach`         | int                  | `96`            | Spieler innerhalb so vieler Blöcke um die Mitte sehen die Leiste, und die Abschlussfunktion läuft als sie. Ein Angreifer, der sich sechzehn Blöcke weiter entfernt, verlässt den Raid     |
+| `timeout`       | int                  | `48000`         | Ticks, nach denen ein unfertiger Raid ohne Ausgang endet. `0` beendet ihn nie                                                                                                             |
+| `sound`         | Geräuschname         | keiner          | Wird jedem Spieler in Reichweite von der Seite vorgespielt, aus der die Welle kommt, sobald sie eintrifft                                                                                 |
+| `wins`          | Funktion             | keine           | Läuft als jeder Spieler in Reichweite, wenn der Raid gewonnen ist                                                                                                                         |
+| `loses`         | Funktion             | keine           | Läuft als jeder Spieler in Reichweite, wenn der Raid verloren ist                                                                                                                         |
+| `points`        | int                  | `0`             | Punkte, die jedem Spieler in Reichweite gutgeschrieben werden, wenn der Raid gewonnen ist, in jedem Ziel, bei dem `points.raid` eingeschaltet ist. Eine Niederlage zahlt nichts           |
+| `loot`          | Beutetabelle         | keine           | Eine Beutetabelle, die für jeden Spieler in Reichweite einmal gewürfelt wird, wenn der Raid gewonnen ist. Die Gegenstände landen im Inventar oder fallen vor seine Füße, wenn es voll ist |
+| `bell`          | Blockname oder Liste | keiner          | Andere Blöcke, die als Glocke läuten, wenn ein Spieler sie benutzt und immer wenn eine Welle eintrifft. Ein Block vom Typ `bell` läutet, ohne genannt zu sein                             |
 
 ### Eine Gruppe
 
@@ -5388,7 +5422,7 @@ Die dritte begrüßt einen Spieler beim ersten Betreten mit einer Karte in der B
 | `death`           | nichts               | Ein Spieler stirbt                                                                                                                                                                                                                                                                     |
 | `y_level`         | `below` oder `above` | Ein Spieler unter oder über diese Höhe kommt                                                                                                                                                                                                                                           |
 | `play_time`       | `minutes`            | Die Spielzeit eines Spielers in der Welt so viele Minuten erreicht, gezählt ab dem Schließen des Welt-Intros, oder ab dem Beitritt, wenn ihm kein Intro gezeigt wird                                                                                                                   |
-| `roll`            | nichts oder `roll` | Ein Spieler würfelt mit `/rdplserver game` oder mit einem Gegenstand mit `rolls`. Mit `roll` löst nur dieser Wurf aus, und `atLeast` und `atMost` begrenzen die Summe |
+| `roll`            | nichts oder `roll`   | Ein Spieler würfelt mit `/rdplserver game` oder mit einem Gegenstand mit `rolls`. Mit `roll` löst nur dieser Wurf aus, und `atLeast` und `atMost` begrenzen die Summe                                                                                                                  |
 | `score`           | `objective`          | Der Punktestand eines Spielers in diesem Ziel `score` erreicht                                                                                                                                                                                                                         |
 
 Biom, Struktur, Höhe, Spielzeit und Punktestand werden einmal pro Sekunde für jeden Spieler geprüft und lösen beim Wechsel von draußen nach drinnen aus, nie bei der ersten Prüfung nach dem Beitritt. Eine `time_of_day`- oder `day`-Regel, deren Publikum nicht `player` ist, löst einmal für die Dimension aus statt einmal für jeden Spieler darin.
@@ -5414,8 +5448,8 @@ Eine Karte, die auslöst, während ein Spieler das Welt-Intro noch offen hat, wa
 | `time`               | int                                      | `0`             | Für `time_of_day`: der Tick des Tages                                                                                                                                                                                                                                                                            |
 | `day`                | int                                      | keiner          | Für `day`: der eine Tag, an dem sie auslöst. Ohne ihn an jedem Tag                                                                                                                                                                                                                                               |
 | `minutes`            | int                                      | keine           | Für `play_time`                                                                                                                                                                                                                                                                                                  |
-| `roll`               | Text                               | keiner         | Für `roll`: `coin`, eine Schreibweise wie `2d6` (`d6` und `1d6` sind gleich) oder der Name eines Würfels oder Decks aus einem Pack. Ohne Angabe löst jeder Wurf die Regel aus |
-| `atLeast`, `atMost`  | int                                | keiner         | Für `roll`: die kleinste und die größte Summe, die die Regel auslöst. Eine Münze zählt 1 für Kopf und 0 für Zahl, ein Würfel oder Deck aus einem Pack die Stelle des Ergebnisses in seiner Datei ab 1 |
+| `roll`               | Text                                     | keiner          | Für `roll`: `coin`, eine Schreibweise wie `2d6` (`d6` und `1d6` sind gleich) oder der Name eines Würfels oder Decks aus einem Pack. Ohne Angabe löst jeder Wurf die Regel aus                                                                                                                                    |
+| `atLeast`, `atMost`  | int                                      | keiner          | Für `roll`: die kleinste und die größte Summe, die die Regel auslöst. Eine Münze zählt 1 für Kopf und 0 für Zahl, ein Würfel oder Deck aus einem Pack die Stelle des Ergebnisses in seiner Datei ab 1                                                                                                            |
 | `objective`, `score` | Text, int                                | keines, `1`     | Für `score`: das Ziel und der Wert, der erreicht werden muss                                                                                                                                                                                                                                                     |
 | `requires`           | Liste von Mod-IDs oder Pack-Namensräumen | keine           | Die Datei wird übersprungen, solange nicht alle vorhanden sind                                                                                                                                                                                                                                                   |
 
@@ -6855,6 +6889,7 @@ Blöcke, Items, Flüssigkeiten und alles andere, was Packs definieren. Nur Confi
 | `vanillaClients`    | boolean        | `false`  | Reine Vanilla-Clients bedienen: nichts aus einem Pack wird registriert, keine Blöcke, Items, Flüssigkeiten oder Kreativ-Tabs, und keine Expositionen werden geladen, sodass ein Client ohne den Mod beitreten kann. Alles, was nur auf dem Server lebt, gilt weiterhin. Braucht einen Neustart |
 | `sounds`            | boolean        | `true`   | Die in sounds/*.json genannten Sound-Events registrieren, damit Packs eigenes Audio mitbringen können                                                                                                                                                                                          |
 | `fuels`             | boolean        | `true`   | fuels/*.json-Dateien anwenden, die Items eine Brenndauer im Ofen geben                                                                                                                                                                                                                         |
+| `tooltips`          | boolean        | `true`   | Die Dateien tooltips/*.json anwenden, die Items und Blöcken Tooltip-Zeilen und einer Verzauberung eine Beschreibung unter ihrem Namen hinzufügen                                                                                                                                               |
 | `potions`           | boolean        | `true`   | Die Trankeffekte und Trankarten registrieren, die potions/*.json und potion_types/*.json in Packs beschreiben. Braucht einen Neustart                                                                                                                                                          |
 | `brewing`           | boolean        | `true`   | brewing/*.json-Dateien anwenden, die Braustand-Rezepte hinzufügen                                                                                                                                                                                                                              |
 | `villagers`         | boolean        | `true`   | Die Dorfbewohner-Berufe registrieren, die villagers/*.json beschreibt, und die Handelsangebote in trades/*.json anwenden. Braucht einen Neustart                                                                                                                                               |

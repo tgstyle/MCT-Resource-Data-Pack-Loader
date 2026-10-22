@@ -152,6 +152,9 @@ data 文件夹里存放的其他一切。它们属于服务端，所以在专用
 右槽的物品，以及铁砧在指定等级下提供的附魔或结果。取出成果
 可以获得一项进度，物品也可以在获得这项进度之前一直无法使用。
 
+tooltips 里的文件会为物品和方块添加灰色的提示行，并在附魔名称下方
+添加一段说明。
+
 hardness 文件为一组方块设定挖掘时间和爆炸抗性，exposures 文件
 则定义辐射之类的危险：它作用于靠近指定方块、携带指定物品或
 处于指定维度的玩家，分为若干等级，每级施加效果和伤害，
@@ -201,6 +204,7 @@ hardness 文件为一组方块设定挖掘时间和爆炸抗性，exposures 文�
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 方块有以下几种形态，由“type”字段决定：
 

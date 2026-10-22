@@ -55,6 +55,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 **Crafting, loot and trade**
 - [Disabled blocks and items](#disabled-blocks-and-items)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
+- [Tooltips](#tooltips)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
 - [Block drops](#block-drops)
@@ -171,6 +172,7 @@ Under `data/`:
 | `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                        |
 | `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                          |
 | `<namespace>/furnace/*.json`                 | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                           |
+| `<namespace>/tooltips/*.json`                | Extra tooltip lines. [Tooltips](#tooltips)                                                                                           |
 | `<namespace>/fuels/*.json`                   | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                  |
 | `<namespace>/brewing/*.json`                 | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                        |
 | `<namespace>/potions/*.json`                 | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                               |
@@ -1357,7 +1359,7 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 | `crop`         | seed          | block name                           | none                   | The crop it plants                                                                                                                                                                                                                    |
 | `soil`         | seed          | block name                           | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                                                             |
 | `rolls`        | no            | `coin`, `d6`, `2d6+1`, a die or deck | none                   | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks)                                                                                     |
-| `rollStore`    | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line |
+| `rollStore`    | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line                                         |
 | `passesTurn`   | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                                                           |
 | `requires`     | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                                                                                            |
 
@@ -1880,6 +1882,38 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `item`     | one of the two | item name  | none    | The item that burns          |
 | `tag`      | one of the two | tag id     | none    | Everything in that tag burns |
 | `burnTime` | yes            | int, ticks | `0`     | Coal is 1600, a plank 300    |
+
+## Tooltips
+
+*items, blocks and enchantments*
+
+`<namespace>/tooltips/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Each line is a lang key when the loaded language files have that key, and plain text otherwise. Item lines are added last, in gray; an enchantment's lines sit right under its name, on an enchanted book or an enchanted item alike. `content.tooltips` in the config turns the folder off.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Key            | Required | Value           | Default | What it does                            |
+| -------------- | -------- | --------------- | ------- | --------------------------------------- |
+| `items`        | no       | list of objects | none    | Lines added to items and blocks         |
+| `enchantments` | no       | list of objects | none    | Lines added under an enchantment's name |
+
+An entry in `items` or `enchantments` takes these keys.
+
+| Key           | Required | Value            | Default | What it does                            |
+| ------------- | -------- | ---------------- | ------- | --------------------------------------- |
+| `item`        | yes      | item name        | none    | The item, or the item of a block        |
+| `enchantment` | yes      | enchantment name | none    | The enchantment that gets the lines     |
+| `lines`       | yes      | list of text     | none    | Lang keys or plain text, shown in order |
 
 ## Potions, potion types and brewing
 
@@ -5116,12 +5150,12 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 
 *scoring*
 
-| Setting          | Type   | Default | What it does                                                                                                                      |
-| ---------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | object | empty   | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill                                       |
-| `points.death`   | int    | `0`     | Points whenever a member dies, however it died. May be negative                                                                   |
+| Setting          | Type    | Default | What it does                                                                                                                                          |
+| ---------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | object  | empty   | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill                                                           |
+| `points.death`   | int     | `0`     | Points whenever a member dies, however it died. May be negative                                                                                       |
 | `points.raid`    | boolean | `false` | Takes the `points` of every [raid](#raids) won: each player in reach is credited that many, on their side's row and, with `individuals`, on their own |
-| `points.ownKill` | int    | `0`     | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty |
+| `points.ownKill` | int     | `0`     | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty                     |
 
 `points` is what this mod adds on top of what the game counts, fed into the same objective so `/scoreboard` still reads it. `kill` is worth so many points per entity id killed, credited to the killer's side; `death` is worth so many whenever a member of a side dies, and may be negative. With `teamTotals` the points land on a row named after the team, which is what lets the sidebar show four sides rather than a row for every mob. `individuals` adds a row per member as well, and is off by default because a row per mob UUID reads as noise.
 
@@ -5304,8 +5338,8 @@ While a wave is on the village, its villagers run home and stay there, as they d
 | `sound`         | sound name         | none           | Played to every player in reach, from the side the wave comes from, as each wave arrives                                                                     |
 | `wins`          | function           | none           | Runs as every player in reach when the raid is won                                                                                                           |
 | `loses`         | function           | none           | Runs as every player in reach when the raid is lost                                                                                                          |
-| `points`        | int                | `0`            | Points every player in reach is credited when the raid is won, in each objective that has `points.raid` on. A loss pays nothing |
-| `loot`          | loot table         | none           | A loot table rolled once for each player in reach when the raid is won. The items go into their inventory, or drop at their feet when it is full |
+| `points`        | int                | `0`            | Points every player in reach is credited when the raid is won, in each objective that has `points.raid` on. A loss pays nothing                              |
+| `loot`          | loot table         | none           | A loot table rolled once for each player in reach when the raid is won. The items go into their inventory, or drop at their feet when it is full             |
 | `bell`          | block name or list | none           | Other blocks that ring as a bell, when a player uses them and whenever a wave arrives. A block of type `bell` rings without being named                      |
 
 ### A group
@@ -5388,7 +5422,7 @@ The third greets a player on the first join with a center card that has no panel
 | `death`           | nothing            | A player dies                                                                                                                                                                                                                                                |
 | `y_level`         | `below` or `above` | A player goes below or above that height                                                                                                                                                                                                                     |
 | `play_time`       | `minutes`          | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
-| `roll`            | nothing, or `roll` | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total |
+| `roll`            | nothing, or `roll` | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
 | `score`           | `objective`        | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
 
 Biome, structure, height, play time and score are checked once a second for each player, and fire on the change from outside to inside, never on the first check after a join. A `time_of_day` or `day` rule whose audience is not `player` fires once for the dimension instead of once for each player in it.
@@ -5414,8 +5448,8 @@ A card that fires while a player still has the world intro open waits and shows 
 | `time`               | int                                | `0`            | For `time_of_day`: the tick of the day                                                                                                                                                                                                                                                  |
 | `day`                | int                                | none           | For `day`: the one day to fire on. Without it, every day                                                                                                                                                                                                                                |
 | `minutes`            | int                                | none           | For `play_time`                                                                                                                                                                                                                                                                         |
-| `roll`               | text                               | none           | For `roll`: `coin`, a notation such as `2d6` (`d6` and `1d6` are the same), or the name of a pack die or deck. Without it, every roll fires the rule |
-| `atLeast`, `atMost`  | int                                | none           | For `roll`: the lowest and the highest total that fires the rule. A coin counts 1 for heads and 0 for tails, a pack die or deck the place of the result in its file, from 1 |
+| `roll`               | text                               | none           | For `roll`: `coin`, a notation such as `2d6` (`d6` and `1d6` are the same), or the name of a pack die or deck. Without it, every roll fires the rule                                                                                                                                    |
+| `atLeast`, `atMost`  | int                                | none           | For `roll`: the lowest and the highest total that fires the rule. A coin counts 1 for heads and 0 for tails, a pack die or deck the place of the result in its file, from 1                                                                                                             |
 | `objective`, `score` | text, int                          | none, `1`      | For `score`: the objective and the value to reach                                                                                                                                                                                                                                       |
 | `requires`           | list of mod ids or pack namespaces | none           | The file is skipped unless all are present                                                                                                                                                                                                                                              |
 
@@ -6855,6 +6889,7 @@ Blocks, items, fluids and everything else packs define. Config only.
 | `vanillaClients`    | boolean       | `false` | Serve plain vanilla clients: nothing from any pack is registered, no blocks, items, fluids or creative tabs, and no exposures load, so a client without the mod can join. Everything that lives on the server alone still applies. Requires a restart |
 | `sounds`            | boolean       | `true`  | Register the sound events named by sounds/*.json, so packs can ship their own audio                                                                                                                                                                   |
 | `fuels`             | boolean       | `true`  | Apply fuels/*.json files, which give items a furnace burn time                                                                                                                                                                                        |
+| `tooltips`          | boolean       | `true`  | Apply tooltips/*.json files, which add tooltip lines to items and blocks and a description under an enchantment's name                                                                                                                                |
 | `potions`           | boolean       | `true`  | Register the potion effects and potion types described by potions/*.json and potion_types/*.json in packs. Requires a restart                                                                                                                         |
 | `brewing`           | boolean       | `true`  | Apply brewing/*.json files, which add brewing stand recipes                                                                                                                                                                                           |
 | `villagers`         | boolean       | `true`  | Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart                                                                                                                             |

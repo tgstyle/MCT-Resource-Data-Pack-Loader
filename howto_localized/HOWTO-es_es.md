@@ -55,6 +55,7 @@ Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres le
 **Fabricación, botín y comercio**
 - [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)
 - [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)
+- [Descripciones emergentes](#descripciones-emergentes)
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
 - [Drops de bloques](#drops-de-bloques)
@@ -171,6 +172,7 @@ Bajo `data/`:
 | `<namespace>/recipe_removals/*.json`         | Recetas eliminadas por nombre, espacio de nombres o resultado. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                               |
 | `<namespace>/disabled/*.json`                | Bloques e ítems retirados del juego. [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)                                                               |
 | `<namespace>/furnace/*.json`                 | Recetas de horno añadidas y eliminadas. [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)                                                      |
+| `<namespace>/tooltips/*.json`                | Líneas extra de descripción emergente. [Descripciones emergentes](#descripciones-emergentes)                                                                     |
 | `<namespace>/fuels/*.json`                   | Tiempos de combustión. [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)                                                                       |
 | `<namespace>/brewing/*.json`                 | Recetas del soporte para pociones. [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)                                            |
 | `<namespace>/potions/*.json`                 | Efectos de poción. [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)                                                            |
@@ -1357,7 +1359,7 @@ Un `potion_bottle` enumera lo que puede contener con `potionTypes`, una lista de
 | `crop`         | seed          | nombre de bloque                                    | ninguno                               | El cultivo que planta                                                                                                                                                                                                                              |
 | `soil`         | seed          | nombre de bloque                                    | `minecraft:farmland`                  | Sobre qué se puede plantar                                                                                                                                                                                                                         |
 | `rolls`        | no            | `coin`, `d6`, `2d6+1`, un dado o un mazo            | ninguno                               | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos)                                                                                |
-| `rollStore`    | no            | nombre de un objetivo                | ninguno                | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat |
+| `rollStore`    | no            | nombre de un objetivo                               | ninguno                               | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat                               |
 | `passesTurn`   | no            | booleano                                            | `false`                               | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                                                                               |
 | `requires`     | no            | lista de ids de mods o espacios de nombres de packs | ninguno                               | El archivo se omite a menos que estén todos presentes                                                                                                                                                                                              |
 
@@ -1880,6 +1882,38 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 | `item`     | uno de los dos | nombre de ítem | ninguno     | El ítem que arde                     |
 | `tag`      | uno de los dos | id de etiqueta | ninguno     | Todo lo que hay en esa etiqueta arde |
 | `burnTime` | sí             | entero, ticks  | `0`         | El carbón son 1600, un tablón 300    |
+
+## Descripciones emergentes
+
+*ítems, bloques y encantamientos*
+
+`<namespace>/tooltips/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Cada línea es una clave de idioma si los archivos de idioma cargados la tienen, y texto plano si no. Las líneas de un ítem se añaden al final, en gris; las de un encantamiento van justo debajo de su nombre, tanto en un libro encantado como en un ítem encantado. `content.tooltips` en la configuración desactiva la carpeta.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Clave          | Obligatorio | Valor            | Por defecto | Qué hace                                           |
+| -------------- | ----------- | ---------------- | ----------- | -------------------------------------------------- |
+| `items`        | no          | lista de objetos | ninguno     | Líneas añadidas a ítems y bloques                  |
+| `enchantments` | no          | lista de objetos | ninguno     | Líneas añadidas bajo el nombre de un encantamiento |
+
+Una entrada de `items` o `enchantments` admite estas claves.
+
+| Clave         | Obligatorio | Valor                   | Por defecto | Qué hace                                 |
+| ------------- | ----------- | ----------------------- | ----------- | ---------------------------------------- |
+| `item`        | sí          | nombre de ítem          | ninguno     | El ítem, o el ítem de un bloque          |
+| `enchantment` | sí          | nombre de encantamiento | ninguno     | El encantamiento que recibe las líneas   |
+| `lines`       | sí          | lista de textos         | ninguno     | Claves de idioma o texto plano, en orden |
 
 ## Pociones, tipos de poción y elaboración
 
@@ -5116,12 +5150,12 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 
 *puntuación*
 
-| Ajuste           | Tipo   | Por defecto | Qué hace                                                                                                                                                          |
-| ---------------- | ------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | objeto | vacío       | Id de entidad a puntos, que se acreditan al bando del autor de la muerte. `minecraft:player` puntúa la muerte de un jugador                                       |
-| `points.death`   | entero | `0`         | Puntos cada vez que muere un miembro, muera como muera. Pueden ser negativos                                                                                      |
-| `points.raid`    | booleano | `false` | Recoge los `points` de cada [asalto](#asaltos) ganado: cada jugador al alcance recibe esa cantidad en la fila de su bando y, con `individuals`, también en la suya |
-| `points.ownKill` | entero | `0`         | Puntos por una muerte causada a un miembro del propio bando del autor, en lugar del valor de `kill`. Con 0 no puntúa nada; un número negativo es una penalización |
+| Ajuste           | Tipo     | Por defecto | Qué hace                                                                                                                                                           |
+| ---------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `points.kill`    | objeto   | vacío       | Id de entidad a puntos, que se acreditan al bando del autor de la muerte. `minecraft:player` puntúa la muerte de un jugador                                        |
+| `points.death`   | entero   | `0`         | Puntos cada vez que muere un miembro, muera como muera. Pueden ser negativos                                                                                       |
+| `points.raid`    | booleano | `false`     | Recoge los `points` de cada [asalto](#asaltos) ganado: cada jugador al alcance recibe esa cantidad en la fila de su bando y, con `individuals`, también en la suya |
+| `points.ownKill` | entero   | `0`         | Puntos por una muerte causada a un miembro del propio bando del autor, en lugar del valor de `kill`. Con 0 no puntúa nada; un número negativo es una penalización  |
 
 `points` es lo que este mod suma a lo que cuenta el juego, y se vuelca en el mismo objetivo para que `/scoreboard` lo siga leyendo. `kill` vale tantos puntos por cada id de entidad abatida, acreditados al bando del autor; `death` vale tantos cada vez que muere un miembro de un bando, y puede ser negativo. Con `teamTotals` los puntos van a una fila con el nombre del equipo, lo que permite que la barra lateral muestre cuatro bandos en lugar de una fila por cada mob. `individuals` añade además una fila por miembro, y está desactivado por defecto porque una fila por cada UUID de mob solo hace ruido.
 
@@ -5304,8 +5338,8 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a casa y se quedan
 | `sound`         | nombre de sonido         | ninguno              | Se reproduce a cada jugador al alcance, desde el lado por el que llega la oleada, cada vez que llega una oleada                                                                              |
 | `wins`          | función                  | ninguno              | Se ejecuta como cada jugador al alcance cuando se gana el asalto                                                                                                                             |
 | `loses`         | función                  | ninguno              | Se ejecuta como cada jugador al alcance cuando se pierde el asalto                                                                                                                           |
-| `points`        | entero | `0`            | Puntos que se acreditan a cada jugador al alcance cuando se gana el asalto, en cada objetivo que tenga activado `points.raid`. Una derrota no paga nada |
-| `loot`          | tabla de botín | ninguno | Una tabla de botín que se sortea una vez por cada jugador al alcance cuando se gana el asalto. Los objetos van a su inventario, o caen a sus pies si está lleno |
+| `points`        | entero                   | `0`                  | Puntos que se acreditan a cada jugador al alcance cuando se gana el asalto, en cada objetivo que tenga activado `points.raid`. Una derrota no paga nada                                      |
+| `loot`          | tabla de botín           | ninguno              | Una tabla de botín que se sortea una vez por cada jugador al alcance cuando se gana el asalto. Los objetos van a su inventario, o caen a sus pies si está lleno                              |
 | `bell`          | nombre de bloque o lista | ninguno              | Otros bloques que suenan como una campana, cuando un jugador los usa y cada vez que llega una oleada. Un bloque de tipo `bell` suena sin necesidad de nombrarlo                              |
 
 ### Un grupo
@@ -5388,7 +5422,7 @@ El tercero saluda a un jugador la primera vez que entra con una tarjeta central 
 | `death`           | nada              | Un jugador muere                                                                                                                                                                                                                                                                        |
 | `y_level`         | `below` o `above` | Un jugador baja de esa altura o la supera                                                                                                                                                                                                                                               |
 | `play_time`       | `minutes`         | El tiempo de un jugador en el mundo alcanza esa cantidad de minutos, contados desde que se cierra la introducción del mundo, o desde que entra cuando no se le muestra introducción                                                                                                     |
-| `roll`            | nada, o `roll`     | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total |
+| `roll`            | nada, o `roll`    | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total                                                                                                                                      |
 | `score`           | `objective`       | La puntuación de un jugador en ese objetivo alcanza `score`                                                                                                                                                                                                                             |
 
 Bioma, estructura, altura, tiempo de juego y puntuación se comprueban una vez por segundo para cada jugador, y se activan en el cambio de fuera a dentro, nunca en la primera comprobación tras entrar. Una regla `time_of_day` o `day` cuya audiencia no sea `player` se activa una vez para la dimensión en lugar de una vez por cada jugador en ella.
@@ -5414,8 +5448,8 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 | `time`               | entero                                            | `0`                  | Para `time_of_day`: el tick del día                                                                                                                                                                                                                                                                                       |
 | `day`                | entero                                            | ninguno              | Para `day`: el único día en el que se activa. Sin él, todos los días                                                                                                                                                                                                                                                      |
 | `minutes`            | entero                                            | ninguno              | Para `play_time`                                                                                                                                                                                                                                                                                                          |
-| `roll`               | texto                              | ninguno        | Para `roll`: `coin`, una notación como `2d6` (`d6` y `1d6` son lo mismo) o el nombre de un dado o un mazo de un pack. Sin ella, toda tirada activa la regla |
-| `atLeast`, `atMost`  | entero                             | ninguno        | Para `roll`: el total más bajo y el más alto que activa la regla. Una moneda cuenta 1 por cara y 0 por cruz; un dado o un mazo de un pack, la posición del resultado en su archivo, desde 1 |
+| `roll`               | texto                                             | ninguno              | Para `roll`: `coin`, una notación como `2d6` (`d6` y `1d6` son lo mismo) o el nombre de un dado o un mazo de un pack. Sin ella, toda tirada activa la regla                                                                                                                                                               |
+| `atLeast`, `atMost`  | entero                                            | ninguno              | Para `roll`: el total más bajo y el más alto que activa la regla. Una moneda cuenta 1 por cara y 0 por cruz; un dado o un mazo de un pack, la posición del resultado en su archivo, desde 1                                                                                                                               |
 | `objective`, `score` | texto, entero                                     | ninguno, `1`         | Para `score`: el objetivo y el valor que hay que alcanzar                                                                                                                                                                                                                                                                 |
 | `requires`           | lista de ids de mod o espacios de nombres de pack | ninguno              | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                                     |
 
@@ -6855,6 +6889,7 @@ Bloques, ítems, fluidos y todo lo demás que definen los packs. Solo configurac
 | `vanillaClients`    | booleano        | `false`     | Atiende a clientes vanilla sin modificar: no se registra nada de ningún pack, ni bloques, ítems, fluidos o pestañas creativas, y no se carga ninguna exposición, de modo que un cliente sin el mod puede unirse. Todo lo que vive solo en el servidor sigue aplicándose. Requiere reiniciar |
 | `sounds`            | booleano        | `true`      | Registra los eventos de sonido nombrados en sounds/*.json, para que los packs puedan incluir su propio audio                                                                                                                                                                                |
 | `fuels`             | booleano        | `true`      | Aplica los archivos fuels/*.json, que dan a los ítems un tiempo de combustión en el horno                                                                                                                                                                                                   |
+| `tooltips`          | booleano        | `true`      | Aplica los archivos tooltips/*.json, que añaden líneas de descripción a ítems y bloques y una descripción bajo el nombre de un encantamiento                                                                                                                                                |
 | `potions`           | booleano        | `true`      | Registra los efectos de poción y los tipos de poción descritos en potions/*.json y potion_types/*.json de los packs. Requiere reiniciar                                                                                                                                                     |
 | `brewing`           | booleano        | `true`      | Aplica los archivos brewing/*.json, que añaden recetas del soporte para pociones                                                                                                                                                                                                            |
 | `villagers`         | booleano        | `true`      | Registra las profesiones de aldeano descritas en villagers/*.json y aplica los intercambios de trades/*.json. Requiere reiniciar                                                                                                                                                            |

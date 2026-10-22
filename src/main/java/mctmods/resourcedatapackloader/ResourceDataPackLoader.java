@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.client.CenterCard;
 import mctmods.resourcedatapackloader.client.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.PackTooltips;
 import mctmods.resourcedatapackloader.client.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.render.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
@@ -373,6 +374,7 @@ import java.util.Set;
             NeoForge.EVENT_BUS.addListener(HoldView::onFog);
             NeoForge.EVENT_BUS.addListener(HoldView::onHud);
             NeoForge.EVENT_BUS.addListener(ProspectTooltip::onTooltip);
+            NeoForge.EVENT_BUS.addListener(PackTooltips::onTooltip);
             NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> HoldView.tick());
             NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, _ -> {
                 HoldView.reset();

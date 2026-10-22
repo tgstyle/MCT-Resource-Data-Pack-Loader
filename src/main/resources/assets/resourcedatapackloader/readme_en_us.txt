@@ -157,6 +157,9 @@ goes with it in the right slot, and the enchantments or result the anvil offers
 for the levels named. Taking it out can earn an advancement, and the item can
 stay unusable until that advancement is earned.
 
+A file in tooltips adds gray tooltip lines to items and blocks, and puts a
+description under the name of an enchantment.
+
 A hardness file sets mining time and blast resistance for a group of blocks, and
 an exposures file defines a hazard such as radiation: it affects players near
 named blocks, carrying named items or in named dimensions, in levels that each
@@ -207,6 +210,7 @@ Each of these is a folder under data/<yourpack>:
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 Blocks come in these shapes, set by the "type" field:
 

@@ -162,6 +162,9 @@ item que o acompanha no espaço da direita e os encantamentos ou o resultado que
 a bigorna oferece pelos níveis indicados. Retirá-lo pode render uma conquista, e
 o item pode ficar inutilizável até que essa conquista seja obtida.
 
+Um arquivo em tooltips adiciona linhas cinzas de dica a itens e blocos e uma
+descrição sob o nome de um encantamento.
+
 Um arquivo hardness define o tempo de mineração e a resistência a explosões de
 um grupo de blocos, e um arquivo exposures define um perigo como radiação: ele
 atinge jogadores perto de blocos nomeados, carregando itens nomeados ou em
@@ -212,6 +215,7 @@ Cada um destes é uma pasta em data/<yourpack>:
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 Os blocos vêm nestas formas, definidas pelo campo "type":
 

@@ -55,6 +55,7 @@ Este guia é para a versão 26.x, que abrange a 26.1.2, a 26.2 e a 26.3; as trê
 **Criação, saque e comércio**
 - [Blocos e itens desativados](#blocos-e-itens-desativados)
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
+- [Dicas de ferramenta](#dicas-de-ferramenta)
 - [Poções, tipos de poção e fermentação](#poções-tipos-de-poção-e-fermentação)
 - [Trabalho na bigorna](#trabalho-na-bigorna)
 - [Drops de blocos](#drops-de-blocos)
@@ -171,6 +172,7 @@ Em `data/`:
 | `<namespace>/recipe_removals/*.json`         | Receitas removidas por nome, namespace ou resultado. [O que você pode substituir](#o-que-você-pode-substituir)                                           |
 | `<namespace>/disabled/*.json`                | Blocos e itens tirados de jogo. [Blocos e itens desativados](#blocos-e-itens-desativados)                                                                |
 | `<namespace>/furnace/*.json`                 | Receitas de fornalha adicionadas e removidas. [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)                                |
+| `<namespace>/tooltips/*.json`                | Linhas extras de dica de ferramenta. [Dicas de ferramenta](#dicas-de-ferramenta)                                                                         |
 | `<namespace>/fuels/*.json`                   | Tempos de queima. [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)                                                            |
 | `<namespace>/brewing/*.json`                 | Receitas do suporte de poções. [Poções, tipos de poção e fermentação](#poções-tipos-de-poção-e-fermentação)                                              |
 | `<namespace>/potions/*.json`                 | Efeitos de poções. [Poções, tipos de poção e fermentação](#poções-tipos-de-poção-e-fermentação)                                                          |
@@ -1357,7 +1359,7 @@ Um `potion_bottle` lista o que pode conter com `potionTypes`, uma lista de nomes
 | `crop`         | seed          | nome de bloco                                 | nenhum                          | A plantação que ele planta                                                                                                                                                                                                                           |
 | `soil`         | seed          | nome de bloco                                 | `minecraft:farmland`            | Onde pode ser plantado                                                                                                                                                                                                                               |
 | `rolls`        | não           | `coin`, `d6`, `2d6+1`, um dado ou um baralho  | nenhum                          | Num item simples, um clique direito rola como `/rdplserver game` faria e conta ao público padrão do pacote. Veja [Dados e baralhos](#dados-e-baralhos)                                                                                               |
-| `rollStore`    | não           | nome de um objetivo                  | nenhum                 | Para um item com `rolls`, o objetivo do placar que recebe o total da rolagem como pontuação de quem o segura a cada uso. Um objetivo que não existe faz a rolagem ser recusada com uma linha no chat |
+| `rollStore`    | não           | nome de um objetivo                           | nenhum                          | Para um item com `rolls`, o objetivo do placar que recebe o total da rolagem como pontuação de quem o segura a cada uso. Um objetivo que não existe faz a rolagem ser recusada com uma linha no chat                                                 |
 | `passesTurn`   | não           | booleano                                      | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Veja [Turnos](#turnos)                                                                                                                           |
 | `requires`     | não           | lista de ids de mods ou namespaces de pacotes | nenhum                          | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                             |
 
@@ -1880,6 +1882,38 @@ O nome do arquivo é de sua escolha, só a pasta é lida, e vários arquivos se 
 | `item`     | um dos dois | nome de item | nenhum | O item que queima                |
 | `tag`      | um dos dois | id de tag    | nenhum | Tudo o que está nessa tag queima |
 | `burnTime` | sim         | int, ticks   | `0`    | O carvão é 1600, uma tábua 300   |
+
+## Dicas de ferramenta
+
+*itens, blocos e encantamentos*
+
+`<namespace>/tooltips/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam. Cada linha é uma chave de idioma quando os arquivos de idioma carregados a têm, e texto simples caso contrário. As linhas de um item entram por último, em cinza; as de um encantamento ficam logo abaixo do nome, tanto em um livro encantado quanto em um item encantado. `content.tooltips` na configuração desliga a pasta.
+
+```json
+{
+  "items": [
+    { "item": "mypack:ruby", "lines": ["tooltip.mypack.ruby", "Found deep underground."] }
+  ],
+  "enchantments": [
+    { "enchantment": "minecraft:sharpness", "lines": ["Extra damage to every mob."] }
+  ]
+}
+```
+
+| Chave          | Obrigatória | Valor            | Padrão | O que faz                                            |
+| -------------- | ----------- | ---------------- | ------ | ---------------------------------------------------- |
+| `items`        | não         | lista de objetos | nenhum | Linhas adicionadas a itens e blocos                  |
+| `enchantments` | não         | lista de objetos | nenhum | Linhas adicionadas abaixo do nome de um encantamento |
+
+Uma entrada de `items` ou `enchantments` aceita estas chaves.
+
+| Chave         | Obrigatória | Valor                | Padrão | O que faz                                   |
+| ------------- | ----------- | -------------------- | ------ | ------------------------------------------- |
+| `item`        | sim         | nome de item         | nenhum | O item, ou o item de um bloco               |
+| `enchantment` | sim         | nome de encantamento | nenhum | O encantamento que recebe as linhas         |
+| `lines`       | sim         | lista de textos      | nenhum | Chaves de idioma ou texto simples, em ordem |
 
 ## Poções, tipos de poção e fermentação
 
@@ -5116,12 +5150,12 @@ Um objetivo é um objetivo de verdade no placar do próprio jogo, então `/score
 
 *pontuação*
 
-| Configuração     | Tipo   | Padrão | O que faz                                                                                                                                           |
-| ---------------- | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | objeto | vazio  | Id da entidade para pontos, creditados ao lado de quem matou. `minecraft:player` pontua a morte de um jogador                                       |
-| `points.death`   | int    | `0`    | Pontos sempre que um membro morre, seja qual for a causa. Pode ser negativo                                                                         |
+| Configuração     | Tipo     | Padrão  | O que faz                                                                                                                                                            |
+| ---------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | objeto   | vazio   | Id da entidade para pontos, creditados ao lado de quem matou. `minecraft:player` pontua a morte de um jogador                                                        |
+| `points.death`   | int      | `0`     | Pontos sempre que um membro morre, seja qual for a causa. Pode ser negativo                                                                                          |
 | `points.raid`    | booleano | `false` | Recebe os `points` de cada [invasão](#invasões) vencida: cada jogador ao alcance ganha essa quantia na linha do seu lado e, com `individuals`, também na sua própria |
-| `points.ownKill` | int    | `0`    | Pontos por matar alguém do próprio lado de quem matou, no lugar do valor de `kill`. 0 não pontua nada por isso; um número negativo é uma penalidade |
+| `points.ownKill` | int      | `0`     | Pontos por matar alguém do próprio lado de quem matou, no lugar do valor de `kill`. 0 não pontua nada por isso; um número negativo é uma penalidade                  |
 
 `points` é o que este mod acrescenta ao que o jogo já conta, alimentado no mesmo objetivo para que o `/scoreboard` continue lendo tudo. `kill` vale tantos pontos por id de entidade morta, creditados ao lado de quem matou; `death` vale tantos pontos sempre que um membro de um lado morre, e pode ser negativo. Com `teamTotals`, os pontos vão para uma linha com o nome da equipe, o que permite à barra lateral mostrar quatro lados em vez de uma linha para cada mob. `individuals` acrescenta também uma linha por membro e vem desativado por padrão, porque uma linha por UUID de mob vira só ruído.
 
@@ -5304,8 +5338,8 @@ Enquanto uma onda está sobre a vila, seus aldeões correm para casa e ficam lá
 | `sound`         | nome de som            | nenhum              | Tocado a cada jogador ao alcance, do lado de onde vem a onda, quando cada onda chega                                                                                           |
 | `wins`          | função                 | nenhum              | Executada como cada jogador ao alcance quando a invasão é vencida                                                                                                              |
 | `loses`         | função                 | nenhum              | Executada como cada jogador ao alcance quando a invasão é perdida                                                                                                              |
-| `points`        | int | `0`            | Pontos creditados a cada jogador ao alcance quando a invasão é vencida, em cada objetivo que tenha `points.raid` ligado. Uma derrota não paga nada |
-| `loot`          | tabela de saque | nenhum | Uma tabela de saque sorteada uma vez para cada jogador ao alcance quando a invasão é vencida. Os itens vão para o inventário dele, ou caem aos seus pés se estiver cheio |
+| `points`        | int                    | `0`                 | Pontos creditados a cada jogador ao alcance quando a invasão é vencida, em cada objetivo que tenha `points.raid` ligado. Uma derrota não paga nada                             |
+| `loot`          | tabela de saque        | nenhum              | Uma tabela de saque sorteada uma vez para cada jogador ao alcance quando a invasão é vencida. Os itens vão para o inventário dele, ou caem aos seus pés se estiver cheio       |
 | `bell`          | nome de bloco ou lista | nenhum              | Outros blocos que tocam como um sino, quando um jogador os usa e sempre que uma onda chega. Um bloco do tipo `bell` toca sem precisar ser nomeado                              |
 
 ### Um grupo
@@ -5388,7 +5422,7 @@ O terceiro dá as boas-vindas a um jogador na primeira entrada com uma carta cen
 | `death`           | nada               | Um jogador morre                                                                                                                                                                                                                                                       |
 | `y_level`         | `below` ou `above` | Um jogador desce abaixo ou sobe acima dessa altura                                                                                                                                                                                                                     |
 | `play_time`       | `minutes`          | O tempo de um jogador no mundo chega a essa quantidade de minutos, contados a partir de quando a introdução do mundo se fecha, ou da entrada quando nenhuma introdução é mostrada a ele                                                                                |
-| `roll`            | nada, ou `roll`    | Um jogador rola com `/rdplserver game` ou com um item com `rolls`. Com `roll`, só essa rolagem a dispara, e `atLeast` e `atMost` limitam o total |
+| `roll`            | nada, ou `roll`    | Um jogador rola com `/rdplserver game` ou com um item com `rolls`. Com `roll`, só essa rolagem a dispara, e `atLeast` e `atMost` limitam o total                                                                                                                       |
 | `score`           | `objective`        | A pontuação de um jogador nesse objetivo chega a `score`                                                                                                                                                                                                               |
 
 Bioma, estrutura, altura, tempo de jogo e pontuação são verificados uma vez por segundo para cada jogador, e disparam na passagem de fora para dentro, nunca na primeira verificação após uma entrada. Uma regra `time_of_day` ou `day` cujo público não é `player` dispara uma vez para a dimensão, em vez de uma vez para cada jogador nela.
@@ -5414,8 +5448,8 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 | `time`               | int                                           | `0`                 | Para `time_of_day`: o tick do dia                                                                                                                                                                                                                                                                                |
 | `day`                | int                                           | nenhum              | Para `day`: o único dia em que disparar. Sem ele, todos os dias                                                                                                                                                                                                                                                  |
 | `minutes`            | int                                           | nenhum              | Para `play_time`                                                                                                                                                                                                                                                                                                 |
-| `roll`               | texto                              | nenhum         | Para `roll`: `coin`, uma notação como `2d6` (`d6` e `1d6` são iguais) ou o nome de um dado ou baralho de um pacote. Sem ele, toda rolagem dispara a regra |
-| `atLeast`, `atMost`  | int                                | nenhum         | Para `roll`: o menor e o maior total que dispara a regra. Uma moeda conta 1 para cara e 0 para coroa; um dado ou baralho de um pacote, a posição do resultado no seu arquivo, a partir de 1 |
+| `roll`               | texto                                         | nenhum              | Para `roll`: `coin`, uma notação como `2d6` (`d6` e `1d6` são iguais) ou o nome de um dado ou baralho de um pacote. Sem ele, toda rolagem dispara a regra                                                                                                                                                        |
+| `atLeast`, `atMost`  | int                                           | nenhum              | Para `roll`: o menor e o maior total que dispara a regra. Uma moeda conta 1 para cara e 0 para coroa; um dado ou baralho de um pacote, a posição do resultado no seu arquivo, a partir de 1                                                                                                                      |
 | `objective`, `score` | texto, int                                    | nenhum, `1`         | Para `score`: o objetivo e o valor a atingir                                                                                                                                                                                                                                                                     |
 | `requires`           | lista de ids de mods ou namespaces de pacotes | nenhum              | O arquivo é ignorado, a menos que todos estejam presentes                                                                                                                                                                                                                                                        |
 
@@ -6855,6 +6889,7 @@ Blocos, itens, fluidos e tudo o mais que os pacotes definem. Apenas config.
 | `vanillaClients`    | booleano     | `false` | Atende clientes vanilla puros: nada de nenhum pacote é registrado, nem blocos, itens, fluidos ou abas criativas, e nenhuma exposição é carregada, então um cliente sem o mod pode entrar. Tudo o que vive só no servidor continua valendo. Exige reinicialização |
 | `sounds`            | booleano     | `true`  | Registra os eventos de som nomeados por sounds/*.json, para que os pacotes possam trazer o próprio áudio                                                                                                                                                         |
 | `fuels`             | booleano     | `true`  | Aplica os arquivos fuels/*.json, que dão aos itens um tempo de queima na fornalha                                                                                                                                                                                |
+| `tooltips`          | booleano     | `true`  | Aplica os arquivos tooltips/*.json, que adicionam linhas de dica de ferramenta a itens e blocos e uma descrição abaixo do nome de um encantamento                                                                                                                |
 | `potions`           | booleano     | `true`  | Registra os efeitos de poção e os tipos de poção descritos por potions/*.json e potion_types/*.json nos pacotes. Exige reinicialização                                                                                                                           |
 | `brewing`           | booleano     | `true`  | Aplica os arquivos brewing/*.json, que adicionam receitas do suporte de poções                                                                                                                                                                                   |
 | `villagers`         | booleano     | `true`  | Registra as profissões de aldeão descritas por villagers/*.json e aplica as trocas em trades/*.json. Exige reinicialização                                                                                                                                       |

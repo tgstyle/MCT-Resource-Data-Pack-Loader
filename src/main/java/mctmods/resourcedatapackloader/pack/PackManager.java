@@ -80,6 +80,7 @@ public final class PackManager {
     public static final String REGISTRY_REMAP = "registry_remap";
     public static final String SOUNDS = "sounds";
     public static final String FUELS = "fuels";
+    public static final String TOOLTIPS = "tooltips";
     public static final String EXPOSURES = "exposures";
     public static final String MATERIALS = "materials";
     public static final String FUNCTIONS = "function";
