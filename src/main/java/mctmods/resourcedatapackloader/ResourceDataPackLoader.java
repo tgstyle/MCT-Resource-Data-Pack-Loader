@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.client.CenterCard;
 import mctmods.resourcedatapackloader.client.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.PackTooltips;
 import mctmods.resourcedatapackloader.client.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.render.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.ChatHistoryKeeper;
@@ -373,6 +374,7 @@ import java.util.Set;
             MinecraftForge.EVENT_BUS.addListener(HoldView::onFog);
             MinecraftForge.EVENT_BUS.addListener(HoldView::onHud);
             MinecraftForge.EVENT_BUS.addListener(ProspectTooltip::onTooltip);
+            MinecraftForge.EVENT_BUS.addListener(PackTooltips::onTooltip);
             MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> { if (event.phase == TickEvent.Phase.END) { HoldView.tick(); } });
             MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> {
                 HoldView.reset();

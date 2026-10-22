@@ -167,6 +167,9 @@ risultato che l'incudine offre per i livelli indicati. Estrarlo può far
 ottenere un advancement, e l'oggetto può restare inutilizzabile finché quel
 advancement non viene ottenuto.
 
+Un file in tooltips aggiunge righe grigie di descrizione a oggetti e blocchi, e
+una descrizione sotto il nome di un incantesimo.
+
 Un file hardness imposta il tempo di estrazione e la resistenza alle esplosioni
 di un gruppo di blocchi, e un file exposures definisce un pericolo come la
 radiazione: colpisce i giocatori vicino a certi blocchi, che portano certi
@@ -218,6 +221,7 @@ Ognuna di queste è una cartella sotto data/<yourpack>:
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
+    tooltips
 
 I blocchi hanno queste forme, impostate dal campo "type":
 

@@ -169,6 +169,9 @@ enchantements ou le résultat que l'enclume propose pour les niveaux indiqués.
 Le retirer peut faire gagner un progrès, et l'objet peut rester inutilisable
 tant que ce progrès n'est pas gagné.
 
+Un fichier dans tooltips ajoute des lignes grises d'infobulle aux objets et aux
+blocs, et une description sous le nom d'un enchantement.
+
 Un fichier hardness fixe le temps de minage et la résistance aux explosions d'un
 groupe de blocs, et un fichier exposures définit un danger comme la
 radioactivité : il touche les joueurs près de blocs nommés, portant des objets
@@ -220,6 +223,7 @@ Chacun de ceux-ci est un dossier sous data/<yourpack> :
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
+    tooltips
 
 Les blocs existent sous ces formes, fixées par le champ "type" :
 

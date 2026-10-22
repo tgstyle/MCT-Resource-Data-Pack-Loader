@@ -162,6 +162,9 @@ datapacks フォルダーにあるデータパックより下に、O を付け�
 するエンチャントまたは結果を指定します。取り出すと進捗を達成でき、その進捗を
 達成するまでアイテムを使えないままにもできます。
 
+tooltips 内のファイルは、アイテムとブロックに灰色のツールチップ行を追加し、
+エンチャント名の下に説明を表示します。
+
 hardness ファイルは、ブロックのグループに対して採掘時間と爆発耐性を設定します。
 exposures ファイルは、放射線のような危険要素を定義します。指定したブロックの
 近く、指定したアイテムの所持、指定したディメンションにいるプレイヤーに影響し、
@@ -212,6 +215,7 @@ Modが優先され、自作のバリアントはスキップされます。
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
+    tooltips
 
 ブロックには、"type" フィールドで指定する次の形があります。
 

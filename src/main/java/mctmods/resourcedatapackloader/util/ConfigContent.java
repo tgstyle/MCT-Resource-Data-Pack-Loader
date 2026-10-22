@@ -7,6 +7,7 @@ public final class ConfigContent {
     private final ForgeConfigSpec.BooleanValue vanillaClients;
     private final ForgeConfigSpec.BooleanValue sounds;
     private final ForgeConfigSpec.BooleanValue fuels;
+    private final ForgeConfigSpec.BooleanValue tooltips;
     private final ForgeConfigSpec.BooleanValue potions;
     private final ForgeConfigSpec.BooleanValue brewing;
     private final ForgeConfigSpec.BooleanValue villagers;
@@ -31,6 +32,7 @@ public final class ConfigContent {
         vanillaClients = builder.comment("Serve plain vanilla clients: nothing from any pack is registered, no blocks, items, fluids or creative tabs, so a client without the mod can join. Everything that lives on the server alone still applies. Requires a restart [Default=false]").worldRestart().define("vanillaClients", false);
         sounds = builder.comment("Register the sound events named by sounds/*.json, so packs can ship their own audio [Default=true]").define("sounds", true);
         fuels = builder.comment("Apply fuels/*.json files, which give items a furnace burn time [Default=true]").define("fuels", true);
+        tooltips = builder.comment("Apply tooltips/*.json files, which add tooltip lines to items and blocks and a description under an enchantment's name [Default=true]").define("tooltips", true);
         potions = builder.comment("Register the potion effects and potion types described by potions/*.json and potion_types/*.json in packs. Requires a restart [Default=true]").worldRestart().define("potions", true);
         brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
         villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
@@ -58,6 +60,8 @@ public final class ConfigContent {
     public boolean sounds() { return Config.loaded() ? sounds.get() : ConfigCore.flag("content.sounds", true); }
 
     public boolean fuels() { return Config.loaded() ? fuels.get() : ConfigCore.flag("content.fuels", true); }
+
+    public boolean tooltips() { return Config.loaded() ? tooltips.get() : ConfigCore.flag("content.tooltips", true); }
 
     public boolean potions() { return Config.loaded() ? potions.get() : ConfigCore.flag("content.potions", true); }
 
