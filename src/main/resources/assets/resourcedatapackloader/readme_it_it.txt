@@ -222,6 +222,7 @@ Ognuna di queste è una cartella sotto data/<yourpack>:
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 I blocchi hanno queste forme, impostate dal campo "type":
 

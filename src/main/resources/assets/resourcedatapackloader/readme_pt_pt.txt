@@ -218,6 +218,7 @@ Cada um destes é uma pasta em data/<yourpack>:
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Os blocos vêm nestas formas, definidas pelo campo "type":
 

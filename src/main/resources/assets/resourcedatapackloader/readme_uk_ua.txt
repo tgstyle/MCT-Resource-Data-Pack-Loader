@@ -213,6 +213,7 @@ assets, так само, як будь-який інший файл у цій т
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Блоки бувають таких форм, їх задає поле "type":
 

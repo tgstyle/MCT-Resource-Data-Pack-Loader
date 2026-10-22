@@ -216,6 +216,7 @@ Modが優先され、自作のバリアントはスキップされます。
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 ブロックには、"type" フィールドで指定する次の形があります。
 

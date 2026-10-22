@@ -218,6 +218,7 @@ Cada una de estas es una carpeta bajo data/<yourpack>:
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Los bloques vienen en estas formas, fijadas por el campo "type":
 

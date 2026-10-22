@@ -59,6 +59,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
 - [Drops de bloques](#drops-de-bloques)
+- [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Botín de jugadores](#botín-de-jugadores)
 - [Aldeanos y comercio](#aldeanos-y-comercio)
 
@@ -182,6 +183,7 @@ Bajo `data/`:
 | `<namespace>/loot_tables/*.json`             | Tablas de botín, sustituidas. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                |
 | `<namespace>/loot_injections/*.json`         | Una reserva añadida a una tabla que ya existe. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                               |
 | `<namespace>/block_drops/*.json`             | Drops adicionales o sustitutivos para bloques que un pack no posee. [Drops de bloques](#drops-de-bloques)                                                        |
+| `<namespace>/harvests/*.json`                | Cultivos que se cosechan y se replantan con clic derecho. [Cosecha con clic derecho](#cosecha-con-clic-derecho)                                                  |
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                              |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                      |
 | `<namespace>/functions/*.mcfunction`         | Archivos de función. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                         |
@@ -2070,6 +2072,33 @@ Cada drop:
 | `silkTouch`  | no                         | `either`, `only` o `never` | `either`    | Si el drop necesita una recolección con Toque de seda, la rechaza o le da igual. Es una cuando un jugador rompe, con una herramienta con Toque de seda, un bloque que se puede recolectar con Toque de seda como lo decidía 1.12.2: un bloque completo sin entidad de bloque, o paneles de vidrio, barrotes de hierro, telarañas y cofres de Ender |
 
 Las reglas ven toda rotura que suelta el botín del bloque, como hacía 1.12.2: la de un jugador, y las explosiones, los pistones, el agua que fluye, los mobs y un mob del pack que cave a través del bloque, que sortean toda regla sin `advancement`. Cuando una explosión reduce los drops propios del bloque, cada ítem sorteado sobrevive con las mismas probabilidades; la experiencia no se reduce. Varias reglas para un mismo bloque se aplican todas, y un `replace` en cualquiera de ellas borra primero los drops habituales.
+
+## Cosecha con clic derecho
+
+*fabricación, botín y comercio*
+
+`<namespace>/harvests/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan.
+
+Un clic derecho sobre un cultivo maduro normalmente no hace nada. Un archivo aquí hace que los cultivos nombrados se cosechen cuando un jugador les hace clic derecho estando maduros: el cultivo suelta sus drops habituales y se vuelve a plantar donde está con edad 0, de modo que un clic hace el trabajo de romperlo y plantar una semilla. Sin archivo no cambia nada, y un pack que quiera dejar la elección al jugador pone una entrada `config:` en `requires`, como se describe en Opciones de pack.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Clave      | Obligatorio | Valor                  | Por defecto                         | Qué hace                                                                                                                                            |
+| ---------- | ----------- | ---------------------- | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crops`    | sí          | lista de ids de bloque |                                     | Los bloques de cultivo que se cosechan con clic derecho, de vanilla o de un pack. Un bloque que nada registra se omite con una línea en el registro |
+| `age`      | no          | int                    | el mayor `age` que admite el bloque | La edad desde la que un cultivo cuenta como maduro, para todos los cultivos del archivo                                                             |
+| `replant`  | no          | boolean                | `true`                              | Si el cultivo vuelve a edad 0 donde está, o se retira una vez soltados sus drops                                                                    |
+| `requires` | no          | lista de cadenas       | ninguno                             | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición                                |
+
+Se puede nombrar cualquier bloque con una propiedad entera `age`. Un cultivo sin madurar, un jugador agachado y un espectador se quedan con el clic derecho de siempre. Los drops son los que daría romper el cultivo, con la Fortuna de la herramienta en mano y todas las reglas de Drops de bloques, y al replantar se les quita una semilla del cultivo si la contienen. La tarea `harvestFarmland` de un aldeano es aparte y no cambia.
 
 ## Botín de jugadores
 

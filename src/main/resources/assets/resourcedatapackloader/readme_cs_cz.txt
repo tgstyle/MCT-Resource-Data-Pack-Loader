@@ -212,6 +212,7 @@ Každé z těchto je složka pod data/<yourpack>:
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Bloky se dodávají v těchto tvarech, určených polem "type":
 

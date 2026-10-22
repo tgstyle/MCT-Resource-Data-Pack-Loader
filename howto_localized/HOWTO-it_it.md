@@ -59,6 +59,7 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 - [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)
 - [Lavori all'incudine](#lavori-allincudine)
 - [Drop dei blocchi](#drop-dei-blocchi)
+- [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
 - [Villici e scambi](#villici-e-scambi)
 
@@ -182,6 +183,7 @@ Sotto `data/`:
 | `<namespace>/loot_tables/*.json`             | Loot table, sostituite. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                             |
 | `<namespace>/loot_injections/*.json`         | Un pool aggiunto a una tabella già esistente. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                       |
 | `<namespace>/block_drops/*.json`             | Drop aggiuntivi o sostitutivi per blocchi che un pack non possiede. [Drop dei blocchi](#drop-dei-blocchi)                                                               |
+| `<namespace>/harvests/*.json`                | Colture che si raccolgono e si ripiantano con il clic destro. [Raccolta con clic destro](#raccolta-con-clic-destro)                                                     |
 | `<namespace>/player_loot/*.json`             | Una loot table tirata quando un giocatore muore. [Bottino dei giocatori](#bottino-dei-giocatori)                                                                        |
 | `<namespace>/advancements/*.json`            | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                          |
 | `<namespace>/functions/*.mcfunction`         | File di funzione. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                   |
@@ -2070,6 +2072,33 @@ Ogni drop:
 | `silkTouch`  | no                          | `either`, `only` o `never` | `either`    | Se il drop richiede un raccolto con Tocco di velluto, lo rifiuta, o gli è indifferente. Conta come raccolto con Tocco di velluto quando un giocatore, con uno strumento con Tocco di velluto, rompe un blocco che 1.12.2 considerava raccoglibile così: un blocco pieno senza entità blocco, oppure pannelli di vetro, sbarre di ferro, ragnatele e bauli di Ender |
 
 Le regole vedono ogni rottura che lascia il bottino del blocco, come in 1.12.2: quella di un giocatore, ed esplosioni, pistoni, acqua che scorre, mob e un mob di un pack che scava nel blocco, che estraggono ogni regola senza `advancement`. Dove un'esplosione riduce i drop del blocco, ogni oggetto estratto sopravvive con la stessa probabilità; l'esperienza non viene ridotta. Più regole per lo stesso blocco si applicano tutte, e un `replace` su una qualsiasi cancella prima i drop usuali.
+
+## Raccolta con clic destro
+
+*crafting, bottino e scambi*
+
+`<namespace>/harvests/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e più file si sommano.
+
+Un clic destro su una coltura matura normalmente non fa nulla. Un file qui fa raccogliere le colture indicate quando un giocatore ci fa clic destro a maturazione: la coltura lascia i suoi drop abituali e viene ripiantata sul posto a età 0, così un clic fa il lavoro di romperla e piantare un seme. Senza file non cambia nulla, e un pack che vuole lasciare la scelta al giocatore mette una voce `config:` in `requires`, come descritto in Opzioni dei pack.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Chiave     | Obbligatorio | Valore                  | Predefinito                            | Cosa fa                                                                                                                                          |
+| ---------- | ------------ | ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `crops`    | sì           | elenco di id di blocchi |                                        | I blocchi di coltura che si raccolgono con il clic destro, vanilla o di un pack. Un blocco che nulla registra viene saltato con una riga nel log |
+| `age`      | no           | int                     | il massimo `age` che il blocco ammette | L'età da cui una coltura conta come matura, per tutte le colture del file                                                                        |
+| `replant`  | no           | boolean                 | `true`                                 | Se la coltura torna a età 0 dov'è, o viene rimossa una volta usciti i suoi drop                                                                  |
+| `requires` | no           | elenco di stringhe      | nessuno                                | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                                           |
+
+Si può indicare qualsiasi blocco con una proprietà intera `age`. Una coltura non matura, un giocatore accovacciato e uno spettatore restano al solito clic destro. I drop sono quelli che darebbe la rottura della coltura, con la Fortuna dello strumento in mano e tutte le regole di Drop dei blocchi, e la ripiantatura ne toglie un seme della coltura se ne contengono uno. Il compito `harvestFarmland` di un abitante è a parte e invariato.
 
 ## Bottino dei giocatori
 
