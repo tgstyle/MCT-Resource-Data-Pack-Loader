@@ -43,11 +43,11 @@ public final class ContentStarField {
         return colors;
     }
 
-    public static float[][] groups(int count, float smallest) {
+    public static float[][] groups(int count, float smallest, SkyOccluder[] occluders) {
         float[][] stars = new float[Math.max(count, 0)][];
         RandomSource random = RandomSource.createThreadLocalInstance(10842L);
         float spread = smallest * 2.0F / 3.0F;
-        for (int star = 0; star < stars.length; ++star) { stars[star] = star(random, smallest, spread); }
+        for (int star = 0; star < stars.length; ++star) { stars[star] = star(random, smallest, spread, occluders); }
         float[][] groups = new float[GROUPS][];
         for (int group = 0; group < GROUPS; ++group) {
             int shown = 0;
@@ -66,7 +66,7 @@ public final class ContentStarField {
         return groups;
     }
 
-    @Nullable private static float[] star(RandomSource random, float smallest, float spread) {
+    @Nullable private static float[] star(RandomSource random, float smallest, float spread, SkyOccluder[] occluders) {
         float x = random.nextFloat() * 2.0F - 1.0F;
         float y = random.nextFloat() * 2.0F - 1.0F;
         float z = random.nextFloat() * 2.0F - 1.0F;
@@ -83,6 +83,9 @@ public final class ContentStarField {
             corners[corner * 3] = point.x;
             corners[corner * 3 + 1] = point.y;
             corners[corner * 3 + 2] = point.z;
+        }
+        for (SkyOccluder body : occluders) {
+            if (body.covers(center.x, center.y, center.z, size * 1.5F)) { return null; }
         }
         return corners;
     }

@@ -35,7 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "render(Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/SkyRenderState;)V", at = @At("HEAD")) private void rdpl$preparePackSky(GpuBufferSlice skyFog, SkyRenderState state, CallbackInfo ci) {
         ContentSkyExtras.prepare(state.sunAngle);
         ContentSkyRenderer sky = ContentSkyRenderer.of(Minecraft.getInstance().level);
-        if (sky != null) { sky.prepare(); }
+        if (sky != null) { sky.prepare(state.sunAngle, state.moonAngle, state.starAngle); }
         if (ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { ContentStars.VANILLA.prepare(); }
     }
 

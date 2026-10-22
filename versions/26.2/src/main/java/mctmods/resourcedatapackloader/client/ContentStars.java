@@ -17,23 +17,41 @@ import net.minecraft.client.renderer.RenderPipelines;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector4f;
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import javax.annotation.Nullable;
 
 public final class ContentStars {
-    public static final ContentStars VANILLA = new ContentStars(ContentStarField.VANILLA_COUNT, ContentStarField.VANILLA_SIZE);
+    public static final ContentStars VANILLA = new ContentStars(ContentStarField.VANILLA_COUNT, ContentStarField.VANILLA_SIZE, new SkyOccluder[0]);
     private final RenderSystem.AutoStorageIndexBuffer quadIndices = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
     private final int count;
     private final float size;
     private final int[] first = new int[ContentStarField.GROUPS];
     private final int[] quads = new int[ContentStarField.GROUPS];
     @Nullable private GpuBuffer buffer;
+    private final SkyOccluder[] occluders;
+    private float[] hidden = new float[0];
+    private int built;
     private int total = -1;
 
-    public ContentStars(int count, float size) {
+    public ContentStars(int count, float size, SkyOccluder[] occluders) {
         this.count = count;
         this.size = size;
+        this.occluders = occluders;
+    }
+
+    public void hide(float[] offsets) {
+        if (built == SkyOccluder.current() && Arrays.equals(hidden, offsets)) { return; }
+        built = SkyOccluder.current();
+        if (hidden.length != offsets.length) { hidden = new float[occluders.length]; }
+        System.arraycopy(offsets, 0, hidden, 0, offsets.length);
+        for (int at = 0; at < offsets.length; ++at) { occluders[at].turn(offsets[at]); }
+        if (buffer != null) {
+            buffer.close();
+            buffer = null;
+        }
+        total = -1;
     }
 
     public void draw(PoseStack poseStack, float brightness) {
@@ -62,7 +80,7 @@ public final class ContentStars {
     }
 
     private void build() {
-        float[][] groups = ContentStarField.groups(count, size);
+        float[][] groups = ContentStarField.groups(count, size, occluders);
         total = 0;
         for (int group = 0; group < groups.length; ++group) {
             first[group] = total;

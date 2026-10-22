@@ -21,15 +21,20 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector4f;
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 public final class ContentSkyRenderer {
+    private static final Identifier[] MOONS = Stream.of("full_moon", "waning_gibbous", "third_quarter", "waning_crescent", "new_moon", "waxing_crescent", "first_quarter", "waxing_gibbous").map(name -> Identifier.withDefaultNamespace("textures/environment/celestial/moon/" + name + ".png")).toArray(Identifier[]::new);
     private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> RENDERERS = new IdentityHashMap<>();
     private static final int PHASES = 8;
     private static final float[] UNTINTED = {1.0F, 1.0F, 1.0F};
@@ -40,12 +45,15 @@ public final class ContentSkyRenderer {
     private final ContentStars stars;
     @Nullable private final Identifier moonTexture;
     private final float moonSize;
+    private final float[] offsets;
 
     private ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
-        this.stars = new ContentStars(sky.starCount(), sky.starSize());
         this.moonTexture = moon == null ? null : moon.texture();
         this.moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
+        SkyOccluder[] bodies = occluders(sky, moonTexture, moonSize);
+        this.offsets = new float[bodies.length];
+        this.stars = new ContentStars(sky.starCount(), sky.starSize(), bodies);
     }
 
     @Nullable public static ContentSkyRenderer of(@Nullable ClientLevel level) {
@@ -54,9 +62,40 @@ public final class ContentSkyRenderer {
         return sky == null ? null : RENDERERS.computeIfAbsent(sky, held -> new ContentSkyRenderer(held, def.traits().moon()));
     }
 
-    public void prepare() {
+    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, @Nullable Identifier moonTexture, float moonSize) {
+        List<SkyOccluder> bodies = new ArrayList<>();
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, sky.sunSize(), false, new Identifier[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.bodies() == null) {
+            if (moonSize > 0.0F) { bodies.add(moonTexture == null ? new SkyOccluder(0.0F, moonSize, true, MOONS, 1, 1) : new SkyOccluder(0.0F, moonSize, true, new Identifier[] {moonTexture}, 4, 2)); }
+        }
+        else {
+            for (DimensionTraitsDef.Body body : sky.bodies()) {
+                if (body.followsTime()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), false, new Identifier[] {body.texture()}, 1, 1)); }
+            }
+        }
+        return bodies.toArray(new SkyOccluder[0]);
+    }
+
+    private float[] angles(float sunAngle, float moonAngle, float starAngle) {
+        int at = 0;
+        if (sky.sunSize() > 0.0F) { offsets[at++] = quantized(sunAngle - starAngle); }
+        if (sky.bodies() == null) {
+            if (moonSize > 0.0F) { offsets[at] = quantized(moonAngle - starAngle); }
+        }
+        else {
+            for (DimensionTraitsDef.Body body : sky.bodies()) {
+                if (body.followsTime()) { offsets[at++] = quantized(sunAngle - starAngle + (float) Math.toRadians(body.angle())); }
+            }
+        }
+        return offsets;
+    }
+
+    private static float quantized(float angle) { return Math.round(Mth.positiveModulo(angle, Mth.TWO_PI) * 1.0E4F) / 1.0E4F; }
+
+    public void prepare(float sunAngle, float moonAngle, float starAngle) {
         if (quadBuffer == null) { quadBuffer = corners(); }
         if (phaseBuffer == null) { phaseBuffer = phases(); }
+        stars.hide(angles(sunAngle, moonAngle, starAngle));
         stars.prepare();
         TextureManager textures = Minecraft.getInstance().getTextureManager();
         if (sky.sunSize() > 0.0F) { textures.getTexture(sky.sunTexture()); }
