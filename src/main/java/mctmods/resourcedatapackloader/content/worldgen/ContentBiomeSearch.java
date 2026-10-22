@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Direction;
 import net.minecraft.core.QuartPos;
 import net.minecraft.resources.ResourceKey;
@@ -40,6 +42,11 @@ public final class ContentBiomeSearch {
             if (biomeAt(level, x, surface, z, target)) { return site; }
         }
         return null;
+    }
+
+    @Nullable public static BlockPos locate(ServerLevel level, ResourceKey<Biome> target, BlockPos from) {
+        Pair<BlockPos, Holder<Biome>> found = level.findClosestBiome3d(held -> held.is(target), from, RANGE, STEP, VERTICAL);
+        return found == null ? null : found.getFirst();
     }
 
     private static boolean somewhere(ServerLevel level, ResourceKey<Biome> target, int x, int z, int[] heights) {

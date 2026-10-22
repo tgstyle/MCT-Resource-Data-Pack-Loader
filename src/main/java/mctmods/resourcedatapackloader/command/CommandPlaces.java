@@ -76,10 +76,14 @@ final class CommandPlaces {
         BlockPos found;
         if (biome != null) {
             place = biome.identifier().toString();
+            CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gotolooking", place));
             found = ContentBiomeSearch.find(level, player, biome, place, from, next);
         }
         else if (ContentLocate.names(level).contains(place)) { found = ContentLocate.nearest(level, place, from, next ? 128.0D : 0.0D); }
-        else { found = ContentStructureSearch.find(level, player, place, from, next); }
+        else {
+            CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gotolooking", place));
+            found = ContentStructureSearch.find(level, player, place, from, next);
+        }
         if (found == null) { return CommandShared.refuse(source, CommandShared.tr("rdpl.command.gotonothing", asked)); }
         return carry(source, player, level, asked, place, found);
     }
