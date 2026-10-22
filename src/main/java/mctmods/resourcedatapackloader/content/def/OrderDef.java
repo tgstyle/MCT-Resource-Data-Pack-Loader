@@ -18,8 +18,11 @@ public final class OrderDef {
     public final String sign;
     public final float speed;
     public final String tool;
+    public final String wins;
+    public final int points;
+    public final String loot;
 
-    public OrderDef(String name, Job job, String blocks, int area, int[] areaByTier, boolean deliversToSelf, int limit, int standing, int workers, int priority, List<String> takers, String sign, float speed, String tool) {
+    public OrderDef(String name, Job job, String blocks, int area, int[] areaByTier, boolean deliversToSelf, int limit, int standing, int workers, int priority, List<String> takers, String sign, float speed, String tool, String wins, int points, String loot) {
         this.name = name;
         this.job = job;
         this.blocks = blocks;
@@ -34,6 +37,9 @@ public final class OrderDef {
         this.sign = sign;
         this.speed = speed;
         this.tool = tool;
+        this.wins = wins;
+        this.points = points;
+        this.loot = loot;
     }
 
     public int widest() {

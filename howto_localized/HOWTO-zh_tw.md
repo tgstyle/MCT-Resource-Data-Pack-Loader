@@ -3089,6 +3089,9 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
       "workers": 2,
       "priority": 1,
       "speed": 1.5,
+      "wins": "mypack:ore_done",
+      "points": 5,
+      "loot": "mypack:miner_reward",
       "takers": ["mypack:miner", "team:Red", "tag:digger"]
     },
     {
@@ -3129,6 +3132,9 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `deliver`    | 否              | `chest` 或 `self`                  | `chest` | `chest` 把收集到的東西送進訂單的箱子。`self` 把它留在工人自己的儲存空間裡，訂單在收集時計數                                                                                                                         |
 | `limit`      | 否              | 整數                               | `64`    | 訂單關閉前需要多少物品                                                                                                                                                                                              |
 | `standing`   | 否              | 整數                               | `0`     | 大於 `0` 時訂單永不關閉：它讓箱子裡保持這麼多物品，少了就工作。此時不會讀取 `limit`                                                                                                                                 |
+| `wins`       | 否              | 函式                               | 無      | 訂單完成時，以每位獲得獎勵的玩家身分執行：開啟訂單的玩家，或為隊伍開啟時該隊伍的每位線上成員                                                                                                                        |
+| `points`     | 否              | 整數                               | `0`     | 訂單完成時記給每位獲得獎勵的玩家的點數，計入每個開啟了 `points.order` 的計分項。永不完成的訂單不支付任何點數                                                                                                        |
+| `loot`       | 否              | 戰利品表                           | 無      | 訂單完成時，為每位獲得獎勵的玩家各抽取一次的戰利品表。物品進入其物品欄，物品欄已滿時掉落在其腳下                                                                                                                    |
 | `workers`    | 否              | 整數                               | `1`     | 同時處理該訂單的最多工人數                                                                                                                                                                                          |
 | `priority`   | 否              | 整數                               | `0`     | 閒置工人先接優先順序最高的開放訂單，其次是最近的                                                                                                                                                                    |
 | `takers`     | 是              | 清單                               |         | 誰可以處理它：變體名稱、`team:<team>` 表示計分板隊伍的任一成員，或 `tag:<tag>` 表示帶有該標籤的任一實體                                                                                                             |
@@ -6043,6 +6049,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `points.kill`    | 物件   | 空      | 實體 id 對應積分，計給擊殺者的陣營。`minecraft:player` 計算擊殺玩家的分數                                                             |
 | `points.death`   | 整數   | `0`     | 成員死亡時的積分，無論死因為何。可以為負                                                                                              |
 | `points.raid`    | 布林值 | `false` | 接收每場獲勝[突襲](#突襲)的 `points`：範圍內的每位玩家都會獲得相應積分，記在所屬陣營的一列上，啟用 `individuals` 時也記在本人的一列上 |
+| `points.order`   | 布林值 | `false` | 計入每個已完成[工作訂單](#工作訂單)的 `points`：每位獲得獎勵的玩家在其陣營的列上獲得該點數，開啟 `individuals` 時在自己的列上也獲得   |
 | `points.ownKill` | 整數   | `0`     | 擊殺者自己陣營的成員被擊殺時的積分，取代 `kill` 的值。0 表示不計分；負數是懲罰                                                        |
 
 `points` 是本模組在遊戲自己計算的內容之上額外加入的部分，會送進同一個目標，所以 `/scoreboard` 仍然讀得到。`kill` 表示每擊殺一個實體 id 值多少分，計給擊殺者的陣營；`death` 表示每當陣營的一名成員死亡值多少分，可以為負。搭配 `teamTotals`，積分會記在以隊伍命名的一列上，這讓側邊欄能顯示四個陣營，而不是每隻生物各佔一列。`individuals` 會另外為每位成員加一列，預設為關閉，因為每個生物 UUID 各佔一列讀起來只是雜訊。
@@ -6314,6 +6321,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `y_level`         | `below` 或 `above` | 玩家的高度低於或高於該值                                                                                                                                                                |
 | `play_time`       | `minutes`          | 玩家在世界中的時間達到這麼多分鐘，從世界介紹關閉時算起，若沒有向其顯示介紹則從加入時算起                                                                                                |
 | `roll`            | 無，或 `roll`      | 玩家用 `/rdplserver game` 或帶 `rolls` 的物品擲骰時。填了 `roll` 就只有那一種擲骰會觸發，`atLeast` 和 `atMost` 限定總和                                                                 |
+| `order_done`      | 無，或 `order`     | 工作訂單完成，對每位獲得獎勵的玩家各觸發一次。帶有 `order` 時，只有 `sign` 為該詞的訂單才會觸發                                                                                         |
 | `score`           | `objective`        | 玩家在該目標上的分數達到 `score`                                                                                                                                                        |
 
 生態域、結構、高度、遊玩時間和分數每秒對每位玩家檢查一次，並在從外到內的變化時觸發，絕不會在加入後的第一次檢查時觸發。對象不是 `player` 的 `time_of_day` 或 `day` 規則，會為該維度觸發一次，而不是對其中每位玩家各觸發一次。
@@ -6340,6 +6348,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `day`                | 整數                         | 無       | 對 `day` 而言：唯一要觸發的那一天。沒有它則每一天都觸發                                                                                                                          |
 | `minutes`            | 整數                         | 無       | 用於 `play_time`                                                                                                                                                                 |
 | `roll`               | 文字                         | 無       | 用於 `roll`：`coin`、形如 `2d6` 的寫法（`d6` 與 `1d6` 相同），或資料包裡骰子、牌組的名稱。不填時，每次擲骰都會觸發該規則                                                         |
+| `order`              | 文字                         | 無       | 用於 `order_done`：訂單的 `sign` 詞。不填時，每個完成的訂單都會觸發該規則                                                                                                        |
 | `atLeast`, `atMost`  | 整數                         | 無       | 用於 `roll`：能觸發該規則的最小和最大總和。硬幣正面算 1、反面算 0，資料包裡的骰子或牌組則按結果在其檔案中的位置計，從 1 開始                                                     |
 | `objective`, `score` | 文字，整數                   | 無，`1`  | 對 `score` 而言：目標，以及要達到的值                                                                                                                                            |
 | `requires`           | 模組 id 或資源包命名空間清單 | 無       | 除非全部存在，否則跳過該檔案                                                                                                                                                     |

@@ -137,7 +137,7 @@ public final class EntityAIWorkOrder extends EntityAIBase {
         boolean full = false;
         for (ItemStack drop : drops) {
             if (drop.isEmpty()) { continue; }
-            boolean counts = OrderItems.matches(def, drop);
+            boolean counts = OrderItems.counts(def, drop);
             int count = drop.getCount();
             int spilled = OrderItems.spilled(mob, drop);
             if (spilled > 0) { full = true; }
@@ -199,7 +199,7 @@ public final class EntityAIWorkOrder extends EntityAIBase {
             return;
         }
         IItemHandler carried = OrderItems.carried(mob);
-        int counted = OrderItems.move(carried, chest, stack -> held.stock || OrderItems.matches(held.def, stack), null, Integer.MAX_VALUE, mob);
+        int counted = OrderItems.move(carried, chest, stack -> held.stock || OrderItems.counts(held.def, stack), null, Integer.MAX_VALUE, mob);
         OrderItems.move(carried, chest, stack -> true, null, Integer.MAX_VALUE, mob);
         OrderBoard.counted(mob, held, counted);
     }

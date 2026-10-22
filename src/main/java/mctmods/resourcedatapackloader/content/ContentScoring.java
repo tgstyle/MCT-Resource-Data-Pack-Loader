@@ -49,6 +49,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentScoring {
@@ -140,10 +141,14 @@ public final class ContentScoring {
         if (own) { OWN.merge(kind, 1, Integer::sum); }
     }
 
-    public static void raidWon(EntityPlayer player, int points) {
+    public static void raidWon(EntityPlayer player, int points) { awarded(player, points, def -> def.raidPoints); }
+
+    public static void orderDone(EntityPlayer player, int points) { awarded(player, points, def -> def.orderPoints); }
+
+    private static void awarded(EntityPlayer player, int points, Predicate<ScoreDef> takes) {
         if (points == 0 || BY_NAME.isEmpty()) { return; }
         for (ScoreDef def : BY_NAME.values()) {
-            if (def.raidPoints) { credit(player.world, def, player, points); }
+            if (takes.test(def)) { credit(player.world, def, player, points); }
         }
     }
 

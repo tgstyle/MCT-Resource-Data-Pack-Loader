@@ -68,6 +68,12 @@ public final class CardEvents {
         }
     }
 
+    public static void orderDone(EntityPlayerMP player, String sign) {
+        for (CardRule rule : CardRules.on(CardRule.ORDER_DONE)) {
+            if (rule.order.isEmpty() || rule.order.equalsIgnoreCase(sign)) { CardFire.fire(rule, player); }
+        }
+    }
+
     @SubscribeEvent public static void onAdvancement(AdvancementEvent event) {
         if (!(event.getEntityPlayer() instanceof EntityPlayerMP)) { return; }
         String earned = event.getAdvancement().getId().toString();

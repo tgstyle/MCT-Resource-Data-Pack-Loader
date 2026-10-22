@@ -14,6 +14,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -35,10 +36,32 @@ import javax.annotation.Nullable;
 
 public final class OrderItems {
     private static final Map<OrderDef, Set<Integer>> ORES = new IdentityHashMap<>();
+    private static final Map<OrderDef, Set<IBlockState>> MINED = new IdentityHashMap<>();
+    private static final Map<OrderDef, Set<Item>> YIELDS = new IdentityHashMap<>();
 
     private OrderItems() {}
 
-    static void forget() { ORES.clear(); }
+    static void forget() {
+        ORES.clear();
+        MINED.clear();
+        YIELDS.clear();
+    }
+
+    public static boolean counts(OrderDef def, ItemStack stack) {
+        if (matches(def, stack)) { return true; }
+        Set<Item> items = YIELDS.get(def);
+        return def.job == OrderDef.Job.MINE && items != null && !stack.isEmpty() && items.contains(stack.getItem());
+    }
+
+    private static void yields(OrderDef def, World world, BlockPos pos, IBlockState state) {
+        if (!MINED.computeIfAbsent(def, held -> new HashSet<>()).add(state)) { return; }
+        Set<Item> items = YIELDS.computeIfAbsent(def, held -> new HashSet<>());
+        NonNullList<ItemStack> drops = NonNullList.create();
+        state.getBlock().getDrops(drops, world, pos, state, 0);
+        for (ItemStack drop : drops) {
+            if (!drop.isEmpty()) { items.add(drop.getItem()); }
+        }
+    }
 
     public static boolean matches(OrderDef def, ItemStack stack) {
         if (stack.isEmpty()) { return false; }
@@ -65,7 +88,9 @@ public final class OrderItems {
             if (!(block instanceof BlockCrops) || !((BlockCrops) block).isMaxAge(state)) { return false; }
             return def.blocks.isEmpty() || matches(def, dropped(world, state));
         }
-        if (!matches(def, new ItemStack(block, 1, block.damageDropped(state))) && !matches(def, dropped(world, state))) { return false; }
+        boolean own = matches(def, new ItemStack(block, 1, block.damageDropped(state)));
+        if (!own && !matches(def, dropped(world, state))) { return false; }
+        if (own && def.job == OrderDef.Job.MINE) { yields(def, world, pos, state); }
         for (EnumFacing side : EnumFacing.values()) {
             if (!world.getBlockState(pos.offset(side)).isNormalCube()) { return true; }
         }
@@ -158,7 +183,7 @@ public final class OrderItems {
         int count = 0;
         for (int slot = 0; slot < handler.getSlots(); slot++) {
             ItemStack stack = handler.getStackInSlot(slot);
-            if (matches(def, stack)) { count += stack.getCount(); }
+            if (counts(def, stack)) { count += stack.getCount(); }
         }
         return count;
     }

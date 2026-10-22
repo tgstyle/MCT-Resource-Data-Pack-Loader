@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
+import mctmods.resourcedatapackloader.util.Rewards;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -12,7 +13,6 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
@@ -28,10 +28,7 @@ import net.minecraft.world.BossInfo;
 import net.minecraft.world.BossInfoServer;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.storage.loot.LootContext;
-import net.minecraft.world.storage.loot.LootTable;
 import net.minecraftforge.common.util.Constants;
-import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -258,12 +255,7 @@ public final class ActiveRaid {
 
     private void reward(WorldServer world, EntityPlayerMP player) {
         ContentScoring.raidWon(player, def.points);
-        if (def.loot.isEmpty()) { return; }
-        LootTable table = world.getLootTableManager().getLootTableFromLocation(new ResourceLocation(def.loot));
-        LootContext context = new LootContext.Builder(world).withLootedEntity(player).withPlayer(player).withLuck(player.getLuck()).build();
-        for (ItemStack stack : table.generateLootForPools(world.rand, context)) {
-            if (!stack.isEmpty()) { ItemHandlerHelper.giveItemToPlayer(player, stack); }
-        }
+        Rewards.loot(world, player, def.loot);
     }
 
     private void celebrate(WorldServer world) {

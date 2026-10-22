@@ -137,7 +137,10 @@ public final class OrderBoard extends WorldSavedData {
             show(world, order, count);
         }
         if (order.done()) {
-            close(order, "it is filled");
+            if (orders.contains(order)) {
+                close(order, "it is filled");
+                OrderRewards.give(world, order);
+            }
             return;
         }
         if (order.working(now) > 0) { order.idleSince = now; }

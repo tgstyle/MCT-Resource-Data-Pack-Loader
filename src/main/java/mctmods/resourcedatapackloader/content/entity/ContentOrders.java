@@ -119,7 +119,8 @@ public final class ContentOrders {
         }
         return new OrderDef(name, job, blocks, Math.max(1, Json.getInt(json, "area", 16)), byTier, "self".equalsIgnoreCase(deliver), Math.max(1, Json.getInt(json, "limit", 64)),
                 Math.max(0, Json.getInt(json, "standing", 0)), Math.max(1, Json.getInt(json, "workers", 1)), Json.getInt(json, "priority", 0), takers,
-                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim());
+                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim(),
+                Json.getString(json, "wins", "").trim(), Json.getInt(json, "points", 0), Json.getString(json, "loot", "").trim());
     }
 
     @Nullable static OrderDef def(String name) { return DEFS.get(name); }
