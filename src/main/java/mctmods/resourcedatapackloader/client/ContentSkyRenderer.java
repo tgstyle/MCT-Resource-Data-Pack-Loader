@@ -25,6 +25,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 
 final class ContentSkyRenderer {
@@ -40,7 +42,21 @@ final class ContentSkyRenderer {
         this.sky = sky;
         moonTexture = moon == null ? MOON_PHASES : moon.texture();
         moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
-        stars = new ContentStars(sky.starCount(), sky.starSize());
+        stars = new ContentStars(sky.starCount(), sky.starSize(), occluders(sky, moonTexture, moonSize));
+    }
+
+    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize) {
+        List<SkyOccluder> bodies = new ArrayList<>();
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, 0.0F, sky.sunSize(), false, new ResourceLocation[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.bodies() == null) {
+            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, 0.0F, moonSize, true, new ResourceLocation[] {moonTexture}, 4, 2)); }
+        }
+        else {
+            for (DimensionTraitsDef.Body body : sky.bodies()) {
+                if (body.followsTime()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.angle()), (float) Math.toRadians(body.tilt()), body.size(), false, new ResourceLocation[] {body.texture()}, 1, 1)); }
+            }
+        }
+        return bodies.toArray(new SkyOccluder[0]);
     }
 
     void render(ClientLevel level, float partialTick, PoseStack poseStack, Camera camera, Matrix4f projection, boolean foggy, Runnable setupFog) {
