@@ -140,7 +140,10 @@ public final class OrderBoard extends SavedData {
             show(level, order, count);
         }
         if (order.done()) {
-            close(order, "it is filled");
+            if (orders.contains(order)) {
+                close(order, "it is filled");
+                OrderRewards.give(level, order);
+            }
             return;
         }
         if (order.working(now) > 0) { order.idleSince = now; }

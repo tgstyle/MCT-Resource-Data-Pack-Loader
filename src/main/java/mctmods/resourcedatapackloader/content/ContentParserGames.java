@@ -99,7 +99,8 @@ public final class ContentParserGames {
                 roundReset(key, Json.getJsonObject(json, "reset", new JsonObject())),
                 Json.getBoolean(json, "tiebreak", false),
                 turns(key, json),
-                Json.getBoolean(points, "raid", false));
+                Json.getBoolean(points, "raid", false),
+                Json.getBoolean(points, "order", false));
     }
 
     @Nullable private static TurnsDef turns(ResourceLocation key, JsonObject json) {
