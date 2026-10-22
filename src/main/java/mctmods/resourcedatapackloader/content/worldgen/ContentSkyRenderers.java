@@ -10,6 +10,8 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.IReloadableResourceManager;
+import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DimensionType;
@@ -37,6 +39,11 @@ import java.util.Map;
     private static final Map<DimensionDef, ContentCloudRenderer> PACK_CLOUDS = new HashMap<>();
 
     private ContentSkyRenderers() {}
+
+    public static void listen() {
+        IResourceManager resources = Minecraft.getMinecraft().getResourceManager();
+        if (resources instanceof IReloadableResourceManager) { ((IReloadableResourceManager) resources).registerReloadListener(reloaded -> SkyOccluder.invalidate()); }
+    }
 
     public static void reload() {
         List<ContentSkyRenderer> retired = new ArrayList<>(PACK_SKIES.values());

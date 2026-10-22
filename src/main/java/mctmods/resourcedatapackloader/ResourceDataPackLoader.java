@@ -269,6 +269,7 @@ public class ResourceDataPackLoader {
         }
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) {
             ClientCommands.register();
+            ContentSkyRenderers.listen();
             if (Config.worldgen.worldgenDebug) {
                 MinecraftForge.EVENT_BUS.register(ContentHardnessCheck.class);
                 ContentHardnessCheck.watching();

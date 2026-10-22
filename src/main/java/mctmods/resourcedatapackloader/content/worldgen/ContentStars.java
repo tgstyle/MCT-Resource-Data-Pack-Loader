@@ -18,17 +18,21 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT) public final class ContentStars {
-    public static final ContentStars VANILLA = new ContentStars(1500, 0.15F);
+    public static final ContentStars VANILLA = new ContentStars(1500, 0.15F, new SkyOccluder[0]);
+    private static final double RADIUS = 100.0D;
     private static final int GROUPS = 8;
     private static final float[] SPEED = {2.1F, 3.3F, 1.7F, 2.9F, 3.7F, 1.3F, 2.5F, 3.1F};
     private static final float PHASE = 2.4F;
     private final int count;
     private final float size;
+    private final SkyOccluder[] occluders;
     private int lists = -1;
+    private int built;
 
-    public ContentStars(int count, float size) {
+    public ContentStars(int count, float size, SkyOccluder[] occluders) {
         this.count = count;
         this.size = size;
+        this.occluders = occluders;
     }
 
     public static boolean keepsVanilla(World world) {
@@ -37,7 +41,10 @@ import javax.annotation.Nullable;
     }
 
     public void draw(World world, float brightness, float partialTicks) {
-        if (lists < 0) { build(); }
+        if (lists < 0 || built != SkyOccluder.current()) {
+            release();
+            build();
+        }
         SkyLookDef look = ContentFogSampler.look(world);
         int color = look == null || look.starColor == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor;
         float twinkle = look == null ? 0.0F : look.starTwinkle;
@@ -59,6 +66,7 @@ import javax.annotation.Nullable;
     }
 
     private void build() {
+        built = SkyOccluder.current();
         lists = GLAllocation.generateDisplayLists(GROUPS);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
@@ -107,9 +115,12 @@ import javax.annotation.Nullable;
             double d = b * spinCos + a * spinSin;
             double e = c * pitchSin;
             double f = -c * pitchCos;
-            quad[corner * 3] = x * 100.0D + f * yawSin - d * yawCos;
-            quad[corner * 3 + 1] = y * 100.0D + e;
-            quad[corner * 3 + 2] = z * 100.0D + d * yawSin + f * yawCos;
+            quad[corner * 3] = x * RADIUS + f * yawSin - d * yawCos;
+            quad[corner * 3 + 1] = y * RADIUS + e;
+            quad[corner * 3 + 2] = z * RADIUS + d * yawSin + f * yawCos;
+        }
+        for (SkyOccluder body : occluders) {
+            if (body.covers(x * RADIUS, y * RADIUS, z * RADIUS, scale * 1.5D)) { return null; }
         }
         return quad;
     }
