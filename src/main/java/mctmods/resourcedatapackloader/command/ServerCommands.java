@@ -15,6 +15,7 @@ import static mctmods.resourcedatapackloader.command.CommandShared.findBiome;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentRoundReset;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
@@ -74,7 +75,7 @@ import javax.annotation.Nullable;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "game");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "game", "raid");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
@@ -174,6 +175,8 @@ public class ServerCommands extends CommandBase {
         if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
+        if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
+        if (args.length == 3 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
@@ -239,6 +242,7 @@ public class ServerCommands extends CommandBase {
         else if ((args.length == 2 || args.length == 3) && "vein".equals(args[0])) { vein(sender, args[1], args.length == 3 ? parseInt(args[2], 1, 64) : 8); }
         else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
         else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
+        else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 

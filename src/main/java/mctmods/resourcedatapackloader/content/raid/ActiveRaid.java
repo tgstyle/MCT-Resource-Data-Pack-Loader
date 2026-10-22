@@ -51,7 +51,9 @@ public final class ActiveRaid {
     private final RaidDef def;
     private final BossInfoServer bar;
     private final Set<UUID> raiders = new LinkedHashSet<>();
+    private final boolean free;
     private BlockPos center;
+    private int villageRadius = VILLAGE_SEARCH;
     private int wave;
     private int cooldown;
     private long ticksActive;
@@ -63,11 +65,17 @@ public final class ActiveRaid {
 
     enum Status { ONGOING, VICTORY, LOSS, STOPPED }
 
-    public ActiveRaid(RaidDef def, BlockPos center) {
+    private ActiveRaid(RaidDef def, BlockPos center, boolean free) {
         this.def = def;
         this.center = center;
+        this.free = free;
         this.cooldown = def.waveDelay;
         this.bar = new BossInfoServer(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10);
+    }
+
+    public static void start(WorldServer world, RaidDef def, BlockPos center, boolean free) {
+        RaidStorage.get(world).add(new ActiveRaid(def, center, free));
+        ContentLog.LOGGER.info("Raid {} begins {} {}, {}, {}", def.registryName, free ? "with no village at" : "on the village at", center.getX(), center.getY(), center.getZ());
     }
 
     BlockPos center() { return center; }
@@ -89,16 +97,19 @@ public final class ActiveRaid {
             stop("the world is peaceful");
             return;
         }
-        Village village = nearestVillage(world, center, VILLAGE_SEARCH);
-        if (village == null) {
-            if (wave > 0) { end(world, Status.LOSS); }
-            else { stop("the village is gone before the first wave"); }
-            return;
-        }
-        center = village.getCenter();
-        if (wave > 0 && village.getNumVillagers() == 0) {
-            end(world, Status.LOSS);
-            return;
+        if (!free) {
+            Village village = nearestVillage(world, center, VILLAGE_SEARCH);
+            if (village == null) {
+                if (wave > 0) { end(world, Status.LOSS); }
+                else { stop("the village is gone before the first wave"); }
+                return;
+            }
+            center = village.getCenter();
+            villageRadius = village.getVillageRadius();
+            if (wave > 0 && village.getNumVillagers() == 0) {
+                end(world, Status.LOSS);
+                return;
+            }
         }
         ticksActive++;
         if (def.timeout > 0 && ticksActive >= def.timeout) {
@@ -115,7 +126,7 @@ public final class ActiveRaid {
                 return;
             }
             if (!spawnWave(world)) { return; }
-            for (BlockPos bell : bells(world, village)) { ContentRaids.ring(world, bell); }
+            for (BlockPos bell : bells(world)) { ContentRaids.ring(world, bell); }
             cooldown = def.waveDelay;
             alive = alive(world);
         }
@@ -196,10 +207,10 @@ public final class ActiveRaid {
         return nearest;
     }
 
-    private List<BlockPos> bells(WorldServer world, Village village) {
+    private List<BlockPos> bells(WorldServer world) {
         if (bells != null) { return bells; }
         List<BlockPos> found = new ArrayList<>();
-        int reach = village.getVillageRadius();
+        int reach = villageRadius;
         for (BlockPos at : BlockPos.getAllInBoxMutable(center.add(-reach, -BELL_RISE, -reach), center.add(reach, BELL_RISE, reach))) {
             if (world.isBlockLoaded(at) && ContentRaids.isBell(world.getBlockState(at))) { found.add(at.toImmutable()); }
         }
@@ -304,6 +315,7 @@ public final class ActiveRaid {
         tag.setInteger("Celebration", celebration);
         tag.setFloat("WaveHealth", waveHealth);
         tag.setString("Status", status.name());
+        if (free) { tag.setBoolean("Free", true); }
         NBTTagList ids = new NBTTagList();
         for (UUID id : raiders) { ids.appendTag(NBTUtil.createUUIDTag(id)); }
         tag.setTag("Raiders", ids);
@@ -315,7 +327,7 @@ public final class ActiveRaid {
             ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString("Raid"));
             return null;
         }
-        ActiveRaid raid = new ActiveRaid(def, NBTUtil.getPosFromTag(tag.getCompoundTag("Center")));
+        ActiveRaid raid = new ActiveRaid(def, NBTUtil.getPosFromTag(tag.getCompoundTag("Center")), tag.getBoolean("Free"));
         raid.wave = tag.getInteger("Wave");
         raid.cooldown = tag.getInteger("Cooldown");
         raid.ticksActive = tag.getLong("Ticks");

@@ -182,7 +182,8 @@ public final class ContentParserGames {
                 Json.getString(json, "loses", "").trim(),
                 bells(json),
                 Json.getInt(json, "points", 0),
-                Json.getString(json, "loot", "").trim());
+                Json.getString(json, "loot", "").trim(),
+                Json.getBoolean(json, "anywhere", false));
     }
 
     private static List<String> bells(JsonObject json) {

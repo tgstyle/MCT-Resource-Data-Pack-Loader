@@ -43,8 +43,10 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -85,6 +87,18 @@ public final class ContentRaids {
     public static boolean belled() { return belled; }
 
     @Nullable public static RaidDef def(ResourceLocation key) { return DEFS.get(key); }
+
+    public static List<String> keys() {
+        List<String> names = new ArrayList<>();
+        for (ResourceLocation key : DEFS.keySet()) { names.add(key.toString()); }
+        return names;
+    }
+
+    public static boolean begin(WorldServer world, RaidDef def, BlockPos at) {
+        if (RaidStorage.get(world).near(at, def.reach) != null) { return false; }
+        ActiveRaid.start(world, def, at, true);
+        return true;
+    }
 
     public static boolean isBell(IBlockState state) { return state.getBlock() instanceof ContentBlockBell || BELLS.contains(state.getBlock()); }
 
@@ -135,11 +149,17 @@ public final class ContentRaids {
             WorldServer world = (WorldServer) player.world;
             BlockPos at = new BlockPos(player);
             Village village = ActiveRaid.nearestVillage(world, at, 0);
-            if (village == null) { return; }
             RaidStorage storage = RaidStorage.get(world);
+            if (village == null) {
+                if (!def.anywhere || storage.near(at, def.reach) != null) { return; }
+                player.removePotionEffect(omen);
+                ActiveRaid.start(world, def, at, true);
+                ContentLog.LOGGER.info("{} carries {} with no village near, so raid {} begins around them", player.getName(), def.omen, def.registryName);
+                return;
+            }
             if (storage.near(village.getCenter(), VILLAGE_SEARCH + village.getVillageRadius()) != null) { return; }
             player.removePotionEffect(omen);
-            storage.add(new ActiveRaid(def, village.getCenter()));
+            ActiveRaid.start(world, def, village.getCenter(), false);
             ContentLog.LOGGER.info("{} carries {} into the village at {}, {}, {}, so raid {} begins", player.getName(), def.omen, village.getCenter().getX(), village.getCenter().getY(), village.getCenter().getZ(), def.registryName);
             return;
         }
