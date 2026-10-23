@@ -65,6 +65,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 
 **Créatures et dangers**
 - [Variantes d'entités](#variantes-dentités)
+- [Rangs de mobs](#rangs-de-mobs)
 - [Ordres de travail](#ordres-de-travail)
 - [Expositions](#expositions)
 
@@ -159,6 +160,7 @@ Sous `data/` :
 | `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                                                  |
 | `<namespace>/dice/*.json`                    | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets)                               |
 | `<namespace>/games/*.json`                   | Jeux de plateau avec des créatures comme pièces : le plateau, les pièces et leur façon de se déplacer, et ce que rapporte un résultat. [Jeux de plateau](#jeux-de-plateau) |
+| `<namespace>/ranks/*.json`                   | Paliers aléatoires qu'un mob peut tirer en apparaissant : santé en plus, dégâts, effets, butin et une étiquette de nom. [Rangs de mobs](#rangs-de-mobs)                    |
 | `<namespace>/orders/*.json`                  | Travaux que des variantes d'entité font pour un joueur à un coffre. [Ordres de travail](#ordres-de-travail)                                                                |
 | `<namespace>/exposures/*.json`               | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions nommées. [Expositions](#expositions)                               |
 | `<namespace>/overrides/<target>/<name>.json` | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés)                                 |
@@ -489,7 +491,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                      |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                    |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                     |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                             |                                                                                                                             |
 
 La colonne de droite est une limite stricte : les blocs, objets, types d'entités, sons et effets de potions qu'un client vanilla n'a pas ne peuvent pas lui être décrits, et le portail propre à une dimension fait partie des blocs du pack ; les expositions ne se chargent qu'avec ce contenu. La colonne de gauche fonctionne parce que tout ce qui s'y trouve s'exécute entièrement côté serveur, parvient au client sous forme d'entrées de pack de données que vanilla lit déjà (biomes, régions de grottes, types de dimensions), ou passe par des paquets que vanilla parle déjà (emplacement de résultat d'artisanat rempli par le serveur, paquets de progrès ordinaires, refus de passage en messages d'état, et une retenue de prégénération faite de paquets vanilla de mode de jeu, de titre et de téléportation).
@@ -2811,6 +2813,38 @@ Une entrée de filtre. La première entrée qui correspond décide, et tout ce q
 | `tag`   | l'une des trois | id de tag d'objet | aucun  | Tous les objets de ce tag, comme `c:ingots/iron`                                                                                  |
 | `fluid` | l'une des trois | id de fluide      | aucun  | Un fluide par son id, comme `minecraft:water`. Lu seulement par un filtre de fluide                                               |
 | `max`   | non             | entier            | `0`    | La plus grande quantité conservée à la fois, comptée sur tous les emplacements, ou en mB pour un fluide. `0` signifie sans limite |
+
+## Rangs de mobs
+
+*créatures et dangers*
+
+`<namespace>/ranks/*.json`
+
+Le chemin du fichier est le nom du rang, et plusieurs fichiers se combinent. Un rang est un palier possible pour les mobs qui apparaissent. Quand un mob entre dans le monde pour la première fois, le jeu tire un rang parmi tous ceux qui le nomment, selon `weight`, et l'applique pour de bon : le rang est enregistré avec le mob et n'est jamais retiré. Un rang qui n'a que `entities` et `weight` est un palier ordinaire, il sert donc à décider de la fréquence des mobs normaux. Les rangs marchent sur n'importe quel mob, y compris ceux de vanilla et les variantes d'entité, et une variante garde son propre nom. Un rang se combine avec le bloc `mobs` d'un environnement : les deux multiplient les statistiques du mob.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| Clé        | Requis | Valeur                           | Défaut         | Rôle                                                                                                                                                                                      |
+| ---------- | ------ | -------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | non    | liste d'ids d'entité ou de types | `["#monster"]` | Les mobs sur lesquels le rang peut tomber : des ids comme `minecraft:zombie`, ou `#monster`, `#creature`, `#ambient`, `#water_creature`. Une variante d'entité se nomme par son propre id |
+| `weight`   | non    | entier, 1 ou plus                | `1`            | Probabilité du rang face aux autres qui nomment le même mob : son poids divisé par le total                                                                                               |
+| `name`     | non    | texte                            | aucun          | Un nom affiché au-dessus du mob. `%s` devient le nom propre du mob. Un mob qui a déjà un nom personnalisé le garde                                                                        |
+| `health`   | non    | nombre supérieur à 0             | `1`            | Multiplie la santé maximale du mob. Le mob apparaît avec toute sa santé                                                                                                                   |
+| `damage`   | non    | nombre, 0 ou plus                | `1`            | Multiplie les dégâts d'attaque au corps à corps du mob                                                                                                                                    |
+| `effects`  | non    | liste                            | aucun          | Effets permanents, chacun un objet avec un id `potion` et un `amplifier`, `0` par défaut. Leurs particules sont masquées                                                                  |
+| `loot`     | non    | nombre, 1 ou plus                | `1`            | Multiplie chaque objet empilable que le mob lâche. La fraction est la chance d'un objet de plus par pile                                                                                  |
+
+Les outils, l'armure et l'équipement que portait le mob ne sont pas multipliés, et les mobs qui portent un inventaire, comme les bêtes de somme, sont ignorés. Une erreur dans un fichier de rang, comme une clé inconnue, un id d'entité inexistant ou une valeur hors limites, est consignée et tout le fichier est ignoré. Supprimer un fichier de rang laisse tels quels les mobs qui ont déjà tiré ce rang, et un mob qu'aucun rang ne nomme reste intact. Seul le serveur lit les rangs, donc les clients vanilla peuvent se connecter.
 
 ## Ordres de travail
 

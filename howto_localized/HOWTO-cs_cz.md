@@ -65,6 +65,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 
 **Tvorové a nebezpečí**
 - [Varianty entit](#varianty-entit)
+- [Hodnosti mobů](#hodnosti-mobů)
 - [Zakázky](#zakázky)
 - [Expozice](#expozice)
 
@@ -159,6 +160,7 @@ V `data/`:
 | `<namespace>/cards/*.json`                   | Karty na obrazovce zobrazené při spouštěči a zprávy, které říká sám tento mód. [Karty](#karty)                                                 |
 | `<namespace>/dice/*.json`                    | Kostky balíčku s váženými stěnami, balíčky karet, kdo uslyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)           |
 | `<namespace>/games/*.json`                   | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                  |
+| `<namespace>/ranks/*.json`                   | Náhodné úrovně, které mob získá při objevení: zdraví navíc, poškození, efekty, kořist a jmenovka. [Hodnosti mobů](#hodnosti-mobů)              |
 | `<namespace>/orders/*.json`                  | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                 |
 | `<namespace>/exposures/*.json`               | Nebezpečí, která ohrožují hráče poblíž pojmenovaných bloků, nesoucí pojmenované předměty nebo v pojmenovaných dimenzích. [Expozice](#expozice) |
 | `<namespace>/overrides/<target>/<name>.json` | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností)                         |
@@ -489,7 +491,7 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                         |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                          |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                  |
 
 Pravý sloupec je tvrdá zarážka: bloky, předměty, typy entit, zvuky a efekty lektvarů, které vanilla klient nemá, mu nelze popsat a vlastní portál dimenze je jedním z bloků balíčku; expozice se načítají jen spolu s tímto obsahem. Levý sloupec funguje, protože všechno v něm buď běží zcela na straně serveru, dorazí ke klientovi jako položky datového balíčku, které vanilla už čte (biomy, oblasti jeskyní, typy dimenzí), nebo dorazí přes pakety, kterými vanilla už mluví (výsledný slot výroby plněný serverem, běžné pakety pokroků, odmítnutí bran ve stavových zprávách a podržení při předgenerování složené z vanilla paketů herního režimu, titulku a teleportu).
@@ -2811,6 +2813,38 @@ Položka filtru. Rozhoduje první položka, která odpovídá, a cokoli, čemu �
 | `tag`   | jedno ze tří | id tagu předmětů | žádný   | Každý předmět pod tímto tagem, například `c:ingots/iron`                                                   |
 | `fluid` | jedno ze tří | id tekutiny      | žádný   | Tekutina podle svého id, například `minecraft:water`. Čte ji jen filtr tekutin                             |
 | `max`   | ne           | celé číslo       | `0`     | Nejvíce, co se z toho drží najednou, počítáno přes všechny sloty, nebo v mB u tekutiny. `0` je bez omezení |
+
+## Hodnosti mobů
+
+*tvorové a nebezpečí*
+
+`<namespace>/ranks/*.json`
+
+Cesta souboru je název hodnosti a více souborů se kombinuje. Hodnost je jedna z možných úrovní pro moby, kteří se objeví. Když mob poprvé vstoupí do světa, hra vybere jednu hodnost ze všech, které ho uvádějí, podle `weight` a použije ji natrvalo: hodnost se uloží s mobem a už se nikdy znovu nelosuje. Hodnost jen s `entities` a `weight` je obyčejná úroveň, takže pomocí ní určíte, jak časté zůstávají běžné moby. Hodnosti fungují na jakémkoli mobovi, včetně vanilla mobů a variant entit, a varianta si ponechá své jméno. Hodnost se kombinuje s blokem `mobs` prostředí: obojí násobí vlastnosti moba.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| Klíč       | Povinný | Hodnota                    | Výchozí        | Co dělá                                                                                                                                                              |
+| ---------- | ------- | -------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | ne      | seznam id entit nebo druhů | `["#monster"]` | Moby, na kterých může hodnost padnout: id jako `minecraft:zombie`, nebo `#monster`, `#creature`, `#ambient`, `#water_creature`. Varianta entity se uvádí vlastním id |
+| `weight`   | ne      | celé číslo, 1 nebo více    | `1`            | Jak pravděpodobná je hodnost mezi ostatními, které uvádějí stejného moba: její váha dělená součtem                                                                   |
+| `name`     | ne      | text                       | žádný          | Jméno zobrazené nad mobem. `%s` se změní na vlastní jméno moba. Mob, který už vlastní jméno má, si ho ponechá                                                        |
+| `health`   | ne      | číslo větší než 0          | `1`            | Násobí maximální zdraví moba. Mob se objeví s plným zdravím                                                                                                          |
+| `damage`   | ne      | číslo, 0 nebo více         | `1`            | Násobí poškození moba při útoku zblízka                                                                                                                              |
+| `effects`  | ne      | seznam                     | žádný          | Trvalé efekty, každý je objekt s id `potion` a `amplifier`, výchozí `0`. Jejich částice jsou skryté                                                                  |
+| `loot`     | ne      | číslo, 1 nebo více         | `1`            | Násobí každý stohovatelný předmět, který mob upustí. Zlomek je šance na jeden další předmět na stoh                                                                  |
+
+Nástroje, brnění a výbava, kterou mob nesl, se neznásobují a moby s inventářem, například soumaři, se přeskočí. Chyba v souboru hodnosti, například neznámý klíč, neexistující id entity nebo hodnota mimo rozsah, se zapíše do logu a celý soubor se přeskočí. Smazání souboru hodnosti nechá moby, kteří ji už získali, jak jsou, a mob, kterého žádná hodnost neuvádí, zůstane beze změny. Hodnosti čte jen server, takže se mohou připojit i vanilla klienti.
 
 ## Zakázky
 

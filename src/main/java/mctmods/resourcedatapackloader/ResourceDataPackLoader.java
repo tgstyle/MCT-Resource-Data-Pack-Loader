@@ -43,6 +43,7 @@ import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentOrders;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -458,6 +459,11 @@ import java.util.Set;
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onBreak);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onChunkLoad);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onInteract);
+                }
+                if (ContentRanks.load()) {
+                    NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ContentRanks::onJoin);
+                    NeoForge.EVENT_BUS.addListener(ContentRanks::onDeath);
+                    NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
                 }
                 ContentOverrides.reload();
             });

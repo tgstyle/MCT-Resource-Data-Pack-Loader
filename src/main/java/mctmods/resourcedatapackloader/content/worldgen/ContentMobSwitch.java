@@ -2,16 +2,14 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
+import mctmods.resourcedatapackloader.content.entity.MobStats;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMob;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -20,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -37,8 +34,6 @@ import javax.annotation.Nullable;
 public final class ContentMobSwitch {
     private static final List<String> KEYS = List.of("entities", "health", "damage", "speed", "equipment");
     private static final List<String> SLOTS = List.of("mainhand", "offhand", "head", "chest", "legs", "feet");
-    private static final List<String> KINDS = List.of("#monster", "#creature", "#ambient", "#water_creature");
-    private static final String MONSTER = "#monster";
     private static final String ITEM = "item";
     private static final String DROP_CHANCE = "dropChance";
     private static final String RECORD = "rdplMobSwitch";
@@ -59,7 +54,7 @@ public final class ContentMobSwitch {
             ContentLog.LOGGER.error("{} gives mobs that is not an object, ignoring it", owner);
             return null;
         }
-        List<String> entities = List.of(MONSTER);
+        List<String> entities = List.of(MobStats.MONSTER);
         float health = 1.0F;
         float damage = 1.0F;
         float speed = 1.0F;
@@ -71,7 +66,7 @@ public final class ContentMobSwitch {
                 continue;
             }
             if ("entities".equals(key)) {
-                List<String> listed = entities(owner, entry.getValue());
+                List<String> listed = MobStats.entities(owner, "mobs.entities", entry.getValue());
                 if (listed != null) { entities = listed; }
             }
             else if ("equipment".equals(key)) { equipment(owner, entry.getValue(), equipment); }
@@ -86,28 +81,6 @@ public final class ContentMobSwitch {
             }
         }
         return new MobSwitchDef(owner, name, List.copyOf(entities), health, damage, speed, equipment);
-    }
-
-    @Nullable private static List<String> entities(String owner, JsonElement element) {
-        if (!element.isJsonArray()) {
-            ContentLog.LOGGER.error("{} gives mobs.entities that is not a list of entity ids and kinds, ignoring it", owner);
-            return null;
-        }
-        List<String> listed = new ArrayList<>();
-        JsonArray array = element.getAsJsonArray();
-        for (JsonElement item : array) {
-            if (!item.isJsonPrimitive() || !item.getAsJsonPrimitive().isString()) {
-                ContentLog.LOGGER.error("{} gives a mobs.entities entry that is not text, ignoring it", owner);
-                continue;
-            }
-            String id = Settings.lower(item.getAsString());
-            if (id.startsWith("#")) {
-                if (KINDS.contains(id)) { listed.add(id); }
-                else { ContentLog.LOGGER.error("{} gives mobs.entities '{}', which is not a kind, ignoring it", owner, id); }
-            }
-            else { listed.add(id.indexOf(':') < 0 ? "minecraft:" + id : id); }
-        }
-        return listed;
     }
 
     private static void equipment(String owner, JsonElement element, Map<String, MobSwitchDef.Gear> into) {
@@ -159,13 +132,6 @@ public final class ContentMobSwitch {
         return new MobSwitchDef.Gear(item, chance);
     }
 
-    private static boolean targets(MobSwitchDef def, Mob mob) {
-        if (def.entities().isEmpty()) { return false; }
-        String id = String.valueOf(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()));
-        String kind = "#" + mob.getType().getCategory().getName();
-        return def.entities().contains(id) || def.entities().contains(kind);
-    }
-
     public static void onJoin(EntityJoinLevelEvent event) {
         if (ready && event.getLevel() instanceof ServerLevel level && event.getEntity() instanceof Mob mob) { settle(mob, level); }
     }
@@ -173,7 +139,7 @@ public final class ContentMobSwitch {
     private static void settle(Mob mob, ServerLevel level) {
         if (!mob.isAlive()) { return; }
         MobSwitchDef def = ContentEnvironments.mobs(level, mob.blockPosition());
-        String wanted = targets(def, mob) ? level.dimension().location() + "/" + def.name() : "";
+        String wanted = MobStats.targets(def.entities(), mob) ? level.dimension().location() + "/" + def.name() : "";
         CompoundTag record = mob.getPersistentData().getCompound(RECORD);
         String held = record.getString(SET);
         if (held.equals(wanted)) { return; }
@@ -184,9 +150,9 @@ public final class ContentMobSwitch {
     private static void apply(Mob mob, MobSwitchDef def, String wanted) {
         CompoundTag record = new CompoundTag();
         record.putString(SET, wanted);
-        if (scale(mob, Attributes.MAX_HEALTH, HEALTH, def.health())) { mob.setHealth(mob.getHealth() * def.health()); }
-        scale(mob, Attributes.ATTACK_DAMAGE, DAMAGE, def.damage());
-        scale(mob, Attributes.MOVEMENT_SPEED, SPEED, def.speed());
+        if (MobStats.scale(mob, Attributes.MAX_HEALTH, HEALTH, def.health())) { mob.setHealth(mob.getHealth() * def.health()); }
+        MobStats.scale(mob, Attributes.ATTACK_DAMAGE, DAMAGE, def.damage());
+        MobStats.scale(mob, Attributes.MOVEMENT_SPEED, SPEED, def.speed());
         CompoundTag gear = new CompoundTag();
         for (Map.Entry<String, MobSwitchDef.Gear> entry : def.equipment().entrySet()) {
             EquipmentSlot slot = Enums.byName(EquipmentSlot.class, entry.getKey());
@@ -201,14 +167,6 @@ public final class ContentMobSwitch {
         }
         record.put(GEAR, gear);
         mob.getPersistentData().put(RECORD, record);
-    }
-
-    private static boolean scale(Mob mob, Holder<Attribute> attribute, ResourceLocation id, float multiplier) {
-        AttributeInstance instance = mob.getAttribute(attribute);
-        if (instance == null || multiplier == 1.0F) { return false; }
-        instance.removeModifier(id);
-        instance.addPermanentModifier(new AttributeModifier(id, multiplier - 1.0F, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
-        return true;
     }
 
     private static void strip(Mob mob, CompoundTag record) {

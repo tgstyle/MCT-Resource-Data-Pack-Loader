@@ -65,6 +65,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 
 **Criaturas e perigos**
 - [Variantes de entidades](#variantes-de-entidades)
+- [Níveis de mobs](#níveis-de-mobs)
 - [Ordens de trabalho](#ordens-de-trabalho)
 - [Exposições](#exposições)
 
@@ -159,6 +160,7 @@ Em `data/`:
 | `<namespace>/cards/*.json`                   | Cartas na tela exibidas por um gatilho e as mensagens que este mod diz por conta própria. [Cartas](#cartas)                                              |
 | `<namespace>/dice/*.json`                    | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve uma rolagem e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos)          |
 | `<namespace>/games/*.json`                   | Jogos de tabuleiro com criaturas como peças: o tabuleiro, as peças e como se movem, e o que um resultado paga. [Jogos de tabuleiro](#jogos-de-tabuleiro) |
+| `<namespace>/ranks/*.json`                   | Faixas aleatórias que um mob pode sortear ao surgir: vida extra, dano, efeitos, itens soltos e uma etiqueta de nome. [Níveis de mobs](#níveis-de-mobs)   |
 | `<namespace>/orders/*.json`                  | Trabalhos que variantes de entidade fazem para um jogador em um baú. [Ordens de trabalho](#ordens-de-trabalho)                                           |
 | `<namespace>/exposures/*.json`               | Perigos que expõem jogadores perto de blocos nomeados, carregando itens nomeados ou em dimensões nomeadas. [Exposições](#exposições)                     |
 | `<namespace>/overrides/<target>/<name>.json` | Propriedades de blocos, itens e tipos de poção existentes, alteradas no lugar. [Substituições de propriedades](#substituições-de-propriedades)           |
@@ -489,7 +491,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                  |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                   |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (pastas de cliente: sem cliente, deixe-as de fora) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (pastas de cliente: sem cliente, deixe-as de fora) |
 | toda a camada de controle, as configurações e a pré-geração                                                                                               |                                                                                                                           |
 
 A coluna da direita é um limite rígido: blocos, itens, tipos de entidade, sons e efeitos de poção que um cliente vanilla não tem não podem ser descritos a ele, e o portal próprio de uma dimensão é um dos blocos do pacote; as exposições só carregam junto com esse conteúdo. A coluna da esquerda funciona porque tudo ali ou roda inteiramente no servidor, ou chega ao cliente como entradas de pacote de dados que o vanilla já lê (biomas, regiões de cavernas, tipos de dimensão), ou chega por pacotes de rede que o vanilla já entende (o espaço de resultado da criação preenchido pelo servidor, pacotes de avanço comuns, recusas de passagens em mensagens de status e uma retenção de pré-geração feita de pacotes vanilla de modo de jogo/título/teletransporte).
@@ -2811,6 +2813,38 @@ Uma entrada de filtro. A primeira entrada que corresponde decide, e tudo o que n
 | `tag`   | uma das três | id de tag de item | nenhum | Todo item sob aquela tag, como `c:ingots/iron`                                                            |
 | `fluid` | uma das três | id de fluido      | nenhum | Um fluido pelo seu id, como `minecraft:water`. Lida apenas por um filtro de fluido                        |
 | `max`   | não          | int               | `0`    | O máximo dele guardado de uma vez, contado em todos os espaços, ou em mB para um fluido. `0` é sem limite |
+
+## Níveis de mobs
+
+*criaturas e perigos*
+
+`<namespace>/ranks/*.json`
+
+O caminho do arquivo é o nome do nível, e vários arquivos se combinam. Um nível é uma faixa possível para os mobs que surgem. Quando um mob entra no mundo pela primeira vez, o jogo sorteia um nível entre todos os que o nomeiam, conforme `weight`, e o aplica para sempre: o nível é salvo com o mob e nunca é sorteado de novo. Um nível só com `entities` e `weight` é um nível comum, então serve para decidir quão frequentes os mobs normais continuam. Os níveis funcionam em qualquer mob, inclusive os do vanilla e as variantes de entidade, e uma variante mantém o próprio nome. Um nível se combina com o bloco `mobs` de um ambiente: os dois multiplicam os atributos do mob.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| Chave      | Obrigatória | Valor                             | Padrão         | O que faz                                                                                                                                                                   |
+| ---------- | ----------- | --------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | não         | lista de IDs de entidade ou tipos | `["#monster"]` | Os mobs em que o nível pode sair: IDs como `minecraft:zombie`, ou `#monster`, `#creature`, `#ambient`, `#water_creature`. Uma variante de entidade é citada pelo próprio ID |
+| `weight`   | não         | número inteiro, 1 ou mais         | `1`            | Quão provável é o nível frente aos outros que citam o mesmo mob: seu peso dividido pelo total                                                                               |
+| `name`     | não         | texto                             | nenhum         | Um nome exibido sobre o mob. `%s` vira o nome próprio do mob. Um mob que já tem nome personalizado o mantém                                                                 |
+| `health`   | não         | número maior que 0                | `1`            | Multiplica a vida máxima do mob. O mob surge com a vida cheia                                                                                                               |
+| `damage`   | não         | número, 0 ou mais                 | `1`            | Multiplica o dano de ataque corpo a corpo do mob                                                                                                                            |
+| `effects`  | não         | lista                             | nenhum         | Efeitos permanentes, cada um um objeto com um ID `potion` e um `amplifier`, padrão `0`. As partículas ficam ocultas                                                         |
+| `loot`     | não         | número, 1 ou mais                 | `1`            | Multiplica cada item empilhável que o mob solta. A parte fracionária é a chance de mais um item por pilha                                                                   |
+
+Ferramentas, armaduras e o equipamento que o mob carregava não são multiplicados, e mobs que carregam um inventário, como animais de carga, são ignorados. Um erro em um arquivo de nível, como uma chave desconhecida, um ID de entidade que não existe ou um valor fora do intervalo, é registrado no log e o arquivo inteiro é ignorado. Apagar um arquivo de nível deixa como estão os mobs que já sortearam aquele nível, e um mob que nenhum nível cita fica intocado. Só o servidor lê os níveis, então clientes vanilla podem entrar.
 
 ## Ordens de trabalho
 
