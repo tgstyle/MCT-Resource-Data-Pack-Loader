@@ -23,7 +23,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
@@ -106,15 +105,13 @@ final class ContentEntityApply {
 
     private static void attributes(LivingEntity mob, EntityVariantDef def, boolean first) {
         for (Map.Entry<String, Double> entry : def.attributes().entrySet()) {
-            Attribute attribute = ContentAttributes.find(entry.getKey(), def.key());
-            if (attribute == null) { continue; }
-            AttributeInstance instance = mob.getAttribute(attribute);
+            AttributeInstance instance = ContentAttributes.instance(mob, entry.getKey(), def.key());
             if (instance == null) {
-                ContentLog.LOGGER.error("Entity variant {} sets {}, which {} does not carry", def.key(), entry.getKey(), def.base());
+                if (ContentAttributes.lookup(entry.getKey()) != null) { ContentLog.LOGGER.error("Unknown attribute '{}' in {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.key(), def.base()); }
                 continue;
             }
             instance.setBaseValue(entry.getValue());
-            if (first && attribute.equals(Attributes.MAX_HEALTH)) { mob.setHealth((float) (double) entry.getValue()); }
+            if (first && instance.getAttribute().equals(Attributes.MAX_HEALTH)) { mob.setHealth((float) (double) entry.getValue()); }
         }
     }
 

@@ -4,7 +4,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraftforge.registries.ForgeRegistries;
 import java.util.HashMap;
@@ -36,14 +38,23 @@ public final class ContentAttributes {
         ATTRIBUTES.put(key("generic." + name), attribute);
     }
 
-    @Nullable public static Attribute find(String name, Object context) {
+    @Nullable public static Attribute lookup(String name) {
         Attribute attribute = ATTRIBUTES.get(key(name));
         if (attribute != null) { return attribute; }
-        ResourceLocation id = ResourceLocation.tryParse(name);
-        attribute = Registered.find(ForgeRegistries.ATTRIBUTES, id);
+        return Registered.find(ForgeRegistries.ATTRIBUTES, ResourceLocation.tryParse(name));
+    }
+
+    @Nullable public static Attribute find(String name, Object context) {
+        Attribute attribute = lookup(name);
         if (attribute != null) { return attribute; }
         ContentLog.LOGGER.error("Unknown attribute '{}' in {}, skipping that modifier. Known names are {} or a registry id such as minecraft:generic.attack_damage", name, context, ATTRIBUTES.keySet());
         return null;
+    }
+
+    @Nullable public static AttributeInstance instance(LivingEntity mob, String name, Object context) {
+        Attribute attribute = find(name, context);
+        if (attribute == null) { return null; }
+        return mob.getAttribute(attribute);
     }
 
     private static String key(String name) { return name.toLowerCase(Locale.ROOT); }
