@@ -378,7 +378,8 @@ public final class ContentParser {
             levels.add(new ExposureLevelDef(effect,
                     Math.max(0.0F, Json.getFloat(level, "damage", 0.0F)),
                     Math.max(0, Json.getInt(level, "damageInterval", 160)),
-                    Collections.unmodifiableList(extras)));
+                    Collections.unmodifiableList(extras),
+                    Json.getString(level, "onEnter", "").trim()));
         }
         if (levels.isEmpty()) {
             ContentLog.LOGGER.error("Exposure {} has no usable levels, ignoring it", key);
@@ -404,6 +405,12 @@ public final class ContentParser {
             Integer dimension = dimension(key, named.trim());
             if (dimension != null) { weatherDimensions.add(dimension); }
         }
+        Set<ResourceLocation> immuneItems = new LinkedHashSet<>();
+        for (String named : strings(json, "immuneItems")) { immuneItems.add(new ResourceLocation(named.trim())); }
+        Set<String> immuneTeams = new LinkedHashSet<>();
+        for (String named : strings(json, "immuneTeams")) {
+            if (!named.trim().isEmpty()) { immuneTeams.add(named.trim()); }
+        }
         return new ExposureDef(key,
                 Math.max(1, Json.getInt(json, "scanInterval", 20)),
                 Math.max(0, Json.getInt(json, "range", 10)),
@@ -415,7 +422,8 @@ public final class ContentParser {
                 Math.max(0, Json.getInt(json, "contagionRange", 4)),
                 MathHelper.clamp(Json.getFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F),
                 Math.max(1, Json.getInt(json, "contagionDuration", 1200)),
-                weather, weatherDimensions, biomes, structures, caveRegions, Collections.unmodifiableList(heights));
+                weather, weatherDimensions, biomes, structures, caveRegions, Collections.unmodifiableList(heights),
+                immuneItems, immuneTeams, Json.getString(json, "onClear", "").trim());
     }
 
     private static List<ExposureBandDef> bands(ResourceLocation key, JsonObject json) {

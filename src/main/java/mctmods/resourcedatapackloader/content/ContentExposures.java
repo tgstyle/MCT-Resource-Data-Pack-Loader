@@ -19,6 +19,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.scoreboard.ScorePlayerTeam;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
@@ -28,14 +29,17 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentExposures {
     private static final Map<ExposureDef, Map<Block, Integer>> BLOCK_LEVELS = new IdentityHashMap<>();
     private static final Map<ExposureDef, Map<Item, Integer>> ITEM_LEVELS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Set<Item>> IMMUNE_ITEMS = new IdentityHashMap<>();
     private static final Map<ExposureDef, DamageSource> SOURCES = new IdentityHashMap<>();
     private static final Map<ExposureDef, Potion[]> MARKERS = new IdentityHashMap<>();
     private static final Map<PotionEffectDef, Potion> EXTRAS = new IdentityHashMap<>();
@@ -61,13 +65,13 @@ public final class ContentExposures {
     private static void tick(ExposureDef def, EntityPlayer player) {
         if (def.skipsCreative && (player.isCreative() || player.isSpectator())) {
             applyLevel(def, player, 0);
-            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def.name, 0); }
+            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def, 0); }
             return;
         }
         if (player.ticksExisted % def.scanInterval == 0) {
             int level = scan(def, player);
             applyLevel(def, player, level);
-            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def.name, level); }
+            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def, level); }
             spreadFrom(def, player, level);
         }
         damageTick(def, player);
@@ -101,9 +105,26 @@ public final class ContentExposures {
     }
 
     private static boolean immune(ExposureDef def, EntityLivingBase entity) {
-        if (def.immunity.isEmpty()) { return false; }
-        Potion immune = immunity(def);
-        return immune != null && entity.isPotionActive(immune);
+        if (!def.immunity.isEmpty()) {
+            Potion immune = immunity(def);
+            if (immune != null && entity.isPotionActive(immune)) { return true; }
+        }
+        return wearsImmune(def, entity) || onImmuneTeam(def, entity);
+    }
+
+    private static boolean wearsImmune(ExposureDef def, EntityLivingBase entity) {
+        if (def.immuneItems.isEmpty()) { return false; }
+        Set<Item> immune = immuneItems(def);
+        for (ItemStack stack : entity.getEquipmentAndArmor()) {
+            if (!stack.isEmpty() && immune.contains(stack.getItem())) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean onImmuneTeam(ExposureDef def, EntityLivingBase entity) {
+        if (def.immuneTeams.isEmpty()) { return false; }
+        ScorePlayerTeam team = ContentTeams.teamOf(entity.world, ContentTeams.memberName(entity));
+        return team != null && def.immuneTeams.contains(team.getName());
     }
 
     @Nullable private static Potion immunity(ExposureDef def) { return IMMUNITIES.computeIfAbsent(def, held -> Potion.getPotionFromResourceLocation(held.immunity)); }
@@ -240,6 +261,18 @@ public final class ContentExposures {
                 else { levels.put(item, entry.getValue()); }
             }
             return levels;
+        });
+    }
+
+    private static Set<Item> immuneItems(ExposureDef def) {
+        return IMMUNE_ITEMS.computeIfAbsent(def, held -> {
+            Set<Item> items = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (ResourceLocation name : held.immuneItems) {
+                Item item = ForgeRegistries.ITEMS.getValue(name);
+                if (item == null) { ContentLog.LOGGER.error("Exposure {} names immune item {}, which is not registered, so it is ignored", held.registryName, name); }
+                else { items.add(item); }
+            }
+            return items;
         });
     }
 

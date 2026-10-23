@@ -3483,35 +3483,41 @@ A pack-defined hazard: named blocks, items, dimensions, biomes, structures, cave
   "caveRegions": [ "mypack:glowcave=2" ],
   "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
+  "immuneItems": [ "mypack:hazmat_helmet", "mypack:hazmat_chest" ],
+  "immuneTeams": [ "scientists" ],
+  "onClear": "mypack:rad/clear",
   "scanInterval": 20,
   "range": 10,
   "sourcesForNextLevel": 4,
   "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+    { "effect": "mypack:radiation_1", "onEnter": "mypack:rad/low", "damage": 4.0, "damageInterval": 160,
       "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
                    { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+    { "effect": "mypack:radiation_2", "onEnter": "mypack:rad/high", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
 ```
 
-| Key                   | Required        | Value                                    | Default | What it does                                                                                    |
-| --------------------- | --------------- | ---------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| `blocks`              | one of the nine | list of `block` or `block=level`         |         | Blocks that expose a player standing near them. No level means 1                                |
-| `items`               | one of the nine | list of `item` or `item=level`           |         | Items that expose a player carrying or wearing them                                             |
-| `dimensions`          | one of the nine | list of `dim` or `dim=level`             |         | Numeric dimension ids that expose any player in them                                            |
-| `biomes`              | one of the nine | list of `biome` or `biome=level`         |         | Biomes that expose any player standing in them. `#` names a BiomeDictionary type                |
-| `structures`          | one of the nine | list of `structure` or `structure=level` |         | Structures that expose a player inside them. A pack structure counts within `range` blocks      |
-| `caveRegions`         | one of the nine | list of `region` or `region=level`       |         | Cave regions that expose a player in them. A bare name takes this file's namespace              |
-| `heights`             | one of the nine | list of `from:to=level`                  |         | Y bands that expose a player in them. Leave one side empty for no limit                         |
-| `levels`              | yes             | list of levels                           |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches |
-| `immunity`            | no              | potion name                              | none    | An effect whose bearer is not exposed at all                                                    |
-| `scanInterval`        | no              | ticks                                    | `20`    | How often surroundings and inventory are checked                                                |
-| `range`               | no              | blocks                                   | `10`    | How far a block's exposure reaches, as a sphere                                                 |
-| `sourcesForNextLevel` | no              | int                                      | `0`     | This many nearby sources of one level push it one level further. `0` turns that off             |
-| `skipsCreative`       | no              | boolean                                  | `true`  | Creative and spectator players are left alone                                                   |
+| Key                   | Required        | Value                                    | Default | What it does                                                                                                                                                                                                                         |
+| --------------------- | --------------- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `blocks`              | one of the nine | list of `block` or `block=level`         |         | Blocks that expose a player standing near them. No level means 1                                                                                                                                                                     |
+| `items`               | one of the nine | list of `item` or `item=level`           |         | Items that expose a player carrying or wearing them                                                                                                                                                                                  |
+| `dimensions`          | one of the nine | list of `dim` or `dim=level`             |         | Numeric dimension ids that expose any player in them                                                                                                                                                                                 |
+| `biomes`              | one of the nine | list of `biome` or `biome=level`         |         | Biomes that expose any player standing in them. `#` names a BiomeDictionary type                                                                                                                                                     |
+| `structures`          | one of the nine | list of `structure` or `structure=level` |         | Structures that expose a player inside them. A pack structure counts within `range` blocks                                                                                                                                           |
+| `caveRegions`         | one of the nine | list of `region` or `region=level`       |         | Cave regions that expose a player in them. A bare name takes this file's namespace                                                                                                                                                   |
+| `heights`             | one of the nine | list of `from:to=level`                  |         | Y bands that expose a player in them. Leave one side empty for no limit                                                                                                                                                              |
+| `levels`              | yes             | list of levels                           |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches                                                                                                                                      |
+| `immunity`            | no              | potion name                              | none    | An effect whose bearer is not exposed at all                                                                                                                                                                                         |
+| `immuneItems`         | no              | list of item names                       | none    | An entity wearing or holding any one of these (armor slots and both hands) is not exposed at all, like `immunity`. Name one piece per suit part; any single piece is enough. An unknown item name is logged as an error and ignored. |
+| `immuneTeams`         | no              | list of scoreboard team names            | none    | Members of these teams (pack team files or `/scoreboard teams`) are not exposed. An unknown team name never matches.                                                                                                                 |
+| `onClear`             | no              | function name                            | none    | Runs as the player when their level drops to 0, including when they switch to creative.                                                                                                                                              |
+| `scanInterval`        | no              | ticks                                    | `20`    | How often surroundings and inventory are checked                                                                                                                                                                                     |
+| `range`               | no              | blocks                                   | `10`    | How far a block's exposure reaches, as a sphere                                                                                                                                                                                      |
+| `sourcesForNextLevel` | no              | int                                      | `0`     | This many nearby sources of one level push it one level further. `0` turns that off                                                                                                                                                  |
+| `skipsCreative`       | no              | boolean                                  | `true`  | Creative and spectator players are left alone                                                                                                                                                                                        |
 
 ### Levels
 
@@ -3525,6 +3531,9 @@ Each level:
 | `damage`         | no       | half-hearts     | `0`     | Damage dealt every `damageInterval` ticks while the level holds. It ignores armor                                            |
 | `damageInterval` | no       | ticks           | `160`   | How often that damage lands                                                                                                  |
 | `effects`        | no       | list of effects | none    | Extra effects applied alongside, the same shape potion types use. Without a `duration` they follow the scan window           |
+| `onEnter`        | no       | function name   | none    | Runs as the player each time the level changes to this level, up or down.                                                    |
+
+Immunity has three forms, and any of them leaves the bearer unexposed: the `immunity` potion, one of the `immuneItems` worn or held, or membership in one of the `immuneTeams`. A level change runs the function named by the new level's `onEnter`, or `onClear` when the level falls to 0. The functions run at permission level 2 with @s the player, after the level's marker effect is applied. The first check after joining sets the starting level without firing, so a player who logs in already exposed runs nothing until the level changes, and a respawn keeps the level. The same change also fires the `exposure_level` card trigger.
 
 The level effects last slightly past the next scan, so walking away lets them lapse on their own. Death by exposure damage reads its message from `death.attack.rdpl.<file name>`, which the pack's lang files supply.
 

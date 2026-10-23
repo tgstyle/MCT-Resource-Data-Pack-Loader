@@ -29,8 +29,11 @@ public final class ExposureDef {
     public final Map<String, Integer> structures;
     public final Map<ResourceLocation, Integer> caveRegions;
     public final List<ExposureBandDef> heights;
+    public final Set<ResourceLocation> immuneItems;
+    public final Set<String> immuneTeams;
+    public final String onClear;
 
-    public ExposureDef(ResourceLocation registryName, int scanInterval, int range, boolean skipsCreative, int sourcesForNextLevel, String immunity, Map<ResourceLocation, Integer> blocks, Map<ResourceLocation, Integer> items, Map<Integer, Integer> dimensions, List<ExposureLevelDef> levels, Map<ResourceLocation, Integer> carriers, boolean contagious, Set<ResourceLocation> catchers, int contagionRange, float contagionChance, int contagionDuration, Map<String, Integer> weather, Set<Integer> weatherDimensions, Map<String, Integer> biomes, Map<String, Integer> structures, Map<ResourceLocation, Integer> caveRegions, List<ExposureBandDef> heights) {
+    public ExposureDef(ResourceLocation registryName, int scanInterval, int range, boolean skipsCreative, int sourcesForNextLevel, String immunity, Map<ResourceLocation, Integer> blocks, Map<ResourceLocation, Integer> items, Map<Integer, Integer> dimensions, List<ExposureLevelDef> levels, Map<ResourceLocation, Integer> carriers, boolean contagious, Set<ResourceLocation> catchers, int contagionRange, float contagionChance, int contagionDuration, Map<String, Integer> weather, Set<Integer> weatherDimensions, Map<String, Integer> biomes, Map<String, Integer> structures, Map<ResourceLocation, Integer> caveRegions, List<ExposureBandDef> heights, Set<ResourceLocation> immuneItems, Set<String> immuneTeams, String onClear) {
         this.registryName = registryName;
         this.name = registryName.getPath();
         this.scanInterval = scanInterval;
@@ -54,6 +57,9 @@ public final class ExposureDef {
         this.structures = structures;
         this.caveRegions = caveRegions;
         this.heights = heights;
+        this.immuneItems = immuneItems;
+        this.immuneTeams = immuneTeams;
+        this.onClear = onClear;
     }
 
     public boolean spreads() { return contagionRange > 0 && contagionChance > 0.0F && (contagious || !carriers.isEmpty()); }

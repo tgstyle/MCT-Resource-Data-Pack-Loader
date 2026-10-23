@@ -3483,35 +3483,41 @@ Nebezpečí definované balíčkem: pojmenované bloky, předměty, dimenze, bio
   "caveRegions": [ "mypack:glowcave=2" ],
   "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
+  "immuneItems": [ "mypack:hazmat_helmet", "mypack:hazmat_chest" ],
+  "immuneTeams": [ "scientists" ],
+  "onClear": "mypack:rad/clear",
   "scanInterval": 20,
   "range": 10,
   "sourcesForNextLevel": 4,
   "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+    { "effect": "mypack:radiation_1", "onEnter": "mypack:rad/low", "damage": 4.0, "damageInterval": 160,
       "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
                    { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+    { "effect": "mypack:radiation_2", "onEnter": "mypack:rad/high", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
 ```
 
-| Klíč                  | Povinné        | Hodnota                                   | Výchozí | Co dělá                                                                                                    |
-| --------------------- | -------------- | ----------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------- |
-| `blocks`              | jeden z devíti | seznam `block` nebo `block=level`         |         | Bloky, které vystavují hráče stojícího poblíž. Bez úrovně platí 1                                          |
-| `items`               | jeden z devíti | seznam `item` nebo `item=level`           |         | Předměty, které vystavují hráče, jenž je nese nebo má na sobě                                              |
-| `dimensions`          | jeden z devíti | seznam `dim` nebo `dim=level`             |         | Číselná id dimenzí, které vystavují každého hráče v nich                                                   |
-| `biomes`              | jeden z devíti | seznam `biome` nebo `biome=level`         |         | Biomy, které vystavují každého hráče, jenž v nich stojí. `#` označuje typ BiomeDictionary                  |
-| `structures`          | jeden z devíti | seznam `structure` nebo `structure=level` |         | Struktury, které vystavují hráče uvnitř nich. Struktura z balíčku platí do vzdálenosti `range` bloků       |
-| `caveRegions`         | jeden z devíti | seznam `region` nebo `region=level`       |         | Oblasti jeskyní, které vystavují hráče v nich. Holý název převezme jmenný prostor tohoto souboru           |
-| `heights`             | jeden z devíti | seznam `from:to=level`                    |         | Pásma výšky Y, která vystavují hráče v nich. Nechte jednu stranu prázdnou, aby neměla žádný limit          |
-| `levels`              | ano            | seznam úrovní                             |         | Žebříček závažnosti, první položka je úroveň 1. Hráč dostane nejvyšší úroveň, jaké dosáhne kterýkoli zdroj |
-| `immunity`            | ne             | název lektvaru                            | žádný   | Efekt, jehož nositel není vystaven vůbec                                                                   |
-| `scanInterval`        | ne             | ticky                                     | `20`    | Jak často se kontroluje okolí a inventář                                                                   |
-| `range`               | ne             | bloky                                     | `10`    | Jak daleko sahá expozice bloku, jako koule                                                                 |
-| `sourcesForNextLevel` | ne             | celé číslo                                | `0`     | Tolik blízkých zdrojů jedné úrovně ji posune o úroveň výš. `0` to vypne                                    |
-| `skipsCreative`       | ne             | boolean                                   | `true`  | Hráči v kreativním a diváckém režimu zůstanou nedotčeni                                                    |
+| Klíč                  | Povinné        | Hodnota                                   | Výchozí | Co dělá                                                                                                                                                                                                                                                            |
+| --------------------- | -------------- | ----------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `blocks`              | jeden z devíti | seznam `block` nebo `block=level`         |         | Bloky, které vystavují hráče stojícího poblíž. Bez úrovně platí 1                                                                                                                                                                                                  |
+| `items`               | jeden z devíti | seznam `item` nebo `item=level`           |         | Předměty, které vystavují hráče, jenž je nese nebo má na sobě                                                                                                                                                                                                      |
+| `dimensions`          | jeden z devíti | seznam `dim` nebo `dim=level`             |         | Číselná id dimenzí, které vystavují každého hráče v nich                                                                                                                                                                                                           |
+| `biomes`              | jeden z devíti | seznam `biome` nebo `biome=level`         |         | Biomy, které vystavují každého hráče, jenž v nich stojí. `#` označuje typ BiomeDictionary                                                                                                                                                                          |
+| `structures`          | jeden z devíti | seznam `structure` nebo `structure=level` |         | Struktury, které vystavují hráče uvnitř nich. Struktura z balíčku platí do vzdálenosti `range` bloků                                                                                                                                                               |
+| `caveRegions`         | jeden z devíti | seznam `region` nebo `region=level`       |         | Oblasti jeskyní, které vystavují hráče v nich. Holý název převezme jmenný prostor tohoto souboru                                                                                                                                                                   |
+| `heights`             | jeden z devíti | seznam `from:to=level`                    |         | Pásma výšky Y, která vystavují hráče v nich. Nechte jednu stranu prázdnou, aby neměla žádný limit                                                                                                                                                                  |
+| `levels`              | ano            | seznam úrovní                             |         | Žebříček závažnosti, první položka je úroveň 1. Hráč dostane nejvyšší úroveň, jaké dosáhne kterýkoli zdroj                                                                                                                                                         |
+| `immunity`            | ne             | název lektvaru                            | žádný   | Efekt, jehož nositel není vystaven vůbec                                                                                                                                                                                                                           |
+| `immuneItems`         | ne             | seznam názvů předmětů                     | žádný   | Subjekt, který nosí nebo drží kterýkoli z těchto předmětů (slot brnění i obě ruce), není vystaven vůbec, stejně jako u `immunity`. Uveďte jeden kus na každou část obleku; stačí jakýkoli jeden kus. Neznámý název předmětu se zaznamená jako chyba a ignoruje se. |
+| `immuneTeams`         | ne             | seznam názvů týmů scoreboardu             | žádný   | Členové těchto týmů (soubory týmů balíčku nebo `/scoreboard teams`) nejsou vystaveni. Neznámý název týmu se nikdy neshoduje.                                                                                                                                       |
+| `onClear`             | ne             | název funkce                              | žádný   | Spustí se jako hráč, když jeho úroveň klesne na 0, včetně přepnutí do kreativního režimu.                                                                                                                                                                          |
+| `scanInterval`        | ne             | ticky                                     | `20`    | Jak často se kontroluje okolí a inventář                                                                                                                                                                                                                           |
+| `range`               | ne             | bloky                                     | `10`    | Jak daleko sahá expozice bloku, jako koule                                                                                                                                                                                                                         |
+| `sourcesForNextLevel` | ne             | celé číslo                                | `0`     | Tolik blízkých zdrojů jedné úrovně ji posune o úroveň výš. `0` to vypne                                                                                                                                                                                            |
+| `skipsCreative`       | ne             | boolean                                   | `true`  | Hráči v kreativním a diváckém režimu zůstanou nedotčeni                                                                                                                                                                                                            |
 
 ### Úrovně
 
@@ -3525,6 +3531,9 @@ Každá úroveň:
 | `damage`         | ne      | půlsrdce       | `0`     | Poškození uštědřené každých `damageInterval` ticků, dokud úroveň platí. Ignoruje zbroj                                                       |
 | `damageInterval` | ne      | ticky          | `160`   | Jak často poškození dopadne                                                                                                                  |
 | `effects`        | ne      | seznam efektů  | žádný   | Další efekty uplatněné současně, ve stejném tvaru jako u typů lektvarů. Bez `duration` se řídí oknem skenování                               |
+| `onEnter`        | ne      | název funkce   | žádný   | Spustí se jako hráč pokaždé, když se úroveň změní na tuto, nahoru nebo dolů.                                                                 |
+
+Imunita má tři podoby a každá z nich nechá nositele nevystaveného: lektvar `immunity`, jeden z předmětů `immuneItems` nošených nebo držených, nebo členství v jednom z týmů `immuneTeams`. Změna úrovně spustí funkci uvedenou v `onEnter` nové úrovně, nebo `onClear`, klesne-li úroveň na 0. Funkce běží s oprávněním úrovně 2 a @s je hráč, až poté, co se použije značkový efekt úrovně. První kontrola po připojení nastaví počáteční úroveň bez spuštění, takže hráč, který se přihlásí už vystaven, nespustí nic, dokud se úroveň nezmění, a respawn úroveň zachová. Stejná změna také spouští spouštěč karty `exposure_level`.
 
 Efekty úrovně trvají o něco déle než do dalšího skenování, takže když hráč odejde, vyprchají samy. Zpráva o smrti způsobené poškozením z expozice se čte z `death.attack.rdpl.<file name>`, což zajišťují lang soubory balíčku.
 
