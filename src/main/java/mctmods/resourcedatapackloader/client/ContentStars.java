@@ -34,8 +34,13 @@ public final class ContentStars {
     private final float size;
     private final boolean vanilla;
     private final SkyOccluder[] occluders;
+    private final boolean dynamic;
     @Nullable private VertexBuffer[] groups;
+    @Nullable private VertexBuffer[] movingGroups;
+    private float[][] stars;
+    private boolean[] moving;
     private int built;
+    private int step = Integer.MIN_VALUE;
 
     public ContentStars(int count, float size, SkyOccluder[] occluders) { this(count, size, false, occluders); }
 
@@ -44,6 +49,9 @@ public final class ContentStars {
         this.size = size;
         this.vanilla = vanilla;
         this.occluders = occluders;
+        boolean fixed = false;
+        for (SkyOccluder body : occluders) { fixed |= body.fixed(); }
+        dynamic = fixed;
     }
 
     public static boolean keepsVanilla(@Nullable ClientLevel level) {
@@ -51,7 +59,7 @@ public final class ContentStars {
         return look == null || !look.tintsStars();
     }
 
-    public void draw(ClientLevel level, float brightness, Matrix4f pose, Matrix4f projection, float partialTick) {
+    public void draw(ClientLevel level, float brightness, Matrix4f pose, Matrix4f projection, float partialTick, float turn) {
         ShaderInstance shader = GameRenderer.getPositionShader();
         if (shader == null) { return; }
         if (built != SkyOccluder.current()) {
@@ -63,6 +71,11 @@ public final class ContentStars {
             meshes = build();
             groups = meshes;
         }
+        VertexBuffer[] swept = movingGroups;
+        if (swept != null) {
+            int now = Math.round(turn * 1000.0F);
+            if (step != now) { retime(swept, now); }
+        }
         SkyLookDef look = ContentFogSampler.look(level);
         int color = look == null || look.starColor() == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor();
         float twinkle = look == null ? 0.0F : look.starTwinkle();
@@ -72,11 +85,18 @@ public final class ContentStars {
         float time = (level.getGameTime() % Level.TICKS_PER_DAY + partialTick) / SharedConstants.TICKS_PER_SECOND;
         for (int group = 0; group < GROUPS; ++group) {
             VertexBuffer buffer = meshes[group];
-            if (buffer == null) { continue; }
+            VertexBuffer sweptBuffer = swept == null ? null : swept[group];
+            if (buffer == null && sweptBuffer == null) { continue; }
             float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
             RenderSystem.setShaderColor(red * shown, green * shown, blue * shown, shown);
-            buffer.bind();
-            buffer.drawWithShader(pose, projection, shader);
+            if (buffer != null) {
+                buffer.bind();
+                buffer.drawWithShader(pose, projection, shader);
+            }
+            if (sweptBuffer != null) {
+                sweptBuffer.bind();
+                sweptBuffer.drawWithShader(pose, projection, shader);
+            }
         }
         VertexBuffer.unbind();
     }
@@ -87,28 +107,78 @@ public final class ContentStars {
             if (buffer != null) { buffer.close(); }
         }
         groups = null;
+        if (movingGroups != null) {
+            for (VertexBuffer buffer : movingGroups) {
+                if (buffer != null) { buffer.close(); }
+            }
+            movingGroups = null;
+        }
+        step = Integer.MIN_VALUE;
+    }
+
+    private void retime(VertexBuffer[] swept, int now) {
+        step = now;
+        for (SkyOccluder body : occluders) {
+            if (body.fixed()) { body.turn(now / 1000.0F); }
+        }
+        RenderSystem.setShader(GameRenderer::getPositionShader);
+        for (int group = 0; group < GROUPS; ++group) {
+            MeshData mesh = mesh(group, true);
+            VertexBuffer old = swept[group];
+            if (mesh == null) {
+                if (old != null) { old.close(); }
+                swept[group] = null;
+            }
+            else if (old == null) { swept[group] = ContentSkyRenderer.upload(mesh); }
+            else {
+                old.bind();
+                old.upload(mesh);
+                VertexBuffer.unbind();
+            }
+        }
     }
 
     private VertexBuffer[] build() {
-        float[][] quads = new float[count][];
+        stars = new float[count][];
+        moving = new boolean[count];
         RandomSource random = RandomSource.create(10842L);
         float spread = size * 2.0F / 3.0F;
-        for (int star = 0; star < count; ++star) { quads[star] = vanilla ? vanillaStar(random) : star(random, spread); }
+        for (int star = 0; star < count; ++star) {
+            float[] quad = vanilla ? vanillaStar(random) : star(random, spread);
+            if (quad == null || hidden(quad, false)) { continue; }
+            stars[star] = quad;
+            moving[star] = sweeps(quad);
+        }
+        if (dynamic) { movingGroups = new VertexBuffer[GROUPS]; }
         RenderSystem.setShader(GameRenderer::getPositionShader);
         return IntStream.range(0, GROUPS).mapToObj(group -> {
-            MeshData mesh = mesh(quads, group);
+            MeshData mesh = mesh(group, false);
             return mesh == null ? null : ContentSkyRenderer.upload(mesh);
         }).toArray(VertexBuffer[]::new);
     }
 
-    @Nullable private MeshData mesh(float[][] quads, int group) {
+    @Nullable private MeshData mesh(int group, boolean sweeping) {
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         for (int star = group; star < count; star += GROUPS) {
-            float[] quad = quads[star];
-            if (quad == null) { continue; }
+            float[] quad = stars[star];
+            if (quad == null || moving[star] != sweeping || sweeping && hidden(quad, true)) { continue; }
             for (int corner = 0; corner < 12; corner += 3) { buffer.addVertex(quad[corner], quad[corner + 1], quad[corner + 2]); }
         }
         return buffer.build();
+    }
+
+    private boolean hidden(float[] star, boolean fixed) {
+        for (SkyOccluder body : occluders) {
+            if (body.fixed() == fixed && body.covers(star[12] * SIZE, star[13] * SIZE, star[14] * SIZE, star[15])) { return true; }
+        }
+        return false;
+    }
+
+    private boolean sweeps(float[] star) {
+        for (SkyOccluder body : occluders) {
+            if (body.fixed() && body.sweeps(star[12], star[15])) { return true; }
+        }
+        return false;
     }
 
     @Nullable private static float[] vanillaStar(RandomSource random) {
@@ -152,7 +222,7 @@ public final class ContentStars {
         double spin = random.nextDouble() * Math.PI * 2.0D;
         double spinSin = Math.sin(spin);
         double spinCos = Math.cos(spin);
-        float[] quad = new float[12];
+        float[] quad = new float[16];
         for (int corner = 0; corner < 4; ++corner) {
             double a = ((corner & 2) - 1) * scale;
             double b = ((corner + 1 & 2) - 1) * scale;
@@ -164,9 +234,10 @@ public final class ContentStars {
             quad[corner * 3 + 1] = (float) (y * SIZE + e);
             quad[corner * 3 + 2] = (float) (z * SIZE + d * yawSin + f * yawCos);
         }
-        for (SkyOccluder body : occluders) {
-            if (body.covers(x * SIZE, y * SIZE, z * SIZE, scale * 1.5D)) { return null; }
-        }
+        quad[12] = (float) x;
+        quad[13] = (float) y;
+        quad[14] = (float) z;
+        quad[15] = (float) (scale * 1.5D);
         return quad;
     }
 }
