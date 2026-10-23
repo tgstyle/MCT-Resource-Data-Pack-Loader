@@ -39,29 +39,31 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.level.BlockEvent;
+import net.minecraftforge.event.level.ChunkEvent;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentOrders {
+    public static final String PLOT_MARK = "rdplPlotOrder";
     private static final String BOSS = "rdplBoss";
     private static final String TEAM = "team:";
     private static final String TAG = "tag:";
     private static final int SIGN_WAIT = 2400;
     private static final int CHECK = 20;
     private static final Map<String, OrderDef> DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceKey<Level>, Map<BlockPos, Pending>> PENDING = new HashMap<>();
+    private static final Map<ResourceKey<Level>, Map<BlockPos, Pending>> PENDING = new ConcurrentHashMap<>();
     private static String stockName = "Stock";
     private static String hire = "";
     private static int spawnCap = 1;
@@ -213,7 +215,7 @@ public final class ContentOrders {
         BlockPos pos = event.getPos();
         Block placed = event.getPlacedBlock().getBlock();
         if (placed instanceof StandingSignBlock || placed instanceof WallSignBlock) {
-            PENDING.computeIfAbsent(level.dimension(), dimension -> new HashMap<>()).put(pos.immutable(), new Pending(player.getUUID(), level.getGameTime() + SIGN_WAIT));
+            PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(player.getUUID(), level.getGameTime() + SIGN_WAIT));
             return;
         }
         BlockEntity tile = level.getBlockEntity(pos);
@@ -240,25 +242,55 @@ public final class ContentOrders {
         Map<BlockPos, Pending> waiting = PENDING.get(level.dimension());
         if (waiting == null || waiting.isEmpty()) { return; }
         long now = level.getGameTime();
-        Iterator<Map.Entry<BlockPos, Pending>> walk = waiting.entrySet().iterator();
-        while (walk.hasNext()) {
-            Map.Entry<BlockPos, Pending> entry = walk.next();
-            BlockPos pos = entry.getKey();
-            if (now > entry.getValue().until() || !level.isLoaded(pos)) {
-                walk.remove();
+        for (BlockPos pos : new ArrayList<>(waiting.keySet())) {
+            Pending pending = waiting.get(pos);
+            if (pending == null) { continue; }
+            if (now > pending.until() || !level.isLoaded(pos)) {
+                waiting.remove(pos);
                 continue;
             }
             if (!(level.getBlockEntity(pos) instanceof SignBlockEntity sign)) {
-                walk.remove();
+                waiting.remove(pos);
                 continue;
             }
             String word = sign.getFrontText().getMessage(0, false).getString().trim();
             if (word.isEmpty()) { continue; }
-            walk.remove();
+            waiting.remove(pos);
             OrderDef def = bySign(word);
-            Player by = level.getPlayerByUUID(entry.getValue().player());
+            if (pending.player() == null) {
+                plotOrder(level, sign, def, word);
+                continue;
+            }
+            Player by = level.getPlayerByUUID(pending.player());
             BlockPos chest = def == null || by == null ? null : beside(level, pos);
             if (chest != null) { OrderBoard.of(level).open(level, def, chest, pos, by, false); }
+        }
+    }
+
+    private static void plotOrder(ServerLevel level, SignBlockEntity sign, @Nullable OrderDef def, String word) {
+        BlockPos pos = sign.getBlockPos();
+        if (def == null) { ContentLog.LOGGER.error("Village plot sign at {}, {}, {} names the order word '{}', which no order has", pos.getX(), pos.getY(), pos.getZ(), word); }
+        else {
+            BlockPos chest = beside(level, pos);
+            if (chest == null) { ContentLog.LOGGER.error("Village plot sign at {}, {}, {} names the order word '{}', but no chest is below it or beside it, so the order stays closed", pos.getX(), pos.getY(), pos.getZ(), word); }
+            else { OrderBoard.of(level).open(level, def, chest, pos, null, false); }
+        }
+        if (!sign.getPersistentData().contains(PLOT_MARK)) { return; }
+        sign.getPersistentData().remove(PLOT_MARK);
+        sign.setChanged();
+    }
+
+    public static void plotSign(ServerLevel level, BlockPos pos) {
+        if (DEFS.isEmpty()) { return; }
+        PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(null, level.getGameTime() + SIGN_WAIT));
+    }
+
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
+        ChunkAccess chunk = event.getChunk();
+        for (BlockPos pos : new ArrayList<>(chunk.getBlockEntitiesPos())) {
+            if (!(chunk.getBlockState(pos).getBlock() instanceof StandingSignBlock) || !(chunk.getBlockEntity(pos) instanceof SignBlockEntity sign) || !sign.getPersistentData().getBoolean(PLOT_MARK)) { continue; }
+            plotSign(level, pos);
         }
     }
 
@@ -358,5 +390,5 @@ public final class ContentOrders {
         return best[0];
     }
 
-    private record Pending(UUID player, long until) {}
+    private record Pending(@Nullable UUID player, long until) {}
 }

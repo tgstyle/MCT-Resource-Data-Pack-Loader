@@ -78,6 +78,7 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
             }
         }
         ContentCity.residents(level, def, box, index -> offset.offset(StructureTemplate.calculateRelativePosition(settings, new BlockPos(def.villagerX() + index, def.villagerY(), def.villagerZ()))));
+        ContentPlotSign.stand(level, def, box, offset, settings);
         return true;
     }
 

@@ -448,6 +448,7 @@ import java.util.Set;
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onPlace);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onBreak);
+                    MinecraftForge.EVENT_BUS.addListener(ContentOrders::onChunkLoad);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onInteract);
                 }
                 ContentOverrides.reload();

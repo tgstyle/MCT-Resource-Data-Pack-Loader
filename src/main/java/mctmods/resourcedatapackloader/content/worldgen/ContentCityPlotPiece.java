@@ -133,6 +133,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         int bridged = bridges(level, manager, chunk, held, box);
         if (opened + grounded + banked + overhead + bridged + doorways > 0) { ContentLog.LOGGER.debug("Opened {} block(s) around {} at {}, {}, stood {} block(s) of ground under it, banked {} up to its grade, lifted {} off its roof, bridged {} between it and a neighbor, and freed {} in front of its doors", opened, named(), held.minX(), held.minZ(), grounded, banked, overhead, bridged, doorways); }
         ContentCity.residents(level, def, box, index -> templatePosition.offset(StructureTemplate.calculateRelativePosition(placeSettings, new BlockPos(def.villagerX() + index, def.villagerY(), def.villagerZ()))));
+        ContentPlotSign.stand(level, def, box, templatePosition, placeSettings);
     }
 
     private int bridges(WorldGenLevel level, StructureManager manager, ChunkPos chunk, BoundingBox held, BoundingBox box) {
