@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.portal.PortalEvents;
 import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSeasonTint;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSnowTint;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
@@ -79,6 +80,7 @@ import java.util.Map;
             if (FMLCommonHandler.instance().getSide().isClient()) {
                 MinecraftForge.EVENT_BUS.register(ContentModels.class);
                 MinecraftForge.EVENT_BUS.register(ContentSnowTint.class);
+                MinecraftForge.EVENT_BUS.register(ContentSeasonTint.class);
             }
         }
         MinecraftForge.EVENT_BUS.register(ContentBeard.class);

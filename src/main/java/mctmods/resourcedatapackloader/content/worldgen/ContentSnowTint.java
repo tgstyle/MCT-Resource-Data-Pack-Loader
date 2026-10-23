@@ -29,6 +29,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ToIntFunction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -38,9 +39,12 @@ import javax.annotation.Nullable;
 
     private ContentSnowTint() {}
 
-    private static boolean wanted() {
+    static boolean wanted() {
         for (DimensionDef def : ContentDimensions.all().values()) {
             if (def.look != null && def.look.snowColor != SkyLookDef.UNSET) { return true; }
+        }
+        for (SkyLookDef look : ContentEnvironments.looks()) {
+            if (look.snowColor != SkyLookDef.UNSET) { return true; }
         }
         for (BiomeDef def : ContentBiomes.defs()) {
             if (def.snowColor != ContentTypes.NO_COLOR) { return true; }
@@ -66,11 +70,15 @@ import javax.annotation.Nullable;
         if (world == null || pos == null) { return WHITE; }
         SkyLookDef look = ContentFogSampler.look(Minecraft.getMinecraft().world);
         int fallback = look == null || look.snowColor == SkyLookDef.UNSET ? WHITE : look.snowColor;
+        return average(world, pos, biome -> column(biome, fallback));
+    }
+
+    static int average(IBlockAccess world, BlockPos pos, ToIntFunction<Biome> column) {
         int red = 0;
         int green = 0;
         int blue = 0;
         for (BlockPos.MutableBlockPos at : BlockPos.getAllInBoxMutable(pos.add(-1, 0, -1), pos.add(1, 0, 1))) {
-            int color = column(world.getBiome(at), fallback);
+            int color = column.applyAsInt(world.getBiome(at));
             red += color >> 16 & 255;
             green += color >> 8 & 255;
             blue += color & 255;

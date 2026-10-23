@@ -3806,10 +3806,14 @@ Estas claves también van en el bloque `sky` y también se dibujan solo en el cl
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` multiplica el color de la hierba, la hierba alta, los helechos y la caña de azúcar, y `foliageTint` el de las hojas y las enredaderas. El color propio del bioma sigue viéndose, y ambas claves funcionan dentro del `sky` de un entorno, que es como una estación cambia las plantas. Los objetos en la mano y en los menús conservan sus colores.
 
 `snowColor` tiñe las capas de nieve y los bloques de nieve del suelo. El `snowColor` propio de un bioma tiene prioridad sobre el de la dimensión, y los colores se funden en los bordes entre biomas como lo hace la hierba.
 
@@ -3826,6 +3830,8 @@ Estas claves también van en el bloque `sky` y también se dibujan solo en el cl
 | `lavaFogColor`   | no          | color hexadecimal | `991A00`    | Color de la niebla en la lava                                 |
 | `starColor`      | no          | color hexadecimal | blanco      | Tinte de las estrellas                                        |
 | `starTwinkle`    | no          | decimal, de 0 a 1 | `0.0`       | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
+| `grassTint`      | no          | color hexadecimal | blanco      | Multiplica el color de la hierba, la hierba alta, los helechos y la caña de azúcar |
+| `foliageTint`    | no          | color hexadecimal | blanco      | Multiplica el color de las hojas y las enredaderas            |
 | `lightningColor` | no          | color hexadecimal | `737380`    | Tinte de los rayos                                            |
 
 ### Skybox, aurora y arcoíris
@@ -4069,6 +4075,40 @@ Un entorno también puede llevar un bloque `raids`, que cambia los [asaltos](#as
 | `environments.<name>.raids.points`                     | no          | número, de 0 a 100                      | `1`              | Multiplica los puntos que paga un asalto ganado                                                                                                                                                                                                                         |
 
 Cualquier otra clave de un entorno, o una de las claves `sky` de arriba, se ignora con un error en el registro. Un mundo guardado con un entorno que el pack ya no nombra vuelve al aspecto propio de la dimensión.
+
+### Estaciones
+
+*dimensiones*
+
+Una estación es un entorno, y `seasons` activa y desactiva los entornos de la dimensión en un ciclo anual.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Cada entrada de `order` nombra un entorno, o una lista de nombres que se cambian juntos, y las entradas se turnan, cada una durante `days` días, antes de que el ciclo empiece de nuevo. Una lista solo puede contener un entorno que cubra toda la dimensión; los demás necesitan `biomes`, como `autumnlocal` arriba. El bloque `environments` debe estar en el mismo archivo de dimensión.
+
+Un día son 24000 ticks del reloj del mundo principal, el mismo día que cuenta el disparador de tarjetas `day`, sea cual sea la dimensión con estaciones. El día 0 empieza la primera estación. El servidor comprueba una vez por segundo, esté la dimensión cargada o no: cuando la estación cambia, desactiva los entornos de la anterior y activa los de la siguiente, y registra `Dimension X enters the season 'name' on day N`, con el primer nombre de la entrada. Solo toca los nombres que aparecen en `order`.
+
+Un comando o una cama que mueva el reloj mueve también la estación, y un mundo se carga en la estación a la que pertenece su día. Un entorno activado a mano se mantiene hasta el siguiente cambio de estación. Un entorno de bioma se superpone a los ajustes propios de la dimensión, no a la estación, así que repite cualquier tinte que quiera conservar. `rules.weatherSpeed` solo actúa en el mundo principal o en una dimensión con `weather.cycle`.
+
+| Clave           | Obligatorio   | Valor                                           | Por defecto | Qué hace                                                                    |
+| --------------- | ------------- | ----------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
+| `seasons`       | no            | objeto                                          | ninguno     | Activa y desactiva los entornos de la dimensión en un ciclo anual           |
+| `seasons.days`  | con `seasons` | entero mayor que 0                              | ninguno     | Días que dura cada estación                                                 |
+| `seasons.order` | con `seasons` | lista de nombres de entornos o de listas de nombres | ninguno | Las estaciones por turnos. Una entrada que es lista cambia sus entornos juntos |
 
 ## Cuerpos de Galacticraft
 

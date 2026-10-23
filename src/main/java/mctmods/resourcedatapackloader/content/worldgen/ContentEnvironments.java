@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.GrowSwitchDef;
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
 import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
 import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.def.SpawnSwitchDef;
 import mctmods.resourcedatapackloader.content.def.TradeSwitchDef;
 import mctmods.resourcedatapackloader.network.MessageEnvironments;
@@ -28,6 +29,7 @@ import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,9 +75,14 @@ public final class ContentEnvironments {
 
     static void parse(ResourceLocation key, String contents, DimensionDef base) {
         JsonObject json = Json.object(key, contents, "dimension");
-        if (json == null || !json.has(ENVIRONMENTS)) { return; }
+        if (json == null) { return; }
+        if (!json.has(ENVIRONMENTS)) {
+            ContentSeasons.parse(key, json, base);
+            return;
+        }
         if (!json.get(ENVIRONMENTS).isJsonObject()) {
             ContentLog.LOGGER.error("Dimension {} gives environments that are not an object of named environments, ignoring them", key);
+            ContentSeasons.parse(key, json, base);
             return;
         }
         Map<String, DimensionDef> sets = new LinkedHashMap<>();
@@ -115,6 +122,7 @@ public final class ContentEnvironments {
             if (raided != null) { RAIDLINES.put(set, raided); }
         }
         if (!sets.isEmpty()) { SETS.put(base, Collections.unmodifiableMap(sets)); }
+        ContentSeasons.parse(key, json, base);
     }
 
     private static void layer(String owner, JsonObject into, JsonObject environment) {
@@ -142,12 +150,13 @@ public final class ContentEnvironments {
         for (Map.Entry<String, JsonElement> entry : value.getAsJsonObject().entrySet()) { put(held.getAsJsonObject(), entry.getKey(), entry.getValue()); }
     }
 
-    static DimensionDef resolve(DimensionDef base) {
+    static DimensionDef resolve(DimensionDef base) { return resolve(base, FMLCommonHandler.instance().getEffectiveSide().isClient() ? viewed : null); }
+
+    static DimensionDef resolve(DimensionDef base, @Nullable Biome biome) {
         Map<String, DimensionDef> sets = SETS.get(base);
         List<String> active = sets == null ? null : ACTIVE.get(base.id);
         if (active == null) { return base; }
-        Biome biome = viewed;
-        if (biome != null && active.size() > 1 && FMLCommonHandler.instance().getEffectiveSide().isClient()) {
+        if (biome != null && active.size() > 1) {
             for (int index = active.size() - 1; index > 0; index--) {
                 DimensionDef set = sets.get(active.get(index));
                 if (set != null && PLACES.containsKey(set) && BiomeNames.matches(PLACES.get(set), biome)) { return set; }
@@ -262,8 +271,38 @@ public final class ContentEnvironments {
         else { ACTIVE.put(dimension, Collections.unmodifiableList(new ArrayList<>(names))); }
     }
 
+    public static List<SkyLookDef> looks() {
+        List<SkyLookDef> found = new ArrayList<>();
+        for (Map<String, DimensionDef> sets : SETS.values()) {
+            for (DimensionDef set : sets.values()) {
+                if (set.look != null) { found.add(set.look); }
+            }
+        }
+        return found;
+    }
+
+    public static List<Integer> tints(int dimension) {
+        DimensionDef def = ContentDimensions.byId(dimension);
+        Map<String, DimensionDef> sets = def == null ? null : SETS.get(BASES.getOrDefault(def, def));
+        List<Integer> found = new ArrayList<>();
+        if (sets == null) { return found; }
+        for (String name : active(dimension)) {
+            DimensionDef set = sets.get(name);
+            if (set == null || set.look == null) { continue; }
+            found.add(set.look.grassTint);
+            found.add(set.look.foliageTint);
+            found.add(set.look.snowColor);
+        }
+        return found;
+    }
+
+    @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) { ContentSeasons.tick(FMLCommonHandler.instance().getMinecraftServerInstance()); }
+    }
+
     public static void serverStarted(MinecraftServer server) {
         ACTIVE.clear();
+        ContentSeasons.forget();
         ContentRaidSwitch.check(RAIDLINES.values());
         EnvironmentStorage storage = EnvironmentStorage.get(server);
         if (storage == null) { return; }
@@ -283,7 +322,10 @@ public final class ContentEnvironments {
         for (WorldServer world : server.worlds) { refresh(world); }
     }
 
-    public static void serverStopped() { ACTIVE.clear(); }
+    public static void serverStopped() {
+        ACTIVE.clear();
+        ContentSeasons.forget();
+    }
 
     public static void receive(Map<Integer, List<String>> active, boolean whole) {
         if (whole) { ACTIVE.clear(); }

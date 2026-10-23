@@ -139,7 +139,7 @@ public class ContentBiome extends Biome {
 
     @SideOnly(Side.CLIENT) public int snowColor() { return def.snowColor; }
 
-    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeGrassColor(int original) { return def.grassColor == ContentTypes.NO_COLOR ? original : def.grassColor; }
+    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeGrassColor(int original) { return ContentSeasonTint.grass(this, def.grassColor == ContentTypes.NO_COLOR ? original : def.grassColor); }
 
     private static Map<DecorateBiomeEvent.Decorate.EventType, String> suppressed() {
         Map<DecorateBiomeEvent.Decorate.EventType, String> map = new EnumMap<>(DecorateBiomeEvent.Decorate.EventType.class);
@@ -165,5 +165,5 @@ public class ContentBiome extends Biome {
         return map;
     }
 
-    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeFoliageColor(int original) { return def.foliageColor == ContentTypes.NO_COLOR ? original : def.foliageColor; }
+    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeFoliageColor(int original) { return ContentSeasonTint.foliage(this, def.foliageColor == ContentTypes.NO_COLOR ? original : def.foliageColor); }
 }

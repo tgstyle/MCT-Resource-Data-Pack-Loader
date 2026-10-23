@@ -3806,10 +3806,14 @@ These keys sit in the `sky` block as well, and they too are drawn on the client 
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` multiplies the color of grass, tall grass, ferns and sugar cane, and `foliageTint` the color of leaves and vines. The biome's own color still shows through, and both keys work inside an environment's `sky`, which is how a season changes the plants. Items in hand and in menus keep their colors.
 
 `snowColor` tints snow layers and snow blocks on the ground. A biome's own `snowColor` wins over the dimension's, and the colors blend across biome borders the way grass does.
 
@@ -3826,6 +3830,8 @@ These keys sit in the `sky` block as well, and they too are drawn on the client 
 | `lavaFogColor`   | no       | hex color     | `991A00` | Fog color in lava                                             |
 | `starColor`      | no       | hex color     | white    | Star tint                                                     |
 | `starTwinkle`    | no       | float, 0 to 1 | `0.0`    | How deep the stars dim as they twinkle. `0` keeps them steady |
+| `grassTint`      | no       | hex color     | white    | Multiplies the color of grass, tall grass, ferns and sugar cane |
+| `foliageTint`    | no       | hex color     | white    | Multiplies the color of leaves and vines                      |
 | `lightningColor` | no       | hex color     | `737380` | Lightning bolt tint                                           |
 
 ### Skybox, aurora and rainbow
@@ -4069,6 +4075,40 @@ An environment can also carry a `raids` block, which changes [raids](#raids) in 
 | `environments.<name>.raids.points`                     | no           | number from 0 to 100              | `1`            | Multiplies the points a won raid pays                                                                                                                                                                                                                                   |
 
 Any other key in an environment, or one of the `sky` keys above, is ignored with an error in the log. A world saved with an environment that the pack no longer names goes back to the dimension's own look.
+
+### Seasons
+
+*dimensions*
+
+A season is an environment, and `seasons` turns the dimension's environments on and off in a yearly cycle.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Each entry of `order` names one environment, or a list of names to switch together, and the entries take turns, each for `days` days, before the cycle begins again. A list may hold only one environment that covers the whole dimension; the others need `biomes`, as `autumnlocal` has above. The `environments` block must sit in the same dimension file.
+
+A day is 24000 ticks of the overworld's clock, the same day the `day` card trigger counts, whatever dimension the seasons are in. Day 0 begins the first season. The server checks once a second, loaded dimension or not: when the season changes it turns the last season's environments off and the next ones on, and logs `Dimension X enters the season 'name' on day N`, with the first name of the entry. It touches only the names listed in `order`.
+
+A command or a bed that moves the clock moves the season too, and a world loads into the season its day belongs to. An environment switched by hand holds until the next season change. A biome environment is layered onto the dimension's own settings, not onto the season, so it repeats any tint it wants to keep. `rules.weatherSpeed` acts only in the overworld or in a dimension with a `weather.cycle`.
+
+| Key             | Required     | Value                                           | Default | What it does                                                          |
+| --------------- | ------------ | ----------------------------------------------- | ------- | --------------------------------------------------------------------- |
+| `seasons`       | no           | object                                          | none    | Turns the dimension's environments on and off in a yearly cycle       |
+| `seasons.days`  | with `seasons` | whole number above 0                          | none    | Days each season lasts                                                |
+| `seasons.order` | with `seasons` | list of environment names, or of lists of names | none  | The seasons in turn. A list entry switches its environments together |
 
 ## Galacticraft bodies
 

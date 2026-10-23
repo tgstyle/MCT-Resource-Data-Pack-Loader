@@ -15,6 +15,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -103,12 +104,16 @@ public final class ContentDimensions {
         return def == null ? null : def.traits.rain;
     }
 
-    @Nullable private static DimensionDef held(Map<Integer, DimensionDef> defs, int dimension) {
+    @Nullable private static DimensionDef held(Map<Integer, DimensionDef> defs, int dimension) { return held(defs, dimension, null, false); }
+
+    @Nullable private static DimensionDef held(Map<Integer, DimensionDef> defs, int dimension, @Nullable Biome biome, boolean exact) {
         DimensionDef def = defs.get(dimension);
-        if (def != null || STATION_TYPES.isEmpty() || !DimensionManager.isDimensionRegistered(dimension)) { return def == null ? null : ContentEnvironments.resolve(def); }
-        int type = DimensionManager.getProviderType(dimension).getId();
-        DimensionDef station = STATION_TYPES.contains(type) ? defs.get(type) : null;
-        return station == null ? null : ContentEnvironments.resolve(station);
+        if (def == null && !STATION_TYPES.isEmpty() && DimensionManager.isDimensionRegistered(dimension)) {
+            int type = DimensionManager.getProviderType(dimension).getId();
+            def = STATION_TYPES.contains(type) ? defs.get(type) : null;
+        }
+        if (def == null) { return null; }
+        return exact ? ContentEnvironments.resolve(def, biome) : ContentEnvironments.resolve(def);
     }
 
     public static boolean register(DimensionDef def, Class<? extends WorldProvider> provider) {
@@ -126,6 +131,8 @@ public final class ContentDimensions {
     public static void claim(DimensionDef def) { BY_ID.put(def.id, def); }
 
     @Nullable public static DimensionDef byId(int dimension) { return held(BY_ID, dimension); }
+
+    @Nullable public static DimensionDef byId(int dimension, Biome biome) { return held(BY_ID, dimension, biome, true); }
 
     public static DimensionType typeFor(int dimension) {
         DimensionType type = TYPES.get(dimension);

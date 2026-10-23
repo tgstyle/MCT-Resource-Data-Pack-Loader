@@ -3806,10 +3806,14 @@ Ces clés se placent elles aussi dans le bloc `sky` et ne sont, elles aussi, des
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` multiplie la couleur de l'herbe, de l'herbe haute, des fougères et de la canne à sucre, et `foliageTint` celle des feuilles et des vignes. La couleur propre du biome reste visible, et les deux clés fonctionnent dans le `sky` d'un environnement, ce qui permet à une saison de changer les plantes. Les objets tenus en main et dans les menus gardent leurs couleurs.
 
 `snowColor` teinte les couches de neige et les blocs de neige au sol. Le `snowColor` propre à un biome l'emporte sur celui de la dimension, et les couleurs se fondent aux frontières entre biomes, comme pour l'herbe.
 
@@ -3826,6 +3830,8 @@ Ces clés se placent elles aussi dans le bloc `sky` et ne sont, elles aussi, des
 | `lavaFogColor`   | non    | couleur hexadécimale | `991A00` | Couleur du brouillard dans la lave                                   |
 | `starColor`      | non    | couleur hexadécimale | blanc    | Teinte des étoiles                                                   |
 | `starTwinkle`    | non    | flottant, 0 à 1      | `0.0`    | Jusqu'où les étoiles faiblissent en scintillant. `0` les garde fixes |
+| `grassTint`      | non    | couleur hexadécimale | blanc    | Multiplie la couleur de l'herbe, de l'herbe haute, des fougères et de la canne à sucre |
+| `foliageTint`    | non    | couleur hexadécimale | blanc    | Multiplie la couleur des feuilles et des vignes              |
 | `lightningColor` | non    | couleur hexadécimale | `737380` | Teinte des éclairs                                                   |
 
 ### Skybox, aurore et arc-en-ciel
@@ -4069,6 +4075,40 @@ Un environnement peut aussi porter un bloc `raids`, qui modifie les [raids](#rai
 | `environments.<name>.raids.points`                     | non          | nombre de 0 à 100                       | `1`             | Multiplie les points qu'un raid gagné rapporte                                                                                                                                                                                                                              |
 
 Toute autre clé dans un environnement, ou l'une des clés `sky` ci-dessus, est ignorée avec une erreur dans le journal. Un monde enregistré avec un environnement que le pack ne nomme plus reprend l'apparence propre de la dimension.
+
+### Saisons
+
+*dimensions*
+
+Une saison est un environnement, et `seasons` active et désactive les environnements de la dimension selon un cycle annuel.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Chaque entrée de `order` nomme un environnement, ou une liste de noms à basculer ensemble, et les entrées se succèdent, chacune pendant `days` jours, avant que le cycle recommence. Une liste ne peut contenir qu'un seul environnement qui couvre toute la dimension ; les autres demandent `biomes`, comme `autumnlocal` ci-dessus. Le bloc `environments` doit se trouver dans le même fichier de dimension.
+
+Un jour dure 24000 ticks de l'horloge de l'Overworld, le même jour que compte le déclencheur de carte `day`, quelle que soit la dimension qui a des saisons. Le jour 0 commence la première saison. Le serveur vérifie une fois par seconde, que la dimension soit chargée ou non : quand la saison change, il désactive les environnements de la précédente et active ceux de la suivante, puis écrit `Dimension X enters the season 'name' on day N` dans le journal, avec le premier nom de l'entrée. Il ne touche que les noms listés dans `order`.
+
+Une commande ou un lit qui avance l'horloge avance aussi la saison, et un monde se charge dans la saison à laquelle appartient son jour. Un environnement basculé à la main reste jusqu'au prochain changement de saison. Un environnement de biome se superpose aux réglages propres de la dimension, pas à la saison, il répète donc toute teinte qu'il veut conserver. `rules.weatherSpeed` n'agit que dans l'Overworld ou dans une dimension avec `weather.cycle`.
+
+| Clé             | Requis         | Valeur                                              | Défaut | Rôle                                                                        |
+| --------------- | -------------- | --------------------------------------------------- | ------ | --------------------------------------------------------------------------- |
+| `seasons`       | non            | objet                                               | aucun  | Active et désactive les environnements de la dimension selon un cycle annuel |
+| `seasons.days`  | avec `seasons` | entier supérieur à 0                                | aucun  | Nombre de jours que dure chaque saison                                      |
+| `seasons.order` | avec `seasons` | liste de noms d'environnements ou de listes de noms | aucun  | Les saisons à tour de rôle. Une entrée qui est une liste bascule ses environnements ensemble |
 
 ## Corps célestes de Galacticraft
 

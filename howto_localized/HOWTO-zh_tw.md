@@ -3806,10 +3806,14 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` 與草、高草、蕨和甘蔗的顏色相乘，`foliageTint` 與樹葉和藤蔓的顏色相乘。生態域自身的顏色依然會透出來，兩個鍵都可以用在環境的 `sky` 中，季節正是這樣改變植物的。手持物品和選單中的物品維持原色。
 
 `snowColor` 為地面上的雪層與雪方塊染色。生態域自己的 `snowColor` 優先於維度的，而且顏色會像草那樣在生態域邊界上混合。
 
@@ -3826,6 +3830,8 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `lavaFogColor`   | 否   | 十六進位顏色   | `991A00` | 熔岩中的霧色                           |
 | `starColor`      | 否   | 十六進位顏色   | 白色     | 星星的色調                             |
 | `starTwinkle`    | 否   | 浮點數，0 到 1 | `0.0`    | 星星閃爍時變暗的深度。`0` 使其穩定不變 |
+| `grassTint`      | 否   | 十六進位顏色 | 白色     | 與草、高草、蕨和甘蔗的顏色相乘           |
+| `foliageTint`    | 否   | 十六進位顏色 | 白色     | 與樹葉和藤蔓的顏色相乘                   |
 | `lightningColor` | 否   | 十六進位顏色   | `737380` | 閃電的色調                             |
 
 ### 天空盒、極光與彩虹
@@ -4069,6 +4075,40 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `environments.<name>.raids.points`                     | 否              | 數字，0 到 100         | `1`            | 乘以獲勝的突襲發放的積分                                                                                                                                                                                                                    |
 
 環境中的任何其他鍵，或上面列出的 `sky` 鍵，都會被忽略並在記錄中留下錯誤。以資源包已不再定義的環境儲存的世界，會恢復維度自身的外觀。
+
+### 季節
+
+*維度*
+
+季節就是環境，`seasons` 依年週期開啟和關閉維度的環境。
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+`order` 的每一項給出一個環境名稱，或一組一起切換的名稱清單，各項輪流生效，每項持續 `days` 天，輪完一圈後重新開始。清單中只能有一個涵蓋整個維度的環境，其餘的需要 `biomes`，如上面的 `autumnlocal`。`environments` 區塊必須位於同一個維度檔案中。
+
+一天等於主世界時鐘的 24000 刻，與卡片觸發器 `day` 計算的天相同，不論季節設在哪個維度。第 0 天開始第一個季節。無論維度是否已載入，伺服器每秒檢查一次：季節更替時，它關閉上一個季節的環境，開啟下一個季節的環境，並在日誌中寫下 `Dimension X enters the season 'name' on day N`，名稱取該項的第一個名字。它只會更動 `order` 中列出的名稱。
+
+移動時鐘的指令或床也會移動季節，世界載入時進入其所在日對應的季節。手動切換的環境會保持到下一次季節更替。生態域環境疊加在維度自身的設定上，而不是季節上，因此需要保留的色調必須在其中重複寫出。`rules.weatherSpeed` 只在主世界或帶有 `weather.cycle` 的維度中生效。
+
+| 鍵              | 必填              | 值                           | 預設 | 作用                                                   |
+| --------------- | ----------------- | ---------------------------- | ---- | ------------------------------------------------------ |
+| `seasons`       | 否                | 物件                         | 無   | 依年週期開啟和關閉維度的環境                           |
+| `seasons.days`  | 有 `seasons` 時是 | 大於 0 的整數                | 無   | 每個季節持續的天數                                     |
+| `seasons.order` | 有 `seasons` 時是 | 環境名稱或名稱清單組成的清單 | 無   | 季節的先後順序。清單項目會讓其中的環境一起切換         |
 
 ## Galacticraft 天體
 

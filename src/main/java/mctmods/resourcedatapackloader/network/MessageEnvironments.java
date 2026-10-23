@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSeasonTint;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.entity.player.EntityPlayer;
@@ -50,6 +51,7 @@ public class MessageEnvironments implements IMessage {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageEnvironments message, MessageContext ctx) {
             ContentEnvironments.receive(message.active, message.whole);
             ContentEnvironments.refresh(world);
+            ContentSeasonTint.changed();
         }
     }
 }
