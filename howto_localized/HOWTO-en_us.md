@@ -135,62 +135,62 @@ A pack has two roots, the same two a vanilla pack has. `assets/` holds what the 
 
 Under `data/`:
 
-| Path                                         | What it holds                                                                                                                        |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `<namespace>/blocks/*.json`                  | Block definitions. [Blocks](#blocks)                                                                                                 |
-| `<namespace>/items/*.json`                   | Item definitions. [Items](#items)                                                                                                    |
-| `<namespace>/fluids/*.json`                  | Fluids, with a block and a bucket. [Fluids](#fluids)                                                                                 |
-| `<namespace>/materials/*.json`               | Tool and armor materials. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                               |
-| `<namespace>/tabs/*.json`                    | Creative tabs. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                          |
-| `<namespace>/sounds/*.json`                  | Sound events. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                           |
-| `<namespace>/biomes/*.json`                  | Biome definitions. [Biomes](#biomes)                                                                                                 |
-| `<namespace>/worldgen/*.json`                | What generates, and where. [Worldgen entries](#worldgen-entries)                                                                     |
-| `<namespace>/caveregions/*.json`             | Named regions painted over the underground. [Cave regions](#cave-regions)                                                            |
-| `<namespace>/dimensions/*.json`              | Dimension definitions. [Dimensions](#dimensions)                                                                                     |
-| `<namespace>/worldtemplates/*.json`          | A whole world's settings in one file. [World templates](#world-templates)                                                            |
-| `<namespace>/worldintro/*.json`              | Pages shown when a player enters the world. [World intro](#world-intro)                                                              |
-| `<namespace>/gates/*.json`                   | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates)                                                        |
-| `<namespace>/gamerules/*.json`               | Game rules for new worlds. [Game rules](#game-rules)                                                                                 |
-| `<namespace>/teams/*.json`                   | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams)                                                                |
-| `<namespace>/scoring/*.json`                 | Objectives, points and how a match ends. [Scoring](#scoring)                                                                         |
-| `<namespace>/raids/*.json`                   | Waves that come for a village when a player brings an omen into it. [Raids](#raids)                                                  |
-| `<namespace>/entities/*.json`                | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                                            |
-| `<namespace>/hardness/*.json`                | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                                          |
-| `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                |
-| `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                           |
-| `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)   |
-| `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games) |
-| `<namespace>/ranks/*.json`                   | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                |
-| `<namespace>/orders/*.json`                  | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                         |
-| `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions. [Exposures](#exposures)                  |
-| `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                   |
-| `<namespace>/villages/*.json`                | Plots a city or village can build. [Village plots](#village-plots)                                                                   |
-| `<namespace>/pathintersects/*.json`          | Designs painted where village roads meet. [Village roads](#village-roads)                                                            |
-| `<namespace>/structuremaps/*.json`           | Templates composed into one large building on a grid. [Structure maps](#structure-maps)                                              |
-| `<namespace>/citymaps/*.json`                | A drawn street plan a city is laid out from instead of rolling one. [City layout maps](#city-layout-maps)                            |
-| `<namespace>/portalframes/*.json`            | Frames a player can build and light. [Portal frames](#portal-frames)                                                                 |
-| `<namespace>/blastplaster/*.json`            | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration)                   |
-| `<namespace>/structures/*.nbt`               | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                |
-| `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                 |
-| `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                        |
-| `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                          |
-| `<namespace>/furnace/*.json`                 | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                           |
-| `<namespace>/tooltips/*.json`                | Extra tooltip lines. [Tooltips](#tooltips)                                                                                           |
-| `<namespace>/fuels/*.json`                   | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                  |
-| `<namespace>/brewing/*.json`                 | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                        |
-| `<namespace>/potions/*.json`                 | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                               |
-| `<namespace>/potion_types/*.json`            | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                     |
-| `<namespace>/villagers/*.json`               | Villager professions. [Villagers and trades](#villagers-and-trades)                                                                  |
-| `<namespace>/trades/*.json`                  | What professions buy and sell. [Villagers and trades](#villagers-and-trades)                                                         |
-| `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                               |
-| `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                         |
-| `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                               |
-| `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                         |
-| `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                  |
-| `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                        |
-| `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                      |
-| `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                            |
-| `<namespace>/registry_remap/*.json`          | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                  |
+| Path                                         | What it holds                                                                                                                                                    |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json`                  | Block definitions. [Blocks](#blocks)                                                                                                                             |
+| `<namespace>/items/*.json`                   | Item definitions. [Items](#items)                                                                                                                                |
+| `<namespace>/fluids/*.json`                  | Fluids, with a block and a bucket. [Fluids](#fluids)                                                                                                             |
+| `<namespace>/materials/*.json`               | Tool and armor materials. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                           |
+| `<namespace>/tabs/*.json`                    | Creative tabs. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                      |
+| `<namespace>/sounds/*.json`                  | Sound events. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                       |
+| `<namespace>/biomes/*.json`                  | Biome definitions. [Biomes](#biomes)                                                                                                                             |
+| `<namespace>/worldgen/*.json`                | What generates, and where. [Worldgen entries](#worldgen-entries)                                                                                                 |
+| `<namespace>/caveregions/*.json`             | Named regions painted over the underground. [Cave regions](#cave-regions)                                                                                        |
+| `<namespace>/dimensions/*.json`              | Dimension definitions. [Dimensions](#dimensions)                                                                                                                 |
+| `<namespace>/worldtemplates/*.json`          | A whole world's settings in one file. [World templates](#world-templates)                                                                                        |
+| `<namespace>/worldintro/*.json`              | Pages shown when a player enters the world. [World intro](#world-intro)                                                                                          |
+| `<namespace>/gates/*.json`                   | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates)                                                                                    |
+| `<namespace>/gamerules/*.json`               | Game rules for new worlds. [Game rules](#game-rules)                                                                                                             |
+| `<namespace>/teams/*.json`                   | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams)                                                                                            |
+| `<namespace>/scoring/*.json`                 | Objectives, points and how a match ends. [Scoring](#scoring)                                                                                                     |
+| `<namespace>/raids/*.json`                   | Waves that come for a village when a player brings an omen into it. [Raids](#raids)                                                                              |
+| `<namespace>/entities/*.json`                | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                                                                        |
+| `<namespace>/hardness/*.json`                | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                                                                      |
+| `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                            |
+| `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                       |
+| `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                               |
+| `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
+| `<namespace>/ranks/*.json`                   | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                                            |
+| `<namespace>/orders/*.json`                  | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                                                     |
+| `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions, biomes, structures, cave regions or heights. [Exposures](#exposures) |
+| `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                                               |
+| `<namespace>/villages/*.json`                | Plots a city or village can build. [Village plots](#village-plots)                                                                                               |
+| `<namespace>/pathintersects/*.json`          | Designs painted where village roads meet. [Village roads](#village-roads)                                                                                        |
+| `<namespace>/structuremaps/*.json`           | Templates composed into one large building on a grid. [Structure maps](#structure-maps)                                                                          |
+| `<namespace>/citymaps/*.json`                | A drawn street plan a city is laid out from instead of rolling one. [City layout maps](#city-layout-maps)                                                        |
+| `<namespace>/portalframes/*.json`            | Frames a player can build and light. [Portal frames](#portal-frames)                                                                                             |
+| `<namespace>/blastplaster/*.json`            | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration)                                               |
+| `<namespace>/structures/*.nbt`               | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                            |
+| `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                             |
+| `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                    |
+| `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                      |
+| `<namespace>/furnace/*.json`                 | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                       |
+| `<namespace>/tooltips/*.json`                | Extra tooltip lines. [Tooltips](#tooltips)                                                                                                                       |
+| `<namespace>/fuels/*.json`                   | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                                              |
+| `<namespace>/brewing/*.json`                 | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                    |
+| `<namespace>/potions/*.json`                 | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                           |
+| `<namespace>/potion_types/*.json`            | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                 |
+| `<namespace>/villagers/*.json`               | Villager professions. [Villagers and trades](#villagers-and-trades)                                                                                              |
+| `<namespace>/trades/*.json`                  | What professions buy and sell. [Villagers and trades](#villagers-and-trades)                                                                                     |
+| `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                                                           |
+| `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                     |
+| `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                           |
+| `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                     |
+| `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                              |
+| `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                    |
+| `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                  |
+| `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                        |
+| `<namespace>/registry_remap/*.json`          | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                                              |
 
 Under `assets/`:
 
@@ -2944,13 +2944,17 @@ Order keys:
 
 The file's path is the hazard's name, and its death message comes from the lang key `death.attack.rdpl.<file name>`. Exposures load only while `load` is on and `vanillaClients` is off.
 
-A pack-defined hazard: named blocks, items and dimensions expose players standing near those blocks, carrying those items or staying in those dimensions, in levels, each level applying effects and periodic damage. A hazard can also be caught from mobs and players nearby, or fall with the rain ([Contagion and weather](#contagion-and-weather)). One file defines one hazard; several run side by side.
+A pack-defined hazard: named blocks, items, dimensions, biomes, structures, cave regions and heights expose players standing near those blocks, carrying those items or staying in those dimensions, in levels, each level applying effects and periodic damage. A hazard can also be caught from mobs and players nearby, or fall with the rain ([Contagion and weather](#contagion-and-weather)). One file defines one hazard; several run side by side.
 
 ```json
 {
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
   "dimensions": [ "minecraft:the_nether" ],
+  "biomes": [ "minecraft:desert=2", "#minecraft:is_badlands" ],
+  "structures": [ "minecraft:mansion", "#minecraft:village", "mypack:ruin=2" ],
+  "caveRegions": [ "mypack:glowcave=2" ],
+  "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
   "scanInterval": 20,
   "range": 10,
@@ -2966,17 +2970,21 @@ A pack-defined hazard: named blocks, items and dimensions expose players standin
 }
 ```
 
-| Key                   | Required        | Value                            | Default | What it does                                                                                    |
-| --------------------- | --------------- | -------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| `blocks`              | one of the five | list of `block` or `block=level` |         | Blocks that expose a player standing near them. No level means 1                                |
-| `items`               | one of the five | list of `item` or `item=level`   |         | Items that expose a player carrying or wearing them                                             |
-| `dimensions`          | one of the five | list of `dim` or `dim=level`     |         | Dimension ids that expose any player in them                                                    |
-| `levels`              | yes             | list of levels                   |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches |
-| `immunity`            | no              | potion name                      | none    | An effect whose bearer is not exposed at all                                                    |
-| `scanInterval`        | no              | ticks                            | `20`    | How often surroundings and inventory are checked                                                |
-| `range`               | no              | blocks                           | `10`    | How far a block's exposure reaches, as a sphere                                                 |
-| `sourcesForNextLevel` | no              | int                              | `0`     | This many nearby sources of one level push it one level further. `0` turns that off             |
-| `skipsCreative`       | no              | boolean                          | `true`  | Creative and spectator players are left alone                                                   |
+| Key                   | Required        | Value                                    | Default | What it does                                                                                                          |
+| --------------------- | --------------- | ---------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | one of the nine | list of `block` or `block=level`         |         | Blocks that expose a player standing near them. No level means 1                                                      |
+| `items`               | one of the nine | list of `item` or `item=level`           |         | Items that expose a player carrying or wearing them                                                                   |
+| `dimensions`          | one of the nine | list of `dim` or `dim=level`             |         | Dimension ids that expose any player in them                                                                          |
+| `biomes`              | one of the nine | list of `biome` or `biome=level`         |         | Biomes that expose any player standing in them. `#` names a biome tag                                                 |
+| `structures`          | one of the nine | list of `structure` or `structure=level` |         | Structures that expose a player inside them. `#` names a structure tag. A pack structure counts within `range` blocks |
+| `caveRegions`         | one of the nine | list of `region` or `region=level`       |         | Cave regions that expose a player in them. A bare name takes this file's namespace                                    |
+| `heights`             | one of the nine | list of `from:to=level`                  |         | Y bands that expose a player in them. Leave one side empty for no limit                                               |
+| `levels`              | yes             | list of levels                           |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches                       |
+| `immunity`            | no              | potion name                              | none    | An effect whose bearer is not exposed at all                                                                          |
+| `scanInterval`        | no              | ticks                                    | `20`    | How often surroundings and inventory are checked                                                                      |
+| `range`               | no              | blocks                                   | `10`    | How far a block's exposure reaches, as a sphere                                                                       |
+| `sourcesForNextLevel` | no              | int                                      | `0`     | This many nearby sources of one level push it one level further. `0` turns that off                                   |
+| `skipsCreative`       | no              | boolean                                  | `true`  | Creative and spectator players are left alone                                                                         |
 
 ### Levels
 
@@ -2990,6 +2998,8 @@ A pack-defined hazard: named blocks, items and dimensions expose players standin
 | `effects`        | no       | list of effects | none    | Extra effects applied alongside, the same shape potion types use. Without a `duration` they follow the scan window           |
 
 The level effects last slightly past the next scan, so walking away lets them lapse on their own. Death by exposure damage reads its message from `death.attack.rdpl.<file name>`, which the pack's lang files supply.
+
+A source that holds at the player's feet is checked every scan, so it ends the moment the player leaves it.
 
 ### Contagion and weather
 
@@ -3013,13 +3023,13 @@ Two more sources, written in the same file. Carriers and exposed bearers pass th
 
 | Key                 | Required        | Value                              | Default            | What it does                                                                                                            |
 | ------------------- | --------------- | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `carriers`          | one of the five | list of `entity` or `entity=level` |                    | Mobs, or `minecraft:player`, that always pass the hazard on at that level. No level means 1                             |
+| `carriers`          | one of the nine | list of `entity` or `entity=level` |                    | Mobs, or `minecraft:player`, that always pass the hazard on at that level. No level means 1                             |
 | `contagious`        | no              | boolean                            | `false`            | Anyone exposed passes the hazard on at the level they hold                                                              |
 | `catchers`          | no              | list of entity names               | `minecraft:player` | Who can catch it. A mob catches it only from carriers and bearers, never from blocks, items or weather                  |
 | `contagionRange`    | no              | blocks                             | `4`                | How far a carrier or bearer reaches, as a sphere                                                                        |
 | `contagionChance`   | no              | `0` to `1`                         | `0.1`              | The chance, at every scan of the carrier or bearer, that each catcher in reach catches it                               |
 | `contagionDuration` | no              | ticks                              | `1200`             | How long a caught hazard holds the level caught. Catching it again starts the time over                                 |
-| `weather`           | one of the five | list of `kind` or `kind=level`     |                    | `rain` exposes a player the rain falls on: open sky overhead in a biome where it rains. `thunder` counts during a storm |
+| `weather`           | one of the nine | list of `kind` or `kind=level`     |                    | `rain` exposes a player the rain falls on: open sky overhead in a biome where it rains. `thunder` counts during a storm |
 | `weatherDimensions` | no              | list of `dim`                      | every dimension    | Dimension ids where the weather exposes                                                                                 |
 
 A caught hazard counts as one more source in the scan, the highest level winning as with any other, and `immunity` protects against it as well. Nothing spreads unless `contagionRange` and `contagionChance` are above `0` and the file names `carriers` or sets `contagious`, and mobs are only looked at when some file does.
