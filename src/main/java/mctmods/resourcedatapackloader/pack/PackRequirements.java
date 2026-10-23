@@ -1,11 +1,13 @@
 package mctmods.resourcedatapackloader.pack;
 
+import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.server.packs.PackType;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.loading.FMLPaths;
 import java.nio.file.Path;
@@ -41,10 +43,16 @@ public final class PackRequirements {
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
         Set<String> found = new LinkedHashSet<>();
-        for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, (namespace, path, contents) -> Json.within("requirements file", namespace + ":" + path, () -> {
+        IPackConsumer reader = (namespace, path, contents) -> Json.within("requirements file", namespace + ":" + path, () -> {
             collect(contents, found);
             return null;
-        })); }
+        });
+        for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, reader); }
+        for (RDPLPack pack : manager.getPacks()) {
+            pack.forEach(PackType.CLIENT_RESOURCES, PackManager.LANGGATES, PackManager.JSON, (namespace, path, contents) -> {
+                if (Settings.lower(path).endsWith("/" + LangGates.GATE_FILE)) { reader.accept(namespace, path, contents); }
+            });
+        }
         for (String modid : found) {
             if (modLoaded(modid) || manager.provides(modid)) { continue; }
             WANTED.add(modid);

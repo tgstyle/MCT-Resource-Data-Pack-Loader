@@ -117,6 +117,10 @@ public final class ContentRegistry {
         for (String asked : requires) {
             if (asked.startsWith(PackRequirements.CONFIG_GATE)) { PackOptions.gating(asked.substring(PackRequirements.CONFIG_GATE.length())); }
         }
+        return holds(requires, key);
+    }
+
+    public static boolean holds(List<String> requires, Object key) {
         for (String asked : requires) {
             if (asked.startsWith(PackRequirements.FILE_GATE)) {
                 String path = asked.substring(PackRequirements.FILE_GATE.length()).replace('\\', '/');
@@ -145,7 +149,7 @@ public final class ContentRegistry {
         return true;
     }
 
-    private static void skipped(Identifier key, String asked) { ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, asked); }
+    private static void skipped(Object key, String asked) { ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, asked); }
 
     public static void addDef(BlockDef def) { BLOCK_DEFS.put(def.key(), def); }
 
