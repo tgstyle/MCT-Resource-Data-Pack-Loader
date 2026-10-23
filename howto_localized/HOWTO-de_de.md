@@ -2954,6 +2954,46 @@ Eine Variante, die nichts davon setzt, spawnt wie zuvor; setzt sie mehrere, spaw
 
 Jede Kreatur hat ihre eigene Leiste, die allen Spielern innerhalb ihrer `trackingRange` angezeigt wird. Die Leiste folgt der Gesundheit der Kreatur und leert sich, wenn sie Schaden nimmt; sie verschwindet, wenn die Kreatur stirbt, entfernt wird oder ihr Chunk entladen wird. Zuschauer sehen sie nicht. Ein unbekanntes `color` oder `style` wird protokolliert und der Standard verwendet. Ohne `bossBar` ändert sich nichts.
 
+### Phasen
+
+*entity-varianten*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| Schlüssel | Pflicht | Wert | Standard | Was er macht |
+| --- | ------- | ---- | -------- | ------------ |
+| `phases` | nein | Liste | keiner | Gesundheitsstufen der Kreatur. Sie sind nach `below` geordnet, und die Kreatur befindet sich in einer Phase, solange ihr Gesundheitsanteil unter dem `below` dieser Phase liegt |
+| `phases[].below` | ja | Zahl, über 0 und unter 1 | keiner | Der Gesundheitsanteil, unter dem die Phase gilt. Ein Treffer, der mehrere Schwellen überschreitet, führt nur in die tiefste Phase. Zwei Phasen mit gleichem `below`: die spätere wird protokolliert und verworfen |
+| `phases[].attributes` | nein | Objekt | keiner | Dieselben Namen wie `attributes`. In der Phase ersetzt der Wert den eigenen der Kreatur. `maxHealth` wird mit einem Fehler im Log abgelehnt, weil es die Schwelle selbst verschieben würde |
+| `phases[].tasks` | nein | Liste | keiner | Dieselbe Syntax wie `tasks`. Wird beim Eintritt in die Phase hinzugefügt; was die Phase hinzugefügt oder entfernt hat, wird beim Verlassen rückgängig gemacht |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | nein | wie außerhalb von `phases` | aus | Angriffsverhalten, das nur in der Phase aktiv ist. Die Kreatur braucht `hostile`, wie bei denselben Schlüsseln außerhalb von `phases`. Ein Verhalten, das die Kreatur schon selbst hat, wird nicht ein zweites Mal hinzugefügt |
+| `phases[].bossBar` | nein | Objekt, wie `bossBar` | die der Kreatur | Ersetzt in der Phase Namen, Farbe, Stil und Hintergrund der Leiste. Braucht eine `bossBar` an der Kreatur selbst, sonst wird es protokolliert und verworfen |
+
+Phasen folgen der Gesundheit in beide Richtungen: Ein Boss, der sich über eine Schwelle heilt, kehrt zur früheren Phase oder zu seiner Basis zurück. Jede Phase steht für sich. Der Wechsel von einer Phase zur nächsten macht die erste rückgängig, im Beispiel hat die zweite Phase also weder den Ansturm noch die zusätzliche Aufgabe der ersten. In den Spielstand wird nichts geschrieben; die Phase wird beim Laden der Kreatur neu aus der Gesundheit bestimmt. Jeder andere Schlüssel in einer Phase, etwa `swoops`, `digs` oder `throws` (sie brauchen Vorbereitung beim Erscheinen der Kreatur), wird protokolliert und ignoriert.
+
 ### Lager
 
 *entity-varianten*

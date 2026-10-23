@@ -3,7 +3,9 @@ package mctmods.resourcedatapackloader.content.util;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
 import net.minecraft.entity.ai.attributes.IAttribute;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -33,6 +35,12 @@ public final class ContentAttributes {
     }
 
     @Nullable public static IAttribute lookup(String name) { return ATTRIBUTES.get(key(name)); }
+
+    @Nullable public static IAttributeInstance instance(AbstractAttributeMap map, String name) {
+        IAttribute attribute = lookup(name);
+        IAttributeInstance instance = map.getAttributeInstanceByName(attribute == null ? name : attribute.getName());
+        return instance == null && attribute != null ? map.registerAttribute(attribute) : instance;
+    }
 
     @Nullable public static IAttribute find(String name, Object context) {
         IAttribute attribute = lookup(name);

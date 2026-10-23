@@ -29,7 +29,6 @@ import net.minecraft.pathfinding.PathNavigateFlying;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityMoveHelper;
 import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
-import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.Item;
@@ -57,6 +56,7 @@ final class ContentEntityApply {
     private static final Set<String> MISSING = new HashSet<>();
     private static final String ROLLED = "rdplBabyRolled";
     static final String YOUNG = "rdplBabyYoung";
+    private static final String DRESSED = "rdplDressed";
 
     private ContentEntityApply() {}
 
@@ -102,17 +102,18 @@ final class ContentEntityApply {
     }
 
     private static void attributes(EntityLivingBase living, EntityVariantDef def) {
+        NBTTagCompound data = living.getEntityData();
+        boolean first = !data.getBoolean(DRESSED);
+        data.setBoolean(DRESSED, true);
         AbstractAttributeMap map = living.getAttributeMap();
         for (Map.Entry<String, Double> entry : def.attributes.entrySet()) {
-            IAttribute attribute = ContentAttributes.lookup(entry.getKey());
-            IAttributeInstance instance = map.getAttributeInstanceByName(attribute == null ? entry.getKey() : attribute.getName());
-            if (instance == null && attribute != null) { instance = map.registerAttribute(attribute); }
+            IAttributeInstance instance = ContentAttributes.instance(map, entry.getKey());
             if (instance == null) {
                 ContentLog.LOGGER.error("Unknown attribute '{}' in {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.registryName, def.base);
                 continue;
             }
             instance.setBaseValue(entry.getValue());
-            if (attribute == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth(living.getMaxHealth()); }
+            if (first && instance.getAttribute() == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth(living.getMaxHealth()); }
         }
     }
 

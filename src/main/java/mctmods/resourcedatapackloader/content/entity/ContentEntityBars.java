@@ -30,7 +30,7 @@ final class ContentEntityBars {
     private ContentEntityBars() {}
 
     static void tick(EntityLivingBase living, EntityVariantDef def) {
-        BossBarDef spec = def.bossBar;
+        BossBarDef spec = ContentEntityPhases.bar(living, def);
         if (spec == null || !(living.world instanceof WorldServer)) { return; }
         UUID id = living.getUniqueID();
         if (!living.isEntityAlive()) {
@@ -60,7 +60,7 @@ final class ContentEntityBars {
         }
     }
 
-    private static void drop(UUID id) {
+    static void drop(UUID id) {
         Held held = HELD.remove(id);
         if (held != null) { BossBars.clear(held.bar); }
     }

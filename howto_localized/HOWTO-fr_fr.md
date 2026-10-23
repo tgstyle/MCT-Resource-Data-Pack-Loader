@@ -2954,6 +2954,46 @@ Une variante qui n'en définit aucune apparaît comme avant, et celle qui en dé
 
 Chaque créature a sa propre barre, visible de tous les joueurs situés dans son `trackingRange`. La barre suit la santé de la créature : elle se vide à mesure que la créature est blessée, et disparaît quand la créature meurt, est retirée ou que son chunk est déchargé. Les spectateurs ne la voient pas. Une valeur inconnue de `color` ou `style` est consignée dans le journal et la valeur par défaut est utilisée. Sans `bossBar`, rien ne change.
 
+### Phases
+
+*variantes d'entités*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| Clé | Requis | Valeur | Défaut | Rôle |
+| --- | ------ | ------ | ------ | ---- |
+| `phases` | non | liste | aucun | Paliers de santé de la créature. Ils sont classés par `below`, et la créature est dans une phase tant que sa fraction de santé est inférieure au `below` de cette phase |
+| `phases[].below` | oui | nombre, supérieur à 0 et inférieur à 1 | aucun | La fraction de santé sous laquelle la phase s'applique. Un coup qui franchit plusieurs seuils n'entre que dans la phase la plus profonde. Deux phases avec le même `below` : la seconde est consignée dans le journal et abandonnée |
+| `phases[].attributes` | non | objet | aucun | Les mêmes noms que `attributes`. Dans la phase, la valeur remplace celle de la créature. `maxHealth` est refusé avec une erreur dans le journal, car il déplacerait le seuil lui-même |
+| `phases[].tasks` | non | liste | aucun | La même syntaxe que `tasks`. Ajoutées à l'entrée dans la phase ; ce que la phase a ajouté ou retiré est annulé à la sortie |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | non | comme hors de `phases` | désactivé | Comportements d'attaque actifs seulement pendant la phase. La créature doit avoir `hostile`, comme pour les mêmes clés hors de `phases`. Un comportement que la créature a déjà par elle-même n'est pas ajouté une seconde fois |
+| `phases[].bossBar` | non | objet, comme `bossBar` | celle de la créature | Remplace le nom, la couleur, le style et le fond de la barre pendant la phase. Il faut un `bossBar` sur la créature elle-même, sinon c'est consigné dans le journal et abandonné |
+
+Les phases suivent la santé dans les deux sens : un boss qui se soigne au-dessus d'un seuil revient à la phase précédente, ou à son état de base. Chaque phase est autonome. Passer d'une phase à une autre annule la première, donc dans l'exemple la seconde phase n'a ni la charge ni la tâche supplémentaire de la première. Rien n'est écrit dans la sauvegarde ; la phase est recalculée à partir de la santé au chargement de la créature. Toute autre clé dans une phase, comme `swoops`, `digs` ou `throws` (elles demandent une préparation faite à l'apparition de la créature), est consignée dans le journal et ignorée.
+
 ### Stockage
 
 *variantes d'entités*

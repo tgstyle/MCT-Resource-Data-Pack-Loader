@@ -121,11 +121,9 @@ final class ContentEntityBehavior {
         }
         if (def.explodes) { living.tasks.addTask(0, new EntityAIKamikaze(creature, def.explosionPower, def.explosionFuse, def.explosionFire)); }
         if (def.throwsItems) { living.tasks.addTask(0, new EntityAIThrower(creature, carrying(def), def.explosionFuse, def.throwReload > 0 ? def.throwReload : def.explosionFuse, def.throwRetreat > 0 ? def.throwRetreat : def.explosionFuse, def.throwAmmo, def.throwPower, def.throwArc, living.getEntityAttribute(SharedMonsterAttributes.FOLLOW_RANGE).getAttributeValue(), def.throwReturns)); }
-        if (def.charges) { living.tasks.addTask(1, new EntityAICharge(creature, 2.0D)); }
-        if (def.pounces) { living.tasks.addTask(1, new EntityAIPounce(creature)); }
+        special(creature, def.charges, def.pounces, def.gusts, def.gustPower);
         if (def.fleesWhenHurt > 0.0F) { living.tasks.addTask(0, new EntityAIFleeWhenHurt(creature, def.fleesWhenHurt, 1.4D)); }
         if (def.sniffs > 0) { living.tasks.addTask(3, new EntityAISniff(creature, def.sniffs)); }
-        if (def.gusts) { living.tasks.addTask(1, new EntityAIGust(creature, def.gustPower)); }
         if (def.digs) { living.tasks.addTask(1, new EntityAIDig(creature)); }
         if (def.swoops) { living.tasks.addTask(1, new EntityAISwoop(creature)); }
         if (def.patrols) { living.tasks.addTask(4, new EntityAIPatrol(creature)); }
@@ -137,6 +135,12 @@ final class ContentEntityBehavior {
             if (type == null) { continue; }
             living.targetTasks.addTask(priority++, new EntityAINearestAttackableTarget<>(creature, type, !def.digs));
         }
+    }
+
+    static void special(EntityCreature creature, boolean charges, boolean pounces, boolean gusts, float gustPower) {
+        if (charges) { creature.tasks.addTask(1, new EntityAICharge(creature, 2.0D)); }
+        if (pounces) { creature.tasks.addTask(1, new EntityAIPounce(creature)); }
+        if (gusts) { creature.tasks.addTask(1, new EntityAIGust(creature, gustPower)); }
     }
 
     private static boolean ownStrike(EntityLiving living, EntityVariantDef def) { return !(living instanceof EntityMob) && declaresAttackDamage(def); }

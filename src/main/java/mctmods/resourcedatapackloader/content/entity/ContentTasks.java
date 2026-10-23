@@ -279,10 +279,12 @@ public final class ContentTasks {
 
     @Nullable private static Float decimal(JsonObject json, String name) { return json.has(name) ? (Float) Json.getFloat(json, name) : null; }
 
-    public static void apply(EntityLiving living, EntityVariantDef def) {
-        if (def.tasks.isEmpty()) { return; }
+    public static void apply(EntityLiving living, EntityVariantDef def) { apply(living, def, def.tasks); }
+
+    static void apply(EntityLiving living, EntityVariantDef def, List<TaskDef> asked) {
+        if (asked.isEmpty()) { return; }
         StringBuilder taken = ContentLog.LOGGER.debugEnabled() ? new StringBuilder() : null;
-        for (TaskDef task : def.tasks) {
+        for (TaskDef task : asked) {
             Kind kind = KINDS.get(task.name.toLowerCase(Locale.ROOT));
             if (kind == null) { continue; }
             if (task.remove) {
