@@ -3541,10 +3541,14 @@ Anche queste chiavi stanno nel blocco `sky`, e anch'esse sono disegnate solo sul
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` moltiplica il colore di erba, erba alta, felci e canna da zucchero, e `foliageTint` quello di foglie e rampicanti. Il colore proprio del bioma resta visibile, ed entrambe le chiavi funzionano dentro il `sky` di un ambiente, ed è così che una stagione cambia le piante. Gli oggetti in mano e nei menu mantengono i loro colori.
 
 `snowColor` colora gli strati di neve e i blocchi di neve sul terreno. Il `snowColor` proprio di un bioma ha la precedenza su quello della dimensione, e i colori sfumano al confine tra biomi come fa l'erba.
 
@@ -3563,6 +3567,8 @@ Su questa versione `waterFogColor` sostituisce il `water_fog_color` che ogni bio
 | `lavaFogColor`   | no           | colore esadecimale | `991A00`         | Colore della nebbia nella lava                                            |
 | `starColor`      | no           | colore esadecimale | bianco           | Tinta delle stelle                                                        |
 | `starTwinkle`    | no           | decimale, da 0 a 1 | `0.0`            | Quanto si attenuano le stelle mentre scintillano. `0` le mantiene stabili |
+| `grassTint`      | no           | colore esadecimale | bianco      | Moltiplica il colore di erba, erba alta, felci e canna da zucchero |
+| `foliageTint`    | no           | colore esadecimale | bianco      | Moltiplica il colore di foglie e rampicanti               |
 | `lightningColor` | no           | colore esadecimale | `737380`         | Tinta dei fulmini                                                         |
 
 ### Skybox, aurora e arcobaleno
@@ -3808,6 +3814,40 @@ Un ambiente può portare anche un blocco `raids`, che modifica le [incursioni](#
 | `environments.<name>.raids.points`                     | no           | numero da 0 a 100                     | `1`            | Moltiplica i punti che paga un'incursione vinta                                                                                                                                                                                                                                   |
 
 Qualsiasi altra chiave in un ambiente, o una delle chiavi `sky` qui sopra, viene ignorata con un errore nel log. Un mondo salvato con un ambiente che il pack non nomina più torna all'aspetto proprio della dimensione.
+
+### Stagioni
+
+*dimensioni*
+
+Una stagione è un ambiente, e `seasons` attiva e disattiva gli ambienti della dimensione in un ciclo annuale.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["minecraft:plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Ogni voce di `order` indica un ambiente, oppure un elenco di nomi da commutare insieme, e le voci si alternano, ciascuna per `days` giorni, prima che il ciclo ricominci. Un elenco può contenere un solo ambiente che copre l'intera dimensione; gli altri richiedono `biomes`, come `autumnlocal` qui sopra. Il blocco `environments` deve stare nello stesso file della dimensione.
+
+Un giorno equivale a 24000 tick dell'orologio del mondo principale, lo stesso giorno che conta il trigger di carta `day`, in qualunque dimensione si trovino le stagioni. Il giorno 0 inizia la prima stagione. Il server controlla una volta al secondo, che la dimensione sia caricata o no: quando la stagione cambia, disattiva gli ambienti della precedente e attiva quelli della successiva, e scrive nel log `Dimension X enters the season 'name' on day N`, con il primo nome della voce. Tocca solo i nomi elencati in `order`.
+
+Un comando o un letto che sposta l'orologio sposta anche la stagione, e un mondo si carica nella stagione a cui appartiene il suo giorno. Un ambiente commutato a mano resta fino al successivo cambio di stagione. Un ambiente di bioma si sovrappone alle impostazioni proprie della dimensione, non alla stagione, quindi ripete ogni tinta che vuole conservare. `rules.weatherSpeed` agisce solo nel mondo principale o in una dimensione con `weather.cycle`.
+
+| Chiave          | Obbligatorio   | Valore                                              | Predefinito | Cosa fa                                                                    |
+| --------------- | -------------- | --------------------------------------------------- | ----------- | -------------------------------------------------------------------------- |
+| `seasons`       | no             | oggetto JSON                                        | nessuno     | Attiva e disattiva gli ambienti della dimensione in un ciclo annuale       |
+| `seasons.days`  | con `seasons`  | intero maggiore di 0                                | nessuno     | Giorni di durata di ogni stagione                                          |
+| `seasons.order` | con `seasons`  | elenco di nomi di ambienti o di elenchi di nomi     | nessuno     | Le stagioni a turno. Una voce che è un elenco commuta i suoi ambienti insieme |
 
 ## Portali e varchi
 

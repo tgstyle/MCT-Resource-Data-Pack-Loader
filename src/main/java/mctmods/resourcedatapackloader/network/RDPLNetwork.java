@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.client.BlastHush;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentRuleClient;
+import mctmods.resourcedatapackloader.client.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
@@ -49,7 +50,10 @@ public final class RDPLNetwork {
         channel.messageBuilder(MessageIntroLandMade.class, 8, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroLandMade()).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); } }).add();
         channel.messageBuilder(MessageEnvironments.class, 9, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageEnvironments::write).decoder(MessageEnvironments::read).consumerMainThread((message, context) -> {
             ContentEnvironments.receive(message.active(), message.whole());
-            if (FMLEnvironment.dist == Dist.CLIENT) { ContentRuleClient.settle(); }
+            if (FMLEnvironment.dist == Dist.CLIENT) {
+                ContentRuleClient.settle();
+                ContentSeasonTint.changed();
+            }
         }).add();
         channel.messageBuilder(MessageIntroDone.class, 3, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroDone()).consumerMainThread((message, context) -> {
             ServerPlayer player = context.get().getSender();

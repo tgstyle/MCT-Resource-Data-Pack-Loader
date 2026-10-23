@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -40,8 +41,9 @@ public final class ContentSnowTint {
 
     private ContentSnowTint() {}
 
-    private static boolean wanted() {
+    static boolean wanted() {
         for (DimensionDef def : ContentDimensions.all()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
+        for (SkyLookDef look : ContentEnvironments.looks()) { if (look.snowColor() != SkyLookDef.UNSET) { return true; } }
         return ContentBiomes.tintsSnow();
     }
 

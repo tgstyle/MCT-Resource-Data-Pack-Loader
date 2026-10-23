@@ -175,7 +175,8 @@
         "client.MixinFontManager",
         "client.MixinFontStringRenderOutput",
         "client.MixinLevelLoadingScreen",
-        "client.MixinExplosion"
+        "client.MixinExplosion",
+        "client.MixinBiomeSeasonTint"
     ],
     "server": [
         "server.ISettings",
