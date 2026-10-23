@@ -101,6 +101,10 @@ public final class RubicLightEngine implements ICubeLightEngine {
         long key = cubeKey(cube.getX(), cube.getY(), cube.getZ());
         if (!owed.isEmpty() && owed.remove(key)) { ready.add(key); }
         if (world.isRemote) { return; }
+        scheduleFaces(cube, true);
+    }
+
+    private void scheduleFaces(ICube cube, boolean everything) {
         int minX = cube.getCoords().getMinBlockX();
         int minY = cube.getCoords().getMinBlockY();
         int minZ = cube.getCoords().getMinBlockZ();
@@ -112,7 +116,10 @@ public final class RubicLightEngine implements ICubeLightEngine {
                     int y = minY + (STEP_Y[face] != 0 ? (STEP_Y[face] < 0 ? 0 : 15) : (STEP_X[face] != 0 ? a : b));
                     int z = minZ + (STEP_Z[face] != 0 ? (STEP_Z[face] < 0 ? 0 : 15) : b);
                     scheduleLightUpdate(EnumSkyBlock.SKY, at.setPos(x, y, z));
+                    if (!everything) { continue; }
                     scheduleLightUpdate(EnumSkyBlock.BLOCK, at.setPos(x, y, z));
+                    scheduleLightUpdate(EnumSkyBlock.SKY, at.setPos(x + STEP_X[face], y + STEP_Y[face], z + STEP_Z[face]));
+                    scheduleLightUpdate(EnumSkyBlock.BLOCK, at.setPos(x + STEP_X[face], y + STEP_Y[face], z + STEP_Z[face]));
                 }
             }
         }
@@ -124,6 +131,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
         try { holdsTop = seedFrom(cube); }
         finally { seeding = false; }
         if (holdsTop) { reshadeBelow(cube); }
+        if (!world.isRemote && world.provider.hasSkyLight()) { scheduleFaces(cube, false); }
     }
 
     @Override public void reshadeBelow(ICube cube) {
@@ -196,6 +204,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
         int x = (column.x << 4) + localX;
         int z = (column.z << 4) + localZ;
         int fromCube = Coords.blockToCube(fromY);
+        if (fromCube > topCube) { return false; }
         for (ICube above : ((IColumn) column).getLoadedCubes(topCube, fromCube)) {
             ExtendedBlockStorage held = above.getStorage();
             if (held == null || held.isEmpty()) { continue; }
@@ -396,6 +405,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
                 int nz = z + STEP_Z[face];
                 ICube next = cubeAt(nx, ny, nz);
                 if (next == null) {
+                    if (ny < ((IMinMaxHeight) world).rdpl$getMinHeight() || ny >= ((IMinMaxHeight) world).rdpl$getMaxHeight()) { continue; }
                     owed.add(cubeKey(Coords.blockToCube(nx), Coords.blockToCube(ny), Coords.blockToCube(nz)));
                     continue;
                 }

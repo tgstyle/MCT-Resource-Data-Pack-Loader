@@ -85,7 +85,10 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         if (getChunk() == null) { return false; }
         try {
             MessageColumn message = new MessageColumn(this.getChunk());
-            for (EntityPlayerMP player : self().getPlayerList()) { RDPLNetwork.sendTo(message, player); }
+            for (EntityPlayerMP player : self().getPlayerList()) {
+                RDPLNetwork.sendTo(message, player);
+                MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(this.getChunk(), player));
+            }
             self().setSentToPlayers(true);
         } catch (Throwable throwable) {
             throw new RuntimeException(throwable);

@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import javax.annotation.Nullable;
 
 @Mod.EventBusSubscriber(modid = Rubic.MODID) public final class CubeIoQueue {
@@ -49,14 +50,18 @@ import javax.annotation.Nullable;
         });
     }
 
-    @Nullable public static Cube syncCubeLoad(World world, ICubeIO io, CubeProviderServer cache, int cubeX, int cubeY, int cubeZ) {
+    @Nullable public static Cube syncCubeLoad(World world, ICubeIO io, CubeProviderServer cache, int cubeX, int cubeY, int cubeZ, UnaryOperator<Cube> settle) {
         Chunk column = cache.getColumn(cubeX, cubeZ, ICubeProviderServer.Requirement.LIGHT);
         CubeAt at = new CubeAt(world, cubeX, cubeY, cubeZ);
         PendingCube queued = cubeReads.remove(at);
         if (queued != null) { forget(at.column()); }
-        PendingCube read = queued == null || queued.hasBeenHandedOver() ? new PendingCube(io, cubeX, cubeY, cubeZ) : queued;
+        PendingCube read = queued == null || queued.hasBeenHandedOver() ? new PendingCube(io, cache, cubeX, cubeY, cubeZ) : queued;
         read.tellColumn(column);
-        return finish(read);
+        readOrAwait(read);
+        read.apply();
+        Cube settled = settle.apply(read.loaded());
+        read.handOver();
+        return settled;
     }
 
     @Nullable public static Chunk syncColumnLoad(World world, ICubeIO io, int columnX, int columnZ, Consumer<Chunk> tellProviderLoading) {
@@ -65,10 +70,14 @@ import javax.annotation.Nullable;
     }
 
     @Nullable private static <T> T finish(PendingLoad<T> read) {
-        if (read.claimRead()) { read.readNow(); }
-        else { read.awaitRead(); }
+        readOrAwait(read);
         read.handOver();
         return read.loaded();
+    }
+
+    private static void readOrAwait(PendingLoad<?> read) {
+        if (read.claimRead()) { read.readNow(); }
+        else { read.awaitRead(); }
     }
 
     private static ICubeGenerator generator(World world) { return ((IRubicWorldInternal.IServer) world).rdpl$getCubeCache().getCubeGenerator(); }
@@ -80,7 +89,7 @@ import javax.annotation.Nullable;
             waiting.waitFor(whenLoaded);
             return;
         }
-        PendingCube read = new PendingCube(io, cubeX, cubeY, cubeZ);
+        PendingCube read = new PendingCube(io, cache, cubeX, cubeY, cubeZ);
         read.waitFor(whenLoaded);
         cubeReads.put(at, read);
         remember(at.column());
@@ -110,7 +119,7 @@ import javax.annotation.Nullable;
             return;
         }
         read.stopWaiting(whenLoaded);
-        if (read.nobodyWaiting() && cubeReads.remove(at, read)) { forget(at.column()); }
+        if (read.nobodyWaiting() && cubeReads.remove(at, read)) { read.abandon(); forget(at.column()); }
     }
 
     public static void dropQueuedColumnLoad(World world, int columnX, int columnZ, Consumer<Chunk> whenLoaded) {
@@ -158,7 +167,7 @@ import javax.annotation.Nullable;
     }
 
     private static void readThenQueue(PendingLoad<?> read) {
-        if (!read.claimRead()) { return; }
+        if (read.hasBeenHandedOver() || !read.claimRead()) { return; }
         read.readNow();
         readyToHandOver.add(read);
     }

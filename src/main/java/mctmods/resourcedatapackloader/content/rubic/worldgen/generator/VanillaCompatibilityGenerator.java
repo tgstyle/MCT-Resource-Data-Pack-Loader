@@ -192,14 +192,6 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                         scope.close();
                     }
                 }
-                if (!optimizationHack) {
-                    optimizationHack = true;
-                    for (int y = worldHeightCubes - 1; y >= 0; y--) {
-                        if (y == vanillaY) { continue; }
-                        ((IRubicWorld) world).rdpl$getCubeFromCubeCoords(cubeX, y + offsetCubes, cubeZ);
-                    }
-                    optimizationHack = false;
-                }
                 ChunkPrimer chunkPrimer = ((IColumnInternal) lastChunk).getCompatGenerationPrimer();
                 if (chunkPrimer != null) { return new CubePrimerWrapper(chunkPrimer, vanillaY); }
                 ExtendedBlockStorage storage = lastChunk.getBlockStorageArray()[vanillaY];
@@ -229,6 +221,20 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             return primer;
         } finally {
             WorldgenHangWatchdog.endWorldGen();
+        }
+    }
+
+    @Override public void generateAlongside(ICube cube) {
+        int vanillaY = cube.getY() - offsetCubes;
+        if (optimizationHack || vanillaY < 0 || vanillaY >= worldHeightCubes) { return; }
+        optimizationHack = true;
+        try {
+            for (int y = worldHeightCubes - 1; y >= 0; y--) {
+                if (y == vanillaY) { continue; }
+                ((IRubicWorld) world).rdpl$getCubeFromCubeCoords(cube.getX(), y + offsetCubes, cube.getZ());
+            }
+        } finally {
+            optimizationHack = false;
         }
     }
 

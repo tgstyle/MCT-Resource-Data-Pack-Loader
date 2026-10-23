@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio.async;
 
+import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
@@ -10,6 +11,7 @@ import javax.annotation.Nullable;
 
 final class PendingCube extends PendingLoad<Cube> {
     private final ICubeIO io;
+    private final CubeProviderServer cache;
     private final int cubeX;
     private final int cubeY;
     private final int cubeZ;
@@ -17,8 +19,9 @@ final class PendingCube extends PendingLoad<Cube> {
     @Nullable private volatile Chunk column;
     @Nullable private ICubeIO.PartialData<ICube> data;
 
-    PendingCube(ICubeIO io, int cubeX, int cubeY, int cubeZ) {
+    PendingCube(ICubeIO io, CubeProviderServer cache, int cubeX, int cubeY, int cubeZ) {
         this.io = io;
+        this.cache = cache;
         this.cubeX = cubeX;
         this.cubeY = cubeY;
         this.cubeZ = cubeZ;
@@ -40,7 +43,8 @@ final class PendingCube extends PendingLoad<Cube> {
         ICubeIO.PartialData<ICube> held = data;
         if (held == null) { throw new IllegalStateException("Nothing was read for " + describe()); }
         if (held.getObject() == null) { return; }
-        io.loadCubeSyncPart(held);
+        if (cache.getLoadedCube(cubeX, cubeY, cubeZ) != null || cache.getLoadedColumn(cubeX, cubeZ) == null) { return; }
+        cache.placeReadCube((Cube) held.getObject(), () -> io.loadCubeSyncPart(held));
     }
 
     @Nullable @Override Cube loaded() { return data == null ? null : (Cube) data.getObject(); }

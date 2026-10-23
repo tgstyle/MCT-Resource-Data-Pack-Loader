@@ -43,21 +43,22 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
     private boolean loading = true;
     private boolean invalid = false;
     private long[] bucketDataEntry = null;
+    private final Consumer<Cube> loadConsumer;
 
     CubeWatcher(PlayerCubeMap playerCubeMap, CubePos cubePos) {
         this.cubePos = cubePos;
         this.playerCubeMap = playerCubeMap;
         this.cubeCache = ((IRubicWorldInternal.IServer) playerCubeMap.getWorldServer()).rdpl$getCubeCache();
-        Consumer<Cube> consumer = (c) -> {
+        this.loadConsumer = (c) -> {
             if (this.invalid) { return; }
-            this.cube = c;
+            this.cube = c != null ? c : this.cubeCache.getCube(cubePos.getX(), cubePos.getY(), cubePos.getZ(), ICubeProviderServer.Requirement.LOAD);
             this.loading = false;
             if (this.cube != null) { this.cube.getTickets().add(this); }
         };
         this.cubeCache.asyncGetCube(
                 cubePos.getX(), cubePos.getY(), cubePos.getZ(),
                 ICubeProviderServer.Requirement.LOAD,
-                consumer);
+                loadConsumer);
     }
 
     void scheduleAddPlayer(EntityPlayerMP player) { if (!playersToAdd.contains(player)) { playersToAdd.add(player); } }
@@ -112,7 +113,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
         if (loading) {
             CubeIoQueue.dropQueuedCubeLoad(this.playerCubeMap.getWorldServer(),
                     cubePos.getX(), cubePos.getY(), cubePos.getZ(),
-                    c -> this.cube = c);
+                    loadConsumer);
         }
         invalid = true;
         playersToAdd.clear();

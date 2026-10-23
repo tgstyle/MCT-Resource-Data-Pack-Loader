@@ -21,6 +21,8 @@ public interface ICubeGenerator {
 
     default CubePrimer generateCube(int cubeX, int cubeY, int cubeZ, CubePrimer primer) { return this.generateCube(cubeX, cubeY, cubeZ); }
 
+    void generateAlongside(ICube cube);
+
     void generateColumn(Chunk column);
 
     void populate(ICube cube);

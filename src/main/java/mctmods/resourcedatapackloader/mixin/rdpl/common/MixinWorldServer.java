@@ -87,7 +87,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private XZMap<IColumn> rdpl$forcedColumns;
     @Unique private CubeGC rdpl$worldChunkGc;
     @Unique private SpawnCubes rdpl$spawnArea;
-    @Unique private boolean rdpl$runningCompatibilityGenerator;
+    @Unique private int rdpl$compatGenerationDepth;
 
     @SuppressWarnings("UnusedAssignment") @WrapOperation(method = "updateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V")) private void rdpl$boundImmediateTicks(Block block, World worldIn, BlockPos pos, IBlockState state, Random rand, Operation<Void> original) {
         if (rdpl$isRubicWorld() && rdpl$immediateTickDepth >= 32) {
@@ -227,11 +227,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Override public void rdpl$unloadOldCubes() { rdpl$worldChunkGc.chunkGc(); }
 
     @Override @Nonnull public ICompatGenerationScope rdpl$doCompatibilityGeneration() {
-        rdpl$runningCompatibilityGenerator = true;
-        return () -> rdpl$runningCompatibilityGenerator = false;
+        rdpl$compatGenerationDepth++;
+        return () -> rdpl$compatGenerationDepth--;
     }
 
-    @Override public boolean rdpl$isCompatGenerationScope() { return rdpl$runningCompatibilityGenerator; }
+    @Override public boolean rdpl$isCompatGenerationScope() { return rdpl$compatGenerationDepth > 0; }
 
     @Inject(method = "updateBlocks", at = @At("HEAD"), cancellable = true) private void rdpl$updateBlocksRubic(CallbackInfo cbi) {
         if (!rdpl$isRubicWorld()) { return; }

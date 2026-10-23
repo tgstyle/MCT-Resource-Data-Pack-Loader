@@ -29,6 +29,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import static net.minecraftforge.fml.common.network.ByteBufUtils.readVarInt;
 
 public class MessageCubeBlockChange implements IMessage {
+    int[] heightAddresses;
     int[] heightValues;
     CubePos cubePos;
     short[] localAddresses;
@@ -50,14 +51,14 @@ public class MessageCubeBlockChange implements IMessage {
             this.blockStates[i] = cube.getBlockState(x, y, z);
             xzAddresses.add(AddressTools.getLocalAddress(x, z));
         }
+        this.heightAddresses = new int[xzAddresses.size()];
         this.heightValues = new int[xzAddresses.size()];
         i = 0;
         TIntIterator it = xzAddresses.iterator();
         while (it.hasNext()) {
             int v = it.next();
-            int height = ((IColumnInternal) cube.getColumn()).getTopYWithStaging(AddressTools.getLocalX(v), AddressTools.getLocalZ(v));
-            v |= height << 8;
-            heightValues[i] = v;
+            heightAddresses[i] = v;
+            heightValues[i] = ((IColumnInternal) cube.getColumn()).getTopYWithStaging(AddressTools.getLocalX(v), AddressTools.getLocalZ(v));
             i++;
         }
     }
@@ -72,8 +73,12 @@ public class MessageCubeBlockChange implements IMessage {
             blockStates[i] = Block.BLOCK_STATE_IDS.getByValue(readVarInt(in, 4));
         }
         int numHmapChanges = in.readUnsignedShort();
+        heightAddresses = new int[numHmapChanges];
         heightValues = new int[numHmapChanges];
-        for (int i = 0; i < numHmapChanges; i++) { heightValues[i] = in.readInt(); }
+        for (int i = 0; i < numHmapChanges; i++) {
+            heightAddresses[i] = in.readUnsignedByte();
+            heightValues[i] = readVarInt(in, 5);
+        }
     }
 
     @SuppressWarnings("deprecation") @Override public void toBytes(ByteBuf out) {
@@ -86,7 +91,10 @@ public class MessageCubeBlockChange implements IMessage {
             ByteBufUtils.writeVarInt(out, Block.BLOCK_STATE_IDS.get(blockStates[i]), 4);
         }
         out.writeShort(heightValues.length);
-        for (int v : heightValues) { out.writeInt(v); }
+        for (int i = 0; i < heightValues.length; i++) {
+            out.writeByte(heightAddresses[i]);
+            ByteBufUtils.writeVarInt(out, heightValues[i], 5);
+        }
     }
 
     public static class Handler extends AbstractClientMessageHandler<MessageCubeBlockChange> {
@@ -111,10 +119,10 @@ public class MessageCubeBlockChange implements IMessage {
 
             ClientHeightMap index = (ClientHeightMap) cube.getColumn().getOpacityIndex();
             ILightingManager lm = ((IRubicWorldInternal.IClient) world).rdpl$getLightingManager();
-            for (int hmapUpdate : packet.heightValues) {
-                int x = hmapUpdate & 0xF;
-                int z = (hmapUpdate >> 4) & 0xF;
-                int height = hmapUpdate >> 8;
+            for (int h = 0; h < packet.heightValues.length; h++) {
+                int x = packet.heightAddresses[h] & 0xF;
+                int z = (packet.heightAddresses[h] >> 4) & 0xF;
+                int height = packet.heightValues[h];
                 int oldHeight = index.getTopBlockY(x, z);
                 index.setHeight(x, z, height);
                 if (oldHeight != height) { lm.updateLightBetween(cube.getColumn(), x, oldHeight, height, z); }

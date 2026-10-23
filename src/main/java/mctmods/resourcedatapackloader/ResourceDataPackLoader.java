@@ -48,7 +48,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPristine;
 import mctmods.resourcedatapackloader.content.worldgen.ContentProspect;
 import mctmods.resourcedatapackloader.util.compat.CbmpRubicParts;
-import mctmods.resourcedatapackloader.util.compat.CmsRubicSpawns;
 import mctmods.resourcedatapackloader.util.compat.GcPlanetWorldgen;
 import mctmods.resourcedatapackloader.util.compat.StreamsRubicValleys;
 import mctmods.resourcedatapackloader.util.compat.ThutRubicLifts;
@@ -251,7 +250,6 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(CardEvents.class);
         MinecraftForge.EVENT_BUS.register(CardScan.class);
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
-        CmsRubicSpawns.register();
         CbmpRubicParts.register();
         StreamsRubicValleys.register();
         GcPlanetWorldgen.register();

@@ -48,6 +48,8 @@ import java.util.function.BooleanSupplier;
         QUEUED.put("galaxyspace", () -> Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("galaxyspace"));
         QUEUED.put("opencomputers", () -> Loader.isModLoaded("opencomputers"));
         QUEUED.put("pulsar", MCTLateMixin::pulsarPresent);
+        QUEUED.put("cbmultipart", () -> Loader.isModLoaded("forgemultipartcbe") && !RDPLMixinPlugin.cubicChunksPresent());
+        QUEUED.put("customspawner", () -> Loader.isModLoaded("customspawner") && !RDPLMixinPlugin.cubicChunksPresent());
         QUEUED.put("ic2", () -> Loader.isModLoaded("ic2") && !RDPLMixinPlugin.cubicChunksPresent());
     }
 

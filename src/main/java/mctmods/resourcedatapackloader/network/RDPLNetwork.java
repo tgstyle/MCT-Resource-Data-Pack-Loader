@@ -49,6 +49,7 @@ public final class RDPLNetwork {
         registerMessage(MessageToasts.Handler.class, MessageToasts.class);
         registerMessage(MessageEnvironments.Handler.class, MessageEnvironments.class);
         registerClient(() -> BossBackgrounds.Handler.class, MessageBossBackground.class);
+        registerMessage(MessageMultipartDesc.Handler.class, MessageMultipartDesc.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {

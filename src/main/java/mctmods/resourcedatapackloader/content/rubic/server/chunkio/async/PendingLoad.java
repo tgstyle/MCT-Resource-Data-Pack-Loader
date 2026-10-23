@@ -12,6 +12,7 @@ abstract class PendingLoad<T> {
     private final List<Consumer<T>> waiting = new CopyOnWriteArrayList<>();
     private final AtomicBoolean readStarted = new AtomicBoolean();
     private final AtomicBoolean handedOver = new AtomicBoolean();
+    private final AtomicBoolean applied = new AtomicBoolean();
     private final CountDownLatch read = new CountDownLatch(1);
     @Nullable private Throwable failure;
 
@@ -49,14 +50,16 @@ abstract class PendingLoad<T> {
 
     void abandon() { handedOver.set(true); }
 
+    void apply() {
+        if (!applied.compareAndSet(false, true)) { return; }
+        if (failure != null) { ContentLog.LOGGER.error("Could not read {}, so it is handed over as missing", describe(), failure); }
+        else { applyOnServerThread(); }
+    }
+
     void handOver() {
         if (!handedOver.compareAndSet(false, true)) { return; }
-        T value = null;
-        if (failure != null) { ContentLog.LOGGER.error("Could not read {}, so it is handed over as missing", describe(), failure); }
-        else {
-            applyOnServerThread();
-            value = loaded();
-        }
+        apply();
+        T value = failure == null ? loaded() : null;
         for (Consumer<T> listener : waiting) { listener.accept(value); }
         waiting.clear();
     }
