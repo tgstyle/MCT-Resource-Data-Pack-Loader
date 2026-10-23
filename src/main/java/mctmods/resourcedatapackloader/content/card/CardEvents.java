@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
@@ -17,10 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 public final class CardEvents {
     private static final Identifier CARD = ResourceDataPackLoader.id("card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
+    private static final Map<UUID, Map<String, Integer>> LEVELS = new HashMap<>();
 
     private CardEvents() {}
 
@@ -56,6 +59,22 @@ public final class CardEvents {
         }
     }
 
+    public static void exposureLevel(ServerPlayer player, String hazard, int level) {
+        Integer before = LEVELS.computeIfAbsent(player.getUUID(), _ -> new HashMap<>()).put(hazard, level);
+        if (before == null || before == level) { return; }
+        for (CardRule rule : CardRules.on(CardRule.EXPOSURE_LEVEL)) {
+            if (!rule.exposure.isEmpty() && !rule.exposure.equals(hazard)) { continue; }
+            if (rule.level == null || rule.level == level) { CardFire.fire(rule, player); }
+        }
+    }
+
+    public static void roundStart(MinecraftServer server) {
+        List<CardRule> rules = CardRules.on(CardRule.ROUND_START);
+        if (rules.isEmpty()) { return; }
+        List<ServerPlayer> players = server.getPlayerList().getPlayers();
+        for (CardRule rule : rules) { CardScan.fireAll(rule, players); }
+    }
+
     public static void orderDone(ServerPlayer player, String sign) {
         for (CardRule rule : CardRules.on(CardRule.ORDER_DONE)) {
             if (rule.order.isEmpty() || rule.order.equalsIgnoreCase(sign)) { CardFire.fire(rule, player); }
@@ -89,6 +108,7 @@ public final class CardEvents {
         CardFire.forget(event.getEntity().getUUID());
         CardScan.forget(event.getEntity().getUUID());
         CardSend.forget(event.getEntity().getUUID());
+        LEVELS.remove(event.getEntity().getUUID());
     }
 
     private static void item(List<CardRule> rules, ServerPlayer player, ItemStack stack) {

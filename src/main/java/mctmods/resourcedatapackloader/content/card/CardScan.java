@@ -100,7 +100,7 @@ public final class CardScan {
         }
     }
 
-    private static void fireAll(CardRule rule, List<ServerPlayer> here) {
+    static void fireAll(CardRule rule, List<ServerPlayer> here) {
         for (ServerPlayer player : List.copyOf(here)) {
             CardFire.fire(rule, player);
             if (!CardRule.PLAYER.equals(rule.audience)) { return; }
