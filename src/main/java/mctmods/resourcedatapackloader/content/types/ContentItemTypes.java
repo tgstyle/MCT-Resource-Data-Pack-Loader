@@ -48,7 +48,7 @@ public final class ContentItemTypes {
     public static final String POTION_BOTTLE = "potion_bottle";
     public static final String CONTAINER = "container";
     private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER);
-    private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0, "");
+    private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0);
     private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, ResourceLocation.parse(ContentFormats.MINEABLE_SWORD));
     private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
             "leggings", ArmorItem.Type.LEGGINGS, "legs", ArmorItem.Type.LEGGINGS, "boots", ArmorItem.Type.BOOTS, "feet", ArmorItem.Type.BOOTS);

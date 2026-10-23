@@ -10,8 +10,10 @@ import java.util.List;
 public final class ContentWornContainers {
     private ContentWornContainers() {}
 
+    private static List<ItemStack> containers(ServerPlayer player) { return ContentCurios.worn(player, stack -> stack.getItem() instanceof ContentContainerItem); }
+
     public static void open(ServerPlayer player) {
-        List<ItemStack> worn = ContentCurios.worn(player);
+        List<ItemStack> worn = containers(player);
         if (worn.isEmpty()) { return; }
         int from = player.containerMenu instanceof ContentContainerMenu menu ? menu.worn() : -1;
         int at = Math.floorMod(from + 1, worn.size());
@@ -20,7 +22,7 @@ public final class ContentWornContainers {
     }
 
     private static ItemStack wornAt(ServerPlayer player, int at) {
-        List<ItemStack> worn = ContentCurios.worn(player);
+        List<ItemStack> worn = containers(player);
         return at < worn.size() ? worn.get(at) : ItemStack.EMPTY;
     }
 }
