@@ -2,12 +2,15 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.card.CardPlace;
+import mctmods.resourcedatapackloader.content.def.BossBarDef;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.FilterDef;
+import mctmods.resourcedatapackloader.content.def.PhaseDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.def.SpawnGateDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
+import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
@@ -22,13 +25,17 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentEntityParser {
+    private static final Set<String> PHASE_KEYS = new LinkedHashSet<>(List.of("below", "attributes", "tasks", "charges", "pounces", "gusts", "gustPower", "bossBar"));
 
     private ContentEntityParser() {}
 
@@ -49,6 +56,7 @@ public final class ContentEntityParser {
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
         JsonObject sounds = Json.getJsonObject(json, "sounds", new JsonObject());
         JsonObject egg = GsonHelper.isObjectNode(json, "egg") ? Json.getJsonObject(json, "egg") : null;
+        BossBarDef bar = BossBars.read("Entity variant " + key, json);
         boolean wantsEgg = !json.has("egg") || egg != null || Json.getBoolean(json, "egg", true);
         float scale = Math.max(0.05F, Json.getFloat(json, "scale", 1.0F));
         return new EntityVariantDef(key, base,
@@ -115,7 +123,55 @@ public final class ContentEntityParser {
                 equipment(key, json),
                 spawns(key, json),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
-                ContentTasks.parse(key, json), storage(key, json), gate(key, json), BossBars.read("Entity variant " + key, json));
+                ContentTasks.parse(key, json), storage(key, json), gate(key, json), bar, phases(key, json, bar != null));
+    }
+
+    private static List<PhaseDef> phases(Identifier key, JsonObject json, boolean hasBar) {
+        List<PhaseDef> phases = new ArrayList<>();
+        if (!json.has("phases")) { return phases; }
+        boolean hostile = Json.getBoolean(json, "hostile", false) && !Json.getBoolean(json, "passive", false);
+        for (JsonElement element : Json.getJsonArray(json, "phases")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("Entity variant {} has a phases entry that is not an object, ignoring it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            for (Map.Entry<String, JsonElement> member : entry.entrySet()) {
+                if (!PHASE_KEYS.contains(member.getKey())) { ContentLog.LOGGER.error("Entity variant {} has a phase key '{}', which is not one of {}, so it is ignored", key, member.getKey(), PHASE_KEYS); }
+            }
+            float below = Json.getFloat(entry, "below", 0.0F);
+            if (below <= 0.0F || below >= 1.0F) {
+                ContentLog.LOGGER.error("Entity variant {} has a phase whose below is {}, which is not above 0 and under 1, so the phase is dropped", key, below);
+                continue;
+            }
+            if (phases.stream().anyMatch(earlier -> earlier.below() == below)) {
+                ContentLog.LOGGER.error("Entity variant {} has two phases with below {}, so the later one is dropped", key, below);
+                continue;
+            }
+            Map<String, Double> attributes = doubles(key, entry, "attributes", "phase attribute");
+            attributes.keySet().removeIf(name -> {
+                boolean health = ContentAttributes.find(name, key) == Attributes.MAX_HEALTH;
+                if (health) { ContentLog.LOGGER.error("Entity variant {} sets maxHealth in the phase below {}, which would move the threshold itself, so it is ignored", key, below); }
+                return health;
+            });
+            BossBarDef bar = BossBars.read("Entity variant " + key + " phase below " + below, entry);
+            if (bar != null && !hasBar) {
+                ContentLog.LOGGER.error("Entity variant {} sets a bossBar in the phase below {}, but the variant has no bossBar of its own, so the phase's is dropped", key, below);
+                bar = null;
+            }
+            boolean charges = Json.getBoolean(entry, "charges", false);
+            boolean pounces = Json.getBoolean(entry, "pounces", false);
+            boolean gusts = Json.getBoolean(entry, "gusts", false);
+            if (!hostile && (charges || pounces || gusts)) {
+                ContentLog.LOGGER.error("Entity variant {} asks for attack behaviors in the phase below {}, but is not hostile, so they are ignored", key, below);
+                charges = false;
+                pounces = false;
+                gusts = false;
+            }
+            phases.add(new PhaseDef(below, attributes, ContentTasks.parse(key, entry), charges, pounces, gusts, Math.max(0.1F, Json.getFloat(entry, "gustPower", 1.5F)), bar));
+        }
+        phases.sort((a, b) -> Float.compare(b.below(), a.below()));
+        return phases;
     }
 
     private static SpawnGateDef gate(Identifier key, JsonObject json) {

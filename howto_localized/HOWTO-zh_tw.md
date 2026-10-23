@@ -2744,6 +2744,46 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 
 每個生物有自己的血條，其 `trackingRange` 範圍內的所有玩家都能看到。血條跟隨生物的生命值，受傷時會變短；生物死亡、被移除或所在區塊卸載時血條消失。旁觀者看不到它。未知的 `color` 或 `style` 會記入日誌，並使用預設值。沒有 `bossBar` 時一切照舊。
 
+### 階段
+
+*實體變體*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| 鍵 | 必填 | 值 | 預設 | 作用 |
+| --- | ---- | -- | ---- | ---- |
+| `phases` | 否 | 清單 | 無 | 生物的生命階段。依 `below` 排序；生物所處的是 `below` 大於其生命比例的最深一個階段 |
+| `phases[].below` | 是 | 數字（大於 0，小於 1） | 無 | 階段開始時的生命比例。一次攻擊跨過多個門檻時，只會進入最深的階段。兩個階段的 `below` 相同時，後者會記入日誌並被捨棄 |
+| `phases[].attributes` | 否 | 物件 | 無 | 名稱與 `attributes` 相同。階段持續期間，這些值會取代生物自身的值。`maxHealth` 會被拒絕並在日誌中報錯，因為它會移動基準線本身 |
+| `phases[].tasks` | 否 | 清單 | 無 | 語法與 `tasks` 相同。進入階段時新增；階段新增或移除的內容在離開階段時還原 |
+| `phases[].charges`、`phases[].pounces`、`phases[].gusts`、`phases[].gustPower` | 否 | 與 `phases` 之外相同 | 關閉 | 僅在階段持續期間生效的攻擊行為。與 `phases` 之外的同名鍵一樣，要求生物帶有 `hostile`。生物自身已有的行為不會被重複新增 |
+| `phases[].bossBar` | 否 | 物件（同 `bossBar`） | 生物自身的 | 階段持續期間取代血條的名稱、顏色、樣式與背景。生物必須有自己的 `bossBar`；沒有時該鍵會記入日誌並被捨棄 |
+
+階段會隨生命值雙向變化：回復到門檻以上的首領會回到上一個階段或基礎狀態。每個階段相互獨立：從一個階段轉入另一個階段時，會先還原前一個階段，所以範例中的第二階段不會繼承第一階段的衝鋒或額外任務。存檔中不會記錄任何內容；生物載入時，階段會依生命值重新計算。階段內的其他鍵（`swoops`、`digs`、`throws`，它們需要在生物出現時做準備）會記入日誌並被忽略。
+
 ### 儲存
 
 *實體變體*

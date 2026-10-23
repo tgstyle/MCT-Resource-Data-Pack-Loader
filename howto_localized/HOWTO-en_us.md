@@ -2744,6 +2744,46 @@ A variant that sets none of these spawns as before, and one that sets several sp
 
 Each creature has its own bar, shown to every player within its `trackingRange`. The bar tracks the creature's health, so it empties as the creature is hurt, and it goes when the creature dies, is removed or its chunk unloads. Spectators are not shown it. An unknown `color` or `style` is logged and the default is used. Without `bossBar` nothing changes.
 
+### Phases
+
+*entity variants*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| Key | Required | Value | Default | What it does |
+| --- | -------- | ----- | ------- | ------------ |
+| `phases` | no | list | none | Health stages of the creature. They are ordered by `below`, and the creature is in a phase while its health fraction is under that phase's `below` |
+| `phases[].below` | yes | number, above 0 and under 1 | none | The health fraction under which the phase is on. A hit that crosses several thresholds enters the deepest one only. Two phases with the same `below`: the later one is logged and dropped |
+| `phases[].attributes` | no | object | none | Same names as `attributes`. While in the phase, the value replaces the creature's own. `maxHealth` is refused with a logged error, because it would move the threshold itself |
+| `phases[].tasks` | no | list | none | Same syntax as `tasks`. Added on entering the phase; what the phase added or dropped is undone on leaving |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | no | as outside `phases` | off | Attack behaviors that are on only while in the phase. The creature needs `hostile`, as for the same keys outside `phases`. A behavior the creature already has itself is not added a second time |
+| `phases[].bossBar` | no | object, as `bossBar` | the creature's | Replaces the bar's name, color, style and background while in the phase. It needs a `bossBar` on the creature itself, otherwise it is logged and dropped |
+
+Phases follow health both ways: a boss that heals above a threshold returns to the earlier phase, or to its base. Each phase stands alone. Moving from one phase to another undoes the first, so in the example the second phase has neither the charge nor the extra task of the first. Nothing is written into the save; the phase is worked out again from health when the creature loads. Any other key in a phase, such as `swoops`, `digs` or `throws` (they need setup made when the creature appears), is logged and ignored.
+
 ### Storage
 
 *entity variants*

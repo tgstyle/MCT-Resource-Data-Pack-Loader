@@ -2744,6 +2744,46 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 바는 생물마다 하나씩 있으며 `trackingRange` 안에 있는 모든 플레이어에게 표시됩니다. 바는 생물의 체력을 따라가므로 피해를 입을수록 줄어들고, 생물이 죽거나 제거되거나 청크가 언로드되면 사라집니다. 관전자에게는 표시되지 않습니다. 알 수 없는 `color`나 `style`은 로그에 기록되고 기본값이 쓰입니다. `bossBar`가 없으면 아무것도 달라지지 않습니다.
 
+### 페이즈
+
+*엔티티 변형*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| 키 | 필수 | 값 | 기본값 | 설명 |
+| --- | ---- | -- | ------ | ---- |
+| `phases` | 아니요 | 목록 | 없음 | 생물의 체력 단계. `below` 순으로 정렬되며, 생물의 체력 비율이 해당 페이즈의 `below`보다 낮은 동안 그 페이즈에 있습니다 |
+| `phases[].below` | 예 | 숫자(0 초과 1 미만) | 없음 | 페이즈가 켜지는 체력 비율. 한 번의 공격으로 여러 기준선을 넘으면 가장 깊은 페이즈에만 들어갑니다. `below`가 같은 페이즈가 둘이면 뒤의 것은 로그에 기록되고 버려집니다 |
+| `phases[].attributes` | 아니요 | 객체 | 없음 | `attributes`와 같은 이름. 페이즈에 있는 동안 이 값이 생물 자신의 값을 대체합니다. `maxHealth`는 기준선 자체를 움직이게 되므로 로그에 오류를 남기고 거부됩니다 |
+| `phases[].tasks` | 아니요 | 목록 | 없음 | `tasks`와 같은 문법. 페이즈에 들어갈 때 추가되며, 페이즈가 추가하거나 뺀 것은 페이즈를 나갈 때 되돌려집니다 |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | 아니요 | `phases` 밖과 같음 | 꺼짐 | 페이즈에 있는 동안에만 켜지는 공격 동작. `phases` 밖의 같은 키와 마찬가지로 생물에 `hostile`이 필요합니다. 생물이 이미 스스로 가진 동작은 두 번 추가되지 않습니다 |
+| `phases[].bossBar` | 아니요 | 객체(`bossBar`와 같음) | 생물의 것 | 페이즈에 있는 동안 바의 이름, 색, 스타일, 배경을 대체합니다. 생물 자신에게 `bossBar`가 있어야 하며, 없으면 로그에 기록되고 버려집니다 |
+
+페이즈는 체력을 양방향으로 따라갑니다. 기준선 위로 회복한 보스는 이전 페이즈나 기본 상태로 돌아갑니다. 각 페이즈는 독립적입니다. 한 페이즈에서 다른 페이즈로 옮겨 갈 때 먼저 앞의 페이즈가 되돌려지므로, 예시에서 두 번째 페이즈에는 첫 번째 페이즈의 돌진도 추가 작업도 없습니다. 세이브에는 아무것도 기록되지 않으며, 생물이 로드될 때 체력으로부터 페이즈가 다시 정해집니다. 페이즈 안의 그 밖의 키(`swoops`, `digs`, `throws` 등. 생물이 나타날 때 준비가 필요합니다)는 로그에 기록되고 무시됩니다.
+
 ### 저장소
 
 *엔티티 변형*

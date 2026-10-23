@@ -2744,6 +2744,46 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 每个生物有自己的血条，其 `trackingRange` 范围内的所有玩家都能看到。血条跟随生物的生命值，受伤时会变短；生物死亡、被移除或所在区块卸载时血条消失。旁观者看不到它。未知的 `color` 或 `style` 会记入日志，并使用默认值。没有 `bossBar` 时一切照旧。
 
+### 阶段
+
+*实体变种*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| 键 | 必需 | 值 | 默认值 | 作用 |
+| --- | ---- | -- | ------ | ---- |
+| `phases` | 否 | 列表 | 无 | 生物的生命阶段。按 `below` 排序；生物所处的是 `below` 大于其生命比例的最深一个阶段 |
+| `phases[].below` | 是 | 数字（大于 0，小于 1） | 无 | 阶段开始时的生命比例。一次攻击跨过多个阈值时，只进入最深的阶段。两个阶段的 `below` 相同时，后者会记入日志并被丢弃 |
+| `phases[].attributes` | 否 | 对象 | 无 | 名称与 `attributes` 相同。阶段持续期间，这些值会取代生物自身的值。`maxHealth` 会被拒绝并在日志中报错，因为它会移动基准线本身 |
+| `phases[].tasks` | 否 | 列表 | 无 | 语法与 `tasks` 相同。进入阶段时添加；阶段添加或移除的内容在离开阶段时还原 |
+| `phases[].charges`、`phases[].pounces`、`phases[].gusts`、`phases[].gustPower` | 否 | 与 `phases` 之外相同 | 关闭 | 仅在阶段持续期间生效的攻击行为。与 `phases` 之外的同名键一样，要求生物带有 `hostile`。生物自身已有的行为不会被重复添加 |
+| `phases[].bossBar` | 否 | 对象（同 `bossBar`） | 生物自身的 | 阶段持续期间替换血条的名称、颜色、样式和背景。生物必须有自己的 `bossBar`；没有时该键会记入日志并被丢弃 |
+
+阶段会随生命值双向变化：回复到阈值以上的首领会回到上一个阶段或基础状态。每个阶段相互独立：从一个阶段转入另一个阶段时，先还原前一个阶段，所以示例中的第二阶段不会继承第一阶段的冲锋或额外任务。存档中不会记录任何内容；生物加载时，阶段会根据生命值重新计算。阶段内的其他键（`swoops`、`digs`、`throws`，它们需要在生物出现时做准备）会记入日志并被忽略。
+
 ### 存储
 
 *实体变种*

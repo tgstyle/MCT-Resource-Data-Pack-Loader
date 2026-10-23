@@ -2744,6 +2744,46 @@ Varianta, která žádnou z těchto podmínek nenastaví, se objevuje jako dří
 
 Každý tvor má vlastní ukazatel, který vidí všichni hráči v dosahu jeho `trackingRange`. Ukazatel sleduje zdraví tvora, takže se při zranění vyprazdňuje, a zmizí, když tvor zemře, je odstraněn nebo se uvolní jeho chunk. Pozorovatelé (spectator) ho nevidí. Neznámá hodnota `color` nebo `style` se zapíše do logu a použije se výchozí. Bez `bossBar` se nic nemění.
 
+### Fáze
+
+*varianty entit*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| --- | ------- | ------- | ------- | ------- |
+| `phases` | ne | seznam | žádný | Fáze zdraví tvora. Řadí se podle `below` a tvor je ve fázi, dokud je jeho podíl zdraví pod `below` této fáze |
+| `phases[].below` | ano | číslo, nad 0 a pod 1 | žádný | Podíl zdraví, pod kterým fáze platí. Zásah, který překročí několik prahů, vstoupí jen do nejhlubší fáze. Dvě fáze se stejným `below`: pozdější se zapíše do logu a zahodí |
+| `phases[].attributes` | ne | objekt | žádný | Stejné názvy jako `attributes`. Ve fázi hodnota nahradí vlastní hodnotu tvora. `maxHealth` se odmítne chybou v logu, protože by posunul samotný práh |
+| `phases[].tasks` | ne | seznam | žádný | Stejná syntaxe jako `tasks`. Přidají se při vstupu do fáze; co fáze přidala nebo odebrala, se při odchodu vrátí zpět |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | ne | jako mimo `phases` | vypnuto | Útočné chování, které je zapnuté jen ve fázi. Tvor potřebuje `hostile`, stejně jako u týchž klíčů mimo `phases`. Chování, které tvor už má sám, se nepřidá podruhé |
+| `phases[].bossBar` | ne | objekt, jako `bossBar` | ukazatel tvora | Ve fázi nahradí název, barvu, styl a pozadí ukazatele. Vyžaduje `bossBar` u samotného tvora, jinak se zapíše do logu a zahodí |
+
+Fáze sledují zdraví oběma směry: boss, který se vyléčí nad práh, se vrátí do předchozí fáze, nebo do základu. Každá fáze stojí sama za sebe. Přechod z jedné fáze do druhé nejdřív vrátí první, takže ve příkladu druhá fáze nemá ani výpad, ani úkol navíc z první. Do uložené hry se nic nezapisuje; fáze se při načtení tvora znovu určí ze zdraví. Jakýkoli jiný klíč ve fázi, například `swoops`, `digs` nebo `throws` (potřebují přípravu při vzniku tvora), se zapíše do logu a ignoruje.
+
 ### Úložiště
 
 *varianty entit*

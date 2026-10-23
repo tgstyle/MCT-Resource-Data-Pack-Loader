@@ -2744,6 +2744,46 @@ Una variante che non imposta nessuna di queste condizioni compare come prima, e 
 
 Ogni creatura ha la propria barra, mostrata a tutti i giocatori entro il suo `trackingRange`. La barra segue la salute della creatura, quindi si svuota man mano che viene ferita, e sparisce quando la creatura muore, viene rimossa o il suo chunk viene scaricato. Gli spettatori non la vedono. Un `color` o `style` sconosciuto viene registrato nel log e si usa il valore predefinito. Senza `bossBar` non cambia nulla.
 
+### Fasi
+
+*varianti delle entità*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| Chiave | Obbligatorio | Valore | Predefinito | Cosa fa |
+| --- | ------------ | ------ | ----------- | ------- |
+| `phases` | no | elenco | nessuno | Gli stadi di salute della creatura. Sono ordinati per `below`, e la creatura è in una fase finché la sua frazione di salute è inferiore al `below` di quella fase |
+| `phases[].below` | sì | numero, maggiore di 0 e minore di 1 | nessuno | La frazione di salute sotto la quale la fase è attiva. Un colpo che supera più soglie entra solo nella fase più profonda. Due fasi con lo stesso `below`: la successiva viene registrata nel log e scartata |
+| `phases[].attributes` | no | oggetto | nessuno | Gli stessi nomi di `attributes`. Durante la fase il valore sostituisce quello proprio della creatura. `maxHealth` viene rifiutato con un errore nel log, perché sposterebbe la soglia stessa |
+| `phases[].tasks` | no | elenco | nessuno | Stessa sintassi di `tasks`. Aggiunti all'ingresso nella fase; ciò che la fase ha aggiunto o tolto viene annullato all'uscita |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | no | come fuori da `phases` | disattivato | Comportamenti d'attacco attivi solo durante la fase. La creatura richiede `hostile`, come per le stesse chiavi fuori da `phases`. Un comportamento che la creatura ha già di suo non viene aggiunto una seconda volta |
+| `phases[].bossBar` | no | oggetto, come `bossBar` | quella della creatura | Sostituisce nome, colore, stile e sfondo della barra durante la fase. Richiede un `bossBar` sulla creatura stessa, altrimenti viene registrato nel log e scartato |
+
+Le fasi seguono la salute in entrambe le direzioni: un boss che si cura sopra una soglia torna alla fase precedente, o alla sua base. Ogni fase sta a sé. Passare da una fase a un'altra annulla la prima, quindi nell'esempio la seconda fase non ha né la carica né il compito in più della prima. Nel salvataggio non viene scritto nulla; la fase viene ricalcolata dalla salute quando la creatura si carica. Qualsiasi altra chiave in una fase, come `swoops`, `digs` o `throws` (richiedono una preparazione fatta quando la creatura compare), viene registrata nel log e ignorata.
+
 ### Archiviazione
 
 *varianti delle entità*

@@ -117,11 +117,9 @@ final class ContentEntityBehavior {
         }
         if (combat.explodes()) { mob.goalSelector.addGoal(0, new KamikazeGoal(creature, combat.explosionPower(), combat.explosionFuse(), combat.explosionFire())); }
         if (combat.throwsItems()) { mob.goalSelector.addGoal(0, new ThrowerGoal(creature, carrying(def), combat.explosionFuse(), combat.throwReload() > 0 ? combat.throwReload() : combat.explosionFuse(), combat.throwRetreat() > 0 ? combat.throwRetreat() : combat.explosionFuse(), combat.throwAmmo(), combat.throwPower(), combat.throwArc(), mob.getAttributeValue(Attributes.FOLLOW_RANGE), combat.throwReturns())); }
-        if (combat.charges()) { mob.goalSelector.addGoal(1, new ChargeGoal(creature, 2.0D)); }
-        if (combat.pounces()) { mob.goalSelector.addGoal(1, new PounceGoal(creature)); }
+        special(creature, combat.charges(), combat.pounces(), combat.gusts(), combat.gustPower());
         if (combat.fleesWhenHurt() > 0.0F) { mob.goalSelector.addGoal(0, new FleeWhenHurtGoal(creature, combat.fleesWhenHurt(), 1.4D)); }
         if (combat.sniffs() > 0) { mob.goalSelector.addGoal(3, new SniffGoal(creature, combat.sniffs())); }
-        if (combat.gusts()) { mob.goalSelector.addGoal(1, new GustGoal(creature, combat.gustPower())); }
         if (combat.swoops()) { mob.goalSelector.addGoal(1, new SwoopGoal(creature)); }
         if (combat.digs()) { mob.goalSelector.addGoal(1, new DigGoal(creature)); }
         if (combat.patrols()) { mob.goalSelector.addGoal(4, new PatrolGoal(creature)); }
@@ -132,6 +130,12 @@ final class ContentEntityBehavior {
             if (type == null) { continue; }
             mob.targetSelector.addGoal(priority++, new NearestAttackableTargetGoal<>(creature, type, 10, !def.combat().digs(), false, ContentTasks.fairGame(name)));
         }
+    }
+
+    static void special(PathfinderMob creature, boolean charges, boolean pounces, boolean gusts, float gustPower) {
+        if (charges) { creature.goalSelector.addGoal(1, new ChargeGoal(creature, 2.0D)); }
+        if (pounces) { creature.goalSelector.addGoal(1, new PounceGoal(creature)); }
+        if (gusts) { creature.goalSelector.addGoal(1, new GustGoal(creature, gustPower)); }
     }
 
     private static boolean ownStrike(Mob mob, EntityVariantDef def) { return !(mob instanceof Monster) && declaresAttackDamage(def); }
