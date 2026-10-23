@@ -118,7 +118,7 @@ public final class RDPLPack {
     private void indexHome(PackType type, Path base, boolean versioned) {
         Path home = base.resolve(type.getDirectory());
         if (!Files.isDirectory(home)) { return; }
-        try (Stream<Path> stream = Files.list(home)) { stream.filter(Files::isDirectory).filter(this::ownsNamespace).forEach(dir -> indexNamespace(type, dir, versioned)); }
+        try (Stream<Path> stream = Files.list(home)) { stream.sorted().filter(Files::isDirectory).filter(this::ownsNamespace).forEach(dir -> indexNamespace(type, dir, versioned)); }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces under {}", name, type.getDirectory(), ex);
         }
@@ -131,7 +131,7 @@ public final class RDPLPack {
         Port.Line superseded = !versioned && type == PackType.SERVER_DATA ? crossRoot : null;
         int nested = 0;
         try (Stream<Path> stream = Files.walk(dir)) {
-            for (String path : (Iterable<String>) stream.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
+            for (String path : (Iterable<String>) stream.sorted().filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
                 if (path.startsWith(PackManager.ROOT_DIRECTORY + "/")) { nested++; }
                 else if ((!carriedOnly || Port.unchanged(path)) && (superseded == null || Crossed.keepsPlace(namespace, path, superseded))) { paths.add(path); }
             }
