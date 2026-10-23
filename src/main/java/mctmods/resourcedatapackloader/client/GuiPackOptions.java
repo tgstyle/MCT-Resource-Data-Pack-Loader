@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.pack.LangGates;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 
 import net.minecraft.client.Minecraft;
@@ -9,6 +10,8 @@ import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.SoundEvents;
+import net.minecraftforge.client.resource.VanillaResourceType;
+import net.minecraftforge.fml.client.FMLClientHandler;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,7 +46,15 @@ public class GuiPackOptions extends GuiScreen {
 
     @Override protected void actionPerformed(GuiButton button) {
         if (button.id != 0) { return; }
-        for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) { PackOptions.save(entry.getKey(), entry.getValue()); }
+        boolean langChanged = false;
+        for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) {
+            Map<String, Boolean> before = PackOptions.optionsOf(entry.getKey());
+            for (Map.Entry<String, Boolean> option : entry.getValue().entrySet()) {
+                if (!option.getValue().equals(before.get(option.getKey())) && LangGates.dependsOn(entry.getKey(), option.getKey())) { langChanged = true; }
+            }
+            PackOptions.save(entry.getKey(), entry.getValue());
+        }
+        if (langChanged) { FMLClientHandler.instance().refreshResources(VanillaResourceType.LANGUAGES); }
         mc.displayGuiScreen(parent);
     }
 

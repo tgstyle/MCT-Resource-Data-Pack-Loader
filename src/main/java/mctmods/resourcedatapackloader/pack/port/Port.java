@@ -92,10 +92,29 @@ public final class Port {
                 if (!Files.isDirectory(namespace)) { continue; }
                 if (Files.isDirectory(namespace.resolve("textures").resolve("block")) && !Files.isDirectory(namespace.resolve("textures").resolve("blocks"))) { return true; }
                 if (jsonLangOnly(namespace.resolve("lang"))) { return true; }
+                if (jsonGatesOnly(namespace.resolve(PackManager.LANGGATES))) { return true; }
             }
         }
         catch (IOException ignored) { }
         return false;
+    }
+
+    private static boolean jsonGatesOnly(Path gates) throws IOException {
+        if (!Files.isDirectory(gates)) { return false; }
+        boolean json = false;
+        try (DirectoryStream<Path> folders = Files.newDirectoryStream(gates)) {
+            for (Path folder : folders) {
+                if (!Files.isDirectory(folder)) { continue; }
+                try (DirectoryStream<Path> files = Files.newDirectoryStream(folder)) {
+                    for (Path file : files) {
+                        String name = trim(file.getFileName().toString()).toLowerCase(Locale.ROOT);
+                        if (name.endsWith(".lang")) { return false; }
+                        if (name.endsWith(PackManager.JSON_SUFFIX) && !name.equals("gate.json")) { json = true; }
+                    }
+                }
+            }
+        }
+        return json;
     }
 
     private static boolean jsonLangOnly(Path lang) throws IOException {
@@ -104,7 +123,7 @@ public final class Port {
         try (DirectoryStream<Path> files = Files.newDirectoryStream(lang)) {
             for (Path file : files) {
                 String name = trim(file.getFileName().toString());
-                if (name.endsWith(".lang")) { return false; }
+                if (name.toLowerCase(Locale.ROOT).endsWith(".lang")) { return false; }
                 if (name.endsWith(PackManager.JSON_SUFFIX)) { json = true; }
             }
         }
@@ -117,6 +136,7 @@ public final class Port {
         int slash = path.indexOf('/');
         String head = slash < 0 ? path : path.substring(0, slash);
         if (NO_TWIN_ASSETS.contains(head)) { return new Mapped(path, Kind.DROPPED, "the '" + head + "' folder has no twin on 1.12.2"); }
+        if (path.toLowerCase(Locale.ROOT).startsWith(PackManager.LANGGATES + "/") && path.endsWith(PackManager.JSON_SUFFIX) && !path.toLowerCase(Locale.ROOT).endsWith("/gate.json")) { return new Mapped(PackManager.stripJson(path, 0).toLowerCase(Locale.ROOT) + ".lang", Kind.LANG, ""); }
         if (path.startsWith("lang/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackManager.stripJson(path, 0).toLowerCase(Locale.ROOT) + ".lang", Kind.LANG, ""); }
         if (path.startsWith("font/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(path, Kind.DROPPED, "a font provider file has no twin on 1.12.2"); }
         if (path.startsWith("textures/")) {

@@ -55,6 +55,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
 - [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
+- [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
 - [Block drops](#block-drops)
@@ -200,6 +201,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/functions/*.mcfunction`                                                            | Function files. [What you can override](#what-you-can-override)                                                                                                  |
 | `<namespace>/registry_remap/*.json`                                                             | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                                              |
 | `<namespace>/texts/*.txt`                                                                       | Plain text files, used by the world intro. [World intro](#world-intro)                                                                                           |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Lang entries a pack loads only while its requirements hold. [Language gates](#language-gates)                                                                    |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | The usual asset folders. [Models, blockstates and textures](#models-blockstates-and-textures)                                                                    |
 
 ## Reading the tables
@@ -388,7 +390,7 @@ Every key an option file accepts:
 | `hide` inside an option | no       | boolean               | `false` | Hides that one option, so it cannot be flipped and stays at its default                                                                     |
 | `description`           | no       | string                | none    | Shown under the option's name in the options screen                                                                                         |
 
-On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start. Options belong to named packs only, that is zips, since the generated file is named after the pack; loose files under `rdploader/assets` have no pack name and carry no options, so zip loose content into a named pack if it needs a switch.
+On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start, except for an option that only a [language gate](#language-gates) reads, which applies as soon as you press Done. Options belong to named packs only, that is zips, since the generated file is named after the pack; loose files under `rdploader/assets` have no pack name and carry no options, so zip loose content into a named pack if it needs a switch.
 
 Any definition's `requires` list can then name an option with a `config:` entry: `"requires": ["config:enableTestingContent"]` registers that content only while the option is true, exactly as a missing mod would skip it. A bare name checks every pack's file and every pack defining it must agree; `"config:PackA:enableTestingContent"` names one pack. An option no pack defines counts as false and is warned about once.
 
@@ -602,6 +604,7 @@ A modern block file comes back with a `meta` for each variant, in the order the 
 | `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, the overworld `gameLoopFunction` |
 | `minecraft:smelting` recipes                                                 | `assets/<ns>/furnace/converted_smelting.json`                                 |
 | `assets/<ns>/lang/<lang>.json`                                               | `assets/<ns>/lang/<lang>.lang`                                                |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                   | `assets/<ns>/langgates/<name>/<lang>.lang`, with `gate.json` as it is         |
 | `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                         |
 | `models/item/<variant>.json`                                                 | `models/item/<file>/<variant>.json`                                           |
 | no blockstate (generated on the modern line)                                 | a generated Forge blockstate per block file, with the models its type needs   |
@@ -2260,6 +2263,42 @@ An entry in `items` or `enchantments` takes these keys.
 | `item`        | yes      | item name        | none    | The item, or the item of a block. `:meta` after the name picks one variant, `:*` picks all of them |
 | `enchantment` | yes      | enchantment name | none    | The enchantment that gets the lines                                                                |
 | `lines`       | yes      | list of text     | none    | Lang keys or plain text, shown in order                                                            |
+
+## Language gates
+
+*lang entries that depend on a condition*
+
+`<namespace>/langgates/<name>/gate.json`
+
+A language gate is a set of lang entries that a pack loads only while its `requires` hold, so a pack can ship alternative names behind a pack option, an installed mod or a file. The entries go in `<namespace>/langgates/<name>/<lang>.lang`, written exactly like the files in `lang/` but holding only the entries that change, and `gate.json` in the same folder says when they apply. The folder name is yours to choose.
+
+Say a pack has an option `stupidNames` and wants `Block A` to read `Stupid Block!` while it is on:
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+and `en_us.lang` in that folder holds the changed entry:
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| Key        | Required | Value        | Default        | What it does                                                                                                                          |
+| ---------- | -------- | ------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | no       | list of text | always applies | Every entry must hold for the gate to apply. The same entries as in any definition: a mod id or pack namespace, `config:` and `file:` |
+
+- The file name is the language code, so `de_de.lang` only changes German. A folder with lang files and no `gate.json` is ignored, with a warning.
+- While the gate holds, its entries are laid over the `lang/<lang>.lang` of the same namespace, and a gate entry beats the same key there. A gate for a language the pack has no file for adds that language's entries while it holds. While it does not hold, the base file is read as it is.
+- Every entry in one gate's `requires` must hold. For either-or, write two folders.
+- Gates apply in the order of the packs, then by folder name, and the later one wins a key. A gate changes the base file whichever pack holds it, but a lang file in an overriding pack still beats a gate in a normal pack, see [Resource packs: who wins](#resource-packs-who-wins).
+- Keys of vanilla or another mod go in a gate under that namespace, for example `minecraft/langgates/<name>/en_us.lang`. It lies above the mod's own file, so it changes the mod's names too.
+- A mod id in `requires` is a hard dependency here as everywhere else. For text that should appear only when something is installed, use a `file:` entry or a pack namespace instead.
+- Language files are read when resources load, so a gate that depends on a mod or a file is decided then, and F3+T reads it again. For a `config:` option, pressing Done on the pack options screen reloads the language files at once, with no restart note.
+- Lang is read on the client only, so a dedicated server ignores the folder. A `<lang>.json` in a pack written for 1.20.1, 1.21.1 or 26.x is carried back to `.lang` like the files in `lang/`; a pack written for 1.12.2 uses `.lang` only.
 
 ## Potions, potion types and brewing
 

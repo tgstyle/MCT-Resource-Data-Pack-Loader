@@ -55,6 +55,7 @@
 - [熔爐配方與燃料](#熔爐配方與燃料)
 - [配方鎖](#配方鎖)
 - [工具提示](#工具提示)
+- [語言閘門](#語言閘門)
 - [藥水、藥水類型與釀造](#藥水藥水類型與釀造)
 - [鐵砧操作](#鐵砧操作)
 - [方塊掉落物](#方塊掉落物)
@@ -200,6 +201,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/functions/*.mcfunction`                                                            | 函數檔案。[可以覆寫的內容](#可以覆寫的內容)                                                                         |
 | `<namespace>/registry_remap/*.json`                                                             | 將舊名稱對應到新名稱。[登錄表重新命名](#登錄表重新命名)                                                             |
 | `<namespace>/texts/*.txt`                                                                       | 純文字檔案，供世界介紹使用。[世界介紹](#世界介紹)                                                                   |
+| `<namespace>/langgates/<name>/gate.json`                                                        | 僅在資源包的條件成立時才載入的語言條目。[語言閘門](#語言閘門)                                                       |
 | `<namespace>/models/`、`<namespace>/blockstates/`、`<namespace>/textures/`、`<namespace>/lang/` | 一般的資產資料夾。[模型、方塊狀態與材質](#模型方塊狀態與材質)                                                       |
 
 ## 如何閱讀表格
@@ -388,7 +390,7 @@ rdploader/RDPL1O Seasonal       優先順序與覆寫合併使用
 | 選項內的 `hide` | 否   | 布林值         | `false` | 隱藏那一個選項，使其無法切換並保持預設值                                       |
 | `description`   | 否   | 字串           | 無      | 顯示在選項畫面中該選項名稱的下方                                               |
 
-啟動時，資源包的選項檔案會變成一個歸使用者所有的真正設定檔，以資源包命名，即 `rdploader/config/PackA.json`，建立時帶有資源包的預設值，並在資源包更新時合併，因此新選項會加入，而不會動到使用者已設定的內容。變更會在下次遊戲啟動時生效。選項只屬於具名的資源包，也就是 zip，因為產生的檔案是以資源包命名；`rdploader/assets` 下的散裝檔案沒有資源包名稱，也不帶選項，所以如果需要開關，請把散裝內容壓縮成具名的資源包。
+啟動時，資源包的選項檔案會變成一個歸使用者所有的真正設定檔，以資源包命名，即 `rdploader/config/PackA.json`，建立時帶有資源包的預設值，並在資源包更新時合併，因此新選項會加入，而不會動到使用者已設定的內容。變更會在下次遊戲啟動時生效，只有語言閘門讀取的選項例外，按下「完成」後立即生效。選項只屬於具名的資源包，也就是 zip，因為產生的檔案是以資源包命名；`rdploader/assets` 下的散裝檔案沒有資源包名稱，也不帶選項，所以如果需要開關，請把散裝內容壓縮成具名的資源包。
 
 任何定義的 `requires` 清單都可以用 `config:` 項目指定一個選項：`"requires": ["config:enableTestingContent"]` 只會在該選項為 true 時註冊該內容，就如同缺少模組時會跳過一樣。只寫名稱時會檢查每個資源包的檔案，且所有定義了該名稱的資源包必須一致；`"config:PackA:enableTestingContent"` 則指定單一資源包。沒有任何資源包定義的選項視為 false，並只警告一次。
 
@@ -602,6 +604,7 @@ thatmod.jar
 | `data/minecraft/tags/functions/tick.json`                                     | `assets/<ns>/gamerules/converted_tick.json`，即主世界的 `gameLoopFunction` |
 | `minecraft:smelting` 配方                                                     | `assets/<ns>/furnace/converted_smelting.json`                              |
 | `assets/<ns>/lang/<lang>.json`                                                | `assets/<ns>/lang/<lang>.lang`                                             |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                    | `assets/<ns>/langgates/<name>/<lang>.lang`，`gate.json` 維持原樣           |
 | `textures/block/`、`textures/item/`                                           | `textures/blocks/`、`textures/items/`                                      |
 | `models/item/<variant>.json`                                                  | `models/item/<file>/<variant>.json`                                        |
 | 沒有方塊狀態（現代版本線會自動產生）                                          | 每個方塊檔案各有一個自動產生的 Forge 方塊狀態，附帶其類型所需的模型        |
@@ -2260,6 +2263,42 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `item`        | 是   | 物品名稱 | 無   | 物品，或方塊對應的物品。名稱後加 `:meta` 選擇一個變體，`:*` 選擇全部 |
 | `enchantment` | 是   | 附魔名稱 | 無   | 獲得這些行的附魔                                                     |
 | `lines`       | 是   | 文字清單 | 無   | 語言鍵或純文字，依序顯示                                             |
+
+## 語言閘門
+
+*取決於條件的語言條目*
+
+`<namespace>/langgates/<name>/gate.json`
+
+語言閘門是一組語言條目，只有在其 `requires` 成立期間，資源包才會載入它們。資源包可以藉此提供替代名稱，條件可以是資源包選項、已安裝的模組或某個檔案。條目放在 `<namespace>/langgates/<name>/<lang>.lang`，寫法與 `lang/` 中的檔案相同，只寫需要變動的條目；同一資料夾裡的 `gate.json` 決定它們何時生效。資料夾名稱隨你取。
+
+假設某個資源包有選項 `stupidNames`，希望它開啟時把 `Block A` 顯示為 `Stupid Block!`：
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+該資料夾裡的 `en_us.lang` 寫入變動後的條目：
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| 鍵         | 必填 | 值       | 預設     | 作用                                                                                                   |
+| ---------- | ---- | -------- | -------- | ------------------------------------------------------------------------------------------------------ |
+| `requires` | 否   | 文字清單 | 一律生效 | 閘門要生效，每一項都必須成立。寫法與任何定義裡的相同：模組 id 或資源包的命名空間、`config:` 和 `file:` |
+
+- 檔名就是語言代碼，所以 `de_de.lang` 只會變動德語。只有語言檔而沒有 `gate.json` 的資料夾會被忽略，並顯示警告。
+- 閘門成立期間，它的條目會疊在同一命名空間的 `lang/<lang>.lang` 之上，同一個鍵以閘門的條目為準。對於資源包本身沒有檔案的語言，閘門成立期間會補上該語言的條目。閘門不成立時，基礎檔案照原樣讀取。
+- 同一個閘門的 `requires` 裡每一項都必須成立。想表達「或者」，就寫兩個資料夾。
+- 閘門依資源包的順序生效，再依資料夾名稱排序，後面的會蓋過同一個鍵。不論基礎檔案在哪個資源包裡，閘門都會變動它；但帶 `O` 標記的資源包裡的語言檔，仍然優先於一般資源包裡的閘門，請見[資源包：誰優先](#資源包誰優先)。
+- 原版或其他模組的鍵放在該命名空間下的閘門裡，例如 `minecraft/langgates/<name>/en_us.lang`。它位於模組自帶檔案之上，因此也會變動模組的名稱。
+- `requires` 裡的模組 id 在這裡和別處一樣是硬性相依。如果文字只應在安裝了某樣東西時出現，請改用 `file:` 條目或資源包的命名空間。
+- 語言檔在載入資源時讀取，所以依賴模組或檔案的閘門在那時判定，按 F3+T 會重新讀取。對於 `config:` 選項，在資源包選項畫面按下「完成」後，語言檔會立即重新載入，不會出現重新啟動的提示。
+- 語言只在用戶端讀取，因此專用伺服器會忽略這個資料夾。為 1.20.1、1.21.1 或 26.x 撰寫的資源包中的 `<lang>.json` 會像 `lang/` 裡的檔案一樣轉回 `.lang`；為 1.12.2 撰寫的資源包只使用 `.lang`。
 
 ## 藥水、藥水類型與釀造
 

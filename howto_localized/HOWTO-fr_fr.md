@@ -55,6 +55,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)
 - [Verrous de recettes](#verrous-de-recettes)
 - [Infobulles](#infobulles)
+- [Passages de langue](#passages-de-langue)
 - [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)
 - [Travail à l'enclume](#travail-à-lenclume)
 - [Butins des blocs](#butins-des-blocs)
@@ -200,6 +201,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/functions/*.mcfunction`                                                            | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                          |
 | `<namespace>/registry_remap/*.json`                                                             | Anciens noms associés à de nouveaux. [Renommages du registre](#renommages-du-registre)                                                                                                          |
 | `<namespace>/texts/*.txt`                                                                       | Fichiers de texte brut, utilisés par l'introduction au monde. [Introduction au monde](#introduction-au-monde)                                                                                   |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Entrées de langue qu'un pack ne charge que tant que ses prérequis sont remplis. [Passages de langue](#passages-de-langue)                                                                       |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Les dossiers de ressources habituels. [Modèles, états de bloc et textures](#modèles-états-de-bloc-et-textures)                                                                                  |
 
 ## Lire les tableaux
@@ -388,7 +390,7 @@ Toutes les clés qu'accepte un fichier d'options :
 | `hide` dans une option     | non    | booléen              | `false` | Masque cette seule option, qui ne peut donc pas être basculée et reste à sa valeur par défaut                                                                   |
 | `description`              | non    | texte                | aucun   | Affichée sous le nom de l'option dans l'écran des options                                                                                                       |
 
-Au lancement, les fichiers d'options du pack deviennent un véritable fichier de configuration appartenant à l'utilisateur, nommé d'après le pack, `rdploader/config/PackA.json`, créé avec les valeurs par défaut du pack et fusionné lors des mises à jour du pack, de sorte que les nouvelles options arrivent sans toucher à ce que l'utilisateur a déjà réglé. Les modifications s'appliquent au prochain démarrage du jeu. Les options n'appartiennent qu'aux packs nommés, c'est-à-dire aux zips, puisque le fichier généré porte le nom du pack ; les fichiers isolés sous `rdploader/assets` n'ont pas de nom de pack et ne portent aucune option, alors compressez le contenu isolé dans un pack nommé s'il a besoin d'un interrupteur.
+Au lancement, les fichiers d'options du pack deviennent un véritable fichier de configuration appartenant à l'utilisateur, nommé d'après le pack, `rdploader/config/PackA.json`, créé avec les valeurs par défaut du pack et fusionné lors des mises à jour du pack, de sorte que les nouvelles options arrivent sans toucher à ce que l'utilisateur a déjà réglé. Les modifications s'appliquent au prochain démarrage du jeu, sauf pour une option que seul un [passage de langue](#passages-de-langue) lit : elle s'applique dès que vous appuyez sur Terminé. Les options n'appartiennent qu'aux packs nommés, c'est-à-dire aux zips, puisque le fichier généré porte le nom du pack ; les fichiers isolés sous `rdploader/assets` n'ont pas de nom de pack et ne portent aucune option, alors compressez le contenu isolé dans un pack nommé s'il a besoin d'un interrupteur.
 
 La liste `requires` de n'importe quelle définition peut alors nommer une option avec une entrée `config:` : `"requires": ["config:enableTestingContent"]` n'enregistre ce contenu que tant que l'option est à true, exactement comme un mod manquant le ferait ignorer. Un nom simple vérifie le fichier de chaque pack et tous les packs qui la définissent doivent s'accorder ; `"config:PackA:enableTestingContent"` désigne un seul pack. Une option qu'aucun pack ne définit compte comme false et fait l'objet d'un avertissement unique.
 
@@ -602,6 +604,7 @@ Un fichier de bloc moderne revient avec un `meta` pour chaque variante, dans l'o
 | `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, le `gameLoopFunction` de l'Overworld                 |
 | recettes `minecraft:smelting`                                                | `assets/<ns>/furnace/converted_smelting.json`                                                     |
 | `assets/<ns>/lang/<lang>.json`                                               | `assets/<ns>/lang/<lang>.lang`                                                                    |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                   | `assets/<ns>/langgates/<name>/<lang>.lang`, `gate.json` reste tel quel                            |
 | `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                                             |
 | `models/item/<variant>.json`                                                 | `models/item/<file>/<variant>.json`                                                               |
 | aucun état de bloc (généré sur la ligne moderne)                             | un état de bloc Forge généré pour chaque fichier de bloc, avec les modèles dont son type a besoin |
@@ -2260,6 +2263,42 @@ Une entrée de `items` ou `enchantments` accepte ces clés.
 | `item`        | oui    | nom d'objet        | aucun  | L'objet, ou l'objet d'un bloc. `:meta` après le nom choisit une variante, `:*` toutes |
 | `enchantment` | oui    | nom d'enchantement | aucun  | L'enchantement qui reçoit les lignes                                                  |
 | `lines`       | oui    | liste de textes    | aucun  | Clés de langue ou texte brut, dans l'ordre                                            |
+
+## Passages de langue
+
+*entrées de langue qui dépendent d'une condition*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Un passage de langue est un ensemble d'entrées de langue qu'un pack ne charge que tant que son `requires` est rempli, ce qui permet à un pack de proposer d'autres noms derrière une option du pack, un mod installé ou un fichier. Les entrées se placent dans `<namespace>/langgates/<name>/<lang>.lang`, écrites comme les fichiers de `lang/` mais avec les seules entrées qui changent, et `gate.json`, dans le même dossier, dit quand elles s'appliquent. Le nom du dossier est à votre choix.
+
+Supposons qu'un pack ait une option `stupidNames` et veuille que `Block A` s'appelle `Stupid Block!` tant qu'elle est activée :
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+et `en_us.lang`, dans ce dossier, contient l'entrée modifiée :
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| Clé        | Requis | Valeur          | Défaut              | Rôle                                                                                                                                                                                     |
+| ---------- | ------ | --------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | non    | liste de textes | s'applique toujours | Chaque entrée doit être remplie pour que le passage s'applique. Les mêmes entrées que dans n'importe quelle définition : un id de mod ou un espace de noms de pack, `config:` et `file:` |
+
+- Le nom du fichier est le code de langue : `de_de.lang` ne change donc que l'allemand. Un dossier qui contient des fichiers de langue mais pas de `gate.json` est ignoré, avec un avertissement.
+- Tant que le passage est rempli, ses entrées sont posées sur le `lang/<lang>.lang` du même espace de noms, et une entrée du passage l'emporte sur la même clé de ce fichier. Un passage pour une langue dont le pack n'a pas de fichier ajoute les entrées de cette langue tant qu'il est rempli. Quand il ne l'est pas, le fichier de base est lu tel quel.
+- Chaque entrée du `requires` d'un passage doit être remplie. Pour un « ou », écrivez deux dossiers.
+- Les passages s'appliquent dans l'ordre des packs, puis par nom de dossier, et le dernier l'emporte sur une clé. Un passage modifie le fichier de base quel que soit le pack qui le détient, mais un fichier de langue d'un pack qui prend le dessus sur les packs de ressources l'emporte toujours sur un passage d'un pack normal, voir [Packs de ressources : qui l'emporte](#packs-de-ressources--qui-lemporte).
+- Les clés de vanilla ou d'un autre mod vont dans un passage sous cet espace de noms, par exemple `minecraft/langgates/<name>/en_us.lang`. Il se place au-dessus du fichier du mod lui-même et change donc aussi les noms du mod.
+- Un id de mod dans `requires` est ici une dépendance stricte, comme partout. Pour un texte qui ne doit apparaître que si quelque chose est installé, utilisez plutôt une entrée `file:` ou un espace de noms de pack.
+- Les fichiers de langue sont lus au chargement des ressources : un passage qui dépend d'un mod ou d'un fichier est donc décidé à ce moment, et F3+T le relit. Pour une option `config:`, appuyer sur Terminé dans l'écran des options du pack recharge aussitôt les fichiers de langue, sans message de redémarrage.
+- La langue n'est lue que côté client : un serveur dédié ignore le dossier. Un `<lang>.json` dans un pack écrit pour 1.20.1, 1.21.1 ou 26.x est reconverti en `.lang` comme les fichiers de `lang/` ; un pack écrit pour 1.12.2 n'utilise que `.lang`.
 
 ## Potions, types de potions et alchimie
 

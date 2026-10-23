@@ -74,6 +74,7 @@ public final class PackManager {
     public static final String GAMES = "games";
     public static final String FUELS = "fuels";
     public static final String TOOLTIPS = "tooltips";
+    public static final String LANGGATES = "langgates";
     public static final String OREDICT = "oredict";
     public static final String SOUNDS = "sounds";
     public static final String RECIPE_REMOVALS = "recipe_removals";
@@ -104,7 +105,7 @@ public final class PackManager {
     public static final String JSON = "json";
     public static final String JSON_SUFFIX = "." + JSON;
     public static final String MCFUNCTION = "mcfunction";
-    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, BREWING, FUELS, TOOLTIPS, FURNACE, RECIPE_REMOVALS, RECIPE_LOCKS, SPAWN_LOCKS, LOOT_INJECTIONS, CARDS, CELESTIAL, DISABLED)));
+    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_LOCKS, SPAWN_LOCKS, LOOT_INJECTIONS, CARDS, CELESTIAL, DISABLED)));
     private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
@@ -182,6 +183,7 @@ public final class PackManager {
         named.sort(Comparator.comparingInt(RDPLPack::getPriority).thenComparing(RDPLPack::getName, String.CASE_INSENSITIVE_ORDER));
         packs.addAll(named);
         buildIndex();
+        LangGates.build();
         namespacesNormal = null;
         namespacesOverride = null;
         packMeta = resolvePackMeta();
@@ -348,6 +350,7 @@ public final class PackManager {
 
     public boolean existsRaw(String namespace, String path, boolean overriding) {
         if (resolve(namespace, path, overriding) != null) { return true; }
+        if (LangGates.active(namespace, path, overriding)) { return true; }
         return ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding);
     }
 
@@ -359,10 +362,19 @@ public final class PackManager {
 
     @Nullable public InputStream openRaw(String namespace, String path, boolean overriding) throws IOException {
         Entry entry = resolve(namespace, path, overriding);
+        if (LangGates.active(namespace, path, overriding)) {
+            InputStream merged = LangGates.merged(namespace, path, overriding, entry == null ? null : baseBytes(entry, namespace));
+            if (merged != null) { return merged; }
+            if (entry == null) { return new ByteArrayInputStream(new byte[0]); }
+        }
         if (entry != null) { return entry.pack.open(namespace, entry.actual); }
         if (!ContentPixelMaps.couldBeDrawn(path)) { return null; }
         byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
         return drawn == null ? null : new ByteArrayInputStream(drawn);
+    }
+
+    private static byte[] baseBytes(Entry entry, String namespace) throws IOException {
+        try (InputStream stream = entry.pack.open(namespace, entry.actual)) { return IOUtils.toByteArray(stream); }
     }
 
     public List<String> rawPaths(boolean overriding) {
@@ -534,6 +546,7 @@ public final class PackManager {
             catch (IOException ex) { ContentLog.LOGGER.error("Could not close pack '{}'", pack.getName(), ex); }
         }
         packs.clear();
+        LangGates.clear();
         mergedNormal.clear();
         mergedOverride.clear();
         warned.clear();

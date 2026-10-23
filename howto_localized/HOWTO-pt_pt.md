@@ -55,6 +55,7 @@ Catorze exemplos funcionais. Coloca qualquer um deles diretamente em `rdploader`
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
 - [Bloqueios de receitas](#bloqueios-de-receitas)
 - [Dicas de ferramenta](#dicas-de-ferramenta)
+- [Passagens de idioma](#passagens-de-idioma)
 - [Poções, tipos de poção e preparação](#poções-tipos-de-poção-e-preparação)
 - [Trabalho na bigorna](#trabalho-na-bigorna)
 - [Itens largados por blocos](#itens-largados-por-blocos)
@@ -200,6 +201,7 @@ Todos os caminhos deste guia estão escritos a partir de `assets/`, pelo que `<n
 | `<namespace>/functions/*.mcfunction`                                                            | Ficheiros de funções. [O que podes substituir](#o-que-podes-substituir)                                                                                                                     |
 | `<namespace>/registry_remap/*.json`                                                             | Nomes antigos mapeados para novos. [Renomeações de registo](#renomeações-de-registo)                                                                                                        |
 | `<namespace>/texts/*.txt`                                                                       | Ficheiros de texto simples, usados pela introdução do mundo. [Introdução do mundo](#introdução-do-mundo)                                                                                    |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Entradas de idioma que um pacote só carrega enquanto os seus requisitos se cumprem. [Passagens de idioma](#passagens-de-idioma)                                                             |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | As pastas de recursos habituais. [Modelos, blockstates e texturas](#modelos-blockstates-e-texturas)                                                                                         |
 
 ## Ler as tabelas
@@ -388,7 +390,7 @@ Todas as chaves que um ficheiro de opções aceita:
 | `hide` dentro de uma opção | não         | booleano               | `false`      | Oculta essa opção, que assim não pode ser alterada e fica na sua predefinição                                                                    |
 | `description`              | não         | texto                  | nenhum       | Mostrada por baixo do nome da opção no ecrã de opções                                                                                            |
 
-No arranque, os ficheiros de opções do pacote tornam-se um único ficheiro de config verdadeiro, que pertence ao utilizador e tem o nome do pacote, `rdploader/config/PackA.json`, criado com as predefinições do pacote e fundido nas atualizações do pacote, de modo que as novas opções chegam sem tocar no que o utilizador já definiu. As alterações aplicam-se no próximo arranque do jogo. As opções pertencem apenas a pacotes com nome, isto é, zips, uma vez que o ficheiro gerado tem o nome do pacote; os ficheiros soltos em `rdploader/assets` não têm nome de pacote e não têm opções, por isso comprime o conteúdo solto num pacote com nome se precisar de um interruptor.
+No arranque, os ficheiros de opções do pacote tornam-se um único ficheiro de config verdadeiro, que pertence ao utilizador e tem o nome do pacote, `rdploader/config/PackA.json`, criado com as predefinições do pacote e fundido nas atualizações do pacote, de modo que as novas opções chegam sem tocar no que o utilizador já definiu. As alterações aplicam-se no próximo arranque do jogo, exceto numa opção que só uma [passagem de idioma](#passagens-de-idioma) lê, que se aplica assim que carregas em Concluído. As opções pertencem apenas a pacotes com nome, isto é, zips, uma vez que o ficheiro gerado tem o nome do pacote; os ficheiros soltos em `rdploader/assets` não têm nome de pacote e não têm opções, por isso comprime o conteúdo solto num pacote com nome se precisar de um interruptor.
 
 A lista `requires` de qualquer definição pode então nomear uma opção com uma entrada `config:`: `"requires": ["config:enableTestingContent"]` regista esse conteúdo apenas enquanto a opção for true, exatamente como um mod em falta o ignoraria. Um nome simples verifica o ficheiro de todos os pacotes e todos os pacotes que o definem têm de estar de acordo; `"config:PackA:enableTestingContent"` nomeia um só pacote. Uma opção que nenhum pacote define conta como false e é avisada uma só vez.
 
@@ -602,6 +604,7 @@ Um ficheiro de bloco moderno regressa com um `meta` para cada variante, pela ord
 | `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, o `gameLoopFunction` da Superfície               |
 | receitas `minecraft:smelting`                                                | `assets/<ns>/furnace/converted_smelting.json`                                                 |
 | `assets/<ns>/lang/<lang>.json`                                               | `assets/<ns>/lang/<lang>.lang`                                                                |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                   | `assets/<ns>/langgates/<name>/<lang>.lang`, e o `gate.json` fica como está                    |
 | `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                                         |
 | `models/item/<variant>.json`                                                 | `models/item/<file>/<variant>.json`                                                           |
 | sem blockstate (gerado na linha moderna)                                     | um blockstate do Forge gerado por ficheiro de bloco, com os modelos de que o seu tipo precisa |
@@ -2260,6 +2263,42 @@ Uma entrada de `items` ou `enchantments` aceita estas chaves.
 | `item`        | sim         | nome de item         | nenhum       | O item, ou o item de um bloco. `:meta` a seguir ao nome escolhe uma variante, `:*` todas |
 | `enchantment` | sim         | nome de encantamento | nenhum       | O encantamento que recebe as linhas                                                      |
 | `lines`       | sim         | lista de textos      | nenhum       | Chaves de idioma ou texto simples, por ordem                                             |
+
+## Passagens de idioma
+
+*entradas de idioma que dependem de uma condição*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Uma passagem de idioma é um conjunto de entradas de idioma que um pacote só carrega enquanto o seu `requires` se cumpre, por isso um pacote pode trazer nomes alternativos por trás de uma opção do pacote, de um mod instalado ou de um ficheiro. As entradas ficam em `<namespace>/langgates/<name>/<lang>.lang`, escritas como os ficheiros de `lang/`, mas só com as entradas que mudam, e o `gate.json`, na mesma pasta, diz quando se aplicam. O nome da pasta é escolha tua.
+
+Imagina que um pacote tem a opção `stupidNames` e quer que `Block A` apareça como `Stupid Block!` enquanto estiver ligada:
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+e o `en_us.lang`, nessa pasta, traz a entrada alterada:
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| Chave      | Obrigatório | Valor           | Predefinição     | O que faz                                                                                                                                                                   |
+| ---------- | ----------- | --------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | não         | lista de textos | aplica-se sempre | Todas as entradas têm de se cumprir para a passagem se aplicar. As mesmas entradas de qualquer definição: um id de mod ou um espaço de nomes de pacote, `config:` e `file:` |
+
+- O nome do ficheiro é o código do idioma, por isso `de_de.lang` só muda o alemão. Uma pasta com ficheiros de idioma e sem `gate.json` é ignorada, com um aviso.
+- Enquanto a passagem se cumpre, as suas entradas são postas sobre o `lang/<lang>.lang` do mesmo espaço de nomes, e uma entrada da passagem vence a mesma chave aí. Uma passagem para um idioma de que o pacote não tem ficheiro acrescenta as entradas desse idioma enquanto se cumpre. Quando não se cumpre, o ficheiro base é lido como está.
+- Todas as entradas do `requires` de uma passagem têm de se cumprir. Para um «ou», escreve duas pastas.
+- As passagens aplicam-se pela ordem dos pacotes, depois pelo nome da pasta, e a posterior vence a chave. Uma passagem altera o ficheiro base seja qual for o pacote que o tenha, mas um ficheiro de idioma de um pacote que sobrepõe continua a vencer uma passagem de um pacote normal, vê [Pacotes de recursos: quem ganha](#pacotes-de-recursos-quem-ganha).
+- As chaves do vanilla ou de outro mod vão numa passagem sob esse espaço de nomes, por exemplo `minecraft/langgates/<name>/en_us.lang`. Fica acima do ficheiro do próprio mod, por isso muda também os nomes do mod.
+- Um id de mod em `requires` é aqui uma dependência obrigatória, como em todo o lado. Para um texto que só deve aparecer quando algo está instalado, usa antes uma entrada `file:` ou um espaço de nomes de pacote.
+- Os ficheiros de idioma são lidos quando os recursos carregam, por isso uma passagem que depende de um mod ou de um ficheiro é decidida nessa altura, e F3+T lê-a de novo. Com uma opção `config:`, carregar em Concluído no ecrã de opções do pacote recarrega logo os ficheiros de idioma, sem o aviso de reinício.
+- O idioma só é lido no cliente, por isso um servidor dedicado ignora a pasta. Um `<lang>.json` num pacote escrito para 1.20.1, 1.21.1 ou 26.x volta a `.lang` como os ficheiros de `lang/`; um pacote escrito para 1.12.2 usa só `.lang`.
 
 ## Poções, tipos de poção e preparação
 

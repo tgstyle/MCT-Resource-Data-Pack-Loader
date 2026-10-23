@@ -55,6 +55,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Ricette e combustibili della fornace](#ricette-e-combustibili-della-fornace)
 - [Blocchi delle ricette](#blocchi-delle-ricette)
 - [Descrizioni comando](#descrizioni-comando)
+- [Varchi di lingua](#varchi-di-lingua)
 - [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)
 - [Lavori all'incudine](#lavori-allincudine)
 - [Drop dei blocchi](#drop-dei-blocchi)
@@ -200,6 +201,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/functions/*.mcfunction`                                                            | File di funzione. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                              |
 | `<namespace>/registry_remap/*.json`                                                             | Vecchi nomi mappati sui nuovi. [Ridenominazioni nel registro](#ridenominazioni-nel-registro)                                                                                                       |
 | `<namespace>/texts/*.txt`                                                                       | File di testo semplice, usati dall'introduzione al mondo. [Introduzione al mondo](#introduzione-al-mondo)                                                                                          |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Voci di lingua che un pack carica solo finché valgono i suoi requisiti. [Varchi di lingua](#varchi-di-lingua)                                                                                      |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Le consuete cartelle degli asset. [Modelli, blockstate e texture](#modelli-blockstate-e-texture)                                                                                                   |
 
 ## Come leggere le tabelle
@@ -388,7 +390,7 @@ Ogni chiave che un file di opzioni accetta:
 | `hide` dentro un'opzione    | no           | booleano                     | `false`     | Nasconde quella singola opzione, che quindi non può essere cambiata e resta al valore predefinito                                                                                |
 | `description`               | no           | stringa                      | nessuno     | Mostrata sotto il nome dell'opzione nella schermata delle opzioni                                                                                                                |
 
-All'avvio i file di opzioni del pack diventano un vero file di configurazione di proprietà dell'utente, con il nome del pack, `rdploader/config/PackA.json`, creato con i valori predefiniti del pack e unito agli aggiornamenti del pack, così le nuove opzioni arrivano senza toccare quanto l'utente ha già impostato. Le modifiche si applicano al successivo avvio del gioco. Le opzioni appartengono solo ai pack con nome, cioè agli zip, poiché il file generato prende il nome dal pack; i file sciolti sotto `rdploader/assets` non hanno un nome di pack e non portano opzioni, quindi comprimi i contenuti sciolti in un pack con nome se serve un interruttore.
+All'avvio i file di opzioni del pack diventano un vero file di configurazione di proprietà dell'utente, con il nome del pack, `rdploader/config/PackA.json`, creato con i valori predefiniti del pack e unito agli aggiornamenti del pack, così le nuove opzioni arrivano senza toccare quanto l'utente ha già impostato. Le modifiche si applicano al successivo avvio del gioco, tranne per un'opzione che legge solo un [varco di lingua](#varchi-di-lingua): quella si applica non appena premi Fatto. Le opzioni appartengono solo ai pack con nome, cioè agli zip, poiché il file generato prende il nome dal pack; i file sciolti sotto `rdploader/assets` non hanno un nome di pack e non portano opzioni, quindi comprimi i contenuti sciolti in un pack con nome se serve un interruttore.
 
 L'elenco `requires` di qualsiasi definizione può poi nominare un'opzione con una voce `config:`: `"requires": ["config:enableTestingContent"]` registra quel contenuto solo mentre l'opzione è true, esattamente come una mod mancante lo farebbe saltare. Un nome semplice controlla il file di ogni pack e tutti i pack che lo definiscono devono concordare; `"config:PackA:enableTestingContent"` indica un solo pack. Un'opzione che nessun pack definisce vale false e viene segnalata con un avviso una sola volta.
 
@@ -602,6 +604,7 @@ Un file di blocchi moderno torna con un `meta` per ogni variante, nell'ordine in
 | `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, il `gameLoopFunction` dell'Overworld             |
 | ricette `minecraft:smelting`                                                 | `assets/<ns>/furnace/converted_smelting.json`                                                 |
 | `assets/<ns>/lang/<lang>.json`                                               | `assets/<ns>/lang/<lang>.lang`                                                                |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                   | `assets/<ns>/langgates/<name>/<lang>.lang`, `gate.json` resta com'è                           |
 | `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                                         |
 | `models/item/<variant>.json`                                                 | `models/item/<file>/<variant>.json`                                                           |
 | nessun blockstate (generato sulla linea moderna)                             | un blockstate Forge generato per ogni file di blocchi, con i modelli che il suo tipo richiede |
@@ -2260,6 +2263,42 @@ Una voce di `items` o `enchantments` accetta queste chiavi.
 | `item`        | sì           | nome dell'oggetto     | nessuno     | L'oggetto, o l'oggetto di un blocco. `:meta` dopo il nome sceglie una variante, `:*` tutte |
 | `enchantment` | sì           | nome dell'incantesimo | nessuno     | L'incantesimo che riceve le righe                                                          |
 | `lines`       | sì           | elenco di testi       | nessuno     | Chiavi di lingua o testo semplice, in ordine                                               |
+
+## Varchi di lingua
+
+*voci di lingua che dipendono da una condizione*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Un varco di lingua è un insieme di voci di lingua che un pack carica solo finché valgono i suoi `requires`, così un pack può portare nomi alternativi dietro un'opzione del pack, un mod installato o un file. Le voci stanno in `<namespace>/langgates/<name>/<lang>.lang`, scritte come i file di `lang/` ma con le sole voci che cambiano, e `gate.json`, nella stessa cartella, dice quando si applicano. Il nome della cartella lo scegli tu.
+
+Poniamo che un pack abbia l'opzione `stupidNames` e voglia che `Block A` si chiami `Stupid Block!` finché è attiva:
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+e `en_us.lang`, in quella cartella, contiene la voce cambiata:
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| Chiave     | Obbligatorio | Valore          | Predefinito       | Cosa fa                                                                                                                                                        |
+| ---------- | ------------ | --------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | no           | elenco di testi | si applica sempre | Ogni voce deve valere perché il varco si applichi. Le stesse voci di qualsiasi definizione: un id di mod o uno spazio dei nomi di un pack, `config:` e `file:` |
+
+- Il nome del file è il codice della lingua, quindi `de_de.lang` cambia solo il tedesco. Una cartella con file di lingua ma senza `gate.json` viene ignorata, con un avviso.
+- Finché il varco vale, le sue voci vengono posate sopra il `lang/<lang>.lang` dello stesso spazio dei nomi, e una voce del varco batte la stessa chiave di quel file. Un varco per una lingua di cui il pack non ha un file aggiunge le voci di quella lingua finché vale. Quando non vale, il file di base viene letto così com'è.
+- Ogni voce del `requires` di un varco deve valere. Per un «oppure» scrivi due cartelle.
+- I varchi si applicano nell'ordine dei pack, poi per nome della cartella, e il successivo vince una chiave. Un varco modifica il file di base qualunque pack lo contenga, ma un file di lingua in un pack che sovrascrive batte comunque un varco in un pack normale, vedi [Resource pack: chi vince](#resource-pack-chi-vince).
+- Le chiavi di vanilla o di un altro mod vanno in un varco sotto quello spazio dei nomi, per esempio `minecraft/langgates/<name>/en_us.lang`. Sta sopra il file del mod stesso, quindi cambia anche i nomi del mod.
+- Un id di mod in `requires` è qui una dipendenza obbligatoria, come ovunque. Per un testo che deve comparire solo quando qualcosa è installato, usa invece una voce `file:` o uno spazio dei nomi di un pack.
+- I file di lingua vengono letti quando si caricano le risorse, quindi un varco che dipende da un mod o da un file si decide in quel momento, e F3+T lo rilegge. Con un'opzione `config:`, premere Fatto nella schermata delle opzioni del pack ricarica subito i file di lingua, senza l'avviso di riavvio.
+- La lingua viene letta solo sul client, quindi un server dedicato ignora la cartella. Un `<lang>.json` in un pack scritto per 1.20.1, 1.21.1 o 26.x viene riportato a `.lang` come i file di `lang/`; un pack scritto per 1.12.2 usa solo `.lang`.
 
 ## Pozioni, tipi di pozione e preparazione
 

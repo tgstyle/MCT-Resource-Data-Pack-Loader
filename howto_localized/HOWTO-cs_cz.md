@@ -55,6 +55,7 @@
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
+- [Jazykové brány](#jazykové-brány)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Dropy z bloků](#dropy-z-bloků)
@@ -200,6 +201,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/functions/*.mcfunction`                                                            | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                             |
 | `<namespace>/registry_remap/*.json`                                                             | Staré názvy přiřazené k novým. [Přejmenování v registru](#přejmenování-v-registru)                                                                                                                                |
 | `<namespace>/texts/*.txt`                                                                       | Prosté textové soubory, které používá úvod do světa. [Úvod do světa](#úvod-do-světa)                                                                                                                              |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Jazykové záznamy, které balíček načte, jen když platí jeho podmínky. [Jazykové brány](#jazykové-brány)                                                                                                            |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Obvyklé složky zdrojů. [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury)                                                                                                                             |
 
 ## Čtení tabulek
@@ -388,7 +390,7 @@ Každý klíč, který soubor voleb přijímá:
 | `hide` uvnitř volby       | ne      | boolean             | `false` | Skryje tu jednu volbu, takže ji nelze přepnout a zůstane na výchozí hodnotě                                                       |
 | `description`             | ne      | řetězec             | žádný   | Zobrazí se pod názvem volby na obrazovce voleb                                                                                    |
 
-Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a slučovaným při aktualizacích balíčku, takže nové volby přibudou, aniž by se dotkly toho, co uživatel už nastavil. Změny se projeví při dalším spuštění hry. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože generovaný soubor nese název balíčku; volné soubory pod `rdploader/assets` nemají název balíčku a žádné volby nenesou, takže pokud potřebuje přepínač, zabal volný obsah do pojmenovaného balíčku.
+Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a slučovaným při aktualizacích balíčku, takže nové volby přibudou, aniž by se dotkly toho, co uživatel už nastavil. Změny se projeví při dalším spuštění hry, kromě voleb, které čte jen [jazyková brána](#jazykové-brány) – ty platí hned po stisku Hotovo. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože generovaný soubor nese název balíčku; volné soubory pod `rdploader/assets` nemají název balíčku a žádné volby nenesou, takže pokud potřebuje přepínač, zabal volný obsah do pojmenovaného balíčku.
 
 `requires` kterékoli definice pak může pojmenovat volbu položkou `config:`: `"requires": ["config:enableTestingContent"]` zaregistruje tento obsah jen tehdy, když je volba true, přesně jako by ho přeskočil chybějící mód. Holý název zkontroluje soubor každého balíčku a všechny balíčky, které ho definují, se musí shodnout; `"config:PackA:enableTestingContent"` pojmenuje jeden balíček. Volba, kterou nedefinuje žádný balíček, se počítá jako false a jednou se na ni upozorní.
 
@@ -602,6 +604,7 @@ Moderní soubor bloku se vrátí s `meta` pro každou variantu v pořadí, v jak
 | `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, `gameLoopFunction` Overworldu             |
 | recepty `minecraft:smelting`                                                 | `assets/<ns>/furnace/converted_smelting.json`                                          |
 | `assets/<ns>/lang/<lang>.json`                                               | `assets/<ns>/lang/<lang>.lang`                                                         |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                   | `assets/<ns>/langgates/<name>/<lang>.lang`, `gate.json` beze změny                     |
 | `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                                  |
 | `models/item/<variant>.json`                                                 | `models/item/<file>/<variant>.json`                                                    |
 | žádný blockstate (na moderní řadě se generuje)                               | generovaný blockstate Forge pro každý soubor bloku, s modely, které jeho typ potřebuje |
@@ -2260,6 +2263,42 @@ Záznam v `items` nebo `enchantments` přijímá tyto klíče.
 | `item`        | ano     | název předmětu | žádný   | Předmět, nebo předmět bloku. `:meta` za názvem vybere jednu variantu, `:*` všechny |
 | `enchantment` | ano     | název kouzla   | žádný   | Kouzlo, které řádky dostane                                                        |
 | `lines`       | ano     | seznam textů   | žádný   | Klíče jazyka nebo prostý text, v tomto pořadí                                      |
+
+## Jazykové brány
+
+*jazykové záznamy závislé na podmínce*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Jazyková brána je sada jazykových záznamů, které balíček načte jen tehdy, když platí jeho `requires`, takže může nabídnout alternativní názvy za volbou balíčku, nainstalovaným módem nebo souborem. Záznamy patří do `<namespace>/langgates/<name>/<lang>.lang`, psané stejně jako soubory v `lang/`, ale jen s položkami, které se mění, a `gate.json` ve stejné složce říká, kdy platí. Název složky je na tobě.
+
+Řekněme, že balíček má volbu `stupidNames` a chce, aby se `Block A` při zapnuté volbě jmenoval `Stupid Block!`:
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+a `en_us.lang` v té složce nese změněný záznam:
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| Klíč       | Povinný | Hodnota      | Výchozí         | Co dělá                                                                                                                                             |
+| ---------- | ------- | ------------ | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | ne      | seznam textů | vždy se použije | Aby se brána použila, musí platit každá položka. Stejné položky jako v kterékoli definici: ID módu nebo jmenný prostor balíčku, `config:` a `file:` |
+
+- Název souboru je kód jazyka, takže `de_de.lang` mění jen němčinu. Složka s jazykovými soubory bez `gate.json` se ignoruje a zapíše se varování.
+- Dokud brána platí, její záznamy se položí přes `lang/<lang>.lang` stejného jmenného prostoru a záznam brány přebije stejný klíč. Brána pro jazyk, ke kterému balíček nemá soubor, záznamy tohoto jazyka přidá, dokud platí. Když neplatí, základní soubor se čte tak, jak je.
+- V `requires` jedné brány musí platit každá položka. Pro „nebo“ napiš dvě složky.
+- Brány se používají v pořadí balíčků, pak podle názvu složky, a pozdější vyhrává klíč. Brána mění základní soubor bez ohledu na to, který balíček ho drží, ale jazykový soubor v balíčku, který přepisuje, pořád přebije bránu v běžném balíčku, viz [Balíčky zdrojů: který vyhraje](#balíčky-zdrojů-který-vyhraje).
+- Klíče vanilly nebo jiného módu patří do brány pod jeho jmenným prostorem, třeba `minecraft/langgates/<name>/en_us.lang`. Leží nad souborem samotného módu, takže mění i názvy z módu.
+- ID módu v `requires` je i tady pevná závislost jako všude jinde. Pro text, který se má objevit jen při něčem nainstalovaném, použij raději položku `file:` nebo jmenný prostor balíčku.
+- Jazykové soubory se čtou při načítání zdrojů, takže brána závislá na módu nebo souboru se rozhodne tehdy a F3+T ji přečte znovu. U volby `config:` se jazykové soubory načtou znovu hned po stisku Hotovo na obrazovce voleb balíčku, bez hlášky o restartu.
+- Jazyk se čte jen na klientovi, takže dedikovaný server složku ignoruje. `<lang>.json` v balíčku psaném pro 1.20.1, 1.21.1 nebo 26.x se převede zpět na `.lang` jako soubory v `lang/`; balíček psaný pro 1.12.2 používá jen `.lang`.
 
 ## Lektvary, typy lektvarů a vaření
 

@@ -55,6 +55,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
 - [Rezeptsperren](#rezeptsperren)
 - [Tooltips](#tooltips)
+- [Sprachtore](#sprachtore)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
 - [Blockdrops](#blockdrops)
@@ -200,6 +201,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/functions/*.mcfunction`                                                            | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                 |
 | `<namespace>/registry_remap/*.json`                                                             | Alte Namen, auf neue abgebildet. [Registry-Umbenennungen](#registry-umbenennungen)                                                                                                                            |
 | `<namespace>/texts/*.txt`                                                                       | Reine Textdateien, genutzt vom Welt-Intro. [Welt-Intro](#welt-intro)                                                                                                                                          |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Spracheinträge, die ein Pack nur lädt, solange seine Voraussetzungen gelten. [Sprachtore](#sprachtore)                                                                                                        |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Die üblichen Asset-Ordner. [Modelle, Blockstates und Texturen](#modelle-blockstates-und-texturen)                                                                                                             |
 
 ## Die Tabellen lesen
@@ -388,7 +390,7 @@ Alle Schlüssel, die eine Optionsdatei annimmt:
 | `hide` innerhalb einer Option | nein    | boolean                 | `false`  | Versteckt nur diese eine Option, sie kann also nicht umgelegt werden und bleibt auf ihrem Standard                                                                      |
 | `description`                 | nein    | Text                    | keine    | Wird im Optionsbildschirm unter dem Namen der Option angezeigt                                                                                                          |
 
-Beim Start werden die Optionsdateien eines Packs zu einer echten Config-Datei, die dem Nutzer gehört, benannt nach dem Pack: `rdploader/config/PackA.json`. Sie wird mit den Standardwerten des Packs angelegt und bei Pack-Updates zusammengeführt, sodass neue Optionen ankommen, ohne das zu verändern, was der Nutzer schon eingestellt hat. Änderungen greifen beim nächsten Spielstart. Optionen gehören nur benannten Packs, also Zips, weil die erzeugte Datei nach dem Pack benannt ist; lose Dateien unter `rdploader/assets` haben keinen Pack-Namen und tragen keine Optionen – zippe losen Inhalt also zu einem benannten Pack, wenn er einen Schalter braucht.
+Beim Start werden die Optionsdateien eines Packs zu einer echten Config-Datei, die dem Nutzer gehört, benannt nach dem Pack: `rdploader/config/PackA.json`. Sie wird mit den Standardwerten des Packs angelegt und bei Pack-Updates zusammengeführt, sodass neue Optionen ankommen, ohne das zu verändern, was der Nutzer schon eingestellt hat. Änderungen greifen beim nächsten Spielstart, außer bei einer Option, die nur ein [Sprachtor](#sprachtore) liest: Sie gilt sofort, wenn du auf Fertig drückst. Optionen gehören nur benannten Packs, also Zips, weil die erzeugte Datei nach dem Pack benannt ist; lose Dateien unter `rdploader/assets` haben keinen Pack-Namen und tragen keine Optionen – zippe losen Inhalt also zu einem benannten Pack, wenn er einen Schalter braucht.
 
 Die `requires`-Liste jeder Definition kann dann mit einem `config:`-Eintrag eine Option nennen: `"requires": ["config:enableTestingContent"]` registriert diesen Inhalt nur, solange die Option true ist, genau wie ein fehlender Mod ihn überspringen ließe. Ein bloßer Name prüft die Datei jedes Packs, und jedes Pack, das ihn definiert, muss zustimmen; `"config:PackA:enableTestingContent"` nennt ein bestimmtes Pack. Eine Option, die kein Pack definiert, gilt als false und wird einmal im Log vermerkt.
 
@@ -602,6 +604,7 @@ Eine moderne Blockdatei kommt mit einem `meta` für jede Variante zurück, in de
 | `data/minecraft/tags/functions/tick.json`                                    | `assets/<ns>/gamerules/converted_tick.json`, die `gameLoopFunction` der Oberwelt    |
 | `minecraft:smelting`-Rezepte                                                 | `assets/<ns>/furnace/converted_smelting.json`                                       |
 | `assets/<ns>/lang/<sprache>.json`                                            | `assets/<ns>/lang/<sprache>.lang`                                                   |
+| `assets/<ns>/langgates/<name>/<lang>.json`                                   | `assets/<ns>/langgates/<name>/<lang>.lang`, `gate.json` bleibt unverändert          |
 | `textures/block/`, `textures/item/`                                          | `textures/blocks/`, `textures/items/`                                               |
 | `models/item/<variante>.json`                                                | `models/item/<datei>/<variante>.json`                                               |
 | kein Blockstate (auf der modernen Linie erzeugt)                             | ein erzeugter Forge-Blockstate je Blockdatei, mit den Modellen, die ihr Typ braucht |
@@ -2260,6 +2263,42 @@ Ein Eintrag in `items` oder `enchantments` nimmt diese Schlüssel.
 | `item`        | ja      | Itemname          | keiner   | Das Item oder das Item eines Blocks. `:meta` hinter dem Namen wählt eine Variante, `:*` alle |
 | `enchantment` | ja      | Verzauberungsname | keiner   | Die Verzauberung, die die Zeilen bekommt                                                     |
 | `lines`       | ja      | Liste von Texten  | keiner   | Sprachschlüssel oder Klartext, in dieser Reihenfolge                                         |
+
+## Sprachtore
+
+*Spracheinträge, die von einer Bedingung abhängen*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Ein Sprachtor ist eine Menge von Spracheinträgen, die ein Pack nur lädt, solange sein `requires` zutrifft. So kann ein Pack alternative Namen hinter einer Pack-Option, einem installierten Mod oder einer Datei mitbringen. Die Einträge stehen in `<namespace>/langgates/<name>/<lang>.lang`, geschrieben wie die Dateien in `lang/`, aber nur mit den Einträgen, die sich ändern; `gate.json` im selben Ordner sagt, wann sie gelten. Der Ordnername ist deine Wahl.
+
+Angenommen, ein Pack hat die Option `stupidNames` und will, dass `Block A` bei eingeschalteter Option `Stupid Block!` heißt:
+
+    mypack/langgates/stupid_names/gate.json
+    mypack/langgates/stupid_names/en_us.lang
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+und `en_us.lang` in diesem Ordner enthält den geänderten Eintrag:
+
+    tile.mypack:block_a.name=Stupid Block!
+
+| Schlüssel  | Pflicht | Wert             | Standard   | Was er macht                                                                                                                                                |
+| ---------- | ------- | ---------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | nein    | Liste von Texten | gilt immer | Jeder Eintrag muss zutreffen, damit das Tor greift. Dieselben Einträge wie in jeder Definition: eine Mod-ID oder ein Pack-Namensraum, `config:` und `file:` |
+
+- Der Dateiname ist der Sprachcode, `de_de.lang` ändert also nur Deutsch. Ein Ordner mit Sprachdateien, aber ohne `gate.json`, wird mit einer Warnung ignoriert.
+- Solange das Tor zutrifft, werden seine Einträge über die `lang/<lang>.lang` desselben Namensraums gelegt, und ein Toreintrag schlägt denselben Schlüssel dort. Ein Tor für eine Sprache, zu der das Pack keine Datei hat, fügt die Einträge dieser Sprache hinzu, solange es zutrifft. Trifft es nicht zu, wird die Basisdatei unverändert gelesen.
+- Jeder Eintrag im `requires` eines Tors muss zutreffen. Für ein Entweder-oder schreibst du zwei Ordner.
+- Tore gelten in der Reihenfolge der Packs, dann nach Ordnername, und das spätere gewinnt einen Schlüssel. Ein Tor ändert die Basisdatei, egal welches Pack sie hält; eine Sprachdatei in einem überschreibenden Pack schlägt aber weiterhin ein Tor in einem normalen Pack, siehe [Ressourcenpakete: wer gewinnt](#ressourcenpakete-wer-gewinnt).
+- Schlüssel von Vanilla oder einem anderen Mod gehören in ein Tor unter dessen Namensraum, zum Beispiel `minecraft/langgates/<name>/en_us.lang`. Es liegt über der Datei des Mods selbst und ändert daher auch dessen Namen.
+- Eine Mod-ID in `requires` ist auch hier eine harte Abhängigkeit, wie überall. Für Text, der nur erscheinen soll, wenn etwas installiert ist, nimm stattdessen einen `file:`-Eintrag oder einen Pack-Namensraum.
+- Sprachdateien werden beim Laden der Ressourcen gelesen, ein Tor, das von einem Mod oder einer Datei abhängt, wird also dann entschieden, und F3+T liest es neu ein. Bei einer `config:`-Option lädt Fertig auf dem Optionsbildschirm des Packs die Sprachdateien sofort neu, ohne Neustart-Hinweis.
+- Sprache wird nur auf dem Client gelesen, ein dedizierter Server ignoriert den Ordner. Eine `<lang>.json` in einem Pack für 1.20.1, 1.21.1 oder 26.x wird wie die Dateien in `lang/` zu `.lang` zurückgeführt; ein Pack für 1.12.2 nutzt nur `.lang`.
 
 ## Tränke, Trankarten und Brauen
 

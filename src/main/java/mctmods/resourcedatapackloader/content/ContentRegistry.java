@@ -145,6 +145,10 @@ public final class ContentRegistry {
         for (String modid : requires) {
             if (modid.startsWith("config:")) { PackOptions.gating(modid.substring("config:".length())); }
         }
+        return holds(requires, key);
+    }
+
+    public static boolean holds(List<String> requires, ResourceLocation key) {
         for (String modid : requires) {
             if (modid.startsWith("file:")) {
                 String asked = modid.substring("file:".length()).replace('\\', '/');
