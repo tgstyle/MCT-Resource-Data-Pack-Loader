@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
@@ -82,11 +83,13 @@ public final class ContentExposures {
     private static void tick(ExposureDef def, ServerPlayer player) {
         if (def.skipsCreative() && (player.isCreative() || player.isSpectator())) {
             applyLevel(def, player, 0);
+            CardEvents.exposureLevel(player, def.name(), 0);
             return;
         }
         if (player.tickCount % def.scanInterval() == 0) {
             int reached = scan(def, player);
             applyLevel(def, player, reached);
+            CardEvents.exposureLevel(player, def.name(), reached);
             spreadFrom(def, player, reached);
         }
         damageTick(def, player);
