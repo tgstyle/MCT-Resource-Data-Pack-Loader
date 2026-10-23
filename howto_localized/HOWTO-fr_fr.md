@@ -3307,46 +3307,55 @@ Un danger défini par un pack : des blocs, objets, dimensions, biomes, structure
   "caveRegions": [ "mypack:glowcave=2" ],
   "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
+  "immuneItems": [ "mypack:hazmat_helmet", "mypack:hazmat_chest" ],
+  "immuneTeams": [ "scientists" ],
+  "onClear": "mypack:rad/clear",
   "scanInterval": 20,
   "range": 10,
   "sourcesForNextLevel": 4,
   "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+    { "effect": "mypack:radiation_1", "onEnter": "mypack:rad/low", "damage": 4.0, "damageInterval": 160,
       "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
                    { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+    { "effect": "mypack:radiation_2", "onEnter": "mypack:rad/high", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
 ```
 
-| Clé                   | Requis         | Valeur                                    | Défaut | Rôle                                                                                                                                                      |
-| --------------------- | -------------- | ----------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `blocks`              | l'une des neuf | liste de `block` ou `block=level`         |        | Blocs qui exposent un joueur se tenant près d'eux. Sans niveau, c'est 1                                                                                   |
-| `items`               | l'une des neuf | liste de `item` ou `item=level`           |        | Objets qui exposent un joueur qui les porte ou les revêt                                                                                                  |
-| `dimensions`          | l'une des neuf | liste de `dim` ou `dim=level`             |        | Ids de dimensions qui exposent tout joueur qui s'y trouve                                                                                                 |
-| `biomes`              | l'une des neuf | liste de `biome` ou `biome=level`         |        | Biomes qui exposent tout joueur s'y trouvant. `#` désigne un tag de biome                                                                                 |
-| `structures`          | l'une des neuf | liste de `structure` ou `structure=level` |        | Structures qui exposent un joueur se trouvant à l'intérieur. `#` désigne un tag de structure. Une structure du pack compte dans un rayon de `range` blocs |
-| `caveRegions`         | l'une des neuf | liste de `region` ou `region=level`       |        | Régions de grottes qui exposent un joueur s'y trouvant. Un nom sans espace de noms prend celui de ce fichier                                              |
-| `heights`             | l'une des neuf | liste de `from:to=level`                  |        | Bandes de Y qui exposent un joueur s'y trouvant. Laissez un côté vide pour ne mettre aucune limite                                                        |
-| `levels`              | oui            | liste de niveaux                          |        | L'échelle de gravité, la première entrée est le niveau 1. Un joueur reçoit le plus haut niveau que l'une des sources atteint                              |
-| `immunity`            | non            | nom de potion                             | aucun  | Un effet dont le porteur n'est pas exposé du tout                                                                                                         |
-| `scanInterval`        | non            | ticks                                     | `20`   | À quelle fréquence l'environnement et l'inventaire sont vérifiés                                                                                          |
-| `range`               | non            | blocs                                     | `10`   | Jusqu'où porte l'exposition d'un bloc, sous forme de sphère                                                                                               |
-| `sourcesForNextLevel` | non            | entier                                    | `0`    | Ce nombre de sources proches d'un même niveau le fait monter d'un niveau. `0` désactive cela                                                              |
-| `skipsCreative`       | non            | booléen                                   | `true` | Les joueurs en créatif et en spectateur sont épargnés                                                                                                     |
+| Clé                   | Requis         | Valeur                                    | Défaut | Rôle                                                                                                                                                                                                                                                                      |
+| --------------------- | -------------- | ----------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | l'une des neuf | liste de `block` ou `block=level`         |        | Blocs qui exposent un joueur se tenant près d'eux. Sans niveau, c'est 1                                                                                                                                                                                                   |
+| `items`               | l'une des neuf | liste de `item` ou `item=level`           |        | Objets qui exposent un joueur qui les porte ou les revêt                                                                                                                                                                                                                  |
+| `dimensions`          | l'une des neuf | liste de `dim` ou `dim=level`             |        | Ids de dimensions qui exposent tout joueur qui s'y trouve                                                                                                                                                                                                                 |
+| `biomes`              | l'une des neuf | liste de `biome` ou `biome=level`         |        | Biomes qui exposent tout joueur s'y trouvant. `#` désigne un tag de biome                                                                                                                                                                                                 |
+| `structures`          | l'une des neuf | liste de `structure` ou `structure=level` |        | Structures qui exposent un joueur se trouvant à l'intérieur. `#` désigne un tag de structure. Une structure du pack compte dans un rayon de `range` blocs                                                                                                                 |
+| `caveRegions`         | l'une des neuf | liste de `region` ou `region=level`       |        | Régions de grottes qui exposent un joueur s'y trouvant. Un nom sans espace de noms prend celui de ce fichier                                                                                                                                                              |
+| `heights`             | l'une des neuf | liste de `from:to=level`                  |        | Bandes de Y qui exposent un joueur s'y trouvant. Laissez un côté vide pour ne mettre aucune limite                                                                                                                                                                        |
+| `levels`              | oui            | liste de niveaux                          |        | L'échelle de gravité, la première entrée est le niveau 1. Un joueur reçoit le plus haut niveau que l'une des sources atteint                                                                                                                                              |
+| `immunity`            | non            | nom de potion                             | aucun  | Un effet dont le porteur n'est pas exposé du tout                                                                                                                                                                                                                         |
+| `immuneItems`         | non            | liste de noms d'objets                    | aucun  | Une entité qui porte ou tient l'un de ces objets (emplacements d'armure et les deux mains) n'est pas exposée du tout, comme avec `immunity`. Indiquez une pièce par partie de tenue ; une seule pièce suffit. Un nom d'objet inconnu est consigné comme erreur et ignoré. |
+| `immuneTeams`         | non            | liste de noms d'équipes du scoreboard     | aucun  | Les membres de ces équipes (fichiers d'équipes du pack ou `/scoreboard teams`) ne sont pas exposés. Un nom d'équipe inconnu ne correspond jamais.                                                                                                                         |
+| `onClear`             | non            | nom de fonction                           | aucun  | S'exécute en tant que joueur quand son niveau tombe à 0, y compris lorsqu'il passe en créatif.                                                                                                                                                                            |
+| `scanInterval`        | non            | ticks                                     | `20`   | À quelle fréquence l'environnement et l'inventaire sont vérifiés                                                                                                                                                                                                          |
+| `range`               | non            | blocs                                     | `10`   | Jusqu'où porte l'exposition d'un bloc, sous forme de sphère                                                                                                                                                                                                               |
+| `sourcesForNextLevel` | non            | entier                                    | `0`    | Ce nombre de sources proches d'un même niveau le fait monter d'un niveau. `0` désactive cela                                                                                                                                                                              |
+| `skipsCreative`       | non            | booléen                                   | `true` | Les joueurs en créatif et en spectateur sont épargnés                                                                                                                                                                                                                     |
 
 ### Niveaux
 
 *expositions*
 
-| Clé              | Requis | Valeur         | Défaut | Rôle                                                                                                                                               |
-| ---------------- | ------ | -------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `effect`         | oui    | nom de potion  |        | L'effet qui marque le niveau sur le joueur. Sa présence déclenche les dégâts : il doit donc être un effet que le pack définit pour cela            |
-| `damage`         | non    | demi-cœurs     | `0`    | Dégâts infligés tous les `damageInterval` ticks tant que le niveau persiste. Ils ignorent l'armure                                                 |
-| `damageInterval` | non    | ticks          | `160`  | À quelle fréquence ces dégâts sont infligés                                                                                                        |
-| `effects`        | non    | liste d'effets | aucun  | Effets supplémentaires appliqués en même temps, de la même forme que celle des types de potions. Sans `duration`, ils suivent la fenêtre d'analyse |
+| Clé              | Requis | Valeur          | Défaut | Rôle                                                                                                                                               |
+| ---------------- | ------ | --------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `effect`         | oui    | nom de potion   |        | L'effet qui marque le niveau sur le joueur. Sa présence déclenche les dégâts : il doit donc être un effet que le pack définit pour cela            |
+| `damage`         | non    | demi-cœurs      | `0`    | Dégâts infligés tous les `damageInterval` ticks tant que le niveau persiste. Ils ignorent l'armure                                                 |
+| `damageInterval` | non    | ticks           | `160`  | À quelle fréquence ces dégâts sont infligés                                                                                                        |
+| `effects`        | non    | liste d'effets  | aucun  | Effets supplémentaires appliqués en même temps, de la même forme que celle des types de potions. Sans `duration`, ils suivent la fenêtre d'analyse |
+| `onEnter`        | non    | nom de fonction | aucun  | S'exécute en tant que joueur à chaque changement vers ce niveau, à la hausse comme à la baisse.                                                    |
+
+L'immunité prend trois formes, et chacune laisse le porteur non exposé : la potion `immunity`, l'un des `immuneItems` portés ou tenus, ou l'appartenance à l'une des `immuneTeams`. Un changement de niveau exécute la fonction nommée dans le `onEnter` du nouveau niveau, ou `onClear` lorsque le niveau tombe à 0. Les fonctions s'exécutent au niveau de permission 2 avec @s pour joueur, après application de l'effet marqueur du niveau. La première vérification après la connexion fixe le niveau de départ sans déclencher, donc un joueur qui se connecte déjà exposé n'exécute rien tant que le niveau ne change pas, et une réapparition conserve le niveau. Ce même changement déclenche aussi le déclencheur de carte `exposure_level`.
 
 Les effets de niveau durent un peu plus longtemps que l'analyse suivante : en s'éloignant, ils s'éteignent donc d'eux-mêmes. Un joueur mort des dégâts d'exposition voit un message tiré de `death.attack.rdpl.<file name>`, que fournissent les fichiers de lang du pack.
 

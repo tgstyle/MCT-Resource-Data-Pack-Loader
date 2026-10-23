@@ -3307,35 +3307,41 @@ Eine vom Pack definierte Gefahr: benannte Blöcke, Items, Dimensionen, Biome, St
   "caveRegions": [ "mypack:glowcave=2" ],
   "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
+  "immuneItems": [ "mypack:hazmat_helmet", "mypack:hazmat_chest" ],
+  "immuneTeams": [ "scientists" ],
+  "onClear": "mypack:rad/clear",
   "scanInterval": 20,
   "range": 10,
   "sourcesForNextLevel": 4,
   "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+    { "effect": "mypack:radiation_1", "onEnter": "mypack:rad/low", "damage": 4.0, "damageInterval": 160,
       "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
                    { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+    { "effect": "mypack:radiation_2", "onEnter": "mypack:rad/high", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
 ```
 
-| Schlüssel             | Pflicht        | Wert                                         | Standard | Was er macht                                                                                                                        |
-| --------------------- | -------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `blocks`              | eines der neun | Liste aus `block` oder `block=stufe`         |          | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1                                                                   |
-| `items`               | eines der neun | Liste aus `item` oder `item=stufe`           |          | Items, die einen Spieler belasten, der sie trägt                                                                                    |
-| `dimensions`          | eines der neun | Liste aus `dim` oder `dim=stufe`             |          | Dimensions-IDs, die jeden Spieler darin belasten                                                                                    |
-| `biomes`              | eines der neun | Liste aus `biome` oder `biome=stufe`         |          | Biome, die jeden Spieler belasten, der darin steht. `#` nennt einen Biom-Tag                                                        |
-| `structures`          | eines der neun | Liste aus `structure` oder `structure=stufe` |          | Strukturen, die einen Spieler darin belasten. `#` nennt einen Struktur-Tag. Eine Pack-Struktur zählt im Umkreis von `range` Blöcken |
-| `caveRegions`         | eines der neun | Liste aus `region` oder `region=stufe`       |          | Höhlenregionen, die einen Spieler darin belasten. Ein Name ohne Namespace nimmt den Namespace dieser Datei                          |
-| `heights`             | eines der neun | Liste aus `von:bis=stufe`                    |          | Y-Bänder, die einen Spieler darin belasten. Eine Seite leer zu lassen heißt keine Grenze                                            |
-| `levels`              | ja             | Liste von Stufen                             |          | Die Schwereleiter, der erste Eintrag ist Stufe 1. Ein Spieler bekommt die höchste erreichte Stufe                                   |
-| `immunity`            | nein           | Trankname                                    | keiner   | Ein Effekt, dessen Träger gar nicht belastet wird                                                                                   |
-| `scanInterval`        | nein           | Ticks                                        | `20`     | Wie oft Umgebung und Inventar geprüft werden                                                                                        |
-| `range`               | nein           | Blöcke                                       | `10`     | Wie weit ein Block wirkt, als Kugel                                                                                                 |
-| `sourcesForNextLevel` | nein           | int                                          | `0`      | So viele Quellen einer Stufe in der Nähe heben sie um eine weitere an. `0` schaltet das ab                                          |
-| `skipsCreative`       | nein           | boolean                                      | `true`   | Kreativ- und Zuschauerspieler bleiben verschont                                                                                     |
+| Schlüssel             | Pflicht        | Wert                                         | Standard | Was er macht                                                                                                                                                                                                                                                                      |
+| --------------------- | -------------- | -------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | eines der neun | Liste aus `block` oder `block=stufe`         |          | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1                                                                                                                                                                                                                 |
+| `items`               | eines der neun | Liste aus `item` oder `item=stufe`           |          | Items, die einen Spieler belasten, der sie trägt                                                                                                                                                                                                                                  |
+| `dimensions`          | eines der neun | Liste aus `dim` oder `dim=stufe`             |          | Dimensions-IDs, die jeden Spieler darin belasten                                                                                                                                                                                                                                  |
+| `biomes`              | eines der neun | Liste aus `biome` oder `biome=stufe`         |          | Biome, die jeden Spieler belasten, der darin steht. `#` nennt einen Biom-Tag                                                                                                                                                                                                      |
+| `structures`          | eines der neun | Liste aus `structure` oder `structure=stufe` |          | Strukturen, die einen Spieler darin belasten. `#` nennt einen Struktur-Tag. Eine Pack-Struktur zählt im Umkreis von `range` Blöcken                                                                                                                                               |
+| `caveRegions`         | eines der neun | Liste aus `region` oder `region=stufe`       |          | Höhlenregionen, die einen Spieler darin belasten. Ein Name ohne Namespace nimmt den Namespace dieser Datei                                                                                                                                                                        |
+| `heights`             | eines der neun | Liste aus `von:bis=stufe`                    |          | Y-Bänder, die einen Spieler darin belasten. Eine Seite leer zu lassen heißt keine Grenze                                                                                                                                                                                          |
+| `levels`              | ja             | Liste von Stufen                             |          | Die Schwereleiter, der erste Eintrag ist Stufe 1. Ein Spieler bekommt die höchste erreichte Stufe                                                                                                                                                                                 |
+| `immunity`            | nein           | Trankname                                    | keiner   | Ein Effekt, dessen Träger gar nicht belastet wird                                                                                                                                                                                                                                 |
+| `immuneItems`         | nein           | Liste von Item-Namen                         | keine    | Ein Träger, der eines dieser Items trägt oder in der Hand hält (Rüstungsplätze und beide Hände), ist gar nicht belastet, wie bei `immunity`. Je Rüstungsteil ein Teil angeben; jedes einzelne Teil genügt. Ein unbekannter Item-Name wird als Fehler protokolliert und ignoriert. |
+| `immuneTeams`         | nein           | Liste von Scoreboard-Teamnamen               | keine    | Mitglieder dieser Teams (Teamdateien des Packs oder `/scoreboard teams`) sind nicht belastet. Ein unbekannter Teamname passt nie.                                                                                                                                                 |
+| `onClear`             | nein           | Funktionsname                                | keine    | Läuft als Spieler, wenn dessen Stufe auf 0 fällt, auch beim Wechsel in den Kreativmodus.                                                                                                                                                                                          |
+| `scanInterval`        | nein           | Ticks                                        | `20`     | Wie oft Umgebung und Inventar geprüft werden                                                                                                                                                                                                                                      |
+| `range`               | nein           | Blöcke                                       | `10`     | Wie weit ein Block wirkt, als Kugel                                                                                                                                                                                                                                               |
+| `sourcesForNextLevel` | nein           | int                                          | `0`      | So viele Quellen einer Stufe in der Nähe heben sie um eine weitere an. `0` schaltet das ab                                                                                                                                                                                        |
+| `skipsCreative`       | nein           | boolean                                      | `true`   | Kreativ- und Zuschauerspieler bleiben verschont                                                                                                                                                                                                                                   |
 
 ### Stufen
 
@@ -3347,6 +3353,9 @@ Eine vom Pack definierte Gefahr: benannte Blöcke, Items, Dimensionen, Biome, St
 | `damage`         | nein    | halbe Herzen       | `0`      | Schaden alle `damageInterval` Ticks, solange die Stufe anliegt. Er ignoriert Rüstung                                                          |
 | `damageInterval` | nein    | Ticks              | `160`    | Wie oft der Schaden fällt                                                                                                                     |
 | `effects`        | nein    | Liste von Effekten | keine    | Zusätzliche Effekte, gleiche Form wie bei Trankarten. Ohne `duration` folgen sie dem Prüfintervall                                            |
+| `onEnter`        | nein    | Funktionsname      | keine    | Läuft als Spieler jedes Mal, wenn die Stufe auf diese Stufe wechselt, nach oben oder unten.                                                   |
+
+Immunität hat drei Formen, und jede davon lässt den Träger gar nicht belastet werden: der Trank `immunity`, eines der `immuneItems`, die getragen oder in der Hand gehalten werden, oder die Mitgliedschaft in einem der `immuneTeams`. Ein Stufenwechsel führt die Funktion aus, die im `onEnter` der neuen Stufe angegeben ist, oder `onClear`, wenn die Stufe auf 0 fällt. Die Funktionen laufen mit Berechtigungsstufe 2 und mit @s als Spieler, nachdem der Markierungseffekt der Stufe angewendet wurde. Die erste Prüfung nach dem Beitritt setzt die Startstufe, ohne etwas auszulösen; ein Spieler, der bereits belastet einloggt, führt also nichts aus, bis sich die Stufe ändert, und ein Respawn behält die Stufe. Dieselbe Änderung löst auch den Kartentrigger `exposure_level` aus.
 
 Die Stufeneffekte halten etwas über die nächste Prüfung hinaus, Weggehen lässt sie also von selbst auslaufen. Der Tod durch den Schaden liest seine Meldung aus `death.attack.rdpl.<Dateiname>`, die die Sprachdateien des Packs liefern.
 
