@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
+import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
@@ -39,6 +40,16 @@ public final class ContentCityStructureSeat {
 
     private ContentCityStructureSeat() {}
 
+    private static void sign(VillageDef def, StructureMapDef map, Rotation turn, CityPlan.Plot placed, int level, List<StructurePiece> pieces) {
+        if (def.orderSign().isEmpty()) { return; }
+        BlockPos turned = StructureTemplate.calculateRelativePosition(new StructurePlaceSettings().setRotation(turn), new BlockPos(def.orderX(), def.orderY(), def.orderZ()));
+        boolean swapped = turn == Rotation.CLOCKWISE_90 || turn == Rotation.COUNTERCLOCKWISE_90;
+        int wide = map.cellsWide() * map.cell();
+        int deep = map.cellsDeep() * map.cell();
+        Vec3i span = new Vec3i(swapped ? deep : wide, 1, swapped ? wide : deep);
+        pieces.add(new ContentMapSignPiece(new BlockPos(placed.fromX() + ContentImprint.backX(turn, span) + turned.getX(), level + turned.getY(), placed.fromZ() + ContentImprint.backZ(turn, span) + turned.getZ()), def.key().toString(), turn));
+    }
+
     @Nullable static ContentCityStructure.Seated seat(GenerationContext context, CityGround ground, CityPlan plan, CityPlan.Plot plot, Map<CityPlan.Line, ContentCityStructure.Laid> streets, List<ContentCityStructure.Well> wells) {
         ContentCityStructure.District district = ContentCityStructureSite.district(context, ground, plan);
         CityPlan.Plot placed = placed(context, ground, plan, district, plot);
@@ -60,7 +71,9 @@ public final class ContentCityStructureSeat {
         if (map != null) {
             StructurePiecesBuilder cells = new StructurePiecesBuilder();
             ContentMapStructure.lay(context, map, Hashes.mix(context.seed(), placed.fromX(), 2, placed.fromZ()), turn, placed.fromX(), placed.fromZ(), level - map.ground() * map.cell(), cells);
-            return new ContentCityStructure.Seated(new ArrayList<>(cells.build().pieces()), footprint, Set.of(), placed, level);
+            List<StructurePiece> laid = new ArrayList<>(cells.build().pieces());
+            sign(placed.def(), map, turn, placed, level, laid);
+            return new ContentCityStructure.Seated(laid, footprint, Set.of(), placed, level);
         }
         if (template == null || context.structureTemplateManager().get(template).isEmpty()) {
             ContentCity.missing(placed.def());

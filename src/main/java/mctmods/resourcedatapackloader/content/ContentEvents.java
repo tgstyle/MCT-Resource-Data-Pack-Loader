@@ -59,6 +59,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentOptionFeatures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapPiece;
+import mctmods.resourcedatapackloader.content.worldgen.ContentMapSignPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapStructure;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpreadPlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureControl;
@@ -122,6 +123,7 @@ public final class ContentEvents {
         event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(id(ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE));
         event.register(Registries.STRUCTURE_PIECE, helper -> {
             helper.register(id(ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE);
+            helper.register(id(ContentStructureMaps.MAP_PIECE + "_sign"), ContentMapSignPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_piece"), ContentCityPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_plot"), ContentCityPlotPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_deck"), ContentCityDeckPiece.TYPE);

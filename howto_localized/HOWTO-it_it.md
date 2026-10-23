@@ -2825,6 +2825,7 @@ Un ordine è un lavoro che le varianti di entità indicate come suoi esecutori s
 - **Un cartello.** Piazza un cartello sopra o accanto a un baule e scrivi sulla prima riga la parola `sign` dell'ordine. L'ordine si apre in quel baule, e la seconda riga del cartello mostra quanti oggetti sono ancora richiesti. Rompere il cartello, o il baule, lo annulla.
 - **Uno strumento.** Fai clic destro su un lavoratore, senza accovacciarti, con uno strumento del tipo `tool` dell'ordine. Il lavoratore prende lo strumento, quello che teneva ti torna indietro, e svolge l'ordine nel baule più vicino entro la sua area.
 - **Un baule scorta.** Rinomina un baule in `stockName` su un'incudine e piazzalo. Ogni oggetto della sua prima fila viene tenuto rifornito fino a una pila intera: i lavoratori lo prelevano da altri bauli entro l'area del primo ordine `haul` del pack, con gli esecutori, la priorità e l'area di quell'ordine.
+- **Un lotto del villaggio.** Un lotto che indica un `orderSign` erige da sé il cartello. Il baule deve stare subito sotto il cartello o accanto, e il modello del lotto deve contenerlo. Qualsiasi lavoratore libero che i `takers` dell'ordine nominano (uno che nessun giocatore ha assunto e che non è in nessuna squadra) può svolgerlo, e l'ordine genera lavoratori liberi come ogni ordine. Non paga punti, bottino né funzione, perché nessun giocatore l'ha aperto; dagli `standing` per tenerlo aperto. Un cartello la cui parola non corrisponde ad alcun ordine registra un errore quando il suo chunk viene caricato. Su un lotto con mappa di strutture ruotato, il cartello si trova rispetto all'ingombro dell'intera mappa, quindi con un pezzo più piccolo della sua cella risulta spostato della dimensione della cella meno la larghezza del pezzo.
 
 ```json
 {
@@ -4827,7 +4828,11 @@ Un `template` piazza invece una delle tue strutture `.nbt`, ruotata verso la str
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -4852,6 +4857,10 @@ Un `template` il cui `structure` indica una delle tue [mappe delle strutture](#m
 | `villagerX`      | tutti    | intero           | `1`         | Dove compaiono, lungo il lotto                                                                                                                                                      |
 | `villagerY`      | tutti    | intero           | `1`         | Dove compaiono, sopra il pavimento                                                                                                                                                  |
 | `villagerZ`      | tutti    | intero           | `1`         | Dove compaiono, all'interno del lotto                                                                                                                                               |
+| `orderSign`      | template | stringa          | nessuno     | La parola `sign` di un ordine, senza distinguere maiuscole e minuscole. Il lotto erige quel cartello e l'ordine si apre nel baule accanto, solo per lavoratori liberi               |
+| `orderX`         | template | intero           | `1`         | Dove sta il cartello, lungo il lotto                                                                                                                                                |
+| `orderY`         | template | intero           | `1`         | Dove sta il cartello, sopra il pavimento                                                                                                                                            |
+| `orderZ`         | template | intero           | `1`         | Dove sta il cartello, all'interno del lotto                                                                                                                                         |
 
 ## Mappe della disposizione delle città
 
