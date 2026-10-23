@@ -47,13 +47,13 @@ final class ContentSkyRenderer {
 
     private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize) {
         List<SkyOccluder> bodies = new ArrayList<>();
-        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, 0.0F, sky.sunSize(), false, new ResourceLocation[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, 0.0F, sky.sunSize(), false, false, new ResourceLocation[] {sky.sunTexture()}, 1, 1)); }
         if (sky.bodies() == null) {
-            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, 0.0F, moonSize, true, new ResourceLocation[] {moonTexture}, 4, 2)); }
+            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, 0.0F, moonSize, true, false, new ResourceLocation[] {moonTexture}, 4, 2)); }
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
-                if (body.followsTime()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.angle()), (float) Math.toRadians(body.tilt()), body.size(), false, new ResourceLocation[] {body.texture()}, 1, 1)); }
+                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle()), (float) Math.toRadians(body.tilt()), body.size(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1));
             }
         }
         return bodies.toArray(new SkyOccluder[0]);
@@ -105,7 +105,7 @@ final class ContentSkyRenderer {
             poseStack.pushPose();
             poseStack.mulPose(Axis.XP.rotationDegrees(turn));
             FogRenderer.setupNoFog();
-            stars.draw(level, bright, poseStack.last().pose(), projection, partialTick);
+            stars.draw(level, bright, poseStack.last().pose(), projection, partialTick, (float) Math.toRadians(turn));
             setupFog.run();
             poseStack.popPose();
         }
