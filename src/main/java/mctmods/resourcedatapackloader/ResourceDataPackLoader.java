@@ -34,6 +34,7 @@ import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentWelcome;
+import mctmods.resourcedatapackloader.content.item.ContentWeapons;
 import mctmods.resourcedatapackloader.content.util.ContentDisabledEvents;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
@@ -246,6 +247,10 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onOpen);
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onChunk);
+        MinecraftForge.EVENT_BUS.addListener(ContentWeapons::onModifiers);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
+        MinecraftForge.EVENT_BUS.addListener(ContentWeapons::onLogout);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, ContentHardness::onBreak);
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onAdvancement);
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onChunkLoad);
@@ -513,6 +518,7 @@ import java.util.Set;
     private void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
         CityBorder.forget();
+        ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
