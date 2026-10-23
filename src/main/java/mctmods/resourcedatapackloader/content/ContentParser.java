@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
+import mctmods.resourcedatapackloader.content.def.ExposureBandDef;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentParser {
@@ -394,8 +396,12 @@ public final class ContentParser {
         Map<ResourceLocation, Integer> dimensions = leveledNames(key, json, "dimensions");
         Map<ResourceLocation, Integer> carriers = leveledNames(key, json, "carriers");
         Map<String, Integer> weather = weather(key, json);
-        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers or weather, ignoring it", key);
+        Map<String, Integer> biomes = leveled(key, json, "biomes", named -> named);
+        Map<String, Integer> structures = leveled(key, json, "structures", named -> named);
+        Map<ResourceLocation, Integer> caveRegions = leveled(key, json, "caveRegions", named -> location(named.contains(":") ? named : key.getNamespace() + ":" + named));
+        List<ExposureBandDef> heights = bands(key, json);
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty() && biomes.isEmpty() && structures.isEmpty() && caveRegions.isEmpty() && heights.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers, weather, biomes, structures, caveRegions or heights, ignoring it", key);
             return null;
         }
         Set<ResourceLocation> catchers = names(key, json.has("catchers") ? Json.strings(json, "catchers") : List.of("minecraft:player"), "catchers");
@@ -403,7 +409,31 @@ public final class ContentParser {
                 Math.max(0, Json.getInt(json, "sourcesForNextLevel", 0)), Json.getString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels),
                 carriers, Json.getBoolean(json, "contagious", false), catchers, Math.max(0, Json.getInt(json, "contagionRange", 4)),
                 Mth.clamp(Json.getFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F), Math.max(1, Json.getInt(json, "contagionDuration", 1200)),
-                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"));
+                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"), biomes, structures, caveRegions, Collections.unmodifiableList(heights));
+    }
+
+    private static List<ExposureBandDef> bands(ResourceLocation key, JsonObject json) {
+        List<ExposureBandDef> bands = new ArrayList<>();
+        for (String entry : Json.strings(json, "heights")) {
+            Settings.Weighted split = Settings.weighted(entry, 1);
+            if (split.unreadable()) { ContentLog.LOGGER.error("The heights entry '{}' in {} has a level that is not a number, so it counts as level 1", entry, key); }
+            int colon = split.name().indexOf(':');
+            Integer from = colon < 0 ? null : bound(split.name().substring(0, colon), Integer.MIN_VALUE);
+            Integer to = colon < 0 ? null : bound(split.name().substring(colon + 1), Integer.MAX_VALUE);
+            if (from == null || to == null || from > to) {
+                ContentLog.LOGGER.error("The heights entry '{}' in {} is not a from:to band, so it is ignored", entry, key);
+                continue;
+            }
+            bands.add(new ExposureBandDef(from, to, Math.max(1, split.weight())));
+        }
+        return bands;
+    }
+
+    @Nullable private static Integer bound(String text, int open) {
+        String trimmed = text.trim();
+        if (trimmed.isEmpty()) { return open; }
+        try { return Integer.parseInt(trimmed); }
+        catch (NumberFormatException bad) { return null; }
     }
 
     private static Map<String, Integer> weather(ResourceLocation key, JsonObject json) {
@@ -426,15 +456,17 @@ public final class ContentParser {
         return found;
     }
 
-    private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) {
-        Map<ResourceLocation, Integer> found = new LinkedHashMap<>();
+    private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) { return leveled(key, json, member, ContentParser::location); }
+
+    private static <T> Map<T, Integer> leveled(ResourceLocation key, JsonObject json, String member, Function<String, T> parse) {
+        Map<T, Integer> found = new LinkedHashMap<>();
         for (JsonElement element : Json.getJsonArray(json, member, new JsonArray())) {
             if (!element.isJsonPrimitive()) { continue; }
             String entry = element.getAsString();
             Settings.Weighted split = Settings.weighted(entry, 1);
             if (split.unreadable()) { ContentLog.LOGGER.error("The {} entry '{}' in {} has a level that is not a number, so it counts as level 1", member, entry, key); }
             if (split.name().isEmpty()) { continue; }
-            ResourceLocation name = location(split.name());
+            T name = parse.apply(split.name());
             if (name == null) {
                 ContentLog.LOGGER.error("The {} entry '{}' in {} is not a name, ignoring it", member, entry, key);
                 continue;

@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.ExposurePlaces;
 import mctmods.resourcedatapackloader.util.ExposureSpread;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -114,6 +115,7 @@ public final class ContentExposures {
         ServerLevel level = player.serverLevel();
         int reached = Math.max(def.dimensions().getOrDefault(level.dimension().location(), 0), scanItems(def, player, most));
         reached = Math.max(reached, Math.max(ExposureSpread.weatherLevel(def, player), ExposureSpread.caughtLevel(def, player)));
+        reached = Math.max(reached, ExposurePlaces.level(def, player));
         if (reached >= most) { return most; }
         return Math.max(reached, scanWorld(def, player, level, most));
     }
