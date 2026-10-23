@@ -644,6 +644,8 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "growth": { "stages": 8, "growth": 10 },
   "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
   "portal": { "dimension": "mypack:ruby_world" },
+  "container": { "rows": 3, "columns": 9 },
+  "bell": { "swing": true, "sound": "minecraft:block.note_block.bell" },
   "variants": {
     "ruby_ore": {
       "hardness": 3.0,
@@ -917,9 +919,26 @@ Une `structure` remplace l'arbre généré par l'un de vos modèles, ce qui perm
     "rows": 6,
     "columns": 9,
     "lootTable": "minecraft:chests/simple_dungeon",
-    "chestModel": true
+    "chestModel": true,
+    "guiTexture": "mypack:textures/gui/crate.png",
+    "guiWidth": 176,
+    "guiHeight": 222
   },
   "variants": { "crate": { "hardness": 2.5 } }
+}
+```
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container",
+  "container": {
+    "rows": 2,
+    "columns": 9,
+    "curioSlot": "belt"
+  },
+  "variants": { "pouch": { "maxSize": 1 } }
 }
 ```
 
@@ -1357,6 +1376,15 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "attackSpeed": -2.4,
   "cooldown": 40,
   "rolls": "d6",
+  "rollStore": "dice_total",
+  "locates": "Village",
+  "passesTurn": false,
+  "attackReach": 3.0,
+  "sweep": { "shape": "box", "damage": 0.5 },
+  "combo": { "window": 30, "steps": [ { "damage": 1.0 }, { "damage": 2.0 } ] },
+  "curioSlot": "ring",
+  "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
+  "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1488,6 +1516,7 @@ Un objet peut porter plus loin que les `3.0` blocs du jeu, blesser les créature
     "steps": [
       { "damage": 1.0 },
       { "damage": 1.5 },
+      { "damage": 2.0, "sweep": { "shape": "line", "reach": 5.0, "width": 2.0 } },
       { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
     ]
   }
@@ -2106,9 +2135,19 @@ Le chemin du fichier est le nom de registre de l'effet : `mypack/potions/ruby_si
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
+  "iconTexture": "mypack:textures/effect/ruby_sight.png",
   "attributes": [
     { "attribute": "minecraft:generic.movement_speed", "uuid": "91AEAA56-376B-4498-935B-2F7F68070635", "amount": 0.2, "operation": 2 }
   ]
+}
+```
+
+`<namespace>/potions/*.json`
+
+```json
+{
+  "color": "C0304A",
+  "icon": { "x": 2, "y": 1 }
 }
 ```
 
@@ -2183,6 +2222,7 @@ Placez l'objet nommé dans l'emplacement gauche d'une enclume et son objet `with
 {
   "item": "minecraft:iron_sword",
   "with": "minecraft:wooden_sword",
+  "result": "minecraft:golden_sword",
   "levels": 3,
   "enchantments": { "minecraft:sharpness": 2 },
   "grants": "mypack:sword_rite",
@@ -2227,6 +2267,18 @@ La table de butin d'un bloc décide de ce qu'il lâche, mais en fournir une remp
 }
 ```
 
+`<namespace>/block_drops/*.json`
+
+```json
+{
+  "block": "minecraft:wheat",
+  "properties": { "age": "7" },
+  "drops": [
+    { "item": "minecraft:gold_nugget", "chance": 0.1 }
+  ]
+}
+```
+
 | Clé           | Requis | Valeur                      | Défaut  | Rôle                                                                                                                                       |
 | ------------- | ------ | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `block`       | oui    | id de bloc                  |         | Le bloc que surveille la règle                                                                                                             |
@@ -2262,6 +2314,16 @@ Un clic droit sur une culture mûre ne fait normalement rien. Un fichier ici fai
 {
   "requires": ["config:enableRightClickHarvest"],
   "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+`<namespace>/harvests/*.json`
+
+```json
+{
+  "crops": ["minecraft:beetroots", "minecraft:nether_wart"],
+  "age": 3,
   "replant": true
 }
 ```
@@ -2361,6 +2423,7 @@ Le nom du fichier est à votre choix, seul le dossier est lu, et plusieurs fichi
       "maxUses": 12,
       "xp": 2,
       "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "buySecondary": { "item": "minecraft:paper", "min": 1 },
       "sell": { "item": "mypack:ruby", "min": 1 }
     }
   ]
@@ -2404,6 +2467,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "lootTable": "mypack:entities/angry_cow",
   "profession": "mypack:jeweller",
   "baby": 0.05,
+  "keepsBaseBaby": false,
   "becomes": [
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
@@ -2415,11 +2479,17 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "jumpMultiplier": 1.0,
   "fallDamage": 1.0,
   "maxFallHeight": 3,
+  "stepHeight": 0.6,
+  "climbs": false,
+  "teleports": true,
+  "walks": false,
   "breathesUnderwater": false,
   "swims": false,
   "amphibious": false,
   "waterSlowdown": 0.8,
   "absorption": 0,
+  "hurtResistance": 20,
+  "ignoresEffects": ["minecraft:poison"],
   "experience": 3,
   "creatureAttribute": "undefined",
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
@@ -2438,6 +2508,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "steerable": false,
   "width": 0.9,
   "height": 1.4,
+  "bright": false,
   "pathPriorities": { "WATER": 0.0, "LAVA": -1.0, "DANGER_FIRE": 8.0, "DOOR_WOOD_CLOSED": 0.0 },
   "egg": { "primary": "AABBCC", "secondary": "112233" },
   "attributes": {
@@ -2451,9 +2522,16 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "hostile": true,
   "targets": ["minecraft:player"],
   "passive": false,
+  "attackReach": 3.0,
+  "knockback": 0.4,
+  "hitEffects": true,
+  "hitFire": true,
+  "threatLeast": 1,
+  "threatHostile": 2,
   "persistent": false,
   "silent": false,
   "picksUpLoot": false,
+  "collectsExperience": false,
   "hideArmor": false,
   "hideHeld": false,
   "tint": "C0304A",
@@ -2469,6 +2547,18 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
+  "digs": false,
+  "throwReturns": false,
+  "charges": false,
+  "pounces": false,
+  "sniffs": 0,
+  "fleesWhenHurt": 0.0,
+  "sleepsByDay": false,
+  "home": 0,
+  "patrols": false,
+  "swoops": false,
+  "gusts": false,
+  "gustPower": 1.5,
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -2485,6 +2575,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "trackingRange": 80,
   "trackVelocity": true,
   "trackingFrequency": 3,
+  "tasks": [ "-wander", { "task": "watchClosest", "priority": 6, "entity": "minecraft:player", "distance": 8 } ],
   "requires": ["mypack"]
 }
 ```
@@ -2705,12 +2796,30 @@ La façon dont le lancer lui-même vole tient à `throwPower` et `throwArc`. La 
     "-wander",
     { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
     { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
-    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 },
+    { "task": "wander", "priority": 8, "speed": 1.0, "chance": 120 },
+    { "task": "follow", "priority": 5, "speed": 1.0, "near": 3, "distance": 10 },
+    { "task": "leapAtTarget", "priority": 1, "leap": 0.5 },
+    { "task": "tempt", "priority": 4, "items": ["minecraft:wheat"], "speed": 1.2, "scared": false },
+    { "task": "attackMelee", "priority": 2, "speed": 1.2, "memory": true },
+    { "task": "openDoor", "priority": 6, "close": true },
+    { "task": "moveThroughVillage", "priority": 5, "speed": 1.0, "nocturnal": true },
+    { "task": "nearestAttackableTarget", "priority": 2, "entity": "minecraft:zombie", "sight": true, "nearby": false },
+    { "task": "hurtByTarget", "priority": 1, "help": true }
   ]
 }
 ```
 
 La liste est appliquée après que `hostile`, `passive` et les comportements ci-dessus ont fait leur travail : elle a donc le dernier mot. Les tâches qui déplacent le corps s'excluent mutuellement : l'une ne s'exécute que si rien de plus prioritaire ne déplace la créature, et l'attaque dont un monstre est pourvu se trouve à 2. Un bond ou une fuite sur un zombie demande donc la priorité 1, sans quoi elle n'a jamais son tour ; l'araignée et le loup placent leur bond avant leur attaque pour la même raison. Une tâche que la base exécute déjà est ajoutée une seconde fois au lieu d'être remplacée : retirez d'abord l'ancienne. Certaines tâches n'ont de sens que sur une base qui possède ce qu'elles pilotent : un combat à l'arc exige une base qui tire, s'asseoir exige une base qui peut être apprivoisée, et le commerce exige un villageois. Si vous en demandez une sur une base qui ne peut pas la porter, le journal indique quelle base il faut, et la variante s'en passe. Sur cette version, un villageois fonctionne avec le cerveau du jeu plutôt qu'avec des tâches ; les lignes de villageois ci-dessous n'atteignent donc que ce que le cerveau laisse aux tâches.
+
+```json
+{
+  "entity": "minecraft:witch",
+  "tasks": [
+    { "task": "attackRanged", "priority": 2, "speed": 1.0, "cooldown": 30, "distance": 12 }
+  ]
+}
+```
 
 | Clé         | Type                   | Défaut            | Rôle                                                                                                                                                                                                                                                                                                                 |
 | ----------- | ---------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2820,6 +2929,7 @@ L'horloge suit le temps du monde : elle s'arrête quand personne ne joue et ne c
 {
   "dimensions": ["minecraft:the_nether"],
   "structures": ["minecraft:fortress"],
+  "radius": 32,
   "timeFrom": 13000,
   "timeTo": 23000,
   "dayAtLeast": 3,
@@ -2852,6 +2962,14 @@ Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs f
 ```json
 {
   "entities": ["minecraft:blaze", "mymod:thing"],
+  "dimensions": ["minecraft:the_nether"],
+  "structures": ["minecraft:fortress"],
+  "radius": 32,
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "objective": "kills",
+  "scoreAtLeast": 5,
   "advancement": "minecraft:story/enter_the_nether"
 }
 ```
@@ -3088,6 +3206,7 @@ Un ordre est un travail que les variantes d'entité nommées comme ses preneurs 
       "sign": "Farm",
       "tool": "hoe",
       "standing": 64,
+      "area": 16,
       "takers": ["mypack:farmer"]
     },
     {
@@ -3263,7 +3382,8 @@ Rassemble la forme d'un monde dans un seul fichier, afin qu'un pack livre un mon
     "mineshafts": false,
     "strongholds": true
   },
-  "roles": { "ocean": "mypack:ruby_ocean" }
+  "roles": { "ocean": "mypack:ruby_ocean" },
+  "requires": ["mypack"]
 }
 ```
 
@@ -3347,6 +3467,9 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "topBlock": "mypack:ruby_grass",
   "fillerBlock": "minecraft:dirt",
   "stoneBlock": "mypack:ruby_stone",
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.5,
+  "skyThickness": 2.0,
   "baseBiome": "minecraft:forest",
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
@@ -3557,15 +3680,28 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "waterVaporizes": false,
     "cloudHeight": 160,
     "cloudColor": "5B3E6A",
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
     "groundLevel": 63,
     "movementFactor": 4.0,
     "fogColor": "20102A",
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
     "showFog": false,
     "skyColor": "3B1E4A",
     "fixedTime": 18000,
     "sunriseColors": true,
     "ambientLight": 0.1,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
     "starBrightness": 0.8,
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 },
     "renderSky": true,
     "renderClouds": true,
     "renderWeather": true,
@@ -3586,11 +3722,12 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
-  "gameRules": { "doMobSpawning": "false" }
+  "gameRules": { "doMobSpawning": "false" },
+  "portal": { "frames": ["mypack:standing_gate"], "ignitedBy": "minecraft:flint_and_steel" }
 }
 ```
 
@@ -3849,6 +3986,14 @@ Ces clés se placent elles aussi dans le bloc `sky`, et elles aussi ne sont dess
 
 Aucune clé vanilla ne donne à une dimension ses propres images de ciel, une aurore ou un arc-en-ciel, ces clés fonctionnent donc de la même façon sur toutes les versions.
 
+```json
+{
+  "sky": {
+    "skybox": { "panorama": "mypack:textures/sky/panorama.png" }
+  }
+}
+```
+
 | Clé               | Requis | Valeur               | Défaut   | Rôle                                                                                          |
 | ----------------- | ------ | -------------------- | -------- | --------------------------------------------------------------------------------------------- |
 | `skybox.<face>`   | non    | chemin de texture    | aucun    | Une face du cube : `up`, `down`, `north`, `east`, `south` ou `west`. Les six sont nécessaires |
@@ -3975,11 +4120,11 @@ Un bloc `ambience` donne à la dimension sa propre musique, ses propres sons et 
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5 }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
-      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+      "mobs": { "entities": ["#monster"], "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
     },
     "bounty": {
       "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
@@ -3988,7 +4133,7 @@ Un bloc `ambience` donne à la dimension sa propre musique, ses propres sons et 
       ]
     },
     "longnight": {
-      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 3.0, "wakeAt": 1000 }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -4115,7 +4260,8 @@ Un bloc `portal` porte une section `portal` :
     "platform": true,
     "platformBlock": "mypack:ruby_block",
     "sound": "block.portal.travel",
-    "owned": true
+    "owned": true,
+    "walkIn": false
   },
   "variants": { "ruby_portal": { "hardness": -1, "light": 11 } }
 }
@@ -4362,6 +4508,10 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "weight": 3,
   "minHeight": -56,
   "maxHeight": 16,
+  "waterLevel": 0,
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.5,
+  "skyThickness": 2.0,
   "dimensions": ["minecraft:overworld"],
   "biome": "minecraft:mushroom_fields",
   "floorCover": "minecraft:mycelium",
@@ -4382,7 +4532,8 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "ambientSound": "minecraft:block.water.ambient",
   "soundChance": 0.02,
   "particle": "minecraft:dripping_water",
-  "particleChance": 0.002
+  "particleChance": 0.002,
+  "requires": ["mypack"]
 }
 ```
 
@@ -4417,12 +4568,6 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 
 *régions de grottes*
 
-| Réglage                 | Type          | Défaut | Rôle                                                                                                                                                                                                               |
-| ----------------------- | ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `caveRegionCells`       | entier, blocs | `128`  | Largeur d'une cellule de région                                                                                                                                                                                    |
-| `caveRegionCellsY`      | entier, blocs | `64`   | Hauteur d'une cellule de région                                                                                                                                                                                    |
-| `caveRegionPlainWeight` | entier        | `4`    | Le poids du sous-sol ordinaire, sans région, dans le tirage de chaque cellule. Plus il est élevé, plus il reste de sous-sol sans région : avec une seule région de poids 1, environ une cellule sur cinq la reçoit |
-
 `<namespace>/worldtemplates/*.json`
 
 ```json
@@ -4434,6 +4579,12 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   }
 }
 ```
+
+| Réglage                 | Type          | Défaut | Rôle                                                                                                                                                                                                               |
+| ----------------------- | ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `caveRegionCells`       | entier, blocs | `128`  | Largeur d'une cellule de région                                                                                                                                                                                    |
+| `caveRegionCellsY`      | entier, blocs | `64`   | Hauteur d'une cellule de région                                                                                                                                                                                    |
+| `caveRegionPlainWeight` | entier        | `4`    | Le poids du sous-sol ordinaire, sans région, dans le tirage de chaque cellule. Plus il est élevé, plus il reste de sous-sol sans région : avec une seule région de poids 1, environ une cellule sur cinq la reçoit |
 
 La part du sous-sol qui reste ordinaire est la clé `terrain` `caveRegionPlainWeight`, `4` par défaut : avec une seule région de poids 1, environ une cellule sur cinq reçoit la région. Les revêtements s'appliquent sous un toit : une région qui monte au-dessus du sol n'apparaît donc jamais en surface. Les revêtements fonctionnent dans toutes les grottes, quel que soit le générateur qui les a creusées.
 
@@ -4691,6 +4842,12 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "taper": "needle",
     "outline": "minecraft:obsidian",
     "fill": "minecraft:glowstone",
+    "middle": "minecraft:calcite",
+    "budding": "minecraft:budding_amethyst",
+    "buddingChance": 0.083,
+    "crystal": "minecraft:amethyst_cluster",
+    "crystalChance": 0.35,
+    "crack": 0.2,
     "surface": ["minecraft:grass_block"],
     "seeSky": true,
     "checkStay": true,
@@ -4719,6 +4876,8 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "density": 0.8,
     "rich": "mypack:rich_ruby_ore",
     "poor": "mypack:poor_ruby_ore",
+    "richAt": 0.88,
+    "poorAt": 0.4,
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -4825,6 +4984,16 @@ Pour une forme qu'aucun type intégré ne couvre, `imprint` est la solution : co
 *formes*
 
 Les structures vanilla se fixent à des endroits exacts avec `structureAt` dans les réglages `terrain`, sous forme d'entrées `structure=x,z`, une par ligne : `"structureAt": ["villages=1000,-500"]`. **Les x et z sont des coordonnées de bloc, pas de chunk**, et la structure se génère dans le chunk qui contient ce bloc. Avec `terrainAdaptation` qui pose les villages comme des rues de ville, le puits d'un village fixé se dresse sur ce bloc même, ou aussi près que son quartier le permet quand le bloc se trouve à quelques blocs du bord du quartier ; les autres structures, et les villages posés sans lui, commencent là où le jeu les ferait commencer dans ce chunk. Une entrée par instance voulue. Son espacement, sa séparation, sa distance minimale d'apparition et ses vérifications de terrain plat s'effacent tous : l'endroit est donc sous la responsabilité du pack, et deux points fixés à moins d'un chunk l'un de l'autre mettent deux structures dans le même chunk. La structure se cale sur le sol de son chunk selon les règles habituelles une fois fondée.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAt": ["villages=1000,-500"]
+  }
+}
+```
 
 | Réglage       | Type                     | Défaut | Rôle                                                                                                                                                                                                                                                                                                         |
 | ------------- | ------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -4976,6 +5145,7 @@ Une carte de structures assemble des modèles en un seul bâtiment nommé sur un
   "ground": 0,
   "spacing": 64,
   "chance": 25,
+  "dimensions": ["minecraft:overworld"],
   "layers": [
     {
       "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
@@ -4989,6 +5159,16 @@ Une carte de structures assemble des modèles en un seul bâtiment nommé sur un
               "...",
               ".a."]
     }
+  ]
+}
+```
+
+```json
+{
+  "cell": 32,
+  "at": [1000, -500],
+  "layers": [
+    { "palette": { "a": "mypack:keep_base" }, "map": ["a"] }
   ]
 }
 ```
@@ -5336,6 +5516,13 @@ Dans un pack, ces clés vont dans le bloc `settings` d'un [modèle de monde](#mo
 
 *prégénération*
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[chunks]
+pregenBorderLimit = 8192
+```
+
 | Clé                           | Rôle                                                                                                                                                                                                                                                         | Pourquoi la définir                                                                                                         |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
 | `pregenOnNewWorld`            | Rayon en chunks créé autour du point d'apparition avant que quiconque joue. 12 est le plancher et 0 signifie ce plancher et non rien, puisque le jeu génère de lui-même 12 chunks autour du point d'apparition. Augmentez-le pour aller plus loin que le jeu | Fixe jusqu'où un pack s'étend au-delà du terrain que le jeu crée déjà                                                       |
@@ -5535,13 +5722,28 @@ Un camp est une vraie équipe du tableau des scores du jeu lui-même : `/team li
   "name": "red",
   "displayName": "Red Team",
   "color": "red",
+  "prefix": "[R] ",
+  "suffix": "!",
+  "scoreboard": true,
   "friendlyFire": false,
+  "mobFriendlyFire": false,
+  "seeFriendlyInvisibles": true,
+  "nameTags": "always",
+  "deathMessages": "always",
+  "collision": "always",
   "joinable": false,
+  "balance": false,
   "entities": ["mypack:zombie_a", "mypack:sapper_a"],
+  "spawnBox": [0, 60, 0, 16, 80, 16],
   "picks": 0,
   "picksFrom": ["players"],
-  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
+  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }, { "item": "minecraft:iron_sword", "unbreakable": true }],
   "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" },
+  "spawn": "0,64,0",
+  "lead": "topScore",
+  "leadOn": "kaboom",
+  "leadIs": "Steve",
+  "leadSays": "You are the current round leader",
   "leadRuns": "mypack:lead_chosen"
 }
 ```
@@ -5629,20 +5831,38 @@ Un objectif est un vrai objectif du tableau des scores du jeu lui-même : `/scor
   "displayName": "Kills",
   "criterion": "dummy",
   "display": "sidebar",
+  "render": "integer",
   "teamTotals": true,
+  "individuals": false,
+  "carries": false,
+  "awardsTo": "totals",
   "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
-    "death": -1
+    "death": -1,
+    "raid": true,
+    "order": true,
+    "ownKill": -1
   },
-  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "opens": { "by": "leader", "lobby": "0,64,0", "says": "Waiting for {leader} to start the round", "leaderSays": "Type /rdpl round start", "lobbyJoins": true, "joinsSays": "Round is in progress, you can join after it ends" },
   "ends": {
-    "afterMinutes": 10
+    "afterMinutes": 10,
+    "atScore": 100,
+    "afterRounds": 3,
+    "lastStanding": false,
+    "outSays": "You are out until the round ends",
+    "locksTeams": true,
+    "resets": true,
+    "intermissionSeconds": 10,
+    "intermissionSays": "Round cooldown {seconds}",
+    "startsSays": "Round starting in {seconds}"
   },
   "results": {
     "card": true,
     "title": "Final standings",
     "icon": "minecraft:tnt",
+    "image": "mypack:textures/gui/results.png",
+    "background": "1E2630",
     "seconds": 15
   }
 }
@@ -5762,7 +5982,12 @@ La barre apparaît à l'ouverture de la manche et disparaît à sa fin. Avec `en
     "teams": ["miners", "raiders"],
     "passPercent": 51,
     "voteSeconds": 30,
-    "cooldownSeconds": 60
+    "cooldownSeconds": 60,
+    "leadSays": "{player} reset the round",
+    "voteSays": "{player} calls a vote to reset the round",
+    "tallySays": "Reset the round? {yes} yes, {no} no, {seconds}",
+    "passSays": "The vote passed, so the round is reset",
+    "failSays": "The vote failed, so the round goes on"
   }
 }
 ```
@@ -5813,6 +6038,7 @@ Chaque joueur en ligne appartenant à un camp vote, quel que soit son camp, avec
     "held": "frozen",
     "endsAtScore": 10,
     "cycles": 5,
+    "mobTags": ["duelist"],
     "mobTypes": ["minecraft:zombie"]
   }
 }
@@ -5856,6 +6082,8 @@ Tant qu'une vague est sur le village, ses villageois courent chez eux et y reste
   "color": "red",
   "waveDelay": 300,
   "spawnDistance": 32,
+  "reach": 96,
+  "timeout": 48000,
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
@@ -5923,7 +6151,7 @@ Chaque message que ce mod dit lui-même est une règle intégrée, listée plus 
   "image": "mypack:textures/gui/desert_card.png",
   "color": "3A2A10",
   "ticks": 120,
-  "when": { "timeFrom": 0, "timeTo": 12000 },
+  "when": { "timeFrom": 0, "timeTo": 12000, "biomes": ["minecraft:desert"], "dayAtLeast": 3, "advancement": "minecraft:story/mine_stone", "gameMode": "survival", "team": "red", "objective": "kills", "scoreAtLeast": 5 },
   "repeat": "once_per_player"
 }
 ```
@@ -5932,7 +6160,9 @@ Chaque message que ce mod dit lui-même est une règle intégrée, listée plus 
 {
   "lines": ["{text}", "Speak to the gatekeeper for more."],
   "icon": "minecraft:ender_eye",
-  "cooldown": 30
+  "cooldown": 30,
+  "audience": "player",
+  "runs": "mypack:card_shown"
 }
 ```
 
@@ -5987,6 +6217,34 @@ Une carte qui se déclenche alors qu'un joueur a encore l'introduction du monde 
 ### Réglages des déclencheurs
 
 *cartes*
+
+```json
+{
+  "trigger": "kill",
+  "dimension": "minecraft:the_nether",
+  "biomes": ["minecraft:desert"],
+  "structures": ["minecraft:village_plains"],
+  "radius": 32,
+  "advancement": "minecraft:story/mine_stone",
+  "item": "minecraft:diamond_sword",
+  "entity": "minecraft:zombie",
+  "count": 3,
+  "below": 0,
+  "above": 64,
+  "time": 13000,
+  "day": 5,
+  "minutes": 30,
+  "roll": "2d6",
+  "order": "Mine",
+  "exposure": "heat",
+  "level": 2,
+  "atLeast": 10,
+  "atMost": 12,
+  "objective": "kills",
+  "score": 5,
+  "requires": ["mypack"]
+}
+```
 
 | Réglage              | Type                                        | Défaut        | Rôle                                                                                                                                                                                                                                                                                                                    |
 | -------------------- | ------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -6113,7 +6371,45 @@ Le nom du fichier est à votre choix, et plusieurs fichiers s'additionnent. Un f
     "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
-    "coin": "{player} tosses the old coin: {result}"
+    "coin": "{player} tosses the old coin: {result}",
+    "pickplayer": "{player} picks a player: {result}",
+    "pickteam": "{player} picks a team: {result}",
+    "heads": "heads",
+    "tails": "tails",
+    "lastnone": "No rolls yet",
+    "nobody": "There is nobody to pick from",
+    "notallowed": "You are not allowed to run that part of /rdplserver game",
+    "usage": "/rdplserver game <coin|die|dice|deck|teamroll|tiebreak>",
+    "die": "{player} rolls {dice}: {result}",
+    "packdie": "{player} rolls {die}: {result}",
+    "dice": "{player} rolls {dice}: {rolls} = {result}",
+    "advantage": "{player} rolls {dice} with advantage: {first} and {second}, keeps {result}",
+    "disadvantage": "{player} rolls {dice} with disadvantage: {first} and {second}, keeps {result}",
+    "pickmember": "{player} picks from {team}: {result}",
+    "draw": "{player} draws from {deck}: {result} ({left} left)",
+    "reshuffled": "{deck} was empty, so it is reshuffled: {player} draws {result} ({left} left)",
+    "shuffle": "{player} shuffles {deck}: {left} cards",
+    "left": "{deck} has {left} card(s) left",
+    "empty": "{deck} is empty, so shuffle it first",
+    "nodeck": "There is no deck called {deck}",
+    "teamroll": "{member} rolls {dice}: {result}",
+    "teamrollwin": "{result} wins the team roll with {score}",
+    "tiebreak": "The tie in {objective} between {sides} goes to {result}",
+    "notie": "{objective} has no tie at the top",
+    "noobjective": "There is no objective called {objective}",
+    "turn": "{group}'s turn: {seconds} seconds",
+    "turnclock": "{group}'s turn: {seconds}",
+    "turnwarn": "{group}: {seconds} seconds left",
+    "turnout": "{group} ran out of time",
+    "turnpass": "{group} passes the turn",
+    "turngap": "Next turn in {seconds}",
+    "notturn": "It is not your turn",
+    "noturns": "No turns are running",
+    "badsides": "A die has 2 to 1000 sides, not {sides}",
+    "badroll": "'{roll}' is not a roll such as 2d6+1, with 1 to 100 dice of 2 to 1000 sides",
+    "badaudience": "'{audience}' is not self, team, all, radius <blocks> or silent",
+    "nodie": "There is no die called {name}",
+    "noteam": "There is no team called {team}"
   }
 }
 ```
@@ -6230,6 +6526,7 @@ Un fichier est un jeu de plateau, nommé d'après son nom de fichier. Il fixe le
   "rules": { "quietDraw": 100, "repeatDraw": 3 },
   "clock": { "minutes": 10, "addSeconds": 2 },
   "ai": 2,
+  "quiet": false,
   "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
 }
 ```
@@ -7029,6 +7326,7 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
     "ambientCap": 15,
     "waterCreatureCap": 5,
     "monsterSpawnLight": 0,
+    "skyAnimals": true,
     "threatItems": ["minecraft:diamond_sword=5,1", "minecraft:diamond=1,16,batch"],
     "threatLevels": [10, 25, 50],
     "threatMost": -1,
@@ -7079,7 +7377,8 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
     "flatBedrockFiller": "minecraft:cobblestone",
     "flatBedrockFillers": ["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"],
     "flatBedrockBiomeTypes": ["minecraft:is_ocean"],
-    "flatBedrockRetrogen": true
+    "flatBedrockRetrogen": true,
+    "flatBedrockRetrogenKey": "0001"
   }
 }
 ```
@@ -7136,6 +7435,90 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 *ce que fait chaque groupe*
 
 `control.chunks` décide de ce groupe : le rayon des chunks de spawn, la prégénération, la régénération rétroactive et la réinitialisation, les lignes de bienvenue, la carte de messages et les toasts du jeu.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "retrogen": false,
+    "adoptExistingChunks": false,
+    "saysCard": true,
+    "saysIcon": "minecraft:compass",
+    "saysColor": "1E2630",
+    "saysImage": "rubyworld:textures/gui/card.png",
+    "saysBackground": true,
+    "saysFont": "rubyworld:runes",
+    "toasts": true,
+    "pregenOnNewWorld": 63,
+    "pregenToBorder": false,
+    "pregenAllDimensions": false,
+    "pregenResume": true,
+    "pregenChunksInFlight": 32,
+    "pregenBackup": false,
+    "resetClearsEntities": true,
+    "resetClearsScores": true,
+    "resetClearsInventory": false,
+    "resetClearsExperience": false,
+    "spawnChunkRadius": 128,
+    "spawnChunkRadii": ["minecraft:overworld=64"],
+    "welcomeSays": ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"],
+    "pregenDimensions": ["minecraft:overworld", "minecraft:the_nether"],
+    "pregenDimensionsWhenEntered": ["minecraft:the_end"],
+    "pregenRunningSays": "Building your world, %d%% done",
+    "pregenFinishedSays": "Your world is ready",
+    "pregenStoppedSays": "World building stopped",
+    "pregenSpectatingSays": "Spectating until the world is ready",
+    "pregenLogo": "center",
+    "pregenBackupSays": "Pack requested world backup",
+    "resetSays": "Pack requested map reset",
+    "resetSendsTo": "spawn",
+    "resetRuns": "rubyworld:rebuild_arena"
+  }
+}
+```
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[worldgen]
+retrogen = false
+adoptExistingChunks = false
+
+[chunks]
+saysCard = true
+saysIcon = "minecraft:compass"
+saysColor = "1E2630"
+saysImage = "rubyworld:textures/gui/card.png"
+saysBackground = true
+saysFont = "rubyworld:runes"
+toasts = true
+pregenOnNewWorld = 63
+pregenToBorder = false
+pregenAllDimensions = false
+pregenResume = true
+pregenChunksInFlight = 32
+pregenBackup = false
+resetClearsEntities = true
+resetClearsScores = true
+resetClearsInventory = false
+resetClearsExperience = false
+spawnChunkRadius = 128
+spawnChunkRadii = ["minecraft:overworld=64"]
+welcomeSays = ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"]
+pregenBorderLimit = 8192
+pregenDimensions = ["minecraft:overworld", "minecraft:the_nether"]
+pregenDimensionsWhenEntered = ["minecraft:the_end"]
+pregenRunningSays = "Building your world, %d%% done"
+pregenFinishedSays = "Your world is ready"
+pregenStoppedSays = "World building stopped"
+pregenSpectatingSays = "Spectating until the world is ready"
+pregenLogo = "center"
+pregenBackupSays = "Pack requested world backup"
+resetSays = "Pack requested map reset"
+resetSendsTo = "spawn"
+resetRuns = "rubyworld:rebuild_arena"
+```
 
 | Réglage                       | Type                | Défaut                                   | Rôle                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ----------------------------- | ------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7243,6 +7626,11 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
     "worldMaxHeight": 384,
     "terrainOffset": 48,
     "deepStone": "minecraft:blackstone",
+    "skyStone": "minecraft:end_stone",
+    "skyShape": "islands",
+    "skyIslands": 0.5,
+    "skyThickness": 2.0,
+    "skyHeights": [330, 380],
     "noiseCaves": "deep",
     "worldSpawn": "0,72,0",
     "worldBorder": 4096,
@@ -7379,6 +7767,23 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 
 `control.recipes` décide de ce groupe. Blocage des recettes de fabrication et de four, et leurs listes blanches. Le blocage des recettes de four emporte avec lui celles du haut fourneau, du fumoir et du feu de camp, puisque la 1.12.2 gardait toutes les recettes de cuisson dans la seule liste du four. Les recettes de la scie à pierre et de la forge ne sont jamais bloquées, puisque la 1.12.2 n'en avait pas.
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[recipes]
+blockRecipes = true
+recipeWhitelist = ["minecraft", "mypack"]
+blockedRecipeMods = ["tconstruct"]
+recipeMatch = "recipe"
+blockFurnaceRecipes = true
+furnaceWhitelist = ["minecraft", "mypack"]
+blockedFurnaceMods = ["tconstruct"]
+logBlockedRecipes = true
+furnace = true
+removals = true
+skipMissingItems = true
+```
+
 | Réglage               | Type                         | Défaut          | Rôle                                                                                                                                                                                                                                                                                                      |
 | --------------------- | ---------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `blockRecipes`        | booléen                      | `false`         | Supprime toutes les recettes de fabrication, sauf celles des mods de `recipeWhitelist`. La liste blanche ne contient que `minecraft` par défaut, donc les recettes vanilla restent et celles de tout autre mod disparaissent ; indiquez l'espace de noms de votre propre pack pour conserver ses recettes |
@@ -7399,6 +7804,31 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 
 `control.commands` décide de ce groupe. Qui peut exécuter les commandes propres au mod : les niveaux de permission de goto.
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "locateLevel": 2,
+    "gotoLevel": 3,
+    "gotoNextLevel": 3,
+    "gotoBackLevel": 3,
+    "gotoPlaceLevels": ["rubyworld:crypt=2"]
+  }
+}
+```
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[commands]
+locateLevel = 2
+gotoLevel = 3
+gotoNextLevel = 3
+gotoBackLevel = 3
+gotoPlaceLevels = ["rubyworld:crypt=2"]
+```
+
 | Réglage           | Type          | Défaut | Rôle                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ----------------- | ------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `locateLevel`     | entier, 0 à 4 | `2`    | Le niveau de permission nécessaire pour le /locate vanilla. 2 est celui de vanilla : rien ne change tant qu'il n'est pas défini. 0 l'ouvre à tous les joueurs, 3 le réserve aux opérateurs et 4 le limite aux opérateurs de niveau 4                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -7412,6 +7842,18 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 *ce que fait chaque groupe*
 
 Ces clés `worldgen` n'appartiennent à aucun groupe et relèvent de la configuration seule.
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[worldgen]
+worldgenDebug = false
+worldTemplate = "auto"
+tellWorldType = true
+worldBorderLimit = 60000000
+retrogenKey = "0000"
+retrogenChunksPerTick = 2
+```
 
 | Réglage                 | Type                 | Défaut     | Rôle                                                                                                                                                                                                                                        |
 | ----------------------- | -------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7428,6 +7870,17 @@ Ces clés `worldgen` n'appartiennent à aucun groupe et relèvent de la configur
 
 Comment les dossiers de packs sont trouvés et servis. Configuration uniquement.
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[packs]
+rootDirectory = "rdploader"
+overrideResourcePacks = true
+warnOnCaseMismatch = true
+logContents = false
+traceUnresolvedVariables = false
+```
+
 | Réglage                    | Type    | Défaut      | Rôle                                                                                                                                                                                            |
 | -------------------------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rootDirectory`            | texte   | `rdploader` | Dossier d'où les packs sont chargés, relatif au répertoire .minecraft. Un chemin absolu fonctionne aussi. Nécessite un redémarrage                                                              |
@@ -7441,6 +7894,31 @@ Comment les dossiers de packs sont trouvés et servis. Configuration uniquement.
 *ce que fait chaque groupe*
 
 Les blocs, objets, fluides et tout le reste que les packs définissent. Configuration uniquement.
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[content]
+load = true
+vanillaClients = false
+sounds = true
+fuels = true
+tooltips = true
+potions = true
+brewing = true
+villagers = true
+entities = true
+overrides = true
+disabled = true
+hardness = true
+shovelPaths = true
+shovelPathBecomes = ""
+shovelPathReverts = ""
+hoeTilling = true
+hoeTillsInto = ""
+caneMaxHeight = 3
+cactusMaxHeight = 3
+```
 
 | Réglage             | Type            | Défaut  | Rôle                                                                                                                                                                                                                                                                                               |
 | ------------------- | --------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7470,6 +7948,18 @@ Les blocs, objets, fluides et tout le reste que les packs définissent. Configur
 
 Le butin, les fonctions et les noms de registre. Configuration uniquement.
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[data]
+lootInjections = true
+playerLoot = true
+registryRemaps = true
+anvils = true
+blockDrops = true
+functions = true
+```
+
 | Réglage          | Type    | Défaut | Rôle                                                                                                                                                                                                                       |
 | ---------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | booléen | `true` | Applique les fichiers loot_injections/*.json, qui ajoutent des pools à des tables de butin déjà existantes au lieu de remplacer la table entière                                                                           |
@@ -7484,6 +7974,18 @@ Le butin, les fonctions et les noms de registre. Configuration uniquement.
 *ce que fait chaque groupe*
 
 De petits changements dans le comportement de vanilla. Configuration uniquement, sauf `privacy`, qu'un pack peut aussi définir ; voir [Bonus : ajustements vanilla](#bonus--ajustements-vanilla).
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[tweaks]
+promptLeafDecay = true
+lenientPaths = true
+unbreakableSpawners = false
+experimentalWarning = false
+privacy = true
+darkSplash = true
+```
 
 | Réglage               | Type    | Défaut  | Rôle                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | --------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7905,6 +8407,133 @@ Quatre autres se trouvent dans la catégorie `content` plutôt que dans `tweaks`
 *référence*
 
 Ce qu'un pack 1.12.2 peut écrire et que cette version ne lit pas, et pourquoi. Un pack qui en écrit une se charge quand même ; la clé ne fait rien. Une ligne qui dit *pas encore reprise* a été ajoutée à la 1.12.2 après le portage de cette partie et reste à venir. Toutes les autres lignes ne peuvent pas, ou n'ont pas besoin de, passer sur ce moteur. Une ligne marquée *depuis 26.3* est ce qu'un pack 26.3 peut écrire et que cette version ne peut pas contenir ; le journal nomme chacune d'elles quand elle est abandonnée. Le tableau est tenu à jour au fil de l'avancée des versions.
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "basic",
+  "meta": 0,
+  "oreDict": "oreRuby",
+  "modelMeta": 0,
+  "variants": { "ruby_ore": { "hardness": 3.0 } }
+}
+```
+
+`<namespace>/biomes/*.json`
+
+```json
+{
+  "id": 5,
+  "baseHeight": 0.2,
+  "heightVariation": 0.1
+}
+```
+
+`<namespace>/dimensions/*.json`
+
+```json
+{
+  "id": 7,
+  "suffix": "_ruby",
+  "keepLoaded": true
+}
+```
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "rubicWorld": true,
+    "rubicHeightLimit": 512,
+    "regionCacheLimit": 64,
+    "deepRavines": true,
+    "oreVeins": true,
+    "readCofhWorldFiles": true,
+    "loadingScreenPercent": true,
+    "disableOptimizations": true,
+    "fixTinkersModelErrors": true,
+    "modernChestPlacement": false
+  }
+}
+```
+
+`<namespace>/entities/*.json`
+
+```json
+{
+  "entity": "minecraft:cow",
+  "galacticraft": true
+}
+```
+
+`<namespace>/overrides/<target>/<name>.json`
+
+```json
+{
+  "harvestTool": "shears"
+}
+```
+
+`<namespace>/villagers/*.json`
+
+```json
+{
+  "careers": ["farmer"]
+}
+```
+
+`<namespace>/trades/*.json`
+
+```json
+{
+  "trades": [
+    { "profession": "minecraft:farmer", "career": "farmer", "buy": { "item": "minecraft:wheat" }, "sell": { "item": "minecraft:emerald" } }
+  ]
+}
+```
+
+`<namespace>/gamerules/*.json`
+
+```json
+{
+  "minecraft:overworld": { "gameLoopFunction": "mypack:tick" }
+}
+```
+
+`<namespace>/biomes/*.json`
+
+```json
+{
+  "placement": { "villageSpawn": true }
+}
+```
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "oreDictionary": true,
+    "disableOverrides": false,
+    "tolerateMissingInAdvancements": true,
+    "terrainWorldTypes": ["default"],
+    "terrainWorldTypesAreBlacklist": false,
+    "pregenKeepLoaded": true,
+    "pregenPauseAbove": 90,
+    "pregenMillisPerRound": 50,
+    "pregenRelightSays": "Relighting",
+    "hurryWritesAbove": 100,
+    "rubicWorldDimensions": ["minecraft:overworld"],
+    "rubicWorldDimensionsAreBlacklist": false,
+    "verticalCubeLoadDistance": 8,
+    "cubeGCInterval": 20,
+    "cubeGenMillisPerRound": 20,
+    "cubesSentPerTick": 25
+  }
+}
+```
 
 | Clé                                                                                                                                                                                                              | Où                                                                                                  | Pourquoi                                                                                                                                                                                                                                                                                                                                                                                                          |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

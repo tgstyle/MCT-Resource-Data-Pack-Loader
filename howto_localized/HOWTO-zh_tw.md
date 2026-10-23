@@ -644,6 +644,8 @@ thatmod.jar
   "growth": { "stages": 8, "growth": 10 },
   "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
   "portal": { "dimension": "mypack:ruby_world" },
+  "container": { "rows": 3, "columns": 9 },
+  "bell": { "swing": true, "sound": "minecraft:block.note_block.bell" },
   "variants": {
     "ruby_ore": {
       "hardness": 3.0,
@@ -917,9 +919,26 @@ thatmod.jar
     "rows": 6,
     "columns": 9,
     "lootTable": "minecraft:chests/simple_dungeon",
-    "chestModel": true
+    "chestModel": true,
+    "guiTexture": "mypack:textures/gui/crate.png",
+    "guiWidth": 176,
+    "guiHeight": 222
   },
   "variants": { "crate": { "hardness": 2.5 } }
+}
+```
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container",
+  "container": {
+    "rows": 2,
+    "columns": 9,
+    "curioSlot": "belt"
+  },
+  "variants": { "pouch": { "maxSize": 1 } }
 }
 ```
 
@@ -1357,6 +1376,15 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
   "attackSpeed": -2.4,
   "cooldown": 40,
   "rolls": "d6",
+  "rollStore": "dice_total",
+  "locates": "Village",
+  "passesTurn": false,
+  "attackReach": 3.0,
+  "sweep": { "shape": "box", "damage": 0.5 },
+  "combo": { "window": 30, "steps": [ { "damage": 1.0 }, { "damage": 2.0 } ] },
+  "curioSlot": "ring",
+  "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
+  "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1488,6 +1516,7 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
     "steps": [
       { "damage": 1.0 },
       { "damage": 1.5 },
+      { "damage": 2.0, "sweep": { "shape": "line", "reach": 5.0, "width": 2.0 } },
       { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
     ]
   }
@@ -2106,9 +2135,19 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
+  "iconTexture": "mypack:textures/effect/ruby_sight.png",
   "attributes": [
     { "attribute": "minecraft:generic.movement_speed", "uuid": "91AEAA56-376B-4498-935B-2F7F68070635", "amount": 0.2, "operation": 2 }
   ]
+}
+```
+
+`<namespace>/potions/*.json`
+
+```json
+{
+  "color": "C0304A",
+  "icon": { "x": 2, "y": 1 }
 }
 ```
 
@@ -2183,6 +2222,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 {
   "item": "minecraft:iron_sword",
   "with": "minecraft:wooden_sword",
+  "result": "minecraft:golden_sword",
   "levels": 3,
   "enchantments": { "minecraft:sharpness": 2 },
   "grants": "mypack:sword_rite",
@@ -2227,6 +2267,18 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 }
 ```
 
+`<namespace>/block_drops/*.json`
+
+```json
+{
+  "block": "minecraft:wheat",
+  "properties": { "age": "7" },
+  "drops": [
+    { "item": "minecraft:gold_nugget", "chance": 0.1 }
+  ]
+}
+```
+
 | 鍵            | 必填 | 值               | 預設    | 作用                                                                                                    |
 | ------------- | ---- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------- |
 | `block`       | 是   | 方塊 id          |         | 規則所監看的方塊                                                                                        |
@@ -2262,6 +2314,16 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 {
   "requires": ["config:enableRightClickHarvest"],
   "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+`<namespace>/harvests/*.json`
+
+```json
+{
+  "crops": ["minecraft:beetroots", "minecraft:nether_wart"],
+  "age": 3,
   "replant": true
 }
 ```
@@ -2361,6 +2423,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
       "maxUses": 12,
       "xp": 2,
       "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "buySecondary": { "item": "minecraft:paper", "min": 1 },
       "sell": { "item": "mypack:ruby", "min": 1 }
     }
   ]
@@ -2404,6 +2467,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "lootTable": "mypack:entities/angry_cow",
   "profession": "mypack:jeweller",
   "baby": 0.05,
+  "keepsBaseBaby": false,
   "becomes": [
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
@@ -2415,11 +2479,17 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "jumpMultiplier": 1.0,
   "fallDamage": 1.0,
   "maxFallHeight": 3,
+  "stepHeight": 0.6,
+  "climbs": false,
+  "teleports": true,
+  "walks": false,
   "breathesUnderwater": false,
   "swims": false,
   "amphibious": false,
   "waterSlowdown": 0.8,
   "absorption": 0,
+  "hurtResistance": 20,
+  "ignoresEffects": ["minecraft:poison"],
   "experience": 3,
   "creatureAttribute": "undefined",
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
@@ -2438,6 +2508,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "steerable": false,
   "width": 0.9,
   "height": 1.4,
+  "bright": false,
   "pathPriorities": { "WATER": 0.0, "LAVA": -1.0, "DANGER_FIRE": 8.0, "DOOR_WOOD_CLOSED": 0.0 },
   "egg": { "primary": "AABBCC", "secondary": "112233" },
   "attributes": {
@@ -2451,9 +2522,16 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "hostile": true,
   "targets": ["minecraft:player"],
   "passive": false,
+  "attackReach": 3.0,
+  "knockback": 0.4,
+  "hitEffects": true,
+  "hitFire": true,
+  "threatLeast": 1,
+  "threatHostile": 2,
   "persistent": false,
   "silent": false,
   "picksUpLoot": false,
+  "collectsExperience": false,
   "hideArmor": false,
   "hideHeld": false,
   "tint": "C0304A",
@@ -2469,6 +2547,18 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
+  "digs": false,
+  "throwReturns": false,
+  "charges": false,
+  "pounces": false,
+  "sniffs": 0,
+  "fleesWhenHurt": 0.0,
+  "sleepsByDay": false,
+  "home": 0,
+  "patrols": false,
+  "swoops": false,
+  "gusts": false,
+  "gustPower": 1.5,
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -2485,6 +2575,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "trackingRange": 80,
   "trackVelocity": true,
   "trackingFrequency": 3,
+  "tasks": [ "-wander", { "task": "watchClosest", "priority": 6, "entity": "minecraft:player", "distance": 8 } ],
   "requires": ["mypack"]
 }
 ```
@@ -2705,12 +2796,30 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "-wander",
     { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
     { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
-    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 },
+    { "task": "wander", "priority": 8, "speed": 1.0, "chance": 120 },
+    { "task": "follow", "priority": 5, "speed": 1.0, "near": 3, "distance": 10 },
+    { "task": "leapAtTarget", "priority": 1, "leap": 0.5 },
+    { "task": "tempt", "priority": 4, "items": ["minecraft:wheat"], "speed": 1.2, "scared": false },
+    { "task": "attackMelee", "priority": 2, "speed": 1.2, "memory": true },
+    { "task": "openDoor", "priority": 6, "close": true },
+    { "task": "moveThroughVillage", "priority": 5, "speed": 1.0, "nocturnal": true },
+    { "task": "nearestAttackableTarget", "priority": 2, "entity": "minecraft:zombie", "sight": true, "nearby": false },
+    { "task": "hurtByTarget", "priority": 1, "help": true }
   ]
 }
 ```
 
 該清單在 `hostile`、`passive` 和上述各行為生效之後才套用，因此它擁有最終決定權。移動身體的任務會相互排斥：只有當優先順序更靠前的任務都沒有在移動生物時，它才會執行；而怪物自帶的攻擊位於優先順序 2，所以殭屍上的撲躍或逃跑需要優先順序 1，否則永遠輪不到它；蜘蛛和狼出於同樣的原因，把撲躍排在攻擊之前。基礎實體已經在執行的任務會被再新增一次，而不是被取代；請先移除舊的。有些任務只有在基礎實體具備其所驅動的東西時才有意義：弓箭戰鬥需要會射擊的基礎實體，坐下需要可馴服的基礎實體，交易需要村民。在無法承載該任務的基礎實體上要求它時，日誌會說明它需要哪種基礎實體，而變體會在沒有它的情況下運作。此版本中的村民靠遊戲的大腦而不是任務運作，所以下面的村民列只涉及大腦留給任務的部分。
+
+```json
+{
+  "entity": "minecraft:witch",
+  "tasks": [
+    { "task": "attackRanged", "priority": 2, "speed": 1.0, "cooldown": 30, "distance": 12 }
+  ]
+}
+```
 
 | 鍵          | 類型           | 預設           | 作用                                                                                                                                                                                          |
 | ----------- | -------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2820,6 +2929,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 {
   "dimensions": ["minecraft:the_nether"],
   "structures": ["minecraft:fortress"],
+  "radius": 32,
   "timeFrom": 13000,
   "timeTo": 23000,
   "dayAtLeast": 3,
@@ -2852,6 +2962,14 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 ```json
 {
   "entities": ["minecraft:blaze", "mymod:thing"],
+  "dimensions": ["minecraft:the_nether"],
+  "structures": ["minecraft:fortress"],
+  "radius": 32,
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "objective": "kills",
+  "scoreAtLeast": 5,
   "advancement": "minecraft:story/enter_the_nether"
 }
 ```
@@ -3088,6 +3206,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
       "sign": "Farm",
       "tool": "hoe",
       "standing": 64,
+      "area": 16,
       "takers": ["mypack:farmer"]
     },
     {
@@ -3263,7 +3382,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "mineshafts": false,
     "strongholds": true
   },
-  "roles": { "ocean": "mypack:ruby_ocean" }
+  "roles": { "ocean": "mypack:ruby_ocean" },
+  "requires": ["mypack"]
 }
 ```
 
@@ -3347,6 +3467,9 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "topBlock": "mypack:ruby_grass",
   "fillerBlock": "minecraft:dirt",
   "stoneBlock": "mypack:ruby_stone",
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.5,
+  "skyThickness": 2.0,
   "baseBiome": "minecraft:forest",
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
@@ -3557,15 +3680,28 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "waterVaporizes": false,
     "cloudHeight": 160,
     "cloudColor": "5B3E6A",
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
     "groundLevel": 63,
     "movementFactor": 4.0,
     "fogColor": "20102A",
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
     "showFog": false,
     "skyColor": "3B1E4A",
     "fixedTime": 18000,
     "sunriseColors": true,
     "ambientLight": 0.1,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
     "starBrightness": 0.8,
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 },
     "renderSky": true,
     "renderClouds": true,
     "renderWeather": true,
@@ -3586,11 +3722,12 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
-  "gameRules": { "doMobSpawning": "false" }
+  "gameRules": { "doMobSpawning": "false" },
+  "portal": { "frames": ["mypack:standing_gate"], "ignitedBy": "minecraft:flint_and_steel" }
 }
 ```
 
@@ -3849,6 +3986,14 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 
 原版沒有任何鍵能為維度提供專屬的天空圖片、極光或彩虹，因此它們在每個版本上的運作方式相同。
 
+```json
+{
+  "sky": {
+    "skybox": { "panorama": "mypack:textures/sky/panorama.png" }
+  }
+}
+```
+
 | 鍵                | 必填 | 值           | 預設     | 作用                                                                             |
 | ----------------- | ---- | ------------ | -------- | -------------------------------------------------------------------------------- |
 | `skybox.<face>`   | 否   | 材質路徑     | 無       | 立方體的一個面：`up`、`down`、`north`、`east`、`south` 或 `west`。六個面都要提供 |
@@ -3975,11 +4120,11 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5 }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
-      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+      "mobs": { "entities": ["#monster"], "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
     },
     "bounty": {
       "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
@@ -3988,7 +4133,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
       ]
     },
     "longnight": {
-      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 3.0, "wakeAt": 1000 }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -4115,7 +4260,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "platform": true,
     "platformBlock": "mypack:ruby_block",
     "sound": "block.portal.travel",
-    "owned": true
+    "owned": true,
+    "walkIn": false
   },
   "variants": { "ruby_portal": { "hardness": -1, "light": 11 } }
 }
@@ -4362,6 +4508,10 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "weight": 3,
   "minHeight": -56,
   "maxHeight": 16,
+  "waterLevel": 0,
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.5,
+  "skyThickness": 2.0,
   "dimensions": ["minecraft:overworld"],
   "biome": "minecraft:mushroom_fields",
   "floorCover": "minecraft:mycelium",
@@ -4382,7 +4532,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "ambientSound": "minecraft:block.water.ambient",
   "soundChance": 0.02,
   "particle": "minecraft:dripping_water",
-  "particleChance": 0.002
+  "particleChance": 0.002,
+  "requires": ["mypack"]
 }
 ```
 
@@ -4417,12 +4568,6 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 
 *洞穴區域*
 
-| 設定                    | 類型           | 預設  | 作用                                                                                                                                |
-| ----------------------- | -------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `caveRegionCells`       | 整數，單位為格 | `128` | 區域儲存格的寬度                                                                                                                    |
-| `caveRegionCellsY`      | 整數，單位為格 | `64`  | 區域儲存格的高度                                                                                                                    |
-| `caveRegionPlainWeight` | 整數           | `4`   | 每個儲存格擲骰時，單純、無區域的地下所占的權重。越高，越多地下沒有任何區域：在只有一個權重為 1 的區域時，約五分之一的儲存格會得到它 |
-
 `<namespace>/worldtemplates/*.json`
 
 ```json
@@ -4434,6 +4579,12 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   }
 }
 ```
+
+| 設定                    | 類型           | 預設  | 作用                                                                                                                                |
+| ----------------------- | -------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `caveRegionCells`       | 整數，單位為格 | `128` | 區域儲存格的寬度                                                                                                                    |
+| `caveRegionCellsY`      | 整數，單位為格 | `64`  | 區域儲存格的高度                                                                                                                    |
+| `caveRegionPlainWeight` | 整數           | `4`   | 每個儲存格擲骰時，單純、無區域的地下所占的權重。越高，越多地下沒有任何區域：在只有一個權重為 1 的區域時，約五分之一的儲存格會得到它 |
 
 地下有多少保持普通，由 `caveRegionPlainWeight` 這個 `terrain` 鍵決定，預設 `4`：只有一個權重為 1 的區域時，約五分之一的單元格會得到該區域。覆蓋層作用於頂蓋之下，所以延伸到地面之上的區域永遠不會在地表顯示。覆蓋層在每個洞穴中都有效，無論是哪種生成器挖出的。
 
@@ -4691,6 +4842,12 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "taper": "needle",
     "outline": "minecraft:obsidian",
     "fill": "minecraft:glowstone",
+    "middle": "minecraft:calcite",
+    "budding": "minecraft:budding_amethyst",
+    "buddingChance": 0.083,
+    "crystal": "minecraft:amethyst_cluster",
+    "crystalChance": 0.35,
+    "crack": 0.2,
     "surface": ["minecraft:grass_block"],
     "seeSky": true,
     "checkStay": true,
@@ -4719,6 +4876,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "density": 0.8,
     "rich": "mypack:rich_ruby_ore",
     "poor": "mypack:poor_ruby_ore",
+    "richAt": 0.88,
+    "poorAt": 0.4,
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -4825,6 +4984,16 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 *形狀*
 
 原版結構透過 `terrain` 設定中的 `structureAt` 固定到精確位置，寫成 `structure=x,z` 項目，每行一個：`"structureAt": ["villages=1000,-500"]`。**其中的 x 和 z 是方塊座標，不是區塊座標**，結構會在包含該方塊的區塊中生成。在 `terrainAdaptation` 把村莊鋪成城市街道的情況下，被固定的村莊的水井就位於該方塊本身；當該方塊離街區邊緣只有幾個方塊遠時，則位於街區允許的最近處；其他結構，以及沒有啟用它而鋪設的村莊，則從遊戲在該區塊中本會讓它們開始的地方開始。每個想要的實例寫一個項目。它的間距、間隔、最小生成距離和平地檢查全部不再起作用，所以位置由資源包自己負責，兩個相距不到一個區塊的固定位置會在同一個區塊中放入兩個結構。結構一旦建立，就依一般規則貼合其區塊處的地面。
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAt": ["villages=1000,-500"]
+  }
+}
+```
 
 | 設定          | 類型                         | 預設 | 作用                                                                                                                                                        |
 | ------------- | ---------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4976,6 +5145,7 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
   "ground": 0,
   "spacing": 64,
   "chance": 25,
+  "dimensions": ["minecraft:overworld"],
   "layers": [
     {
       "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
@@ -4989,6 +5159,16 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
               "...",
               ".a."]
     }
+  ]
+}
+```
+
+```json
+{
+  "cell": 32,
+  "at": [1000, -500],
+  "layers": [
+    { "palette": { "a": "mypack:keep_base" }, "map": ["a"] }
   ]
 }
 ```
@@ -5336,6 +5516,13 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
 
 *預先生成*
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[chunks]
+pregenBorderLimit = 8192
+```
+
 | 鍵                            | 作用                                                                                                                                                                  | 設定它的原因                                             |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
 | `pregenOnNewWorld`            | 在任何人遊玩之前，圍繞出生點生成的區塊半徑。12 是下限，0 表示取這個下限而不是什麼都不生成，因為遊戲本來就會自行在出生點周圍生成 12 個區塊。調高它可以延伸得比遊戲更遠 | 設定資源包在遊戲已生成的地形之外延伸多遠                 |
@@ -5535,13 +5722,28 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "name": "red",
   "displayName": "Red Team",
   "color": "red",
+  "prefix": "[R] ",
+  "suffix": "!",
+  "scoreboard": true,
   "friendlyFire": false,
+  "mobFriendlyFire": false,
+  "seeFriendlyInvisibles": true,
+  "nameTags": "always",
+  "deathMessages": "always",
+  "collision": "always",
   "joinable": false,
+  "balance": false,
   "entities": ["mypack:zombie_a", "mypack:sapper_a"],
+  "spawnBox": [0, 60, 0, 16, 80, 16],
   "picks": 0,
   "picksFrom": ["players"],
-  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
+  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }, { "item": "minecraft:iron_sword", "unbreakable": true }],
   "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" },
+  "spawn": "0,64,0",
+  "lead": "topScore",
+  "leadOn": "kaboom",
+  "leadIs": "Steve",
+  "leadSays": "You are the current round leader",
   "leadRuns": "mypack:lead_chosen"
 }
 ```
@@ -5629,20 +5831,38 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "displayName": "Kills",
   "criterion": "dummy",
   "display": "sidebar",
+  "render": "integer",
   "teamTotals": true,
+  "individuals": false,
+  "carries": false,
+  "awardsTo": "totals",
   "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
-    "death": -1
+    "death": -1,
+    "raid": true,
+    "order": true,
+    "ownKill": -1
   },
-  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "opens": { "by": "leader", "lobby": "0,64,0", "says": "Waiting for {leader} to start the round", "leaderSays": "Type /rdpl round start", "lobbyJoins": true, "joinsSays": "Round is in progress, you can join after it ends" },
   "ends": {
-    "afterMinutes": 10
+    "afterMinutes": 10,
+    "atScore": 100,
+    "afterRounds": 3,
+    "lastStanding": false,
+    "outSays": "You are out until the round ends",
+    "locksTeams": true,
+    "resets": true,
+    "intermissionSeconds": 10,
+    "intermissionSays": "Round cooldown {seconds}",
+    "startsSays": "Round starting in {seconds}"
   },
   "results": {
     "card": true,
     "title": "Final standings",
     "icon": "minecraft:tnt",
+    "image": "mypack:textures/gui/results.png",
+    "background": "1E2630",
     "seconds": 15
   }
 }
@@ -5762,7 +5982,12 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "teams": ["miners", "raiders"],
     "passPercent": 51,
     "voteSeconds": 30,
-    "cooldownSeconds": 60
+    "cooldownSeconds": 60,
+    "leadSays": "{player} reset the round",
+    "voteSays": "{player} calls a vote to reset the round",
+    "tallySays": "Reset the round? {yes} yes, {no} no, {seconds}",
+    "passSays": "The vote passed, so the round is reset",
+    "failSays": "The vote failed, so the round goes on"
   }
 }
 ```
@@ -5813,6 +6038,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "held": "frozen",
     "endsAtScore": 10,
     "cycles": 5,
+    "mobTags": ["duelist"],
     "mobTypes": ["minecraft:zombie"]
   }
 }
@@ -5856,6 +6082,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "color": "red",
   "waveDelay": 300,
   "spawnDistance": 32,
+  "reach": 96,
+  "timeout": 48000,
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
@@ -5923,7 +6151,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "image": "mypack:textures/gui/desert_card.png",
   "color": "3A2A10",
   "ticks": 120,
-  "when": { "timeFrom": 0, "timeTo": 12000 },
+  "when": { "timeFrom": 0, "timeTo": 12000, "biomes": ["minecraft:desert"], "dayAtLeast": 3, "advancement": "minecraft:story/mine_stone", "gameMode": "survival", "team": "red", "objective": "kills", "scoreAtLeast": 5 },
   "repeat": "once_per_player"
 }
 ```
@@ -5932,7 +6160,9 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 {
   "lines": ["{text}", "Speak to the gatekeeper for more."],
   "icon": "minecraft:ender_eye",
-  "cooldown": 30
+  "cooldown": 30,
+  "audience": "player",
+  "runs": "mypack:card_shown"
 }
 ```
 
@@ -5987,6 +6217,34 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 ### 觸發器設定
 
 *卡片*
+
+```json
+{
+  "trigger": "kill",
+  "dimension": "minecraft:the_nether",
+  "biomes": ["minecraft:desert"],
+  "structures": ["minecraft:village_plains"],
+  "radius": 32,
+  "advancement": "minecraft:story/mine_stone",
+  "item": "minecraft:diamond_sword",
+  "entity": "minecraft:zombie",
+  "count": 3,
+  "below": 0,
+  "above": 64,
+  "time": 13000,
+  "day": 5,
+  "minutes": 30,
+  "roll": "2d6",
+  "order": "Mine",
+  "exposure": "heat",
+  "level": 2,
+  "atLeast": 10,
+  "atMost": 12,
+  "objective": "kills",
+  "score": 5,
+  "requires": ["mypack"]
+}
+```
 
 | 設定                 | 類型                         | 預設     | 作用                                                                                                                                                                                                                |
 | -------------------- | ---------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -6113,7 +6371,45 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
     "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
-    "coin": "{player} tosses the old coin: {result}"
+    "coin": "{player} tosses the old coin: {result}",
+    "pickplayer": "{player} picks a player: {result}",
+    "pickteam": "{player} picks a team: {result}",
+    "heads": "heads",
+    "tails": "tails",
+    "lastnone": "No rolls yet",
+    "nobody": "There is nobody to pick from",
+    "notallowed": "You are not allowed to run that part of /rdplserver game",
+    "usage": "/rdplserver game <coin|die|dice|deck|teamroll|tiebreak>",
+    "die": "{player} rolls {dice}: {result}",
+    "packdie": "{player} rolls {die}: {result}",
+    "dice": "{player} rolls {dice}: {rolls} = {result}",
+    "advantage": "{player} rolls {dice} with advantage: {first} and {second}, keeps {result}",
+    "disadvantage": "{player} rolls {dice} with disadvantage: {first} and {second}, keeps {result}",
+    "pickmember": "{player} picks from {team}: {result}",
+    "draw": "{player} draws from {deck}: {result} ({left} left)",
+    "reshuffled": "{deck} was empty, so it is reshuffled: {player} draws {result} ({left} left)",
+    "shuffle": "{player} shuffles {deck}: {left} cards",
+    "left": "{deck} has {left} card(s) left",
+    "empty": "{deck} is empty, so shuffle it first",
+    "nodeck": "There is no deck called {deck}",
+    "teamroll": "{member} rolls {dice}: {result}",
+    "teamrollwin": "{result} wins the team roll with {score}",
+    "tiebreak": "The tie in {objective} between {sides} goes to {result}",
+    "notie": "{objective} has no tie at the top",
+    "noobjective": "There is no objective called {objective}",
+    "turn": "{group}'s turn: {seconds} seconds",
+    "turnclock": "{group}'s turn: {seconds}",
+    "turnwarn": "{group}: {seconds} seconds left",
+    "turnout": "{group} ran out of time",
+    "turnpass": "{group} passes the turn",
+    "turngap": "Next turn in {seconds}",
+    "notturn": "It is not your turn",
+    "noturns": "No turns are running",
+    "badsides": "A die has 2 to 1000 sides, not {sides}",
+    "badroll": "'{roll}' is not a roll such as 2d6+1, with 1 to 100 dice of 2 to 1000 sides",
+    "badaudience": "'{audience}' is not self, team, all, radius <blocks> or silent",
+    "nodie": "There is no die called {name}",
+    "noteam": "There is no team called {team}"
   }
 }
 ```
@@ -6230,6 +6526,7 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
   "rules": { "quietDraw": 100, "repeatDraw": 3 },
   "clock": { "minutes": 10, "addSeconds": 2 },
   "ai": 2,
+  "quiet": false,
   "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
 }
 ```
@@ -7029,6 +7326,7 @@ xxoxoxx
     "ambientCap": 15,
     "waterCreatureCap": 5,
     "monsterSpawnLight": 0,
+    "skyAnimals": true,
     "threatItems": ["minecraft:diamond_sword=5,1", "minecraft:diamond=1,16,batch"],
     "threatLevels": [10, 25, 50],
     "threatMost": -1,
@@ -7079,7 +7377,8 @@ xxoxoxx
     "flatBedrockFiller": "minecraft:cobblestone",
     "flatBedrockFillers": ["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"],
     "flatBedrockBiomeTypes": ["minecraft:is_ocean"],
-    "flatBedrockRetrogen": true
+    "flatBedrockRetrogen": true,
+    "flatBedrockRetrogenKey": "0001"
   }
 }
 ```
@@ -7136,6 +7435,90 @@ xxoxoxx
 *各群組的作用*
 
 `control.chunks` 決定這個分組。出生點區塊半徑、預先生成、回溯生成與重置、歡迎文字、提示卡片，以及遊戲的彈出通知。
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "retrogen": false,
+    "adoptExistingChunks": false,
+    "saysCard": true,
+    "saysIcon": "minecraft:compass",
+    "saysColor": "1E2630",
+    "saysImage": "rubyworld:textures/gui/card.png",
+    "saysBackground": true,
+    "saysFont": "rubyworld:runes",
+    "toasts": true,
+    "pregenOnNewWorld": 63,
+    "pregenToBorder": false,
+    "pregenAllDimensions": false,
+    "pregenResume": true,
+    "pregenChunksInFlight": 32,
+    "pregenBackup": false,
+    "resetClearsEntities": true,
+    "resetClearsScores": true,
+    "resetClearsInventory": false,
+    "resetClearsExperience": false,
+    "spawnChunkRadius": 128,
+    "spawnChunkRadii": ["minecraft:overworld=64"],
+    "welcomeSays": ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"],
+    "pregenDimensions": ["minecraft:overworld", "minecraft:the_nether"],
+    "pregenDimensionsWhenEntered": ["minecraft:the_end"],
+    "pregenRunningSays": "Building your world, %d%% done",
+    "pregenFinishedSays": "Your world is ready",
+    "pregenStoppedSays": "World building stopped",
+    "pregenSpectatingSays": "Spectating until the world is ready",
+    "pregenLogo": "center",
+    "pregenBackupSays": "Pack requested world backup",
+    "resetSays": "Pack requested map reset",
+    "resetSendsTo": "spawn",
+    "resetRuns": "rubyworld:rebuild_arena"
+  }
+}
+```
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[worldgen]
+retrogen = false
+adoptExistingChunks = false
+
+[chunks]
+saysCard = true
+saysIcon = "minecraft:compass"
+saysColor = "1E2630"
+saysImage = "rubyworld:textures/gui/card.png"
+saysBackground = true
+saysFont = "rubyworld:runes"
+toasts = true
+pregenOnNewWorld = 63
+pregenToBorder = false
+pregenAllDimensions = false
+pregenResume = true
+pregenChunksInFlight = 32
+pregenBackup = false
+resetClearsEntities = true
+resetClearsScores = true
+resetClearsInventory = false
+resetClearsExperience = false
+spawnChunkRadius = 128
+spawnChunkRadii = ["minecraft:overworld=64"]
+welcomeSays = ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"]
+pregenBorderLimit = 8192
+pregenDimensions = ["minecraft:overworld", "minecraft:the_nether"]
+pregenDimensionsWhenEntered = ["minecraft:the_end"]
+pregenRunningSays = "Building your world, %d%% done"
+pregenFinishedSays = "Your world is ready"
+pregenStoppedSays = "World building stopped"
+pregenSpectatingSays = "Spectating until the world is ready"
+pregenLogo = "center"
+pregenBackupSays = "Pack requested world backup"
+resetSays = "Pack requested map reset"
+resetSendsTo = "spawn"
+resetRuns = "rubyworld:rebuild_arena"
+```
 
 | 設定                          | 類型               | 預設                                     | 作用                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ----------------------------- | ------------------ | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7243,6 +7626,11 @@ xxoxoxx
     "worldMaxHeight": 384,
     "terrainOffset": 48,
     "deepStone": "minecraft:blackstone",
+    "skyStone": "minecraft:end_stone",
+    "skyShape": "islands",
+    "skyIslands": 0.5,
+    "skyThickness": 2.0,
+    "skyHeights": [330, 380],
     "noiseCaves": "deep",
     "worldSpawn": "0,72,0",
     "worldBorder": 4096,
@@ -7379,6 +7767,23 @@ xxoxoxx
 
 `control.recipes` 決定這個分組。合成配方與熔爐配方的封鎖及其白名單。熔爐封鎖也會連帶封鎖高爐、煙燻爐和營火的配方，因為 1.12.2 把所有烹飪配方都放在同一份熔爐清單中。切石機與鍛造配方永遠不會被封鎖，因為 1.12.2 沒有這些。
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[recipes]
+blockRecipes = true
+recipeWhitelist = ["minecraft", "mypack"]
+blockedRecipeMods = ["tconstruct"]
+recipeMatch = "recipe"
+blockFurnaceRecipes = true
+furnaceWhitelist = ["minecraft", "mypack"]
+blockedFurnaceMods = ["tconstruct"]
+logBlockedRecipes = true
+furnace = true
+removals = true
+skipMissingItems = true
+```
+
 | 設定                  | 類型                         | 預設            | 作用                                                                                                                                                                                |
 | --------------------- | ---------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `blockRecipes`        | 布林值                       | `false`         | 移除所有合成配方，但 `recipeWhitelist` 中的模組所提供的除外。白名單預設只有 `minecraft`，所以原版配方會保留，其他所有模組的配方都會被移除；請列出你自己資源包的命名空間以保留其配方 |
@@ -7399,6 +7804,31 @@ xxoxoxx
 
 `control.commands` 決定這個分組。誰可以執行此模組自己的指令：goto 的權限等級。
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "locateLevel": 2,
+    "gotoLevel": 3,
+    "gotoNextLevel": 3,
+    "gotoBackLevel": 3,
+    "gotoPlaceLevels": ["rubyworld:crypt=2"]
+  }
+}
+```
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[commands]
+locateLevel = 2
+gotoLevel = 3
+gotoNextLevel = 3
+gotoBackLevel = 3
+gotoPlaceLevels = ["rubyworld:crypt=2"]
+```
+
 | 設定              | 類型         | 預設 | 作用                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ----------------- | ------------ | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `locateLevel`     | 整數，0 到 4 | `2`  | 執行原版 /locate 所需的權限等級。2 就是原版的等級，因此在設定之前不會有任何變化。0 讓任何玩家都能執行，3 只留給管理員，4 則限定為 4 級管理員                                                                                                                                                                                                                                                                                                                                        |
@@ -7412,6 +7842,18 @@ xxoxoxx
 *各群組的作用*
 
 這些 `worldgen` 鍵不屬於任何分組，只屬於設定檔。
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[worldgen]
+worldgenDebug = false
+worldTemplate = "auto"
+tellWorldType = true
+worldBorderLimit = 60000000
+retrogenKey = "0000"
+retrogenChunksPerTick = 2
+```
 
 | 設定                    | 類型                | 預設       | 作用                                                                                                                                                     |
 | ----------------------- | ------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7428,6 +7870,17 @@ xxoxoxx
 
 如何找到並提供資源包資料夾。僅限設定。
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[packs]
+rootDirectory = "rdploader"
+overrideResourcePacks = true
+warnOnCaseMismatch = true
+logContents = false
+traceUnresolvedVariables = false
+```
+
 | 設定                       | 類型   | 預設        | 作用                                                                                                    |
 | -------------------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------- |
 | `rootDirectory`            | 文字   | `rdploader` | 載入資源包的資料夾，相對於 .minecraft 目錄。也可使用絕對路徑。需要重新啟動                              |
@@ -7441,6 +7894,31 @@ xxoxoxx
 *各群組的作用*
 
 方塊、物品、流體，以及資源包定義的其他一切。僅限設定。
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[content]
+load = true
+vanillaClients = false
+sounds = true
+fuels = true
+tooltips = true
+potions = true
+brewing = true
+villagers = true
+entities = true
+overrides = true
+disabled = true
+hardness = true
+shovelPaths = true
+shovelPathBecomes = ""
+shovelPathReverts = ""
+hoeTilling = true
+hoeTillsInto = ""
+caneMaxHeight = 3
+cactusMaxHeight = 3
+```
 
 | 設定                | 類型           | 預設    | 作用                                                                                                                                                                                     |
 | ------------------- | -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7470,6 +7948,18 @@ xxoxoxx
 
 戰利品、函數和登錄表名稱。僅限設定。
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[data]
+lootInjections = true
+playerLoot = true
+registryRemaps = true
+anvils = true
+blockDrops = true
+functions = true
+```
+
 | 設定             | 類型   | 預設   | 作用                                                                                                               |
 | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------ |
 | `lootInjections` | 布林值 | `true` | 套用 loot_injections/*.json 檔案，這些檔案為已存在的戰利品表新增獎勵池，而不是取代整張表                           |
@@ -7484,6 +7974,18 @@ xxoxoxx
 *各群組的作用*
 
 對原版行為的小改動。僅限設定，唯獨 `privacy` 資源包也能設定；參見[額外功能：原版調整](#額外功能原版調整)。
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[tweaks]
+promptLeafDecay = true
+lenientPaths = true
+unbreakableSpawners = false
+experimentalWarning = false
+privacy = true
+darkSplash = true
+```
 
 | 設定                  | 類型   | 預設    | 作用                                                                                                                                                                                                                                                                                                                 |
 | --------------------- | ------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7905,6 +8407,133 @@ Blast Plaster 負責處理爆炸後的行為：逐方塊修復彈坑、考量樹
 *值清單*
 
 1.12.2 資源包可以寫、但此版本不讀取的內容，以及原因。寫了其中一項的資源包仍會載入；該鍵不起任何作用。標示*尚未移植*的列，是在該部分移植之後才加入 1.12.2、仍待移植過來的。其餘每一列在這個引擎上都無法、或無須移植。標示*自 26.3 起*的列，是 26.3 資源包可以寫、但此版本無法容納的內容；日誌會在每一項被捨棄時指出。此表會隨各條線的進展保持最新。
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "basic",
+  "meta": 0,
+  "oreDict": "oreRuby",
+  "modelMeta": 0,
+  "variants": { "ruby_ore": { "hardness": 3.0 } }
+}
+```
+
+`<namespace>/biomes/*.json`
+
+```json
+{
+  "id": 5,
+  "baseHeight": 0.2,
+  "heightVariation": 0.1
+}
+```
+
+`<namespace>/dimensions/*.json`
+
+```json
+{
+  "id": 7,
+  "suffix": "_ruby",
+  "keepLoaded": true
+}
+```
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "rubicWorld": true,
+    "rubicHeightLimit": 512,
+    "regionCacheLimit": 64,
+    "deepRavines": true,
+    "oreVeins": true,
+    "readCofhWorldFiles": true,
+    "loadingScreenPercent": true,
+    "disableOptimizations": true,
+    "fixTinkersModelErrors": true,
+    "modernChestPlacement": false
+  }
+}
+```
+
+`<namespace>/entities/*.json`
+
+```json
+{
+  "entity": "minecraft:cow",
+  "galacticraft": true
+}
+```
+
+`<namespace>/overrides/<target>/<name>.json`
+
+```json
+{
+  "harvestTool": "shears"
+}
+```
+
+`<namespace>/villagers/*.json`
+
+```json
+{
+  "careers": ["farmer"]
+}
+```
+
+`<namespace>/trades/*.json`
+
+```json
+{
+  "trades": [
+    { "profession": "minecraft:farmer", "career": "farmer", "buy": { "item": "minecraft:wheat" }, "sell": { "item": "minecraft:emerald" } }
+  ]
+}
+```
+
+`<namespace>/gamerules/*.json`
+
+```json
+{
+  "minecraft:overworld": { "gameLoopFunction": "mypack:tick" }
+}
+```
+
+`<namespace>/biomes/*.json`
+
+```json
+{
+  "placement": { "villageSpawn": true }
+}
+```
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "oreDictionary": true,
+    "disableOverrides": false,
+    "tolerateMissingInAdvancements": true,
+    "terrainWorldTypes": ["default"],
+    "terrainWorldTypesAreBlacklist": false,
+    "pregenKeepLoaded": true,
+    "pregenPauseAbove": 90,
+    "pregenMillisPerRound": 50,
+    "pregenRelightSays": "Relighting",
+    "hurryWritesAbove": 100,
+    "rubicWorldDimensions": ["minecraft:overworld"],
+    "rubicWorldDimensionsAreBlacklist": false,
+    "verticalCubeLoadDistance": 8,
+    "cubeGCInterval": 20,
+    "cubeGenMillisPerRound": 20,
+    "cubesSentPerTick": 25
+  }
+}
+```
 
 | 鍵                                                                                                                                                                  | 位置                                                                                          | 原因                                                                                                                                                                                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
