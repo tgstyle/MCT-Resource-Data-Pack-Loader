@@ -43,6 +43,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 **Bloky a předměty**
 - [Bloky](#bloky)
 - [Kontejnery](#kontejnery)
+- [Typy slotů Curios](#typy-slotů-curios)
 - [Zvony](#zvony)
 - [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury)
 - [Jak donutit vanillu zacházet s tvým blokem správně](#jak-donutit-vanillu-zacházet-s-tvým-blokem-správně)
@@ -55,6 +56,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 **Výroba, kořist a obchod**
 - [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
+- [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
@@ -138,6 +140,7 @@ V `data/`:
 | Cesta                                        | Co obsahuje                                                                                                                                                                                          |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `<namespace>/blocks/*.json`                  | Definice bloků. [Bloky](#bloky)                                                                                                                                                                      |
+| `<namespace>/curioslots/*.json`              | Typy slotů Curios, do kterých lze předmět nasadit. [Typy slotů Curios](#typy-slotů-curios)                                                                                                           |
 | `<namespace>/items/*.json`                   | Definice předmětů. [Předměty](#předměty)                                                                                                                                                             |
 | `<namespace>/fluids/*.json`                  | Tekutiny s blokem a kbelíkem. [Tekutiny](#tekutiny)                                                                                                                                                  |
 | `<namespace>/materials/*.json`               | Materiály nástrojů a zbroje. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                            |
@@ -173,6 +176,8 @@ V `data/`:
 | `<namespace>/structures/*.nbt`               | Šablony pro sazenice, `imprint` a přepisy módů. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                |
 | `<namespace>/recipes/*.json`                 | Výrobní recepty, přidané nebo nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                       |
 | `<namespace>/recipe_removals/*.json`         | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                           |
+| `<namespace>/recipe_locks/*.json`            | Recepty, které zůstávají zavřené, dokud hráč nezíská pokrok. [Zámky receptů](#zámky-receptů)                                                                                                         |
+| `<namespace>/spawn_locks/*.json`             | Moby, které se neobjeví, dokud neplatí podmínky. [Zámky spawnu](#zámky-spawnu)                                                                                                                       |
 | `<namespace>/disabled/*.json`                | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                            |
 | `<namespace>/furnace/*.json`                 | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                                            |
 | `<namespace>/tooltips/*.json`                | Další řádky popisků. [Popisky předmětů](#popisky-předmětů)                                                                                                                                           |
@@ -951,6 +956,53 @@ Položka `structure` nahradí vygenerovaný strom některou z tvých šablon, co
 
 **Tabulka kořisti se plní při prvním použití**, ne když se blok umístí, což ho činí užitečným ve struktuře: kdo ho otevře první, dostane výsledek losování, a stejně ho vylosuje i násypka nebo komparátor, který se k němu dostane dřív. Stejnou tabulku lze použít přes `lootTable` u tvaru otisku nebo pozemku vesnice, takže balíček může tyto bloky umisťovat při generování světa a stejně je zásobit.
 
+**Nosit lze jakýkoli předmět.** `curioSlot` je také klíč předmětu, nejen kontejneru, takže prsten, náhrdelník nebo talisman kontejner nepotřebuje. Předmět jde do tohoto slotu Curios a dokud v něm je, `wornEffects` a `wornAttributes` působí na toho, kdo ho nosí. Klíč `bauble` z 1.12.2 se čte jako `curioSlot`.
+
+```json
+{
+  "curioSlot": "ring",
+  "wornEffects": [
+    { "potion": "minecraft:speed", "amplifier": 1, "ambient": true }
+  ],
+  "wornAttributes": [
+    { "attribute": "maxHealth", "amount": 10.0, "operation": 0 }
+  ],
+  "variants": { "ring": { "maxSize": 1 } }
+}
+```
+
+Položka v `wornEffects` bere `potion`, `amplifier`, `ambient` a `showParticles`, které je tady ve výchozím stavu vypnuté. Nemá `duration`: efekt se udržuje, dokud se předmět nosí, a po sundání vyprchá za jednu až dvě sekundy. Položka v `wornAttributes` bere `attribute`, `amount` a `operation`, kde `0` přičítá, `1` násobí základ a `2` násobí celek, a změna se sundáním předmětu odebere. Není tu `uuid`: změna je pojmenovaná podle předmětu, takže dva stejné nošené předměty sdílejí jednu změnu a nesčítají se. Obojí se čte jednou za sekundu a nikdy se neukládá s hráčem.
+
+## Typy slotů Curios
+
+*předměty*
+
+`<namespace>/curioslots/*.json`
+
+```json
+{
+  "size": 2,
+  "order": 5,
+  "icon": "mypack:slot/gem",
+  "cosmetic": true,
+  "dropRule": "ALWAYS_KEEP",
+  "renderToggle": true,
+  "entities": ["minecraft:player"]
+}
+```
+
+Soubor tady přidá typ slotu Curios nebo upraví slot, který Curios už má, a předmět ho uvede v `curioSlot`. Název souboru je id slotu, takže `gem.json` je slot `gem`. Hráči vidí jeho název z klíče lang `curios.identifier.gem` a ikona prázdného pole je textura v `assets/<namespace>/textures/slot/<name>.png`. Verze pro 1.12.2 takovou složku nemá, protože sloty Baubles jsou pevné.
+
+| Klíč           | Povinné | Hodnota                                            | Výchozí            | Co dělá                                                             |
+| -------------- | ------- | -------------------------------------------------- | ------------------ | ------------------------------------------------------------------- |
+| `size`         | ne      | celé číslo                                         | `1`                | Kolik polí slot má                                                  |
+| `order`        | ne      | celé číslo                                         | výchozí z Curios   | Kde slot leží na obrazovce Curios, nejnižší první                   |
+| `icon`         | ne      | `namespace:name`                                   | žádná              | Ikona prázdného pole z `textures/slot/<name>.png` v tomto namespace |
+| `cosmetic`     | ne      | boolean                                            | `false`            | Přidá kosmetické pole ke každému poli slotu                         |
+| `dropRule`     | ne      | `DEFAULT`, `ALWAYS_DROP`, `ALWAYS_KEEP`, `DESTROY` | výchozí z Curios   | Co se stane s předměty v něm, když nositel zemře                    |
+| `renderToggle` | ne      | boolean                                            | výchozí z Curios   | Zda má slot tlačítko, které skryje, co se v něm nosí                |
+| `entities`     | ne      | seznam id entit                                    | `minecraft:player` | Které entity slot dostanou                                          |
+
 ## Zvony
 
 *bloky*
@@ -1380,27 +1432,33 @@ Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do da
 
 *předměty*
 
-| Klíč           | Povinné       | Hodnota                                    | Výchozí              | Co dělá                                                                                                                                                                                                                                                        |
-| -------------- | ------------- | ------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | ano           | objekt názvu varianty na variantu          |                      | Jeden předmět na záznam. Klíč je jeho název v registru a pojmenovává jeho model, texturu a jazykový klíč                                                                                                                                                       |
-| `type`         | ne            | jeden z typů výše                          | `basic`              | Jaký typ předmět má                                                                                                                                                                                                                                            |
-| `creativeTab`  | ne            | název karty                                | žádný                | Karta, na které se objeví, viz [Karty kreativního režimu](#karty-kreativního-režimu)                                                                                                                                                                           |
-| `material`     | tool, armor   | název materiálu                            | žádný                | Z kterého z tvých materiálů je vyroben                                                                                                                                                                                                                         |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`        | žádný                | Jaký je to nástroj. `sword` je nástroj z 1.12.2, ne vanilla meč: udeří za 3 plus `damage` materiálu, těží bloky, jejichž `harvestTool` je `sword`, bere těžební kouzla a ani nezametá, ani neřeže pavučiny                                                     |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`            | žádný                | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots`                                                                                                                                                                                            |
-| `eat`          | food          | boolean                                    | `false`              | Používá animaci jedení                                                                                                                                                                                                                                         |
-| `alwaysEdible` | food          | boolean                                    | `false`              | Lze sníst i při plné liště hladu                                                                                                                                                                                                                               |
-| `useDuration`  | drink, potion | celé číslo, ticky                          | `32`                 | Pro `drink` a `potion`: jak dlouho trvá pití, v ticích (20 ticků = 1 sekunda). Ostatní typy to ignorují                                                                                                                                                        |
-| `attackSpeed`  | ne            | desetinné číslo                            | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                                                                                                    |
-| `cooldown`     | ne            | celé číslo, ticky                          | `0`                  | U `food`, `drink` a `potion`, jak dlouho předmět po spotřebování odmítá opětovné použití; u předmětu, který `rolls`, jak dlouho mezi hody                                                                                                                      |
-| `container`    | drink         | název předmětu                             | žádný                | Co zůstane, například láhev. U předmětu `container` je tento klíč místo toho vlastním nastavením váčku, viz [Kontejnery](#kontejnery)                                                                                                                          |
-| `crop`         | seed          | název bloku                                | žádný                | Plodina, kterou sází                                                                                                                                                                                                                                           |
-| `soil`         | seed          | název bloku                                | `minecraft:farmland` | Na co ji lze zasadit                                                                                                                                                                                                                                           |
-| `rolls`        | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček | žádný                | U obyčejného předmětu pravé kliknutí hodí tak, jako by to udělalo `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                             |
-| `rollStore`    | ne            | název cíle skóre                           | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                                                                                                          |
-| `locates`      | ne            | `Village`, `minecraft:river`               | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše |
-| `passesTurn`   | ne            | boolean                                    | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                                                                                                             |
-| `requires`     | ne            | seznam id módů nebo namespace balíčků      | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                              |
+| Klíč             | Povinné       | Hodnota                                    | Výchozí              | Co dělá                                                                                                                                                                                                                                                        |
+| ---------------- | ------------- | ------------------------------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`       | ano           | objekt názvu varianty na variantu          |                      | Jeden předmět na záznam. Klíč je jeho název v registru a pojmenovává jeho model, texturu a jazykový klíč                                                                                                                                                       |
+| `type`           | ne            | jeden z typů výše                          | `basic`              | Jaký typ předmět má                                                                                                                                                                                                                                            |
+| `creativeTab`    | ne            | název karty                                | žádný                | Karta, na které se objeví, viz [Karty kreativního režimu](#karty-kreativního-režimu)                                                                                                                                                                           |
+| `material`       | tool, armor   | název materiálu                            | žádný                | Z kterého z tvých materiálů je vyroben                                                                                                                                                                                                                         |
+| `toolClass`      | tool          | `pickaxe`, `axe`, `shovel`, `sword`        | žádný                | Jaký je to nástroj. `sword` je nástroj z 1.12.2, ne vanilla meč: udeří za 3 plus `damage` materiálu, těží bloky, jejichž `harvestTool` je `sword`, bere těžební kouzla a ani nezametá, ani neřeže pavučiny                                                     |
+| `slot`           | armor         | `head`, `chest`, `legs`, `feet`            | žádný                | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots`                                                                                                                                                                                            |
+| `eat`            | food          | boolean                                    | `false`              | Používá animaci jedení                                                                                                                                                                                                                                         |
+| `alwaysEdible`   | food          | boolean                                    | `false`              | Lze sníst i při plné liště hladu                                                                                                                                                                                                                               |
+| `useDuration`    | drink, potion | celé číslo, ticky                          | `32`                 | Pro `drink` a `potion`: jak dlouho trvá pití, v ticích (20 ticků = 1 sekunda). Ostatní typy to ignorují                                                                                                                                                        |
+| `attackReach`    | ne            | desetinné číslo, bloky                     | `3.0`                | Jak daleko sahá úder s předmětem v hlavní ruce. Platí i pro pravé kliknutí na tvory. Viz [Zbraně](#zbraně)                                                                                                                                                     |
+| `sweep`          | ne            | objekt                                     | žádný                | Zraní i další tvory kolem úderu v plné síle. Viz [Zbraně](#zbraně)                                                                                                                                                                                             |
+| `combo`          | ne            | objekt                                     | žádný                | Údery do `window` ticků po sobě procházejí `steps`. Viz [Zbraně](#zbraně)                                                                                                                                                                                      |
+| `attackSpeed`    | ne            | desetinné číslo                            | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                                                                                                    |
+| `cooldown`       | ne            | celé číslo, ticky                          | `0`                  | U `food`, `drink` a `potion`, jak dlouho předmět po spotřebování odmítá opětovné použití; u předmětu, který `rolls`, jak dlouho mezi hody                                                                                                                      |
+| `container`      | drink         | název předmětu                             | žádný                | Co zůstane, například láhev. U předmětu `container` je tento klíč místo toho vlastním nastavením váčku, viz [Kontejnery](#kontejnery)                                                                                                                          |
+| `crop`           | seed          | název bloku                                | žádný                | Plodina, kterou sází                                                                                                                                                                                                                                           |
+| `soil`           | seed          | název bloku                                | `minecraft:farmland` | Na co ji lze zasadit                                                                                                                                                                                                                                           |
+| `rolls`          | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček | žádný                | U obyčejného předmětu pravé kliknutí hodí tak, jako by to udělalo `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                             |
+| `rollStore`      | ne            | název cíle skóre                           | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                                                                                                          |
+| `curioSlot`      | ne            | název slotu Curios                         | žádný                | Slot Curios, do kterého lze předmět nasadit, u předmětu libovolného typu. Bez nainstalovaného Curios se ignoruje                                                                                                                                               |
+| `wornEffects`    | ne            | seznam efektů                              | žádný                | Efekty lektvaru držené na nositeli, dokud je předmět ve svém slotu Curios, jako `potion`, `amplifier`, `ambient` a `showParticles`                                                                                                                             |
+| `wornAttributes` | ne            | seznam změn atributů                       | žádný                | Změny atributů držené na nositeli, dokud je předmět ve svém slotu Curios, jako `attribute`, `amount` a `operation`                                                                                                                                             |
+| `locates`        | ne            | `Village`, `minecraft:river`               | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše |
+| `passesTurn`     | ne            | boolean                                    | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                                                                                                             |
+| `requires`       | ne            | seznam id módů nebo namespace balíčků      | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                              |
 
 ### Klíče variant předmětů
 
@@ -1414,6 +1472,60 @@ Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do da
 | `saturation` | food        | desetinné číslo                      | `0.0`    | Obnovená sytost                                                                                                                                                                                                                                       |
 | `tags`       | ne          | seznam id tagů                       | žádný    | Tagy předmětů, do kterých se tato varianta zapíše; soubory tagů se generují za tebe                                                                                                                                                                   |
 | `potion`     | food, drink | `potion,duration,amplifier`          | žádný    | Efekt aplikovaný, když se varianta sní nebo vypije. Čtvrtá část, `true`, z něj udělá ambientní. Prospěšný efekt je v popisku pojmenován zeleně, následovaný zesílením římskými číslicemi, když je nad 0, a žádný efekt, který dává, neukazuje částice |
+
+### Zbraně
+
+*předměty*
+
+Předmět může dosáhnout dál než výchozích `3.0` bloků, zranit tvory kolem svého cíle nebo procházet řetězec úderů. Klíče patří do souboru předmětu vedle `attackSpeed`. Příklad ostatní klíče vynechává.
+
+```json
+{
+  "attackReach": 8.0,
+  "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
+  "combo": {
+    "window": 40,
+    "steps": [
+      { "damage": 1.0 },
+      { "damage": 1.5 },
+      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
+    ]
+  }
+}
+```
+
+`attackReach` je dosah úderu s předmětem v hlavní ruce v blocích, nad `0` a nejvýše `64`. Platí i pro pravé kliknutí na tvory. Kreativní režim si ponechává svůj bonus dosahu navíc a k bloku se dosáhne jen tak daleko, jak hra dovolí.
+
+`sweep` zraní další tvory kolem cíle, když úder dopadne v plné síle, tedy nad 90 % obnovy útoku. Má tyto klíče:
+
+| Klíč     | Povinné | Hodnota                        | Výchozí | Co dělá                                         |
+| -------- | ------- | ------------------------------ | ------- | ----------------------------------------------- |
+| `shape`  | ne      | `box`, `arc`, `line`, `circle` | `box`   | Tvar, který vybírá tvory. Viz níže              |
+| `reach`  | ne      | desetinné číslo, 0.1 až 64     | `3.0`   | Jak daleko tvar sahá, v blocích                 |
+| `angle`  | ne      | desetinné číslo, 1 až 360      | `90.0`  | U `arc` šířka výseče ve stupních                |
+| `width`  | ne      | desetinné číslo, 0.1 až 64     | `1.0`   | U `line` šířka pruhu v blocích                  |
+| `damage` | ne      | desetinné číslo, 0 až 10       | `0.5`   | Podíl poškození úderu, který každý tvor dostane |
+
+- `box` je vlastní vlna hry: tvory vedle cíle, nejvýše `attackReach` předmětu od hráče (bez něj `3.0`). Ostatní klíče se ignorují.
+- `arc` je výseč před hráčem široká `angle` stupňů a dlouhá `reach` bloků, pro tvory zhruba ve výšce hráče.
+- `line` je pruh široký `width` bloků podél hráčova pohledu, dlouhý `reach` bloků.
+- `circle` jsou všichni tvorové do `reach` bloků od hráče, zhruba ve výšce hráče, před ním i za ním.
+
+`combo` způsobí, že údery zasazené do `window` ticků po sobě procházejí `steps`, jeden krok na úder, a po posledním začínají znovu:
+
+| Klíč     | Povinné | Hodnota                      | Výchozí | Co dělá                                                      |
+| -------- | ------- | ---------------------------- | ------- | ------------------------------------------------------------ |
+| `window` | ne      | celé číslo, ticky, nejméně 1 | `30`    | Nejdelší odstup dvou úderů, který se ještě počítá do řetězce |
+| `steps`  | ano     | seznam kroků                 |         | Jeden krok na úder. Alespoň jeden                            |
+
+Každý krok má tyto klíče:
+
+| Klíč     | Povinné | Hodnota                   | Výchozí          | Co dělá                                                              |
+| -------- | ------- | ------------------------- | ---------------- | -------------------------------------------------------------------- |
+| `damage` | ne      | desetinné číslo, 0 až 100 | `1.0`            | Násobí poškození úderu před brněním                                  |
+| `sweep`  | ne      | objekt                    | `sweep` předmětu | Nahradí `sweep` předmětu pro tento úder, se stejnými klíči jako výše |
+
+Kombo se posouvá a vlna se spouští jen úderem v plné síle. Slabší úder kombo vynuluje a nedostane ani poškození kroku, ani vlnu. Postup se drží u každého hráče v paměti a nikdy se neukládá. Odhlášení, přepnutí na jiný předmět nebo vypršení `window` ho vynuluje. Vlna nikdy nezraní hráče, cíl, spojence, pozorovatele ani značkovací stojany na zbroj a každý tvor dostane `damage` násobek úderu po násobiči kroku. Úder, jehož základní poškození není vyšší než poslední poškození cíle, zahodí odolnost proti zranění dříve, než se použije násobič kroku, takže ho krok nemůže zvýšit; týká se to jen rychlosti útoku 2 a více.
 
 ## Tekutiny
 
@@ -1919,6 +2031,32 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 | `item`     | jedno ze dvou | název předmětu    | žádný   | Předmět, který hoří       |
 | `tag`      | jedno ze dvou | id tagu           | žádný   | Hoří všechno v tomto tagu |
 | `burnTime` | ano           | celé číslo, ticky | `0`     | Uhlí je 1600, prkno 300   |
+
+## Zámky receptů
+
+*výroba, kořist a obchod*
+
+`<namespace>/recipe_locks/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Drží recepty na výrobu zavřené, dokud hráč nezíská pokrok.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword"]
+}
+```
+
+| Klíč          | Povinný | Hodnota               | Výchozí | Co dělá                                                                                                                    |
+| ------------- | ------- | --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | ano     | `namespace:path`      | žádný   | Pokrok, který hráč potřebuje, aby tyto recepty fungovaly. Soubor bez něj se přeskočí a log to uvede                        |
+| `names`       | ne      | seznam                | žádný   | Názvy receptů, které se zadrží. Koncová `*` odpovídá všem názvům začínajícím tímto textem, například `thermalfoundation:*` |
+| `namespaces`  | ne      | seznam                | žádný   | Všechny recepty těchto namespace                                                                                           |
+| `outputs`     | ne      | seznam názvů předmětů | žádný   | Všechny recepty, které vyrábějí některý z těchto předmětů                                                                  |
+
+Hráč bez pokroku vidí u odpovídajícího receptu prázdný výsledný slot, a to na pracovním stole, v mřížce 2x2 v inventáři i tehdy, když mřížku vyplní kniha receptů; hráč, který pokrok má, vyrábí jako obvykle. Pece, kovadliny a automatické výrobníky se nezadržují. Více souborů se sčítá a recept, který odpovídá dvěma souborům, potřebuje oba pokroky. Soubor, který nevybere žádný recept, se přeskočí a log to uvede.
 
 ## Popisky předmětů
 
@@ -2703,6 +2841,28 @@ Hodiny běží na světovém čase, takže se zastaví, když nikdo nehraje, a n
 
 Varianta, která žádnou z těchto podmínek nenastaví, se objevuje jako dřív, a varianta s více podmínkami se objeví jen tam a tehdy, kdy platí všechny. Omezují přirozený spawn, včetně toho, který provádí chunk při generování; vejce, `/summon`, spawner a `becomes` omezené nejsou. `advancement`, `objective` a `scoreAtLeast` se posuzují společně pro každého hráče do 128 bloků od místa spawnu, bez pozorovatelů: všechny musí splnit tentýž hráč, a když nikdo takhle blízko není, varianta, která některou z nich nastaví, se neobjeví.
 
+### Zámky spawnu
+
+*varianty entit*
+
+`<namespace>/spawn_locks/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Zadrží přirozený spawn uvedených mobů, dokud neplatí stejný druh podmínek jako u variant, takže lze zamknout libovolného moba i bez souboru varianty.
+
+```json
+{
+  "entities": ["minecraft:blaze", "mymod:thing"],
+  "advancement": "minecraft:story/enter_the_nether"
+}
+```
+
+| Klíč                                                                                                                 | Povinný | Hodnota                  | Výchozí | Co dělá                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------- | ------- | ------------------------ | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                           | ano     | seznam názvů entit       | žádný   | Moby, které se zadrží, například `minecraft:blaze`. Soubor bez něj se přeskočí a log to uvede                               |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `objective`, `scoreAtLeast` | ne      | jako v Podmínkách spawnu | žádný   | Stejné klíče se stejným významem jako v Podmínkách spawnu. Soubor, který nenastaví žádný z nich, se přeskočí a log to uvede |
+
+Mob uvedený ve více souborech nebo i ve variantě se objeví jen tam a tehdy, kdy platí všechny podmínky. Zadržují se přirozené spawny, i ty, které chunk vytvoří při generování; vejce, `/summon` a spawner ne.
+
 ### Síť
 
 *varianty entit*
@@ -2730,13 +2890,13 @@ Varianta, která žádnou z těchto podmínek nenastaví, se objevuje jako dří
 }
 ```
 
-| Klíč            | Povinný | Hodnota | Výchozí     | Co dělá                                                                  |
-| --------------- | ------- | ------- | ----------- | ------------------------------------------------------------------------ |
-| `bossBar`       | ne      | objekt  | žádný       | Ukazuje hráčům poblíž ukazatel bosse, dokud tvor žije                    |
-| `bossBar.name`  | ne      | text    | jméno tvora | Název na ukazateli                                                       |
-| `bossBar.color` | ne      | text    | `purple`    | `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white`          |
-| `bossBar.style` | ne      | text    | `progress`  | `progress`, `notched_6`, `notched_10`, `notched_12` nebo `notched_20`    |
-| `bossBar.background` | ne | objekt  | žádný       | Textura vykreslená za ukazatelem a jeho názvem: `texture` (`namespace:cesta.png`, povinná), `width` a `height` (výchozí 182 a výška řádku ukazatele), `x` a `y` (posun od levého horního rohu řádku s názvem, výchozí 0) |
+| Klíč                 | Povinný | Hodnota | Výchozí     | Co dělá                                                                                                                                                                                                                  |
+| -------------------- | ------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bossBar`            | ne      | objekt  | žádný       | Ukazuje hráčům poblíž ukazatel bosse, dokud tvor žije                                                                                                                                                                    |
+| `bossBar.name`       | ne      | text    | jméno tvora | Název na ukazateli                                                                                                                                                                                                       |
+| `bossBar.color`      | ne      | text    | `purple`    | `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white`                                                                                                                                                          |
+| `bossBar.style`      | ne      | text    | `progress`  | `progress`, `notched_6`, `notched_10`, `notched_12` nebo `notched_20`                                                                                                                                                    |
+| `bossBar.background` | ne      | objekt  | žádný       | Textura vykreslená za ukazatelem a jeho názvem: `texture` (`namespace:cesta.png`, povinná), `width` a `height` (výchozí 182 a výška řádku ukazatele), `x` a `y` (posun od levého horního rohu řádku s názvem, výchozí 0) |
 
 Každý tvor má vlastní ukazatel, který vidí všichni hráči v dosahu jeho `trackingRange`. Ukazatel sleduje zdraví tvora, takže se při zranění vyprazdňuje, a zmizí, když tvor zemře, je odstraněn nebo se uvolní jeho chunk. Pozorovatelé (spectator) ho nevidí. Neznámá hodnota `color` nebo `style` se zapíše do logu a použije se výchozí. Bez `bossBar` se nic nemění.
 
@@ -2769,14 +2929,14 @@ Každý tvor má vlastní ukazatel, který vidí všichni hráči v dosahu jeho 
 }
 ```
 
-| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
-| --- | ------- | ------- | ------- | ------- |
-| `phases` | ne | seznam | žádný | Fáze zdraví tvora. Řadí se podle `below` a tvor je ve fázi, dokud je jeho podíl zdraví pod `below` této fáze |
-| `phases[].below` | ano | číslo, nad 0 a pod 1 | žádný | Podíl zdraví, pod kterým fáze platí. Zásah, který překročí několik prahů, vstoupí jen do nejhlubší fáze. Dvě fáze se stejným `below`: pozdější se zapíše do logu a zahodí |
-| `phases[].attributes` | ne | objekt | žádný | Stejné názvy jako `attributes`. Ve fázi hodnota nahradí vlastní hodnotu tvora. `maxHealth` se odmítne chybou v logu, protože by posunul samotný práh |
-| `phases[].tasks` | ne | seznam | žádný | Stejná syntaxe jako `tasks`. Přidají se při vstupu do fáze; co fáze přidala nebo odebrala, se při odchodu vrátí zpět |
-| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | ne | jako mimo `phases` | vypnuto | Útočné chování, které je zapnuté jen ve fázi. Tvor potřebuje `hostile`, stejně jako u týchž klíčů mimo `phases`. Chování, které tvor už má sám, se nepřidá podruhé |
-| `phases[].bossBar` | ne | objekt, jako `bossBar` | ukazatel tvora | Ve fázi nahradí název, barvu, styl a pozadí ukazatele. Vyžaduje `bossBar` u samotného tvora, jinak se zapíše do logu a zahodí |
+| Klíč                                                                           | Povinný | Hodnota                | Výchozí        | Co dělá                                                                                                                                                                   |
+| ------------------------------------------------------------------------------ | ------- | ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `phases`                                                                       | ne      | seznam                 | žádný          | Fáze zdraví tvora. Řadí se podle `below` a tvor je ve fázi, dokud je jeho podíl zdraví pod `below` této fáze                                                              |
+| `phases[].below`                                                               | ano     | číslo, nad 0 a pod 1   | žádný          | Podíl zdraví, pod kterým fáze platí. Zásah, který překročí několik prahů, vstoupí jen do nejhlubší fáze. Dvě fáze se stejným `below`: pozdější se zapíše do logu a zahodí |
+| `phases[].attributes`                                                          | ne      | objekt                 | žádný          | Stejné názvy jako `attributes`. Ve fázi hodnota nahradí vlastní hodnotu tvora. `maxHealth` se odmítne chybou v logu, protože by posunul samotný práh                      |
+| `phases[].tasks`                                                               | ne      | seznam                 | žádný          | Stejná syntaxe jako `tasks`. Přidají se při vstupu do fáze; co fáze přidala nebo odebrala, se při odchodu vrátí zpět                                                      |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | ne      | jako mimo `phases`     | vypnuto        | Útočné chování, které je zapnuté jen ve fázi. Tvor potřebuje `hostile`, stejně jako u týchž klíčů mimo `phases`. Chování, které tvor už má sám, se nepřidá podruhé        |
+| `phases[].bossBar`                                                             | ne      | objekt, jako `bossBar` | ukazatel tvora | Ve fázi nahradí název, barvu, styl a pozadí ukazatele. Vyžaduje `bossBar` u samotného tvora, jinak se zapíše do logu a zahodí                                             |
 
 Fáze sledují zdraví oběma směry: boss, který se vyléčí nad práh, se vrátí do předchozí fáze, nebo do základu. Každá fáze stojí sama za sebe. Přechod z jedné fáze do druhé nejdřív vrátí první, takže ve příkladu druhá fáze nemá ani výpad, ani úkol navíc z první. Do uložené hry se nic nezapisuje; fáze se při načtení tvora znovu určí ze zdraví. Jakýkoli jiný klíč ve fázi, například `swoops`, `digs` nebo `throws` (potřebují přípravu při vzniku tvora), se zapíše do logu a ignoruje.
 
@@ -3644,16 +3804,16 @@ V této verzi `waterFogColor` přepisuje `water_fog_color`, které nese každý 
 
 `lightningColor` zabarvuje blesky.
 
-| Klíč             | Povinné | Hodnota                 | Výchozí      | Co dělá                                                     |
-| ---------------- | ------- | ----------------------- | ------------ | ----------------------------------------------------------- |
-| `snowColor`      | ne      | hexadecimální barva     | bílá         | Odstín vrstev sněhu a sněhových bloků                       |
-| `waterFogColor`  | ne      | hexadecimální barva     | jako u biomu | Barva mlhy pod vodou                                        |
-| `lavaFogColor`   | ne      | hexadecimální barva     | `991A00`     | Barva mlhy v lávě                                           |
-| `starColor`      | ne      | hexadecimální barva     | bílá         | Odstín hvězd                                                |
-| `starTwinkle`    | ne      | desetinné číslo, 0 až 1 | `0.0`        | Jak hluboko hvězdy při blikání ztmavnou. `0` je drží klidné |
-| `grassTint`      | ne      | hexadecimální barva     | bílá     | Vynásobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny |
-| `foliageTint`    | ne      | hexadecimální barva     | bílá     | Vynásobí barvu listí a lián                                |
-| `lightningColor` | ne      | hexadecimální barva     | `737380`     | Odstín blesku                                               |
+| Klíč             | Povinné | Hodnota                 | Výchozí      | Co dělá                                                       |
+| ---------------- | ------- | ----------------------- | ------------ | ------------------------------------------------------------- |
+| `snowColor`      | ne      | hexadecimální barva     | bílá         | Odstín vrstev sněhu a sněhových bloků                         |
+| `waterFogColor`  | ne      | hexadecimální barva     | jako u biomu | Barva mlhy pod vodou                                          |
+| `lavaFogColor`   | ne      | hexadecimální barva     | `991A00`     | Barva mlhy v lávě                                             |
+| `starColor`      | ne      | hexadecimální barva     | bílá         | Odstín hvězd                                                  |
+| `starTwinkle`    | ne      | desetinné číslo, 0 až 1 | `0.0`        | Jak hluboko hvězdy při blikání ztmavnou. `0` je drží klidné   |
+| `grassTint`      | ne      | hexadecimální barva     | bílá         | Vynásobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny |
+| `foliageTint`    | ne      | hexadecimální barva     | bílá         | Vynásobí barvu listí a lián                                   |
+| `lightningColor` | ne      | hexadecimální barva     | `737380`     | Odstín blesku                                                 |
 
 ### Skybox, polární záře a duha
 
@@ -3927,11 +4087,11 @@ Den má 24000 ticků hodin Overworldu, stejný den, který počítá spouštěč
 
 Příkaz nebo postel, které posunou hodiny, posunou i roční období, a svět se načte do ročního období, do kterého jeho den patří. Prostředí přepnuté ručně vydrží do další změny ročního období. Prostředí biomu se vrství na vlastní nastavení dimenze, ne na roční období, a proto musí zopakovat každý odstín, který si chce ponechat. `rules.weatherSpeed` působí jen v Overworldu nebo v dimenzi s `weather.cycle`.
 
-| Klíč            | Povinné      | Hodnota                                         | Výchozí | Co dělá                                                                  |
-| --------------- | ------------ | ----------------------------------------------- | ------- | ------------------------------------------------------------------------ |
-| `seasons`       | ne           | objekt                                          | žádný   | Zapíná a vypíná prostředí dimenze v ročním cyklu                         |
-| `seasons.days`  | s `seasons`  | celé číslo nad 0                                | žádný   | Počet dní, které každé roční období trvá                                 |
-| `seasons.order` | s `seasons`  | seznam jmen prostředí nebo seznamů jmen         | žádný   | Roční období za sebou. Položka se seznamem přepíná své prostředí společně |
+| Klíč            | Povinné     | Hodnota                                 | Výchozí | Co dělá                                                                   |
+| --------------- | ----------- | --------------------------------------- | ------- | ------------------------------------------------------------------------- |
+| `seasons`       | ne          | objekt                                  | žádný   | Zapíná a vypíná prostředí dimenze v ročním cyklu                          |
+| `seasons.days`  | s `seasons` | celé číslo nad 0                        | žádný   | Počet dní, které každé roční období trvá                                  |
+| `seasons.order` | s `seasons` | seznam jmen prostředí nebo seznamů jmen | žádný   | Roční období za sebou. Položka se seznamem přepíná své prostředí společně |
 
 ## Portály a brány
 
@@ -5552,12 +5712,12 @@ Cíl je skutečný cíl na tabulce skóre samotné hry, takže ho čte `/scorebo
 }
 ```
 
-| Nastavení       | Typ    | Výchozí                  | Co dělá                                                              |
-| --------------- | ------ | ------------------------ | -------------------------------------------------------------------- |
-| `bossBar`       | objekt | žádný                    | Ukazuje všem hráčům ukazatel bosse, dokud kolo běží                  |
-| `bossBar.name`  | text   | `displayName` cíle       | Název na ukazateli                                                   |
-| `bossBar.color` | text   | `purple`                 | `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white`      |
-| `bossBar.style` | text   | `progress`               | `progress`, `notched_6`, `notched_10`, `notched_12` nebo `notched_20` |
+| Nastavení            | Typ    | Výchozí            | Co dělá                                                                                                                                                                                                                  |
+| -------------------- | ------ | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `bossBar`            | objekt | žádný              | Ukazuje všem hráčům ukazatel bosse, dokud kolo běží                                                                                                                                                                      |
+| `bossBar.name`       | text   | `displayName` cíle | Název na ukazateli                                                                                                                                                                                                       |
+| `bossBar.color`      | text   | `purple`           | `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white`                                                                                                                                                          |
+| `bossBar.style`      | text   | `progress`         | `progress`, `notched_6`, `notched_10`, `notched_12` nebo `notched_20`                                                                                                                                                    |
 | `bossBar.background` | objekt | žádný              | Textura vykreslená za ukazatelem a jeho názvem: `texture` (`namespace:cesta.png`, povinná), `width` a `height` (výchozí 182 a výška řádku ukazatele), `x` a `y` (posun od levého horního rohu řádku s názvem, výchozí 0) |
 
 Ukazatel se objeví, když kolo začne, a zmizí, když skončí. S `ends.afterMinutes` se vyprazdňuje s uplývajícím časem. Jinak se s `ends.atScore` plní, jak se vedoucí strana tomuto skóre blíží. Bez obou zůstává plný. Neznámá hodnota `color` nebo `style` se zapíše do logu a použije se výchozí.
@@ -5815,6 +5975,10 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 | `roll`            | nic, nebo `roll`     | Hráč hodí příkazem `/rdplserver game` nebo předmětem s `rolls`. S `roll` pravidlo spustí jen tento hod a `atLeast` a `atMost` omezují součet                                                                                                             |
 | `order_done`      | nic, nebo `order`    | Zakázka je splněna, a to jednou pro každého hráče, kterého odměňuje. S `order` ji spustí jen zakázka s tímto slovem `sign`                                                                                                                               |
 | `score`           | `objective`          | Skóre hráče v tomto cíli dosáhne `score`                                                                                                                                                                                                                 |
+| `exposure_level`  | nic, nebo `exposure` | Úroveň hráče v některém nebezpečí se změní, nahoru i dolů. S `exposure` jen u tohoto nebezpečí, s `level` jen při změně, která dosáhne této úrovně. První kontrola po připojení ji nikdy nespustí                                                        |
+| `round_start`     | nic                  | Kolo se otevře po odpočtu: jednou pro každého hráče, nebo jednou pro `audience`. Spustí se po resetu stejně jako po `/rdplserver round start`                                                                                                            |
+
+Úrovně nebezpečí se čtou při každé kontrole, takže karta s `exposure_level` se spustí do `scanInterval` nebezpečí od změny.
 
 Biom, struktura, výška, herní čas a skóre se kontrolují jednou za sekundu u každého hráče a spouštějí se při změně zvenčí dovnitř, nikdy při první kontrole po připojení. Pravidlo `time_of_day` nebo `day`, jehož publikum není `player`, se spustí jednou pro dimenzi místo jednou pro každého hráče v ní.
 
@@ -5841,6 +6005,8 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `minutes`            | celé číslo                            | žádný          | Pro `play_time`                                                                                                                                                                                                                                                                                                        |
 | `roll`               | text                                  | žádný          | Pro `roll`: `coin`, zápis jako `2d6` (`d6` a `1d6` jsou totéž) nebo název kostky či balíčku karet z datového balíčku. Bez něj pravidlo spustí každý hod                                                                                                                                                                |
 | `order`              | text                                  | žádný          | Pro `order_done`: slovo `sign` zakázky. Bez něj spustí pravidlo každá splněná zakázka                                                                                                                                                                                                                                  |
+| `exposure`           | text                                  | žádný          | Pro `exposure_level`: název souboru nebezpečí ve složce `exposures`. Bez něj spustí pravidlo každé nebezpečí                                                                                                                                                                                                           |
+| `level`              | celé číslo                            | žádný          | Pro `exposure_level`: spustí se, až se úroveň hráče stane touto; `0` znamená, že už není vystaven. Bez něj spustí pravidlo každá změna                                                                                                                                                                                 |
 | `atLeast`, `atMost`  | celé číslo                            | žádný          | Pro `roll`: nejnižší a nejvyšší součet, který pravidlo spustí. Mince se počítá jako 1 za líc a 0 za rub, kostka či balíček z datového balíčku jako pořadí výsledku v jeho souboru od 1                                                                                                                                 |
 | `objective`, `score` | text, celé číslo                      | žádný, `1`     | Pro `score`: cíl a hodnota, které je třeba dosáhnout                                                                                                                                                                                                                                                                   |
 | `requires`           | seznam id módů nebo namespace balíčků | žádný          | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                      |
