@@ -58,6 +58,7 @@
 - [화로 레시피와 연료](#화로-레시피와-연료)
 - [레시피 잠금](#레시피-잠금)
 - [툴팁](#툴팁)
+- [언어 게이트](#언어-게이트)
 - [물약, 물약 유형, 양조](#물약-물약-유형-양조)
 - [모루 작업](#모루-작업)
 - [블록 드롭](#블록-드롭)
@@ -199,11 +200,12 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 
 `assets/` 아래:
 
-| 경로                                                                                            | 내용                                                                   |
-| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 일반적인 에셋 폴더. [모델, 블록 상태, 텍스처](#모델-블록-상태-텍스처)  |
-| `<namespace>/sounds.json`                                                                       | 게임이 읽는 소리 색인이며, `data/` 아래 `sounds/` 정의와 짝을 이룹니다 |
-| `<namespace>/texts/*.txt`                                                                       | 월드 소개에서 쓰는 일반 텍스트 파일. [월드 소개](#월드-소개)           |
+| 경로                                                                                            | 내용                                                                       |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 일반적인 에셋 폴더. [모델, 블록 상태, 텍스처](#모델-블록-상태-텍스처)      |
+| `<namespace>/langgates/<name>/gate.json`                                                        | 게이트가 충족되는 동안에만 불러오는 언어 항목. [언어 게이트](#언어-게이트) |
+| `<namespace>/sounds.json`                                                                       | 게임이 읽는 소리 색인이며, `data/` 아래 `sounds/` 정의와 짝을 이룹니다     |
+| `<namespace>/texts/*.txt`                                                                       | 월드 소개에서 쓰는 일반 텍스트 파일. [월드 소개](#월드-소개)               |
 
 **1.21.1**은 바닐라 데이터 폴더 이름을 단수형으로 씁니다: `loot_table/`, `recipe/`, `advancement/`, `function/`, `structure/`, `tags/item/`, `tags/block/`. 팩은 어느 철자를 써도 되며, 위의 복수형 이름은 단수형 짝으로 읽히므로 팩 하나로 두 빌드를 모두 지원합니다.
 
@@ -399,7 +401,7 @@ rdploader/RDPL1O Seasonal       우선순위와 재정의를 함께 지정
 
     { "enableTestingContent": { "default": true, "description": "테스트용 블록과 아이템을 등록합니다" } }
 
-실행할 때 팩의 옵션 파일들은 사용자가 소유하는 실제 설정 파일 하나가 되며, 팩 이름을 따라 `rdploader/config/PackA.json`이라는 이름으로 팩의 기본값과 함께 만들어지고, 팩이 업데이트될 때 병합되므로 사용자가 이미 정한 값은 건드리지 않은 채 새 옵션이 들어옵니다. 변경은 다음 게임 시작 때 적용되며, 플레이어는 월드 선택 화면과 월드 만들기 화면의 팩 옵션 버튼에서 옵션을 바꿉니다. 옵션은 생성되는 파일이 팩 이름을 따르므로 이름 있는 팩, 즉 zip에만 속합니다. `rdploader/assets`와 `rdploader/data` 아래의 낱개 파일은 팩 이름이 없어 옵션을 가질 수 없으므로, 스위치가 필요한 낱개 콘텐츠는 이름 있는 팩으로 zip해 두세요.
+실행할 때 팩의 옵션 파일들은 사용자가 소유하는 실제 설정 파일 하나가 되며, 팩 이름을 따라 `rdploader/config/PackA.json`이라는 이름으로 팩의 기본값과 함께 만들어지고, 팩이 업데이트될 때 병합되므로 사용자가 이미 정한 값은 건드리지 않은 채 새 옵션이 들어옵니다. 변경은 다음 게임 시작 때 적용됩니다. 다만 [언어 게이트](#언어-게이트)가 읽는 옵션은 완료를 누르는 즉시 적용됩니다. 플레이어는 월드 선택 화면과 월드 만들기 화면의 팩 옵션 버튼에서 옵션을 바꿉니다. 옵션은 생성되는 파일이 팩 이름을 따르므로 이름 있는 팩, 즉 zip에만 속합니다. `rdploader/assets`와 `rdploader/data` 아래의 낱개 파일은 팩 이름이 없어 옵션을 가질 수 없으므로, 스위치가 필요한 낱개 콘텐츠는 이름 있는 팩으로 zip해 두세요.
 
 이후 어떤 정의의 `requires` 목록이든 `config:` 항목으로 옵션을 지정할 수 있습니다. `"requires": ["config:enableTestingContent"]`는 옵션이 true인 동안에만 그 콘텐츠를 등록하며, 없는 모드가 건너뛰게 하는 것과 똑같습니다. 이름만 쓰면 모든 팩의 파일을 확인하고 그것을 정의한 모든 팩이 일치해야 하며, `"config:PackA:enableTestingContent"`는 팩 하나를 지정합니다. 어떤 팩도 정의하지 않은 옵션은 false로 간주되고 한 번 경고합니다.
 
@@ -577,7 +579,7 @@ thatmod.jar
 - `textures/blocks/`와 `textures/items/`는 모델, 픽셀 맵, 파일 자체에서 `textures/block/`과 `textures/item/`으로 제공됩니다. `models/item/<file>/<variant>.json`의 아이템 모델은 `models/item/<variant>.json`으로 제공됩니다.
 - `minecraft:wool:14`나 `minecraft:dye:4`처럼 메타데이터가 붙은 모든 id는 1.12.2 월드를 업그레이드하는 것과 같은 코드인 게임 자체의 데이터 픽서를 거치므로, `minecraft:red_wool`, `minecraft:lapis_lazuli`처럼 바뀐 블록이나 아이템으로 나옵니다. 평탄화 뒤에 속성으로 남은 블록 상태, 즉 `minecraft:log:1`에서 `axis=y`인 `minecraft:oak_log`는 `properties` 객체로 나옵니다. 팩 자체의 id는 팩 자신의 정의를 통해 해석됩니다. `mypack:materials:5`는 `meta`가 5였던 변형이 되고, `mypack:ruby_ore`는 파일의 첫 번째 변형이 되는데, 여기서는 변형마다 별개의 블록이기 때문입니다. 엔티티와 생물 군계 이름도 같은 방식으로 고쳐지고, 차원 번호는 id가 됩니다.
 - `variants`는 키를 유지하며, `meta`는 버려지고 `oreDict`는 광석 사전을 규약 태그에 대응시키는 방식으로 `tags`가 됩니다. `oredict/*.json` 파일은 추가하거나 제거하는 이름마다 아이템 태그 파일 하나가 됩니다. `-name` 제거는 태그의 `remove` 목록에 들어가고, `*`를 제거하면 태그가 교체됩니다. 맨 이름의 `creativeTab`은 팩의 네임스페이스를 갖고, `misc` 같은 1.12.2 바닐라 탭 라벨은 가장 가까운 바닐라 탭이 됩니다.
-- `.lang` 파일은 게임이 읽는 `.json`으로 제공됩니다. `tile.mypack:file.variant.name`은 `block.mypack.variant`가 되고, `item.`도 같은 방식이며, `itemGroup.x`는 `itemGroup.mypack.x`, `fluid.x`는 두 유체 키 모두가 되고, 나머지는 적힌 그대로입니다.
+- `.lang` 파일은 게임이 읽는 `.json`으로 제공됩니다. `tile.mypack:file.variant.name`은 `block.mypack.variant`가 되고, `item.`도 같은 방식이며, `itemGroup.x`는 `itemGroup.mypack.x`, `fluid.x`는 두 유체 키 모두가 되고, 나머지는 적힌 그대로입니다. `langgates/<name>/` 폴더 안의 `.lang` 파일도 같은 방식으로 변환됩니다.
 - 1.12.2 블록 상태는 전혀 제공되지 않습니다. 대신 그 텍스처를 읽어 생성기가 찾는 이름으로 제공하며, 블록 상태에 `end`, `top`, `bottom`이 있던 곳에는 `_top`과 `_bottom`이 붙은 `textures/block/<variant>.png`를 씁니다. 그러면 여기서 작성한 팩과 마찬가지로 변형마다 블록 상태와 모델이 생성됩니다.
 - 레시피는 `data`를 잃고 평탄화된 id를 얻습니다. `forge:ore_shaped`는 `ore` 재료를 `tag`로 바꾼 `minecraft:crafting_shaped`가 되고, 전리품 테이블도 같은 방식으로 `set_data`를 잃으며, `data`가 있는 발전 과제의 `item`은 `items`가 됩니다. 발전 과제의 `background`는 `textures/blocks/`에서 `textures/block/`으로 옮겨지고, 아이콘은 아이템을 `id`로 지정합니다.
 - 레시피의 1.12.2 Forge 어휘도 함께 변환됩니다. `forge:ore_dict` 또는 `minecraft:item` 재료 유형은 버려지고, `minecraft:item_nbt` 재료는 nbt를 데이터 픽서에 통과시킨 `forge:nbt`(1.21.1: `neoforge:components`)가 되며, `minecraft:item_exists`는 `forge:item_exists`가 되고(1.21.1: 모든 조건이 `neoforge:conditions` 아래에서 `neoforge` 이름을 가짐), 네임스페이스가 없는 아이템은 레시피의 네임스페이스를 갖고, `data` 32767은 모든 변형의 목록이 됩니다. 모드의 `_constants.json`에 있는 `#CONSTANT`는 함께 가져올 수 없으며 로그에 이름이 남습니다. 아이템을 나열하는 곳이면 어디든 `name:*`는 그 아이템이 가졌던 모든 변형이 되고, 단일 값은 첫 번째를 취하며, 이는 `recipe_removals` 결과물과 `furnace` 제거에도 미치고 이들도 아이템으로 변환됩니다. `name:*`로 쓴 모루의 `item`이나 `with`는 모든 변형의 목록이 되며, 그중 어느 것이든 응답합니다.
@@ -2118,6 +2120,36 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `item`        | 예   | 아이템 이름    | 없음   | 아이템 또는 블록의 아이템          |
 | `enchantment` | 예   | 마법 부여 이름 | 없음   | 줄을 받는 마법 부여                |
 | `lines`       | 예   | 텍스트 목록    | 없음   | 언어 키 또는 일반 텍스트, 순서대로 |
+
+## 언어 게이트
+
+*팩 옵션에 따라 달라지는 언어 항목*
+
+`<namespace>/langgates/<name>/gate.json`
+
+게이트는 `requires`가 충족되는 동안에만 불러오는 언어 항목의 폴더입니다. 안에는 `gate.json`과 `en_us.json` 같은 언어 코드별 파일이 들어갑니다. 파일은 `<namespace>/lang/`의 파일과 같은 방식으로 쓰되, 게이트가 바꾸는 항목만 담습니다. 게이트가 충족되는 동안에는 그 항목이 해당 언어에 더해지고, 팩에 있는 같은 키보다 우선합니다. 충족되지 않으면 언어는 원래 모습 그대로 제공됩니다.
+
+`assets/mypack/langgates/stupid/gate.json`
+
+```json
+{ "requires": ["config:stupidNames"] }
+```
+
+`assets/mypack/langgates/stupid/en_us.json`
+
+```json
+{ "block.mypack.block_a": "Stupid Block!" }
+```
+
+| 키         | 필수   | 값          | 기본값    | 설명                                                                                                                |
+| ---------- | ------ | ----------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| `requires` | 아니요 | 텍스트 목록 | 항상 적용 | 모든 항목이 충족되어야 합니다. `config:` 옵션, `file:` 경로, 모드 ID, 팩 네임스페이스는 다른 정의와 똑같이 쓰입니다 |
+
+게이트는 팩 순서대로 적용되고, 그다음에는 폴더 이름(대소문자 구분 없음) 순으로 적용되며, 나중 것이 이깁니다. 같은 키에 대한 게이트 두 개는 둘 중 하나가 되는 관계인데, 각각이 따로 충족되기 때문입니다. 게이트는 자신과 같은 [단계](#리소스-팩-우선-적용되는-쪽)의 언어에 항목을 더합니다. `lang` 파일이나 게이트를 어느 팩이 갖고 있든 마찬가지이므로, `O`로 표시한 팩의 `lang` 파일은 `N`으로 표시한 팩의 게이트보다 여전히 우선합니다. 게임 본체나 다른 모드의 키에 대한 게이트는 그 네임스페이스 아래 `assets/minecraft/langgates/<name>/`에 두며, 모드 자체 파일 위에 쌓입니다. 해당 코드의 `lang` 파일이 어디에도 없으면 충족된 게이트가 혼자 그 언어를 제공하고, 충족되지 않은 게이트는 아무것도 더하지 않습니다.
+
+`gate.json`이 없는 폴더는 건너뛰며 로그에 그렇게 남습니다. JSON 객체가 아닌 파일도 한 번만 같은 식으로 처리됩니다. `requires`에 적은 모드 ID는 다른 곳과 마찬가지로 게임이 그 모드를 요구하게 만듭니다. 모드가 설치되어 있을 때만 쓰고 싶은 항목에는 `file:` 경로나 팩 네임스페이스를 쓰세요.
+
+팩 옵션 화면에서 완료를 누르면, 바뀐 옵션이 게이트가 읽는 것일 때 언어가 즉시 다시 불러와지므로 재시작이 필요 없습니다. `file:` 항목처럼 그 밖의 변경은 F3+T를 누른 뒤에 반영됩니다.
 
 ## 물약, 물약 유형, 양조
 

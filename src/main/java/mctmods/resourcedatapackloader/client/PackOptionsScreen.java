@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.command.ReloadGroups;
+import mctmods.resourcedatapackloader.pack.LangGates;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 
 import net.minecraft.ChatFormatting;
@@ -54,9 +56,22 @@ public final class PackOptionsScreen extends Screen {
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> done()).bounds(width / 2 - 100, height - 27, 200, 20).build());
     }
 
+    private boolean languagesChanged() {
+        for (Map.Entry<String, Map<String, Boolean>> file : staged.entrySet()) {
+            Map<String, Boolean> now = PackOptions.optionsOf(file.getKey());
+            for (Map.Entry<String, Boolean> option : file.getValue().entrySet()) {
+                if (!option.getValue().equals(now.get(option.getKey())) && LangGates.dependsOn(file.getKey(), option.getKey())) { return true; }
+            }
+        }
+        return false;
+    }
+
     private void done() {
+        boolean refresh = languagesChanged();
         for (Map.Entry<String, Map<String, Boolean>> entry : staged.entrySet()) { PackOptions.save(entry.getKey(), entry.getValue()); }
-        if (minecraft != null) { minecraft.setScreen(parent); }
+        if (minecraft == null) { return; }
+        if (refresh) { ReloadGroups.reload(minecraft, "languages"); }
+        minecraft.setScreen(parent);
     }
 
     @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

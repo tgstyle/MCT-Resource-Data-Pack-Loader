@@ -58,6 +58,7 @@
 - [熔炉配方与燃料](#熔炉配方与燃料)
 - [配方锁](#配方锁)
 - [工具提示](#工具提示)
+- [语言闸门](#语言闸门)
 - [药水、药水类型与酿造](#药水药水类型与酿造)
 - [铁砧操作](#铁砧操作)
 - [方块掉落物](#方块掉落物)
@@ -202,6 +203,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | 路径                                                                                            | 存放内容                                                      |
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 常规的资源文件夹。[模型、方块状态与纹理](#模型方块状态与纹理) |
+| `<namespace>/langgates/<name>/gate.json`                                                        | 仅在闸门成立期间加载的语言条目。[语言闸门](#语言闸门)         |
 | `<namespace>/sounds.json`                                                                       | 游戏读取的声音索引，与 `data/` 下的 `sounds/` 定义并列        |
 | `<namespace>/texts/*.txt`                                                                       | 纯文本文件，供世界介绍使用。[世界介绍](#世界介绍)             |
 
@@ -399,7 +401,7 @@ rdploader/RDPL1O Seasonal       priority and override combined
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-启动时，资源包的选项文件会合并成一个真正的、归用户所有的配置文件，以资源包命名，即 `rdploader/config/PackA.json`，创建时带有资源包的默认值，并在资源包更新时合并，所以新选项会加进来，而不会触动用户已经设置的内容。更改在下次启动游戏时生效，玩家在世界选择界面和创建世界界面上的“资源包选项”按钮处切换它们。选项只属于有名称的资源包，也就是 zip，因为生成的文件以资源包命名；`rdploader/assets` 和 `rdploader/data` 下的散装文件没有资源包名称，不带任何选项，所以如果散装内容需要开关，请把它们打成一个有名称的 zip 资源包。
+启动时，资源包的选项文件会合并成一个真正的、归用户所有的配置文件，以资源包命名，即 `rdploader/config/PackA.json`，创建时带有资源包的默认值，并在资源包更新时合并，所以新选项会加进来，而不会触动用户已经设置的内容。更改在下次启动游戏时生效，但[语言闸门](#语言闸门)读取的选项除外，它们在点击“完成”时立即生效。玩家在世界选择界面和创建世界界面上的“资源包选项”按钮处切换它们。选项只属于有名称的资源包，也就是 zip，因为生成的文件以资源包命名；`rdploader/assets` 和 `rdploader/data` 下的散装文件没有资源包名称，不带任何选项，所以如果散装内容需要开关，请把它们打成一个有名称的 zip 资源包。
 
 之后，任何定义的 `requires` 列表都可以用 `config:` 条目来指定一个选项：`"requires": ["config:enableTestingContent"]` 只在该选项为 true 时才注册该内容，与缺少模组时跳过的方式完全相同。不带资源包名的名称会检查每个资源包的文件，且每个定义了它的资源包必须一致；`"config:PackA:enableTestingContent"` 则指定某一个资源包。没有任何资源包定义的选项按 false 处理，并只警告一次。
 
@@ -577,7 +579,7 @@ thatmod.jar
 - `textures/blocks/` 和 `textures/items/` 会作为 `textures/block/` 和 `textures/item/` 提供，在模型中、在像素图中以及在文件本身中均如此。位于 `models/item/<file>/<variant>.json` 的物品模型会作为 `models/item/<variant>.json` 提供。
 - 每个带元数据的 id，`minecraft:wool:14` 或 `minecraft:dye:4`，都会交给游戏自己的数据修复器处理，也就是升级 1.12.2 世界所用的同一套代码，所以得出的是它后来变成的那个方块或物品：`minecraft:red_wool`、`minecraft:lapis_lazuli`。在扁平化之后保留为属性的方块状态，`minecraft:log:1` 变为带 `axis=y` 的 `minecraft:oak_log`，会以 `properties` 对象的形式给出。资源包自己的 id 通过它自己的定义来解析：`mypack:materials:5` 变成 `meta` 为 5 的那个变种，而 `mypack:ruby_ore` 变成文件的第一个变种，因为在这里每个变种都是独立的方块。实体和生物群系名称以同样方式修复，维度编号则变成 id。
 - `variants` 保留它们的键；`meta` 被丢弃，`oreDict` 通过矿物词典对约定标签的映射变成 `tags`。`oredict/*.json` 文件会按它添加或移除的每个名称变成一个物品标签文件：`-name` 形式的移除会落入该标签的 `remove` 列表，移除 `*` 则替换该标签。单独的 `creativeTab` 会采用资源包的命名空间，而 `misc` 这样的 1.12.2 原版标签页名称会变成最接近的原版标签页。
-- `.lang` 文件会作为游戏所读取的 `.json` 提供，`tile.mypack:file.variant.name` 变为 `block.mypack.variant`，`item.` 同理，`itemGroup.x` 变为 `itemGroup.mypack.x`，`fluid.x` 变为两个流体键，其余一切照原样保留。
+- `.lang` 文件会作为游戏所读取的 `.json` 提供，`tile.mypack:file.variant.name` 变为 `block.mypack.variant`，`item.` 同理，`itemGroup.x` 变为 `itemGroup.mypack.x`，`fluid.x` 变为两个流体键，其余一切照原样保留。`langgates/<name>/` 文件夹里的 `.lang` 文件也以同样方式转换。
 - 1.12.2 的方块状态完全不会被提供。取而代之的是读取它的纹理，并按生成器所查找的名称提供，即 `textures/block/<variant>.png`，在方块状态中有 `end`、`top` 或 `bottom` 的地方带有 `_top` 和 `_bottom`，所以每个变种的方块状态和模型都会像为此版本编写的资源包那样生成。
 - 配方会丢掉它们的 `data` 并获得扁平化的 id，`forge:ore_shaped` 变成 `minecraft:crafting_shaped`，其中的 `ore` 原料变为 `tag`，战利品表同样会丢掉 `set_data`，进度的 `item` 与 `data` 会变成 `items`。进度的 `background` 从 `textures/blocks/` 移到 `textures/block/`，其图标以 `id` 指明物品。
 - 配方的 1.12.2 Forge 词汇也会一并转换：`forge:ore_dict` 或 `minecraft:item` 原料类型会被丢弃，`minecraft:item_nbt` 原料变成 `forge:nbt`（1.21.1：`neoforge:components`），其 nbt 经过数据修复器处理，`minecraft:item_exists` 变成 `forge:item_exists`（1.21.1：每个条件都采用其 `neoforge` 名称，位于 `neoforge:conditions` 之下），没有命名空间的物品采用配方的命名空间，`data` 为 32767 的会变成包含每个变种的列表。模组的 `_constants.json` 中的 `#CONSTANT` 无法一并转换，日志会点名它。凡是列出物品的地方，`name:*` 都会变成该物品曾有的每个变种，而单个值则取第一个；这涉及 `recipe_removals` 的产物和 `furnace` 的移除，它们同样会被当作物品来转换。铁砧的 `item` 或 `with` 写成 `name:*` 时，会变成包含每个变种的列表，其中任何一个都可以匹配。
@@ -2118,6 +2120,36 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `item`        | 是   | 物品名称 | 无     | 物品，或方块对应的物品     |
 | `enchantment` | 是   | 附魔名称 | 无     | 获得这些行的附魔           |
 | `lines`       | 是   | 文本列表 | 无     | 语言键或纯文本，按顺序显示 |
+
+## 语言闸门
+
+*随资源包选项而定的语言条目*
+
+`<namespace>/langgates/<name>/gate.json`
+
+闸门是一个存放语言条目的文件夹，这些条目只在它的 `requires` 成立期间加载。文件夹里有一个 `gate.json`，以及每个语言代码一个文件，例如 `en_us.json`，写法与 `<namespace>/lang/` 里的文件相同，只包含闸门要改动的条目。闸门成立时，它的条目会加入该语言，并压过资源包里相同的键；否则语言原样提供。
+
+`assets/mypack/langgates/stupid/gate.json`
+
+```json
+{ "requires": ["config:stupidNames"] }
+```
+
+`assets/mypack/langgates/stupid/en_us.json`
+
+```json
+{ "block.mypack.block_a": "Stupid Block!" }
+```
+
+| 键         | 必需 | 值       | 默认值   | 作用                                                                                           |
+| ---------- | ---- | -------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `requires` | 否   | 文本列表 | 始终生效 | 每一项都必须成立。`config:` 选项、`file:` 路径、模组 ID 和资源包命名空间的用法与其他定义中相同 |
+
+闸门按资源包的顺序生效，其次按文件夹名称（不区分大小写），靠后的胜出。同一个键的两个闸门构成“或”的关系，因为每个闸门各自成立即可。闸门补充的是它自己所在[层级](#资源包谁优先)的语言，无论 `lang` 文件或闸门在哪个资源包里，所以标记为 `O` 的资源包中的 `lang` 文件仍然压过标记为 `N` 的资源包中的闸门。针对游戏本体或其他模组的键的闸门，放在该命名空间下的 `assets/minecraft/langgates/<name>/`，叠加在模组自带的文件之上。如果任何地方都没有该代码的 `lang` 文件，成立的闸门会单独提供这门语言，不成立的闸门则什么也不添加。
+
+没有 `gate.json` 的文件夹会被跳过，日志会说明；不是 JSON 对象的文件同样会被跳过，且只提示一次。`requires` 里的模组 ID 会让游戏要求安装该模组，这与其他各处一致；如果条目只想在装了某个模组时才生效，请使用 `file:` 路径或资源包命名空间。
+
+在资源包选项界面点击“完成”时，如果改动的选项是闸门读取的，语言会立即重新加载，无需重启。其他改动，例如 `file:` 项，在按下 F3+T 后生效。
 
 ## 药水、药水类型与酿造
 

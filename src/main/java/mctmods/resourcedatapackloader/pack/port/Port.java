@@ -14,13 +14,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class Port {
     private static final String LANG_SUFFIX = ".lang";
     private static final String SOUNDS = "sounds";
-    private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
+    private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "langgates", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
     private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
     private static final int LAST_1_20_FORMAT = 26;
     private static final int FIRST_1_21_FORMAT = 41;
@@ -127,6 +128,7 @@ public final class Port {
                         String name = folder.getFileName().toString().replace("/", "");
                         if (Files.isDirectory(folder) && DEFINITION_FOLDERS.contains(name) && !Files.isDirectory(root.resolve(RDPLPack.DATA))) { return true; }
                         if (Files.isDirectory(folder) && "lang".equals(name) && hasLangFile(folder)) { return true; }
+                        if (Files.isDirectory(folder) && PackManager.LANGGATES.equals(name) && hasGateLangFile(folder)) { return true; }
                     }
                 }
             }
@@ -135,9 +137,16 @@ public final class Port {
         return false;
     }
 
+    private static boolean hasGateLangFile(Path gates) throws IOException {
+        try (DirectoryStream<Path> folders = Files.newDirectoryStream(gates)) {
+            for (Path folder : folders) { if (Files.isDirectory(folder) && hasLangFile(folder)) { return true; } }
+        }
+        return false;
+    }
+
     private static boolean hasLangFile(Path lang) throws IOException {
         try (DirectoryStream<Path> files = Files.newDirectoryStream(lang)) {
-            for (Path file : files) { if (file.getFileName().toString().replace("/", "").endsWith(LANG_SUFFIX)) { return true; } }
+            for (Path file : files) { if (file.getFileName().toString().replace("/", "").toLowerCase(Locale.ROOT).endsWith(LANG_SUFFIX)) { return true; } }
         }
         return false;
     }
@@ -158,7 +167,7 @@ public final class Port {
     }
 
     private static Mapped client(String path) {
-        if (path.startsWith("lang/") && path.endsWith(LANG_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path.substring(0, path.length() - LANG_SUFFIX.length()) + PackManager.JSON_SUFFIX, Kind.LANG); }
+        if ((path.startsWith("lang/") || path.startsWith(PackManager.LANGGATES + "/")) && path.toLowerCase(Locale.ROOT).endsWith(LANG_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path.substring(0, path.length() - LANG_SUFFIX.length()) + PackManager.JSON_SUFFIX, Kind.LANG); }
         if (path.startsWith("textures/blocks/") || path.startsWith("textures/items/")) {
             String moved = path.startsWith("textures/blocks/") ? "textures/block/" + path.substring("textures/blocks/".length()) : "textures/item/" + path.substring("textures/items/".length());
             return new Mapped(PackType.CLIENT_RESOURCES, moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.PIXELMAP : Kind.RAW);

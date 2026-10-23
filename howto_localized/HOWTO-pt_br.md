@@ -58,6 +58,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
 - [Bloqueios de receitas](#bloqueios-de-receitas)
 - [Dicas de ferramenta](#dicas-de-ferramenta)
+- [Portões de idioma](#portões-de-idioma)
 - [Poções, tipos de poção e fermentação](#poções-tipos-de-poção-e-fermentação)
 - [Trabalho na bigorna](#trabalho-na-bigorna)
 - [Drops de blocos](#drops-de-blocos)
@@ -202,6 +203,7 @@ Em `assets/`:
 | Caminho                                                                                         | O que contém                                                                                            |
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | As pastas de assets de sempre. [Modelos, blockstates e texturas](#modelos-blockstates-e-texturas)       |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Entradas de idioma carregadas só enquanto um portão vale. [Portões de idioma](#portões-de-idioma)       |
 | `<namespace>/sounds.json`                                                                       | O índice de sons que o jogo lê, ao lado das definições de `sounds/` em `data/`                          |
 | `<namespace>/texts/*.txt`                                                                       | Arquivos de texto simples, usados pela introdução do mundo. [Introdução do mundo](#introdução-do-mundo) |
 
@@ -399,7 +401,7 @@ Uma opção também pode ser um objeto com uma descrição, exibida sob o nome d
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-Na inicialização, os arquivos de opções do pacote viram um arquivo de config de verdade que pertence ao usuário, nomeado a partir do pacote, `rdploader/config/PackA.json`, criado com os padrões do pacote e mesclado nas atualizações do pacote, de modo que opções novas chegam sem tocar no que o usuário já definiu. As alterações valem na próxima inicialização do jogo, e o botão Opções do pacote nas telas de seleção de mundo e de criação de mundo é onde um jogador as alterna. As opções pertencem apenas a pacotes nomeados, isto é, zips, já que o arquivo gerado leva o nome do pacote; arquivos soltos em `rdploader/assets` e `rdploader/data` não têm nome de pacote e não trazem opções, então compacte conteúdo solto em um pacote nomeado se ele precisar de um interruptor.
+Na inicialização, os arquivos de opções do pacote viram um arquivo de config de verdade que pertence ao usuário, nomeado a partir do pacote, `rdploader/config/PackA.json`, criado com os padrões do pacote e mesclado nas atualizações do pacote, de modo que opções novas chegam sem tocar no que o usuário já definiu. As alterações valem na próxima inicialização do jogo, exceto as opções que um [portão de idioma](#portões-de-idioma) lê, que valem assim que você toca em Concluído. O botão Opções do pacote nas telas de seleção de mundo e de criação de mundo é onde um jogador as alterna. As opções pertencem apenas a pacotes nomeados, isto é, zips, já que o arquivo gerado leva o nome do pacote; arquivos soltos em `rdploader/assets` e `rdploader/data` não têm nome de pacote e não trazem opções, então compacte conteúdo solto em um pacote nomeado se ele precisar de um interruptor.
 
 A lista `requires` de qualquer definição pode então nomear uma opção com uma entrada `config:`: `"requires": ["config:enableTestingContent"]` registra esse conteúdo só enquanto a opção for true, exatamente como um mod ausente o faria ser ignorado. Um nome simples verifica o arquivo de todos os pacotes e todo pacote que o define precisa concordar; `"config:PackA:enableTestingContent"` nomeia um pacote. Uma opção que nenhum pacote define conta como false e gera um aviso uma única vez.
 
@@ -577,7 +579,7 @@ Um pacote feito para a linha 1.12.2 carrega como está. O loader reconhece um pe
 - `textures/blocks/` e `textures/items/` são servidas como `textures/block/` e `textures/item/`, nos modelos, nos mapas de pixels e nos próprios arquivos. Um modelo de item em `models/item/<file>/<variant>.json` é servido como `models/item/<variant>.json`.
 - Todo id com metadados, `minecraft:wool:14` ou `minecraft:dye:4`, passa pelos data fixers do próprio jogo, o mesmo código que atualiza um mundo da 1.12.2, então sai como o bloco ou item em que se tornou: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Um estado de bloco que sobreviveu à flattening como propriedade, `minecraft:log:1` para `minecraft:oak_log` com `axis=y`, sai como um objeto `properties`. Os ids do próprio pacote são resolvidos pelas suas definições: `mypack:materials:5` vira a variante cujo `meta` era 5, e `mypack:ruby_ore` a primeira variante do arquivo, já que cada variante é um bloco próprio aqui. Nomes de entidades e biomas são corrigidos do mesmo modo, e números de dimensão viram ids.
 - `variants` mantêm suas chaves; `meta` é descartado e `oreDict` vira `tags` pelo mapeamento do dicionário de minérios para as tags de convenção. Um arquivo `oredict/*.json` vira um arquivo de tag de item para cada nome ao qual acrescenta ou do qual remove: uma remoção `-name` cai na lista `remove` da tag, e remover `*` substitui a tag. Um `creativeTab` simples assume o namespace do pacote, e um rótulo de aba do vanilla da 1.12.2 como `misc` vira a aba vanilla mais próxima.
-- Um arquivo `.lang` é servido como o `.json` que o jogo lê, com `tile.mypack:file.variant.name` como `block.mypack.variant`, `item.` do mesmo jeito, `itemGroup.x` como `itemGroup.mypack.x`, `fluid.x` como as duas chaves de fluido e todo o resto como escrito.
+- Um arquivo `.lang` é servido como o `.json` que o jogo lê, com `tile.mypack:file.variant.name` como `block.mypack.variant`, `item.` do mesmo jeito, `itemGroup.x` como `itemGroup.mypack.x`, `fluid.x` como as duas chaves de fluido e todo o resto como escrito. Um arquivo `.lang` dentro de uma pasta `langgates/<name>/` é convertido do mesmo jeito.
 - Um blockstate da 1.12.2 não é servido de forma alguma. Em vez dele, as texturas são lidas e servidas com os nomes que o gerador procura, `textures/block/<variant>.png` com `_top` e `_bottom` onde o blockstate tinha `end`, `top` ou `bottom`, de modo que o blockstate e os modelos são gerados para cada variante como seriam para um pacote escrito aqui.
 - As receitas perdem o `data` e ganham ids achatados, `forge:ore_shaped` vira `minecraft:crafting_shaped` com ingredientes `ore` como `tag`, as tabelas de saque perdem `set_data` do mesmo modo, e o `item` com `data` de um avanço vira `items`. O `background` de um avanço passa de `textures/blocks/` para `textures/block/`, e o ícone dele nomeia o item como `id`.
 - O vocabulário Forge da 1.12.2 de uma receita também é levado: um tipo de ingrediente `forge:ore_dict` ou `minecraft:item` é descartado, um ingrediente `minecraft:item_nbt` vira `forge:nbt` (1.21.1: `neoforge:components`) com seu nbt passado pelos data fixers, `minecraft:item_exists` vira `forge:item_exists` (1.21.1: toda condição assume o nome `neoforge`, sob `neoforge:conditions`), um item sem namespace assume o da receita, e `data` 32767 vira uma lista de todas as variantes. Uma `#CONSTANT` de um `_constants.json` de mod não pode acompanhar, e o log a nomeia. Onde quer que uma lista nomeie itens, `name:*` vira todas as variantes que o item tinha, e um valor único assume a primeira; isso alcança os resultados de `recipe_removals` e as remoções de `furnace`, que também são levados como itens. O `item` ou `with` de uma bigorna escrito como `name:*` vira uma lista de todas as variantes, e qualquer uma delas atende.
@@ -2118,6 +2120,36 @@ Uma entrada de `items` ou `enchantments` aceita estas chaves.
 | `item`        | sim         | nome de item         | nenhum | O item, ou o item de um bloco               |
 | `enchantment` | sim         | nome de encantamento | nenhum | O encantamento que recebe as linhas         |
 | `lines`       | sim         | lista de textos      | nenhum | Chaves de idioma ou texto simples, em ordem |
+
+## Portões de idioma
+
+*entradas de idioma que dependem de uma opção do pacote*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Um portão é uma pasta de entradas de idioma que só são carregadas enquanto o `requires` dele vale. Ela contém um `gate.json` e um arquivo por código de idioma, como `en_us.json`, escrito como um arquivo de `<namespace>/lang/` e com apenas as entradas que o portão muda. Enquanto o portão vale, as entradas dele são somadas a esse idioma e vencem a mesma chave vinda dos pacotes; caso contrário, o idioma é servido exatamente como estava.
+
+`assets/mypack/langgates/stupid/gate.json`
+
+```json
+{ "requires": ["config:stupidNames"] }
+```
+
+`assets/mypack/langgates/stupid/en_us.json`
+
+```json
+{ "block.mypack.block_a": "Stupid Block!" }
+```
+
+| Chave      | Obrigatória | Valor           | Padrão           | O que faz                                                                                                                              |
+| ---------- | ----------- | --------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | não         | lista de textos | sempre se aplica | Toda entrada precisa valer. Opções `config:`, caminhos `file:`, ids de mod e namespaces de pacote funcionam como em qualquer definição |
+
+Os portões valem na ordem dos pacotes, depois pelo nome da pasta sem diferenciar maiúsculas de minúsculas, e o mais tardio vence. Dois portões para a mesma chave dão um «ou», já que cada um vale por si. Um portão soma ao idioma do seu próprio [nível](#pacotes-de-recursos-quem-vence), seja qual for o pacote que guarda o arquivo `lang` ou o portão; por isso um arquivo `lang` num pacote marcado com `O` ainda vence um portão num pacote marcado com `N`. Um portão para uma chave do jogo ou de outro mod fica nesse namespace, `assets/minecraft/langgates/<name>/`, e se empilha sobre o arquivo do próprio mod. Sem nenhum arquivo `lang` desse código, um portão que vale fornece o idioma sozinho, e um que não vale não soma nada.
+
+Uma pasta sem `gate.json` é ignorada e o log avisa, assim como um arquivo que não é um objeto JSON, uma única vez. Um id de mod em `requires` faz o jogo exigir esse mod, como em todo lugar; para entradas desejadas só quando um mod está instalado, use um caminho `file:` ou um namespace de pacote.
+
+Tocar em Concluído na tela de opções do pacote recarrega os idiomas na hora quando uma opção alterada é uma das que um portão lê, então não é preciso reiniciar. Qualquer outra mudança, como uma entrada `file:`, aparece depois de F3+T.
 
 ## Poções, tipos de poção e fermentação
 

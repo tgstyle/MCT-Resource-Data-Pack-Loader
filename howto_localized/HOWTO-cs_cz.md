@@ -58,6 +58,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
+- [Jazykové brány](#jazykové-brány)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Dropy z bloků](#dropy-z-bloků)
@@ -202,6 +203,7 @@ V `assets/`:
 | Cesta                                                                                           | Co obsahuje                                                                           |
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Obvyklé složky assetů. [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury) |
+| `<namespace>/langgates/<name>/gate.json`                                                        | Jazykové položky načtené, jen dokud brána platí. [Jazykové brány](#jazykové-brány)    |
 | `<namespace>/sounds.json`                                                                       | Index zvuků, který hra čte, vedle definic `sounds/` pod `data/`                       |
 | `<namespace>/texts/*.txt`                                                                       | Prosté textové soubory, používané úvodem do světa. [Úvod do světa](#úvod-do-světa)    |
 
@@ -399,7 +401,7 @@ Volba může být také objekt s popisem, zobrazeným pod jejím názvem na obra
 
     { "enableTestingContent": { "default": true, "description": "Zaregistruje testovací bloky a předměty" } }
 
-Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a sloučeným při aktualizacích balíčku, takže nové volby dorazí, aniž by se sáhlo na to, co uživatel už nastavil. Změny se projeví při dalším spuštění hry a tlačítko Pack Options na obrazovce výběru světa a vytváření světa je místo, kde je hráč přepíná. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože vygenerovaný soubor je pojmenován podle balíčku; volné soubory pod `rdploader/assets` a `rdploader/data` nemají název balíčku a nenesou žádné volby, takže pokud potřebují přepínač, zabal volný obsah do pojmenovaného balíčku.
+Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a sloučeným při aktualizacích balíčku, takže nové volby dorazí, aniž by se sáhlo na to, co uživatel už nastavil. Změny se projeví při dalším spuštění hry, kromě voleb, které čte [jazyková brána](#jazykové-brány): ty platí hned po stisknutí Hotovo. Tlačítko Pack Options na obrazovce výběru světa a vytváření světa je místo, kde je hráč přepíná. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože vygenerovaný soubor je pojmenován podle balíčku; volné soubory pod `rdploader/assets` a `rdploader/data` nemají název balíčku a nenesou žádné volby, takže pokud potřebují přepínač, zabal volný obsah do pojmenovaného balíčku.
 
 `requires` kterékoli definice pak může pojmenovat volbu položkou `config:`: `"requires": ["config:enableTestingContent"]` zaregistruje tento obsah jen tehdy, když je volba true, přesně jako by ho přeskočil chybějící mód. Holý název zkontroluje soubor každého balíčku a všechny balíčky, které ho definují, se musí shodnout; `"config:PackA:enableTestingContent"` pojmenuje jeden balíček. Volba, kterou nedefinuje žádný balíček, se počítá jako false a jednou se na ni upozorní.
 
@@ -577,7 +579,7 @@ Balíček vytvořený pro řadu 1.12.2 se načte tak, jak je. Loader ho pozná p
 - `textures/blocks/` a `textures/items/` se servírují jako `textures/block/` a `textures/item/`, v modelech, v pixelových mapách i v samotných souborech. Model předmětu v `models/item/<file>/<variant>.json` se servíruje jako `models/item/<variant>.json`.
 - Každé id s metadaty, `minecraft:wool:14` nebo `minecraft:dye:4`, projde datovými opravami samotné hry, stejným kódem, který aktualizuje svět z 1.12.2, takže vyjde jako blok nebo předmět, kterým se stalo: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Stav bloku, který flattening přežil jako vlastnost, `minecraft:log:1` na `minecraft:oak_log` s `axis=y`, vyjde jako objekt `properties`. Vlastní id balíčku se řeší přes jeho vlastní definice: `mypack:materials:5` se stane variantou, jejíž `meta` bylo 5, a `mypack:ruby_ore` první variantou souboru, protože každá varianta je zde samostatný blok. Názvy entit a biomů se opravují stejně a čísla dimenzí se stanou id.
 - `variants` si ponechají své klíče; `meta` se zahodí a `oreDict` se stane `tags` přes mapování slovníku rud na konvenční tagy. Soubor `oredict/*.json` se stane jedním souborem tagu předmětů na každý název, který přidává nebo odebírá: odebrání `-name` skončí v seznamu `remove` tagu a odebrání `*` tag nahradí. Holé `creativeTab` převezme namespace balíčku a štítek vanilla karty z 1.12.2 jako `misc` se stane nejbližší vanilla kartou.
-- Soubor `.lang` se servíruje jako `.json`, který hra čte, s `tile.mypack:file.variant.name` jako `block.mypack.variant`, `item.` stejným způsobem, `itemGroup.x` jako `itemGroup.mypack.x`, `fluid.x` jako oba klíče tekutiny a vším ostatním tak, jak je napsáno.
+- Soubor `.lang` se servíruje jako `.json`, který hra čte, s `tile.mypack:file.variant.name` jako `block.mypack.variant`, `item.` stejným způsobem, `itemGroup.x` jako `itemGroup.mypack.x`, `fluid.x` jako oba klíče tekutiny a vším ostatním tak, jak je napsáno. Soubor `.lang` ve složce `langgates/<name>/` se převádí stejným způsobem.
 - Blockstate z 1.12.2 se neservíruje vůbec. Místo toho se čtou jeho textury a servírují se pod názvy, které generátor hledá, `textures/block/<variant>.png` s `_top` a `_bottom` tam, kde blockstate měl `end`, `top` nebo `bottom`, takže se blockstate a modely generují pro každou variantu tak, jak by se generovaly pro balíček psaný zde.
 - Recepty ztratí `data` a získají zploštěná id, `forge:ore_shaped` se stane `minecraft:crafting_shaped` s ingrediencemi `ore` jako `tag`, tabulky kořisti stejným způsobem ztratí `set_data` a `item` s `data` v pokroku se stane `items`. `background` pokroku se přesune z `textures/blocks/` do `textures/block/` a jeho ikona jmenuje předmět jako `id`.
 - Přenáší se i slovník Forge z 1.12.2 v receptu: typ ingredience `forge:ore_dict` nebo `minecraft:item` se zahodí, ingredience `minecraft:item_nbt` se stane `forge:nbt` (1.21.1: `neoforge:components`) s nbt proběhlým datovými opravami, `minecraft:item_exists` se stane `forge:item_exists` (1.21.1: každá podmínka dostane svůj název `neoforge` pod `neoforge:conditions`), předmět bez namespace převezme namespace receptu a `data` 32767 se stane seznamem všech variant. `#CONSTANT` z `_constants.json` módu se přenést nedá a log ji jmenuje. Všude, kde seznam jmenuje předměty, se `name:*` stane každou variantou, kterou předmět měl, a jedna hodnota vezme první; to platí pro výstupy `recipe_removals` a odebrání `furnace`, které se také přenášejí jako předměty. `item` nebo `with` kovadliny zapsané jako `name:*` se stane seznamem všech variant a odpovídá kterákoli z nich.
@@ -2118,6 +2120,36 @@ Záznam v `items` nebo `enchantments` přijímá tyto klíče.
 | `item`        | ano     | název předmětu | žádný   | Předmět, nebo předmět bloku                   |
 | `enchantment` | ano     | název kouzla   | žádný   | Kouzlo, které řádky dostane                   |
 | `lines`       | ano     | seznam textů   | žádný   | Klíče jazyka nebo prostý text, v tomto pořadí |
+
+## Jazykové brány
+
+*jazykové položky závislé na volbě balíčku*
+
+`<namespace>/langgates/<name>/gate.json`
+
+Brána je složka s jazykovými položkami, které se načtou, jen dokud platí její `requires`. Obsahuje soubor `gate.json` a jeden soubor pro každý kód jazyka, například `en_us.json`, psaný stejně jako soubor v `<namespace>/lang/` a nesoucí jen položky, které brána mění. Dokud brána platí, její položky se přidají k danému jazyku a přebijí stejný klíč z balíčků; jinak se jazyk servíruje přesně tak, jak byl.
+
+`assets/mypack/langgates/stupid/gate.json`
+
+```json
+{ "requires": ["config:stupidNames"] }
+```
+
+`assets/mypack/langgates/stupid/en_us.json`
+
+```json
+{ "block.mypack.block_a": "Stupid Block!" }
+```
+
+| Klíč       | Povinný | Hodnota      | Výchozí    | Co dělá                                                                                                               |
+| ---------- | ------- | ------------ | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `requires` | ne      | seznam textů | vždy platí | Musí platit každá položka. Volby `config:`, cesty `file:`, ID modů a jmenné prostory balíčků fungují jako všude jinde |
+
+Brány se uplatňují v pořadí balíčků, poté podle názvu složky bez ohledu na velikost písmen, a vyhrává pozdější. Dvě brány pro stejný klíč dávají buď–anebo, protože každá platí sama za sebe. Brána doplňuje jazyk své vlastní [vrstvy](#balíčky-zdrojů-který-vyhraje), ať soubor `lang` nebo bránu drží kterýkoli balíček, takže soubor `lang` v balíčku označeném `O` stále přebije bránu v balíčku označeném `N`. Brána pro klíč hry nebo jiného modu leží pod jeho jmenným prostorem, `assets/minecraft/langgates/<name>/`, a překrývá vlastní soubor modu. Když žádný soubor `lang` s daným kódem neexistuje, platná brána jazyk dodá sama, a neplatná nepřidá nic.
+
+Složka bez `gate.json` se přeskočí a log to řekne, stejně jako soubor, který není objekt JSON, a to jednou. ID modu v `requires` způsobí, že hra ten mod vyžaduje, stejně jako všude jinde; pro položky potřebné jen tehdy, když je mod nainstalován, použijte cestu `file:` nebo jmenný prostor balíčku.
+
+Stisknutí Hotovo na obrazovce voleb balíčku okamžitě znovu načte jazyky, když změněná volba patří k těm, které brána čte, takže restart není potřeba. Jakákoli jiná změna, například položka `file:`, se projeví po F3+T.
 
 ## Lektvary, typy lektvarů a vaření
 

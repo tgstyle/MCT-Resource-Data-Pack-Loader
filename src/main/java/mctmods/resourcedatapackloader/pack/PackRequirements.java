@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public final class PackRequirements {
@@ -45,6 +46,14 @@ public final class PackRequirements {
             collect(contents, found);
             return null;
         })); }
+        manager.forEachAssets(PackManager.LANGGATES, PackManager.JSON, (namespace, path, contents) -> {
+            if (path.toLowerCase(Locale.ROOT).endsWith("/gate")) {
+                Json.within("requirements file", namespace + ":" + PackManager.LANGGATES + "/" + path, () -> {
+                    collect(contents, found);
+                    return null;
+                });
+            }
+        });
         for (String modid : found) {
             if (modLoaded(modid) || manager.provides(modid)) { continue; }
             WANTED.add(modid);
