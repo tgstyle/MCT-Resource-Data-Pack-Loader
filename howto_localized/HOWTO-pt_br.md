@@ -3722,7 +3722,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4072,6 +4072,7 @@ Qualquer outra chave numa janela é ignorada com um erro no log, assim como `pre
 | `rain.interval`         | não         | int                     | `3`                      | Com que raridade o som toca; mais alto é mais esparso, `0` toca a cada oportunidade                                                                                                                   |
 | `rain.color`            | não         | cor hex                 | `#FFFFFF`                | Tom da chuva que cai                                                                                                                                                                                  |
 | `rain.snowColor`        | não         | cor hex                 | `#FFFFFF`                | Tom da neve que cai                                                                                                                                                                                   |
+| `rain.colorMode`        | não         | `multiply` ou `solid`   | `multiply`               | Como `rain.color` se combina com a textura da chuva: `multiply` tinge os riscos cinza-azulados, então cores vivas saem escuras; `solid` desenha os riscos em `rain.color`, mantendo forma e transparência; a luz da noite ainda os escurece |
 | `rain.angle`            | não         | float, 0 a 180          | `0`                      | Graus a partir da vertical para baixo: `90` sopra de lado, `180` sobe em linha reta. É desenhada inclinada em no máximo 75 graus                                                                      |
 | `rain.heading`          | não         | float, graus            | `0`                      | Para onde sopra: `0` sul, `90` oeste, `180` norte, `270` leste                                                                                                                                        |
 | `rain.splashUpward`     | não         | booleano                | `false`                  | Ligado, a chuva que sobe (`angle` acima de `90`) continua respingando no chão e tocando o som                                                                                                         |
