@@ -108,7 +108,7 @@ public final class ContentDimensionParser {
         DimensionTraitsDef traits = traits(key, json);
         return new DimensionDef(key, type, flatOptions(terrain), Json.getBoolean(terrain, "structures", true), source,
                 Json.getString(biomes, "biome", "minecraft:plains").trim(), biomeList, minHeight, maxHeight,
-                options.has("seaLevel") ? Json.getInt(options, "seaLevel") : -1, Json.getBoolean(options, "useLavaOceans", false),
+                options.has("seaLevel") ? Json.getInt(options, "seaLevel") : -1, Json.getBoolean(options, "useLavaOceans", false), Json.getString(options, "oceanFluid", "").trim(),
                 Json.getBoolean(sky, "hasSkyLight", true), Json.getBoolean(sky, "surfaceWorld", true), Json.getBoolean(sky, "spawning", true),
                 cloudHeight, Math.max(1.0E-5D, Json.getDouble(sky, "movementFactor", 1.0D)),
                 fog.isEmpty() ? -1 : ContentParser.color(fog, key + " fogColor") & 0xFFFFFF, skyColor.isEmpty() ? -1 : ContentParser.color(skyColor, key + " skyColor") & 0xFFFFFF,
