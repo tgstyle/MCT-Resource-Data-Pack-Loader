@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentOceanFluid;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorOverworld;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Longs;
@@ -62,7 +63,7 @@ public final class BeardSurface {
         int surface = surfaceAt(world, pos.getX(), pos.getZ());
         int y = pos.getY();
         if (surface < 0) { return Blocks.AIR.getDefaultState(); }
-        if (y > surface) { return y <= world.getSeaLevel() ? Blocks.WATER.getDefaultState() : Blocks.AIR.getDefaultState(); }
+        if (y > surface) { return y <= world.getSeaLevel() ? ContentOceanFluid.of(world) : Blocks.AIR.getDefaultState(); }
         Biome biome = world.getBiome(pos);
         if (y == surface) { return surface < world.getSeaLevel() ? biome.fillerBlock : biome.topBlock; }
         if (y > surface - 5) { return biome.fillerBlock; }

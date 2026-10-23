@@ -6,9 +6,11 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeardSeat;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentFreezeCheck;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOceanFluid;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
@@ -38,6 +40,12 @@ import net.minecraft.world.gen.structure.WoodlandMansion;
 
 @Mixin(ChunkGeneratorOverworld.class) public abstract class MixinChunkGeneratorOverworld {
     @Shadow @Final private World world;
+    @Shadow private IBlockState oceanBlock;
+
+    @Inject(method = "<init>(Lnet/minecraft/world/World;JZLjava/lang/String;)V", at = @At("TAIL")) private void rdpl$oceanFluid(World worldIn, long seed, boolean mapFeaturesEnabledIn, String generatorOptions, CallbackInfo ci) {
+        IBlockState sea = ContentOceanFluid.chosen(worldIn, generatorOptions);
+        if (sea != null) { oceanBlock = sea; }
+    }
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {
         Chunk chunk = ContentVoidWorld.emptyChunk(world, x, z);

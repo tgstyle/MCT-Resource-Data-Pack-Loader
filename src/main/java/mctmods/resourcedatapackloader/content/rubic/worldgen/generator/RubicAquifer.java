@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOceanFluid;
 import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.block.state.IBlockState;
@@ -17,11 +18,15 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 public final class RubicAquifer {
     private static final int SEA_LEVEL = 63;
     private static final int DRY = -1000000;
+    private static final int SEA = 0;
+    private static final int LAVA = 1;
+    private static final int WATER = 2;
     private static final int CACHE_LIMIT = 1 << 16;
     private static final int[][] SURFACE_OFFSETS_IN_CHUNKS = {
             {0, 0}, {-2, -1}, {-1, -1}, {0, -1}, {1, -1}, {-3, 0}, {-2, 0}, {-1, 0}, {1, 0}, {-2, 1}, {-1, 1}, {0, 1}, {1, 1}
     };
     private final World world;
+    private final IBlockState sea;
     private final int lavaLevel;
     private final int offsetBlocks;
     private final IBlockState barrierBlock;
@@ -37,6 +42,7 @@ public final class RubicAquifer {
 
     public RubicAquifer(World world, long seed, int lavaLevel, int offsetBlocks, IBlockState barrierBlock, DeepGeneration carver) {
         this.world = world;
+        this.sea = ContentOceanFluid.of(world);
         this.seed = seed;
         this.lavaLevel = lavaLevel;
         this.offsetBlocks = offsetBlocks;
@@ -49,7 +55,7 @@ public final class RubicAquifer {
     }
 
     public IBlockState substance(int x, int y, int z, double density) {
-        if (y > surfaceEstimate(x, z) + 8 + 12) { return at(pack(SEA_LEVEL, false), y); }
+        if (y > surfaceEstimate(x, z) + 8 + 12) { return at(pack(SEA_LEVEL, SEA), y); }
         Nearest nearest = nearest3(x, y, z);
         long distanceSqr1 = nearest.distance[0];
         long distanceSqr2 = nearest.distance[1];
@@ -71,7 +77,7 @@ public final class RubicAquifer {
     }
 
     private IBlockState settled(IBlockState state, int x, int y, int z) {
-        if (state.getBlock() != Blocks.WATER && state.getBlock() != Blocks.LAVA) { return state; }
+        if (state.getBlock() != Blocks.WATER && state.getBlock() != Blocks.LAVA && state.getBlock() != sea.getBlock()) { return state; }
         if (state.getBlock() == Blocks.WATER && y - 1 < lavaLevel) { return barrierBlock; }
         if (leaks(state, x, y - 1, z) || leaks(state, x - 1, y, z) || leaks(state, x + 1, y, z)
                 || leaks(state, x, y, z - 1) || leaks(state, x, y, z + 1)) { return barrierBlock; }
@@ -186,11 +192,11 @@ public final class RubicAquifer {
     }
 
     private long computeFluid(int x, int y, int z) {
-        long global = y < lavaLevel ? pack(lavaLevel, true) : pack(SEA_LEVEL, false);
+        long global = y < lavaLevel ? pack(lavaLevel, LAVA) : pack(SEA_LEVEL, SEA);
         CaveRegionDef region = ContentCaveRegions.regionAt(world, x, y + offsetBlocks, z);
         if (region != null && region.hasWater()) {
             int level = Math.min(SEA_LEVEL - 1, Math.max(region.waterLevel - offsetBlocks, lavaLevel + 2));
-            return pack(level, false);
+            return pack(level, WATER);
         }
         int lowestSurface = Integer.MAX_VALUE;
         int topOfCell = y + 12;
@@ -207,7 +213,7 @@ public final class RubicAquifer {
             if (pokesAboveSurface || center) {
                 if (adjusted < SEA_LEVEL && adjusted >= lavaLevel) {
                     if (center) { centerUnderGlobalFluid = true; }
-                    if (pokesAboveSurface) { return pack(SEA_LEVEL, false); }
+                    if (pokesAboveSurface) { return pack(SEA_LEVEL, SEA); }
                 }
             }
             lowestSurface = Math.min(lowestSurface, surface);
@@ -232,10 +238,10 @@ public final class RubicAquifer {
             level = DRY;
         }
         boolean lava = false;
-        if (level != DRY && level <= -10 && !isLava(global)) {
+        if (level != DRY && level <= -10 && kind(global) != LAVA) {
             lava = Math.abs(lavaPocket.sample(Math.floorDiv(x, 64), Math.floorDiv(y, 40), Math.floorDiv(z, 64))) > 0.55D;
         }
-        return pack(level, lava);
+        return pack(level, lava ? LAVA : SEA);
     }
 
     private int surfaceEstimate(int x, int z) {
@@ -252,14 +258,16 @@ public final class RubicAquifer {
 
     @SuppressWarnings("ConstantConditions") private IBlockState at(long status, int y) {
         if (y >= level(status)) { return Blocks.AIR.getDefaultState(); }
-        return isLava(status) ? Blocks.LAVA.getDefaultState() : Blocks.WATER.getDefaultState();
+        int kind = kind(status);
+        if (kind == LAVA) { return Blocks.LAVA.getDefaultState(); }
+        return kind == SEA ? sea : Blocks.WATER.getDefaultState();
     }
 
-    private static long pack(int level, boolean lava) { return ((long) level << 1) | (lava ? 1L : 0L); }
+    private static long pack(int level, int kind) { return ((long) level << 2) | kind; }
 
-    private static int level(long status) { return (int) (status >> 1); }
+    private static int level(long status) { return (int) (status >> 2); }
 
-    private static boolean isLava(long status) { return (status & 1L) != 0; }
+    private static int kind(long status) { return (int) (status & 3L); }
 
     private static long cellKey(int x, int y, int z) { return ((x & 0x1FFFFFL) << 42) | ((y & 0x1FFFFFL) << 21) | (z & 0x1FFFFFL); }
 
