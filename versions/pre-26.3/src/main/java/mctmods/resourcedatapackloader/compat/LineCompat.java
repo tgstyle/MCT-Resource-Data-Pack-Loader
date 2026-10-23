@@ -27,6 +27,8 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
@@ -42,6 +44,7 @@ import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.context.ContextKey;
 import net.minecraft.util.context.ContextMap;
@@ -78,6 +81,7 @@ import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignText;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -103,6 +107,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 import net.minecraft.world.level.levelgen.synth.NormalNoise;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
@@ -220,6 +225,12 @@ public final class LineCompat {
     public static void drop(Player player, ItemStack stack) { player.drop(stack, false); }
 
     public static String signWord(SignBlockEntity sign) { return sign.getFrontText().getMessage(0, false).getString().trim(); }
+
+    public static void loadSignWord(SignBlockEntity sign, RegistryAccess registries, String word) {
+        CompoundTag tag = new CompoundTag();
+        SignText.DIRECT_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), new SignText().setMessage(0, Component.literal(word))).result().ifPresent(text -> tag.put("front_text", text));
+        sign.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, registries, tag));
+    }
 
     public static void signCount(SignBlockEntity sign, int count) { sign.updateText(text -> text.setMessage(1, Component.literal(String.valueOf(count))), true); }
 

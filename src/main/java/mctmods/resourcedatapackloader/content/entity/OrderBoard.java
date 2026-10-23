@@ -73,16 +73,16 @@ public final class OrderBoard extends SavedData {
         return compound;
     }
 
-    public WorkOrder open(ServerLevel level, OrderDef def, BlockPos chest, @Nullable BlockPos sign, Player by, boolean stock) {
+    public WorkOrder open(ServerLevel level, OrderDef def, BlockPos chest, @Nullable BlockPos sign, @Nullable Player by, boolean stock) {
         for (WorkOrder order : orders) {
             if (order.def == def && order.chest.equals(chest) && order.stock == stock) { return order; }
         }
-        PlayerTeam side = ContentOrders.teamOf(by);
-        WorkOrder order = new WorkOrder(nextId++, def, chest.immutable(), sign == null ? null : sign.immutable(), side == null ? "" : side.getName(), by.getUUID(), stock, def.limit());
+        PlayerTeam side = by == null ? null : ContentOrders.teamOf(by);
+        WorkOrder order = new WorkOrder(nextId++, def, chest.immutable(), sign == null ? null : sign.immutable(), side == null ? "" : side.getName(), by == null ? null : by.getUUID(), stock, def.limit());
         order.idleSince = level.getGameTime();
         orders.add(order);
         setDirty();
-        ContentLog.LOGGER.info("{} opened the {} order {} at the chest at {}, {}, {}{}", by.getName().getString(), def.job().name().toLowerCase(Locale.ROOT), def.name(), chest.getX(), chest.getY(), chest.getZ(), side == null ? "" : " for team " + side.getName());
+        ContentLog.LOGGER.info("{} opened the {} order {} at the chest at {}, {}, {}{}", by == null ? "A village plot" : by.getName().getString(), def.job().name().toLowerCase(Locale.ROOT), def.name(), chest.getX(), chest.getY(), chest.getZ(), side == null ? "" : " for team " + side.getName());
         refresh(level, order, level.getGameTime());
         return order;
     }
@@ -251,11 +251,13 @@ public final class OrderBoard extends SavedData {
     }
 
     @Nullable private static BlockPos standing(ServerLevel level, BlockPos chest) {
-        if (level.isEmptyBlock(chest.above()) && level.isEmptyBlock(chest.above(2))) { return chest.above(); }
+        if (clear(level, chest.above()) && clear(level, chest.above(2))) { return chest.above(); }
         for (Direction side : Direction.Plane.HORIZONTAL) {
             BlockPos pos = chest.relative(side);
-            if (level.isEmptyBlock(pos) && level.isEmptyBlock(pos.above()) && level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) { return pos; }
+            if (clear(level, pos) && clear(level, pos.above()) && level.getBlockState(pos.below()).isFaceSturdy(level, pos.below(), Direction.UP)) { return pos; }
         }
         return null;
     }
+
+    private static boolean clear(ServerLevel level, BlockPos pos) { return level.getBlockState(pos).canBeReplaced() && level.getFluidState(pos).isEmpty(); }
 }

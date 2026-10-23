@@ -102,7 +102,7 @@ public final class ContentVillages {
             Vec3i size = house.getValue().size();
             TURNS.put(house.getKey(), house.getValue().turn());
             VANILLA.put(house.getKey(), new VillageDef(house.getKey(), VillageDef.TEMPLATE, 3, 1, 4, Math.max(3, size.getX()), Math.max(1, size.getY()), Math.max(3, size.getZ()), 2,
-                    List.of(), "minecraft:oak_log", "minecraft:farmland", true, 2, house.getKey().toString(), "minecraft:dirt", ShapeDef.FULL_INTEGRITY, "", 0, "", 1, 1, 1, List.of()));
+                    List.of(), "minecraft:oak_log", "minecraft:farmland", true, 2, house.getKey().toString(), "minecraft:dirt", ShapeDef.FULL_INTEGRITY, "", 0, "", 1, 1, 1, List.of(), "", 1, 1, 1));
         }
     }
 
@@ -129,7 +129,7 @@ public final class ContentVillages {
     private static VillageDef sized(VillageDef def, int width, int height, int depth) {
         if (width == def.width() && height == def.height() && depth == def.depth()) { return def; }
         return new VillageDef(def.key(), def.type(), def.weight(), def.leastCount(), def.mostCount(), width, height, depth, def.apron(), def.crops(), def.edge(), def.soil(), def.water(), def.rowWidth(),
-                def.structure(), def.ground(), def.integrity(), def.lootTable(), def.villagers(), def.villagerEntity(), def.villagerX(), def.villagerY(), def.villagerZ(), def.requires());
+                def.structure(), def.ground(), def.integrity(), def.lootTable(), def.villagers(), def.villagerEntity(), def.villagerX(), def.villagerY(), def.villagerZ(), def.requires(), def.orderSign(), def.orderX(), def.orderY(), def.orderZ());
     }
 
     @Nullable public static VillageDef byKey(String named) {
@@ -232,6 +232,11 @@ public final class ContentVillages {
             ContentLog.LOGGER.error("Village plot {} names structure '{}', which is not a valid id, so it is dropped", key, structure);
             return null;
         }
+        String orderSign = Json.getString(json, "orderSign", "").trim();
+        if (!orderSign.isEmpty() && !VillageDef.TEMPLATE.equals(type)) {
+            ContentLog.LOGGER.error("Village plot {} is a farm and names the order sign '{}', which only a template plot stands, ignoring the sign", key, orderSign);
+            orderSign = "";
+        }
         return grown(new VillageDef(key, type,
                 Math.max(1, Json.getInt(json, "weight", 3)),
                 Math.max(0, Json.getInt(json, "leastCount", 1)),
@@ -254,6 +259,10 @@ public final class ContentVillages {
                 Json.getInt(json, "villagerX", 1),
                 Json.getInt(json, "villagerY", 1),
                 Json.getInt(json, "villagerZ", 1),
-                Json.strings(json, "requires")), null);
+                Json.strings(json, "requires"),
+                orderSign,
+                Json.getInt(json, "orderX", 1),
+                Json.getInt(json, "orderY", 1),
+                Json.getInt(json, "orderZ", 1)), null);
     }
 }

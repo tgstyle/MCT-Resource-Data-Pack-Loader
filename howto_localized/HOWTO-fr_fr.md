@@ -2829,6 +2829,7 @@ Un ordre est un travail que les variantes d'entité nommées comme ses preneurs 
 - **Un panneau.** Posez un panneau sur un coffre ou à côté, et écrivez le mot `sign` de l'ordre sur sa première ligne. L'ordre s'ouvre à ce coffre, et la deuxième ligne du panneau indique combien d'objets manquent encore. Casser le panneau, ou le coffre, l'annule.
 - **Un outil.** Faites un clic droit sur un travailleur, sans vous accroupir, avec un outil du type `tool` de l'ordre. Le travailleur prend l'outil, celui qu'il tenait vous revient, et il exécute l'ordre au coffre le plus proche dans sa zone.
 - **Un coffre de réserve.** Renommez un coffre en `stockName` dans une enclume et posez-le. Chaque objet de sa première rangée est maintenu à une pile complète : les travailleurs le rapportent d'autres coffres dans la zone du premier ordre `haul` du pack, avec les preneurs, la priorité et la zone de cet ordre.
+- **Une parcelle de village.** Une parcelle qui indique un `orderSign` dresse elle-même le panneau. Le coffre doit se trouver juste sous le panneau ou à côté, et le modèle de la parcelle doit le contenir. Tout travailleur libre que les `takers` de l'ordre nomment (un travailleur qu'aucun joueur n'a engagé et qui n'est dans aucune équipe) peut l'exécuter, et l'ordre fait apparaître des travailleurs libres comme n'importe quel ordre. Il ne verse ni points, ni butin, ni fonction, car aucun joueur ne l'a ouvert ; donnez-lui `standing` pour le garder ouvert. Un panneau dont le mot ne correspond à aucun ordre consigne une erreur au chargement de son chunk. Sur une parcelle de carte de structures tournée, le panneau se place par rapport à l'emprise de toute la carte ; avec une pièce plus petite que sa cellule, il est donc décalé de la taille de la cellule moins la largeur de la pièce.
 
 ```json
 {
@@ -4829,7 +4830,11 @@ Un `template` place à la place l'une de vos structures `.nbt`, tournée pour fa
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -4854,6 +4859,10 @@ Un `template` dont la `structure` désigne l'une de vos [cartes de structures](#
 | `villagerX`      | tous         | entier           | `1`           | Où ils apparaissent, en travers de la parcelle                                                                                                                                |
 | `villagerY`      | tous         | entier           | `1`           | Où ils apparaissent, au-dessus du sol                                                                                                                                         |
 | `villagerZ`      | tous         | entier           | `1`           | Où ils apparaissent, en profondeur dans la parcelle                                                                                                                           |
+| `orderSign`      | template     | texte            | aucun         | Le mot `sign` d'un ordre, sans distinction de casse. La parcelle dresse ce panneau et l'ordre s'ouvre au coffre voisin, aux travailleurs libres seulement                     |
+| `orderX`         | template     | entier           | `1`           | Où se dresse le panneau, en travers de la parcelle                                                                                                                            |
+| `orderY`         | template     | entier           | `1`           | Où se dresse le panneau, au-dessus du sol                                                                                                                                     |
+| `orderZ`         | template     | entier           | `1`           | Où se dresse le panneau, en profondeur dans la parcelle                                                                                                                       |
 
 ## Cartes de plan des villes
 

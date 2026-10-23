@@ -2829,6 +2829,7 @@ Uma ordem é um trabalho que as variantes de entidade nomeadas como seus executo
 - **Uma placa.** Coloque uma placa sobre um baú ou ao lado dele e escreva a palavra `sign` da ordem na primeira linha. A ordem abre naquele baú, e a segunda linha da placa mostra quantos itens ainda faltam. Quebrar a placa, ou o baú, a cancela.
 - **Uma ferramenta.** Clique com o botão direito em um trabalhador, sem agachar, com uma ferramenta do tipo `tool` da ordem. O trabalhador pega a ferramenta, a que ele segurava volta para você, e ele executa a ordem no baú mais próximo dentro da área dele.
 - **Um baú de estoque.** Renomeie um baú para `stockName` em uma bigorna e coloque-o. Cada item da primeira fileira dele é mantido cheio até uma pilha completa: trabalhadores o trazem de outros baús dentro da área da primeira ordem `haul` do pacote, com os executores, a prioridade e a área dessa ordem.
+- **Um terreno de vila.** Um terreno que indica um `orderSign` ergue a placa sozinho. O baú precisa estar logo abaixo da placa ou ao lado, e o modelo do terreno precisa incluí-lo. Qualquer trabalhador livre que os `takers` da ordem nomeiam (um que nenhum jogador contratou e que não está em nenhuma equipe) pode executá-la, e ela gera trabalhadores livres como qualquer ordem. Ela não paga pontos, saque nem função, porque nenhum jogador a abriu; dê a ela `standing` para mantê-la aberta. Uma placa cuja palavra não corresponde a nenhuma ordem registra um erro quando seu chunk é carregado. Em um terreno de mapa de estruturas girado, a placa fica posicionada em relação à área do mapa inteiro, então com uma peça menor que sua célula ela fica deslocada pelo tamanho da célula menos a largura da peça.
 
 ```json
 {
@@ -4829,7 +4830,11 @@ Um `template` coloca, em vez disso, uma das suas estruturas `.nbt`, virada para 
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -4854,6 +4859,10 @@ Um `template` cujo `structure` nomeia um dos seus [mapas de estruturas](#mapas-d
 | `villagerX`      | todos     | int              | `1`       | Onde aparecem, ao longo do terreno                                                                                                                                  |
 | `villagerY`      | todos     | int              | `1`       | Onde aparecem, acima do piso                                                                                                                                        |
 | `villagerZ`      | todos     | int              | `1`       | Onde aparecem, para dentro do terreno                                                                                                                               |
+| `orderSign`      | template  | texto            | nenhum    | A palavra `sign` de uma ordem, sem diferenciar maiúsculas. O terreno ergue essa placa e a ordem abre no baú ao lado, só para trabalhadores livres                   |
+| `orderX`         | template  | int              | `1`       | Onde a placa fica, ao longo do terreno                                                                                                                              |
+| `orderY`         | template  | int              | `1`       | Onde a placa fica, acima do piso                                                                                                                                    |
+| `orderZ`         | template  | int              | `1`       | Onde a placa fica, para dentro do terreno                                                                                                                           |
 
 ## Mapas de layout de cidades
 

@@ -2829,6 +2829,7 @@ Zakázka je práce, kterou pro hráče vykonávají varianty entit uvedené jako
 - **Cedule.** Polož ceduli na truhlu nebo vedle ní a na první řádek napiš slovo `sign` zakázky. Zakázka se otevře u té truhly a druhý řádek cedule ukazuje, kolik předmětů je stále žádáno. Rozbití cedule nebo truhly ji zruší.
 - **Nástroj.** Klikni pravým tlačítkem na pracovníka, bez plížení, nástrojem druhu `tool` dané zakázky. Pracovník nástroj vezme, jakýkoli nástroj, který držel, se vrátí tobě a zakázku vykonává u nejbližší truhly v její oblasti.
 - **Zásobní truhla.** Pojmenuj truhlu `stockName` na kovadlině a polož ji. Každý předmět v jejím prvním řádku se udržuje doplněný na plný stack: pracovníci ho nosí z jiných truhel v oblasti první zakázky `haul` balíčku, pod přijímateli, prioritou a oblastí té zakázky.
+- **Vesnický pozemek.** Pozemek, který uvádí `orderSign`, postaví ceduli sám. Truhla musí být přímo pod cedulí nebo vedle ní a šablona pozemku ji musí obsahovat. Zakázku smí vykonávat jakýkoli volný pracovník, kterého zakázka uvádí v `takers` (takový, kterého nikdo nenajal a který není v žádném týmu), a jako každá zakázka vytváří volné pracovníky. Neplatí žádné body, kořist ani funkci, protože ji neotevřel žádný hráč, proto jí dej `standing`, aby zůstala otevřená. Cedule se slovem, které nemá žádná zakázka, zapíše při načtení svého chunku chybu. Na otočeném pozemku se strukturní mapou se cedule řídí půdorysem celé mapy, takže u dílu menšího než jeho buňka je posunutá o velikost buňky minus šířku dílu.
 
 ```json
 {
@@ -4829,7 +4830,11 @@ Pozemky stavějí města balíčku podél svých ulic a každý šablonový poze
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -4854,6 +4859,10 @@ Pozemek `template`, jehož `structure` pojmenovává jednu z tvých [map struktu
 | `villagerX`      | všechny   | celé číslo       | `1`      | Kde se objeví, napříč pozemkem                                                                                                                      |
 | `villagerY`      | všechny   | celé číslo       | `1`      | Kde se objeví, nad podlahou                                                                                                                         |
 | `villagerZ`      | všechny   | celé číslo       | `1`      | Kde se objeví, do hloubky pozemku                                                                                                                   |
+| `orderSign`      | template  | řetězec          | žádný    | Slovo `sign` zakázky, bez ohledu na velikost písmen. Pozemek postaví takovou ceduli a zakázka se otevře u truhly vedle ní, jen pro volné pracovníky |
+| `orderX`         | template  | celé číslo       | `1`      | Kde cedule stojí, napříč pozemkem                                                                                                                   |
+| `orderY`         | template  | celé číslo       | `1`      | Kde cedule stojí, nad podlahou                                                                                                                      |
+| `orderZ`         | template  | celé číslo       | `1`      | Kde cedule stojí, do hloubky pozemku                                                                                                                |
 
 ## Mapy rozložení měst
 

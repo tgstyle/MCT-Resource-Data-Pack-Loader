@@ -448,6 +448,7 @@ import java.util.Set;
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onBreak);
+                    NeoForge.EVENT_BUS.addListener(ContentOrders::onChunkLoad);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onInteract);
                 }
                 ContentOverrides.reload();

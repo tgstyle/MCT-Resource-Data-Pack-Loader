@@ -2829,6 +2829,7 @@ An order is a job that the entity variants named as its takers do for a player: 
 - **A sign.** Place a sign on or beside a chest and write the order's `sign` word on its first line. The order opens at that chest, and the sign's second line shows how many items are still wanted. Breaking the sign, or the chest, cancels it.
 - **A tool.** Right-click a worker, not sneaking, with a tool of the order's `tool` kind. The worker takes the tool, any tool it held comes back to you, and it works the order at the nearest chest within its area.
 - **A stock chest.** Rename a chest to `stockName` in an anvil and place it. Each item in its first row is kept topped up to a full stack: workers fetch it from other chests within the area of the pack's first `haul` order, under that order's takers, priority and area.
+- **A village plot.** A plot that names an `orderSign` stands the sign itself. The chest must be directly below the sign or beside it, and the plot's template must hold it. Any free worker the order's takers name (one no player hired and on no team) may work it, and it spawns free workers like any order. It pays no points, loot or function because no player opened it, so give it `standing` to keep it open. A sign whose word matches no order logs an error when its chunk loads. On a turned structure-map plot the sign sits relative to the whole map's footprint, so a piece smaller than its cell puts it off by the cell size minus the piece width.
 
 ```json
 {
@@ -4829,7 +4830,11 @@ A `template` places one of your `.nbt` structures instead, turned to face the st
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -4854,6 +4859,10 @@ A `template` whose `structure` names one of your [structure maps](#structure-map
 | `villagerX`      | all      | int              | `1`        | Where they appear, across the plot                                                                                                                |
 | `villagerY`      | all      | int              | `1`        | Where they appear, above the floor                                                                                                                |
 | `villagerZ`      | all      | int              | `1`        | Where they appear, into the plot                                                                                                                  |
+| `orderSign`      | template | string           | none       | The `sign` word of a work order, in any case. The plot stands that sign, and the order opens at the chest beside it, for free workers only        |
+| `orderX`         | template | int              | `1`        | Where the sign stands, across the plot                                                                                                            |
+| `orderY`         | template | int              | `1`        | Where the sign stands, above the floor                                                                                                            |
+| `orderZ`         | template | int              | `1`        | Where the sign stands, into the plot                                                                                                              |
 
 ## City layout maps
 
