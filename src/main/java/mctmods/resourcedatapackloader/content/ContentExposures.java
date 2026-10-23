@@ -27,6 +27,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffect;
@@ -42,9 +43,11 @@ import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -53,6 +56,7 @@ public final class ContentExposures {
     private static final String TIMER = "RDPLExposure";
     private static final Map<ExposureDef, Map<Block, Integer>> BLOCK_LEVELS = new IdentityHashMap<>();
     private static final Map<ExposureDef, Map<Item, Integer>> ITEM_LEVELS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Set<Item>> IMMUNE_ITEMS = new IdentityHashMap<>();
     private static final Map<ExposureDef, List<MobEffect>> MARKERS = new IdentityHashMap<>();
     private static final Map<PotionEffectDef, MobEffect> EXTRAS = new IdentityHashMap<>();
     private static final Map<ExposureDef, MobEffect> IMMUNITIES = new IdentityHashMap<>();
@@ -84,13 +88,13 @@ public final class ContentExposures {
     private static void tick(ExposureDef def, ServerPlayer player) {
         if (def.skipsCreative() && (player.isCreative() || player.isSpectator())) {
             applyLevel(def, player, 0);
-            CardEvents.exposureLevel(player, def.name(), 0);
+            CardEvents.exposureLevel(player, def, 0);
             return;
         }
         if (player.tickCount % def.scanInterval() == 0) {
             int reached = scan(def, player);
             applyLevel(def, player, reached);
-            CardEvents.exposureLevel(player, def.name(), reached);
+            CardEvents.exposureLevel(player, def, reached);
             spreadFrom(def, player, reached);
         }
         damageTick(def, player);
@@ -125,9 +129,38 @@ public final class ContentExposures {
     }
 
     private static boolean immune(ExposureDef def, LivingEntity living) {
-        if (def.immunity().isEmpty()) { return false; }
-        MobEffect immune = immunity(def);
-        return immune != null && living.hasEffect(immune);
+        if (!def.immunity().isEmpty()) {
+            MobEffect immune = immunity(def);
+            if (immune != null && living.hasEffect(immune)) { return true; }
+        }
+        return wearsImmune(def, living) || onImmuneTeam(def, living);
+    }
+
+    private static boolean wearsImmune(ExposureDef def, LivingEntity living) {
+        if (def.immuneItems().isEmpty()) { return false; }
+        Set<Item> immune = immuneItems(def);
+        for (ItemStack stack : living.getAllSlots()) {
+            if (!stack.isEmpty() && immune.contains(stack.getItem())) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean onImmuneTeam(ExposureDef def, LivingEntity living) {
+        if (def.immuneTeams().isEmpty()) { return false; }
+        PlayerTeam team = ContentTeams.teamOf(living.level().getServer(), ContentTeams.memberName(living));
+        return team != null && def.immuneTeams().contains(team.getName());
+    }
+
+    private static Set<Item> immuneItems(ExposureDef def) {
+        return IMMUNE_ITEMS.computeIfAbsent(def, held -> {
+            Set<Item> items = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (ResourceLocation name : held.immuneItems()) {
+                Item item = Registered.find(ForgeRegistries.ITEMS, name);
+                if (item == null) { ContentLog.LOGGER.error("Exposure {} names immune item {}, which is not registered, so it is ignored", held.key(), name); }
+                else { items.add(item); }
+            }
+            return items;
+        });
     }
 
     @Nullable private static MobEffect immunity(ExposureDef def) { return cachedEffect(IMMUNITIES, def, def.immunity(), def, "immunity"); }

@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.card;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.def.ExposureDef;
+import mctmods.resourcedatapackloader.util.Functions;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -57,13 +59,18 @@ public final class CardEvents {
         }
     }
 
-    public static void exposureLevel(ServerPlayer player, String hazard, int level) {
+    public static void exposureLevel(ServerPlayer player, ExposureDef def, int level) {
+        String hazard = def.name();
         Integer before = LEVELS.computeIfAbsent(player.getUUID(), id -> new HashMap<>()).put(hazard, level);
-        if (before == null || before == level) { return; }
-        for (CardRule rule : CardRules.on(CardRule.EXPOSURE_LEVEL)) {
-            if (!rule.exposure.isEmpty() && !rule.exposure.equals(hazard)) { continue; }
-            if (rule.level == null || rule.level == level) { CardFire.fire(rule, player); }
+        if (before == null ? level == 0 : before == level) { return; }
+        if (before != null) {
+            for (CardRule rule : CardRules.on(CardRule.EXPOSURE_LEVEL)) {
+                if (!rule.exposure.isEmpty() && !rule.exposure.equals(hazard)) { continue; }
+                if (rule.level == null || rule.level == level) { CardFire.fire(rule, player); }
+            }
         }
+        String named = level > 0 ? def.levels().get(level - 1).onEnter() : def.onClear();
+        if (!named.isEmpty()) { Functions.runAs(player, named, "Exposure " + hazard); }
     }
 
     public static void roundStart(MinecraftServer server) {

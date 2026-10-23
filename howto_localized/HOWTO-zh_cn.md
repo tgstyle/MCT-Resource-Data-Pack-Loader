@@ -3314,35 +3314,41 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
   "caveRegions": [ "mypack:glowcave=2" ],
   "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
+  "immuneItems": [ "mypack:hazmat_helmet", "mypack:hazmat_chest" ],
+  "immuneTeams": [ "scientists" ],
+  "onClear": "mypack:rad/clear",
   "scanInterval": 20,
   "range": 10,
   "sourcesForNextLevel": 4,
   "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+    { "effect": "mypack:radiation_1", "onEnter": "mypack:rad/low", "damage": 4.0, "damageInterval": 160,
       "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
                    { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+    { "effect": "mypack:radiation_2", "onEnter": "mypack:rad/high", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
 ```
 
-| 键                    | 必需   | 值                                      | 默认值 | 作用                                                                                        |
-| --------------------- | ------ | --------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
-| `blocks`              | 九选一 | `block` 或 `block=level` 的列表         |        | 会让站在附近的玩家受到暴露的方块。不写等级则为 1                                            |
-| `items`               | 九选一 | `item` 或 `item=level` 的列表           |        | 会让携带或穿戴它们的玩家受到暴露的物品                                                      |
-| `dimensions`          | 九选一 | `dim` 或 `dim=level` 的列表             |        | 会让其中任何玩家受到暴露的维度 id                                                           |
-| `biomes`              | 九选一 | `biome` 或 `biome=level` 的列表         |        | 会让站在其中的任何玩家受到暴露的生物群系。`#` 表示生物群系标签                              |
-| `structures`          | 九选一 | `structure` 或 `structure=level` 的列表 |        | 会让身处其内部的玩家受到暴露的结构。`#` 表示结构标签。资源包结构在 `range` 个方块范围内生效 |
-| `caveRegions`         | 九选一 | `region` 或 `region=level` 的列表       |        | 会让身处其中的玩家受到暴露的洞穴区域。只写名称时使用本文件的命名空间                        |
-| `heights`             | 九选一 | `from:to=level` 的列表                  |        | 会让身处其中的玩家受到暴露的 Y 轴区间。某一侧留空表示没有限制                               |
-| `levels`              | 是     | 等级列表                                |        | 严重程度的阶梯，第一项是 1 级。玩家获得任何来源所达到的最高等级                             |
-| `immunity`            | 否     | 药水名称                                | 无     | 带有该效果的人完全不会受到暴露                                                              |
-| `scanInterval`        | 否     | 刻                                      | `20`   | 多久检查一次周围环境和物品栏                                                                |
-| `range`               | 否     | 格                                      | `10`   | 方块的暴露范围有多远，为球形                                                                |
-| `sourcesForNextLevel` | 否     | 整数                                    | `0`    | 附近有这么多个同一等级的来源，就会把该等级再推高一级。`0` 表示关闭此功能                    |
-| `skipsCreative`       | 否     | 布尔值                                  | `true` | 创造模式和旁观模式的玩家不受影响                                                            |
+| 键                    | 必需   | 值                                      | 默认值 | 作用                                                                                                                                                                   |
+| --------------------- | ------ | --------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | 九选一 | `block` 或 `block=level` 的列表         |        | 会让站在附近的玩家受到暴露的方块。不写等级则为 1                                                                                                                       |
+| `items`               | 九选一 | `item` 或 `item=level` 的列表           |        | 会让携带或穿戴它们的玩家受到暴露的物品                                                                                                                                 |
+| `dimensions`          | 九选一 | `dim` 或 `dim=level` 的列表             |        | 会让其中任何玩家受到暴露的维度 id                                                                                                                                      |
+| `biomes`              | 九选一 | `biome` 或 `biome=level` 的列表         |        | 会让站在其中的任何玩家受到暴露的生物群系。`#` 表示生物群系标签                                                                                                         |
+| `structures`          | 九选一 | `structure` 或 `structure=level` 的列表 |        | 会让身处其内部的玩家受到暴露的结构。`#` 表示结构标签。资源包结构在 `range` 个方块范围内生效                                                                            |
+| `caveRegions`         | 九选一 | `region` 或 `region=level` 的列表       |        | 会让身处其中的玩家受到暴露的洞穴区域。只写名称时使用本文件的命名空间                                                                                                   |
+| `heights`             | 九选一 | `from:to=level` 的列表                  |        | 会让身处其中的玩家受到暴露的 Y 轴区间。某一侧留空表示没有限制                                                                                                          |
+| `levels`              | 是     | 等级列表                                |        | 严重程度的阶梯，第一项是 1 级。玩家获得任何来源所达到的最高等级                                                                                                        |
+| `immunity`            | 否     | 药水名称                                | 无     | 带有该效果的人完全不会受到暴露                                                                                                                                         |
+| `immuneItems`         | 否     | 物品名称列表                            | 无     | 穿戴或手持其中任意一件物品（盔甲栏和双手）的实体完全不会受到曝露，与 `immunity` 相同。每个护甲部位指定一件即可，任意一件都足够。无法识别的物品名会记录为错误并被忽略。 |
+| `immuneTeams`         | 否     | 计分板队伍名称列表                      | 无     | 这些队伍的成员（包内的队伍文件或 `/scoreboard teams`）不会受到曝露。无法识别的队伍名永远不会匹配。                                                                     |
+| `onClear`             | 否     | 函数名                                  | 无     | 玩家的等级降到 0 时以该玩家身份运行，包括切换到创造模式时。                                                                                                            |
+| `scanInterval`        | 否     | 刻                                      | `20`   | 多久检查一次周围环境和物品栏                                                                                                                                           |
+| `range`               | 否     | 格                                      | `10`   | 方块的暴露范围有多远，为球形                                                                                                                                           |
+| `sourcesForNextLevel` | 否     | 整数                                    | `0`    | 附近有这么多个同一等级的来源，就会把该等级再推高一级。`0` 表示关闭此功能                                                                                               |
+| `skipsCreative`       | 否     | 布尔值                                  | `true` | 创造模式和旁观模式的玩家不受影响                                                                                                                                       |
 
 ### 等级
 
@@ -3354,6 +3360,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `damage`         | 否   | 半颗心   | `0`    | 该等级持续期间，每隔 `damageInterval` 刻造成的伤害。它无视护甲                     |
 | `damageInterval` | 否   | 刻       | `160`  | 这种伤害多久落下一次                                                               |
 | `effects`        | 否   | 效果列表 | 无     | 一并施加的额外效果，结构与药水类型所用的相同。不写 `duration` 时，它们跟随扫描窗口 |
+| `onEnter`        | 否   | 函数名   | 无     | 每当等级变为此等级时以该玩家身份运行，无论等级升高还是降低。                       |
+
+免疫有三种形式，任一形式都会使携带者不受曝露：`immunity` 药水、穿戴或手持的 `immuneItems` 之一，或属于 `immuneTeams` 中的某个队伍。等级变化时会运行新等级 `onEnter` 指定的函数；等级降到 0 时则运行 `onClear`。函数以权限等级 2 运行，@s 为该玩家，并且在该等级的标记效果应用之后运行。加入后的第一次检查只设定起始等级而不触发，因此进入时已处于曝露状态的玩家在等级变化前不会运行任何内容；重生会保留等级。同一变化还会触发 `exposure_level` 卡牌触发器。
 
 等级效果会比下一次扫描稍晚结束，因此走开后它们会自行失效。因暴露伤害而死亡时，其消息读取自 `death.attack.rdpl.<file name>`，由资源包的语言文件提供。
 
