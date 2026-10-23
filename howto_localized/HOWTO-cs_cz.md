@@ -58,6 +58,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
+- [Podmíněné jazykové soubory](#podmíněné-jazykové-soubory)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Dropy z bloků](#dropy-z-bloků)
@@ -199,11 +200,12 @@ V `data/`:
 
 V `assets/`:
 
-| Cesta                                                                                           | Co obsahuje                                                                           |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Obvyklé složky assetů. [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury) |
-| `<namespace>/sounds.json`                                                                       | Index zvuků, který hra čte, vedle definic `sounds/` pod `data/`                       |
-| `<namespace>/texts/*.txt`                                                                       | Prosté textové soubory, používané úvodem do světa. [Úvod do světa](#úvod-do-světa)    |
+| Cesta                                                                                           | Co obsahuje                                                                                                                 |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Obvyklé složky assetů. [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury)                                       |
+| `<namespace>/langgates/<name>/*.json`                                                           | Jazykové záznamy, které se načtou jen tehdy, když platí podmínka. [Podmíněné jazykové soubory](#podmíněné-jazykové-soubory) |
+| `<namespace>/sounds.json`                                                                       | Index zvuků, který hra čte, vedle definic `sounds/` pod `data/`                                                             |
+| `<namespace>/texts/*.txt`                                                                       | Prosté textové soubory, používané úvodem do světa. [Úvod do světa](#úvod-do-světa)                                          |
 
 **1.21.1** pojmenovává vanilla datové složky v jednotném čísle: `loot_table/`, `recipe/`, `advancement/`, `function/`, `structure/`, `tags/item/`, `tags/block/`. Balíček může použít kterýkoli zápis; názvy v množném čísle výše se čtou jako jejich jednotné dvojice, takže jeden balíček obsluhuje obě verze.
 
@@ -399,7 +401,7 @@ Volba může být také objekt s popisem, zobrazeným pod jejím názvem na obra
 
     { "enableTestingContent": { "default": true, "description": "Zaregistruje testovací bloky a předměty" } }
 
-Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a sloučeným při aktualizacích balíčku, takže nové volby dorazí, aniž by se sáhlo na to, co uživatel už nastavil. Změny se projeví při dalším spuštění hry a tlačítko Pack Options na obrazovce výběru světa a vytváření světa je místo, kde je hráč přepíná. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože vygenerovaný soubor je pojmenován podle balíčku; volné soubory pod `rdploader/assets` a `rdploader/data` nemají název balíčku a nenesou žádné volby, takže pokud potřebují přepínač, zabal volný obsah do pojmenovaného balíčku.
+Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a sloučeným při aktualizacích balíčku, takže nové volby dorazí, aniž by se sáhlo na to, co uživatel už nastavil. Změny se projeví při dalším spuštění hry, kromě volby, kterou čtou jen [podmíněné jazykové soubory](#podmíněné-jazykové-soubory): ta se projeví po stisknutí Hotovo, a tlačítko Pack Options na obrazovce výběru světa a vytváření světa je místo, kde je hráč přepíná. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože vygenerovaný soubor je pojmenován podle balíčku; volné soubory pod `rdploader/assets` a `rdploader/data` nemají název balíčku a nenesou žádné volby, takže pokud potřebují přepínač, zabal volný obsah do pojmenovaného balíčku.
 
 `requires` kterékoli definice pak může pojmenovat volbu položkou `config:`: `"requires": ["config:enableTestingContent"]` zaregistruje tento obsah jen tehdy, když je volba true, přesně jako by ho přeskočil chybějící mód. Holý název zkontroluje soubor každého balíčku a všechny balíčky, které ho definují, se musí shodnout; `"config:PackA:enableTestingContent"` pojmenuje jeden balíček. Volba, kterou nedefinuje žádný balíček, se počítá jako false a jednou se na ni upozorní.
 
@@ -578,6 +580,7 @@ Balíček vytvořený pro řadu 1.12.2 se načte tak, jak je. Loader ho pozná p
 - Každé id s metadaty, `minecraft:wool:14` nebo `minecraft:dye:4`, projde datovými opravami samotné hry, stejným kódem, který aktualizuje svět z 1.12.2, takže vyjde jako blok nebo předmět, kterým se stalo: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Stav bloku, který flattening přežil jako vlastnost, `minecraft:log:1` na `minecraft:oak_log` s `axis=y`, vyjde jako objekt `properties`. Vlastní id balíčku se řeší přes jeho vlastní definice: `mypack:materials:5` se stane variantou, jejíž `meta` bylo 5, a `mypack:ruby_ore` první variantou souboru, protože každá varianta je zde samostatný blok. Názvy entit a biomů se opravují stejně a čísla dimenzí se stanou id.
 - `variants` si ponechají své klíče; `meta` se zahodí a `oreDict` se stane `tags` přes mapování slovníku rud na konvenční tagy. Soubor `oredict/*.json` se stane jedním souborem tagu předmětů na každý název, který přidává nebo odebírá: odebrání `-name` skončí v seznamu `remove` tagu a odebrání `*` tag nahradí. Holé `creativeTab` převezme namespace balíčku a štítek vanilla karty z 1.12.2 jako `misc` se stane nejbližší vanilla kartou.
 - Soubor `.lang` se servíruje jako `.json`, který hra čte, s `tile.mypack:file.variant.name` jako `block.mypack.variant`, `item.` stejným způsobem, `itemGroup.x` jako `itemGroup.mypack.x`, `fluid.x` jako oba klíče tekutiny a vším ostatním tak, jak je napsáno.
+- Soubor `.lang` ve složce `langgates/<name>/` se servíruje stejným způsobem, takže podmínková složka psaná pro 1.12.2 nepotřebuje žádnou úpravu.
 - Blockstate z 1.12.2 se neservíruje vůbec. Místo toho se čtou jeho textury a servírují se pod názvy, které generátor hledá, `textures/block/<variant>.png` s `_top` a `_bottom` tam, kde blockstate měl `end`, `top` nebo `bottom`, takže se blockstate a modely generují pro každou variantu tak, jak by se generovaly pro balíček psaný zde.
 - Recepty ztratí `data` a získají zploštěná id, `forge:ore_shaped` se stane `minecraft:crafting_shaped` s ingrediencemi `ore` jako `tag`, tabulky kořisti stejným způsobem ztratí `set_data` a `item` s `data` v pokroku se stane `items`. `background` pokroku se přesune z `textures/blocks/` do `textures/block/`.
 - Přenáší se i slovník Forge z 1.12.2 v receptu: typ ingredience `forge:ore_dict` nebo `minecraft:item` se zahodí, ingredience `minecraft:item_nbt` se stane `forge:nbt` (1.21.1: `neoforge:components`) s nbt proběhlým datovými opravami, `minecraft:item_exists` se stane `forge:item_exists` (1.21.1: každá podmínka dostane svůj název `neoforge` pod `neoforge:conditions`), předmět bez namespace převezme namespace receptu a `data` 32767 se stane seznamem všech variant. `#CONSTANT` z `_constants.json` módu se přenést nedá a log ji jmenuje. Všude, kde seznam jmenuje předměty, se `name:*` stane každou variantou, kterou předmět měl, a jedna hodnota vezme první; to platí pro výstupy `recipe_removals` a odebrání `furnace`, které se také přenášejí jako předměty. `item` nebo `with` kovadliny zapsané jako `name:*` se stane seznamem všech variant a odpovídá kterákoli z nich.
@@ -2118,6 +2121,42 @@ Záznam v `items` nebo `enchantments` přijímá tyto klíče.
 | `item`        | ano     | název předmětu | žádný   | Předmět, nebo předmět bloku                   |
 | `enchantment` | ano     | název kouzla   | žádný   | Kouzlo, které řádky dostane                   |
 | `lines`       | ano     | seznam textů   | žádný   | Klíče jazyka nebo prostý text, v tomto pořadí |
+
+## Podmíněné jazykové soubory
+
+*jazykové soubory závislé na podmínce*
+
+`<namespace>/langgates/<name>/*.json`
+
+Podmínková složka je složka s jazykovými záznamy, které balíček načte jen tehdy, když platí její podmínky, například když je zapnutá volba balíčku. Název složky si zvolíš sám. `gate.json` vypisuje podmínky a každý soubor `<code>.json` vedle něj, pojmenovaný jako soubor v `lang/`, například `en_us.json`, obsahuje jen záznamy, které podmínková složka mění.
+
+`assets/mypack/langgates/stupid_names/gate.json` zapíná složku pomocí volby balíčku.
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+`assets/mypack/langgates/stupid_names/en_us.json` obsahuje záznamy, které mění.
+
+```json
+{
+  "block.mypack.block_a": "Stupid Block!"
+}
+```
+
+| Klíč       | Povinný | Hodnota      | Výchozí         | Co dělá                                                                                                                                   |
+| ---------- | ------- | ------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | ne      | seznam textů | vždy se použije | Co přijímá `requires` u každé definice: id módů, namespace balíčků, volby `config:` a cesty `file:`. Složka platí, jen když platí všechny |
+
+Záznamy podmínkové složky nahradí stejný klíč v jazykovém souboru a přidají klíče, které mu chybí, i takový, který nemá žádný jazykový soubor. Dokud žádná složka neplatí, použije se jazykový soubor tak, jak je.
+
+Podmínkové složky se čtou při každém načtení jazyka, takže F3+T projeví úpravu souborů. Přepnutí volby `config:`, kterou složka používá, znovu načte jazyky po stisknutí Hotovo v Pack Options, bez restartu.
+
+Více složek se sčítá. Platí v pořadí balíčků, od nejnižšího, a uvnitř balíčku podle názvu složky bez ohledu na velikost písmen; vyhrává ta, která klíč nastaví jako poslední. U jedné složky musí platit všechny její `requires`, takže dvě složky s různými podmínkami fungují jako „nebo“. Složka se uplatní nad jazykovým souborem bez ohledu na to, který balíček drží jedno či druhé, ale soubor `lang/` v balíčku ve vrstvě, která přepisuje ([Balíčky zdrojů: který vyhraje](#balíčky-zdrojů-který-vyhraje)), stále přebije složku v balíčku, který v ní není.
+
+Složka pro klíče vanilly nebo cizího módu leží pod jeho namespace, `assets/minecraft/langgates/<name>/`, a skládá se nad vlastní jar módu. Pro složku, která má platit jen při nainstalovaném módu, použij položku `file:` nebo namespace balíčku: id módu v `requires`, který není nainstalovaný, hru zastaví a vypíše módy, které balíčky potřebují. Balíček psaný pro 1.12.2 dává soubory `<code>.lang` do stejných složek ([Balíčky psané pro 1.12.2](#balíčky-psané-pro-1122)).
 
 ## Lektvary, typy lektvarů a vaření
 

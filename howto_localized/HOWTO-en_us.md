@@ -58,6 +58,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
 - [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
+- [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
 - [Block drops](#block-drops)
@@ -202,6 +203,7 @@ Under `assets/`:
 | Path                                                                                            | What it holds                                                                                 |
 | ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | The usual asset folders. [Models, blockstates and textures](#models-blockstates-and-textures) |
+| `<namespace>/langgates/<name>/*.json`                                                           | Language entries that load only while a condition holds. [Language gates](#language-gates)    |
 | `<namespace>/sounds.json`                                                                       | The sound index the game reads, beside the `sounds/` definitions under `data/`                |
 | `<namespace>/texts/*.txt`                                                                       | Plain text files, used by the world intro. [World intro](#world-intro)                        |
 
@@ -399,7 +401,7 @@ An option can also be an object carrying a description, shown under its name in 
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start, and the Pack Options button on the world selection and create world screens is where a player flips them. Options belong to named packs only, that is zips, since the generated file is named after the pack; loose files under `rdploader/assets` and `rdploader/data` have no pack name and carry no options, so zip loose content into a named pack if it needs a switch.
+On launch the pack's option files become one real config file the user owns, named after the pack, `rdploader/config/PackA.json`, created with the pack's defaults and merged on pack updates so new options arrive without touching what the user already set. Changes apply on the next game start, except that an option only [language gates](#language-gates) read applies when you press Done, and the Pack Options button on the world selection and create world screens is where a player flips them. Options belong to named packs only, that is zips, since the generated file is named after the pack; loose files under `rdploader/assets` and `rdploader/data` have no pack name and carry no options, so zip loose content into a named pack if it needs a switch.
 
 Any definition's `requires` list can then name an option with a `config:` entry: `"requires": ["config:enableTestingContent"]` registers that content only while the option is true, exactly as a missing mod would skip it. A bare name checks every pack's file and every pack defining it must agree; `"config:PackA:enableTestingContent"` names one pack. An option no pack defines counts as false and is warned about once.
 
@@ -578,6 +580,7 @@ A pack made for the 1.12.2 line loads as it is. The loader recognizes one by its
 - Every id with metadata, `minecraft:wool:14` or `minecraft:dye:4`, is run through the game's own data fixers, the same code that upgrades a 1.12.2 world, so it comes out as the block or item it became: `minecraft:red_wool`, `minecraft:lapis_lazuli`. A block state that survived the flattening as a property, `minecraft:log:1` to `minecraft:oak_log` with `axis=y`, comes out as a `properties` object. The pack's own ids resolve through its own definitions: `mypack:materials:5` becomes the variant whose `meta` was 5, and `mypack:ruby_ore` the file's first variant, since each variant is a block of its own here. Entity and biome names are fixed the same way, and dimension numbers become ids.
 - `variants` keep their keys; `meta` is dropped and `oreDict` becomes `tags` through the ore dictionary's mapping onto the convention tags. An `oredict/*.json` file becomes one item tag file per name it adds to or removes from: a `-name` removal lands in the tag's `remove` list, and removing `*` replaces the tag. A bare `creativeTab` takes the pack's namespace, and a 1.12.2 vanilla tab label such as `misc` becomes the nearest vanilla tab.
 - A `.lang` file is served as the `.json` the game reads, with `tile.mypack:file.variant.name` as `block.mypack.variant`, `item.` the same way, `itemGroup.x` as `itemGroup.mypack.x`, `fluid.x` as both fluid keys, and everything else as written.
+- A `.lang` file in a `langgates/<name>/` folder is served the same way, so a language gate written for 1.12.2 needs no change.
 - A 1.12.2 blockstate is not served at all. Its textures are read instead and served under the names the generator looks for, `textures/block/<variant>.png` with `_top` and `_bottom` where the blockstate had `end`, `top` or `bottom`, so the blockstate and the models are generated for each variant as they would be for a pack written here.
 - Recipes lose their `data` and gain flattened ids, `forge:ore_shaped` becomes `minecraft:crafting_shaped` with `ore` ingredients as `tag`, loot tables lose `set_data` the same way, and an advancement's `item` with `data` becomes `items`. An advancement's `background` moves from `textures/blocks/` to `textures/block/`.
 - A recipe's 1.12.2 Forge vocabulary is carried too: a `forge:ore_dict` or `minecraft:item` ingredient type is dropped, a `minecraft:item_nbt` ingredient becomes `forge:nbt` (1.21.1: `neoforge:components`) with its nbt run through the data fixers, `minecraft:item_exists` becomes `forge:item_exists` (1.21.1: every condition takes its `neoforge` name, under `neoforge:conditions`), an item without a namespace takes the recipe's, and `data` 32767 becomes a list of every variant. A `#CONSTANT` from a mod's `_constants.json` cannot come along, and the log names it. Wherever a list names items, `name:*` becomes every variant the item had, and a single value takes the first; that reaches `recipe_removals` outputs and `furnace` removals, which are carried as items too. An anvil's `item` or `with` written as `name:*` becomes a list of every variant, and any of them answers.
@@ -2118,6 +2121,42 @@ An entry in `items` or `enchantments` takes these keys.
 | `item`        | yes      | item name        | none    | The item, or the item of a block        |
 | `enchantment` | yes      | enchantment name | none    | The enchantment that gets the lines     |
 | `lines`       | yes      | list of text     | none    | Lang keys or plain text, shown in order |
+
+## Language gates
+
+*language files that depend on a condition*
+
+`<namespace>/langgates/<name>/*.json`
+
+A gate is a folder of language entries that a pack loads only while its conditions hold, such as a pack option being on. The folder name is yours to choose. `gate.json` lists the conditions, and each `<code>.json` beside it, named like a file in `lang/` such as `en_us.json`, holds only the entries the gate changes.
+
+`assets/mypack/langgates/stupid_names/gate.json` switches the gate on with a pack option.
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+`assets/mypack/langgates/stupid_names/en_us.json` holds the entries it changes.
+
+```json
+{
+  "block.mypack.block_a": "Stupid Block!"
+}
+```
+
+| Key        | Required | Value        | Default        | What it does                                                                                                                                        |
+| ---------- | -------- | ------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | no       | list of text | always applies | What any definition's `requires` takes: mod ids, pack namespaces, `config:` options and `file:` paths. The gate applies only while all of them hold |
+
+A gate's entries replace the same key in the language file and add the keys it lacks, even a key no language file has. While no gate holds, the language file is used as it is.
+
+Gates are read whenever the language loads, so F3+T applies an edit to the files. Flipping a `config:` option that a gate uses reloads the languages when you press Done in Pack Options, with no restart.
+
+Several gates stack. They apply in pack order, lowest first, and inside a pack by folder name, ignoring case; the last one to set a key wins. All of one gate's `requires` must hold, so two folders with different conditions work as either-or. A gate applies on top of the language file whichever pack holds either, but a `lang/` file in a pack on the overriding tier ([Resource packs: who wins](#resource-packs-who-wins)) still beats a gate in a pack that is not.
+
+A gate for vanilla's or another mod's keys sits under that namespace, `assets/minecraft/langgates/<name>/`, and stacks above the mod's own jar. For a gate that applies only when a mod is installed, use a `file:` entry or a pack namespace: a mod id in `requires` that is not installed stops the game and lists the mods the packs need. A pack written for 1.12.2 puts `<code>.lang` files in the same folders ([Packs written for 1.12.2](#packs-written-for-1122)).
 
 ## Potions, potion types and brewing
 

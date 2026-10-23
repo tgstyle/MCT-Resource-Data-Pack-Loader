@@ -58,6 +58,7 @@
 - [熔炉配方与燃料](#熔炉配方与燃料)
 - [配方锁](#配方锁)
 - [工具提示](#工具提示)
+- [条件语言条目](#条件语言条目)
 - [药水、药水类型与酿造](#药水药水类型与酿造)
 - [铁砧操作](#铁砧操作)
 - [方块掉落物](#方块掉落物)
@@ -199,11 +200,12 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 
 `assets/` 之下：
 
-| 路径                                                                                            | 存放内容                                                      |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 常规的资源文件夹。[模型、方块状态与纹理](#模型方块状态与纹理) |
-| `<namespace>/sounds.json`                                                                       | 游戏读取的声音索引，与 `data/` 下的 `sounds/` 定义并列        |
-| `<namespace>/texts/*.txt`                                                                       | 纯文本文件，供世界介绍使用。[世界介绍](#世界介绍)             |
+| 路径                                                                                            | 存放内容                                                        |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 常规的资源文件夹。[模型、方块状态与纹理](#模型方块状态与纹理)   |
+| `<namespace>/langgates/<name>/*.json`                                                           | 仅在条件成立期间才加载的语言条目。[条件语言条目](#条件语言条目) |
+| `<namespace>/sounds.json`                                                                       | 游戏读取的声音索引，与 `data/` 下的 `sounds/` 定义并列          |
+| `<namespace>/texts/*.txt`                                                                       | 纯文本文件，供世界介绍使用。[世界介绍](#世界介绍)               |
 
 **1.21.1** 以单数形式命名原版数据文件夹：`loot_table/`、`recipe/`、`advancement/`、`function/`、`structure/`、`tags/item/`、`tags/block/`。资源包在此处两种写法都可以；上面的复数名称会按其单数对应项读取，所以同一个资源包可用于两个版本。
 
@@ -399,7 +401,7 @@ rdploader/RDPL1O Seasonal       priority and override combined
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-启动时，资源包的选项文件会合并成一个真正的、归用户所有的配置文件，以资源包命名，即 `rdploader/config/PackA.json`，创建时带有资源包的默认值，并在资源包更新时合并，所以新选项会加进来，而不会触动用户已经设置的内容。更改在下次启动游戏时生效，玩家在世界选择界面和创建世界界面上的“资源包选项”按钮处切换它们。选项只属于有名称的资源包，也就是 zip，因为生成的文件以资源包命名；`rdploader/assets` 和 `rdploader/data` 下的散装文件没有资源包名称，不带任何选项，所以如果散装内容需要开关，请把它们打成一个有名称的 zip 资源包。
+启动时，资源包的选项文件会合并成一个真正的、归用户所有的配置文件，以资源包命名，即 `rdploader/config/PackA.json`，创建时带有资源包的默认值，并在资源包更新时合并，所以新选项会加进来，而不会触动用户已经设置的内容。更改在下次启动游戏时生效，但只有[条件语言条目](#条件语言条目)读取的选项会在点击“完成”时生效，玩家在世界选择界面和创建世界界面上的“资源包选项”按钮处切换它们。选项只属于有名称的资源包，也就是 zip，因为生成的文件以资源包命名；`rdploader/assets` 和 `rdploader/data` 下的散装文件没有资源包名称，不带任何选项，所以如果散装内容需要开关，请把它们打成一个有名称的 zip 资源包。
 
 之后，任何定义的 `requires` 列表都可以用 `config:` 条目来指定一个选项：`"requires": ["config:enableTestingContent"]` 只在该选项为 true 时才注册该内容，与缺少模组时跳过的方式完全相同。不带资源包名的名称会检查每个资源包的文件，且每个定义了它的资源包必须一致；`"config:PackA:enableTestingContent"` 则指定某一个资源包。没有任何资源包定义的选项按 false 处理，并只警告一次。
 
@@ -578,6 +580,7 @@ thatmod.jar
 - 每个带元数据的 id，`minecraft:wool:14` 或 `minecraft:dye:4`，都会交给游戏自己的数据修复器处理，也就是升级 1.12.2 世界所用的同一套代码，所以得出的是它后来变成的那个方块或物品：`minecraft:red_wool`、`minecraft:lapis_lazuli`。在扁平化之后保留为属性的方块状态，`minecraft:log:1` 变为带 `axis=y` 的 `minecraft:oak_log`，会以 `properties` 对象的形式给出。资源包自己的 id 通过它自己的定义来解析：`mypack:materials:5` 变成 `meta` 为 5 的那个变种，而 `mypack:ruby_ore` 变成文件的第一个变种，因为在这里每个变种都是独立的方块。实体和生物群系名称以同样方式修复，维度编号则变成 id。
 - `variants` 保留它们的键；`meta` 被丢弃，`oreDict` 通过矿物词典对约定标签的映射变成 `tags`。`oredict/*.json` 文件会按它添加或移除的每个名称变成一个物品标签文件：`-name` 形式的移除会落入该标签的 `remove` 列表，移除 `*` 则替换该标签。单独的 `creativeTab` 会采用资源包的命名空间，而 `misc` 这样的 1.12.2 原版标签页名称会变成最接近的原版标签页。
 - `.lang` 文件会作为游戏所读取的 `.json` 提供，`tile.mypack:file.variant.name` 变为 `block.mypack.variant`，`item.` 同理，`itemGroup.x` 变为 `itemGroup.mypack.x`，`fluid.x` 变为两个流体键，其余一切照原样保留。
+- `langgates/<name>/` 文件夹中的 `.lang` 文件以同样方式提供，所以为 1.12.2 编写的条件文件夹无需任何改动。
 - 1.12.2 的方块状态完全不会被提供。取而代之的是读取它的纹理，并按生成器所查找的名称提供，即 `textures/block/<variant>.png`，在方块状态中有 `end`、`top` 或 `bottom` 的地方带有 `_top` 和 `_bottom`，所以每个变种的方块状态和模型都会像为此版本编写的资源包那样生成。
 - 配方会丢掉它们的 `data` 并获得扁平化的 id，`forge:ore_shaped` 变成 `minecraft:crafting_shaped`，其中的 `ore` 原料变为 `tag`，战利品表同样会丢掉 `set_data`，进度的 `item` 与 `data` 会变成 `items`。进度的 `background` 从 `textures/blocks/` 移到 `textures/block/`。
 - 配方的 1.12.2 Forge 词汇也会一并转换：`forge:ore_dict` 或 `minecraft:item` 原料类型会被丢弃，`minecraft:item_nbt` 原料变成 `forge:nbt`（1.21.1：`neoforge:components`），其 nbt 经过数据修复器处理，`minecraft:item_exists` 变成 `forge:item_exists`（1.21.1：每个条件都采用其 `neoforge` 名称，位于 `neoforge:conditions` 之下），没有命名空间的物品采用配方的命名空间，`data` 为 32767 的会变成包含每个变种的列表。模组的 `_constants.json` 中的 `#CONSTANT` 无法一并转换，日志会点名它。凡是列出物品的地方，`name:*` 都会变成该物品曾有的每个变种，而单个值则取第一个；这涉及 `recipe_removals` 的产物和 `furnace` 的移除，它们同样会被当作物品来转换。铁砧的 `item` 或 `with` 写成 `name:*` 时，会变成包含每个变种的列表，其中任何一个都可以匹配。
@@ -2118,6 +2121,42 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `item`        | 是   | 物品名称 | 无     | 物品，或方块对应的物品     |
 | `enchantment` | 是   | 附魔名称 | 无     | 获得这些行的附魔           |
 | `lines`       | 是   | 文本列表 | 无     | 语言键或纯文本，按顺序显示 |
+
+## 条件语言条目
+
+*取决于条件的语言条目*
+
+`<namespace>/langgates/<name>/*.json`
+
+条件文件夹是一个存放语言条目的文件夹，资源包只在它的条件成立期间才加载这些条目，例如某个资源包选项处于开启状态时。文件夹名由你自己选择。`gate.json` 列出条件，它旁边的每个 `<code>.json` 按 `lang/` 中文件的命名方式命名，例如 `en_us.json`，只包含该文件夹要改动的条目。
+
+`assets/mypack/langgates/stupid_names/gate.json` 通过资源包选项来开启该文件夹。
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+`assets/mypack/langgates/stupid_names/en_us.json` 包含它要改动的条目。
+
+```json
+{
+  "block.mypack.block_a": "Stupid Block!"
+}
+```
+
+| 键         | 必需 | 值       | 默认值   | 作用                                                                                                                       |
+| ---------- | ---- | -------- | -------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | 否   | 文本列表 | 始终生效 | 任何定义的 `requires` 所接受的内容：模组 id、资源包命名空间、`config:` 选项和 `file:` 路径。只有全部成立时，该文件夹才生效 |
+
+文件夹中的条目会替换语言文件里的同名键，并补上语言文件所缺的键，即使任何语言文件里都没有这个键也一样。没有任何条件文件夹生效时，语言文件原样使用。
+
+条件文件夹在每次加载语言时读取，所以改动文件后按 F3+T 即可生效。在资源包选项界面里切换某个条件文件夹用到的 `config:` 选项，点击“完成”时会重新加载语言，无需重启。
+
+多个条件文件夹会叠加。它们按资源包顺序（由低到高）生效，同一资源包内按文件夹名排序（不区分大小写），最后设置某个键的那个胜出。同一个文件夹的 `requires` 必须全部成立，因此两个条件不同的文件夹相当于“或”。不论语言文件和文件夹由哪个资源包持有，文件夹都叠加在语言文件之上，但处于覆盖层级的资源包（[资源包：谁优先](#资源包谁优先)）中的 `lang/` 文件，仍然胜过非覆盖层级资源包中的条件文件夹。
+
+针对原版或其他模组的键的文件夹，放在对应的命名空间下，即 `assets/minecraft/langgates/<name>/`，并叠加在该模组自身的 jar 之上。如果文件夹只应在安装了某个模组时生效，请使用 `file:` 条目或资源包命名空间：`requires` 中写了未安装的模组 id 会让游戏停止，并列出资源包所需的模组。为 1.12.2 编写的资源包把 `<code>.lang` 文件放进同样的文件夹（[为 1.12.2 编写的资源包](#为-1122-编写的资源包)）。
 
 ## 药水、药水类型与酿造
 

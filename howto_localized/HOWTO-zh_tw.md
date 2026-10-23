@@ -58,6 +58,7 @@
 - [熔爐配方與燃料](#熔爐配方與燃料)
 - [配方鎖](#配方鎖)
 - [工具提示](#工具提示)
+- [條件式語言條目](#條件式語言條目)
 - [藥水、藥水類型與釀造](#藥水藥水類型與釀造)
 - [鐵砧操作](#鐵砧操作)
 - [方塊掉落物](#方塊掉落物)
@@ -199,11 +200,12 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 
 `assets/` 之下：
 
-| 路徑                                                                                            | 內容                                                          |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| `<namespace>/models/`、`<namespace>/blockstates/`、`<namespace>/textures/`、`<namespace>/lang/` | 一般的資產資料夾。[模型、方塊狀態與材質](#模型方塊狀態與材質) |
-| `<namespace>/sounds.json`                                                                       | 遊戲讀取的音效索引，與 `data/` 下的 `sounds/` 定義並列        |
-| `<namespace>/texts/*.txt`                                                                       | 純文字檔案，供世界介紹使用。[世界介紹](#世界介紹)             |
+| 路徑                                                                                            | 內容                                                                |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `<namespace>/models/`、`<namespace>/blockstates/`、`<namespace>/textures/`、`<namespace>/lang/` | 一般的資產資料夾。[模型、方塊狀態與材質](#模型方塊狀態與材質)       |
+| `<namespace>/langgates/<name>/*.json`                                                           | 只在條件成立期間才載入的語言條目。[條件式語言條目](#條件式語言條目) |
+| `<namespace>/sounds.json`                                                                       | 遊戲讀取的音效索引，與 `data/` 下的 `sounds/` 定義並列              |
+| `<namespace>/texts/*.txt`                                                                       | 純文字檔案，供世界介紹使用。[世界介紹](#世界介紹)                   |
 
 **1.21.1** 以單數形式命名原版資料資料夾：`loot_table/`、`recipe/`、`advancement/`、`function/`、`structure/`、`tags/item/`、`tags/block/`。資源包在此處兩種寫法都可以；上面的複數名稱會按其單數對應項讀取，所以同一個資源包可用於兩個版本。
 
@@ -399,7 +401,7 @@ rdploader/RDPL1O Seasonal       優先順序與覆寫合併使用
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-啟動時，資源包的選項檔案會變成一份使用者自己擁有的真正設定檔，以資源包命名，即 `rdploader/config/PackA.json`，以資源包的預設值建立，並在資源包更新時合併，使新選項到來時不會動到使用者已經設定的內容。變更會在下次啟動遊戲時生效，玩家則在選取世界與建立世界畫面上的「資源包選項」按鈕中切換。選項只屬於有名稱的資源包，也就是 zip，因為產生的檔案以資源包命名；`rdploader/assets` 與 `rdploader/data` 下的散裝檔案沒有資源包名稱，也不帶選項，所以散裝內容若需要開關，就請把它壓成有名稱的資源包。
+啟動時，資源包的選項檔案會變成一份使用者自己擁有的真正設定檔，以資源包命名，即 `rdploader/config/PackA.json`，以資源包的預設值建立，並在資源包更新時合併，使新選項到來時不會動到使用者已經設定的內容。變更會在下次啟動遊戲時生效，但只有[條件式語言條目](#條件式語言條目)讀取的選項會在按下「完成」時生效，玩家則在選取世界與建立世界畫面上的「資源包選項」按鈕中切換。選項只屬於有名稱的資源包，也就是 zip，因為產生的檔案以資源包命名；`rdploader/assets` 與 `rdploader/data` 下的散裝檔案沒有資源包名稱，也不帶選項，所以散裝內容若需要開關，就請把它壓成有名稱的資源包。
 
 任何定義的 `requires` 清單都可以用 `config:` 項目指定一個選項：`"requires": ["config:enableTestingContent"]` 只會在該選項為 true 時註冊該內容，就如同缺少模組時會跳過一樣。只寫名稱時會檢查每個資源包的檔案，且所有定義了該名稱的資源包必須一致；`"config:PackA:enableTestingContent"` 則指定單一資源包。沒有任何資源包定義的選項視為 false，並只警告一次。
 
@@ -578,6 +580,7 @@ thatmod.jar
 - 每個帶中繼資料的 id，`minecraft:wool:14` 或 `minecraft:dye:4`，都會經過遊戲自己的資料修正器，也就是升級 1.12.2 世界所用的同一份程式碼，因此會變成它後來成為的方塊或物品：`minecraft:red_wool`、`minecraft:lapis_lazuli`。在扁平化之後以屬性形式保留下來的方塊狀態，`minecraft:log:1` 變成 `minecraft:oak_log` 並帶 `axis=y`，會以 `properties` 物件輸出。資源包自己的 id 則透過它自己的定義解析：`mypack:materials:5` 變成 `meta` 為 5 的那個變體，`mypack:ruby_ore` 則是檔案的第一個變體，因為在此每個變體都是獨立的方塊。實體與生態域名稱以同樣方式修正，維度編號則變成 id。
 - `variants` 保留其鍵；`meta` 會被捨棄，`oreDict` 則透過礦物辭典對應到慣例標籤的方式，變成 `tags`。`oredict/*.json` 檔案會依其加入或移除的每個名稱，各變成一個物品標籤檔案：`-name` 形式的移除會落進標籤的 `remove` 清單，移除 `*` 則取代該標籤。單獨寫的 `creativeTab` 會採用資源包的命名空間，1.12.2 原版分頁標籤如 `misc` 則變成最接近的原版分頁。
 - `.lang` 檔案會以遊戲讀取的 `.json` 提供，`tile.mypack:file.variant.name` 變成 `block.mypack.variant`，`item.` 同理，`itemGroup.x` 變成 `itemGroup.mypack.x`，`fluid.x` 同時變成兩個流體鍵，其餘一律照原樣。
+- `langgates/<name>/` 資料夾中的 `.lang` 檔案以相同方式提供，所以為 1.12.2 編寫的條件資料夾不需要任何更動。
 - 1.12.2 的方塊狀態完全不會被提供。改為讀取它的材質，並以產生器尋找的名稱提供，即 `textures/block/<variant>.png`，若方塊狀態中有 `end`、`top` 或 `bottom`，則加上 `_top` 與 `_bottom`，於是方塊狀態與模型會為每個變體產生，就像為在此編寫的資源包所做的一樣。
 - 配方會失去 `data` 並換成扁平化後的 id，`forge:ore_shaped` 變成 `minecraft:crafting_shaped`，其 `ore` 材料變成 `tag`；戰利品表以同樣方式失去 `set_data`；進度的 `item` 帶 `data` 時則變成 `items`。進度的 `background` 從 `textures/blocks/` 移到 `textures/block/`。
 - 配方的 1.12.2 Forge 詞彙也會一併轉換：`forge:ore_dict` 或 `minecraft:item` 材料類型會被捨棄，`minecraft:item_nbt` 材料變成 `forge:nbt`（1.21.1：`neoforge:components`），其 nbt 經過資料修正器處理，`minecraft:item_exists` 變成 `forge:item_exists`（1.21.1：每個條件都改用其 `neoforge` 名稱，置於 `neoforge:conditions` 下），沒有命名空間的物品會採用該配方的命名空間，`data` 為 32767 則變成包含每個變體的清單。模組 `_constants.json` 中的 `#CONSTANT` 無法一併轉換，日誌會指出它。凡是清單列出物品之處，`name:*` 會變成該物品曾有的每個變體，單一值則取第一個；這涵蓋 `recipe_removals` 的產出與 `furnace` 的移除，它們同樣以物品來轉換。鐵砧的 `item` 或 `with` 寫成 `name:*` 時，會變成包含每個變體的清單，其中任何一個都符合。
@@ -2118,6 +2121,42 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `item`        | 是   | 物品名稱 | 無   | 物品，或方塊對應的物品   |
 | `enchantment` | 是   | 附魔名稱 | 無   | 獲得這些行的附魔         |
 | `lines`       | 是   | 文字清單 | 無   | 語言鍵或純文字，依序顯示 |
+
+## 條件式語言條目
+
+*依條件而定的語言條目*
+
+`<namespace>/langgates/<name>/*.json`
+
+條件資料夾是存放語言條目的資料夾，資源包只在它的條件成立期間才載入這些條目，例如某個資源包選項處於開啟狀態時。資料夾名稱由你自行決定。`gate.json` 列出條件，它旁邊的每個 `<code>.json` 依 `lang/` 中檔案的命名方式命名，例如 `en_us.json`，只包含該資料夾要更動的條目。
+
+`assets/mypack/langgates/stupid_names/gate.json` 透過資源包選項開啟該資料夾。
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+`assets/mypack/langgates/stupid_names/en_us.json` 包含它要更動的條目。
+
+```json
+{
+  "block.mypack.block_a": "Stupid Block!"
+}
+```
+
+| 鍵         | 必填 | 值       | 預設     | 作用                                                                                                                     |
+| ---------- | ---- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `requires` | 否   | 文字清單 | 一律生效 | 任何定義的 `requires` 所接受的內容：模組 id、資源包命名空間、`config:` 選項與 `file:` 路徑。全部成立時，該資料夾才會生效 |
+
+資料夾中的條目會取代語言檔中的同名鍵，並補上語言檔所缺的鍵，即使任何語言檔裡都沒有這個鍵也一樣。沒有任何條件資料夾生效時，語言檔原樣使用。
+
+條件資料夾在每次載入語言時讀取，所以修改檔案後按 F3+T 即可生效。在資源包選項畫面中切換某個條件資料夾用到的 `config:` 選項，按下「完成」時會重新載入語言，不需要重新啟動。
+
+多個條件資料夾會疊加。它們依資源包順序（由低到高）生效，同一資源包內依資料夾名稱排序（不分大小寫），最後設定某個鍵的那個勝出。同一個資料夾的 `requires` 必須全部成立，因此兩個條件不同的資料夾相當於「或」。不論語言檔與資料夾由哪個資源包持有，資料夾都疊加在語言檔之上，但處於覆寫層級的資源包（[資源包：誰優先](#資源包誰優先)）中的 `lang/` 檔案，仍然勝過非覆寫層級資源包中的條件資料夾。
+
+針對原版或其他模組之鍵的資料夾，放在對應的命名空間下，即 `assets/minecraft/langgates/<name>/`，並疊加在該模組自身的 jar 之上。若資料夾只應在安裝了某個模組時生效，請使用 `file:` 條目或資源包命名空間：`requires` 中寫了未安裝的模組 id 會讓遊戲停止，並列出資源包所需的模組。為 1.12.2 編寫的資源包把 `<code>.lang` 檔案放進相同的資料夾（[為 1.12.2 編寫的資源包](#為-1122-編寫的資源包)）。
 
 ## 藥水、藥水類型與釀造
 

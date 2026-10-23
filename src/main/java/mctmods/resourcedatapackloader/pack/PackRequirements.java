@@ -6,12 +6,14 @@ import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.server.packs.PackType;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLPaths;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public final class PackRequirements {
@@ -45,6 +47,12 @@ public final class PackRequirements {
             collect(contents, found);
             return null;
         })); }
+        for (RDPLPack pack : manager.getPacks()) { pack.forEach(PackType.CLIENT_RESOURCES, PackManager.LANGGATES, PackManager.JSON, (namespace, path, contents) -> {
+            if (path.toLowerCase(Locale.ROOT).endsWith("/gate")) { Json.within("requirements file", namespace + ":" + PackManager.LANGGATES + "/" + path, () -> {
+                collect(contents, found);
+                return null;
+            }); }
+        }); }
         for (String modid : found) {
             if (modLoaded(modid) || manager.provides(modid)) { continue; }
             WANTED.add(modid);

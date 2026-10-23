@@ -58,6 +58,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
 - [Rezeptsperren](#rezeptsperren)
 - [Tooltips](#tooltips)
+- [Bedingte Sprachdateien](#bedingte-sprachdateien)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
 - [Blockdrops](#blockdrops)
@@ -199,11 +200,12 @@ Unter `data/`:
 
 Unter `assets/`:
 
-| Pfad                                                                                            | Was darin liegt                                                                                   |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Die üblichen Asset-Ordner. [Modelle, Blockstates und Texturen](#modelle-blockstates-und-texturen) |
-| `<namespace>/sounds.json`                                                                       | Der Sound-Index, den das Spiel liest, neben den `sounds/`-Definitionen unter `data/`              |
-| `<namespace>/texts/*.txt`                                                                       | Reine Textdateien, genutzt vom Welt-Intro. [Welt-Intro](#welt-intro)                              |
+| Pfad                                                                                            | Was darin liegt                                                                                                        |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Die üblichen Asset-Ordner. [Modelle, Blockstates und Texturen](#modelle-blockstates-und-texturen)                      |
+| `<namespace>/langgates/<name>/*.json`                                                           | Spracheinträge, die nur geladen werden, solange eine Bedingung gilt. [Bedingte Sprachdateien](#bedingte-sprachdateien) |
+| `<namespace>/sounds.json`                                                                       | Der Sound-Index, den das Spiel liest, neben den `sounds/`-Definitionen unter `data/`                                   |
+| `<namespace>/texts/*.txt`                                                                       | Reine Textdateien, genutzt vom Welt-Intro. [Welt-Intro](#welt-intro)                                                   |
 
 **1.21.1** benennt die Vanilla-Datenordner in der Einzahl: `loot_table/`, `recipe/`, `advancement/`, `function/`, `structure/`, `tags/item/`, `tags/block/`. Ein Pack darf dort beide Schreibweisen verwenden; die Mehrzahlnamen oben werden als ihre Einzahl-Zwillinge gelesen, sodass ein Pack beide Builds bedient.
 
@@ -399,7 +401,7 @@ Eine Option kann auch ein Objekt mit einer Beschreibung sein, die im Optionsmen�
 
     { "enableTestingContent": { "default": true, "description": "Registers the test blocks and items" } }
 
-Beim Start werden die Optionsdateien eines Packs zu einer echten Config-Datei, die dem Nutzer gehört, benannt nach dem Pack: `rdploader/config/PackA.json`. Sie wird mit den Standardwerten des Packs angelegt und bei Pack-Updates zusammengeführt, sodass neue Optionen ankommen, ohne anzurühren, was der Nutzer schon eingestellt hat. Änderungen greifen beim nächsten Spielstart, und die Schaltfläche Pack-Optionen auf den Bildschirmen Welt auswählen und Neue Welt erstellen ist der Ort, an dem ein Spieler sie umlegt. Optionen gehören nur benannten Packs, also Zips, weil die erzeugte Datei nach dem Pack benannt ist; lose Dateien unter `rdploader/assets` und `rdploader/data` haben keinen Pack-Namen und tragen keine Optionen, zippe losen Inhalt also zu einem benannten Pack, wenn er einen Schalter braucht.
+Beim Start werden die Optionsdateien eines Packs zu einer echten Config-Datei, die dem Nutzer gehört, benannt nach dem Pack: `rdploader/config/PackA.json`. Sie wird mit den Standardwerten des Packs angelegt und bei Pack-Updates zusammengeführt, sodass neue Optionen ankommen, ohne anzurühren, was der Nutzer schon eingestellt hat. Änderungen greifen beim nächsten Spielstart, außer bei einer Option, die nur [bedingte Sprachdateien](#bedingte-sprachdateien) lesen: Sie greift, sobald du auf Fertig klickst, und die Schaltfläche Pack-Optionen auf den Bildschirmen Welt auswählen und Neue Welt erstellen ist der Ort, an dem ein Spieler sie umlegt. Optionen gehören nur benannten Packs, also Zips, weil die erzeugte Datei nach dem Pack benannt ist; lose Dateien unter `rdploader/assets` und `rdploader/data` haben keinen Pack-Namen und tragen keine Optionen, zippe losen Inhalt also zu einem benannten Pack, wenn er einen Schalter braucht.
 
 Die `requires`-Liste jeder Definition kann dann mit einem `config:`-Eintrag eine Option nennen: `"requires": ["config:enableTestingContent"]` registriert diesen Inhalt nur, solange die Option true ist, genau wie ein fehlender Mod ihn überspringen ließe. Ein bloßer Name prüft die Datei jedes Packs, und jedes Pack, das ihn definiert, muss zustimmen; `"config:PackA:enableTestingContent"` nennt ein bestimmtes Pack. Eine Option, die kein Pack definiert, gilt als false und wird einmal im Log vermerkt.
 
@@ -578,6 +580,7 @@ Ein Pack, das für die 1.12.2-Linie gemacht wurde, lädt so, wie es ist. Der Loa
 - Jede ID mit Metadaten, `minecraft:wool:14` oder `minecraft:dye:4`, läuft durch die Data-Fixer des Spiels selbst, denselben Code, der eine 1.12.2-Welt aktualisiert, und kommt als der Block oder das Item heraus, zu dem sie wurde: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Ein Blockzustand, der das Flattening als Eigenschaft überlebt hat, `minecraft:log:1` zu `minecraft:oak_log` mit `axis=y`, kommt als `properties`-Objekt heraus. Die eigenen IDs des Packs lösen sich über seine eigenen Definitionen auf: `mypack:materials:5` wird zur Variante, deren `meta` 5 war, und `mypack:ruby_ore` zur ersten Variante der Datei, da hier jede Variante ein eigener Block ist. Entity- und Biomnamen werden genauso repariert, und Dimensionsnummern werden zu IDs.
 - `variants` behalten ihre Schlüssel; `meta` fällt weg und `oreDict` wird zu `tags`, über die Abbildung des Ore Dictionary auf die Konventions-Tags. Eine `oredict/*.json`-Datei wird zu einer Item-Tag-Datei pro Namen, den sie ergänzt oder aus dem sie entfernt: Eine Entfernung `-name` landet in der `remove`-Liste des Tags, und das Entfernen von `*` ersetzt den Tag. Ein bloßes `creativeTab` bekommt den Namespace des Packs, und ein Vanilla-Tab-Label aus 1.12.2 wie `misc` wird zum nächstliegenden Vanilla-Tab.
 - Eine `.lang`-Datei wird als das `.json` ausgeliefert, das das Spiel liest, mit `tile.mypack:datei.variante.name` als `block.mypack.variante`, `item.` ebenso, `itemGroup.x` als `itemGroup.mypack.x`, `fluid.x` als beide Fluid-Schlüssel, und alles andere wie geschrieben.
+- Eine `.lang`-Datei in einem Ordner `langgates/<name>/` wird genauso ausgeliefert, ein für 1.12.2 geschriebener Bedingungsordner braucht also keine Änderung.
 - Ein 1.12.2-Blockstate wird gar nicht ausgeliefert. Stattdessen werden seine Texturen gelesen und unter den Namen ausgeliefert, nach denen der Generator sucht, `textures/block/<variante>.png` mit `_top` und `_bottom`, wo der Blockstate `end`, `top` oder `bottom` hatte, sodass Blockstate und Modelle für jede Variante generiert werden, wie sie es für ein hier geschriebenes Pack würden.
 - Rezepte verlieren ihr `data` und bekommen geglättete IDs, `forge:ore_shaped` wird zu `minecraft:crafting_shaped` mit `ore`-Zutaten als `tag`, Beutetabellen verlieren `set_data` auf dieselbe Weise, und das `item` mit `data` eines Fortschritts wird zu `items`. Der `background` eines Fortschritts wandert von `textures/blocks/` nach `textures/block/`.
 - Auch das Forge-Vokabular der Rezepte aus 1.12.2 kommt mit: Ein Zutatentyp `forge:ore_dict` oder `minecraft:item` fällt weg, eine Zutat `minecraft:item_nbt` wird zu `forge:nbt` (1.21.1: `neoforge:components`), ihr NBT durch die Datenfixer geschickt, `minecraft:item_exists` wird zu `forge:item_exists` (1.21.1: jede Bedingung bekommt ihren `neoforge`-Namen, unter `neoforge:conditions`), ein Item ohne Namespace bekommt den des Rezepts, und `data` 32767 wird zu einer Liste aller Varianten. Eine `#CONSTANT` aus der `_constants.json` eines Mods kann nicht mitkommen, und das Log nennt sie. Wo eine Liste Items nennt, wird `name:*` zu jeder Variante, die das Item hatte, und ein einzelner Wert nimmt die erste; das betrifft die `outputs` von `recipe_removals` und die Entfernungen in `furnace`, die ebenfalls als Items übertragen werden. Ein `item` oder `with` einer Amboss-Arbeit, als `name:*` geschrieben, wird zu einer Liste aller Varianten, und jede davon passt.
@@ -2118,6 +2121,42 @@ Ein Eintrag in `items` oder `enchantments` nimmt diese Schlüssel.
 | `item`        | ja      | Itemname          | keiner   | Das Item oder das Item eines Blocks                  |
 | `enchantment` | ja      | Verzauberungsname | keiner   | Die Verzauberung, die die Zeilen bekommt             |
 | `lines`       | ja      | Liste von Texten  | keiner   | Sprachschlüssel oder Klartext, in dieser Reihenfolge |
+
+## Bedingte Sprachdateien
+
+*Sprachdateien, die von einer Bedingung abhängen*
+
+`<namespace>/langgates/<name>/*.json`
+
+Ein Bedingungsordner enthält Spracheinträge, die ein Pack nur lädt, solange seine Bedingungen gelten, etwa weil eine Pack-Option eingeschaltet ist. Den Ordnernamen wählst du selbst. `gate.json` nennt die Bedingungen, und jede `<code>.json` daneben, benannt wie eine Datei in `lang/`, zum Beispiel `en_us.json`, enthält nur die Einträge, die der Bedingungsordner ändert.
+
+`assets/mypack/langgates/stupid_names/gate.json` schaltet den Bedingungsordner über eine Pack-Option ein.
+
+```json
+{
+  "requires": ["config:stupidNames"]
+}
+```
+
+`assets/mypack/langgates/stupid_names/en_us.json` enthält die Einträge, die er ändert.
+
+```json
+{
+  "block.mypack.block_a": "Stupid Block!"
+}
+```
+
+| Schlüssel  | Pflicht | Wert             | Standard   | Was er macht                                                                                                                                             |
+| ---------- | ------- | ---------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | nein    | Liste von Texten | gilt immer | Was das `requires` jeder Definition annimmt: Mod-IDs, Pack-Namespaces, `config:`-Optionen und `file:`-Pfade. Der Ordner gilt nur, solange alle zutreffen |
+
+Die Einträge eines Bedingungsordners ersetzen denselben Schlüssel in der Sprachdatei und fügen die Schlüssel hinzu, die ihr fehlen, auch einen, den keine Sprachdatei hat. Gilt kein Bedingungsordner, wird die Sprachdatei unverändert verwendet.
+
+Bedingungsordner werden bei jedem Laden der Sprache gelesen, daher übernimmt F3+T eine Änderung an den Dateien. Wer in den Pack-Optionen eine `config:`-Option umlegt, die ein Bedingungsordner nutzt, lädt mit Fertig die Sprachen neu, ohne Neustart.
+
+Mehrere Bedingungsordner addieren sich. Sie greifen in Pack-Reihenfolge, der niedrigste zuerst, und innerhalb eines Packs nach Ordnername ohne Beachtung der Groß- und Kleinschreibung; wer einen Schlüssel zuletzt setzt, gewinnt. Alle `requires` eines Bedingungsordners müssen zutreffen, zwei Ordner mit verschiedenen Bedingungen wirken also als Entweder-oder. Ein Bedingungsordner wirkt über der Sprachdatei, egal welches Pack beides enthält, aber eine `lang/`-Datei in einem Pack der überschreibenden Ebene ([Ressourcenpakete: wer gewinnt](#ressourcenpakete-wer-gewinnt)) schlägt weiterhin einen Bedingungsordner in einem Pack, das nicht dazugehört.
+
+Ein Bedingungsordner für Schlüssel von Vanilla oder einer anderen Mod liegt unter deren Namespace, `assets/minecraft/langgates/<name>/`, und liegt über dem eigenen Jar der Mod. Soll er nur gelten, wenn eine Mod installiert ist, nimm einen `file:`-Eintrag oder einen Pack-Namespace: Eine Mod-ID in `requires`, die nicht installiert ist, hält das Spiel an und listet die Mods, die die Packs brauchen. Ein für 1.12.2 geschriebenes Pack legt `<code>.lang`-Dateien in dieselben Ordner ([Packs für 1.12.2](#packs-für-1122)).
 
 ## Tränke, Trankarten und Brauen
 

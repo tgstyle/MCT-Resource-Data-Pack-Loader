@@ -83,6 +83,7 @@ public final class PackManager {
     public static final String SOUNDS = "sounds";
     public static final String FUELS = "fuels";
     public static final String TOOLTIPS = "tooltips";
+    public static final String LANGGATES = "langgates";
     public static final String EXPOSURES = "exposures";
     public static final String MATERIALS = "materials";
     public static final String FUNCTIONS = "functions";
@@ -184,6 +185,7 @@ public final class PackManager {
         named.sort(Comparator.comparingInt(RDPLPack::getPriority).thenComparing(RDPLPack::getName, String.CASE_INSENSITIVE_ORDER));
         packs.addAll(named);
         buildIndex();
+        LangGates.build();
         meta = resolveMeta();
         PackOptions.reload(packRoot, packs);
         ContentPixelMaps.tidy();
@@ -357,11 +359,22 @@ public final class PackManager {
 
     public boolean existsRaw(PackType type, String namespace, String path, boolean overriding) {
         if (resolve(type, namespace, path, overriding) != null) { return true; }
+        if (gated(type, namespace, path, overriding)) { return true; }
         return drawable(type, path) && ContentPixelMaps.exists(namespace, path, overriding);
     }
 
+    private static boolean gated(PackType type, String namespace, String path, boolean overriding) { return type == PackType.CLIENT_RESOURCES && !LangGates.active(overriding, namespace, path).isEmpty(); }
+
     @Nullable public InputStream openRaw(PackType type, String namespace, String path, boolean overriding) throws IOException {
         Entry entry = resolve(type, namespace, path, overriding);
+        List<LangGates.Gate> gates = type == PackType.CLIENT_RESOURCES ? LangGates.active(overriding, namespace, path) : Collections.emptyList();
+        if (!gates.isEmpty()) {
+            byte[] base = null;
+            if (entry != null) {
+                try (InputStream stream = entry.pack().open(type, namespace, entry.actual())) { base = stream.readAllBytes(); }
+            }
+            return new ByteArrayInputStream(LangGates.merge(base, gates));
+        }
         if (entry != null) { return entry.pack().open(type, namespace, entry.actual()); }
         if (!drawable(type, path)) { return null; }
         byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
@@ -397,6 +410,7 @@ public final class PackManager {
         for (RDPLPack pack : packs) {
             for (String namespace : pack.getNamespaces(PackType.CLIENT_RESOURCES)) {
                 for (String path : pack.getPaths(PackType.CLIENT_RESOURCES, namespace)) {
+                    if (path.startsWith(LANGGATES + "/")) { continue; }
                     if (served.contains(key(PackType.CLIENT_RESOURCES, namespace, path))) { continue; }
                     unused.add(pack.getName() + " -> " + namespace + ":" + path);
                 }
@@ -510,6 +524,7 @@ public final class PackManager {
             catch (IOException ex) { ContentLog.LOGGER.error("Could not close pack '{}'", pack.getName(), ex); }
         }
         packs.clear();
+        LangGates.clear();
         for (PackType type : PackType.values()) {
             mergedNormal.get(type).clear();
             mergedOverride.get(type).clear();
