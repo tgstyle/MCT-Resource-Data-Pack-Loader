@@ -389,7 +389,7 @@ public final class ContentParser {
                 continue;
             }
             List<PotionEffectDef> extras = effects(key, Json.getJsonArray(level, "effects", new JsonArray()), 0, false);
-            levels.add(new ExposureLevelDef(effect, Math.max(0.0F, Json.getFloat(level, "damage", 0.0F)), Math.max(0, Json.getInt(level, "damageInterval", 160)), Collections.unmodifiableList(extras)));
+            levels.add(new ExposureLevelDef(effect, Math.max(0.0F, Json.getFloat(level, "damage", 0.0F)), Math.max(0, Json.getInt(level, "damageInterval", 160)), Collections.unmodifiableList(extras), Json.getString(level, "onEnter", "").trim()));
         }
         if (levels.isEmpty()) {
             ContentLog.LOGGER.error("Exposure {} has no usable levels, ignoring it", key);
@@ -408,12 +408,17 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers, weather, biomes, structures, caveRegions or heights, ignoring it", key);
             return null;
         }
+        Set<String> immuneTeams = new LinkedHashSet<>();
+        for (String named : Json.strings(json, "immuneTeams")) {
+            if (!named.trim().isEmpty()) { immuneTeams.add(named.trim()); }
+        }
         Set<Identifier> catchers = names(key, json.has("catchers") ? Json.strings(json, "catchers") : List.of("minecraft:player"), "catchers");
         return new ExposureDef(key, Math.max(1, Json.getInt(json, "scanInterval", 20)), Math.max(0, Json.getInt(json, "range", 10)), Json.getBoolean(json, "skipsCreative", true),
                 Math.max(0, Json.getInt(json, "sourcesForNextLevel", 0)), Json.getString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels),
                 carriers, Json.getBoolean(json, "contagious", false), catchers, Math.max(0, Json.getInt(json, "contagionRange", 4)),
                 Mth.clamp(Json.getFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F), Math.max(1, Json.getInt(json, "contagionDuration", 1200)),
-                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"), biomes, structures, caveRegions, Collections.unmodifiableList(heights));
+                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"), biomes, structures, caveRegions, Collections.unmodifiableList(heights),
+                names(key, Json.strings(json, "immuneItems"), "immuneItems"), immuneTeams, Json.getString(json, "onClear", "").trim());
     }
 
     private static List<ExposureBandDef> bands(Identifier key, JsonObject json) {

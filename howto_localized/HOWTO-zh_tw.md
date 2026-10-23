@@ -3311,35 +3311,41 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "caveRegions": [ "mypack:glowcave=2" ],
   "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
+  "immuneItems": [ "mypack:hazmat_helmet", "mypack:hazmat_chest" ],
+  "immuneTeams": [ "scientists" ],
+  "onClear": "mypack:rad/clear",
   "scanInterval": 20,
   "range": 10,
   "sourcesForNextLevel": 4,
   "skipsCreative": true,
   "levels": [
-    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+    { "effect": "mypack:radiation_1", "onEnter": "mypack:rad/low", "damage": 4.0, "damageInterval": 160,
       "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
                    { "potion": "minecraft:hunger" } ] },
-    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+    { "effect": "mypack:radiation_2", "onEnter": "mypack:rad/high", "damage": 8.0, "damageInterval": 120,
       "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
   ]
 }
 ```
 
-| 鍵                    | 必填   | 值                                      | 預設   | 作用                                                                                      |
-| --------------------- | ------ | --------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
-| `blocks`              | 九選一 | `block` 或 `block=level` 的清單         |        | 會讓站在附近的玩家受到曝露的方塊。不寫等級則為 1                                          |
-| `items`               | 九選一 | `item` 或 `item=level` 的清單           |        | 會讓攜帶或穿戴它們的玩家受到曝露的物品                                                    |
-| `dimensions`          | 九選一 | `dim` 或 `dim=level` 的清單             |        | 會讓其中任何玩家受到曝露的維度 id                                                         |
-| `biomes`              | 九選一 | `biome` 或 `biome=level` 的清單         |        | 讓站在其中的任何玩家受到曝露的生態域。`#` 表示生態域標籤                                  |
-| `structures`          | 九選一 | `structure` 或 `structure=level` 的清單 |        | 讓身處其內部的玩家受到曝露的結構。`#` 表示結構標籤。資源包結構在 `range` 個方塊範圍內生效 |
-| `caveRegions`         | 九選一 | `region` 或 `region=level` 的清單       |        | 讓身處其中的玩家受到曝露的洞穴區域。只寫名稱時使用本檔案的命名空間                        |
-| `heights`             | 九選一 | `from:to=level` 的清單                  |        | 讓身處其中的玩家受到曝露的 Y 軸區間。某一側留空表示沒有限制                               |
-| `levels`              | 是     | 等級清單                                |        | 嚴重程度的階梯，第一項是 1 級。玩家獲得任何來源所達到的最高等級                           |
-| `immunity`            | 否     | 藥水名稱                                | 無     | 帶有該效果的人完全不會受到曝露                                                            |
-| `scanInterval`        | 否     | 刻                                      | `20`   | 多久檢查一次周圍環境和物品欄                                                              |
-| `range`               | 否     | 格                                      | `10`   | 方塊的曝露範圍有多遠，為球形                                                              |
-| `sourcesForNextLevel` | 否     | 整數                                    | `0`    | 附近有這麼多個同一等級的來源，就會把該等級再推高一級。`0` 表示關閉此功能                  |
-| `skipsCreative`       | 否     | 布林值                                  | `true` | 創造模式和旁觀模式的玩家不受影響                                                          |
+| 鍵                    | 必填   | 值                                      | 預設   | 作用                                                                                                                                                             |
+| --------------------- | ------ | --------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | 九選一 | `block` 或 `block=level` 的清單         |        | 會讓站在附近的玩家受到曝露的方塊。不寫等級則為 1                                                                                                                 |
+| `items`               | 九選一 | `item` 或 `item=level` 的清單           |        | 會讓攜帶或穿戴它們的玩家受到曝露的物品                                                                                                                           |
+| `dimensions`          | 九選一 | `dim` 或 `dim=level` 的清單             |        | 會讓其中任何玩家受到曝露的維度 id                                                                                                                                |
+| `biomes`              | 九選一 | `biome` 或 `biome=level` 的清單         |        | 讓站在其中的任何玩家受到曝露的生態域。`#` 表示生態域標籤                                                                                                         |
+| `structures`          | 九選一 | `structure` 或 `structure=level` 的清單 |        | 讓身處其內部的玩家受到曝露的結構。`#` 表示結構標籤。資源包結構在 `range` 個方塊範圍內生效                                                                        |
+| `caveRegions`         | 九選一 | `region` 或 `region=level` 的清單       |        | 讓身處其中的玩家受到曝露的洞穴區域。只寫名稱時使用本檔案的命名空間                                                                                               |
+| `heights`             | 九選一 | `from:to=level` 的清單                  |        | 讓身處其中的玩家受到曝露的 Y 軸區間。某一側留空表示沒有限制                                                                                                      |
+| `levels`              | 是     | 等級清單                                |        | 嚴重程度的階梯，第一項是 1 級。玩家獲得任何來源所達到的最高等級                                                                                                  |
+| `immunity`            | 否     | 藥水名稱                                | 無     | 帶有該效果的人完全不會受到曝露                                                                                                                                   |
+| `immuneItems`         | 否     | 物品名稱清單                            | 無     | 穿戴或手持其中任一物品（盔甲欄與雙手）的實體完全不會受到曝露，與 `immunity` 相同。每個護甲部位指定一件即可，任一件都足夠。無法辨識的物品名稱會記錄為錯誤並略過。 |
+| `immuneTeams`         | 否     | 計分板隊伍名稱清單                      | 無     | 這些隊伍的成員（套件中的隊伍檔案或 `/scoreboard teams`）不會受到曝露。無法辨識的隊伍名稱永遠不會符合。                                                           |
+| `onClear`             | 否     | 函式名稱                                | 無     | 玩家的等級降到 0 時以該玩家身分執行，包括切換到創造模式時。                                                                                                      |
+| `scanInterval`        | 否     | 刻                                      | `20`   | 多久檢查一次周圍環境和物品欄                                                                                                                                     |
+| `range`               | 否     | 格                                      | `10`   | 方塊的曝露範圍有多遠，為球形                                                                                                                                     |
+| `sourcesForNextLevel` | 否     | 整數                                    | `0`    | 附近有這麼多個同一等級的來源，就會把該等級再推高一級。`0` 表示關閉此功能                                                                                         |
+| `skipsCreative`       | 否     | 布林值                                  | `true` | 創造模式和旁觀模式的玩家不受影響                                                                                                                                 |
 
 ### 等級
 
@@ -3351,6 +3357,9 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `damage`         | 否   | 半顆心           | `0`   | 該等級持續期間，每隔 `damageInterval` 刻造成一次傷害。無視護甲                   |
 | `damageInterval` | 否   | 刻               | `160` | 該傷害的施加頻率                                                                 |
 | `effects`        | 否   | 清單，內容為效果 | 無    | 一併施加的額外效果，格式與藥水類型相同。未設定 `duration` 時，持續時間隨掃描視窗 |
+| `onEnter`        | 否   | 函式名稱         | 無    | 每當等級變為此等級時以該玩家身分執行，無論等級升高或降低。                       |
+
+免疫有三種形式，任一種都會讓攜帶者不受曝露：`immunity` 藥水、穿戴或手持的 `immuneItems` 之一，或屬於 `immuneTeams` 中的某個隊伍。等級變化時會執行新等級 `onEnter` 指定的函式；等級降到 0 時則執行 `onClear`。函式以權限等級 2 執行，@s 為該玩家，並且在該等級的標記效果套用之後執行。加入後的第一次檢查只設定起始等級而不觸發，因此進入時已處於曝露狀態的玩家在等級變化前不會執行任何內容；重生會保留等級。同一變化也會觸發 `exposure_level` 卡牌觸發器。
 
 等級效果會比下一次掃描略晚結束，因此玩家離開後效果會自行消退。因曝露傷害而死亡時，訊息取自 `death.attack.rdpl.<file name>`，由資源包的語言檔案提供。
 
