@@ -53,6 +53,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 **Fabricación, botín y comercio**
 - [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)
 - [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)
+- [Bloqueos de recetas](#bloqueos-de-recetas)
 - [Descripciones emergentes](#descripciones-emergentes)
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
@@ -175,6 +176,8 @@ Todas las rutas de esta guía se escriben desde `assets/` en adelante, así que 
 | `<namespace>/structures/*.nbt`                                                                  | Plantillas, para brotes, `imprint` y sobrescrituras de mods. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                           |
 | `<namespace>/recipes/*.json`                                                                    | Recetas de fabricación, añadidas o sustituidas. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                        |
 | `<namespace>/recipe_removals/*.json`                                                            | Recetas eliminadas por nombre, espacio de nombres o resultado. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                         |
+| `<namespace>/recipe_locks/*.json`                                                               | Recetas que siguen cerradas hasta que un jugador consigue un logro. [Bloqueos de recetas](#bloqueos-de-recetas)                                                                                            |
+| `<namespace>/spawn_locks/*.json`                                                                | Criaturas que no aparecen hasta que se cumplen las condiciones. [Bloqueos de aparición](#bloqueos-de-aparición)                                                                                            |
 | `<namespace>/disabled/*.json`                                                                   | Bloques e ítems sacados del juego. [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)                                                                                                           |
 | `<namespace>/furnace/*.json`                                                                    | Recetas de horno añadidas y eliminadas. [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)                                                                                                |
 | `<namespace>/tooltips/*.json`                                                                   | Líneas extra de descripción emergente. [Descripciones emergentes](#descripciones-emergentes)                                                                                                               |
@@ -997,6 +1000,23 @@ El bloque colocado y el ítem que llevas en la mano leen ese mismo nombre, así 
 
 **La tabla de botín se llena en el primer uso**, no al colocar el bloque, lo que lo hace útil en una estructura: quien lo abra primero se lleva el sorteo, y una tolva o un comparador que lo alcance antes lo sortea igual. La misma tabla se puede usar con `lootTable` en una forma de imprint o en una parcela de aldea, de modo que un pack puede colocar estos bloques mediante worldgen y llenarlos de la misma manera.
 
+**Cualquier ítem se puede llevar puesto.** `bauble` es también una clave de ítem, no solo de contenedor, así que un anillo, un amuleto o un talismán no necesita contenedor. El ítem va a esa ranura de Baubles y, mientras está en ella, `wornEffects` y `wornAttributes` se aplican a quien lo lleva.
+
+```json
+{
+  "bauble": "ring",
+  "wornEffects": [
+    { "potion": "minecraft:speed", "amplifier": 1, "ambient": true }
+  ],
+  "wornAttributes": [
+    { "attribute": "maxHealth", "amount": 10.0, "operation": 0 }
+  ],
+  "variants": { "ring": { "meta": 0, "maxSize": 1 } }
+}
+```
+
+Una entrada de `wornEffects` admite `potion`, `amplifier`, `ambient` y `showParticles`, que aquí viene desactivado por defecto. No tiene `duration`: el efecto se mantiene mientras el ítem esté puesto y se desvanece uno o dos segundos después de quitarlo. Una entrada de `wornAttributes` admite `attribute`, `amount` y `operation`, donde `0` suma, `1` multiplica la base y `2` multiplica el total, y el cambio se retira junto con el ítem. No hay `uuid`: el cambio lleva el nombre del ítem, así que dos ítems iguales puestos a la vez comparten un solo cambio y no se acumulan. Ambos se leen una vez por segundo y nunca se guardan con el jugador. Al quitar una bonificación de salud, la salud de quien lo lleva baja al nuevo máximo. Los tipos de ranura de Curios que puede añadir un pack moderno no tienen equivalente aquí, porque las ranuras de Baubles son fijas, así que la carpeta `curioslots` no se lee en esta versión.
+
 ## Campanas
 
 *bloques*
@@ -1549,28 +1569,34 @@ El destino se guarda en la pila, así que el ítem sigue apuntando a él hasta e
 
 *ítems*
 
-| Clave          | Obligatorio   | Valor                                               | Por defecto                   | Qué hace                                                                                                                                                                                                                                                                                                  |
-| -------------- | ------------- | --------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | sí            | objeto de nombre de variante a variante             |                               | Una entrada por valor de metadatos. La clave da nombre a ese valor en el blockstate, la ruta del modelo y la clave de idioma. El nombre de registro sale de la propia ruta del archivo                                                                                                                    |
-| `type`         | no            | uno de los tipos anteriores                         | `basic`                       | Qué tipo adopta el ítem                                                                                                                                                                                                                                                                                   |
-| `creativeTab`  | no            | nombre de pestaña                                   | ninguno                       | La pestaña en la que aparece                                                                                                                                                                                                                                                                              |
-| `material`     | tool, armor   | nombre de material                                  | ninguno                       | De cuál de tus materiales está hecho                                                                                                                                                                                                                                                                      |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`                 | ninguno                       | Qué herramienta es                                                                                                                                                                                                                                                                                        |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`                     | ninguno                       | Dónde se lleva puesto. También valen `helmet`, `chestplate`, `leggings` y `boots`                                                                                                                                                                                                                         |
-| `eat`          | food          | booleano                                            | `false`                       | Usa la animación de comer                                                                                                                                                                                                                                                                                 |
-| `alwaysEdible` | food          | booleano                                            | `false`                       | Se puede comer con la barra de hambre llena                                                                                                                                                                                                                                                               |
-| `useDuration`  | drink, potion | entero, ticks                                       | `32`                          | Para `drink` y `potion`: cuánto tarda en beberse, en ticks (20 ticks = 1 segundo). Los demás tipos lo ignoran                                                                                                                                                                                             |
-| `attackSpeed`  | no            | decimal                                             | según la clase de herramienta | Para `tool`, el atributo de velocidad de ataque, como el `-2.4` de una espada                                                                                                                                                                                                                             |
-| `cooldown`     | no            | entero, ticks                                       | `0`                           | Para `food`, `drink` y `potion`, cuánto tiempo rechaza el ítem volver a usarse tras consumirse; en un ítem con `rolls`, el tiempo entre tiradas                                                                                                                                                           |
-| `container`    | drink         | nombre de ítem                                      | ninguno                       | Lo que queda atrás, como una botella                                                                                                                                                                                                                                                                      |
-| `crop`         | seed          | nombre de bloque                                    | ninguno                       | El cultivo que planta                                                                                                                                                                                                                                                                                     |
-| `soil`         | seed          | nombre de bloque                                    | `minecraft:farmland`          | Sobre qué se puede plantar                                                                                                                                                                                                                                                                                |
-| `rocket`       | rocket        | `namespace:name`                                    | ninguno                       | La variante de entidad que coloca                                                                                                                                                                                                                                                                         |
-| `rolls`        | no            | `coin`, `d6`, `2d6+1`, un dado o un mazo            | ninguno                       | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos)                                                                                                                                       |
-| `rollStore`    | no            | nombre de un objetivo                               | ninguno                       | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat                                                                                      |
-| `locates`      | no            | `Village`, `minecraft:river`                        | ninguno                       | En un ítem simple, un clic derecho busca el lugar más cercano con ese nombre y orienta el ítem hacia él, como una brújula. El nombre es una estructura o un bioma de vanilla, o uno registrado con `locateAs`. El ítem se apila de uno en uno. Consulta el párrafo de la brújula localizadora, más arriba |
-| `passesTurn`   | no            | booleano                                            | `false`                       | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                                                                                                                                      |
-| `requires`     | no            | lista de ids de mods o espacios de nombres de packs | ninguno                       | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                     |
+| Clave            | Obligatorio   | Valor                                                        | Por defecto                   | Qué hace                                                                                                                                                                                                                                                                                                  |
+| ---------------- | ------------- | ------------------------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`       | sí            | objeto de nombre de variante a variante                      |                               | Una entrada por valor de metadatos. La clave da nombre a ese valor en el blockstate, la ruta del modelo y la clave de idioma. El nombre de registro sale de la propia ruta del archivo                                                                                                                    |
+| `type`           | no            | uno de los tipos anteriores                                  | `basic`                       | Qué tipo adopta el ítem                                                                                                                                                                                                                                                                                   |
+| `creativeTab`    | no            | nombre de pestaña                                            | ninguno                       | La pestaña en la que aparece                                                                                                                                                                                                                                                                              |
+| `material`       | tool, armor   | nombre de material                                           | ninguno                       | De cuál de tus materiales está hecho                                                                                                                                                                                                                                                                      |
+| `toolClass`      | tool          | `pickaxe`, `axe`, `shovel`, `sword`                          | ninguno                       | Qué herramienta es                                                                                                                                                                                                                                                                                        |
+| `slot`           | armor         | `head`, `chest`, `legs`, `feet`                              | ninguno                       | Dónde se lleva puesto. También valen `helmet`, `chestplate`, `leggings` y `boots`                                                                                                                                                                                                                         |
+| `eat`            | food          | booleano                                                     | `false`                       | Usa la animación de comer                                                                                                                                                                                                                                                                                 |
+| `alwaysEdible`   | food          | booleano                                                     | `false`                       | Se puede comer con la barra de hambre llena                                                                                                                                                                                                                                                               |
+| `useDuration`    | drink, potion | entero, ticks                                                | `32`                          | Para `drink` y `potion`: cuánto tarda en beberse, en ticks (20 ticks = 1 segundo). Los demás tipos lo ignoran                                                                                                                                                                                             |
+| `attackReach`    | no            | decimal, bloques                                             | `3.0`                         | Hasta dónde llega un golpe con el ítem en la mano principal. También vale al hacer clic derecho sobre criaturas. Véase [Armas](#armas)                                                                                                                                                                    |
+| `sweep`          | no            | objeto                                                       | ninguno                       | Hiere también a otras criaturas alrededor de un golpe con fuerza completa. Véase [Armas](#armas)                                                                                                                                                                                                          |
+| `combo`          | no            | objeto                                                       | ninguno                       | Los golpes con no más de `window` ticks entre sí recorren `steps`. Véase [Armas](#armas)                                                                                                                                                                                                                  |
+| `attackSpeed`    | no            | decimal                                                      | según la clase de herramienta | Para `tool`, el atributo de velocidad de ataque, como el `-2.4` de una espada                                                                                                                                                                                                                             |
+| `cooldown`       | no            | entero, ticks                                                | `0`                           | Para `food`, `drink` y `potion`, cuánto tiempo rechaza el ítem volver a usarse tras consumirse; en un ítem con `rolls`, el tiempo entre tiradas                                                                                                                                                           |
+| `container`      | drink         | nombre de ítem                                               | ninguno                       | Lo que queda atrás, como una botella                                                                                                                                                                                                                                                                      |
+| `crop`           | seed          | nombre de bloque                                             | ninguno                       | El cultivo que planta                                                                                                                                                                                                                                                                                     |
+| `soil`           | seed          | nombre de bloque                                             | `minecraft:farmland`          | Sobre qué se puede plantar                                                                                                                                                                                                                                                                                |
+| `rocket`         | rocket        | `namespace:name`                                             | ninguno                       | La variante de entidad que coloca                                                                                                                                                                                                                                                                         |
+| `rolls`          | no            | `coin`, `d6`, `2d6+1`, un dado o un mazo                     | ninguno                       | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos)                                                                                                                                       |
+| `rollStore`      | no            | nombre de un objetivo                                        | ninguno                       | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat                                                                                      |
+| `bauble`         | no            | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | ninguno                       | La ranura de Baubles en la que se puede llevar puesto el ítem, para cualquier tipo de ítem. Se ignora si Baubles no está instalado                                                                                                                                                                        |
+| `wornEffects`    | no            | lista de efectos                                             | ninguno                       | Efectos de poción mantenidos en quien lo lleva mientras el ítem está en su ranura de Baubles, como `potion`, `amplifier`, `ambient` y `showParticles`                                                                                                                                                     |
+| `wornAttributes` | no            | lista de cambios de atributos                                | ninguno                       | Cambios de atributos mantenidos en quien lo lleva mientras el ítem está en su ranura de Baubles, como `attribute`, `amount` y `operation`                                                                                                                                                                 |
+| `locates`        | no            | `Village`, `minecraft:river`                                 | ninguno                       | En un ítem simple, un clic derecho busca el lugar más cercano con ese nombre y orienta el ítem hacia él, como una brújula. El nombre es una estructura o un bioma de vanilla, o uno registrado con `locateAs`. El ítem se apila de uno en uno. Consulta el párrafo de la brújula localizadora, más arriba |
+| `passesTurn`     | no            | booleano                                                     | `false`                       | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                                                                                                                                      |
+| `requires`       | no            | lista de ids de mods o espacios de nombres de packs          | ninguno                       | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                     |
 
 ### Claves de variantes de ítems
 
@@ -1585,6 +1611,60 @@ El destino se guarda en la pila, así que el ítem sigue apuntando a él hasta e
 | `saturation` | food        | decimal                                       | `0.0`       | Saturación que restaura                                                                                                                                                |
 | `oreDict`    | no          | lista de nombres del diccionario de minerales | ninguno     | Nombres del diccionario de minerales bajo los que se registra esta variante                                                                                            |
 | `potion`     | food, drink | `potion,duration,amplifier`                   | ninguno     | Un efecto que se aplica cuando se come o se bebe la variante. Una cuarta parte, `true`, lo hace ambiental. Un efecto beneficioso se nombra en la descripción emergente |
+
+### Armas
+
+*ítems*
+
+Un ítem puede llegar más lejos que los `3.0` bloques del juego, herir a las criaturas que rodean a su objetivo o recorrer una cadena de golpes. Las claves van en el archivo del ítem, junto a `attackSpeed`. El ejemplo omite las demás claves.
+
+```json
+{
+  "attackReach": 8.0,
+  "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
+  "combo": {
+    "window": 40,
+    "steps": [
+      { "damage": 1.0 },
+      { "damage": 1.5 },
+      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
+    ]
+  }
+}
+```
+
+`attackReach` es hasta dónde llega un golpe con el ítem en la mano principal, en bloques, por encima de `0` y como máximo `64`. También vale al hacer clic derecho sobre criaturas. El modo creativo conserva su alcance extra por encima, y un bloque solo se alcanza hasta donde el juego lo permite.
+
+`sweep` hiere a las demás criaturas alrededor del objetivo cuando un golpe da con fuerza completa, es decir, por encima del 90 % de la recarga de ataque. Admite estas claves:
+
+| Clave    | Obligatorio | Valor                          | Por defecto | Qué hace                                             |
+| -------- | ----------- | ------------------------------ | ----------- | ---------------------------------------------------- |
+| `shape`  | no          | `box`, `arc`, `line`, `circle` | `box`       | La forma que elige a las criaturas. Véase abajo      |
+| `reach`  | no          | decimal, de 0.1 a 64           | `3.0`       | Hasta dónde llega la forma, en bloques               |
+| `angle`  | no          | decimal, de 1 a 360            | `90.0`      | En `arc`, la anchura del abanico en grados           |
+| `width`  | no          | decimal, de 0.1 a 64           | `1.0`       | En `line`, la anchura de la franja en bloques        |
+| `damage` | no          | decimal, de 0 a 10             | `0.5`       | La parte del daño del golpe que recibe cada criatura |
+
+- `box` es el barrido propio del juego: criaturas junto al objetivo, a no más del `attackReach` del ítem desde el jugador (`3.0` si no tiene). Las demás claves se ignoran.
+- `arc` es un abanico delante del jugador, de `angle` grados de ancho y `reach` bloques de largo, para criaturas a la altura del jugador, más o menos.
+- `line` es una franja de `width` bloques de ancho a lo largo de la línea de visión del jugador, de `reach` bloques de largo.
+- `circle` son todas las criaturas a no más de `reach` bloques del jugador, a su altura más o menos, delante o detrás.
+
+`combo` hace que los golpes dados con no más de `window` ticks entre sí recorran `steps`, un paso por golpe, y vuelvan a empezar tras el último:
+
+| Clave    | Obligatorio | Valor                     | Por defecto | Qué hace                                                       |
+| -------- | ----------- | ------------------------- | ----------- | -------------------------------------------------------------- |
+| `window` | no          | entero, ticks, al menos 1 | `30`        | El mayor intervalo entre dos golpes que aún cuenta como cadena |
+| `steps`  | sí          | lista de pasos            |             | Un paso por golpe. Al menos uno                                |
+
+Cada paso admite estas claves:
+
+| Clave    | Obligatorio | Valor               | Por defecto         | Qué hace                                                                      |
+| -------- | ----------- | ------------------- | ------------------- | ----------------------------------------------------------------------------- |
+| `damage` | no          | decimal, de 0 a 100 | `1.0`               | Multiplica el daño del golpe antes de la armadura                             |
+| `sweep`  | no          | objeto              | el `sweep` del ítem | Sustituye el `sweep` del ítem en este golpe, con las mismas claves que arriba |
+
+Solo un golpe con fuerza completa hace avanzar un combo o barre. Un golpe más débil reinicia el combo y no recibe ni el daño del paso ni un barrido. El avance se guarda por jugador en memoria y nunca se graba. Cerrar sesión, cambiar a otro ítem o dejar que se agote `window` lo reinicia. Un barrido nunca hiere al jugador, al objetivo, a los aliados, a los espectadores ni a los soportes de armadura marcadores, y cada criatura recibe `damage` veces el golpe tras el multiplicador del paso. Un golpe cuyo daño base no supera el último daño del objetivo lo descarta la resistencia al daño antes de aplicar el multiplicador del paso, así que un paso no puede aumentarlo; solo afecta a velocidades de ataque de 2 o más.
 
 ## Fluidos
 
@@ -2105,6 +2185,32 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 | `item`     | una de las dos | nombre de ítem                      | ninguno     | El ítem que arde                     |
 | `oreDict`  | una de las dos | nombre del diccionario de minerales | ninguno     | Todo lo que hay bajo ese nombre arde |
 | `burnTime` | sí             | entero, ticks                       | `0`         | El carbón es 1600, una tabla 300     |
+
+## Bloqueos de recetas
+
+*fabricación, botín y comercio*
+
+`<namespace>/recipe_locks/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Mantiene cerradas las recetas de fabricación para un jugador hasta que consigue un logro.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword"]
+}
+```
+
+| Clave         | Obligatorio | Valor                    | Por defecto | Qué hace                                                                                                                               |
+| ------------- | ----------- | ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | sí          | `namespace:path`         | ninguno     | El logro que necesita un jugador para poder fabricar con estas recetas. Un archivo sin él se omite y el registro lo indica             |
+| `names`       | no          | lista                    | ninguno     | Nombres de recetas que se retienen. Un `*` final coincide con todos los nombres que empiezan por ese texto, como `thermalfoundation:*` |
+| `namespaces`  | no          | lista                    | ninguno     | Todas las recetas de estos espacios de nombres                                                                                         |
+| `outputs`     | no          | lista de nombres de ítem | ninguno     | Todas las recetas que fabrican alguno de estos ítems                                                                                   |
+
+Un jugador sin el logro ve vacía la casilla de resultado de una receta que coincide, en una mesa de crafteo, en la cuadrícula de 2x2 del inventario y cuando el libro de recetas rellena la cuadrícula; quien lo tiene fabrica como siempre. Los hornos, los yunques y los fabricadores automáticos no se retienen. Varios archivos se acumulan, y una receta que coincide con dos archivos necesita ambos logros. Un archivo que no selecciona ninguna receta se omite y el registro lo indica.
 
 ## Descripciones emergentes
 
@@ -2917,6 +3023,28 @@ El reloj corre con el tiempo del mundo, así que se detiene cuando nadie está j
 
 Una variante que no fija ninguna de estas condiciones aparece como antes, y la que fija varias aparece solo donde y cuando se cumplen todas. Frenan las apariciones naturales, incluidas las que un chunk hace al generarse; un huevo, `/summon`, un generador y `becomes` no se frenan. `advancement`, `objective` y `scoreAtLeast` se juzgan juntos para cada jugador a menos de 128 bloques del punto de aparición, sin contar a los espectadores: un mismo jugador debe cumplirlos todos, y si no hay nadie tan cerca, una variante que fije alguno no aparece.
 
+### Bloqueos de aparición
+
+*variantes de entidades*
+
+`<namespace>/spawn_locks/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Retiene la aparición natural de las criaturas que nombra hasta que se cumplen las mismas condiciones que usan las variantes, así que cualquier criatura puede bloquearse sin un archivo de variante.
+
+```json
+{
+  "entities": ["minecraft:blaze", "mymod:thing"],
+  "advancement": "minecraft:story/enter_the_nether"
+}
+```
+
+| Clave                                                                                                                | Obligatorio | Valor                                | Por defecto | Qué hace                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------- | ----------- | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                           | sí          | lista de nombres de entidad          | ninguno     | Las criaturas que se retienen, como `minecraft:blaze`. Un archivo sin ella se omite y el registro lo indica                                       |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `objective`, `scoreAtLeast` | no          | como en las condiciones de aparición | ninguno     | Las mismas claves con el mismo significado que en las condiciones de aparición. Un archivo que no define ninguna se omite y el registro lo indica |
+
+Una criatura nombrada en varios archivos, o también en una variante, aparece solo donde y cuando se cumplen todos. Se retienen las apariciones naturales, también las que un chunk crea al generarse; un huevo, `/summon` y un generador no.
+
 ### Red
 
 *variantes de entidades*
@@ -2944,13 +3072,13 @@ Una variante que no fija ninguna de estas condiciones aparece como antes, y la q
 }
 ```
 
-| Clave           | Obligatorio | Valor  | Por defecto            | Qué hace                                                                       |
-| --------------- | ----------- | ------ | ---------------------- | ------------------------------------------------------------------------------ |
-| `bossBar`       | no          | objeto | ninguno                | Muestra una barra de jefe a los jugadores cercanos mientras la criatura vive   |
-| `bossBar.name`  | no          | texto  | el nombre de la criatura | El título de la barra                                                        |
-| `bossBar.color` | no          | texto  | `purple`               | `pink`, `blue`, `red`, `green`, `yellow`, `purple` o `white`                   |
-| `bossBar.style` | no          | texto  | `progress`             | `progress`, `notched_6`, `notched_10`, `notched_12` o `notched_20`             |
-| `bossBar.background` | no     | objeto | ninguno                | Una textura dibujada detrás de la barra y su título: `texture` (`namespace:ruta.png`, obligatoria), `width` y `height` (por defecto 182 y la altura de la fila de la barra), `x` e `y` (desplazamiento desde la esquina superior izquierda de la fila del título, por defecto 0) |
+| Clave                | Obligatorio | Valor  | Por defecto              | Qué hace                                                                                                                                                                                                                                                                         |
+| -------------------- | ----------- | ------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bossBar`            | no          | objeto | ninguno                  | Muestra una barra de jefe a los jugadores cercanos mientras la criatura vive                                                                                                                                                                                                     |
+| `bossBar.name`       | no          | texto  | el nombre de la criatura | El título de la barra                                                                                                                                                                                                                                                            |
+| `bossBar.color`      | no          | texto  | `purple`                 | `pink`, `blue`, `red`, `green`, `yellow`, `purple` o `white`                                                                                                                                                                                                                     |
+| `bossBar.style`      | no          | texto  | `progress`               | `progress`, `notched_6`, `notched_10`, `notched_12` o `notched_20`                                                                                                                                                                                                               |
+| `bossBar.background` | no          | objeto | ninguno                  | Una textura dibujada detrás de la barra y su título: `texture` (`namespace:ruta.png`, obligatoria), `width` y `height` (por defecto 182 y la altura de la fila de la barra), `x` e `y` (desplazamiento desde la esquina superior izquierda de la fila del título, por defecto 0) |
 
 Cada criatura tiene su propia barra, que ven todos los jugadores dentro de su `trackingRange`. La barra sigue la salud de la criatura, así que se vacía a medida que recibe daño, y desaparece cuando la criatura muere, se elimina o se descarga su chunk. Los espectadores no la ven. Un `color` o `style` desconocido se registra en el log y se usa el valor por defecto. Sin `bossBar` no cambia nada.
 
@@ -2983,14 +3111,14 @@ Cada criatura tiene su propia barra, que ven todos los jugadores dentro de su `t
 }
 ```
 
-| Clave | Obligatorio | Valor | Por defecto | Qué hace |
-| --- | ----------- | ----- | ----------- | -------- |
-| `phases` | no | lista | ninguno | Etapas de salud de la criatura. Se ordenan por `below`, y la criatura está en una fase mientras su fracción de salud sea menor que el `below` de esa fase |
-| `phases[].below` | sí | número, mayor que 0 y menor que 1 | ninguno | La fracción de salud por debajo de la cual la fase está activa. Un golpe que cruza varios umbrales entra solo en la fase más profunda. Dos fases con el mismo `below`: la posterior se registra en el log y se descarta |
-| `phases[].attributes` | no | objeto | ninguno | Los mismos nombres que `attributes`. Mientras está en la fase, el valor sustituye al propio de la criatura. `maxHealth` se rechaza con un error en el log, porque movería el propio umbral |
-| `phases[].tasks` | no | lista | ninguno | La misma sintaxis que `tasks`. Se añaden al entrar en la fase; lo que la fase añadió o quitó se deshace al salir |
-| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | no | como fuera de `phases` | desactivado | Comportamientos de ataque que solo están activos durante la fase. La criatura necesita `hostile`, igual que con las mismas claves fuera de `phases`. Un comportamiento que la criatura ya tiene por sí misma no se añade por segunda vez |
-| `phases[].bossBar` | no | objeto, como `bossBar` | el de la criatura | Sustituye el nombre, el color, el estilo y el fondo de la barra durante la fase. Necesita un `bossBar` en la propia criatura; si no, se registra en el log y se descarta |
+| Clave                                                                          | Obligatorio | Valor                             | Por defecto       | Qué hace                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------ | ----------- | --------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `phases`                                                                       | no          | lista                             | ninguno           | Etapas de salud de la criatura. Se ordenan por `below`, y la criatura está en una fase mientras su fracción de salud sea menor que el `below` de esa fase                                                                                |
+| `phases[].below`                                                               | sí          | número, mayor que 0 y menor que 1 | ninguno           | La fracción de salud por debajo de la cual la fase está activa. Un golpe que cruza varios umbrales entra solo en la fase más profunda. Dos fases con el mismo `below`: la posterior se registra en el log y se descarta                  |
+| `phases[].attributes`                                                          | no          | objeto                            | ninguno           | Los mismos nombres que `attributes`. Mientras está en la fase, el valor sustituye al propio de la criatura. `maxHealth` se rechaza con un error en el log, porque movería el propio umbral                                               |
+| `phases[].tasks`                                                               | no          | lista                             | ninguno           | La misma sintaxis que `tasks`. Se añaden al entrar en la fase; lo que la fase añadió o quitó se deshace al salir                                                                                                                         |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | no          | como fuera de `phases`            | desactivado       | Comportamientos de ataque que solo están activos durante la fase. La criatura necesita `hostile`, igual que con las mismas claves fuera de `phases`. Un comportamiento que la criatura ya tiene por sí misma no se añade por segunda vez |
+| `phases[].bossBar`                                                             | no          | objeto, como `bossBar`            | el de la criatura | Sustituye el nombre, el color, el estilo y el fondo de la barra durante la fase. Necesita un `bossBar` en la propia criatura; si no, se registra en el log y se descarta                                                                 |
 
 Las fases siguen la salud en ambos sentidos: un jefe que se cura por encima de un umbral vuelve a la fase anterior o a su base. Cada fase se sostiene por sí sola. Pasar de una fase a otra deshace la primera, así que en el ejemplo la segunda fase no tiene ni la embestida ni la tarea extra de la primera. No se escribe nada en la partida guardada; la fase se calcula de nuevo a partir de la salud cuando la criatura se carga. Cualquier otra clave dentro de una fase, como `swoops`, `digs` o `throws` (necesitan una preparación hecha cuando aparece la criatura), se registra en el log y se ignora.
 
@@ -3907,16 +4035,16 @@ Estas claves también van en el bloque `sky` y también se dibujan solo en el cl
 
 `lightningColor` tiñe los rayos.
 
-| Clave            | Obligatorio | Valor             | Por defecto | Qué hace                                                      |
-| ---------------- | ----------- | ----------------- | ----------- | ------------------------------------------------------------- |
-| `snowColor`      | no          | color hexadecimal | blanco      | Tinte de las capas y los bloques de nieve                     |
-| `waterFogColor`  | no          | color hexadecimal | `050533`    | Color de la niebla bajo el agua                               |
-| `lavaFogColor`   | no          | color hexadecimal | `991A00`    | Color de la niebla en la lava                                 |
-| `starColor`      | no          | color hexadecimal | blanco      | Tinte de las estrellas                                        |
-| `starTwinkle`    | no          | decimal, de 0 a 1 | `0.0`       | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
+| Clave            | Obligatorio | Valor             | Por defecto | Qué hace                                                                           |
+| ---------------- | ----------- | ----------------- | ----------- | ---------------------------------------------------------------------------------- |
+| `snowColor`      | no          | color hexadecimal | blanco      | Tinte de las capas y los bloques de nieve                                          |
+| `waterFogColor`  | no          | color hexadecimal | `050533`    | Color de la niebla bajo el agua                                                    |
+| `lavaFogColor`   | no          | color hexadecimal | `991A00`    | Color de la niebla en la lava                                                      |
+| `starColor`      | no          | color hexadecimal | blanco      | Tinte de las estrellas                                                             |
+| `starTwinkle`    | no          | decimal, de 0 a 1 | `0.0`       | Cuánto se apagan las estrellas al titilar. `0` las deja fijas                      |
 | `grassTint`      | no          | color hexadecimal | blanco      | Multiplica el color de la hierba, la hierba alta, los helechos y la caña de azúcar |
-| `foliageTint`    | no          | color hexadecimal | blanco      | Multiplica el color de las hojas y las enredaderas            |
-| `lightningColor` | no          | color hexadecimal | `737380`    | Tinte de los rayos                                            |
+| `foliageTint`    | no          | color hexadecimal | blanco      | Multiplica el color de las hojas y las enredaderas                                 |
+| `lightningColor` | no          | color hexadecimal | `737380`    | Tinte de los rayos                                                                 |
 
 ### Skybox, aurora y arcoíris
 
@@ -4188,11 +4316,11 @@ Un día son 24000 ticks del reloj del mundo principal, el mismo día que cuenta 
 
 Un comando o una cama que mueva el reloj mueve también la estación, y un mundo se carga en la estación a la que pertenece su día. Un entorno activado a mano se mantiene hasta el siguiente cambio de estación. Un entorno de bioma se superpone a los ajustes propios de la dimensión, no a la estación, así que repite cualquier tinte que quiera conservar. `rules.weatherSpeed` solo actúa en el mundo principal o en una dimensión con `weather.cycle`.
 
-| Clave           | Obligatorio   | Valor                                           | Por defecto | Qué hace                                                                    |
-| --------------- | ------------- | ----------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
-| `seasons`       | no            | objeto                                          | ninguno     | Activa y desactiva los entornos de la dimensión en un ciclo anual           |
-| `seasons.days`  | con `seasons` | entero mayor que 0                              | ninguno     | Días que dura cada estación                                                 |
-| `seasons.order` | con `seasons` | lista de nombres de entornos o de listas de nombres | ninguno | Las estaciones por turnos. Una entrada que es lista cambia sus entornos juntos |
+| Clave           | Obligatorio   | Valor                                               | Por defecto | Qué hace                                                                       |
+| --------------- | ------------- | --------------------------------------------------- | ----------- | ------------------------------------------------------------------------------ |
+| `seasons`       | no            | objeto                                              | ninguno     | Activa y desactiva los entornos de la dimensión en un ciclo anual              |
+| `seasons.days`  | con `seasons` | entero mayor que 0                                  | ninguno     | Días que dura cada estación                                                    |
+| `seasons.order` | con `seasons` | lista de nombres de entornos o de listas de nombres | ninguno     | Las estaciones por turnos. Una entrada que es lista cambia sus entornos juntos |
 
 ## Cuerpos de Galacticraft
 
@@ -6345,13 +6473,13 @@ Un objetivo es un objetivo real en el marcador propio del juego, así que `/scor
 }
 ```
 
-| Ajuste          | Tipo   | Por defecto                 | Qué hace                                                              |
-| --------------- | ------ | --------------------------- | --------------------------------------------------------------------- |
-| `bossBar`       | objeto | ninguno                     | Muestra una barra de jefe a todos los jugadores mientras la ronda está en marcha |
-| `bossBar.name`  | texto  | el `displayName` del objetivo | El título de la barra                                               |
-| `bossBar.color` | texto  | `purple`                    | `pink`, `blue`, `red`, `green`, `yellow`, `purple` o `white`          |
-| `bossBar.style` | texto  | `progress`                  | `progress`, `notched_6`, `notched_10`, `notched_12` o `notched_20`    |
-| `bossBar.background` | objeto | ninguno                | Una textura dibujada detrás de la barra y su título: `texture` (`namespace:ruta.png`, obligatoria), `width` y `height` (por defecto 182 y la altura de la fila de la barra), `x` e `y` (desplazamiento desde la esquina superior izquierda de la fila del título, por defecto 0) |
+| Ajuste               | Tipo   | Por defecto                   | Qué hace                                                                                                                                                                                                                                                                         |
+| -------------------- | ------ | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bossBar`            | objeto | ninguno                       | Muestra una barra de jefe a todos los jugadores mientras la ronda está en marcha                                                                                                                                                                                                 |
+| `bossBar.name`       | texto  | el `displayName` del objetivo | El título de la barra                                                                                                                                                                                                                                                            |
+| `bossBar.color`      | texto  | `purple`                      | `pink`, `blue`, `red`, `green`, `yellow`, `purple` o `white`                                                                                                                                                                                                                     |
+| `bossBar.style`      | texto  | `progress`                    | `progress`, `notched_6`, `notched_10`, `notched_12` o `notched_20`                                                                                                                                                                                                               |
+| `bossBar.background` | objeto | ninguno                       | Una textura dibujada detrás de la barra y su título: `texture` (`namespace:ruta.png`, obligatoria), `width` y `height` (por defecto 182 y la altura de la fila de la barra), `x` e `y` (desplazamiento desde la esquina superior izquierda de la fila del título, por defecto 0) |
 
 La barra aparece cuando empieza la ronda y desaparece cuando termina. Con `ends.afterMinutes` se vacía a medida que se agota el tiempo. Si no, con `ends.atScore`, se llena a medida que el bando que va en cabeza se acerca a esa puntuación. Con ninguno de los dos se mantiene llena. Un `color` o `style` desconocido se registra en el log y se usa el valor por defecto.
 
@@ -6589,26 +6717,30 @@ El tercero saluda a un jugador en su primera entrada con una tarjeta central sin
 
 *tarjetas*
 
-| Disparador        | Necesita          | Se activa cuando                                                                                                                                                                                                                                                                    |
-| ----------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `command`         | nada              | Se ejecuta `/rdplserver card <rule> [players]`. El comando omite `when`, `repeat` y `cooldown`, y sigue ejecutando `runs`. Cualquier regla puede mostrarse así, sea cual sea su disparador                                                                                          |
-| `first_join`      | nada              | Un jugador entra en el mundo por primera vez                                                                                                                                                                                                                                        |
-| `dimension_enter` | `dimension`       | Un jugador llega a esa dimensión                                                                                                                                                                                                                                                    |
-| `biome_enter`     | `biomes`          | Un jugador entra en uno de esos biomas viniendo de otro sitio                                                                                                                                                                                                                       |
-| `structure_enter` | `structures`      | Un jugador entra en una de esas estructuras desde fuera de ella                                                                                                                                                                                                                     |
-| `advancement`     | `advancement`     | Un jugador consigue ese logro                                                                                                                                                                                                                                                       |
-| `time_of_day`     | `time`            | El reloj del día pasa por ese tick, de `0` a `23999` en la misma escala que `time.windows`, ajustada a la `dayLength` de la dimensión, mientras hay jugadores en la dimensión. Una dimensión con `fixedTime` nunca lo activa. Un reloj cambiado con un comando o una cama no cuenta |
-| `day`             | nada, o `day`     | Empieza un día nuevo en la dimensión; con `day`, solo ese día                                                                                                                                                                                                                       |
-| `craft`           | `item`            | Un jugador fabrica ese ítem                                                                                                                                                                                                                                                         |
-| `pickup`          | `item`            | Un jugador recoge ese ítem                                                                                                                                                                                                                                                          |
-| `kill`            | `entity`          | Un jugador mata a esa entidad, o a la `count`-ésima de ellas                                                                                                                                                                                                                        |
-| `respawn`         | nada              | Un jugador reaparece tras morir                                                                                                                                                                                                                                                     |
-| `death`           | nada              | Un jugador muere                                                                                                                                                                                                                                                                    |
-| `y_level`         | `below` o `above` | Un jugador baja por debajo o sube por encima de esa altura                                                                                                                                                                                                                          |
-| `play_time`       | `minutes`         | El tiempo de un jugador en el mundo alcanza esa cantidad de minutos, contados desde que se cierra la introducción al mundo, o desde la entrada cuando no se le muestra ninguna introducción                                                                                         |
-| `roll`            | nada, o `roll`    | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total                                                                                                                                  |
-| `order_done`      | nada, o `order`   | Se cumple una orden de trabajo, una vez por cada jugador al que recompensa. Con `order`, solo la dispara una orden con esa palabra de `sign`                                                                                                                                        |
-| `score`           | `objective`       | La puntuación de un jugador en ese objetivo alcanza `score`                                                                                                                                                                                                                         |
+| Disparador        | Necesita           | Se activa cuando                                                                                                                                                                                                                                                                    |
+| ----------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command`         | nada               | Se ejecuta `/rdplserver card <rule> [players]`. El comando omite `when`, `repeat` y `cooldown`, y sigue ejecutando `runs`. Cualquier regla puede mostrarse así, sea cual sea su disparador                                                                                          |
+| `first_join`      | nada               | Un jugador entra en el mundo por primera vez                                                                                                                                                                                                                                        |
+| `dimension_enter` | `dimension`        | Un jugador llega a esa dimensión                                                                                                                                                                                                                                                    |
+| `biome_enter`     | `biomes`           | Un jugador entra en uno de esos biomas viniendo de otro sitio                                                                                                                                                                                                                       |
+| `structure_enter` | `structures`       | Un jugador entra en una de esas estructuras desde fuera de ella                                                                                                                                                                                                                     |
+| `advancement`     | `advancement`      | Un jugador consigue ese logro                                                                                                                                                                                                                                                       |
+| `time_of_day`     | `time`             | El reloj del día pasa por ese tick, de `0` a `23999` en la misma escala que `time.windows`, ajustada a la `dayLength` de la dimensión, mientras hay jugadores en la dimensión. Una dimensión con `fixedTime` nunca lo activa. Un reloj cambiado con un comando o una cama no cuenta |
+| `day`             | nada, o `day`      | Empieza un día nuevo en la dimensión; con `day`, solo ese día                                                                                                                                                                                                                       |
+| `craft`           | `item`             | Un jugador fabrica ese ítem                                                                                                                                                                                                                                                         |
+| `pickup`          | `item`             | Un jugador recoge ese ítem                                                                                                                                                                                                                                                          |
+| `kill`            | `entity`           | Un jugador mata a esa entidad, o a la `count`-ésima de ellas                                                                                                                                                                                                                        |
+| `respawn`         | nada               | Un jugador reaparece tras morir                                                                                                                                                                                                                                                     |
+| `death`           | nada               | Un jugador muere                                                                                                                                                                                                                                                                    |
+| `y_level`         | `below` o `above`  | Un jugador baja por debajo o sube por encima de esa altura                                                                                                                                                                                                                          |
+| `play_time`       | `minutes`          | El tiempo de un jugador en el mundo alcanza esa cantidad de minutos, contados desde que se cierra la introducción al mundo, o desde la entrada cuando no se le muestra ninguna introducción                                                                                         |
+| `roll`            | nada, o `roll`     | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total                                                                                                                                  |
+| `order_done`      | nada, o `order`    | Se cumple una orden de trabajo, una vez por cada jugador al que recompensa. Con `order`, solo la dispara una orden con esa palabra de `sign`                                                                                                                                        |
+| `score`           | `objective`        | La puntuación de un jugador en ese objetivo alcanza `score`                                                                                                                                                                                                                         |
+| `exposure_level`  | nada, o `exposure` | Cambia el nivel de un jugador en un peligro, hacia arriba o hacia abajo. Con `exposure`, solo ese peligro; con `level`, solo un cambio que llegue a ese nivel. La primera comprobación tras entrar nunca la dispara                                                                 |
+| `round_start`     | nada               | Se abre una ronda, tras la cuenta atrás: una vez por cada jugador, o una vez para la `audience`. Ocurre tanto tras un reinicio como con `/rdplserver round start`                                                                                                                   |
+
+Los niveles de peligro se leen en cada escaneo, así que una carta se dispara dentro del `scanInterval` del peligro tras el cambio.
 
 El bioma, la estructura, la altura, el tiempo de juego y la puntuación se comprueban una vez por segundo para cada jugador, y se activan con el cambio de fuera a dentro, nunca en la primera comprobación tras una entrada. Una regla `time_of_day` o `day` cuya audiencia no es `player` se activa una vez para la dimensión en lugar de una vez por cada jugador en ella.
 
@@ -6635,6 +6767,8 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 | `minutes`            | entero                                            | ninguno              | Para `play_time`                                                                                                                                                                                                        |
 | `roll`               | texto                                             | ninguno              | Para `roll`: `coin`, una notación como `2d6` (`d6` y `1d6` son lo mismo) o el nombre de un dado o un mazo de un pack. Sin ella, toda tirada activa la regla                                                             |
 | `order`              | texto                                             | ninguno              | Para `order_done`: la palabra de `sign` de la orden. Sin ella, cada orden cumplida dispara la regla                                                                                                                     |
+| `exposure`           | texto                                             | ninguno              | Para `exposure_level`: el nombre de archivo del peligro en `exposures`. Sin él, todos los peligros disparan la regla                                                                                                    |
+| `level`              | entero                                            | ninguno              | Para `exposure_level`: se dispara solo cuando el nivel del jugador pasa a ser este; `0` significa que ya no está expuesto. Sin él, se dispara con cada cambio                                                           |
 | `atLeast`, `atMost`  | entero                                            | ninguno              | Para `roll`: el total más bajo y el más alto que activa la regla. Una moneda cuenta 1 por cara y 0 por cruz; un dado o un mazo de un pack, la posición del resultado en su archivo, desde 1                             |
 | `objective`, `score` | texto, entero                                     | ninguno, `1`         | Para `score`: el objetivo y el valor que hay que alcanzar                                                                                                                                                               |
 | `requires`           | lista de ids de mod o espacios de nombres de pack | ninguno              | El archivo se omite a menos que estén presentes todos                                                                                                                                                                   |

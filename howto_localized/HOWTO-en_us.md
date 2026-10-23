@@ -53,6 +53,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 **Crafting, loot and trade**
 - [Disabled blocks and items](#disabled-blocks-and-items)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
+- [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
@@ -175,6 +176,8 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/structures/*.nbt`                                                                  | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                            |
 | `<namespace>/recipes/*.json`                                                                    | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                             |
 | `<namespace>/recipe_removals/*.json`                                                            | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                    |
+| `<namespace>/recipe_locks/*.json`                                                               | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                      |
+| `<namespace>/spawn_locks/*.json`                                                                | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                        |
 | `<namespace>/disabled/*.json`                                                                   | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                      |
 | `<namespace>/furnace/*.json`                                                                    | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                       |
 | `<namespace>/tooltips/*.json`                                                                   | Extra tooltip lines. [Tooltips](#tooltips)                                                                                                                       |
@@ -997,6 +1000,23 @@ The placed block and the item in your hand read that one name, so they match. Na
 
 **The loot table fills on first use**, not when the block is placed, which is what makes it useful in a structure: whoever opens it first gets the roll, and a hopper or a comparator reaching it first rolls it just the same. The same table can be used by `lootTable` on an imprint shape or a village plot, so a pack can place these through worldgen and stock them the same way.
 
+**Any item can be worn.** `bauble` is an item key as well as a container one, so a ring, an amulet or a charm needs no container. The item goes in that Baubles slot, and while it is there `wornEffects` and `wornAttributes` apply to whoever wears it.
+
+```json
+{
+  "bauble": "ring",
+  "wornEffects": [
+    { "potion": "minecraft:speed", "amplifier": 1, "ambient": true }
+  ],
+  "wornAttributes": [
+    { "attribute": "maxHealth", "amount": 10.0, "operation": 0 }
+  ],
+  "variants": { "ring": { "meta": 0, "maxSize": 1 } }
+}
+```
+
+An entry in `wornEffects` takes `potion`, `amplifier`, `ambient` and `showParticles`, which is off here. It has no `duration`: the effect is kept up for as long as the item is worn and fades one to two seconds after it comes off. An entry in `wornAttributes` takes `attribute`, `amount` and `operation`, where `0` adds, `1` multiplies the base and `2` multiplies the total, and the change is taken off with the item. There is no `uuid`: the change is named after the item, so two of the same item worn at once share one change and do not stack. Both are read once a second and are never saved with the player. Taking off a health bonus brings the wearer's health down to the new maximum. The Curios slot types a modern pack can add have no counterpart here, because the Baubles slots are fixed, so the `curioslots` folder is not read on this version.
+
 ## Bells
 
 *blocks*
@@ -1549,28 +1569,34 @@ The target is kept in the stack, so the item keeps pointing at it until the next
 
 *items*
 
-| Key            | Required      | Value                                | Default                | What it does                                                                                                                                                                                                                                                  |
-| -------------- | ------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`     | yes           | object of variant name to variant    |                        | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path                                                                                                   |
-| `type`         | no            | one of the types above               | `basic`                | Which type the item takes                                                                                                                                                                                                                                     |
-| `creativeTab`  | no            | tab name                             | none                   | The tab it appears in                                                                                                                                                                                                                                         |
-| `material`     | tool, armor   | material name                        | none                   | Which of your materials it is made from                                                                                                                                                                                                                       |
-| `toolClass`    | tool          | `pickaxe`, `axe`, `shovel`, `sword`  | none                   | Which tool it is                                                                                                                                                                                                                                              |
-| `slot`         | armor         | `head`, `chest`, `legs`, `feet`      | none                   | Where it is worn. `helmet`, `chestplate`, `leggings` and `boots` also work                                                                                                                                                                                    |
-| `eat`          | food          | boolean                              | `false`                | Uses the eating animation                                                                                                                                                                                                                                     |
-| `alwaysEdible` | food          | boolean                              | `false`                | Can be eaten on a full hunger bar                                                                                                                                                                                                                             |
-| `useDuration`  | drink, potion | int, ticks                           | `32`                   | For `drink` and `potion`: how long drinking it takes, in ticks (20 ticks = 1 second). Other types ignore it                                                                                                                                                   |
-| `attackSpeed`  | no            | float                                | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                                                                                                                             |
-| `cooldown`     | no            | int, ticks                           | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed; for an item that `rolls`, how long between rolls                                                                                                                     |
-| `container`    | drink         | item name                            | none                   | What is left behind, such as a bottle                                                                                                                                                                                                                         |
-| `crop`         | seed          | block name                           | none                   | The crop it plants                                                                                                                                                                                                                                            |
-| `soil`         | seed          | block name                           | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                                                                                     |
-| `rocket`       | rocket        | `namespace:name`                     | none                   | The entity variant it places                                                                                                                                                                                                                                  |
-| `rolls`        | no            | `coin`, `d6`, `2d6+1`, a die or deck | none                   | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks)                                                                                                             |
-| `rollStore`    | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line                                                                 |
-| `locates`      | no            | `Village`, `minecraft:river`         | none                   | For a plain item, a right-click finds the nearest place of that name and points the item at it, as a compass does. The name is a vanilla structure or biome, or one registered with `locateAs`. The item stacks to 1. See the locator compass paragraph above |
-| `passesTurn`   | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                                                                                   |
-| `requires`     | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
+| Key              | Required      | Value                                                        | Default                | What it does                                                                                                                                                                                                                                                  |
+| ---------------- | ------------- | ------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants`       | yes           | object of variant name to variant                            |                        | One entry per metadata value. The key names that value in the blockstate, the model path and the lang key. The registry name comes from the file's own path                                                                                                   |
+| `type`           | no            | one of the types above                                       | `basic`                | Which type the item takes                                                                                                                                                                                                                                     |
+| `creativeTab`    | no            | tab name                                                     | none                   | The tab it appears in                                                                                                                                                                                                                                         |
+| `material`       | tool, armor   | material name                                                | none                   | Which of your materials it is made from                                                                                                                                                                                                                       |
+| `toolClass`      | tool          | `pickaxe`, `axe`, `shovel`, `sword`                          | none                   | Which tool it is                                                                                                                                                                                                                                              |
+| `slot`           | armor         | `head`, `chest`, `legs`, `feet`                              | none                   | Where it is worn. `helmet`, `chestplate`, `leggings` and `boots` also work                                                                                                                                                                                    |
+| `eat`            | food          | boolean                                                      | `false`                | Uses the eating animation                                                                                                                                                                                                                                     |
+| `alwaysEdible`   | food          | boolean                                                      | `false`                | Can be eaten on a full hunger bar                                                                                                                                                                                                                             |
+| `useDuration`    | drink, potion | int, ticks                                                   | `32`                   | For `drink` and `potion`: how long drinking it takes, in ticks (20 ticks = 1 second). Other types ignore it                                                                                                                                                   |
+| `attackReach`    | no            | float, blocks                                                | `3.0`                  | How far a blow with the item in the main hand reaches. It also holds for right-clicking creatures. See [Weapons](#weapons)                                                                                                                                    |
+| `sweep`          | no            | object                                                       | none                   | Also hurts other creatures around a full-strength blow. See [Weapons](#weapons)                                                                                                                                                                               |
+| `combo`          | no            | object                                                       | none                   | Blows struck within `window` ticks of each other step through `steps`. See [Weapons](#weapons)                                                                                                                                                                |
+| `attackSpeed`    | no            | float                                                        | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                                                                                                                             |
+| `cooldown`       | no            | int, ticks                                                   | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed; for an item that `rolls`, how long between rolls                                                                                                                     |
+| `container`      | drink         | item name                                                    | none                   | What is left behind, such as a bottle                                                                                                                                                                                                                         |
+| `crop`           | seed          | block name                                                   | none                   | The crop it plants                                                                                                                                                                                                                                            |
+| `soil`           | seed          | block name                                                   | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                                                                                     |
+| `rocket`         | rocket        | `namespace:name`                                             | none                   | The entity variant it places                                                                                                                                                                                                                                  |
+| `rolls`          | no            | `coin`, `d6`, `2d6+1`, a die or deck                         | none                   | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks)                                                                                                             |
+| `rollStore`      | no            | objective name                                               | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line                                                                 |
+| `locates`        | no            | `Village`, `minecraft:river`                                 | none                   | For a plain item, a right-click finds the nearest place of that name and points the item at it, as a compass does. The name is a vanilla structure or biome, or one registered with `locateAs`. The item stacks to 1. See the locator compass paragraph above |
+| `passesTurn`     | no            | boolean                                                      | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                                                                                   |
+| `bauble`         | no            | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | none                   | The Baubles slot the item can be worn in, for any type of item. Ignored when Baubles is not installed                                                                                                                                                         |
+| `wornEffects`    | no            | list of effects                                              | none                   | Potion effects held on the wearer while the item is in its Baubles slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                              |
+| `wornAttributes` | no            | list of attribute changes                                    | none                   | Attribute changes held on the wearer while the item is in its Baubles slot, as `attribute`, `amount` and `operation`                                                                                                                                          |
+| `requires`       | no            | list of mod ids or pack namespaces                           | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
 
 ### Item variant keys
 
@@ -1585,6 +1611,60 @@ The target is kept in the stack, so the item keeps pointing at it until the next
 | `saturation` | food        | float                                | `0.0`    | Saturation restored                                                                                                                        |
 | `oreDict`    | no          | list of ore dictionary names         | none     | Ore dictionary names this variant is registered under                                                                                      |
 | `potion`     | food, drink | `potion,duration,amplifier`          | none     | An effect applied when the variant is eaten or drunk. A fourth part, `true`, makes it ambient. A beneficial effect is named in the tooltip |
+
+### Weapons
+
+*items*
+
+An item can reach farther than the game's `3.0` blocks, hurt the creatures around its target, or step through a chain of blows. The keys go in the item file, beside `attackSpeed`. The example leaves out the other keys.
+
+```json
+{
+  "attackReach": 8.0,
+  "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
+  "combo": {
+    "window": 40,
+    "steps": [
+      { "damage": 1.0 },
+      { "damage": 1.5 },
+      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
+    ]
+  }
+}
+```
+
+`attackReach` is how far a blow with the item in the main hand reaches, in blocks, above `0` and at most `64`. It also holds for right-clicking creatures. Creative mode keeps its extra reach on top, and a block is still reached only as far as the game allows.
+
+`sweep` hurts the other creatures around the target when a blow lands at full strength, which means above 90% of the attack cooldown. It takes these keys:
+
+| Key      | Required | Value                          | Default | What it does                                            |
+| -------- | -------- | ------------------------------ | ------- | ------------------------------------------------------- |
+| `shape`  | no       | `box`, `arc`, `line`, `circle` | `box`   | The shape that picks the creatures. See below           |
+| `reach`  | no       | float, 0.1 to 64               | `3.0`   | How far the shape reaches, in blocks                    |
+| `angle`  | no       | float, 1 to 360                | `90.0`  | For `arc`, how wide the fan is, in degrees              |
+| `width`  | no       | float, 0.1 to 64               | `1.0`   | For `line`, how wide the line is, in blocks             |
+| `damage` | no       | float, 0 to 10                 | `0.5`   | The share of the blow's damage that each creature takes |
+
+- `box` is the game's own sweep: creatures beside the target, within the item's `attackReach` of the player (`3.0` without one). The other keys are ignored.
+- `arc` is a fan in front of the player, `angle` degrees wide and `reach` blocks long, for creatures at about the player's height.
+- `line` is a strip `width` blocks wide along the player's line of sight, `reach` blocks long.
+- `circle` is every creature within `reach` blocks of the player, at about the player's height, in front or behind.
+
+`combo` makes blows struck within `window` ticks of each other step through `steps`, one step per blow, and start over after the last one:
+
+| Key      | Required | Value                  | Default | What it does                                                   |
+| -------- | -------- | ---------------------- | ------- | -------------------------------------------------------------- |
+| `window` | no       | int, ticks, at least 1 | `30`    | The longest gap between two blows that still counts as a chain |
+| `steps`  | yes      | list of steps          |         | One step per blow. At least one                                |
+
+Each step takes these keys:
+
+| Key      | Required | Value           | Default            | What it does                                                           |
+| -------- | -------- | --------------- | ------------------ | ---------------------------------------------------------------------- |
+| `damage` | no       | float, 0 to 100 | `1.0`              | Multiplies the blow's damage before armor                              |
+| `sweep`  | no       | object          | the item's `sweep` | Replaces the item's `sweep` for this blow, with the same keys as above |
+
+Only a blow at full strength moves a combo on or sweeps. A weaker blow resets the combo and gets neither the step's damage nor a sweep. Progress is kept per player in memory and is never saved. Logging out, switching to another item, or letting `window` run out resets it. A sweep never hurts the player, the target, allies, spectators or marker armor stands, and each creature takes `damage` times the blow after the step's multiplier. A blow whose base damage is not above the target's last damage is dropped by the hurt resistance before the step's multiplier applies, so a step cannot raise it; this matters only at an attack speed of 2 or more.
 
 ## Fluids
 
@@ -2105,6 +2185,32 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `item`     | one of the two | item name           | none    | The item that burns              |
 | `oreDict`  | one of the two | ore dictionary name | none    | Everything under that name burns |
 | `burnTime` | yes            | int, ticks          | `0`     | Coal is 1600, a plank 300        |
+
+## Recipe locks
+
+*crafting, loot and trade*
+
+`<namespace>/recipe_locks/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Keeps crafting recipes closed to a player until they earn an advancement.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
+  "namespaces": ["tconstruct"],
+  "outputs": ["minecraft:diamond_sword"]
+}
+```
+
+| Key           | Required | Value              | Default | What it does                                                                                                        |
+| ------------- | -------- | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | yes      | `namespace:path`   | none    | The advancement a player needs before these recipes craft. A file without it is skipped and the log says so         |
+| `names`       | no       | list               | none    | Recipe names to hold back. A trailing `*` matches every name starting with that text, such as `thermalfoundation:*` |
+| `namespaces`  | no       | list               | none    | Every recipe of these namespaces                                                                                    |
+| `outputs`     | no       | list of item names | none    | Every recipe that crafts one of these items                                                                         |
+
+A player without the advancement sees an empty result slot for a matching recipe, in a crafting table, in the 2x2 inventory grid and when the recipe book fills the grid; a player who has it crafts as usual. Furnaces, anvils and automated crafters are not held back. Several files stack, and a recipe that matches two files needs both advancements. A file that selects no recipe is skipped, and the log says so.
 
 ## Tooltips
 
@@ -2917,6 +3023,28 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 
 A variant that sets none of these spawns as before, and one that sets several spawns only where and when all of them hold. They hold back natural spawns, the ones a chunk makes as it generates included; an egg, `/summon`, a spawner and `becomes` are not held back. `advancement`, `objective` and `scoreAtLeast` are judged together for each player within 128 blocks of the spawn point, spectators left out, so one player has to meet all of them, and with nobody that near a variant that sets any of them does not spawn.
 
+### Spawn locks
+
+*entity variants*
+
+`<namespace>/spawn_locks/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Holds back the natural spawns of the mobs it names until the same kind of conditions that variants use hold, so any mob can be gated without a variant file.
+
+```json
+{
+  "entities": ["minecraft:blaze", "mymod:thing"],
+  "advancement": "minecraft:story/enter_the_nether"
+}
+```
+
+| Key                                                                                                                  | Required | Value                  | Default | What it does                                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                           | yes      | list of entity names   | none    | The mobs to hold back, such as `minecraft:blaze`. A file without it is skipped and the log says so                          |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `objective`, `scoreAtLeast` | no       | as in Spawn conditions | none    | The same keys with the same meaning as under Spawn conditions. A file that sets none of them is skipped and the log says so |
+
+A mob named in several files, or in a variant too, spawns only where and when all of them hold. Natural spawns and the ones a chunk makes as it generates are held back; an egg, `/summon` and a spawner are not.
+
 ### Network
 
 *entity variants*
@@ -2944,13 +3072,13 @@ A variant that sets none of these spawns as before, and one that sets several sp
 }
 ```
 
-| Key              | Required | Value  | Default             | What it does                                                                 |
-| ---------------- | -------- | ------ | ------------------- | ---------------------------------------------------------------------------- |
-| `bossBar`        | no       | object | none                | Shows a boss bar to players near the creature for as long as it lives        |
-| `bossBar.name`   | no       | text   | the creature's name | The title on the bar                                                         |
-| `bossBar.color`  | no       | text   | `purple`            | `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`                |
-| `bossBar.style`  | no       | text   | `progress`          | `progress`, `notched_6`, `notched_10`, `notched_12` or `notched_20`          |
-| `bossBar.background` | no   | object | none                | A texture drawn behind the bar and its title: `texture` (`namespace:path.png`, required), `width` and `height` (default 182 and the bar's row height), `x` and `y` (offset from the top left of the title row, default 0) |
+| Key                  | Required | Value  | Default             | What it does                                                                                                                                                                                                              |
+| -------------------- | -------- | ------ | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bossBar`            | no       | object | none                | Shows a boss bar to players near the creature for as long as it lives                                                                                                                                                     |
+| `bossBar.name`       | no       | text   | the creature's name | The title on the bar                                                                                                                                                                                                      |
+| `bossBar.color`      | no       | text   | `purple`            | `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`                                                                                                                                                             |
+| `bossBar.style`      | no       | text   | `progress`          | `progress`, `notched_6`, `notched_10`, `notched_12` or `notched_20`                                                                                                                                                       |
+| `bossBar.background` | no       | object | none                | A texture drawn behind the bar and its title: `texture` (`namespace:path.png`, required), `width` and `height` (default 182 and the bar's row height), `x` and `y` (offset from the top left of the title row, default 0) |
 
 Each creature has its own bar, shown to every player within its `trackingRange`. The bar tracks the creature's health, so it empties as the creature is hurt, and it goes when the creature dies, is removed or its chunk unloads. Spectators are not shown it. An unknown `color` or `style` is logged and the default is used. Without `bossBar` nothing changes.
 
@@ -2983,14 +3111,14 @@ Each creature has its own bar, shown to every player within its `trackingRange`.
 }
 ```
 
-| Key | Required | Value | Default | What it does |
-| --- | -------- | ----- | ------- | ------------ |
-| `phases` | no | list | none | Health stages of the creature. They are ordered by `below`, and the creature is in a phase while its health fraction is under that phase's `below` |
-| `phases[].below` | yes | number, above 0 and under 1 | none | The health fraction under which the phase is on. A hit that crosses several thresholds enters the deepest one only. Two phases with the same `below`: the later one is logged and dropped |
-| `phases[].attributes` | no | object | none | Same names as `attributes`. While in the phase, the value replaces the creature's own. `maxHealth` is refused with a logged error, because it would move the threshold itself |
-| `phases[].tasks` | no | list | none | Same syntax as `tasks`. Added on entering the phase; what the phase added or dropped is undone on leaving |
-| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | no | as outside `phases` | off | Attack behaviors that are on only while in the phase. The creature needs `hostile`, as for the same keys outside `phases`. A behavior the creature already has itself is not added a second time |
-| `phases[].bossBar` | no | object, as `bossBar` | the creature's | Replaces the bar's name, color, style and background while in the phase. It needs a `bossBar` on the creature itself, otherwise it is logged and dropped |
+| Key                                                                            | Required | Value                       | Default        | What it does                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------ | -------- | --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `phases`                                                                       | no       | list                        | none           | Health stages of the creature. They are ordered by `below`, and the creature is in a phase while its health fraction is under that phase's `below`                                               |
+| `phases[].below`                                                               | yes      | number, above 0 and under 1 | none           | The health fraction under which the phase is on. A hit that crosses several thresholds enters the deepest one only. Two phases with the same `below`: the later one is logged and dropped        |
+| `phases[].attributes`                                                          | no       | object                      | none           | Same names as `attributes`. While in the phase, the value replaces the creature's own. `maxHealth` is refused with a logged error, because it would move the threshold itself                    |
+| `phases[].tasks`                                                               | no       | list                        | none           | Same syntax as `tasks`. Added on entering the phase; what the phase added or dropped is undone on leaving                                                                                        |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | no       | as outside `phases`         | off            | Attack behaviors that are on only while in the phase. The creature needs `hostile`, as for the same keys outside `phases`. A behavior the creature already has itself is not added a second time |
+| `phases[].bossBar`                                                             | no       | object, as `bossBar`        | the creature's | Replaces the bar's name, color, style and background while in the phase. It needs a `bossBar` on the creature itself, otherwise it is logged and dropped                                         |
 
 Phases follow health both ways: a boss that heals above a threshold returns to the earlier phase, or to its base. Each phase stands alone. Moving from one phase to another undoes the first, so in the example the second phase has neither the charge nor the extra task of the first. Nothing is written into the save; the phase is worked out again from health when the creature loads. Any other key in a phase, such as `swoops`, `digs` or `throws` (they need setup made when the creature appears), is logged and ignored.
 
@@ -3907,16 +4035,16 @@ These keys sit in the `sky` block as well, and they too are drawn on the client 
 
 `lightningColor` tints lightning bolts.
 
-| Key              | Required | Value         | Default  | What it does                                                  |
-| ---------------- | -------- | ------------- | -------- | ------------------------------------------------------------- |
-| `snowColor`      | no       | hex color     | white    | Tint of snow layers and snow blocks                           |
-| `waterFogColor`  | no       | hex color     | `050533` | Fog color under water                                         |
-| `lavaFogColor`   | no       | hex color     | `991A00` | Fog color in lava                                             |
-| `starColor`      | no       | hex color     | white    | Star tint                                                     |
-| `starTwinkle`    | no       | float, 0 to 1 | `0.0`    | How deep the stars dim as they twinkle. `0` keeps them steady |
+| Key              | Required | Value         | Default  | What it does                                                    |
+| ---------------- | -------- | ------------- | -------- | --------------------------------------------------------------- |
+| `snowColor`      | no       | hex color     | white    | Tint of snow layers and snow blocks                             |
+| `waterFogColor`  | no       | hex color     | `050533` | Fog color under water                                           |
+| `lavaFogColor`   | no       | hex color     | `991A00` | Fog color in lava                                               |
+| `starColor`      | no       | hex color     | white    | Star tint                                                       |
+| `starTwinkle`    | no       | float, 0 to 1 | `0.0`    | How deep the stars dim as they twinkle. `0` keeps them steady   |
 | `grassTint`      | no       | hex color     | white    | Multiplies the color of grass, tall grass, ferns and sugar cane |
-| `foliageTint`    | no       | hex color     | white    | Multiplies the color of leaves and vines                      |
-| `lightningColor` | no       | hex color     | `737380` | Lightning bolt tint                                           |
+| `foliageTint`    | no       | hex color     | white    | Multiplies the color of leaves and vines                        |
+| `lightningColor` | no       | hex color     | `737380` | Lightning bolt tint                                             |
 
 ### Skybox, aurora and rainbow
 
@@ -4188,11 +4316,11 @@ A day is 24000 ticks of the overworld's clock, the same day the `day` card trigg
 
 A command or a bed that moves the clock moves the season too, and a world loads into the season its day belongs to. An environment switched by hand holds until the next season change. A biome environment is layered onto the dimension's own settings, not onto the season, so it repeats any tint it wants to keep. `rules.weatherSpeed` acts only in the overworld or in a dimension with a `weather.cycle`.
 
-| Key             | Required     | Value                                           | Default | What it does                                                          |
-| --------------- | ------------ | ----------------------------------------------- | ------- | --------------------------------------------------------------------- |
-| `seasons`       | no           | object                                          | none    | Turns the dimension's environments on and off in a yearly cycle       |
-| `seasons.days`  | with `seasons` | whole number above 0                          | none    | Days each season lasts                                                |
-| `seasons.order` | with `seasons` | list of environment names, or of lists of names | none  | The seasons in turn. A list entry switches its environments together |
+| Key             | Required       | Value                                           | Default | What it does                                                         |
+| --------------- | -------------- | ----------------------------------------------- | ------- | -------------------------------------------------------------------- |
+| `seasons`       | no             | object                                          | none    | Turns the dimension's environments on and off in a yearly cycle      |
+| `seasons.days`  | with `seasons` | whole number above 0                            | none    | Days each season lasts                                               |
+| `seasons.order` | with `seasons` | list of environment names, or of lists of names | none    | The seasons in turn. A list entry switches its environments together |
 
 ## Galacticraft bodies
 
@@ -6345,13 +6473,13 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 }
 ```
 
-| Setting         | Type   | Default                | What it does                                                        |
-| --------------- | ------ | ---------------------- | ------------------------------------------------------------------- |
-| `bossBar`       | object | none                   | Shows a boss bar to every player while the round runs               |
-| `bossBar.name`  | text   | the objective's `displayName` | The title on the bar                                         |
-| `bossBar.color` | text   | `purple`               | `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`       |
-| `bossBar.style` | text   | `progress`             | `progress`, `notched_6`, `notched_10`, `notched_12` or `notched_20` |
-| `bossBar.background` | object | none              | A texture drawn behind the bar and its title: `texture` (`namespace:path.png`, required), `width` and `height` (default 182 and the bar's row height), `x` and `y` (offset from the top left of the title row, default 0) |
+| Setting              | Type   | Default                       | What it does                                                                                                                                                                                                              |
+| -------------------- | ------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bossBar`            | object | none                          | Shows a boss bar to every player while the round runs                                                                                                                                                                     |
+| `bossBar.name`       | text   | the objective's `displayName` | The title on the bar                                                                                                                                                                                                      |
+| `bossBar.color`      | text   | `purple`                      | `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`                                                                                                                                                             |
+| `bossBar.style`      | text   | `progress`                    | `progress`, `notched_6`, `notched_10`, `notched_12` or `notched_20`                                                                                                                                                       |
+| `bossBar.background` | object | none                          | A texture drawn behind the bar and its title: `texture` (`namespace:path.png`, required), `width` and `height` (default 182 and the bar's row height), `x` and `y` (offset from the top left of the title row, default 0) |
 
 The bar appears when the round opens and goes when it ends. With `ends.afterMinutes` it drains as the time runs out. Otherwise, with `ends.atScore`, it fills as the leading side nears that score. With neither it stays full. An unknown `color` or `style` is logged and the default is used.
 
@@ -6589,26 +6717,30 @@ The third greets a player on the first join with a center card that has no panel
 
 *cards*
 
-| Trigger           | Needs               | Fires when                                                                                                                                                                                                                                                   |
-| ----------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `command`         | nothing             | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger                                                                                   |
-| `first_join`      | nothing             | A player joins the world for the first time                                                                                                                                                                                                                  |
-| `dimension_enter` | `dimension`         | A player arrives in that dimension                                                                                                                                                                                                                           |
-| `biome_enter`     | `biomes`            | A player walks into one of those biomes from somewhere else                                                                                                                                                                                                  |
-| `structure_enter` | `structures`        | A player walks into one of those structures from outside it                                                                                                                                                                                                  |
-| `advancement`     | `advancement`       | A player earns that advancement                                                                                                                                                                                                                              |
-| `time_of_day`     | `time`              | The day clock passes that tick, `0` to `23999` on the same scale as `time.windows`, scaled to the dimension's `dayLength`, while players are in the dimension. A dimension with `fixedTime` never fires it. A clock set by a command or a bed does not count |
-| `day`             | nothing, or `day`   | A new day begins in the dimension; with `day`, only that day                                                                                                                                                                                                 |
-| `craft`           | `item`              | A player crafts that item                                                                                                                                                                                                                                    |
-| `pickup`          | `item`              | A player picks that item up                                                                                                                                                                                                                                  |
-| `kill`            | `entity`            | A player kills that entity, or the `count`th one of it                                                                                                                                                                                                       |
-| `respawn`         | nothing             | A player respawns after dying                                                                                                                                                                                                                                |
-| `death`           | nothing             | A player dies                                                                                                                                                                                                                                                |
-| `y_level`         | `below` or `above`  | A player goes below or above that height                                                                                                                                                                                                                     |
-| `play_time`       | `minutes`           | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
-| `roll`            | nothing, or `roll`  | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
-| `order_done`      | nothing, or `order` | A work order is filled, once for each player it rewards. With `order`, only an order with that `sign` word fires it                                                                                                                                          |
-| `score`           | `objective`         | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
+| Trigger           | Needs                  | Fires when                                                                                                                                                                                                                                                   |
+| ----------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `command`         | nothing                | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger                                                                                   |
+| `first_join`      | nothing                | A player joins the world for the first time                                                                                                                                                                                                                  |
+| `dimension_enter` | `dimension`            | A player arrives in that dimension                                                                                                                                                                                                                           |
+| `biome_enter`     | `biomes`               | A player walks into one of those biomes from somewhere else                                                                                                                                                                                                  |
+| `structure_enter` | `structures`           | A player walks into one of those structures from outside it                                                                                                                                                                                                  |
+| `advancement`     | `advancement`          | A player earns that advancement                                                                                                                                                                                                                              |
+| `time_of_day`     | `time`                 | The day clock passes that tick, `0` to `23999` on the same scale as `time.windows`, scaled to the dimension's `dayLength`, while players are in the dimension. A dimension with `fixedTime` never fires it. A clock set by a command or a bed does not count |
+| `day`             | nothing, or `day`      | A new day begins in the dimension; with `day`, only that day                                                                                                                                                                                                 |
+| `craft`           | `item`                 | A player crafts that item                                                                                                                                                                                                                                    |
+| `pickup`          | `item`                 | A player picks that item up                                                                                                                                                                                                                                  |
+| `kill`            | `entity`               | A player kills that entity, or the `count`th one of it                                                                                                                                                                                                       |
+| `respawn`         | nothing                | A player respawns after dying                                                                                                                                                                                                                                |
+| `death`           | nothing                | A player dies                                                                                                                                                                                                                                                |
+| `y_level`         | `below` or `above`     | A player goes below or above that height                                                                                                                                                                                                                     |
+| `play_time`       | `minutes`              | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
+| `roll`            | nothing, or `roll`     | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
+| `order_done`      | nothing, or `order`    | A work order is filled, once for each player it rewards. With `order`, only an order with that `sign` word fires it                                                                                                                                          |
+| `score`           | `objective`            | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
+| `exposure_level`  | nothing, or `exposure` | A player's level in a hazard changes, up or down; with `exposure`, only that hazard, with `level`, only a change that reaches that level. The first check after a join never fires it                                                                        |
+| `round_start`     | nothing                | A round opens, after the count: once for each player, or once for the `audience`. It follows a reset and `/rdplserver round start` alike                                                                                                                     |
+
+Hazard levels are read at each scan, so an `exposure_level` card fires within the hazard's `scanInterval` of the change.
 
 Biome, structure, height, play time and score are checked once a second for each player, and fire on the change from outside to inside, never on the first check after a join. A `time_of_day` or `day` rule whose audience is not `player` fires once for the dimension instead of once for each player in it.
 
@@ -6635,6 +6767,8 @@ A card that fires while a player still has the world intro open waits and shows 
 | `minutes`            | int                                | none           | For `play_time`                                                                                                                                                                                                    |
 | `roll`               | text                               | none           | For `roll`: `coin`, a notation such as `2d6` (`d6` and `1d6` are the same), or the name of a pack die or deck. Without it, every roll fires the rule                                                               |
 | `order`              | text                               | none           | For `order_done`: the `sign` word of the order. Without it, every filled order fires the rule                                                                                                                      |
+| `exposure`           | text                               | none           | For `exposure_level`: the hazard's file name under `exposures`. Without it, every hazard fires the rule                                                                                                            |
+| `level`              | int                                | none           | For `exposure_level`: fire only when the player's level becomes this one; `0` means no longer exposed. Without it, every change fires                                                                              |
 | `atLeast`, `atMost`  | int                                | none           | For `roll`: the lowest and the highest total that fires the rule. A coin counts 1 for heads and 0 for tails, a pack die or deck the place of the result in its file, from 1                                        |
 | `objective`, `score` | text, int                          | none, `1`      | For `score`: the objective and the value to reach                                                                                                                                                                  |
 | `requires`           | list of mod ids or pack namespaces | none           | The file is skipped unless all are present                                                                                                                                                                         |
