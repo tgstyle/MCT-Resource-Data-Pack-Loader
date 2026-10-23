@@ -19,7 +19,7 @@ final class ContentEntityBars {
     private ContentEntityBars() {}
 
     static void tick(LivingEntity living, EntityVariantDef def) {
-        BossBarDef spec = def.bossBar();
+        BossBarDef spec = ContentEntityPhases.bar(living, def);
         if (spec == null || !(living.level() instanceof ServerLevel level)) { return; }
         if (!living.isAlive()) {
             drop(living);

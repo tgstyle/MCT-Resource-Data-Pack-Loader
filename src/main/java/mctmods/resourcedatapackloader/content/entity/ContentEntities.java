@@ -150,7 +150,10 @@ public final class ContentEntities {
     }
 
     public static void onLeave(EntityLeaveLevelEvent event) {
-        if (!event.getLevel().isClientSide()) { ContentEntityBars.drop(event.getEntity()); }
+        if (!event.getLevel().isClientSide()) {
+            ContentEntityBars.drop(event.getEntity());
+            ContentEntityPhases.drop(event.getEntity());
+        }
         if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof Mob mob) || mob.getRemovalReason() == null || !mob.getRemovalReason().shouldDestroy()) { return; }
         level.getServer().tell(new TickTask(level.getServer().getTickCount(), () -> {
             release(mob.goalSelector);
@@ -182,6 +185,7 @@ public final class ContentEntities {
             return;
         }
         ContentEntityApply.dress(event.getEntity(), def);
+        if (!def.phases().isEmpty()) { ContentEntityPhases.join(event.getEntity()); }
     }
 
     private static boolean swapped(ServerLevel level, Entity was, EntityVariantDef def) {
@@ -210,6 +214,7 @@ public final class ContentEntities {
         if (!(living instanceof Mob mob) || living.level().isClientSide()) { return; }
         EntityVariantDef def = def(mob);
         if (def == null) { return; }
+        if (!def.phases().isEmpty()) { ContentEntityPhases.tick(mob, def); }
         if (def.bossBar() != null) { ContentEntityBars.tick(mob, def); }
         if (def.flags().collectsExperience() && mob.isAlive()) {
             ContentMobExperience.collect(mob);

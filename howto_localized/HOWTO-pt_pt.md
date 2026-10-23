@@ -2740,6 +2740,46 @@ Uma variante que não define nenhuma destas condições surge como antes, e uma 
 
 Cada criatura tem a sua própria barra, mostrada a todos os jogadores dentro do seu `trackingRange`. A barra acompanha a vida da criatura, por isso esvazia à medida que ela sofre dano, e desaparece quando a criatura morre, é removida ou o seu chunk é descarregado. Os espectadores não a veem. Um `color` ou `style` desconhecido é registado no log e usa-se a predefinição. Sem `bossBar`, nada muda.
 
+### Fases
+
+*variantes de entidades*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "hostile": true,
+  "attributes": { "maxHealth": 200, "movementSpeed": 0.23, "attackDamage": 6 },
+  "bossBar": { "name": "Warden", "color": "purple" },
+  "phases": [
+    {
+      "below": 0.66,
+      "attributes": { "movementSpeed": 0.30, "attackDamage": 9 },
+      "charges": true,
+      "tasks": [ { "task": "leapAtTarget", "priority": 3, "leap": 0.5 }, "-wanderAvoidWater" ],
+      "bossBar": { "name": "Warden Enraged", "color": "red", "style": "notched_6" }
+    },
+    {
+      "below": 0.33,
+      "attributes": { "movementSpeed": 0.36, "attackDamage": 12 },
+      "pounces": true,
+      "gusts": true,
+      "gustPower": 2.0
+    }
+  ]
+}
+```
+
+| Chave | Obrigatório | Valor | Predefinição | O que faz |
+| ----- | ----------- | ----- | ------------ | --------- |
+| `phases` | não | lista | nenhum | Os estádios de vida da criatura. Ordenados por `below`; a criatura fica na fase mais profunda cujo `below` seja superior à sua proporção de vida |
+| `phases[].below` | sim | número (acima de 0, abaixo de 1) | nenhum | A proporção de vida a que a fase começa. Um golpe que cruza vários limiares entra apenas na fase mais profunda. Duas fases com o mesmo `below`: a segunda é registada no log e descartada |
+| `phases[].attributes` | não | objeto | nenhum | Os mesmos nomes de `attributes`. Enquanto a fase durar, estes valores substituem os da própria criatura. `maxHealth` é recusado com um erro no log, pois moveria a própria linha de referência |
+| `phases[].tasks` | não | lista | nenhum | A mesma sintaxe de `tasks`. Adicionadas ao entrar na fase; o que a fase adicionou ou removeu é desfeito ao sair |
+| `phases[].charges`, `phases[].pounces`, `phases[].gusts`, `phases[].gustPower` | não | como fora de `phases` | desligado | Comportamentos de ataque que só valem enquanto a fase durar. Tal como as mesmas chaves fora de `phases`, exigem `hostile` na criatura. Um comportamento que a criatura já tem não é adicionado duas vezes |
+| `phases[].bossBar` | não | objeto (como `bossBar`) | o da criatura | Substitui o nome, a cor, o estilo e o fundo da barra enquanto a fase durar. A criatura tem de ter o seu próprio `bossBar`; sem ele, a chave é registada no log e descartada |
+
+As fases seguem a vida nos dois sentidos: um chefe que recupera acima de um limiar volta à fase anterior ou ao estado base. Cada fase é independente: ao passar de uma para outra, a anterior é desfeita primeiro, pelo que a segunda fase do exemplo não herda a investida nem a tarefa extra da primeira. Nada é gravado no save; a fase é recalculada a partir da vida quando a criatura carrega. Outras chaves dentro de uma fase (`swoops`, `digs`, `throws`, que precisam de preparação quando a criatura aparece) são registadas no log e ignoradas.
+
 ### Armazenamento
 
 *variantes de entidades*
