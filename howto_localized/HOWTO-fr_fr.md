@@ -3878,7 +3878,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4231,6 +4231,7 @@ Toute autre clé dans une plage est ignorée avec une erreur dans le log, tout c
 | `rain.interval`         | non    | entier                            | `3`                      | Rareté du son ; plus la valeur est élevée, plus il est espacé, `0` le joue à chaque occasion                                                                                  |
 | `rain.color`            | non    | couleur hexadécimale              | `#FFFFFF`                | Teinte de la pluie qui tombe                                                                                                                                                  |
 | `rain.snowColor`        | non    | couleur hexadécimale              | `#FFFFFF`                | Teinte de la neige qui tombe                                                                                                                                                  |
+| `rain.colorMode`        | non    | `multiply` ou `solid`             | `multiply`               | Comment `rain.color` se combine à la texture de la pluie : `multiply` teinte les traînées gris-bleu, donc les couleurs vives ressortent sombres ; `solid` dessine les traînées en `rain.color`, en gardant leur forme et leur transparence ; la lumière de nuit les assombrit toujours |
 | `rain.angle`            | non    | flottant, 0 à 180                 | `0`                      | Degrés par rapport à la verticale descendante : `90` souffle à l'horizontale, `180` monte tout droit. Elle est dessinée inclinée de 75 degrés au plus                         |
 | `rain.heading`          | non    | flottant, degrés                  | `0`                      | Direction du souffle : `0` sud, `90` ouest, `180` nord, `270` est                                                                                                             |
 | `rain.splashUpward`     | non    | booléen                           | `false`                  | Activé, la pluie qui monte (`angle` au-delà de `90`) éclabousse quand même le sol et reste audible                                                                            |

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.client.render.Blends;
+import mctmods.resourcedatapackloader.client.render.WhitenedTexture;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
 import mctmods.resourcedatapackloader.util.Colors;
@@ -167,7 +168,7 @@ import java.util.Random;
         if (drawing == kind) { return; }
         if (drawing != NONE) { Tessellator.getInstance().draw(); }
         drawing = kind;
-        mc.getTextureManager().bindTexture(kind == RAINING ? RAIN : SNOW);
+        mc.getTextureManager().bindTexture(kind == RAINING ? rain.solid ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN : SNOW);
         Tessellator.getInstance().getBuffer().begin(GL11.GL_QUADS,DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
     }
 }

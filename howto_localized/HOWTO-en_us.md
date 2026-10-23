@@ -3878,7 +3878,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4231,6 +4231,7 @@ Any other key in a window is ignored with an error in the log, and so is `precip
 | `rain.interval`         | no       | int                    | `3`                      | How rarely the sound plays; higher is sparser, `0` plays it every chance                                                                                        |
 | `rain.color`            | no       | hex color              | `#FFFFFF`                | Tint of the falling rain                                                                                                                                        |
 | `rain.snowColor`        | no       | hex color              | `#FFFFFF`                | Tint of the falling snow                                                                                                                                        |
+| `rain.colorMode`        | no       | `multiply` or `solid`  | `multiply`               | How `rain.color` meets the rain texture: `multiply` tints the gray-blue streaks, so bright colors come out dark; `solid` draws the streaks in `rain.color`, keeping their shape and transparency; night light still darkens them |
 | `rain.angle`            | no       | float, 0 to 180        | `0`                      | Degrees from straight down: `90` blows sideways, `180` rises straight up. It is drawn leaning at most 75 degrees                                                |
 | `rain.heading`          | no       | float, degrees         | `0`                      | Which way it blows: `0` south, `90` west, `180` north, `270` east                                                                                               |
 | `rain.splashUpward`     | no       | boolean                | `false`                  | On, rain that rises (`angle` over `90`) still splashes on the ground and plays its sound                                                                        |

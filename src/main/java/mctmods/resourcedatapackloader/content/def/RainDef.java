@@ -10,18 +10,20 @@ public final class RainDef {
     public final int interval;
     public final int color;
     public final int snowColor;
+    public final boolean solid;
     public final float angle;
     public final float heading;
     public final boolean splashUpward;
     @Nullable public final WindDef wind;
 
-    public RainDef(String particle, ResourceLocation sound, float volume, int interval, int color, int snowColor, float angle, float heading, boolean splashUpward, @Nullable WindDef wind) {
+    public RainDef(String particle, ResourceLocation sound, float volume, int interval, int color, int snowColor, boolean solid, float angle, float heading, boolean splashUpward, @Nullable WindDef wind) {
         this.particle = particle;
         this.sound = sound;
         this.volume = volume;
         this.interval = interval;
         this.color = color;
         this.snowColor = snowColor;
+        this.solid = solid;
         this.angle = angle;
         this.heading = heading;
         this.splashUpward = splashUpward;

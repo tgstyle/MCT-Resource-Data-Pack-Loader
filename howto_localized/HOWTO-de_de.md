@@ -3878,7 +3878,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4231,6 +4231,7 @@ Jeder andere Schlüssel in einem Fenster wird mit einem Fehler im Log ignoriert,
 | `rain.interval`         | nein    | int                   | `3`                      | Wie selten das Geräusch spielt; höher ist seltener, `0` spielt es bei jeder Gelegenheit                                                                                                         |
 | `rain.color`            | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Regens                                                                                                                                                                    |
 | `rain.snowColor`        | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Schnees                                                                                                                                                                   |
+| `rain.colorMode`        | nein    | `multiply` oder `solid` | `multiply`               | Wie `rain.color` auf die Regentextur wirkt: `multiply` färbt die graublauen Streifen ein, helle Farben werden dadurch dunkel; `solid` zeichnet die Streifen in `rain.color` und behält Form und Transparenz bei; das Nachtlicht dunkelt sie weiterhin ab |
 | `rain.angle`            | nein    | float, 0 bis 180      | `0`                      | Grad gegenüber senkrecht nach unten: `90` weht seitwärts, `180` steigt senkrecht auf. Gezeichnet wird er höchstens 75 Grad geneigt                                                              |
 | `rain.heading`          | nein    | float, Grad           | `0`                      | Wohin er weht: `0` nach Süden, `90` nach Westen, `180` nach Norden, `270` nach Osten                                                                                                            |
 | `rain.splashUpward`     | nein    | boolean               | `false`                  | An spritzt aufsteigender Regen (`angle` über `90`) trotzdem am Boden und ist zu hören                                                                                                           |

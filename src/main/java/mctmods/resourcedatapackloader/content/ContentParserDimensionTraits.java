@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -29,6 +30,7 @@ public final class ContentParserDimensionTraits {
     private static final int THUNDER_HIGH = 15600;
     private static final int CALM_LOW = 12000;
     private static final int CALM_HIGH = 180000;
+    private static final List<String> COLOR_MODES = Collections.unmodifiableList(Arrays.asList("multiply", "solid"));
     private static final String RAIN_PARTICLE = "droplet";
     private static final String RAIN_SOUND = "minecraft:weather.rain";
     private static final String WHITE = "#FFFFFF";
@@ -125,6 +127,7 @@ public final class ContentParserDimensionTraits {
                 Math.max(0, Json.getInt(json, "interval", 3)),
                 ContentTypes.color(Json.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
                 ContentTypes.color(Json.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
+                "solid".equals(Json.choice(json, "colorMode", "multiply", "Dimension " + key + " rain", COLOR_MODES)),
                 angle,
                 Json.getFloat(json, "heading", 0.0F),
                 Json.getBoolean(json, "splashUpward", false),
