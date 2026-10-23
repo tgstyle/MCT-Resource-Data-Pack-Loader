@@ -3545,10 +3545,14 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` 与草、高草、蕨和甘蔗的颜色相乘，`foliageTint` 与树叶和藤蔓的颜色相乘。生物群系自身的颜色依然会透出来，两个键都可以用在环境的 `sky` 中，季节正是这样改变植物的。手持物品和菜单中的物品保持原色。
 
 `snowColor` 为地面上的雪层和雪块着色。生物群系自己的 `snowColor` 优先于维度的设置，颜色也会像草一样在生物群系交界处过渡混合。
 
@@ -3567,6 +3571,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `lavaFogColor`   | 否   | 十六进制颜色   | `991A00`       | 岩浆中的雾色                         |
 | `starColor`      | 否   | 十六进制颜色   | 白色           | 星星的色调                           |
 | `starTwinkle`    | 否   | 浮点数，0 到 1 | `0.0`          | 星星闪烁时变暗的程度。`0` 表示不闪烁 |
+| `grassTint`      | 否   | 十六进制颜色 | 白色     | 与草、高草、蕨和甘蔗的颜色相乘           |
+| `foliageTint`    | 否   | 十六进制颜色 | 白色     | 与树叶和藤蔓的颜色相乘                   |
 | `lightningColor` | 否   | 十六进制颜色   | `737380`       | 闪电的色调                           |
 
 ### 天空盒、极光与彩虹
@@ -3810,6 +3816,40 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `environments.<name>.raids.points`                     | 否              | 数字，0 到 100         | `1`            | 乘以获胜的袭击发放的积分                                                                                                                                                                                                                |
 
 环境中的任何其他键，或上面列出的 `sky` 键，都会被忽略并在日志中记录错误。用资源包已不再定义的环境保存的世界，会恢复维度自身的外观。
+
+### 季节
+
+*维度*
+
+季节就是环境，`seasons` 按年周期开启和关闭维度的环境。
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["minecraft:plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+`order` 的每一项给出一个环境名，或一组一起切换的名称列表，各项轮流生效，每项持续 `days` 天，轮完一圈后重新开始。列表中只能有一个覆盖整个维度的环境，其余的需要 `biomes`，如上面的 `autumnlocal`。`environments` 块必须位于同一个维度文件中。
+
+一天等于主世界时钟的 24000 刻，与卡片触发器 `day` 计数的天相同，不管季节设在哪个维度。第 0 天开始第一个季节。无论维度是否已加载，服务器每秒检查一次：季节更替时，它关闭上一个季节的环境，开启下一个季节的环境，并在日志中写下 `Dimension X enters the season 'name' on day N`，名称取该项的第一个名字。它只会改动 `order` 中列出的名称。
+
+移动时钟的命令或床也会移动季节，世界加载时进入其所在日对应的季节。手动切换的环境会保持到下一次季节更替。生物群系环境叠加在维度自身的设置上，而不是季节上，因此需要保留的色调必须在其中重复写出。`rules.weatherSpeed` 只在主世界或带有 `weather.cycle` 的维度中生效。
+
+| 键              | 必需            | 值                           | 默认值 | 作用                                                   |
+| --------------- | --------------- | ---------------------------- | ------ | ------------------------------------------------------ |
+| `seasons`       | 否              | 对象                         | 无     | 按年周期开启和关闭维度的环境                           |
+| `seasons.days`  | 有 `seasons` 时是 | 大于 0 的整数              | 无     | 每个季节持续的天数                                     |
+| `seasons.order` | 有 `seasons` 时是 | 环境名或名称列表组成的列表 | 无     | 季节的先后顺序。列表项会让其中的环境一起切换           |
 
 ## 传送门与闸门
 

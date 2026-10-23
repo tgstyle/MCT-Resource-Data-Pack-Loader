@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
@@ -40,6 +41,7 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageEnvironments.TYPE, MessageEnvironments.CODEC, (message, context) -> {
             ContentEnvironments.receive(message.active(), message.whole());
             ContentRuleSwitch.settle(context.player().level());
+            if (FMLEnvironment.getDist() == Dist.CLIENT) { ContentSeasonTint.changed(); }
         });
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); } });
         registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); } });

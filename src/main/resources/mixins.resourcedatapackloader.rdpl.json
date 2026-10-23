@@ -192,7 +192,8 @@
         "client.MixinItemFeatureRenderer",
         "client.MixinLevelLoadingScreen",
         "client.MixinClientExplosionSound",
-        "client.MixinCompassAngleState"
+        "client.MixinCompassAngleState",
+        "client.MixinBiomeSeasonTint"
     ],
     "server": [
         "server.ISettings",

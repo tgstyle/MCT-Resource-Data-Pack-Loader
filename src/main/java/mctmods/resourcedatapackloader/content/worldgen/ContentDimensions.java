@@ -20,6 +20,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -31,6 +32,7 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionDefaults;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -92,6 +94,8 @@ public final class ContentDimensions {
     public static boolean shapes(DimensionDef def) { return sets(def, TERRAIN_TYPE); }
 
     @Nullable public static DimensionDef def(Identifier dimension) { return ContentEnvironments.resolve(dimension, DEFS.get(dimension)); }
+
+    @Nullable public static DimensionDef def(Identifier dimension, Holder<Biome> biome) { return ContentEnvironments.resolve(dimension, DEFS.get(dimension), biome); }
 
     @Nullable public static DimensionDef def(@Nullable Level level) { return level == null ? null : def(level.dimension().identifier()); }
 

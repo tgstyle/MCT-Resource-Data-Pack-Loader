@@ -3545,10 +3545,14 @@ Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` násobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny a `foliageTint` barvu listí a lián. Vlastní barva biomu stále prosvítá a oba klíče fungují uvnitř `sky` prostředí, čímž roční období mění rostliny. Předměty v ruce a v nabídkách si své barvy ponechají.
 
 `snowColor` zabarvuje vrstvy sněhu a sněhové bloky na zemi. Vlastní `snowColor` biomu vítězí nad dimenzí a barvy se na hranicích biomů prolínají jako u trávy.
 
@@ -3567,6 +3571,8 @@ Na 26.x se `waterFogColor` stane atributem prostředí `visual/water_fog_color` 
 | `lavaFogColor`   | ne      | hexadecimální barva     | `991A00`     | Barva mlhy v lávě                                           |
 | `starColor`      | ne      | hexadecimální barva     | bílá         | Odstín hvězd                                                |
 | `starTwinkle`    | ne      | desetinné číslo, 0 až 1 | `0.0`        | Jak hluboko hvězdy při blikání ztmavnou. `0` je drží klidné |
+| `grassTint`      | ne      | hexadecimální barva     | bílá     | Vynásobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny |
+| `foliageTint`    | ne      | hexadecimální barva     | bílá     | Vynásobí barvu listí a lián                                |
 | `lightningColor` | ne      | hexadecimální barva     | `737380`     | Odstín blesku                                               |
 
 ### Skybox, polární záře a duha
@@ -3810,6 +3816,40 @@ Prostředí může nést také blok `raids`, který mění [nájezdy](#nájezdy)
 | `environments.<name>.raids.points`                     | ne        | číslo od 0 do 100             | `1`            | Násobí body, které vyhraný nájezd vyplatí                                                                                                                                                                                                                     |
 
 Jakýkoli jiný klíč v prostředí, stejně jako kterýkoli z klíčů `sky` výše, se přeskočí s chybou v logu. Svět uložený s prostředím, které balíček už nejmenuje, se vrátí k vlastní podobě dimenze.
+
+### Roční období
+
+*dimenze*
+
+Roční období je prostředí a `seasons` zapíná a vypíná prostředí dimenze v ročním cyklu.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["minecraft:plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Každá položka `order` jmenuje jedno prostředí nebo seznam jmen, která se přepínají společně. Položky se střídají, každá po `days` dní, a pak cyklus začne znovu. Seznam smí obsahovat jen jedno prostředí, které pokrývá celou dimenzi; ostatní potřebují `biomes`, jako `autumnlocal` výše. Blok `environments` musí být ve stejném souboru dimenze.
+
+Den má 24000 ticků hodin Overworldu, stejný den, který počítá spouštěč karet `day`, ať jsou roční období v jakékoli dimenzi. Den 0 začíná první roční období. Server kontroluje jednou za sekundu, ať je dimenze načtená, nebo ne: když se roční období změní, vypne prostředí minulého a zapne prostředí příštího a zapíše do logu `Dimension X enters the season 'name' on day N` s prvním jménem položky. Dotkne se jen jmen uvedených v `order`.
+
+Příkaz nebo postel, které posunou hodiny, posunou i roční období, a svět se načte do ročního období, do kterého jeho den patří. Prostředí přepnuté ručně vydrží do další změny ročního období. Prostředí biomu se vrství na vlastní nastavení dimenze, ne na roční období, a proto musí zopakovat každý odstín, který si chce ponechat. `rules.weatherSpeed` působí jen v Overworldu nebo v dimenzi s `weather.cycle`.
+
+| Klíč            | Povinné      | Hodnota                                         | Výchozí | Co dělá                                                                  |
+| --------------- | ------------ | ----------------------------------------------- | ------- | ------------------------------------------------------------------------ |
+| `seasons`       | ne           | objekt                                          | žádný   | Zapíná a vypíná prostředí dimenze v ročním cyklu                         |
+| `seasons.days`  | s `seasons`  | celé číslo nad 0                                | žádný   | Počet dní, které každé roční období trvá                                 |
+| `seasons.order` | s `seasons`  | seznam jmen prostředí nebo seznamů jmen         | žádný   | Roční období za sebou. Položka se seznamem přepíná své prostředí společně |
 
 ## Portály a brány
 

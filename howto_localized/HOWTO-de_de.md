@@ -3545,10 +3545,14 @@ Auch diese Schlüssel stehen im Block `sky`, und auch sie werden nur auf dem Cli
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` multipliziert die Farbe von Gras, hohem Gras, Farnen und Zuckerrohr, `foliageTint` die von Laub und Ranken. Die eigene Farbe des Bioms scheint weiter durch, und beide Schlüssel funktionieren im `sky` einer Umgebung, womit eine Jahreszeit die Pflanzen verändert. Gegenstände in der Hand und in Menüs behalten ihre Farben.
 
 `snowColor` färbt Schneeschichten und Schneeblöcke am Boden. Die eigene `snowColor` eines Bioms geht der der Dimension vor, und an Biomgrenzen gehen die Farben ineinander über wie beim Gras.
 
@@ -3567,6 +3571,8 @@ Auf 26.x wird `waterFogColor` zum Umgebungsattribut `visual/water_fog_color` der
 | `lavaFogColor`   | nein    | Hex-Farbe      | `991A00`      | Nebelfarbe in Lava                                                       |
 | `starColor`      | nein    | Hex-Farbe      | weiß          | Färbung der Sterne                                                       |
 | `starTwinkle`    | nein    | float, 0 bis 1 | `0.0`         | Wie weit die Sterne beim Funkeln abdunkeln. `0` lässt sie ruhig leuchten |
+| `grassTint`      | nein    | Hex-Farbe      | weiß     | Multipliziert die Farbe von Gras, hohem Gras, Farnen und Zuckerrohr |
+| `foliageTint`    | nein    | Hex-Farbe      | weiß     | Multipliziert die Farbe von Laub und Ranken                  |
 | `lightningColor` | nein    | Hex-Farbe      | `737380`      | Färbung der Blitze                                                       |
 
 ### Skybox, Polarlicht und Regenbogen
@@ -3810,6 +3816,40 @@ Eine Umgebung kann außerdem einen Block `raids` tragen, der die [Raids](#raids)
 | `environments.<name>.raids.points`                     | nein        | Zahl von 0 bis 100                | `1`            | Multipliziert die Punkte, die ein gewonnener Raid auszahlt                                                                                                                                                                                                                           |
 
 Jeder andere Schlüssel in einer Umgebung und jeder der oben genannten `sky`-Schlüssel wird mit einem Fehler im Log übergangen. Eine Welt, die mit einer Umgebung gespeichert wurde, die das Pack nicht mehr nennt, kehrt zum eigenen Aussehen der Dimension zurück.
+
+### Jahreszeiten
+
+*dimensionen*
+
+Eine Jahreszeit ist eine Umgebung, und `seasons` schaltet die Umgebungen der Dimension in einem Jahreszyklus ein und aus.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["minecraft:plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Jeder Eintrag von `order` nennt eine Umgebung oder eine Liste von Namen, die zusammen geschaltet werden. Die Einträge kommen der Reihe nach dran, jeder für `days` Tage, danach beginnt der Zyklus von vorn. Eine Liste darf nur eine Umgebung enthalten, die die ganze Dimension abdeckt; die anderen brauchen `biomes`, wie `autumnlocal` oben. Der Block `environments` muss in derselben Dimensionsdatei stehen.
+
+Ein Tag sind 24000 Ticks der Uhr der Oberwelt, derselbe Tag, den der `day`-Auslöser der Karten zählt, in welcher Dimension die Jahreszeiten auch stehen. Tag 0 beginnt die erste Jahreszeit. Der Server prüft einmal pro Sekunde, geladene Dimension oder nicht: Wechselt die Jahreszeit, schaltet er die Umgebungen der letzten aus und die der nächsten ein und schreibt `Dimension X enters the season 'name' on day N` ins Log, mit dem ersten Namen des Eintrags. Er berührt nur die Namen, die in `order` stehen.
+
+Ein Befehl oder ein Bett, das die Uhr verstellt, verstellt auch die Jahreszeit, und eine Welt wird in der Jahreszeit geladen, zu der ihr Tag gehört. Eine von Hand geschaltete Umgebung bleibt bis zum nächsten Jahreszeitenwechsel. Eine Biom-Umgebung wird auf die eigenen Einstellungen der Dimension gelegt, nicht auf die Jahreszeit, und muss deshalb jede Färbung wiederholen, die sie behalten soll. `rules.weatherSpeed` wirkt nur in der Oberwelt oder in einer Dimension mit `weather.cycle`.
+
+| Schlüssel       | Pflicht        | Wert                                              | Standard | Was er macht                                                              |
+| --------------- | -------------- | ------------------------------------------------- | -------- | ------------------------------------------------------------------------- |
+| `seasons`       | nein           | Objekt                                            | keiner   | Schaltet die Umgebungen der Dimension in einem Jahreszyklus ein und aus   |
+| `seasons.days`  | mit `seasons`  | ganze Zahl über 0                                 | keiner   | Tage, die jede Jahreszeit dauert                                          |
+| `seasons.order` | mit `seasons`  | Liste von Umgebungsnamen oder von Namenslisten    | keiner   | Die Jahreszeiten der Reihe nach. Ein Listeneintrag schaltet seine Umgebungen zusammen |
 
 ## Portale und Tore
 

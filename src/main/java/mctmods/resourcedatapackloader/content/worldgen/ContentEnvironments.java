@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.GrowSwitchDef;
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
 import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
 import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.def.SpawnSwitchDef;
 import mctmods.resourcedatapackloader.content.def.TradeSwitchDef;
 import mctmods.resourcedatapackloader.network.MessageEnvironments;
@@ -70,9 +71,14 @@ public final class ContentEnvironments {
 
     static void parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "dimension");
-        if (json == null || !json.has(ENVIRONMENTS)) { return; }
+        if (json == null) { return; }
+        if (!json.has(ENVIRONMENTS)) {
+            ContentSeasons.parse(key, json);
+            return;
+        }
         if (!json.get(ENVIRONMENTS).isJsonObject()) {
             ContentLog.LOGGER.error("Dimension {} gives environments that are not an object of named environments, ignoring them", key);
+            ContentSeasons.parse(key, json);
             return;
         }
         Map<String, DimensionDef> sets = new LinkedHashMap<>();
@@ -118,6 +124,7 @@ public final class ContentEnvironments {
             if (raided != null) { RAIDLINES.put(set, raided); }
         }
         if (!sets.isEmpty()) { SETS.put(key, Collections.unmodifiableMap(sets)); }
+        ContentSeasons.parse(key, json);
     }
 
     private static void layer(String owner, JsonObject into, JsonObject environment) {
@@ -145,12 +152,13 @@ public final class ContentEnvironments {
         for (Map.Entry<String, JsonElement> entry : value.getAsJsonObject().entrySet()) { put(held.getAsJsonObject(), entry.getKey(), entry.getValue()); }
     }
 
-    @Nullable static DimensionDef resolve(Identifier dimension, @Nullable DimensionDef base) {
+    @Nullable static DimensionDef resolve(Identifier dimension, @Nullable DimensionDef base) { return resolve(dimension, base, viewed != null && EffectiveSide.get().isClient() ? viewed : null); }
+
+    @Nullable static DimensionDef resolve(Identifier dimension, @Nullable DimensionDef base, @Nullable Holder<Biome> biome) {
         List<String> active = base == null ? null : ACTIVE.get(dimension);
         Map<String, DimensionDef> sets = active == null ? null : SETS.get(dimension);
         if (sets == null) { return base; }
-        Holder<Biome> biome = viewed;
-        if (biome != null && active.size() > 1 && EffectiveSide.get().isClient()) {
+        if (biome != null && active.size() > 1) {
             for (int index = active.size() - 1; index > 0; index--) {
                 DimensionDef set = sets.get(active.get(index));
                 if (set != null && PLACES.containsKey(set) && BiomeNames.matches(PLACES.get(set), biome)) { return set; }
@@ -219,7 +227,7 @@ public final class ContentEnvironments {
 
     public static Set<String> names(Identifier dimension) { return SETS.getOrDefault(dimension, Map.of()).keySet(); }
 
-    private static boolean local(Identifier dimension, String name) {
+    static boolean local(Identifier dimension, String name) {
         DimensionDef set = SETS.getOrDefault(dimension, Map.of()).get(name);
         return set != null && PLACES.containsKey(set);
     }
@@ -253,6 +261,7 @@ public final class ContentEnvironments {
 
     public static void onServerStarted(ServerStartedEvent event) {
         ACTIVE.clear();
+        ContentSeasons.forget();
         ContentRaidSwitch.check(RAIDLINES.values());
         EnvironmentStorage storage = EnvironmentStorage.of(event.getServer());
         for (Map.Entry<Identifier, List<String>> entry : storage.kept().entrySet()) {
@@ -274,6 +283,11 @@ public final class ContentEnvironments {
         for (ServerLevel level : event.getServer().getAllLevels()) { ContentRuleSwitch.settle(level); }
     }
 
+    public static void stopped() {
+        clear();
+        ContentSeasons.forget();
+    }
+
     public static void clear() {
         ContentSpawnSwitch.forget();
         ContentGrowSwitch.forget();
@@ -283,6 +297,30 @@ public final class ContentEnvironments {
     }
 
     public static void view(Holder<Biome> biome) { viewed = biome; }
+
+    public static List<SkyLookDef> looks() {
+        List<SkyLookDef> found = new ArrayList<>();
+        for (Map<String, DimensionDef> sets : SETS.values()) {
+            for (DimensionDef set : sets.values()) {
+                if (set.look() != null) { found.add(set.look()); }
+            }
+        }
+        return found;
+    }
+
+    public static List<Integer> tints(Identifier dimension) {
+        Map<String, DimensionDef> sets = SETS.getOrDefault(dimension, Map.of());
+        List<Integer> found = new ArrayList<>();
+        for (String name : active(dimension)) {
+            DimensionDef set = sets.get(name);
+            SkyLookDef look = set == null ? null : set.look();
+            if (look == null) { continue; }
+            found.add(look.grassTint());
+            found.add(look.foliageTint());
+            found.add(look.snowColor());
+        }
+        return found;
+    }
 
     public static void receive(Map<Identifier, List<String>> active, boolean whole) {
         if (whole) { ACTIVE.clear(); }

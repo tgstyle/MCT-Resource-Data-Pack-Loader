@@ -3545,10 +3545,14 @@ Estas chaves também ficam no bloco `sky` e também são desenhadas apenas no cl
     "lavaFogColor": "#802000",
     "starColor": "#FFE0A0",
     "starTwinkle": 0.5,
-    "lightningColor": "#A080FF"
+    "lightningColor": "#A080FF",
+    "grassTint": "#A0FF80",
+    "foliageTint": "#E0A040"
   }
 }
 ```
+
+`grassTint` multiplica a cor da grama, da grama alta, das samambaias e da cana-de-açúcar, e `foliageTint` a das folhas e das trepadeiras. A cor própria do bioma continua aparecendo, e as duas chaves funcionam dentro do `sky` de um ambiente, que é como uma estação muda as plantas. Itens na mão e nos menus mantêm suas cores.
 
 `snowColor` tinge as camadas de neve e os blocos de neve no chão. O `snowColor` próprio de um bioma tem prioridade sobre o da dimensão, e as cores se misturam nas bordas entre biomas, como acontece com a grama.
 
@@ -3567,6 +3571,8 @@ No 26.x, `waterFogColor` vira o atributo de ambiente `visual/water_fog_color` da
 | `lavaFogColor`   | não         | cor hex      | `991A00`   | Cor da neblina na lava                                           |
 | `starColor`      | não         | cor hex      | branco     | Tonalidade das estrelas                                          |
 | `starTwinkle`    | não         | float, 0 a 1 | `0.0`      | O quanto as estrelas escurecem ao cintilar. `0` as mantém firmes |
+| `grassTint`      | não         | cor hex      | branco   | Multiplica a cor da grama, da grama alta, das samambaias e da cana-de-açúcar |
+| `foliageTint`    | não         | cor hex      | branco   | Multiplica a cor das folhas e das trepadeiras                    |
 | `lightningColor` | não         | cor hex      | `737380`   | Tonalidade dos raios                                             |
 
 ### Skybox, aurora e arco-íris
@@ -3810,6 +3816,40 @@ Um ambiente também pode levar um bloco `raids`, que muda as [invasões](#invas�
 | `environments.<name>.raids.points`                     | não         | número de 0 a 100                           | `1`             | Multiplica os pontos que uma invasão vencida paga                                                                                                                                                                                                                   |
 
 Qualquer outra chave num ambiente, ou uma das chaves `sky` acima, é ignorada com um erro no log. Um mundo salvo com um ambiente que o pacote não nomeia mais volta à aparência própria da dimensão.
+
+### Estações
+
+*dimensões*
+
+Uma estação é um ambiente, e `seasons` liga e desliga os ambientes da dimensão em um ciclo anual.
+
+```json
+{
+  "seasons": {
+    "days": 2,
+    "order": ["spring", "summer", ["autumn", "autumnlocal"], "winter"]
+  },
+  "environments": {
+    "spring": { "growth": { "crops": 1.5 } },
+    "summer": { "rules": { "weather": "clear" } },
+    "autumn": { "sky": { "grassTint": "#E0A040", "foliageTint": "#FF8020" } },
+    "autumnlocal": { "biomes": ["minecraft:plains"], "sky": { "grassTint": "#E0A040", "foliageTint": "#FF0000" } },
+    "winter": { "growth": { "crops": 0.0 }, "sky": { "snowColor": "#D8E8FF" } }
+  }
+}
+```
+
+Cada entrada de `order` nomeia um ambiente, ou uma lista de nomes para alternar juntos, e as entradas se revezam, cada uma por `days` dias, antes de o ciclo recomeçar. Uma lista só pode ter um ambiente que cubra a dimensão inteira; os demais precisam de `biomes`, como `autumnlocal` acima. O bloco `environments` precisa estar no mesmo arquivo de dimensão.
+
+Um dia são 24000 ticks do relógio do Overworld, o mesmo dia que o gatilho `day` das cartas conta, em qualquer dimensão que tenha estações. O dia 0 começa a primeira estação. O servidor verifica uma vez por segundo, com a dimensão carregada ou não: quando a estação muda, desliga os ambientes da anterior e liga os da próxima, e registra `Dimension X enters the season 'name' on day N` no log, com o primeiro nome da entrada. Ele só mexe nos nomes listados em `order`.
+
+Um comando ou uma cama que mova o relógio move a estação também, e um mundo carrega na estação a que seu dia pertence. Um ambiente ligado à mão se mantém até a próxima mudança de estação. Um ambiente de bioma é colocado sobre as configurações próprias da dimensão, não sobre a estação, então repete qualquer tonalidade que queira manter. `rules.weatherSpeed` só age no Overworld ou em uma dimensão com `weather.cycle`.
+
+| Chave           | Obrigatória    | Valor                                           | Padrão  | O que faz                                                              |
+| --------------- | -------------- | ----------------------------------------------- | ------- | ---------------------------------------------------------------------- |
+| `seasons`       | não            | objeto                                          | nenhum  | Liga e desliga os ambientes da dimensão em um ciclo anual              |
+| `seasons.days`  | com `seasons`  | inteiro maior que 0                             | nenhum  | Dias que cada estação dura                                             |
+| `seasons.order` | com `seasons`  | lista de nomes de ambientes ou de listas de nomes | nenhum | As estações em ordem. Uma entrada que é lista alterna seus ambientes juntos |
 
 ## Portais e passagens
 
