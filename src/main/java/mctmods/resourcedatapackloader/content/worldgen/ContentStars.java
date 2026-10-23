@@ -26,13 +26,21 @@ import javax.annotation.Nullable;
     private final int count;
     private final float size;
     private final SkyOccluder[] occluders;
+    private final boolean dynamic;
     private int lists = -1;
+    private int movingLists = -1;
     private int built;
+    private int step = Integer.MIN_VALUE;
+    private double[][] stars;
+    private boolean[] moving;
 
     public ContentStars(int count, float size, SkyOccluder[] occluders) {
         this.count = count;
         this.size = size;
         this.occluders = occluders;
+        boolean fixed = false;
+        for (SkyOccluder body : occluders) { fixed |= body.fixed(); }
+        dynamic = fixed;
     }
 
     public static boolean keepsVanilla(World world) {
@@ -40,11 +48,13 @@ import javax.annotation.Nullable;
         return look == null || !look.tintsStars();
     }
 
-    public void draw(World world, float brightness, float partialTicks) {
+    public void draw(World world, float brightness, float partialTicks, float turn) {
         if (lists < 0 || built != SkyOccluder.current()) {
             release();
             build();
         }
+        int now = Math.round(turn * 1000.0F);
+        if (dynamic && step != now) { retime(now); }
         SkyLookDef look = ContentFogSampler.look(world);
         int color = look == null || look.starColor == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor;
         float twinkle = look == null ? 0.0F : look.starTwinkle;
@@ -56,6 +66,7 @@ import javax.annotation.Nullable;
             float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * MathHelper.sin(time * SPEED[group] + group * PHASE)));
             GlStateManager.color(red * shown, green * shown, blue * shown, shown);
             GlStateManager.callList(lists + group);
+            if (dynamic) { GlStateManager.callList(movingLists + group); }
         }
     }
 
@@ -63,28 +74,66 @@ import javax.annotation.Nullable;
         if (lists < 0) { return; }
         GLAllocation.deleteDisplayLists(lists, GROUPS);
         lists = -1;
+        if (movingLists >= 0) {
+            GLAllocation.deleteDisplayLists(movingLists, GROUPS);
+            movingLists = -1;
+        }
+        step = Integer.MIN_VALUE;
+    }
+
+    private void retime(int now) {
+        step = now;
+        for (SkyOccluder body : occluders) {
+            if (body.fixed()) { body.turn(now / 1000.0F); }
+        }
+        compile(movingLists, true);
     }
 
     private void build() {
         built = SkyOccluder.current();
-        lists = GLAllocation.generateDisplayLists(GROUPS);
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder buffer = tessellator.getBuffer();
         Random random = new Random(10842L);
         float spread = size * 2.0F / 3.0F;
-        double[][] corners = new double[count][];
-        for (int star = 0; star < count; ++star) { corners[star] = star(random, spread); }
+        stars = new double[count][];
+        moving = new boolean[count];
+        for (int star = 0; star < count; ++star) {
+            double[] quad = star(random, spread);
+            if (quad == null || hidden(quad, false)) { continue; }
+            stars[star] = quad;
+            moving[star] = sweeps(quad);
+        }
+        lists = GLAllocation.generateDisplayLists(GROUPS);
+        compile(lists, false);
+        if (dynamic) { movingLists = GLAllocation.generateDisplayLists(GROUPS); }
+    }
+
+    private void compile(int base, boolean sweeping) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
         for (int group = 0; group < GROUPS; ++group) {
-            GlStateManager.glNewList(lists + group, GL11.GL_COMPILE);
+            GlStateManager.glNewList(base + group, GL11.GL_COMPILE);
             buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
             for (int star = group; star < count; star += GROUPS) {
-                double[] quad = corners[star];
-                if (quad == null) { continue; }
+                double[] quad = stars[star];
+                if (quad == null || moving[star] != sweeping || sweeping && hidden(quad, true)) { continue; }
                 for (int corner = 0; corner < 12; corner += 3) { buffer.pos(quad[corner], quad[corner + 1], quad[corner + 2]).endVertex(); }
             }
             tessellator.draw();
             GlStateManager.glEndList();
         }
+    }
+
+    private boolean hidden(double[] star, boolean fixed) {
+        for (SkyOccluder body : occluders) {
+            if (body.fixed() == fixed && body.covers(star[12] * RADIUS, star[13] * RADIUS, star[14] * RADIUS, star[15])) { return true; }
+        }
+        return false;
+    }
+
+    private boolean sweeps(double[] star) {
+        for (SkyOccluder body : occluders) {
+            if (body.fixed() && body.sweeps(star[12], star[15])) { return true; }
+        }
+        return false;
     }
 
     @Nullable private double[] star(Random random, float spread) {
@@ -107,7 +156,7 @@ import javax.annotation.Nullable;
         double spin = random.nextDouble() * Math.PI * 2.0D;
         double spinSin = Math.sin(spin);
         double spinCos = Math.cos(spin);
-        double[] quad = new double[12];
+        double[] quad = new double[16];
         for (int corner = 0; corner < 4; ++corner) {
             double a = ((corner & 2) - 1) * scale;
             double b = ((corner + 1 & 2) - 1) * scale;
@@ -119,9 +168,10 @@ import javax.annotation.Nullable;
             quad[corner * 3 + 1] = y * RADIUS + e;
             quad[corner * 3 + 2] = z * RADIUS + d * yawSin + f * yawCos;
         }
-        for (SkyOccluder body : occluders) {
-            if (body.covers(x * RADIUS, y * RADIUS, z * RADIUS, scale * 1.5D)) { return null; }
-        }
+        quad[12] = x;
+        quad[13] = y;
+        quad[14] = z;
+        quad[15] = scale * 1.5D;
         return quad;
     }
 }

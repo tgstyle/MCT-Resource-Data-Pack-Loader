@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
             GlStateManager.color(colorRed, colorGreen, colorBlue, colorAlpha);
             return;
         }
-        ContentStars.VANILLA.draw(world, colorAlpha, Minecraft.getMinecraft().getRenderPartialTicks());
+        ContentStars.VANILLA.draw(world, colorAlpha, Minecraft.getMinecraft().getRenderPartialTicks(), 0.0F);
         GlStateManager.color(0.0F, 0.0F, 0.0F, 0.0F);
     }
 
