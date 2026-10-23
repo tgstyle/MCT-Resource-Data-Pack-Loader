@@ -76,7 +76,7 @@ final class ContentEntityApply {
         attributes(alive, def);
         body(alive, def);
         if (def.absorption > 0.0F) { alive.setAbsorptionAmount(def.absorption); }
-        effects(alive, def);
+        effects(alive, def.effects, def.registryName);
         if (!(entity instanceof EntityLiving)) { return; }
         EntityLiving living = (EntityLiving) entity;
         if (def.swims) { swimmer(living); }
@@ -112,7 +112,7 @@ final class ContentEntityApply {
                 continue;
             }
             instance.setBaseValue(entry.getValue());
-            if (attribute == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth((float) (double) entry.getValue()); }
+            if (attribute == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth(living.getMaxHealth()); }
         }
     }
 
@@ -223,12 +223,12 @@ final class ContentEntityApply {
         ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
     }
 
-    private static void effects(EntityLivingBase living, EntityVariantDef def) {
-        for (Map.Entry<String, Integer> entry : def.effects.entrySet()) {
+    static void effects(EntityLivingBase living, Map<String, Integer> effects, ResourceLocation owner) {
+        for (Map.Entry<String, Integer> entry : effects.entrySet()) {
             ResourceLocation name = new ResourceLocation(entry.getKey());
             Potion potion = Registries.find(ForgeRegistries.POTIONS, name);
             if (potion == null) {
-                ContentLog.LOGGER.errorOnce(MISSING, def.registryName + " " + name, "Entity variant {} wants effect {}, which nothing registers", def.registryName, name);
+                ContentLog.LOGGER.errorOnce(MISSING, owner + " " + name, "{} wants effect {}, which nothing registers", owner, name);
                 continue;
             }
             living.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, entry.getValue(), false, false));

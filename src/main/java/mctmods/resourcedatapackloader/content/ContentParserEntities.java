@@ -24,6 +24,21 @@ import javax.annotation.Nullable;
 public final class ContentParserEntities {
     private ContentParserEntities() {}
 
+    public static Map<String, Integer> effects(ResourceLocation key, JsonObject json) {
+        Map<String, Integer> effects = new LinkedHashMap<>();
+        if (json.has("effects")) {
+            for (JsonElement element : Json.getJsonArray(json, "effects")) {
+                if (!element.isJsonObject()) {
+                    ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
+                    continue;
+                }
+                JsonObject effect = element.getAsJsonObject();
+                effects.put(Json.getString(effect, "potion", ""), Math.max(0, Json.getInt(effect, "amplifier", 0)));
+            }
+        }
+        return effects;
+    }
+
     @Nullable public static EntityVariantDef entityVariant(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "entity file");
         if (json == null) { return null; }
@@ -48,17 +63,7 @@ public final class ContentParserEntities {
         }
         List<SpawnEntryDef> spawns = ContentParser.spawns(key, json, "creatureType", false);
         JsonObject sounds = Json.getJsonObject(json, "sounds", new JsonObject());
-        Map<String, Integer> effects = new LinkedHashMap<>();
-        if (json.has("effects")) {
-            for (JsonElement element : Json.getJsonArray(json, "effects")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject effect = element.getAsJsonObject();
-                effects.put(Json.getString(effect, "potion", ""), Math.max(0, Json.getInt(effect, "amplifier", 0)));
-            }
-        }
+        Map<String, Integer> effects = effects(key, json);
         Map<String, Float> priorities = numbers(key, json, "pathPriorities", "path priority", JsonElement::getAsFloat);
         JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? Json.getJsonObject(json, "egg") : null;
         boolean wantsEgg = !json.has("egg") || egg != null || Json.getBoolean(json, "egg", true);

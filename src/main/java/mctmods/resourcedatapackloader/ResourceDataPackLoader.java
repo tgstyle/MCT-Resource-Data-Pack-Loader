@@ -37,6 +37,7 @@ import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.content.entity.ContentOrders;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveAmbience;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensionAmbience;
@@ -237,6 +238,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(EntityStorage.class);
             if (ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(ContentOrders.class); }
         }
+        if (ContentRanks.load()) { MinecraftForge.EVENT_BUS.register(ContentRanks.class); }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
         ContentGates.load();
@@ -320,6 +322,7 @@ public class ResourceDataPackLoader {
         ContentSpawners.apply();
         ContentPortals.bind();
         ContentCelestial.loadComplete();
+        ContentRanks.verify();
     }
 
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {

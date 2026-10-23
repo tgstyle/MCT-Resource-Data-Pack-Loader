@@ -63,6 +63,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 
 **Criaturas y peligros**
 - [Variantes de entidades](#variantes-de-entidades)
+- [Rangos de mobs](#rangos-de-mobs)
 - [Órdenes de trabajo](#órdenes-de-trabajo)
 - [Exposiciones](#exposiciones)
 
@@ -161,6 +162,7 @@ Todas las rutas de esta guía se escriben desde `assets/` en adelante, así que 
 | `<namespace>/raids/*.json`                                                                      | Oleadas que atacan una aldea cuando un jugador lleva un presagio a ella. [Asaltos](#asaltos)                                                               |
 | `<namespace>/entities/*.json`                                                                   | Variantes de entidades creadas a partir de entidades que ya existen. [Variantes de entidades](#variantes-de-entidades)                                     |
 | `<namespace>/hardness/*.json`                                                                   | Multiplicadores de tiempo de minado y de explosión para grupos de bloques. [Grupos de dureza](#grupos-de-dureza)                                           |
+| `<namespace>/ranks/*.json`                                                                      | Niveles aleatorios que un mob puede sortear al aparecer: salud extra, daño, efectos, botín y una etiqueta de nombre. [Rangos de mobs](#rangos-de-mobs)     |
 | `<namespace>/orders/*.json`                                                                     | Trabajos que las variantes de entidad hacen para un jugador en un cofre. [Órdenes de trabajo](#órdenes-de-trabajo)                                         |
 | `<namespace>/exposures/*.json`                                                                  | Peligros que exponen a los jugadores cerca de bloques con nombre, al llevar ítems con nombre o en dimensiones con nombre. [Exposiciones](#exposiciones)    |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Propiedades de bloques, ítems y tipos de poción existentes, modificadas en el sitio. [Sobrescritura de propiedades](#sobrescritura-de-propiedades)         |
@@ -492,7 +494,7 @@ Un pack puede vivir solo en el servidor, con jugadores en clientes vanilla puros
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                  | `biomes`, `dimensions`, `portalframes`                                                         |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                                               | `villagers`                                                                                    |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profesiones que el cliente conoce: las de vanilla o las de un mod presente en ambos lados) | `entities`, `worldintro`, `texts` (la introducción nunca se muestra a un cliente vanilla)      |
-| `teams`, `scoring`                                                                                                                                                                  | `models`, `blockstates`, `textures`, `lang` (carpetas del cliente: sin cliente, déjalas fuera) |
+| `teams`, `scoring`, `ranks`                                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (carpetas del cliente: sin cliente, déjalas fuera) |
 | toda la capa de control, los ajustes y la pregeneración                                                                                                                             |                                                                                                |
 
 La columna de la derecha es un tope absoluto: un cliente vanilla enviado a una dimensión desconocida se desconecta, y los bloques desconocidos no se le pueden describir. La columna de la izquierda funciona porque todo lo que contiene se ejecuta por completo en el servidor o llega al cliente mediante paquetes que vanilla ya entiende (casilla de resultado de fabricación rellenada por el servidor, paquetes de logros normales, rechazos de puerta mediante mensajes de estado y una retención de pregeneración hecha con paquetes vanilla de modo de juego, título y teletransporte).
@@ -3083,6 +3085,38 @@ En cualquier otra entidad el objeto se ignora, y el registro lo indica. El cohet
 | `cargo`           | no          | lista de entradas de filtro | ninguno            | Lo que pueden meter las ranuras de carga y un Cargo Loader. Sin ella, aceptan cualquier cosa. Las entradas son las de `storage`, con `item` u `oreDict`     |
 | `requiredPayload` | no          | lista                       | ninguno            | Lo que debe haber en la carga antes de que despegue el cohete. Cada entrada es `item` u `oreDict` y un `count`, por defecto `1`                             |
 | `payload`         | no          | lista                       | ninguno            | Lo que lleva un ítem de cohete recién fabricado, cargado en la carga cuando se coloca por primera vez. Cada entrada es `item` y un `count`, por defecto `1` |
+
+## Rangos de mobs
+
+*criaturas y peligros*
+
+`<namespace>/ranks/*.json`
+
+La ruta del archivo es el nombre del rango, y varios archivos se combinan. Un rango es un nivel posible para los mobs que aparecen. Cuando un mob entra en el mundo por primera vez, el juego elige un rango entre todos los que lo nombran, según `weight`, y lo aplica para siempre: el rango se guarda con el mob y no se vuelve a sortear. Un rango con solo `entities` y `weight` es un nivel simple, así que sirve para decidir qué tan comunes siguen siendo los mobs normales. Los rangos funcionan con cualquier mob, incluidos los de vanilla y las variantes de entidad, y una variante conserva su propio nombre. Un rango se combina con el bloque `mobs` de un entorno: ambos multiplican las estadísticas del mob.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| Clave      | Obligatorio | Valor                           | Por defecto    | Qué hace                                                                                                                                                                            |
+| ---------- | ----------- | ------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | no          | lista de ids de entidad o tipos | `["#monster"]` | Los mobs en los que puede salir el rango: ids como `minecraft:zombie`, o `#monster`, `#creature`, `#ambient`, `#water_creature`. Una variante de entidad se nombra con su propio id |
+| `weight`   | no          | número entero, 1 o más          | `1`            | Qué tan probable es el rango frente a los demás que nombran al mismo mob: su peso dividido entre el total                                                                           |
+| `name`     | no          | texto                           | ninguno        | Un nombre que se muestra sobre el mob. `%s` pasa a ser el nombre propio del mob. Un mob que ya tiene un nombre personalizado lo conserva                                            |
+| `health`   | no          | número mayor que 0              | `1`            | Multiplica la salud máxima del mob. El mob aparece con la salud completa                                                                                                            |
+| `damage`   | no          | número, 0 o más                 | `1`            | Multiplica el daño de ataque cuerpo a cuerpo del mob                                                                                                                                |
+| `effects`  | no          | lista                           | ninguno        | Efectos permanentes, cada uno un objeto con un id `potion` y un `amplifier`, por defecto `0`. Sus partículas están ocultas                                                          |
+| `loot`     | no          | número, 1 o más                 | `1`            | Multiplica cada objeto apilable que suelta el mob. La fracción es la probabilidad de un objeto más por pila                                                                         |
+
+Las herramientas, la armadura y el equipo que llevaba el mob no se multiplican, y los mobs que llevan un inventario, como las bestias de carga, se omiten. Un error en un archivo de rango, como una clave desconocida, un id de entidad que no existe o un valor fuera de rango, se registra y se omite el archivo entero. Borrar un archivo de rango deja como están a los mobs que ya sortearon ese rango, y un mob que ningún rango nombra queda sin cambios. Solo el servidor lee los rangos, así que los clientes vanilla pueden entrar.
 
 ## Órdenes de trabajo
 
