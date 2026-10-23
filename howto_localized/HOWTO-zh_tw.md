@@ -672,6 +672,9 @@ thatmod.jar
   "growth": { "stages": 8 },
   "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
   "portal": { "dimension": 12 },
+  "needsOxygen": true,
+  "container": { "rows": 3, "columns": 9 },
+  "bell": { "swing": true, "sound": "minecraft:block.note.bell", "resonateSound": "minecraft:block.note.chime" },
   "variants": {
     "ruby_ore": {
       "meta": 0,
@@ -959,7 +962,11 @@ thatmod.jar
     "rows": 6,
     "columns": 9,
     "lootTable": "minecraft:chests/simple_dungeon",
-    "chestModel": true
+    "chestModel": true,
+    "guiTexture": "mypack:textures/gui/crate.png",
+    "guiWidth": 176,
+    "guiHeight": 222,
+    "bauble": "body"
   },
   "variants": [ { "name": "crate", "hardness": 2.5 } ]
 }
@@ -1494,6 +1501,15 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
   "soil": "minecraft:farmland",
   "potionTypes": ["mypack:ruby_tonic"],
   "rocket": "mypack:supply_rocket",
+  "attackReach": 5.0,
+  "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
+  "combo": { "window": 40, "steps": [{ "damage": 1.0 }, { "damage": 1.5 }] },
+  "rollStore": "dice_total",
+  "locates": "Village",
+  "passesTurn": false,
+  "bauble": "ring",
+  "wornEffects": [{ "potion": "minecraft:night_vision", "amplifier": 0, "ambient": false, "showParticles": false }],
+  "wornAttributes": [{ "attribute": "generic.maxHealth", "amount": 2.0, "operation": 0 }],
   "requires": ["mypack"],
   "variants": {
     "ruby_apple": {
@@ -1627,7 +1643,8 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
     "steps": [
       { "damage": 1.0 },
       { "damage": 1.5 },
-      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
+      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } },
+      { "damage": 2.0, "sweep": { "shape": "line", "reach": 6.0, "width": 1.5 } }
     ]
   }
 }
@@ -2339,6 +2356,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "with": "minecraft:wooden_sword",
   "levels": 3,
   "enchantments": { "minecraft:sharpness": 2 },
+  "result": { "item": "minecraft:diamond_sword", "count": 1 },
   "grants": "mypack:sword_rite",
   "locks": true
 }
@@ -2417,7 +2435,8 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 {
   "requires": ["config:enableRightClickHarvest"],
   "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
-  "replant": true
+  "replant": true,
+  "age": 7
 }
 ```
 
@@ -2516,6 +2535,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
       "level": 1,
       "maxUses": 12,
       "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "buySecondary": { "item": "minecraft:gold_nugget", "min": 1, "max": 2 },
       "sell": { "item": "mypack:ruby", "min": 1 }
     }
   ]
@@ -2560,6 +2580,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "profession": "mypack:jeweller",
   "career": 1,
   "baby": 0.05,
+  "keepsBaseBaby": false,
   "becomes": [
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
@@ -2573,12 +2594,15 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "hitEffects": true,
   "ignoresEffects": ["minecraft:wither", "minecraft:poison"],
   "hitFire": true,
+  "threatLeast": 1,
+  "threatHostile": 2,
   "attackReach": 2.0,
   "hurtResistance": 20,
   "stepHeight": 0.6,
   "knockback": 0.4,
   "climbs": false,
   "teleports": true,
+  "walks": false,
   "maxFallHeight": 3,
   "breathesUnderwater": false,
   "swims": false,
@@ -2638,6 +2662,17 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
+  "throwReturns": false,
+  "charges": false,
+  "pounces": false,
+  "sniffs": 16,
+  "fleesWhenHurt": 0.25,
+  "sleepsByDay": false,
+  "home": 32,
+  "patrols": false,
+  "swoops": false,
+  "gusts": false,
+  "gustPower": 1.5,
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -2883,7 +2918,17 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
     "-wander",
     { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
     { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
-    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8, "chance": 0.01 },
+    { "task": "wander", "priority": 8, "speed": 0.8, "chance": 60 },
+    { "task": "follow", "priority": 5, "distance": 10, "near": 3 },
+    { "task": "leapAtTarget", "priority": 3, "leap": 0.6 },
+    { "task": "attackRanged", "priority": 4, "cooldown": 30, "distance": 15 },
+    { "task": "attackMelee", "priority": 2, "memory": true },
+    { "task": "openDoor", "priority": 9, "close": true },
+    { "task": "moveThroughVillage", "priority": 5, "nocturnal": true },
+    { "task": "tempt", "priority": 4, "items": ["minecraft:wheat"], "scared": true },
+    { "task": "nearestAttackableTarget", "priority": 2, "entity": "minecraft:player", "sight": true, "nearby": true },
+    { "task": "hurtByTarget", "priority": 1, "help": true }
   ]
 }
 ```
@@ -3002,6 +3047,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 {
   "dimensions": [-1],
   "structures": ["Fortress"],
+  "radius": 48,
   "timeFrom": 13000,
   "timeTo": 23000,
   "dayAtLeast": 3,
@@ -3034,6 +3080,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 ```json
 {
   "entities": ["minecraft:blaze", "mymod:thing"],
+  "dimensions": [-1],
   "advancement": "minecraft:story/enter_the_nether"
 }
 ```
@@ -3328,6 +3375,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
       "sign": "Farm",
       "tool": "hoe",
       "standing": 64,
+      "area": 12,
       "takers": ["mypack:farmer"]
     },
     {
@@ -3806,7 +3854,20 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
-    "stars": { "count": 6000, "size": 0.12 }
+    "stars": { "count": 6000, "size": 0.12 },
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 }
   },
   "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
   "time": { "dayLength": 36000 },
@@ -3817,7 +3878,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4072,6 +4133,18 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 }
 ```
 
+用一張環繞整個天空的圖片取代六個面：
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "panorama": "mypack:textures/sky/panorama.png"
+    }
+  }
+}
+```
+
 `skybox` 把你自己的圖片畫在天空上，位於日出光暈、太陽、月亮與星星之後。以完整的材質路徑提供立方體的全部六個面，依立方體展開圖排列：`up` 接在 `north` 的上緣，`down` 接在其下緣，`west` 在其左側，`east` 在其右側，`south` 則在 `east` 之後。或者只提供 `panorama`，以一張 2:1 的圖片環繞整個天空：它的左緣面向北方，順時針經過東、南、西方，最上一列是正上方，最下一列是正下方。缺少某個面又沒有 panorama 的天空盒會被略過，並在日誌中記錄錯誤。
 
 `aurora` 在夜間於北方天空低處懸掛發光的簾幕。它們緩慢起伏，隨日落淡入，白天與下雨時消失。`color` 是簾幕底部的顏色，`topColor` 則是它們在頂部漸變成的顏色。
@@ -4206,18 +4279,18 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0 }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
-      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+      "mobs": { "entities": ["#monster", "minecraft:zombie"], "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
     },
     "bounty": {
       "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
       "trades": [{ "profession": "minecraft:farmer", "career": "farmer", "level": 1, "buy": { "item": "minecraft:wheat", "min": 10 }, "sell": { "item": "minecraft:emerald" } }]
     },
     "longnight": {
-      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 4.0, "wakeAt": 1000 }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -4345,6 +4418,8 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
   "kind": "system",
   "name": "ember",
   "galaxy": "milky_way",
+  "galaxyImage": "mypack:textures/gui/ember_galaxy.png",
+  "requires": ["mypack"],
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
@@ -4389,14 +4464,14 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 }
 ```
 
-| 鍵            | 必填     | 值                                      | 預設         | 作用                                                                                |
-| ------------- | -------- | --------------------------------------- | ------------ | ----------------------------------------------------------------------------------- |
-| `kind`        | 是       | `system`、`planet`、`subsystem`、`moon` |              | 檔案要建立的東西                                                                    |
-| `galaxy`      | 否       | 字串，`a-z`、`0-9` 與 `_`               | `milky_way`  | 星系所屬的銀河系。尚未被任何星系用過的名稱會開啟一個新的銀河系，擁有自己的地圖      |
-| `galaxyImage` | 否       | 材質路徑                                | 銀河系的圖片 | 銀河系在銀河系清單中的圖塊。由該銀河系的第一個星系決定；僅在安裝 GalaxySpace 時讀取 |
-| `mapPosition` | 星系必填 | `[x, y]` 或 `[x, y, z]`                 |              | 星系在銀河地圖上的位置                                                              |
-| `star`        | 否       | [地圖鍵](#地圖鍵)的物件                 |              | 星系的恆星，畫在其中心                                                              |
-| `requires`    | 否       | 清單，內容為模組 id 或資源包命名空間    | 無           | 除非全部都存在，否則會跳過此檔案                                                    |
+| 鍵            | 必填     | 值                                      | 預設         | 作用                                                                                                                |
+| ------------- | -------- | --------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | 是       | `system`、`planet`、`subsystem`、`moon` |              | 檔案要建立的東西                                                                                                    |
+| `galaxy`      | 否       | 字串，`a-z`、`0-9` 與 `_`               | `milky_way`  | 星系所屬的銀河系。尚未被任何星系用過的名稱會開啟一個新的銀河系，擁有自己的地圖                                      |
+| `galaxyImage` | 否       | 材質路徑                                | 銀河系的圖片 | 銀河系在銀河系清單中的圖塊。由該銀河系的第一個星系決定；僅在安裝 GalaxySpace 時讀取                                 |
+| `mapPosition` | 星系必填 | `[x, y]` 或 `[x, y, z]`                 |              | 星系在銀河地圖上的位置。Galacticraft 會將數值乘以 500，太陽的外軌道約為 0.33，因此近距離的星系應使用小於 1 的數值。 |
+| `star`        | 否       | [地圖鍵](#地圖鍵)的物件                 |              | 星系的恆星，畫在其中心                                                                                              |
+| `requires`    | 否       | 清單，內容為模組 id 或資源包命名空間    | 無           | 除非全部都存在，否則會跳過此檔案                                                                                    |
 
 這裡的行星、子星系或衛星採用[地圖鍵](#地圖鍵)，其 `tier` 預設為 `0`。它們在所有星系之後才放上地圖，先子星系，再行星，最後衛星，因此每個天體都可以環繞同一資源包中的天體運行。
 
@@ -4411,6 +4486,26 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 *Galacticraft 天體*
 
 每個天體，不論是 `celestial/` 檔案、星系的 `star` 或維度的 `galacticraft` 區段，都用這些鍵把自己放在地圖上。
+
+`<namespace>/celestial/*.json`
+
+```json
+{
+  "kind": "planet",
+  "name": "ash",
+  "parent": "ember",
+  "icon": "galacticraftcore:textures/gui/celestialbodies/mercury.png",
+  "relativeSize": 0.5,
+  "distance": 1.4,
+  "scaledDistance": 1.4,
+  "orbitTime": 2.5,
+  "phaseShift": 1.2,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
+  "ringColor": "19E599",
+  "tier": 3
+}
+```
 
 | 鍵               | 必填             | 值           | 預設                                                | 作用                                                                                                                                                                                                                                                |
 | ---------------- | ---------------- | ------------ | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4451,6 +4546,7 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
     "distance": 0.75,
     "tier": 2,
     "minTier": 2,
+    "reachable": true,
     "landing": "balloons",
     "landingHeight": 700,
     "arrival": "departure",
@@ -4526,14 +4622,26 @@ Galacticraft 只在自己的地形中建造地城，因此 `dungeon` 只在有�
 {
   "id": 73,
   "terrain": { "type": "void" },
-  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "sky": {
+    "skyColor": "000000",
+    "fogColor": "000000",
+    "starBrightness": 1.0,
+    "renderClouds": false,
+    "sunriseColors": false,
+    "sun": { "size": 6 }
+  },
   "physics": { "gravity": 0.1 },
+  "time": { "dayLength": 24000 },
   "galacticraft": {
     "kind": "asteroids",
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
     "tier": 3,
+    "landing": "lander",
+    "landingHeight": 500,
+    "arrival": "spawn",
+    "dungeon": { "spacing": 704, "chest": "mypack:chests/slag_dungeon" },
     "beltWidth": 0.15
   }
 }
@@ -4577,13 +4685,21 @@ Galacticraft 只在自己的地形中建造地城，因此 `dungeon` 只在有�
 ```json
 {
   "id": 80,
-  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "sky": {
+    "skyColor": "000000",
+    "starBrightness": 1.0,
+    "renderSky": true,
+    "renderClouds": true,
+    "renderWeather": true,
+    "sun": { "size": 12 }
+  },
   "time": { "dayLength": 12000 },
   "galacticraft": {
     "kind": "station",
     "name": "cinder_station",
     "parent": "cinder",
     "tier": 2,
+    "checklist": ["equip_oxygen_suit", "equip_parachute"],
     "showName": true,
     "recipe": {
       "ingotTin": 32,
@@ -4647,7 +4763,9 @@ Galacticraft 只在自己的地形中建造地城，因此 `dungeon` 只在有�
       "orbitOffset": [0.5, 0],
       "thermalVariation": 0.4,
       "solarWind": 0.8,
-      "weather": "frozen_storm"
+      "weather": "frozen_storm",
+      "weatherFrequency": 2.0,
+      "freezeBlocks": false
     },
     "extraplanets": {
       "pressure": 40,
@@ -4713,6 +4831,7 @@ Galacticraft 只在自己的地形中建造地城，因此 `dungeon` 只在有�
 {
   "kind": "override",
   "body": "star.sol",
+  "requires": ["galaxyspace"],
   "icon": "mypack:textures/gui/celestialbodies/sun.png",
   "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
 }
@@ -4773,7 +4892,8 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
     "platform": true,
     "platformBlock": "mypack:ruby_block",
     "sound": "block.portal.travel",
-    "owned": true
+    "owned": true,
+    "walkIn": true
   },
   "variants": { "ruby_portal": { "meta": 0, "hardness": -1, "light": 11 } }
 }
@@ -5128,6 +5248,7 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
     "mypack:cave_well"
   ],
   "structureChance": 0.5,
+  "structureLoot": "mypack:chests/cave_shrine",
   "skyStone": "minecraft:sandstone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
@@ -5256,6 +5377,7 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
   "indicators": ["mypack:iron_rock=3", "minecraft:gravel=1", "empty=4"],
   "indicatorCount": { "min": 1, "max": 3 },
   "indicatorSpread": 2,
+  "prospectAs": "Hematite",
   "then": ["mypack:quartz_halo=2", "empty=1", { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }],
   "thenCount": 1,
   "thenSpread": 6,
@@ -5446,6 +5568,12 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
     "hanging": false,
     "taper": "needle",
     "outline": "minecraft:obsidian",
+    "middle": "mypack:calcite",
+    "budding": "mypack:budding_amethyst",
+    "buddingChance": 0.083,
+    "crystal": "mypack:amethyst_cluster",
+    "crystalChance": 0.35,
+    "crack": 0.95,
     "fill": "minecraft:glowstone",
     "surface": ["minecraft:grass"],
     "seeSky": true,
@@ -5463,6 +5591,7 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
       "mypack:shrine"
     ],
     "integrity": 100,
+    "lootTable": "mypack:chests/crypt",
     "turns": ["none", { "turn": "half", "weight": 2 }],
     "mirrors": ["none", { "mirror": "leftright", "weight": 2 }],
     "at": [1000, -500],
@@ -5474,6 +5603,8 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
     "density": 0.8,
     "rich": "mypack:rich_ruby_ore",
     "poor": "mypack:poor_ruby_ore",
+    "richAt": 0.88,
+    "poorAt": 0.4,
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -5578,6 +5709,16 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
 *形狀*
 
 原版結構可以用 `terrain` 設定中的 `structureAt` 固定在精確的位置，寫成 `structure=x,z` 項目，一行一個：`"structureAt": ["villages=1000,-500"]`。**x 和 z 是方塊座標，不是區塊座標**，結構會在包含該方塊的區塊中生成；村莊的水井就立在該方塊本身，而其他結構則從遊戲在該區塊中會讓它開始的地方開始。每個想要的實例一個項目。它的間距、分隔、最小出生點距離和平地檢查全都不再適用，所以位置由資源包負責，而相距不到一個區塊的兩個固定點會把兩個結構放進同一個區塊。結構建立之後，會依一般規則貼合到其區塊的地面。
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAt": ["villages=1000,-500", "Fortress=-2000,300"]
+  }
+}
+```
 
 | 設定          | 類型                         | 預設 | 作用                                                                                                                                                        |
 | ------------- | ---------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -5730,6 +5871,8 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
   "ground": 0,
   "spacing": 64,
   "chance": 25,
+  "at": [128, -64],
+  "dimensions": [0],
   "layers": [
     {
       "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
@@ -5802,6 +5945,7 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
   "villagerY": 1,
   "villagerZ": 1,
   "ground": "minecraft:dirt",
+  "apron": 2,
   "requires": ["mypack"]
 }
 ```
@@ -5866,6 +6010,7 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
   "height": 6,
   "depth": 9,
   "structure": "mypack:blacksmith_shed",
+  "lootTable": "mypack:chests/smithy",
   "orderSign": "Mine",
   "orderX": 3,
   "orderY": 1,
@@ -6094,6 +6239,14 @@ belt 會忽略 `attempts` 和 `spread`，因為它是逐區塊放置而不是逐
 
 *預先生成*
 
+`config/mct_resourcedatapackloader_mixin.cfg`
+
+```ini
+chunks {
+    I:pregenBorderLimit=8192
+}
+```
+
 | 鍵                            | 作用                                                                                                                                                                                                                                          | 設定它的原因                                                     |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
 | `pregenOnNewWorld`            | 在任何人遊玩之前，圍繞出生點生成的區塊半徑。12 是下限，0 表示取這個下限而不是什麼都不做，因為遊戲自己本來就會在出生點周圍生成 12 個區塊：執行時會接管這片地面並一次為其打光，而不是任由它跟在玩家身後慢慢出現。調高它可以比遊戲本身延伸得更遠 | 設定資源包在遊戲本來就會生成的地面之外再延伸多遠                 |
@@ -6301,6 +6454,21 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "color": "red",
   "friendlyFire": false,
   "joinable": false,
+  "prefix": "[R] ",
+  "suffix": " *",
+  "scoreboard": true,
+  "mobFriendlyFire": false,
+  "seeFriendlyInvisibles": true,
+  "nameTags": "hideForOtherTeams",
+  "deathMessages": "always",
+  "collision": "pushOtherTeams",
+  "spawnBox": [0, 60, 0, 16, 80, 16],
+  "balance": true,
+  "spawn": "23,64,10",
+  "lead": "first",
+  "leadOn": "kaboom",
+  "leadIs": "Steve",
+  "leadSays": "You lead the red side",
   "entities": ["mypack:zombie_a", "mypack:sapper_a"],
   "picks": 0,
   "picksFrom": ["players"],
@@ -6389,22 +6557,47 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "name": "kaboom",
   "displayName": "Kills",
   "criterion": "dummy",
+  "render": "integer",
+  "individuals": true,
+  "carries": false,
+  "awardsTo": "wins",
   "display": "sidebar",
   "teamTotals": true,
   "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
-    "death": -1
+    "death": -1,
+    "raid": true,
+    "order": true,
+    "ownKill": -1
   },
-  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "opens": {
+    "by": "leader",
+    "lobby": "0,64,0",
+    "says": "Waiting for {leader} to start the round",
+    "leaderSays": "Type /rdpl round start",
+    "lobbyJoins": true,
+    "joinsSays": "Round is in progress, you can join after it ends"
+  },
   "ends": {
-    "afterMinutes": 10
+    "afterMinutes": 10,
+    "atScore": 50,
+    "afterRounds": 5,
+    "lastStanding": true,
+    "outSays": "You are out until the round ends",
+    "locksTeams": true,
+    "resets": true,
+    "intermissionSeconds": 10,
+    "intermissionSays": "Round cooldown {seconds}",
+    "startsSays": "Round starting in {seconds}"
   },
   "results": {
     "card": true,
     "title": "Final standings",
     "icon": "minecraft:tnt",
-    "seconds": 15
+    "seconds": 15,
+    "image": "mypack:textures/gui/result.png",
+    "background": "1E2630"
   }
 }
 ```
@@ -6524,7 +6717,12 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "teams": ["miners", "raiders"],
     "passPercent": 51,
     "voteSeconds": 30,
-    "cooldownSeconds": 60
+    "cooldownSeconds": 60,
+    "leadSays": "{player} reset the round",
+    "voteSays": "{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds",
+    "tallySays": "Reset the round? {yes} yes, {no} no, {seconds}",
+    "passSays": "The vote passed, so the round is reset",
+    "failSays": "The vote failed, so the round goes on"
   }
 }
 ```
@@ -6575,7 +6773,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "held": "frozen",
     "endsAtScore": 10,
     "cycles": 5,
-    "mobTypes": ["minecraft:zombie"]
+    "mobTypes": ["minecraft:zombie"],
+    "mobTags": ["pawn"]
   }
 }
 ```
@@ -6624,6 +6823,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "points": 10,
   "loot": "mypack:raid_reward",
   "anywhere": true,
+  "reach": 96,
+  "timeout": 48000,
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6685,8 +6886,19 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "image": "mypack:textures/gui/desert_card.png",
   "color": "3A2A10",
   "ticks": 120,
-  "when": { "timeFrom": 0, "timeTo": 12000 },
-  "repeat": "once_per_player"
+  "when": {
+    "timeFrom": 0,
+    "timeTo": 12000,
+    "dayAtLeast": 3,
+    "advancement": "minecraft:story/mine_stone",
+    "gameMode": "survival",
+    "team": "miners",
+    "objective": "kills",
+    "scoreAtLeast": 5
+  },
+  "repeat": "once_per_player",
+  "audience": "dimension",
+  "runs": "mypack:desert_entered"
 }
 ```
 
@@ -6749,6 +6961,35 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 ### 觸發器設定
 
 *卡片*
+
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "score",
+  "dimension": "the_nether",
+  "structures": ["Fortress"],
+  "radius": 48,
+  "advancement": "minecraft:story/mine_stone",
+  "item": "minecraft:diamond_sword",
+  "entity": "minecraft:zombie",
+  "count": 5,
+  "below": 20,
+  "above": 80,
+  "time": 6000,
+  "day": 3,
+  "minutes": 30,
+  "roll": "2d6",
+  "order": "Mine",
+  "exposure": "radiation",
+  "level": 2,
+  "atLeast": 10,
+  "atMost": 12,
+  "objective": "kills",
+  "score": 5,
+  "requires": ["mypack"]
+}
+```
 
 | 設定                 | 類型                         | 預設     | 作用                                                                                                                                                                             |
 | -------------------- | ---------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -6875,6 +7116,44 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
     "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
+    "pickplayer": "{player} picks {result}",
+    "pickteam": "{player} picks the team {result}",
+    "heads": "Heads",
+    "tails": "Tails",
+    "lastnone": "Nobody has rolled yet",
+    "nobody": "Nobody is here to hear it",
+    "notallowed": "You may not do that",
+    "usage": "Use: /rdplserver game coin",
+    "die": "{player} rolls {dice}d{sides}: {result}",
+    "packdie": "{player} rolls the {die}: {result}",
+    "dice": "{player} rolls {dice}: {rolls} makes {result}",
+    "advantage": "{player} rolls {dice} with advantage: {first}, {second}, so {result}",
+    "disadvantage": "{player} rolls {dice} with disadvantage: {first}, {second}, so {result}",
+    "pickmember": "{player} picks {result} from {team}",
+    "draw": "{player} draws {result} from {deck}, {left} left",
+    "reshuffled": "{player} reshuffles {deck} and draws {result}, {left} left",
+    "shuffle": "{player} shuffles {deck}, {left} cards",
+    "left": "{left} cards left in {deck}",
+    "empty": "{deck} is empty",
+    "nodeck": "There is no deck called {deck}",
+    "teamroll": "{member} rolls {dice}: {result}",
+    "teamrollwin": "The team roll comes to {result}, {score} points",
+    "tiebreak": "{objective} is tied between {sides}: {result} wins",
+    "notie": "{objective} is not tied",
+    "noobjective": "There is no objective called {objective}",
+    "turn": "{group} to move, {seconds} seconds",
+    "turnclock": "{group}: {seconds} seconds",
+    "turnwarn": "{group}: only {seconds} seconds left",
+    "turnout": "{group} ran out of time",
+    "turnpass": "{group} passes",
+    "turngap": "Next turn in {seconds} seconds",
+    "notturn": "It is not your turn",
+    "noturns": "Turns are not running",
+    "badsides": "{sides} is not a number of sides",
+    "badroll": "{roll} is not a roll",
+    "badaudience": "{audience} is not an audience",
+    "nodie": "There is no die called {name}",
+    "noteam": "There is no team called {team}",
     "coin": "{player} tosses the old coin: {result}"
   }
 }
@@ -6954,6 +7233,7 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
 {
   "name": "Chess",
   "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "quiet": false,
   "sides": [
     { "name": "White", "color": "white" },
     { "name": "Black", "color": "dark_gray" }
@@ -7254,7 +7534,75 @@ tconstruct:ore:0=minecraft:netherrack
     "villagePlotsBackRow": true,
     "villageTieStreets": true,
     "villageBlockSizes": ["32=3", "64=1"],
-    "villageLayout": "mypack:downtown"
+    "villageLayout": "mypack:downtown",
+    "villageCitySpacing": 1,
+    "villagePathSupportBlock": "minecraft:cobblestone",
+    "villagePathBridgeBlock": "minecraft:planks",
+    "villagePathBridgeBarrierBlock": "minecraft:fence",
+    "villagePathBridgeBarrierHeight": 1,
+    "villagePathBridgeSidewalkBlock": "minecraft:stone_slab",
+    "villagePathBridgeDrop": 4,
+    "villagePathBridgeFrameBlock": "minecraft:log",
+    "villagePathBridgeFrameTopBlock": "minecraft:planks",
+    "villagePathBridgeFrameHeight": 4,
+    "villagePathBridgeFrameRun": 24,
+    "villagePathBridgeFrameLeast": 24,
+    "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathPierCargo": ["minecraft:chest=1", "minecraft:hay_block=2,2", "empty=5"],
+    "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo",
+    "villagePathTunnelBlock": "minecraft:stonebrick",
+    "villagePathTunnelDepth": 10,
+    "villagePathTunnelLightBlock": "minecraft:glowstone",
+    "villagePathTunnelLightRun": 8,
+    "villageSewerBlock": "minecraft:stonebrick",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:stone_slab",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 25,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
+    "villageSewerWellEntrance": true,
+    "villageSubwayLines": 1,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "ew",
+    "villageSubwayWidth": 3,
+    "villageSubwayTracks": 1,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayBlock": "minecraft:rail",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:planks",
+    "villageSubwayTieRun": 2,
+    "villageSubwayShoulderBlock": "minecraft:cobblestone",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "minecraft:golden_rail",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwaySurfaces": 25,
+    "villageSubwayStationLength": 12,
+    "villageSubwayStationRun": 96,
+    "villageSubwayStationRepeat": 12,
+    "villageSubwayStationFoot": 4,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:stone_slab",
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:log",
+    "villageSubwayBenchLength": 5
   }
 }
 ```
@@ -8007,6 +8355,7 @@ strongholds=minecraft:silverfish
   "settings": {
     "flatBedrock": true,
     "flatBedrockRetrogen": false,
+    "flatBedrockRetrogenKey": "0000",
     "bedrockLayers": 1,
     "flatBedrockRoof": true,
     "flatBedrockFiller": "minecraft:stone",
@@ -8262,6 +8611,92 @@ strongholds=minecraft:silverfish
     "worldType": "customized",
     "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
   }
+}
+```
+
+同樣的鍵寫成一般 JSON，每個鍵都帶預設值：
+
+```json
+{
+  "coordinateScale": 684.412,
+  "heightScale": 684.412,
+  "upperLimitScale": 512.0,
+  "lowerLimitScale": 512.0,
+  "depthNoiseScaleX": 200.0,
+  "depthNoiseScaleZ": 200.0,
+  "depthNoiseScaleExponent": 0.5,
+  "mainNoiseScaleX": 80.0,
+  "mainNoiseScaleY": 160.0,
+  "mainNoiseScaleZ": 80.0,
+  "baseSize": 8.5,
+  "stretchY": 12.0,
+  "seaLevel": 63,
+  "useLavaOceans": false,
+  "useWaterLakes": true,
+  "waterLakeChance": 4,
+  "useLavaLakes": true,
+  "lavaLakeChance": 80,
+  "useCaves": true,
+  "useRavines": true,
+  "useDungeons": true,
+  "dungeonChance": 8,
+  "useStrongholds": true,
+  "useVillages": true,
+  "useMineShafts": true,
+  "useTemples": true,
+  "useMonuments": true,
+  "useMansions": true,
+  "biomeDepthWeight": 1.0,
+  "biomeDepthOffset": 0.0,
+  "biomeScaleWeight": 1.0,
+  "biomeScaleOffset": 0.0,
+  "fixedBiome": -1,
+  "biomeSize": 4,
+  "riverSize": 4,
+  "dirtSize": 33,
+  "dirtCount": 10,
+  "dirtMinHeight": 0,
+  "dirtMaxHeight": 256,
+  "gravelSize": 33,
+  "gravelCount": 8,
+  "gravelMinHeight": 0,
+  "gravelMaxHeight": 256,
+  "graniteSize": 33,
+  "graniteCount": 10,
+  "graniteMinHeight": 0,
+  "graniteMaxHeight": 80,
+  "dioriteSize": 33,
+  "dioriteCount": 10,
+  "dioriteMinHeight": 0,
+  "dioriteMaxHeight": 80,
+  "andesiteSize": 33,
+  "andesiteCount": 10,
+  "andesiteMinHeight": 0,
+  "andesiteMaxHeight": 80,
+  "coalSize": 17,
+  "coalCount": 20,
+  "coalMinHeight": 0,
+  "coalMaxHeight": 128,
+  "ironSize": 9,
+  "ironCount": 20,
+  "ironMinHeight": 0,
+  "ironMaxHeight": 64,
+  "goldSize": 9,
+  "goldCount": 2,
+  "goldMinHeight": 0,
+  "goldMaxHeight": 32,
+  "redstoneSize": 8,
+  "redstoneCount": 8,
+  "redstoneMinHeight": 0,
+  "redstoneMaxHeight": 16,
+  "diamondSize": 8,
+  "diamondCount": 1,
+  "diamondMinHeight": 0,
+  "diamondMaxHeight": 16,
+  "lapisSize": 7,
+  "lapisCount": 1,
+  "lapisCenterHeight": 16,
+  "lapisSpread": 16
 }
 ```
 

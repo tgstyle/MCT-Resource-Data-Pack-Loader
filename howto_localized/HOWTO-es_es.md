@@ -672,6 +672,9 @@ Todas las claves, mostradas de una vez. Un archivo real escribe solo las que nec
   "growth": { "stages": 8 },
   "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
   "portal": { "dimension": 12 },
+  "needsOxygen": true,
+  "container": { "rows": 3, "columns": 9 },
+  "bell": { "swing": true, "sound": "minecraft:block.note.bell", "resonateSound": "minecraft:block.note.chime" },
   "variants": {
     "ruby_ore": {
       "meta": 0,
@@ -959,7 +962,11 @@ Con `enableOxygenForPlantsAndFoods` de GalaxySpace activado, un `crop`, `flower`
     "rows": 6,
     "columns": 9,
     "lootTable": "minecraft:chests/simple_dungeon",
-    "chestModel": true
+    "chestModel": true,
+    "guiTexture": "mypack:textures/gui/crate.png",
+    "guiWidth": 176,
+    "guiHeight": 222,
+    "bauble": "body"
   },
   "variants": [ { "name": "crate", "hardness": 2.5 } ]
 }
@@ -1494,6 +1501,15 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "soil": "minecraft:farmland",
   "potionTypes": ["mypack:ruby_tonic"],
   "rocket": "mypack:supply_rocket",
+  "attackReach": 5.0,
+  "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
+  "combo": { "window": 40, "steps": [{ "damage": 1.0 }, { "damage": 1.5 }] },
+  "rollStore": "dice_total",
+  "locates": "Village",
+  "passesTurn": false,
+  "bauble": "ring",
+  "wornEffects": [{ "potion": "minecraft:night_vision", "amplifier": 0, "ambient": false, "showParticles": false }],
+  "wornAttributes": [{ "attribute": "generic.maxHealth", "amount": 2.0, "operation": 0 }],
   "requires": ["mypack"],
   "variants": {
     "ruby_apple": {
@@ -1627,7 +1643,8 @@ Un ítem puede llegar más lejos que los `3.0` bloques del juego, herir a las cr
     "steps": [
       { "damage": 1.0 },
       { "damage": 1.5 },
-      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
+      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } },
+      { "damage": 2.0, "sweep": { "shape": "line", "reach": 6.0, "width": 1.5 } }
     ]
   }
 }
@@ -2339,6 +2356,7 @@ Pon el ítem indicado en la ranura izquierda de un yunque y su ítem `with` en l
   "with": "minecraft:wooden_sword",
   "levels": 3,
   "enchantments": { "minecraft:sharpness": 2 },
+  "result": { "item": "minecraft:diamond_sword", "count": 1 },
   "grants": "mypack:sword_rite",
   "locks": true
 }
@@ -2417,7 +2435,8 @@ Un clic derecho sobre un cultivo maduro normalmente no hace nada. Un archivo aqu
 {
   "requires": ["config:enableRightClickHarvest"],
   "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
-  "replant": true
+  "replant": true,
+  "age": 7
 }
 ```
 
@@ -2516,6 +2535,7 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
       "level": 1,
       "maxUses": 12,
       "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "buySecondary": { "item": "minecraft:gold_nugget", "min": 1, "max": 2 },
       "sell": { "item": "mypack:ruby", "min": 1 }
     }
   ]
@@ -2560,6 +2580,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "profession": "mypack:jeweller",
   "career": 1,
   "baby": 0.05,
+  "keepsBaseBaby": false,
   "becomes": [
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
@@ -2573,12 +2594,15 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "hitEffects": true,
   "ignoresEffects": ["minecraft:wither", "minecraft:poison"],
   "hitFire": true,
+  "threatLeast": 1,
+  "threatHostile": 2,
   "attackReach": 2.0,
   "hurtResistance": 20,
   "stepHeight": 0.6,
   "knockback": 0.4,
   "climbs": false,
   "teleports": true,
+  "walks": false,
   "maxFallHeight": 3,
   "breathesUnderwater": false,
   "swims": false,
@@ -2638,6 +2662,17 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
+  "throwReturns": false,
+  "charges": false,
+  "pounces": false,
+  "sniffs": 16,
+  "fleesWhenHurt": 0.25,
+  "sleepsByDay": false,
+  "home": 32,
+  "patrols": false,
+  "swoops": false,
+  "gusts": false,
+  "gustPower": 1.5,
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -2883,7 +2918,17 @@ Cómo vuela el lanzamiento en sí lo deciden `throwPower` y `throwArc`. El prime
     "-wander",
     { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
     { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
-    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8, "chance": 0.01 },
+    { "task": "wander", "priority": 8, "speed": 0.8, "chance": 60 },
+    { "task": "follow", "priority": 5, "distance": 10, "near": 3 },
+    { "task": "leapAtTarget", "priority": 3, "leap": 0.6 },
+    { "task": "attackRanged", "priority": 4, "cooldown": 30, "distance": 15 },
+    { "task": "attackMelee", "priority": 2, "memory": true },
+    { "task": "openDoor", "priority": 9, "close": true },
+    { "task": "moveThroughVillage", "priority": 5, "nocturnal": true },
+    { "task": "tempt", "priority": 4, "items": ["minecraft:wheat"], "scared": true },
+    { "task": "nearestAttackableTarget", "priority": 2, "entity": "minecraft:player", "sight": true, "nearby": true },
+    { "task": "hurtByTarget", "priority": 1, "help": true }
   ]
 }
 ```
@@ -3002,6 +3047,7 @@ El reloj corre con el tiempo del mundo, así que se detiene cuando nadie está j
 {
   "dimensions": [-1],
   "structures": ["Fortress"],
+  "radius": 48,
   "timeFrom": 13000,
   "timeTo": 23000,
   "dayAtLeast": 3,
@@ -3034,6 +3080,7 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 ```json
 {
   "entities": ["minecraft:blaze", "mymod:thing"],
+  "dimensions": [-1],
   "advancement": "minecraft:story/enter_the_nether"
 }
 ```
@@ -3328,6 +3375,7 @@ Una orden es un trabajo que las variantes de entidad nombradas como sus encargad
       "sign": "Farm",
       "tool": "hoe",
       "standing": 64,
+      "area": 12,
       "takers": ["mypack:farmer"]
     },
     {
@@ -3806,7 +3854,20 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
-    "stars": { "count": 6000, "size": 0.12 }
+    "stars": { "count": 6000, "size": 0.12 },
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 }
   },
   "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
   "time": { "dayLength": 36000 },
@@ -3817,7 +3878,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4072,6 +4133,18 @@ Estas claves también van en el bloque `sky`, y también se dibujan solo en el c
 }
 ```
 
+Una sola imagen que envuelve todo el cielo en lugar de las seis caras:
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "panorama": "mypack:textures/sky/panorama.png"
+    }
+  }
+}
+```
+
 `skybox` pinta tus propias imágenes en el cielo, detrás del resplandor del amanecer, el sol, la luna y las estrellas. Indica las seis caras de un cubo como rutas de textura completas, dispuestas como el cubo desplegado: `up` toca el borde superior de `north`, `down` su borde inferior, `west` queda a su izquierda y `east` a su derecha, con `south` después de `east`. O bien indica solo `panorama`, una imagen 2:1 que envuelve todo el cielo: su borde izquierdo mira al norte y recorre el cielo en el sentido de las agujas del reloj por el este, el sur y el oeste; su fila superior queda justo encima y la inferior justo debajo. Una skybox a la que le falta una cara y no tiene panorama se omite, con un error en el registro.
 
 `aurora` cuelga cortinas luminosas bajas sobre el cielo del norte durante la noche. Ondean despacio, aparecen al ponerse el sol y desaparecen de día y con lluvia. `color` es el color de su base y `topColor` aquel en el que se desvanecen arriba.
@@ -4206,18 +4279,18 @@ Un bloque `ambience` da a la dimensión música, sonidos y partículas flotantes
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0 }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
-      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+      "mobs": { "entities": ["#monster", "minecraft:zombie"], "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
     },
     "bounty": {
       "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
       "trades": [{ "profession": "minecraft:farmer", "career": "farmer", "level": 1, "buy": { "item": "minecraft:wheat", "min": 10 }, "sell": { "item": "minecraft:emerald" } }]
     },
     "longnight": {
-      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 4.0, "wakeAt": 1000 }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -4345,6 +4418,8 @@ Un archivo aquí es un sistema estelar, un subsistema, o un planeta o una luna q
   "kind": "system",
   "name": "ember",
   "galaxy": "milky_way",
+  "galaxyImage": "mypack:textures/gui/ember_galaxy.png",
+  "requires": ["mypack"],
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
@@ -4389,14 +4464,14 @@ Un archivo aquí es un sistema estelar, un subsistema, o un planeta o una luna q
 }
 ```
 
-| Clave         | Obligatorio   | Valor                                             | Por defecto                | Qué hace                                                                                                             |
-| ------------- | ------------- | ------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `kind`        | sí            | `system`, `planet`, `subsystem`, `moon`           |                            | Qué crea el archivo                                                                                                  |
-| `galaxy`      | no            | cadena, `a-z`, `0-9` y `_`                        | `milky_way`                | La galaxia de un sistema. Un nombre que ningún sistema ha usado aún crea una galaxia nueva, con su propio mapa       |
-| `galaxyImage` | no            | ruta de textura                                   | la imagen de la Vía Láctea | El icono de la galaxia en la lista de galaxias. Lo fija el primer sistema de la galaxia; solo se lee con GalaxySpace |
-| `mapPosition` | en un sistema | `[x, y]` o `[x, y, z]`                            |                            | Dónde se sitúa el sistema en el mapa de la galaxia                                                                   |
-| `star`        | no            | objeto de [claves de mapa](#claves-de-mapa)       |                            | La estrella del sistema, dibujada en su centro                                                                       |
-| `requires`    | no            | lista de ids de mod o espacios de nombres de pack | ninguno                    | El archivo se omite a menos que estén presentes todos                                                                |
+| Clave         | Obligatorio   | Valor                                             | Por defecto                | Qué hace                                                                                                                                                                                           |
+| ------------- | ------------- | ------------------------------------------------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | sí            | `system`, `planet`, `subsystem`, `moon`           |                            | Qué crea el archivo                                                                                                                                                                                |
+| `galaxy`      | no            | cadena, `a-z`, `0-9` y `_`                        | `milky_way`                | La galaxia de un sistema. Un nombre que ningún sistema ha usado aún crea una galaxia nueva, con su propio mapa                                                                                     |
+| `galaxyImage` | no            | ruta de textura                                   | la imagen de la Vía Láctea | El icono de la galaxia en la lista de galaxias. Lo fija el primer sistema de la galaxia; solo se lee con GalaxySpace                                                                               |
+| `mapPosition` | en un sistema | `[x, y]` o `[x, y, z]`                            |                            | Dónde se sitúa el sistema en el mapa de la galaxia. Galacticraft multiplica el valor por 500, y la órbita exterior de Sol alcanza unos 0,33, así que un sistema cercano usa valores menores que 1. |
+| `star`        | no            | objeto de [claves de mapa](#claves-de-mapa)       |                            | La estrella del sistema, dibujada en su centro                                                                                                                                                     |
+| `requires`    | no            | lista de ids de mod o espacios de nombres de pack | ninguno                    | El archivo se omite a menos que estén presentes todos                                                                                                                                              |
 
 Un planeta, un subsistema o una luna aquí admite las [claves de mapa](#claves-de-mapa) con un `tier` por defecto de `0`. Se colocan en el mapa después de todos los sistemas, primero los subsistemas, luego los planetas y luego las lunas, así que cada uno puede orbitar un cuerpo del mismo pack.
 
@@ -4411,6 +4486,26 @@ Un subsistema es una segunda estrella que orbita la estrella del sistema. Galact
 *cuerpos de galacticraft*
 
 Todo cuerpo, ya sea un archivo de `celestial/`, la `star` de un sistema o el bloque `galacticraft` de una dimensión, se sitúa en el mapa con estas claves.
+
+`<namespace>/celestial/*.json`
+
+```json
+{
+  "kind": "planet",
+  "name": "ash",
+  "parent": "ember",
+  "icon": "galacticraftcore:textures/gui/celestialbodies/mercury.png",
+  "relativeSize": 0.5,
+  "distance": 1.4,
+  "scaledDistance": 1.4,
+  "orbitTime": 2.5,
+  "phaseShift": 1.2,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
+  "ringColor": "19E599",
+  "tier": 3
+}
+```
 
 | Clave            | Obligatorio            | Valor             | Por defecto                                                                      | Qué hace                                                                                                                                                                                                                                                                                                                                                                             |
 | ---------------- | ---------------------- | ----------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -4451,6 +4546,7 @@ Un bloque `galacticraft` en un archivo de dimensión convierte esa dimensión en
     "distance": 0.75,
     "tier": 2,
     "minTier": 2,
+    "reachable": true,
     "landing": "balloons",
     "landingHeight": 700,
     "arrival": "departure",
@@ -4526,14 +4622,26 @@ Una dimensión cuyo bloque `galacticraft` tiene `kind: "asteroids"` es un cintur
 {
   "id": 73,
   "terrain": { "type": "void" },
-  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "sky": {
+    "skyColor": "000000",
+    "fogColor": "000000",
+    "starBrightness": 1.0,
+    "renderClouds": false,
+    "sunriseColors": false,
+    "sun": { "size": 6 }
+  },
   "physics": { "gravity": 0.1 },
+  "time": { "dayLength": 24000 },
   "galacticraft": {
     "kind": "asteroids",
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
     "tier": 3,
+    "landing": "lander",
+    "landingHeight": 500,
+    "arrival": "spawn",
+    "dungeon": { "spacing": 704, "chest": "mypack:chests/slag_dungeon" },
     "beltWidth": 0.15
   }
 }
@@ -4577,13 +4685,21 @@ Un archivo de dimensión cuyo bloque `galacticraft` tiene `kind: "station"` perm
 ```json
 {
   "id": 80,
-  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "sky": {
+    "skyColor": "000000",
+    "starBrightness": 1.0,
+    "renderSky": true,
+    "renderClouds": true,
+    "renderWeather": true,
+    "sun": { "size": 12 }
+  },
   "time": { "dayLength": 12000 },
   "galacticraft": {
     "kind": "station",
     "name": "cinder_station",
     "parent": "cinder",
     "tier": 2,
+    "checklist": ["equip_oxygen_suit", "equip_parachute"],
     "showName": true,
     "recipe": {
       "ingotTin": 32,
@@ -4647,7 +4763,9 @@ Dos complementos de Galacticraft leen más información de un cuerpo que Galacti
       "orbitOffset": [0.5, 0],
       "thermalVariation": 0.4,
       "solarWind": 0.8,
-      "weather": "frozen_storm"
+      "weather": "frozen_storm",
+      "weatherFrequency": 2.0,
+      "freezeBlocks": false
     },
     "extraplanets": {
       "pressure": 40,
@@ -4713,6 +4831,7 @@ Un archivo con `kind` `override` cambia el aspecto en el mapa de un cuerpo que G
 {
   "kind": "override",
   "body": "star.sol",
+  "requires": ["galaxyspace"],
   "icon": "mypack:textures/gui/celestialbodies/sun.png",
   "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
 }
@@ -4773,7 +4892,8 @@ Un bloque `portal` lleva una sección `portal`:
     "platform": true,
     "platformBlock": "mypack:ruby_block",
     "sound": "block.portal.travel",
-    "owned": true
+    "owned": true,
+    "walkIn": true
   },
   "variants": { "ruby_portal": { "meta": 0, "hardness": -1, "light": 11 } }
 }
@@ -5128,6 +5248,7 @@ Todas las claves a la vez. Un archivo real escribe solo las que necesita.
     "mypack:cave_well"
   ],
   "structureChance": 0.5,
+  "structureLoot": "mypack:chests/cave_shrine",
   "skyStone": "minecraft:sandstone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
@@ -5256,6 +5377,7 @@ Describe algo que se genera. Cada entrada es una **forma** colocada por una **di
   "indicators": ["mypack:iron_rock=3", "minecraft:gravel=1", "empty=4"],
   "indicatorCount": { "min": 1, "max": 3 },
   "indicatorSpread": 2,
+  "prospectAs": "Hematite",
   "then": ["mypack:quartz_halo=2", "empty=1", { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }],
   "thenCount": 1,
   "thenSpread": 6,
@@ -5446,6 +5568,12 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "hanging": false,
     "taper": "needle",
     "outline": "minecraft:obsidian",
+    "middle": "mypack:calcite",
+    "budding": "mypack:budding_amethyst",
+    "buddingChance": 0.083,
+    "crystal": "mypack:amethyst_cluster",
+    "crystalChance": 0.35,
+    "crack": 0.95,
     "fill": "minecraft:glowstone",
     "surface": ["minecraft:grass"],
     "seeSky": true,
@@ -5463,6 +5591,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
       "mypack:shrine"
     ],
     "integrity": 100,
+    "lootTable": "mypack:chests/crypt",
     "turns": ["none", { "turn": "half", "weight": 2 }],
     "mirrors": ["none", { "mirror": "leftright", "weight": 2 }],
     "at": [1000, -500],
@@ -5474,6 +5603,8 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "density": 0.8,
     "rich": "mypack:rich_ruby_ore",
     "poor": "mypack:poor_ruby_ore",
+    "richAt": 0.88,
+    "poorAt": 0.4,
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -5578,6 +5709,16 @@ Para una forma que ningún tipo integrado cubre, `imprint` es el camino: constr�
 *formas*
 
 Las estructuras vanilla se fijan a puntos exactos con `structureAt` en los ajustes de `terrain`, como entradas `structure=x,z`, una por línea: `"structureAt": ["villages=1000,-500"]`. **La x y la z son coordenadas de bloque, no de chunk**, y la estructura se genera en el chunk que contiene ese bloque; el pozo de una aldea queda en ese mismo bloque, mientras que otras estructuras empiezan donde el juego las empezaría en ese chunk. Una entrada por instancia deseada. Su espaciado, separación, distancia mínima de aparición y comprobaciones de terreno llano se apartan, así que el punto es responsabilidad del pack, y dos fijaciones a menos de un chunk de distancia ponen dos estructuras en el mismo chunk. Una vez fundada, la estructura se asienta en el suelo de su chunk según las reglas habituales.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAt": ["villages=1000,-500", "Fortress=-2000,300"]
+  }
+}
+```
 
 | Ajuste        | Tipo                     | Por defecto | Qué hace                                                                                                                                                                                                                                                                                     |
 | ------------- | ------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -5730,6 +5871,8 @@ Un mapa de estructuras compone plantillas en un único edificio con nombre sobre
   "ground": 0,
   "spacing": 64,
   "chance": 25,
+  "at": [128, -64],
+  "dimensions": [0],
   "layers": [
     {
       "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
@@ -5802,6 +5945,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "villagerY": 1,
   "villagerZ": 1,
   "ground": "minecraft:dirt",
+  "apron": 2,
   "requires": ["mypack"]
 }
 ```
@@ -5866,6 +6010,7 @@ Una `template` coloca en su lugar una de tus estructuras `.nbt`, girada para mir
   "height": 6,
   "depth": 9,
   "structure": "mypack:blacksmith_shed",
+  "lootTable": "mypack:chests/smithy",
   "orderSign": "Mine",
   "orderX": 3,
   "orderY": 1,
@@ -6094,6 +6239,14 @@ En un pack, estos van en el bloque `settings` de una [plantilla de mundo](#plant
 
 *pregeneración*
 
+`config/mct_resourcedatapackloader_mixin.cfg`
+
+```ini
+chunks {
+    I:pregenBorderLimit=8192
+}
+```
+
 | Clave                         | Qué hace                                                                                                                                                                                                                                                                                                                                                                                  | Por qué la definirías                                                                                    |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `pregenOnNewWorld`            | Radio en chunks que se crea alrededor del punto de aparición antes de que nadie juegue. 12 es el mínimo y 0 significa ese mínimo y no nada, ya que el juego crea de todos modos 12 chunks alrededor del punto de aparición: la ejecución adopta ese terreno y lo ilumina de una pasada en lugar de dejar que llegue a goteo detrás del jugador. Súbelo para llegar más lejos que el juego | Fija hasta dónde llega un pack más allá del terreno que el juego ya crea                                 |
@@ -6301,6 +6454,21 @@ Un bando solo se pone en juego donde un pack lo pide: sin ninguna carpeta `teams
   "color": "red",
   "friendlyFire": false,
   "joinable": false,
+  "prefix": "[R] ",
+  "suffix": " *",
+  "scoreboard": true,
+  "mobFriendlyFire": false,
+  "seeFriendlyInvisibles": true,
+  "nameTags": "hideForOtherTeams",
+  "deathMessages": "always",
+  "collision": "pushOtherTeams",
+  "spawnBox": [0, 60, 0, 16, 80, 16],
+  "balance": true,
+  "spawn": "23,64,10",
+  "lead": "first",
+  "leadOn": "kaboom",
+  "leadIs": "Steve",
+  "leadSays": "You lead the red side",
   "entities": ["mypack:zombie_a", "mypack:sapper_a"],
   "picks": 0,
   "picksFrom": ["players"],
@@ -6389,22 +6557,47 @@ Un objetivo es un objetivo real en el marcador propio del juego, así que `/scor
   "name": "kaboom",
   "displayName": "Kills",
   "criterion": "dummy",
+  "render": "integer",
+  "individuals": true,
+  "carries": false,
+  "awardsTo": "wins",
   "display": "sidebar",
   "teamTotals": true,
   "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
-    "death": -1
+    "death": -1,
+    "raid": true,
+    "order": true,
+    "ownKill": -1
   },
-  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "opens": {
+    "by": "leader",
+    "lobby": "0,64,0",
+    "says": "Waiting for {leader} to start the round",
+    "leaderSays": "Type /rdpl round start",
+    "lobbyJoins": true,
+    "joinsSays": "Round is in progress, you can join after it ends"
+  },
   "ends": {
-    "afterMinutes": 10
+    "afterMinutes": 10,
+    "atScore": 50,
+    "afterRounds": 5,
+    "lastStanding": true,
+    "outSays": "You are out until the round ends",
+    "locksTeams": true,
+    "resets": true,
+    "intermissionSeconds": 10,
+    "intermissionSays": "Round cooldown {seconds}",
+    "startsSays": "Round starting in {seconds}"
   },
   "results": {
     "card": true,
     "title": "Final standings",
     "icon": "minecraft:tnt",
-    "seconds": 15
+    "seconds": 15,
+    "image": "mypack:textures/gui/result.png",
+    "background": "1E2630"
   }
 }
 ```
@@ -6524,7 +6717,12 @@ Los ajustes del objeto `opens` deciden cuándo empieza una ronda y dónde espera
     "teams": ["miners", "raiders"],
     "passPercent": 51,
     "voteSeconds": 30,
-    "cooldownSeconds": 60
+    "cooldownSeconds": 60,
+    "leadSays": "{player} reset the round",
+    "voteSays": "{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds",
+    "tallySays": "Reset the round? {yes} yes, {no} no, {seconds}",
+    "passSays": "The vote passed, so the round is reset",
+    "failSays": "The vote failed, so the round goes on"
   }
 }
 ```
@@ -6575,7 +6773,8 @@ Todos los jugadores conectados de un bando votan, sea cual sea su bando, con `/r
     "held": "frozen",
     "endsAtScore": 10,
     "cycles": 5,
-    "mobTypes": ["minecraft:zombie"]
+    "mobTypes": ["minecraft:zombie"],
+    "mobTags": ["pawn"]
   }
 }
 ```
@@ -6624,6 +6823,8 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a refugiarse en la
   "points": 10,
   "loot": "mypack:raid_reward",
   "anywhere": true,
+  "reach": 96,
+  "timeout": 48000,
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6685,8 +6886,19 @@ Cada mensaje que dice este mod por sí mismo es una regla integrada, listada má
   "image": "mypack:textures/gui/desert_card.png",
   "color": "3A2A10",
   "ticks": 120,
-  "when": { "timeFrom": 0, "timeTo": 12000 },
-  "repeat": "once_per_player"
+  "when": {
+    "timeFrom": 0,
+    "timeTo": 12000,
+    "dayAtLeast": 3,
+    "advancement": "minecraft:story/mine_stone",
+    "gameMode": "survival",
+    "team": "miners",
+    "objective": "kills",
+    "scoreAtLeast": 5
+  },
+  "repeat": "once_per_player",
+  "audience": "dimension",
+  "runs": "mypack:desert_entered"
 }
 ```
 
@@ -6749,6 +6961,35 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 ### Ajustes de disparadores
 
 *tarjetas*
+
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "score",
+  "dimension": "the_nether",
+  "structures": ["Fortress"],
+  "radius": 48,
+  "advancement": "minecraft:story/mine_stone",
+  "item": "minecraft:diamond_sword",
+  "entity": "minecraft:zombie",
+  "count": 5,
+  "below": 20,
+  "above": 80,
+  "time": 6000,
+  "day": 3,
+  "minutes": 30,
+  "roll": "2d6",
+  "order": "Mine",
+  "exposure": "radiation",
+  "level": 2,
+  "atLeast": 10,
+  "atMost": 12,
+  "objective": "kills",
+  "score": 5,
+  "requires": ["mypack"]
+}
+```
 
 | Ajuste               | Tipo                                              | Por defecto          | Qué hace                                                                                                                                                                                                                |
 | -------------------- | ------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -6875,6 +7116,44 @@ El nombre del archivo lo eliges tú, y varios archivos se acumulan. Un archivo n
     "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
+    "pickplayer": "{player} picks {result}",
+    "pickteam": "{player} picks the team {result}",
+    "heads": "Heads",
+    "tails": "Tails",
+    "lastnone": "Nobody has rolled yet",
+    "nobody": "Nobody is here to hear it",
+    "notallowed": "You may not do that",
+    "usage": "Use: /rdplserver game coin",
+    "die": "{player} rolls {dice}d{sides}: {result}",
+    "packdie": "{player} rolls the {die}: {result}",
+    "dice": "{player} rolls {dice}: {rolls} makes {result}",
+    "advantage": "{player} rolls {dice} with advantage: {first}, {second}, so {result}",
+    "disadvantage": "{player} rolls {dice} with disadvantage: {first}, {second}, so {result}",
+    "pickmember": "{player} picks {result} from {team}",
+    "draw": "{player} draws {result} from {deck}, {left} left",
+    "reshuffled": "{player} reshuffles {deck} and draws {result}, {left} left",
+    "shuffle": "{player} shuffles {deck}, {left} cards",
+    "left": "{left} cards left in {deck}",
+    "empty": "{deck} is empty",
+    "nodeck": "There is no deck called {deck}",
+    "teamroll": "{member} rolls {dice}: {result}",
+    "teamrollwin": "The team roll comes to {result}, {score} points",
+    "tiebreak": "{objective} is tied between {sides}: {result} wins",
+    "notie": "{objective} is not tied",
+    "noobjective": "There is no objective called {objective}",
+    "turn": "{group} to move, {seconds} seconds",
+    "turnclock": "{group}: {seconds} seconds",
+    "turnwarn": "{group}: only {seconds} seconds left",
+    "turnout": "{group} ran out of time",
+    "turnpass": "{group} passes",
+    "turngap": "Next turn in {seconds} seconds",
+    "notturn": "It is not your turn",
+    "noturns": "Turns are not running",
+    "badsides": "{sides} is not a number of sides",
+    "badroll": "{roll} is not a roll",
+    "badaudience": "{audience} is not an audience",
+    "nodie": "There is no die called {name}",
+    "noteam": "There is no team called {team}",
     "coin": "{player} tosses the old coin: {result}"
   }
 }
@@ -6954,6 +7233,7 @@ Un archivo es un juego de tablero, y su nombre es el del archivo. Fija el tabler
 {
   "name": "Chess",
   "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "quiet": false,
   "sides": [
     { "name": "White", "color": "white" },
     { "name": "Black", "color": "dark_gray" }
@@ -7254,7 +7534,75 @@ Cada chunk se procesa una sola vez, al cargarse desde el disco, y se marca en lo
     "villagePlotsBackRow": true,
     "villageTieStreets": true,
     "villageBlockSizes": ["32=3", "64=1"],
-    "villageLayout": "mypack:downtown"
+    "villageLayout": "mypack:downtown",
+    "villageCitySpacing": 1,
+    "villagePathSupportBlock": "minecraft:cobblestone",
+    "villagePathBridgeBlock": "minecraft:planks",
+    "villagePathBridgeBarrierBlock": "minecraft:fence",
+    "villagePathBridgeBarrierHeight": 1,
+    "villagePathBridgeSidewalkBlock": "minecraft:stone_slab",
+    "villagePathBridgeDrop": 4,
+    "villagePathBridgeFrameBlock": "minecraft:log",
+    "villagePathBridgeFrameTopBlock": "minecraft:planks",
+    "villagePathBridgeFrameHeight": 4,
+    "villagePathBridgeFrameRun": 24,
+    "villagePathBridgeFrameLeast": 24,
+    "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathPierCargo": ["minecraft:chest=1", "minecraft:hay_block=2,2", "empty=5"],
+    "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo",
+    "villagePathTunnelBlock": "minecraft:stonebrick",
+    "villagePathTunnelDepth": 10,
+    "villagePathTunnelLightBlock": "minecraft:glowstone",
+    "villagePathTunnelLightRun": 8,
+    "villageSewerBlock": "minecraft:stonebrick",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:stone_slab",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 25,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
+    "villageSewerWellEntrance": true,
+    "villageSubwayLines": 1,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "ew",
+    "villageSubwayWidth": 3,
+    "villageSubwayTracks": 1,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayBlock": "minecraft:rail",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:planks",
+    "villageSubwayTieRun": 2,
+    "villageSubwayShoulderBlock": "minecraft:cobblestone",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "minecraft:golden_rail",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwaySurfaces": 25,
+    "villageSubwayStationLength": 12,
+    "villageSubwayStationRun": 96,
+    "villageSubwayStationRepeat": 12,
+    "villageSubwayStationFoot": 4,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:stone_slab",
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:log",
+    "villageSubwayBenchLength": 5
   }
 }
 ```
@@ -8007,6 +8355,7 @@ Remodela el propio terreno a medida que se crea, de modo que un mundo generado c
   "settings": {
     "flatBedrock": true,
     "flatBedrockRetrogen": false,
+    "flatBedrockRetrogenKey": "0000",
     "bedrockLayers": 1,
     "flatBedrockRoof": true,
     "flatBedrockFiller": "minecraft:stone",
@@ -8262,6 +8611,92 @@ Todo lo demás que hace un pack, bloquear biomas y minerales, sustituir bloques,
     "worldType": "customized",
     "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
   }
+}
+```
+
+Las mismas claves escritas como JSON normal, cada una con su valor por defecto:
+
+```json
+{
+  "coordinateScale": 684.412,
+  "heightScale": 684.412,
+  "upperLimitScale": 512.0,
+  "lowerLimitScale": 512.0,
+  "depthNoiseScaleX": 200.0,
+  "depthNoiseScaleZ": 200.0,
+  "depthNoiseScaleExponent": 0.5,
+  "mainNoiseScaleX": 80.0,
+  "mainNoiseScaleY": 160.0,
+  "mainNoiseScaleZ": 80.0,
+  "baseSize": 8.5,
+  "stretchY": 12.0,
+  "seaLevel": 63,
+  "useLavaOceans": false,
+  "useWaterLakes": true,
+  "waterLakeChance": 4,
+  "useLavaLakes": true,
+  "lavaLakeChance": 80,
+  "useCaves": true,
+  "useRavines": true,
+  "useDungeons": true,
+  "dungeonChance": 8,
+  "useStrongholds": true,
+  "useVillages": true,
+  "useMineShafts": true,
+  "useTemples": true,
+  "useMonuments": true,
+  "useMansions": true,
+  "biomeDepthWeight": 1.0,
+  "biomeDepthOffset": 0.0,
+  "biomeScaleWeight": 1.0,
+  "biomeScaleOffset": 0.0,
+  "fixedBiome": -1,
+  "biomeSize": 4,
+  "riverSize": 4,
+  "dirtSize": 33,
+  "dirtCount": 10,
+  "dirtMinHeight": 0,
+  "dirtMaxHeight": 256,
+  "gravelSize": 33,
+  "gravelCount": 8,
+  "gravelMinHeight": 0,
+  "gravelMaxHeight": 256,
+  "graniteSize": 33,
+  "graniteCount": 10,
+  "graniteMinHeight": 0,
+  "graniteMaxHeight": 80,
+  "dioriteSize": 33,
+  "dioriteCount": 10,
+  "dioriteMinHeight": 0,
+  "dioriteMaxHeight": 80,
+  "andesiteSize": 33,
+  "andesiteCount": 10,
+  "andesiteMinHeight": 0,
+  "andesiteMaxHeight": 80,
+  "coalSize": 17,
+  "coalCount": 20,
+  "coalMinHeight": 0,
+  "coalMaxHeight": 128,
+  "ironSize": 9,
+  "ironCount": 20,
+  "ironMinHeight": 0,
+  "ironMaxHeight": 64,
+  "goldSize": 9,
+  "goldCount": 2,
+  "goldMinHeight": 0,
+  "goldMaxHeight": 32,
+  "redstoneSize": 8,
+  "redstoneCount": 8,
+  "redstoneMinHeight": 0,
+  "redstoneMaxHeight": 16,
+  "diamondSize": 8,
+  "diamondCount": 1,
+  "diamondMinHeight": 0,
+  "diamondMaxHeight": 16,
+  "lapisSize": 7,
+  "lapisCount": 1,
+  "lapisCenterHeight": 16,
+  "lapisSpread": 16
 }
 ```
 

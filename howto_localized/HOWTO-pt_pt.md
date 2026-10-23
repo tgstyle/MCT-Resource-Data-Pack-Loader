@@ -672,6 +672,9 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "growth": { "stages": 8 },
   "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
   "portal": { "dimension": 12 },
+  "needsOxygen": true,
+  "container": { "rows": 3, "columns": 9 },
+  "bell": { "swing": true, "sound": "minecraft:block.note.bell", "resonateSound": "minecraft:block.note.chime" },
   "variants": {
     "ruby_ore": {
       "meta": 0,
@@ -959,7 +962,11 @@ Com o `enableOxygenForPlantsAndFoods` do GalaxySpace ativado, um `crop`, `flower
     "rows": 6,
     "columns": 9,
     "lootTable": "minecraft:chests/simple_dungeon",
-    "chestModel": true
+    "chestModel": true,
+    "guiTexture": "mypack:textures/gui/crate.png",
+    "guiWidth": 176,
+    "guiHeight": 222,
+    "bauble": "body"
   },
   "variants": [ { "name": "crate", "hardness": 2.5 } ]
 }
@@ -1494,6 +1501,15 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "soil": "minecraft:farmland",
   "potionTypes": ["mypack:ruby_tonic"],
   "rocket": "mypack:supply_rocket",
+  "attackReach": 5.0,
+  "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
+  "combo": { "window": 40, "steps": [{ "damage": 1.0 }, { "damage": 1.5 }] },
+  "rollStore": "dice_total",
+  "locates": "Village",
+  "passesTurn": false,
+  "bauble": "ring",
+  "wornEffects": [{ "potion": "minecraft:night_vision", "amplifier": 0, "ambient": false, "showParticles": false }],
+  "wornAttributes": [{ "attribute": "generic.maxHealth", "amount": 2.0, "operation": 0 }],
   "requires": ["mypack"],
   "variants": {
     "ruby_apple": {
@@ -1627,7 +1643,8 @@ Um item pode chegar mais longe do que os `3.0` blocos do jogo, ferir as criatura
     "steps": [
       { "damage": 1.0 },
       { "damage": 1.5 },
-      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
+      { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } },
+      { "damage": 2.0, "sweep": { "shape": "line", "reach": 6.0, "width": 1.5 } }
     ]
   }
 }
@@ -2339,6 +2356,7 @@ Coloca o item indicado na ranhura esquerda de uma bigorna e o seu item `with` na
   "with": "minecraft:wooden_sword",
   "levels": 3,
   "enchantments": { "minecraft:sharpness": 2 },
+  "result": { "item": "minecraft:diamond_sword", "count": 1 },
   "grants": "mypack:sword_rite",
   "locks": true
 }
@@ -2417,7 +2435,8 @@ Clicar com o botão direito numa cultura madura normalmente não faz nada. Um fi
 {
   "requires": ["config:enableRightClickHarvest"],
   "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
-  "replant": true
+  "replant": true,
+  "age": 7
 }
 ```
 
@@ -2516,6 +2535,7 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
       "level": 1,
       "maxUses": 12,
       "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "buySecondary": { "item": "minecraft:gold_nugget", "min": 1, "max": 2 },
       "sell": { "item": "mypack:ruby", "min": 1 }
     }
   ]
@@ -2560,6 +2580,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro a sério escreve apenas as de
   "profession": "mypack:jeweller",
   "career": 1,
   "baby": 0.05,
+  "keepsBaseBaby": false,
   "becomes": [
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
@@ -2573,12 +2594,15 @@ Todas as chaves, mostradas de uma vez. Um ficheiro a sério escreve apenas as de
   "hitEffects": true,
   "ignoresEffects": ["minecraft:wither", "minecraft:poison"],
   "hitFire": true,
+  "threatLeast": 1,
+  "threatHostile": 2,
   "attackReach": 2.0,
   "hurtResistance": 20,
   "stepHeight": 0.6,
   "knockback": 0.4,
   "climbs": false,
   "teleports": true,
+  "walks": false,
   "maxFallHeight": 3,
   "breathesUnderwater": false,
   "swims": false,
@@ -2638,6 +2662,17 @@ Todas as chaves, mostradas de uma vez. Um ficheiro a sério escreve apenas as de
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
+  "throwReturns": false,
+  "charges": false,
+  "pounces": false,
+  "sniffs": 16,
+  "fleesWhenHurt": 0.25,
+  "sleepsByDay": false,
+  "home": 32,
+  "patrols": false,
+  "swoops": false,
+  "gusts": false,
+  "gustPower": 1.5,
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -2883,7 +2918,17 @@ O modo como o próprio arremesso voa depende de `throwPower` e `throwArc`. O pri
     "-wander",
     { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
     { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
-    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8, "chance": 0.01 },
+    { "task": "wander", "priority": 8, "speed": 0.8, "chance": 60 },
+    { "task": "follow", "priority": 5, "distance": 10, "near": 3 },
+    { "task": "leapAtTarget", "priority": 3, "leap": 0.6 },
+    { "task": "attackRanged", "priority": 4, "cooldown": 30, "distance": 15 },
+    { "task": "attackMelee", "priority": 2, "memory": true },
+    { "task": "openDoor", "priority": 9, "close": true },
+    { "task": "moveThroughVillage", "priority": 5, "nocturnal": true },
+    { "task": "tempt", "priority": 4, "items": ["minecraft:wheat"], "scared": true },
+    { "task": "nearestAttackableTarget", "priority": 2, "entity": "minecraft:player", "sight": true, "nearby": true },
+    { "task": "hurtByTarget", "priority": 1, "help": true }
   ]
 }
 ```
@@ -3002,6 +3047,7 @@ O relógio corre no tempo do mundo, pelo que para quando ninguém está a jogar 
 {
   "dimensions": [-1],
   "structures": ["Fortress"],
+  "radius": 48,
   "timeFrom": 13000,
   "timeTo": 23000,
   "dayAtLeast": 3,
@@ -3034,6 +3080,7 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
 ```json
 {
   "entities": ["minecraft:blaze", "mymod:thing"],
+  "dimensions": [-1],
   "advancement": "minecraft:story/enter_the_nether"
 }
 ```
@@ -3328,6 +3375,7 @@ Uma ordem é um trabalho que as variantes de entidade indicadas como encarregado
       "sign": "Farm",
       "tool": "hoe",
       "standing": 64,
+      "area": 12,
       "takers": ["mypack:farmer"]
     },
     {
@@ -3806,7 +3854,20 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
-    "stars": { "count": 6000, "size": 0.12 }
+    "stars": { "count": 6000, "size": 0.12 },
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 }
   },
   "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
   "time": { "dayLength": 36000 },
@@ -3817,7 +3878,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": false },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4072,6 +4133,18 @@ Estas chaves ficam também no bloco `sky`, e também elas são desenhadas apenas
 }
 ```
 
+Uma única imagem a envolver o céu todo em vez das seis faces:
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "panorama": "mypack:textures/sky/panorama.png"
+    }
+  }
+}
+```
+
 `skybox` pinta as tuas próprias imagens no céu, por trás do brilho do nascer do sol, do sol, da lua e das estrelas. Indica as seis faces de um cubo como caminhos completos de textura, dispostas como o cubo se desdobra: `up` encontra o limite superior de `north`, `down` o seu limite inferior, `west` fica à sua esquerda e `east` à sua direita, com `south` depois de `east`. Ou indica apenas `panorama`, uma imagem 2:1 enrolada em todo o céu: o seu limite esquerdo está virado a norte e corre no sentido horário por este, sul e oeste, a sua linha superior é a vertical para cima e a inferior a vertical para baixo. Uma skybox com uma face em falta e sem panorama é ignorada, com um erro no registo.
 
 `aurora` pendura cortinas luminosas baixas sobre o céu do norte à noite. Ondulam lentamente, surgem gradualmente quando o sol se põe, e desaparecem de dia e com chuva. `color` é a cor na base e `topColor` a cor em que se esbatem no topo.
@@ -4206,18 +4279,18 @@ Um bloco `ambience` dá à dimensão a sua própria música, sons e partículas 
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0 }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
-      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+      "mobs": { "entities": ["#monster", "minecraft:zombie"], "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
     },
     "bounty": {
       "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
       "trades": [{ "profession": "minecraft:farmer", "career": "farmer", "level": 1, "buy": { "item": "minecraft:wheat", "min": 10 }, "sell": { "item": "minecraft:emerald" } }]
     },
     "longnight": {
-      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 4.0, "wakeAt": 1000 }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -4345,6 +4418,8 @@ Um ficheiro aqui é um sistema estelar, um subsistema, ou um planeta ou lua que 
   "kind": "system",
   "name": "ember",
   "galaxy": "milky_way",
+  "galaxyImage": "mypack:textures/gui/ember_galaxy.png",
+  "requires": ["mypack"],
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
@@ -4389,14 +4464,14 @@ Um ficheiro aqui é um sistema estelar, um subsistema, ou um planeta ou lua que 
 }
 ```
 
-| Chave         | Obrigatório     | Valor                                         | Predefinição           | O que faz                                                                                                                 |
-| ------------- | --------------- | --------------------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `kind`        | sim             | `system`, `planet`, `subsystem`, `moon`       |                        | O que o ficheiro cria                                                                                                     |
-| `galaxy`      | não             | texto, `a-z`, `0-9` e `_`                     | `milky_way`            | A galáxia de um sistema. Um nome que nenhum sistema tenha usado ainda inicia uma nova galáxia, com o seu próprio mapa     |
-| `galaxyImage` | não             | caminho da textura                            | a imagem da Via Láctea | O mosaico da galáxia na lista de galáxias. É definido pelo primeiro sistema de uma galáxia; lido apenas com o GalaxySpace |
-| `mapPosition` | para um sistema | `[x, y]` ou `[x, y, z]`                       |                        | Onde o sistema fica no mapa da galáxia                                                                                    |
-| `star`        | não             | objeto de [chaves de mapa](#chaves-de-mapa)   |                        | A estrela do sistema, desenhada no seu centro                                                                             |
-| `requires`    | não             | lista de ids de mods ou namespaces de pacotes | nenhum                 | O ficheiro é ignorado a menos que todos estejam presentes                                                                 |
+| Chave         | Obrigatório     | Valor                                         | Predefinição           | O que faz                                                                                                                                                                                    |
+| ------------- | --------------- | --------------------------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | sim             | `system`, `planet`, `subsystem`, `moon`       |                        | O que o ficheiro cria                                                                                                                                                                        |
+| `galaxy`      | não             | texto, `a-z`, `0-9` e `_`                     | `milky_way`            | A galáxia de um sistema. Um nome que nenhum sistema tenha usado ainda inicia uma nova galáxia, com o seu próprio mapa                                                                        |
+| `galaxyImage` | não             | caminho da textura                            | a imagem da Via Láctea | O mosaico da galáxia na lista de galáxias. É definido pelo primeiro sistema de uma galáxia; lido apenas com o GalaxySpace                                                                    |
+| `mapPosition` | para um sistema | `[x, y]` ou `[x, y, z]`                       |                        | Onde o sistema fica no mapa da galáxia. O Galacticraft multiplica o valor por 500, e a órbita exterior de Sol chega a cerca de 0,33, pelo que um sistema próximo usa valores inferiores a 1. |
+| `star`        | não             | objeto de [chaves de mapa](#chaves-de-mapa)   |                        | A estrela do sistema, desenhada no seu centro                                                                                                                                                |
+| `requires`    | não             | lista de ids de mods ou namespaces de pacotes | nenhum                 | O ficheiro é ignorado a menos que todos estejam presentes                                                                                                                                    |
 
 Um planeta, subsistema ou lua aqui aceita as [chaves de mapa](#chaves-de-mapa) com um `tier` predefinido de `0`. Vão para o mapa depois de todos os sistemas, primeiro os subsistemas, depois os planetas, depois as luas, pelo que cada um pode orbitar um corpo do mesmo pacote.
 
@@ -4411,6 +4486,26 @@ Um subsistema é uma segunda estrela que orbita a estrela do sistema. O Galactic
 *corpos do Galacticraft*
 
 Todos os corpos, seja um ficheiro de `celestial/`, a `star` de um sistema ou o bloco `galacticraft` de uma dimensão, colocam-se no mapa com estas chaves.
+
+`<namespace>/celestial/*.json`
+
+```json
+{
+  "kind": "planet",
+  "name": "ash",
+  "parent": "ember",
+  "icon": "galacticraftcore:textures/gui/celestialbodies/mercury.png",
+  "relativeSize": 0.5,
+  "distance": 1.4,
+  "scaledDistance": 1.4,
+  "orbitTime": 2.5,
+  "phaseShift": 1.2,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
+  "ringColor": "19E599",
+  "tier": 3
+}
+```
 
 | Chave            | Obrigatório             | Valor                    | Predefinição                                                                    | O que faz                                                                                                                                                                                                                                                                                                                                                         |
 | ---------------- | ----------------------- | ------------------------ | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4451,6 +4546,7 @@ Um bloco `galacticraft` num ficheiro de dimensão faz dessa dimensão um planeta
     "distance": 0.75,
     "tier": 2,
     "minTier": 2,
+    "reachable": true,
     "landing": "balloons",
     "landingHeight": 700,
     "arrival": "departure",
@@ -4526,14 +4622,26 @@ Uma dimensão cujo bloco `galacticraft` tem `kind: "asteroids"` é uma cintura d
 {
   "id": 73,
   "terrain": { "type": "void" },
-  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "sky": {
+    "skyColor": "000000",
+    "fogColor": "000000",
+    "starBrightness": 1.0,
+    "renderClouds": false,
+    "sunriseColors": false,
+    "sun": { "size": 6 }
+  },
   "physics": { "gravity": 0.1 },
+  "time": { "dayLength": 24000 },
   "galacticraft": {
     "kind": "asteroids",
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
     "tier": 3,
+    "landing": "lander",
+    "landingHeight": 500,
+    "arrival": "spawn",
+    "dungeon": { "spacing": 704, "chest": "mypack:chests/slag_dungeon" },
     "beltWidth": 0.15
   }
 }
@@ -4577,13 +4685,21 @@ Um ficheiro de dimensão cujo bloco `galacticraft` tem `kind: "station"` permite
 ```json
 {
   "id": 80,
-  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "sky": {
+    "skyColor": "000000",
+    "starBrightness": 1.0,
+    "renderSky": true,
+    "renderClouds": true,
+    "renderWeather": true,
+    "sun": { "size": 12 }
+  },
   "time": { "dayLength": 12000 },
   "galacticraft": {
     "kind": "station",
     "name": "cinder_station",
     "parent": "cinder",
     "tier": 2,
+    "checklist": ["equip_oxygen_suit", "equip_parachute"],
     "showName": true,
     "recipe": {
       "ingotTin": 32,
@@ -4647,7 +4763,9 @@ Dois extras do Galacticraft leem mais sobre um corpo do que o Galacticraft. Um o
       "orbitOffset": [0.5, 0],
       "thermalVariation": 0.4,
       "solarWind": 0.8,
-      "weather": "frozen_storm"
+      "weather": "frozen_storm",
+      "weatherFrequency": 2.0,
+      "freezeBlocks": false
     },
     "extraplanets": {
       "pressure": 40,
@@ -4713,6 +4831,7 @@ Um ficheiro com `kind` `override` altera o aspeto no mapa de um corpo que o Gala
 {
   "kind": "override",
   "body": "star.sol",
+  "requires": ["galaxyspace"],
   "icon": "mypack:textures/gui/celestialbodies/sun.png",
   "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
 }
@@ -4773,7 +4892,8 @@ Um bloco `portal` traz uma secção `portal`:
     "platform": true,
     "platformBlock": "mypack:ruby_block",
     "sound": "block.portal.travel",
-    "owned": true
+    "owned": true,
+    "walkIn": true
   },
   "variants": { "ruby_portal": { "meta": 0, "hardness": -1, "light": 11 } }
 }
@@ -5128,6 +5248,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
     "mypack:cave_well"
   ],
   "structureChance": 0.5,
+  "structureLoot": "mypack:chests/cave_shrine",
   "skyStone": "minecraft:sandstone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
@@ -5256,6 +5377,7 @@ Descreve algo que se gera. Cada entrada é uma **forma** colocada por uma **disp
   "indicators": ["mypack:iron_rock=3", "minecraft:gravel=1", "empty=4"],
   "indicatorCount": { "min": 1, "max": 3 },
   "indicatorSpread": 2,
+  "prospectAs": "Hematite",
   "then": ["mypack:quartz_halo=2", "empty=1", { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }],
   "thenCount": 1,
   "thenSpread": 6,
@@ -5446,6 +5568,12 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
     "hanging": false,
     "taper": "needle",
     "outline": "minecraft:obsidian",
+    "middle": "mypack:calcite",
+    "budding": "mypack:budding_amethyst",
+    "buddingChance": 0.083,
+    "crystal": "mypack:amethyst_cluster",
+    "crystalChance": 0.35,
+    "crack": 0.95,
     "fill": "minecraft:glowstone",
     "surface": ["minecraft:grass"],
     "seeSky": true,
@@ -5463,6 +5591,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
       "mypack:shrine"
     ],
     "integrity": 100,
+    "lootTable": "mypack:chests/crypt",
     "turns": ["none", { "turn": "half", "weight": 2 }],
     "mirrors": ["none", { "mirror": "leftright", "weight": 2 }],
     "at": [1000, -500],
@@ -5474,6 +5603,8 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
     "density": 0.8,
     "rich": "mypack:rich_ruby_ore",
     "poor": "mypack:poor_ruby_ore",
+    "richAt": 0.88,
+    "poorAt": 0.4,
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -5578,6 +5709,16 @@ Para uma forma que nenhum tipo integrado cubra, `imprint` é o caminho: constró
 *formas*
 
 As estruturas do vanilla fixam-se em pontos exatos com `structureAt` nas definições de `terrain`, como entradas `structure=x,z`, uma por linha: `"structureAt": ["villages=1000,-500"]`. **O x e o z são coordenadas de bloco, não de chunk**, e a estrutura gera-se no chunk que contém esse bloco; o poço de uma aldeia fica nesse próprio bloco, enquanto as outras estruturas começam onde o jogo as começaria nesse chunk. Uma entrada por instância desejada. O seu espaçamento, separação, distância mínima ao spawn e verificações de terreno plano ficam todos de lado, pelo que o ponto é responsabilidade do pacote, e dois pontos fixados a menos de um chunk de distância põem duas estruturas no mesmo chunk. A estrutura assenta no chão do seu chunk pelas regras habituais depois de fundada.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAt": ["villages=1000,-500", "Fortress=-2000,300"]
+  }
+}
+```
 
 | Definição     | Tipo                     | Predefinição | O que faz                                                                                                                                                                                                                                                                                |
 | ------------- | ------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -5730,6 +5871,8 @@ Um mapa de estruturas compõe modelos num único edifício com nome numa grelha,
   "ground": 0,
   "spacing": 64,
   "chance": 25,
+  "at": [128, -64],
+  "dimensions": [0],
   "layers": [
     {
       "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
@@ -5802,6 +5945,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "villagerY": 1,
   "villagerZ": 1,
   "ground": "minecraft:dirt",
+  "apron": 2,
   "requires": ["mypack"]
 }
 ```
@@ -5866,6 +6010,7 @@ Um `template` coloca, em vez disso, uma das tuas estruturas `.nbt`, virada para 
   "height": 6,
   "depth": 9,
   "structure": "mypack:blacksmith_shed",
+  "lootTable": "mypack:chests/smithy",
   "orderSign": "Mine",
   "orderX": 3,
   "orderY": 1,
@@ -6094,6 +6239,14 @@ Num pacote, estas chaves vão no bloco `settings` de um [modelo de mundo](#model
 
 *pré-geração*
 
+`config/mct_resourcedatapackloader_mixin.cfg`
+
+```ini
+chunks {
+    I:pregenBorderLimit=8192
+}
+```
+
 | Chave                         | O que faz                                                                                                                                                                                                                                                                                                                                                               | Porquê defini-la                                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | `pregenOnNewWorld`            | Raio em chunks criados à volta do spawn antes de alguém jogar. 12 é o mínimo e 0 significa esse mínimo em vez de nada, já que o jogo cria 12 chunks à volta do spawn por conta própria de qualquer forma: a execução assume esse terreno e ilumina-o de uma só vez, em vez de o deixar chegar aos poucos atrás do jogador. Aumenta para ir mais longe do que o jogo vai | Define até onde um pacote chega para além do terreno que o jogo já cria                                |
@@ -6301,6 +6454,21 @@ Um lado só é posto em campo onde um pacote o pede: sem nenhuma pasta `teams`, 
   "color": "red",
   "friendlyFire": false,
   "joinable": false,
+  "prefix": "[R] ",
+  "suffix": " *",
+  "scoreboard": true,
+  "mobFriendlyFire": false,
+  "seeFriendlyInvisibles": true,
+  "nameTags": "hideForOtherTeams",
+  "deathMessages": "always",
+  "collision": "pushOtherTeams",
+  "spawnBox": [0, 60, 0, 16, 80, 16],
+  "balance": true,
+  "spawn": "23,64,10",
+  "lead": "first",
+  "leadOn": "kaboom",
+  "leadIs": "Steve",
+  "leadSays": "You lead the red side",
   "entities": ["mypack:zombie_a", "mypack:sapper_a"],
   "picks": 0,
   "picksFrom": ["players"],
@@ -6389,22 +6557,47 @@ Um objetivo é um objetivo real no quadro de pontuação do próprio jogo, pelo 
   "name": "kaboom",
   "displayName": "Kills",
   "criterion": "dummy",
+  "render": "integer",
+  "individuals": true,
+  "carries": false,
+  "awardsTo": "wins",
   "display": "sidebar",
   "teamTotals": true,
   "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
-    "death": -1
+    "death": -1,
+    "raid": true,
+    "order": true,
+    "ownKill": -1
   },
-  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "opens": {
+    "by": "leader",
+    "lobby": "0,64,0",
+    "says": "Waiting for {leader} to start the round",
+    "leaderSays": "Type /rdpl round start",
+    "lobbyJoins": true,
+    "joinsSays": "Round is in progress, you can join after it ends"
+  },
   "ends": {
-    "afterMinutes": 10
+    "afterMinutes": 10,
+    "atScore": 50,
+    "afterRounds": 5,
+    "lastStanding": true,
+    "outSays": "You are out until the round ends",
+    "locksTeams": true,
+    "resets": true,
+    "intermissionSeconds": 10,
+    "intermissionSays": "Round cooldown {seconds}",
+    "startsSays": "Round starting in {seconds}"
   },
   "results": {
     "card": true,
     "title": "Final standings",
     "icon": "minecraft:tnt",
-    "seconds": 15
+    "seconds": 15,
+    "image": "mypack:textures/gui/result.png",
+    "background": "1E2630"
   }
 }
 ```
@@ -6524,7 +6717,12 @@ As definições do objeto `opens` decidem quando uma ronda começa e onde os jog
     "teams": ["miners", "raiders"],
     "passPercent": 51,
     "voteSeconds": 30,
-    "cooldownSeconds": 60
+    "cooldownSeconds": 60,
+    "leadSays": "{player} reset the round",
+    "voteSays": "{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds",
+    "tallySays": "Reset the round? {yes} yes, {no} no, {seconds}",
+    "passSays": "The vote passed, so the round is reset",
+    "failSays": "The vote failed, so the round goes on"
   }
 }
 ```
@@ -6575,7 +6773,8 @@ Todos os jogadores online de um lado votam, seja qual for o lado em que estão, 
     "held": "frozen",
     "endsAtScore": 10,
     "cycles": 5,
-    "mobTypes": ["minecraft:zombie"]
+    "mobTypes": ["minecraft:zombie"],
+    "mobTags": ["pawn"]
   }
 }
 ```
@@ -6624,6 +6823,8 @@ Enquanto uma vaga está na aldeia, os seus aldeões correm para dentro de casa a
   "points": 10,
   "loot": "mypack:raid_reward",
   "anywhere": true,
+  "reach": 96,
+  "timeout": 48000,
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6685,8 +6886,19 @@ Cada mensagem que este mod diz por si é uma regra integrada, listada abaixo. Um
   "image": "mypack:textures/gui/desert_card.png",
   "color": "3A2A10",
   "ticks": 120,
-  "when": { "timeFrom": 0, "timeTo": 12000 },
-  "repeat": "once_per_player"
+  "when": {
+    "timeFrom": 0,
+    "timeTo": 12000,
+    "dayAtLeast": 3,
+    "advancement": "minecraft:story/mine_stone",
+    "gameMode": "survival",
+    "team": "miners",
+    "objective": "kills",
+    "scoreAtLeast": 5
+  },
+  "repeat": "once_per_player",
+  "audience": "dimension",
+  "runs": "mypack:desert_entered"
 }
 ```
 
@@ -6749,6 +6961,35 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 ### Definições dos acionadores
 
 *cartas*
+
+`<namespace>/cards/*.json`
+
+```json
+{
+  "trigger": "score",
+  "dimension": "the_nether",
+  "structures": ["Fortress"],
+  "radius": 48,
+  "advancement": "minecraft:story/mine_stone",
+  "item": "minecraft:diamond_sword",
+  "entity": "minecraft:zombie",
+  "count": 5,
+  "below": 20,
+  "above": 80,
+  "time": 6000,
+  "day": 3,
+  "minutes": 30,
+  "roll": "2d6",
+  "order": "Mine",
+  "exposure": "radiation",
+  "level": 2,
+  "atLeast": 10,
+  "atMost": 12,
+  "objective": "kills",
+  "score": 5,
+  "requires": ["mypack"]
+}
+```
 
 | Definição            | Tipo                                          | Predefinição        | O que faz                                                                                                                                                                                                                        |
 | -------------------- | --------------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -6875,6 +7116,44 @@ O nome do ficheiro é à tua escolha, e vários ficheiros somam-se. Um ficheiro 
     "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
+    "pickplayer": "{player} picks {result}",
+    "pickteam": "{player} picks the team {result}",
+    "heads": "Heads",
+    "tails": "Tails",
+    "lastnone": "Nobody has rolled yet",
+    "nobody": "Nobody is here to hear it",
+    "notallowed": "You may not do that",
+    "usage": "Use: /rdplserver game coin",
+    "die": "{player} rolls {dice}d{sides}: {result}",
+    "packdie": "{player} rolls the {die}: {result}",
+    "dice": "{player} rolls {dice}: {rolls} makes {result}",
+    "advantage": "{player} rolls {dice} with advantage: {first}, {second}, so {result}",
+    "disadvantage": "{player} rolls {dice} with disadvantage: {first}, {second}, so {result}",
+    "pickmember": "{player} picks {result} from {team}",
+    "draw": "{player} draws {result} from {deck}, {left} left",
+    "reshuffled": "{player} reshuffles {deck} and draws {result}, {left} left",
+    "shuffle": "{player} shuffles {deck}, {left} cards",
+    "left": "{left} cards left in {deck}",
+    "empty": "{deck} is empty",
+    "nodeck": "There is no deck called {deck}",
+    "teamroll": "{member} rolls {dice}: {result}",
+    "teamrollwin": "The team roll comes to {result}, {score} points",
+    "tiebreak": "{objective} is tied between {sides}: {result} wins",
+    "notie": "{objective} is not tied",
+    "noobjective": "There is no objective called {objective}",
+    "turn": "{group} to move, {seconds} seconds",
+    "turnclock": "{group}: {seconds} seconds",
+    "turnwarn": "{group}: only {seconds} seconds left",
+    "turnout": "{group} ran out of time",
+    "turnpass": "{group} passes",
+    "turngap": "Next turn in {seconds} seconds",
+    "notturn": "It is not your turn",
+    "noturns": "Turns are not running",
+    "badsides": "{sides} is not a number of sides",
+    "badroll": "{roll} is not a roll",
+    "badaudience": "{audience} is not an audience",
+    "nodie": "There is no die called {name}",
+    "noteam": "There is no team called {team}",
     "coin": "{player} tosses the old coin: {result}"
   }
 }
@@ -6954,6 +7233,7 @@ Um ficheiro é um jogo de tabuleiro, identificado pelo nome do ficheiro. Define 
 {
   "name": "Chess",
   "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "quiet": false,
   "sides": [
     { "name": "White", "color": "white" },
     { "name": "Black", "color": "dark_gray" }
@@ -7254,7 +7534,75 @@ Cada chunk é processado uma vez, quando carrega do disco, e marcado nos dados d
     "villagePlotsBackRow": true,
     "villageTieStreets": true,
     "villageBlockSizes": ["32=3", "64=1"],
-    "villageLayout": "mypack:downtown"
+    "villageLayout": "mypack:downtown",
+    "villageCitySpacing": 1,
+    "villagePathSupportBlock": "minecraft:cobblestone",
+    "villagePathBridgeBlock": "minecraft:planks",
+    "villagePathBridgeBarrierBlock": "minecraft:fence",
+    "villagePathBridgeBarrierHeight": 1,
+    "villagePathBridgeSidewalkBlock": "minecraft:stone_slab",
+    "villagePathBridgeDrop": 4,
+    "villagePathBridgeFrameBlock": "minecraft:log",
+    "villagePathBridgeFrameTopBlock": "minecraft:planks",
+    "villagePathBridgeFrameHeight": 4,
+    "villagePathBridgeFrameRun": 24,
+    "villagePathBridgeFrameLeast": 24,
+    "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathPierCargo": ["minecraft:chest=1", "minecraft:hay_block=2,2", "empty=5"],
+    "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo",
+    "villagePathTunnelBlock": "minecraft:stonebrick",
+    "villagePathTunnelDepth": 10,
+    "villagePathTunnelLightBlock": "minecraft:glowstone",
+    "villagePathTunnelLightRun": 8,
+    "villageSewerBlock": "minecraft:stonebrick",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:stone_slab",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 25,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
+    "villageSewerWellEntrance": true,
+    "villageSubwayLines": 1,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "ew",
+    "villageSubwayWidth": 3,
+    "villageSubwayTracks": 1,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayBlock": "minecraft:rail",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:planks",
+    "villageSubwayTieRun": 2,
+    "villageSubwayShoulderBlock": "minecraft:cobblestone",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "minecraft:golden_rail",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stonebrick",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwaySurfaces": 25,
+    "villageSubwayStationLength": 12,
+    "villageSubwayStationRun": 96,
+    "villageSubwayStationRepeat": 12,
+    "villageSubwayStationFoot": 4,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:stone_slab",
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:log",
+    "villageSubwayBenchLength": 5
   }
 }
 ```
@@ -8007,6 +8355,7 @@ Remodela o próprio terreno à medida que este é criado, por isso um mundo gera
   "settings": {
     "flatBedrock": true,
     "flatBedrockRetrogen": false,
+    "flatBedrockRetrogenKey": "0000",
     "bedrockLayers": 1,
     "flatBedrockRoof": true,
     "flatBedrockFiller": "minecraft:stone",
@@ -8262,6 +8611,92 @@ Tudo o resto que um pacote faz, bloquear biomas e minérios, substituir blocos, 
     "worldType": "customized",
     "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
   }
+}
+```
+
+As mesmas chaves escritas em JSON simples, cada uma com o seu valor predefinido:
+
+```json
+{
+  "coordinateScale": 684.412,
+  "heightScale": 684.412,
+  "upperLimitScale": 512.0,
+  "lowerLimitScale": 512.0,
+  "depthNoiseScaleX": 200.0,
+  "depthNoiseScaleZ": 200.0,
+  "depthNoiseScaleExponent": 0.5,
+  "mainNoiseScaleX": 80.0,
+  "mainNoiseScaleY": 160.0,
+  "mainNoiseScaleZ": 80.0,
+  "baseSize": 8.5,
+  "stretchY": 12.0,
+  "seaLevel": 63,
+  "useLavaOceans": false,
+  "useWaterLakes": true,
+  "waterLakeChance": 4,
+  "useLavaLakes": true,
+  "lavaLakeChance": 80,
+  "useCaves": true,
+  "useRavines": true,
+  "useDungeons": true,
+  "dungeonChance": 8,
+  "useStrongholds": true,
+  "useVillages": true,
+  "useMineShafts": true,
+  "useTemples": true,
+  "useMonuments": true,
+  "useMansions": true,
+  "biomeDepthWeight": 1.0,
+  "biomeDepthOffset": 0.0,
+  "biomeScaleWeight": 1.0,
+  "biomeScaleOffset": 0.0,
+  "fixedBiome": -1,
+  "biomeSize": 4,
+  "riverSize": 4,
+  "dirtSize": 33,
+  "dirtCount": 10,
+  "dirtMinHeight": 0,
+  "dirtMaxHeight": 256,
+  "gravelSize": 33,
+  "gravelCount": 8,
+  "gravelMinHeight": 0,
+  "gravelMaxHeight": 256,
+  "graniteSize": 33,
+  "graniteCount": 10,
+  "graniteMinHeight": 0,
+  "graniteMaxHeight": 80,
+  "dioriteSize": 33,
+  "dioriteCount": 10,
+  "dioriteMinHeight": 0,
+  "dioriteMaxHeight": 80,
+  "andesiteSize": 33,
+  "andesiteCount": 10,
+  "andesiteMinHeight": 0,
+  "andesiteMaxHeight": 80,
+  "coalSize": 17,
+  "coalCount": 20,
+  "coalMinHeight": 0,
+  "coalMaxHeight": 128,
+  "ironSize": 9,
+  "ironCount": 20,
+  "ironMinHeight": 0,
+  "ironMaxHeight": 64,
+  "goldSize": 9,
+  "goldCount": 2,
+  "goldMinHeight": 0,
+  "goldMaxHeight": 32,
+  "redstoneSize": 8,
+  "redstoneCount": 8,
+  "redstoneMinHeight": 0,
+  "redstoneMaxHeight": 16,
+  "diamondSize": 8,
+  "diamondCount": 1,
+  "diamondMinHeight": 0,
+  "diamondMaxHeight": 16,
+  "lapisSize": 7,
+  "lapisCount": 1,
+  "lapisCenterHeight": 16,
+  "lapisSpread": 16
 }
 ```
 
