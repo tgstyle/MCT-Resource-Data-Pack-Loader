@@ -139,65 +139,65 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 
 本指南中的每個路徑都從 `assets/` 起算，因此對於命名空間為 `mypack` 的資源包，`<namespace>/blocks/*.json` 在磁碟上就是 `assets/mypack/blocks/ruby_ore.json`。每個章節都會在標題下方重複列出自己的路徑，並說明該路徑對應到什麼。
 
-| 路徑                                                                                            | 內容                                                                                          |
-| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `<namespace>/blocks/*.json`                                                                     | 方塊定義。[方塊](#方塊)                                                                       |
-| `<namespace>/items/*.json`                                                                      | 物品定義。[物品](#物品)                                                                       |
-| `<namespace>/fluids/*.json`                                                                     | 附帶方塊與桶的流體。[流體](#流體)                                                             |
-| `<namespace>/materials/*.json`                                                                  | 工具與盔甲的材料。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                         |
-| `<namespace>/tabs/*.json`                                                                       | 創造模式分頁。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                             |
-| `<namespace>/sounds/*.json`                                                                     | 音效事件。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                                 |
-| `<namespace>/oredict/*.json`                                                                    | 礦物辭典名稱。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                             |
-| `<namespace>/biomes/*.json`                                                                     | 生態域定義。[生態域](#生態域)                                                                 |
-| `<namespace>/worldgen/*.json`                                                                   | 生成什麼，以及在哪裡生成。[世界生成項目](#世界生成項目)                                       |
-| `<namespace>/caveregions/*.json`                                                                | 繪製在地下的具名區域。[洞穴區域](#洞穴區域)                                                   |
-| `<namespace>/dimensions/*.json`                                                                 | 維度定義。[維度](#維度)                                                                       |
-| `<namespace>/celestial/*.json`                                                                  | Galacticraft 星圖上的星系與天體。[Galacticraft 天體](#galacticraft-天體)                      |
-| `<namespace>/worldtemplates/*.json`                                                             | 將整個世界的設定放進一個檔案。[世界範本](#世界範本)                                           |
-| `<namespace>/worldintro/*.json`                                                                 | 玩家進入世界時顯示的頁面。[世界介紹](#世界介紹)                                               |
-| `<namespace>/gates/*.json`                                                                      | 傳送門與維度的條件。[傳送門與閘門](#傳送門與閘門)                                             |
-| `<namespace>/gamerules/*.json`                                                                  | 新世界的遊戲規則。[遊戲規則](#遊戲規則)                                                       |
-| `<namespace>/teams/*.json`                                                                      | 原版計分板上的陣營，以及加入陣營的對象。[隊伍](#隊伍)                                         |
-| `<namespace>/scoring/*.json`                                                                    | 目標、積分，以及比賽如何結束。[計分](#計分)                                                   |
-| `<namespace>/raids/*.json`                                                                      | 玩家把不祥之兆帶進村莊時，前來突襲村莊的各波敵人。[突襲](#突襲)                               |
-| `<namespace>/entities/*.json`                                                                   | 以既有實體為基礎建立的實體變體。[實體變體](#實體變體)                                         |
-| `<namespace>/hardness/*.json`                                                                   | 針對一組方塊的挖掘時間與爆炸倍率。[硬度群組](#硬度群組)                                       |
-| `<namespace>/ranks/*.json`                                                                      | 生物生成時可以抽取的隨機層級：額外生命值、傷害、效果、掉落物和名稱標籤。[生物等級](#生物等級) |
-| `<namespace>/orders/*.json`                                                                     | 實體變體在箱子旁為玩家完成的工作。[工作訂單](#工作訂單)                                       |
-| `<namespace>/exposures/*.json`                                                                  | 讓靠近指定方塊、攜帶指定物品或位於指定維度的玩家受到曝露的危險。[曝露設定](#曝露設定)         |
-| `<namespace>/overrides/<target>/<name>.json`                                                    | 就地修改既有方塊、物品與藥水類型的屬性。[屬性覆寫](#屬性覆寫)                                 |
-| `<namespace>/villages/*.json`                                                                   | 村莊可以興建的地塊。[村莊地塊](#村莊地塊)                                                     |
-| `<namespace>/pathintersects/*.json`                                                             | 繪製在村莊道路交會處的圖樣。[村莊道路](#村莊道路)                                             |
-| `<namespace>/structuremaps/*.json`                                                              | 在網格上組合成一棟大型建築的範本。[結構地圖](#結構地圖)                                       |
-| `<namespace>/citymaps/*.json`                                                                   | 手繪的街道配置，村莊依此規劃而非自行生長。[城市配置地圖](#城市配置地圖)                       |
-| `<namespace>/portalframes/*.json`                                                               | 玩家可以建造並點燃的框架。[傳送門框架](#傳送門框架)                                           |
-| `<namespace>/blastplaster/*.json`                                                               | Blast Plaster 在爆炸後依維度執行的動作。[Blast Plaster 整合](#blast-plaster-整合)             |
-| `<namespace>/structures/*.nbt`                                                                  | 供樹苗、`imprint` 與模組覆寫使用的範本。[可以覆寫的內容](#可以覆寫的內容)                     |
-| `<namespace>/recipes/*.json`                                                                    | 合成配方，新增或取代。[可以覆寫的內容](#可以覆寫的內容)                                       |
-| `<namespace>/recipe_removals/*.json`                                                            | 依名稱、命名空間或產出刪除的配方。[可以覆寫的內容](#可以覆寫的內容)                           |
-| `<namespace>/disabled/*.json`                                                                   | 退出遊戲的方塊與物品。[停用的方塊與物品](#停用的方塊與物品)                                   |
-| `<namespace>/furnace/*.json`                                                                    | 新增與移除的熔爐配方。[熔爐配方與燃料](#熔爐配方與燃料)                                       |
-| `<namespace>/tooltips/*.json`                                                                   | 額外的工具提示行。[工具提示](#工具提示)                                                       |
-| `<namespace>/fuels/*.json`                                                                      | 燃燒時間。[熔爐配方與燃料](#熔爐配方與燃料)                                                   |
-| `<namespace>/brewing/*.json`                                                                    | 釀造台配方。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                       |
-| `<namespace>/potions/*.json`                                                                    | 藥水效果。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                         |
-| `<namespace>/potion_types/*.json`                                                               | 以這些效果組成的瓶裝藥水。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                         |
-| `<namespace>/villagers/*.json`                                                                  | 村民職業。[村民與交易](#村民與交易)                                                           |
-| `<namespace>/trades/*.json`                                                                     | 各職業買進與賣出的東西。[村民與交易](#村民與交易)                                             |
-| `<namespace>/loot_tables/*.json`                                                                | 戰利品表，取代原有的。[可以覆寫的內容](#可以覆寫的內容)                                       |
-| `<namespace>/loot_injections/*.json`                                                            | 加入既有戰利品表的一個池。[可以覆寫的內容](#可以覆寫的內容)                                   |
-| `<namespace>/block_drops/*.json`                                                                | 資源包並不擁有的方塊所額外增加或取代的掉落物。[方塊掉落物](#方塊掉落物)                       |
-| `<namespace>/anvils/*.json`                                                                     | 鐵砧為指定物品附加的附魔、由此獲得的進度，以及在此之前的鎖定。[鐵砧操作](#鐵砧操作)           |
-| `<namespace>/cards/*.json`                                                                      | 由觸發器顯示的螢幕卡片，以及本模組自己說出的訊息。[卡片](#卡片)                               |
-| `<namespace>/dice/*.json`                                                                       | 帶有加權面的資源包骰子、牌組、誰能聽到擲骰結果，以及結果的措辭。[骰子與牌組](#骰子與牌組)     |
-| `<namespace>/games/*.json`                                                                      | 以生物作棋子進行的桌上遊戲：棋盤、棋子與其走法，以及結果的獎勵。[桌上遊戲](#桌上遊戲)         |
-| `<namespace>/harvests/*.json`                                                                   | 右鍵即可收穫並補種的作物。[右鍵收穫](#右鍵收穫)                                               |
-| `<namespace>/player_loot/*.json`                                                                | 玩家死亡時擲出的戰利品表。[玩家戰利品](#玩家戰利品)                                           |
-| `<namespace>/advancements/*.json`                                                               | 進度。[可以覆寫的內容](#可以覆寫的內容)                                                       |
-| `<namespace>/functions/*.mcfunction`                                                            | 函數檔案。[可以覆寫的內容](#可以覆寫的內容)                                                   |
-| `<namespace>/registry_remap/*.json`                                                             | 將舊名稱對應到新名稱。[登錄表重新命名](#登錄表重新命名)                                       |
-| `<namespace>/texts/*.txt`                                                                       | 純文字檔案，供世界介紹使用。[世界介紹](#世界介紹)                                             |
-| `<namespace>/models/`、`<namespace>/blockstates/`、`<namespace>/textures/`、`<namespace>/lang/` | 一般的資產資料夾。[模型、方塊狀態與材質](#模型方塊狀態與材質)                                 |
+| 路徑                                                                                            | 內容                                                                                                                |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json`                                                                     | 方塊定義。[方塊](#方塊)                                                                                             |
+| `<namespace>/items/*.json`                                                                      | 物品定義。[物品](#物品)                                                                                             |
+| `<namespace>/fluids/*.json`                                                                     | 附帶方塊與桶的流體。[流體](#流體)                                                                                   |
+| `<namespace>/materials/*.json`                                                                  | 工具與盔甲的材料。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                                               |
+| `<namespace>/tabs/*.json`                                                                       | 創造模式分頁。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                                                   |
+| `<namespace>/sounds/*.json`                                                                     | 音效事件。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                                                       |
+| `<namespace>/oredict/*.json`                                                                    | 礦物辭典名稱。[材料、分頁、音效、礦物辭典](#材料分頁音效礦物辭典)                                                   |
+| `<namespace>/biomes/*.json`                                                                     | 生態域定義。[生態域](#生態域)                                                                                       |
+| `<namespace>/worldgen/*.json`                                                                   | 生成什麼，以及在哪裡生成。[世界生成項目](#世界生成項目)                                                             |
+| `<namespace>/caveregions/*.json`                                                                | 繪製在地下的具名區域。[洞穴區域](#洞穴區域)                                                                         |
+| `<namespace>/dimensions/*.json`                                                                 | 維度定義。[維度](#維度)                                                                                             |
+| `<namespace>/celestial/*.json`                                                                  | Galacticraft 星圖上的星系與天體。[Galacticraft 天體](#galacticraft-天體)                                            |
+| `<namespace>/worldtemplates/*.json`                                                             | 將整個世界的設定放進一個檔案。[世界範本](#世界範本)                                                                 |
+| `<namespace>/worldintro/*.json`                                                                 | 玩家進入世界時顯示的頁面。[世界介紹](#世界介紹)                                                                     |
+| `<namespace>/gates/*.json`                                                                      | 傳送門與維度的條件。[傳送門與閘門](#傳送門與閘門)                                                                   |
+| `<namespace>/gamerules/*.json`                                                                  | 新世界的遊戲規則。[遊戲規則](#遊戲規則)                                                                             |
+| `<namespace>/teams/*.json`                                                                      | 原版計分板上的陣營，以及加入陣營的對象。[隊伍](#隊伍)                                                               |
+| `<namespace>/scoring/*.json`                                                                    | 目標、積分，以及比賽如何結束。[計分](#計分)                                                                         |
+| `<namespace>/raids/*.json`                                                                      | 玩家把不祥之兆帶進村莊時，前來突襲村莊的各波敵人。[突襲](#突襲)                                                     |
+| `<namespace>/entities/*.json`                                                                   | 以既有實體為基礎建立的實體變體。[實體變體](#實體變體)                                                               |
+| `<namespace>/hardness/*.json`                                                                   | 針對一組方塊的挖掘時間與爆炸倍率。[硬度群組](#硬度群組)                                                             |
+| `<namespace>/ranks/*.json`                                                                      | 生物生成時可以抽取的隨機層級：額外生命值、傷害、效果、掉落物和名稱標籤。[生物等級](#生物等級)                       |
+| `<namespace>/orders/*.json`                                                                     | 實體變體在箱子旁為玩家完成的工作。[工作訂單](#工作訂單)                                                             |
+| `<namespace>/exposures/*.json`                                                                  | 讓靠近指定方塊、攜帶指定物品或位於指定維度、生態域、結構、洞穴區域或高度的玩家受到曝露的危險。[曝露設定](#曝露設定) |
+| `<namespace>/overrides/<target>/<name>.json`                                                    | 就地修改既有方塊、物品與藥水類型的屬性。[屬性覆寫](#屬性覆寫)                                                       |
+| `<namespace>/villages/*.json`                                                                   | 村莊可以興建的地塊。[村莊地塊](#村莊地塊)                                                                           |
+| `<namespace>/pathintersects/*.json`                                                             | 繪製在村莊道路交會處的圖樣。[村莊道路](#村莊道路)                                                                   |
+| `<namespace>/structuremaps/*.json`                                                              | 在網格上組合成一棟大型建築的範本。[結構地圖](#結構地圖)                                                             |
+| `<namespace>/citymaps/*.json`                                                                   | 手繪的街道配置，村莊依此規劃而非自行生長。[城市配置地圖](#城市配置地圖)                                             |
+| `<namespace>/portalframes/*.json`                                                               | 玩家可以建造並點燃的框架。[傳送門框架](#傳送門框架)                                                                 |
+| `<namespace>/blastplaster/*.json`                                                               | Blast Plaster 在爆炸後依維度執行的動作。[Blast Plaster 整合](#blast-plaster-整合)                                   |
+| `<namespace>/structures/*.nbt`                                                                  | 供樹苗、`imprint` 與模組覆寫使用的範本。[可以覆寫的內容](#可以覆寫的內容)                                           |
+| `<namespace>/recipes/*.json`                                                                    | 合成配方，新增或取代。[可以覆寫的內容](#可以覆寫的內容)                                                             |
+| `<namespace>/recipe_removals/*.json`                                                            | 依名稱、命名空間或產出刪除的配方。[可以覆寫的內容](#可以覆寫的內容)                                                 |
+| `<namespace>/disabled/*.json`                                                                   | 退出遊戲的方塊與物品。[停用的方塊與物品](#停用的方塊與物品)                                                         |
+| `<namespace>/furnace/*.json`                                                                    | 新增與移除的熔爐配方。[熔爐配方與燃料](#熔爐配方與燃料)                                                             |
+| `<namespace>/tooltips/*.json`                                                                   | 額外的工具提示行。[工具提示](#工具提示)                                                                             |
+| `<namespace>/fuels/*.json`                                                                      | 燃燒時間。[熔爐配方與燃料](#熔爐配方與燃料)                                                                         |
+| `<namespace>/brewing/*.json`                                                                    | 釀造台配方。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                                             |
+| `<namespace>/potions/*.json`                                                                    | 藥水效果。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                                               |
+| `<namespace>/potion_types/*.json`                                                               | 以這些效果組成的瓶裝藥水。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                               |
+| `<namespace>/villagers/*.json`                                                                  | 村民職業。[村民與交易](#村民與交易)                                                                                 |
+| `<namespace>/trades/*.json`                                                                     | 各職業買進與賣出的東西。[村民與交易](#村民與交易)                                                                   |
+| `<namespace>/loot_tables/*.json`                                                                | 戰利品表，取代原有的。[可以覆寫的內容](#可以覆寫的內容)                                                             |
+| `<namespace>/loot_injections/*.json`                                                            | 加入既有戰利品表的一個池。[可以覆寫的內容](#可以覆寫的內容)                                                         |
+| `<namespace>/block_drops/*.json`                                                                | 資源包並不擁有的方塊所額外增加或取代的掉落物。[方塊掉落物](#方塊掉落物)                                             |
+| `<namespace>/anvils/*.json`                                                                     | 鐵砧為指定物品附加的附魔、由此獲得的進度，以及在此之前的鎖定。[鐵砧操作](#鐵砧操作)                                 |
+| `<namespace>/cards/*.json`                                                                      | 由觸發器顯示的螢幕卡片，以及本模組自己說出的訊息。[卡片](#卡片)                                                     |
+| `<namespace>/dice/*.json`                                                                       | 帶有加權面的資源包骰子、牌組、誰能聽到擲骰結果，以及結果的措辭。[骰子與牌組](#骰子與牌組)                           |
+| `<namespace>/games/*.json`                                                                      | 以生物作棋子進行的桌上遊戲：棋盤、棋子與其走法，以及結果的獎勵。[桌上遊戲](#桌上遊戲)                               |
+| `<namespace>/harvests/*.json`                                                                   | 右鍵即可收穫並補種的作物。[右鍵收穫](#右鍵收穫)                                                                     |
+| `<namespace>/player_loot/*.json`                                                                | 玩家死亡時擲出的戰利品表。[玩家戰利品](#玩家戰利品)                                                                 |
+| `<namespace>/advancements/*.json`                                                               | 進度。[可以覆寫的內容](#可以覆寫的內容)                                                                             |
+| `<namespace>/functions/*.mcfunction`                                                            | 函數檔案。[可以覆寫的內容](#可以覆寫的內容)                                                                         |
+| `<namespace>/registry_remap/*.json`                                                             | 將舊名稱對應到新名稱。[登錄表重新命名](#登錄表重新命名)                                                             |
+| `<namespace>/texts/*.txt`                                                                       | 純文字檔案，供世界介紹使用。[世界介紹](#世界介紹)                                                                   |
+| `<namespace>/models/`、`<namespace>/blockstates/`、`<namespace>/textures/`、`<namespace>/lang/` | 一般的資產資料夾。[模型、方塊狀態與材質](#模型方塊狀態與材質)                                                       |
 
 ## 如何閱讀表格
 
@@ -3216,13 +3216,17 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 
 檔案路徑即為危害的名稱，其死亡訊息取自語言鍵 `death.attack.rdpl.<file name>`。
 
-由資源包定義的危害：指定的方塊、物品與維度，會讓站在這些方塊附近、攜帶這些物品或身處這些維度的玩家受到曝露，曝露分為多個等級，每個等級會施加效果與週期性傷害。危害也可以從附近的生物與玩家身上感染，或隨雨水降下（[傳染與天氣](#傳染與天氣)）。一個檔案定義一種危害，多種危害可同時運作。各鍵的預設值是 Immersive World 輻射所用的數值。
+由資源包定義的危害：指定的方塊、物品、維度、生態域、結構、洞穴區域與高度，會讓站在這些方塊附近、攜帶這些物品或身處這些維度的玩家受到曝露，曝露分為多個等級，每個等級會施加效果與週期性傷害。危害也可以從附近的生物與玩家身上感染，或隨雨水降下（[傳染與天氣](#傳染與天氣)）。一個檔案定義一種危害，多種危害可同時運作。各鍵的預設值是 Immersive World 輻射所用的數值。
 
 ```json
 {
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
   "dimensions": [ "-1" ],
+  "biomes": [ "minecraft:desert=2", "#SANDY" ],
+  "structures": [ "Village", "mypack:ruin=2" ],
+  "caveRegions": [ "mypack:glowcave=2" ],
+  "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
   "scanInterval": 20,
   "range": 10,
@@ -3238,17 +3242,21 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 }
 ```
 
-| 鍵                    | 必填   | 值                                    | 預設   | 作用                                                                     |
-| --------------------- | ------ | ------------------------------------- | ------ | ------------------------------------------------------------------------ |
-| `blocks`              | 五選一 | 清單，內容為 `block` 或 `block=level` |        | 讓站在附近的玩家受到曝露的方塊。未指定等級則為 1                         |
-| `items`               | 五選一 | 清單，內容為 `item` 或 `item=level`   |        | 讓攜帶或穿戴的玩家受到曝露的物品                                         |
-| `dimensions`          | 五選一 | 清單，內容為 `dim` 或 `dim=level`     |        | 讓身處其中的任何玩家受到曝露的數字維度 id                                |
-| `levels`              | 是     | 清單，內容為等級                      |        | 嚴重程度的階梯，第一項為等級 1。玩家取得任一來源所達到的最高等級         |
-| `immunity`            | 否     | 藥水名稱                              | 無     | 帶有此效果的對象完全不會受到曝露                                         |
-| `scanInterval`        | 否     | 刻                                    | `20`   | 檢查周圍環境與物品欄的頻率                                               |
-| `range`               | 否     | 方塊                                  | `10`   | 方塊曝露的影響範圍，球形                                                 |
-| `sourcesForNextLevel` | 否     | 整數                                  | `0`    | 附近同一等級的來源達到此數量，就會使該等級再升高一級。`0` 表示關閉此功能 |
-| `skipsCreative`       | 否     | 布林值                                | `true` | 創造與旁觀模式的玩家不受影響                                             |
+| 鍵                    | 必填   | 值                                            | 預設   | 作用                                                                     |
+| --------------------- | ------ | --------------------------------------------- | ------ | ------------------------------------------------------------------------ |
+| `blocks`              | 九選一 | 清單，內容為 `block` 或 `block=level`         |        | 讓站在附近的玩家受到曝露的方塊。未指定等級則為 1                         |
+| `items`               | 九選一 | 清單，內容為 `item` 或 `item=level`           |        | 讓攜帶或穿戴的玩家受到曝露的物品                                         |
+| `dimensions`          | 九選一 | 清單，內容為 `dim` 或 `dim=level`             |        | 讓身處其中的任何玩家受到曝露的數字維度 id                                |
+| `biomes`              | 九選一 | 清單，內容為 `biome` 或 `biome=level`         |        | 讓站在其中的任何玩家受到曝露的生態域。`#` 表示 BiomeDictionary 類型      |
+| `structures`          | 九選一 | 清單，內容為 `structure` 或 `structure=level` |        | 讓身處其內部的玩家受到曝露的結構。資源包結構在 `range` 個方塊範圍內生效  |
+| `caveRegions`         | 九選一 | 清單，內容為 `region` 或 `region=level`       |        | 讓身處其中的玩家受到曝露的洞穴區域。只寫名稱時使用本檔案的命名空間       |
+| `heights`             | 九選一 | 清單，內容為 `from:to=level`                  |        | 讓身處其中的玩家受到曝露的 Y 軸區間。某一側留空表示沒有限制              |
+| `levels`              | 是     | 清單，內容為等級                              |        | 嚴重程度的階梯，第一項為等級 1。玩家取得任一來源所達到的最高等級         |
+| `immunity`            | 否     | 藥水名稱                                      | 無     | 帶有此效果的對象完全不會受到曝露                                         |
+| `scanInterval`        | 否     | 刻                                            | `20`   | 檢查周圍環境與物品欄的頻率                                               |
+| `range`               | 否     | 方塊                                          | `10`   | 方塊曝露的影響範圍，球形                                                 |
+| `sourcesForNextLevel` | 否     | 整數                                          | `0`    | 附近同一等級的來源達到此數量，就會使該等級再升高一級。`0` 表示關閉此功能 |
+| `skipsCreative`       | 否     | 布林值                                        | `true` | 創造與旁觀模式的玩家不受影響                                             |
 
 ### 等級
 
@@ -3264,6 +3272,8 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `effects`        | 否   | 清單，內容為效果 | 無    | 一併施加的額外效果，格式與藥水類型相同。未設定 `duration` 時，持續時間隨掃描視窗 |
 
 等級效果會比下一次掃描略晚結束，因此玩家離開後效果會自行消退。因曝露傷害而死亡時，訊息取自 `death.attack.rdpl.<file name>`，由資源包的語言檔案提供。
+
+在玩家腳下成立的來源，每次掃描都會重新檢查，因此玩家一離開，曝露就立即結束。
 
 ### 傳染與天氣
 
@@ -3287,13 +3297,13 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 
 | 鍵                  | 必填   | 值                                      | 預設               | 作用                                                                                              |
 | ------------------- | ------ | --------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| `carriers`          | 五選一 | 清單，內容為 `entity` 或 `entity=level` |                    | 一律以該等級傳播危害的生物，或 `minecraft:player`。未指定等級則為 1                               |
+| `carriers`          | 九選一 | 清單，內容為 `entity` 或 `entity=level` |                    | 一律以該等級傳播危害的生物，或 `minecraft:player`。未指定等級則為 1                               |
 | `contagious`        | 否     | 布林值                                  | `false`            | 任何受到曝露的對象都會以其所處等級傳播危害                                                        |
 | `catchers`          | 否     | 清單，內容為實體名稱                    | `minecraft:player` | 可被感染的對象。生物只會從帶原者與帶有者身上感染，不會從方塊、物品或天氣感染                      |
 | `contagionRange`    | 否     | 方塊                                    | `4`                | 帶原者或帶有者的影響範圍，球形                                                                    |
 | `contagionChance`   | 否     | `0` 到 `1`                              | `0.1`              | 每次掃描帶原者或帶有者時，範圍內每個感染對象被感染的機率                                          |
 | `contagionDuration` | 否     | 刻                                      | `1200`             | 被感染的危害維持所感染等級的時間。再次感染會重新計時                                              |
-| `weather`           | 五選一 | 清單，內容為 `kind` 或 `kind=level`     |                    | `rain` 讓被雨淋到的玩家受到曝露：頭頂為開闊天空，且位於會下雨的生態域。`thunder` 在暴風雨期間計算 |
+| `weather`           | 九選一 | 清單，內容為 `kind` 或 `kind=level`     |                    | `rain` 讓被雨淋到的玩家受到曝露：頭頂為開闊天空，且位於會下雨的生態域。`thunder` 在暴風雨期間計算 |
 | `weatherDimensions` | 否     | 清單，內容為 `dim`                      | 所有維度           | 天氣會造成曝露的數字維度 id                                                                       |
 
 被感染的危害在掃描中算作多一個來源，與其他來源一樣取最高等級，`immunity` 同樣能防護。除非 `contagionRange` 與 `contagionChance` 都大於 `0`，且檔案列出 `carriers` 或設定 `contagious`，否則不會有任何傳播；而且只有在某個檔案這樣設定時，才會去檢查生物。

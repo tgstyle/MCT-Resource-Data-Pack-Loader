@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.ExposurePlaces;
 import mctmods.resourcedatapackloader.util.ExposureSpread;
 
 import net.minecraft.block.Block;
@@ -90,6 +91,7 @@ public final class ContentExposures {
         int most = def.levels.size();
         int level = Math.max(def.dimensions.getOrDefault(player.dimension, 0), scanItems(def, player, most));
         level = Math.max(level, Math.max(ExposureSpread.weatherLevel(def, player), ExposureSpread.caughtLevel(def, player)));
+        level = Math.max(level, ExposurePlaces.level(def, player));
         if (level >= most) { return most; }
         return Math.max(level, scanWorld(def, player, most));
     }

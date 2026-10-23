@@ -139,65 +139,65 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 
 이 가이드의 모든 경로는 `assets/`부터 적습니다. 따라서 `<namespace>/blocks/*.json`은 네임스페이스가 `mypack`인 팩에서는 디스크상 `assets/mypack/blocks/ruby_ore.json`입니다. 각 섹션은 제목 아래에 자기 경로를 다시 적고, 그 경로가 무엇이 되는지 덧붙입니다.
 
-| 경로                                                                                            | 내용                                                                                                                                 |
-| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `<namespace>/blocks/*.json`                                                                     | 블록 정의. [블록](#블록)                                                                                                             |
-| `<namespace>/items/*.json`                                                                      | 아이템 정의. [아이템](#아이템)                                                                                                       |
-| `<namespace>/fluids/*.json`                                                                     | 블록과 양동이가 딸린 유체. [유체](#유체)                                                                                             |
-| `<namespace>/materials/*.json`                                                                  | 도구와 방어구 재질. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                             |
-| `<namespace>/tabs/*.json`                                                                       | 크리에이티브 탭. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                |
-| `<namespace>/sounds/*.json`                                                                     | 소리 이벤트. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                    |
-| `<namespace>/oredict/*.json`                                                                    | 광석 사전 이름. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                 |
-| `<namespace>/biomes/*.json`                                                                     | 생물 군계 정의. [생물 군계](#생물-군계)                                                                                              |
-| `<namespace>/worldgen/*.json`                                                                   | 무엇이 어디에 생성되는지. [월드젠 항목](#월드젠-항목)                                                                                |
-| `<namespace>/caveregions/*.json`                                                                | 지하에 칠해 놓는 이름 있는 지역. [동굴 지역](#동굴-지역)                                                                             |
-| `<namespace>/dimensions/*.json`                                                                 | 차원 정의. [차원](#차원)                                                                                                             |
-| `<namespace>/celestial/*.json`                                                                  | Galacticraft 지도용 항성계와 천체. [Galacticraft 천체](#galacticraft-천체)                                                           |
-| `<namespace>/worldtemplates/*.json`                                                             | 월드 전체의 설정을 파일 하나에. [월드 템플릿](#월드-템플릿)                                                                          |
-| `<namespace>/worldintro/*.json`                                                                 | 플레이어가 월드에 들어올 때 보여 주는 페이지. [월드 소개](#월드-소개)                                                                |
-| `<namespace>/gates/*.json`                                                                      | 포털과 차원에 거는 조건. [포털과 게이트](#포털과-게이트)                                                                             |
-| `<namespace>/gamerules/*.json`                                                                  | 새 월드의 게임 규칙. [게임 규칙](#게임-규칙)                                                                                         |
-| `<namespace>/teams/*.json`                                                                      | 바닐라 스코어보드의 진영과 거기에 합류하는 대상. [팀](#팀)                                                                           |
-| `<namespace>/scoring/*.json`                                                                    | 목표, 점수, 경기가 끝나는 방식. [점수 계산](#점수-계산)                                                                              |
-| `<namespace>/raids/*.json`                                                                      | 플레이어가 징조를 마을에 가져오면 마을로 몰려오는 웨이브. [습격](#습격)                                                              |
-| `<namespace>/entities/*.json`                                                                   | 이미 있는 엔티티를 바탕으로 만든 엔티티 변형. [엔티티 변형](#엔티티-변형)                                                            |
-| `<namespace>/hardness/*.json`                                                                   | 블록 그룹의 채굴 시간과 폭발 배율. [경도 그룹](#경도-그룹)                                                                           |
-| `<namespace>/ranks/*.json`                                                                      | 몹이 스폰될 때 뽑을 수 있는 무작위 단계: 추가 체력, 피해, 효과, 전리품, 이름표. [몹 등급](#몹-등급)                                  |
-| `<namespace>/orders/*.json`                                                                     | 엔티티 변형이 상자 앞의 플레이어를 위해 하는 일. [작업 지시](#작업-지시)                                                             |
-| `<namespace>/exposures/*.json`                                                                  | 이름 있는 블록 근처에 있거나, 이름 있는 아이템을 지니고 있거나, 이름 있는 차원에 있는 플레이어를 노출시키는 위험 요소. [노출](#노출) |
-| `<namespace>/overrides/<target>/<name>.json`                                                    | 기존 블록, 아이템, 물약 유형의 속성을 그 자리에서 변경. [속성 재정의](#속성-재정의)                                                  |
-| `<namespace>/villages/*.json`                                                                   | 마을이 지을 수 있는 구획. [마을 구획](#마을-구획)                                                                                    |
-| `<namespace>/pathintersects/*.json`                                                             | 마을 도로가 만나는 곳에 칠하는 디자인. [마을 도로](#마을-도로)                                                                       |
-| `<namespace>/structuremaps/*.json`                                                              | 격자 위에서 큰 건물 하나로 조합되는 템플릿. [구조물 맵](#구조물-맵)                                                                  |
-| `<namespace>/citymaps/*.json`                                                                   | 마을이 자라는 대신 이를 따라 배치되는, 직접 그린 거리 계획. [도시 배치 맵](#도시-배치-맵)                                            |
-| `<namespace>/portalframes/*.json`                                                               | 플레이어가 짓고 점화할 수 있는 프레임. [포털 프레임](#포털-프레임)                                                                   |
-| `<namespace>/blastplaster/*.json`                                                               | 폭발 뒤에 Blast Plaster가 차원별로 하는 일. [Blast Plaster 연동](#blast-plaster-연동)                                                |
-| `<namespace>/structures/*.nbt`                                                                  | 묘목, `imprint`, 모드 재정의용 템플릿. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                               |
-| `<namespace>/recipes/*.json`                                                                    | 추가하거나 교체하는 제작 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                     |
-| `<namespace>/recipe_removals/*.json`                                                            | 이름, 네임스페이스, 결과물 기준으로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                 |
-| `<namespace>/disabled/*.json`                                                                   | 사용에서 제외한 블록과 아이템. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)                                                 |
-| `<namespace>/furnace/*.json`                                                                    | 추가하거나 제거하는 화로 레시피. [화로 레시피와 연료](#화로-레시피와-연료)                                                           |
-| `<namespace>/tooltips/*.json`                                                                   | 추가 툴팁 줄. [툴팁](#툴팁)                                                                                                          |
-| `<namespace>/fuels/*.json`                                                                      | 연소 시간. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                 |
-| `<namespace>/brewing/*.json`                                                                    | 양조대 레시피. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                         |
-| `<namespace>/potions/*.json`                                                                    | 물약 효과. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                             |
-| `<namespace>/potion_types/*.json`                                                               | 그 효과로 만든 병에 담긴 물약. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                         |
-| `<namespace>/villagers/*.json`                                                                  | 주민 직업. [주민과 거래](#주민과-거래)                                                                                               |
-| `<namespace>/trades/*.json`                                                                     | 직종이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                      |
-| `<namespace>/loot_tables/*.json`                                                                | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                              |
-| `<namespace>/loot_injections/*.json`                                                            | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                      |
-| `<namespace>/block_drops/*.json`                                                                | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                          |
-| `<namespace>/anvils/*.json`                                                                     | 모루가 이름 있는 아이템에 부여하는 마법, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                               |
-| `<namespace>/cards/*.json`                                                                      | 트리거 시 표시되는 화면 카드와 이 모드가 직접 전하는 메시지. [카드](#카드)                                                           |
-| `<namespace>/dice/*.json`                                                                       | 가중치 면이 있는 팩 주사위, 카드 덱, 굴림 결과를 듣는 대상, 결과 문구. [주사위와 덱](#주사위와-덱)                                   |
-| `<namespace>/games/*.json`                                                                      | 몹을 말로 쓰는 보드 게임. 판, 말과 말의 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                                         |
-| `<namespace>/harvests/*.json`                                                                   | 우클릭으로 수확하고 다시 심는 작물. [우클릭 수확](#우클릭-수확)                                                                      |
-| `<namespace>/player_loot/*.json`                                                                | 플레이어가 죽을 때 굴리는 전리품 테이블. [플레이어 전리품](#플레이어-전리품)                                                         |
-| `<namespace>/advancements/*.json`                                                               | 발전 과제. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                           |
-| `<namespace>/functions/*.mcfunction`                                                            | 함수 파일. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                           |
-| `<namespace>/registry_remap/*.json`                                                             | 옛 이름을 새 이름에 대응시킵니다. [레지스트리 이름 변경](#레지스트리-이름-변경)                                                      |
-| `<namespace>/texts/*.txt`                                                                       | 월드 소개에 쓰는 일반 텍스트 파일. [월드 소개](#월드-소개)                                                                           |
-| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 일반적인 에셋 폴더. [모델, 블록 상태, 텍스처](#모델-블록-상태-텍스처)                                                                |
+| 경로                                                                                            | 내용                                                                                                                                                                     |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<namespace>/blocks/*.json`                                                                     | 블록 정의. [블록](#블록)                                                                                                                                                 |
+| `<namespace>/items/*.json`                                                                      | 아이템 정의. [아이템](#아이템)                                                                                                                                           |
+| `<namespace>/fluids/*.json`                                                                     | 블록과 양동이가 딸린 유체. [유체](#유체)                                                                                                                                 |
+| `<namespace>/materials/*.json`                                                                  | 도구와 방어구 재질. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                                                 |
+| `<namespace>/tabs/*.json`                                                                       | 크리에이티브 탭. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                                                    |
+| `<namespace>/sounds/*.json`                                                                     | 소리 이벤트. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                                                        |
+| `<namespace>/oredict/*.json`                                                                    | 광석 사전 이름. [재질, 탭, 소리, 광석 사전](#재질-탭-소리-광석-사전)                                                                                                     |
+| `<namespace>/biomes/*.json`                                                                     | 생물 군계 정의. [생물 군계](#생물-군계)                                                                                                                                  |
+| `<namespace>/worldgen/*.json`                                                                   | 무엇이 어디에 생성되는지. [월드젠 항목](#월드젠-항목)                                                                                                                    |
+| `<namespace>/caveregions/*.json`                                                                | 지하에 칠해 놓는 이름 있는 지역. [동굴 지역](#동굴-지역)                                                                                                                 |
+| `<namespace>/dimensions/*.json`                                                                 | 차원 정의. [차원](#차원)                                                                                                                                                 |
+| `<namespace>/celestial/*.json`                                                                  | Galacticraft 지도용 항성계와 천체. [Galacticraft 천체](#galacticraft-천체)                                                                                               |
+| `<namespace>/worldtemplates/*.json`                                                             | 월드 전체의 설정을 파일 하나에. [월드 템플릿](#월드-템플릿)                                                                                                              |
+| `<namespace>/worldintro/*.json`                                                                 | 플레이어가 월드에 들어올 때 보여 주는 페이지. [월드 소개](#월드-소개)                                                                                                    |
+| `<namespace>/gates/*.json`                                                                      | 포털과 차원에 거는 조건. [포털과 게이트](#포털과-게이트)                                                                                                                 |
+| `<namespace>/gamerules/*.json`                                                                  | 새 월드의 게임 규칙. [게임 규칙](#게임-규칙)                                                                                                                             |
+| `<namespace>/teams/*.json`                                                                      | 바닐라 스코어보드의 진영과 거기에 합류하는 대상. [팀](#팀)                                                                                                               |
+| `<namespace>/scoring/*.json`                                                                    | 목표, 점수, 경기가 끝나는 방식. [점수 계산](#점수-계산)                                                                                                                  |
+| `<namespace>/raids/*.json`                                                                      | 플레이어가 징조를 마을에 가져오면 마을로 몰려오는 웨이브. [습격](#습격)                                                                                                  |
+| `<namespace>/entities/*.json`                                                                   | 이미 있는 엔티티를 바탕으로 만든 엔티티 변형. [엔티티 변형](#엔티티-변형)                                                                                                |
+| `<namespace>/hardness/*.json`                                                                   | 블록 그룹의 채굴 시간과 폭발 배율. [경도 그룹](#경도-그룹)                                                                                                               |
+| `<namespace>/ranks/*.json`                                                                      | 몹이 스폰될 때 뽑을 수 있는 무작위 단계: 추가 체력, 피해, 효과, 전리품, 이름표. [몹 등급](#몹-등급)                                                                      |
+| `<namespace>/orders/*.json`                                                                     | 엔티티 변형이 상자 앞의 플레이어를 위해 하는 일. [작업 지시](#작업-지시)                                                                                                 |
+| `<namespace>/exposures/*.json`                                                                  | 이름 있는 블록 근처에 있거나, 이름 있는 아이템을 지니고 있거나, 이름 있는 차원, 생물 군계, 구조물, 동굴 지역, 높이에 있는 플레이어를 노출시키는 위험 요소. [노출](#노출) |
+| `<namespace>/overrides/<target>/<name>.json`                                                    | 기존 블록, 아이템, 물약 유형의 속성을 그 자리에서 변경. [속성 재정의](#속성-재정의)                                                                                      |
+| `<namespace>/villages/*.json`                                                                   | 마을이 지을 수 있는 구획. [마을 구획](#마을-구획)                                                                                                                        |
+| `<namespace>/pathintersects/*.json`                                                             | 마을 도로가 만나는 곳에 칠하는 디자인. [마을 도로](#마을-도로)                                                                                                           |
+| `<namespace>/structuremaps/*.json`                                                              | 격자 위에서 큰 건물 하나로 조합되는 템플릿. [구조물 맵](#구조물-맵)                                                                                                      |
+| `<namespace>/citymaps/*.json`                                                                   | 마을이 자라는 대신 이를 따라 배치되는, 직접 그린 거리 계획. [도시 배치 맵](#도시-배치-맵)                                                                                |
+| `<namespace>/portalframes/*.json`                                                               | 플레이어가 짓고 점화할 수 있는 프레임. [포털 프레임](#포털-프레임)                                                                                                       |
+| `<namespace>/blastplaster/*.json`                                                               | 폭발 뒤에 Blast Plaster가 차원별로 하는 일. [Blast Plaster 연동](#blast-plaster-연동)                                                                                    |
+| `<namespace>/structures/*.nbt`                                                                  | 묘목, `imprint`, 모드 재정의용 템플릿. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                   |
+| `<namespace>/recipes/*.json`                                                                    | 추가하거나 교체하는 제작 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                         |
+| `<namespace>/recipe_removals/*.json`                                                            | 이름, 네임스페이스, 결과물 기준으로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                     |
+| `<namespace>/disabled/*.json`                                                                   | 사용에서 제외한 블록과 아이템. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)                                                                                     |
+| `<namespace>/furnace/*.json`                                                                    | 추가하거나 제거하는 화로 레시피. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                               |
+| `<namespace>/tooltips/*.json`                                                                   | 추가 툴팁 줄. [툴팁](#툴팁)                                                                                                                                              |
+| `<namespace>/fuels/*.json`                                                                      | 연소 시간. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                                                     |
+| `<namespace>/brewing/*.json`                                                                    | 양조대 레시피. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                                             |
+| `<namespace>/potions/*.json`                                                                    | 물약 효과. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                                                 |
+| `<namespace>/potion_types/*.json`                                                               | 그 효과로 만든 병에 담긴 물약. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                             |
+| `<namespace>/villagers/*.json`                                                                  | 주민 직업. [주민과 거래](#주민과-거래)                                                                                                                                   |
+| `<namespace>/trades/*.json`                                                                     | 직종이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                                          |
+| `<namespace>/loot_tables/*.json`                                                                | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                  |
+| `<namespace>/loot_injections/*.json`                                                            | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                          |
+| `<namespace>/block_drops/*.json`                                                                | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                                              |
+| `<namespace>/anvils/*.json`                                                                     | 모루가 이름 있는 아이템에 부여하는 마법, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                                                                   |
+| `<namespace>/cards/*.json`                                                                      | 트리거 시 표시되는 화면 카드와 이 모드가 직접 전하는 메시지. [카드](#카드)                                                                                               |
+| `<namespace>/dice/*.json`                                                                       | 가중치 면이 있는 팩 주사위, 카드 덱, 굴림 결과를 듣는 대상, 결과 문구. [주사위와 덱](#주사위와-덱)                                                                       |
+| `<namespace>/games/*.json`                                                                      | 몹을 말로 쓰는 보드 게임. 판, 말과 말의 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                                                                             |
+| `<namespace>/harvests/*.json`                                                                   | 우클릭으로 수확하고 다시 심는 작물. [우클릭 수확](#우클릭-수확)                                                                                                          |
+| `<namespace>/player_loot/*.json`                                                                | 플레이어가 죽을 때 굴리는 전리품 테이블. [플레이어 전리품](#플레이어-전리품)                                                                                             |
+| `<namespace>/advancements/*.json`                                                               | 발전 과제. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                               |
+| `<namespace>/functions/*.mcfunction`                                                            | 함수 파일. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                               |
+| `<namespace>/registry_remap/*.json`                                                             | 옛 이름을 새 이름에 대응시킵니다. [레지스트리 이름 변경](#레지스트리-이름-변경)                                                                                          |
+| `<namespace>/texts/*.txt`                                                                       | 월드 소개에 쓰는 일반 텍스트 파일. [월드 소개](#월드-소개)                                                                                                               |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | 일반적인 에셋 폴더. [모델, 블록 상태, 텍스처](#모델-블록-상태-텍스처)                                                                                                    |
 
 ## 표 읽는 방법
 
@@ -3216,13 +3216,17 @@ Galacticraft의 `EntitySpaceshipBase`나 ExtraPlanets의 `EntityElectricSpaceshi
 
 파일의 경로가 곧 위험 요소의 이름이며, 사망 메시지는 언어 키 `death.attack.rdpl.<file name>`에서 가져옵니다.
 
-팩에서 정의하는 위험 요소입니다. 지정한 블록, 아이템, 차원이 플레이어를 노출시킵니다. 해당 블록 근처에 서 있거나, 해당 아이템을 소지하거나, 해당 차원에 머무르는 플레이어가 대상이며, 노출은 레벨로 나뉘고 각 레벨은 효과와 주기적인 피해를 줍니다. 위험 요소는 주변의 몹과 플레이어에게서 옮을 수도 있고, 비와 함께 내릴 수도 있습니다([전염과 날씨](#전염과-날씨)). 파일 하나가 위험 요소 하나를 정의하며, 여러 개를 나란히 실행할 수 있습니다. 키별 기본값은 Immersive World의 방사선이 쓰는 수치입니다.
+팩에서 정의하는 위험 요소입니다. 지정한 블록, 아이템, 차원, 생물 군계, 구조물, 동굴 지역, 높이가 플레이어를 노출시킵니다. 해당 블록 근처에 서 있거나, 해당 아이템을 소지하거나, 해당 차원에 머무르는 플레이어가 대상이며, 노출은 레벨로 나뉘고 각 레벨은 효과와 주기적인 피해를 줍니다. 위험 요소는 주변의 몹과 플레이어에게서 옮을 수도 있고, 비와 함께 내릴 수도 있습니다([전염과 날씨](#전염과-날씨)). 파일 하나가 위험 요소 하나를 정의하며, 여러 개를 나란히 실행할 수 있습니다. 키별 기본값은 Immersive World의 방사선이 쓰는 수치입니다.
 
 ```json
 {
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
   "dimensions": [ "-1" ],
+  "biomes": [ "minecraft:desert=2", "#SANDY" ],
+  "structures": [ "Village", "mypack:ruin=2" ],
+  "caveRegions": [ "mypack:glowcave=2" ],
+  "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
   "scanInterval": 20,
   "range": 10,
@@ -3238,17 +3242,21 @@ Galacticraft의 `EntitySpaceshipBase`나 ExtraPlanets의 `EntityElectricSpaceshi
 }
 ```
 
-| 키                    | 필수            | 값                                | 기본값 | 설명                                                                                                  |
-| --------------------- | --------------- | --------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| `blocks`              | 다섯 개 중 하나 | `block` 또는 `block=level`의 목록 |        | 근처에 서 있는 플레이어를 노출시키는 블록. 레벨을 생략하면 1입니다                                    |
-| `items`               | 다섯 개 중 하나 | `item` 또는 `item=level`의 목록   |        | 들고 있거나 착용한 플레이어를 노출시키는 아이템                                                       |
-| `dimensions`          | 다섯 개 중 하나 | `dim` 또는 `dim=level`의 목록     |        | 해당 차원에 있는 모든 플레이어를 노출시키는 숫자 차원 id                                              |
-| `levels`              | 예              | 레벨 목록                         |        | 심각도 단계 목록으로, 첫 항목이 레벨 1입니다. 플레이어는 어떤 소스든 도달한 가장 높은 레벨을 받습니다 |
-| `immunity`            | 아니요          | 물약 이름                         | 없음   | 이 효과를 가진 대상은 전혀 노출되지 않습니다                                                          |
-| `scanInterval`        | 아니요          | 틱                                | `20`   | 주변과 인벤토리를 검사하는 주기                                                                       |
-| `range`               | 아니요          | 블록                              | `10`   | 블록의 노출이 구형으로 미치는 거리                                                                    |
-| `sourcesForNextLevel` | 아니요          | 정수                              | `0`    | 같은 레벨의 소스가 근처에 이 개수만큼 있으면 레벨이 한 단계 더 올라갑니다. `0`이면 꺼집니다           |
-| `skipsCreative`       | 아니요          | 불리언                            | `true` | 크리에이티브와 관전 모드 플레이어는 제외합니다                                                        |
+| 키                    | 필수            | 값                                        | 기본값 | 설명                                                                                                  |
+| --------------------- | --------------- | ----------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| `blocks`              | 아홉 개 중 하나 | `block` 또는 `block=level`의 목록         |        | 근처에 서 있는 플레이어를 노출시키는 블록. 레벨을 생략하면 1입니다                                    |
+| `items`               | 아홉 개 중 하나 | `item` 또는 `item=level`의 목록           |        | 들고 있거나 착용한 플레이어를 노출시키는 아이템                                                       |
+| `dimensions`          | 아홉 개 중 하나 | `dim` 또는 `dim=level`의 목록             |        | 해당 차원에 있는 모든 플레이어를 노출시키는 숫자 차원 id                                              |
+| `biomes`              | 아홉 개 중 하나 | `biome` 또는 `biome=level`의 목록         |        | 그 안에 서 있는 모든 플레이어를 노출시키는 생물 군계. `#`은 BiomeDictionary 타입을 가리킵니다         |
+| `structures`          | 아홉 개 중 하나 | `structure` 또는 `structure=level`의 목록 |        | 그 안에 있는 플레이어를 노출시키는 구조물. 팩 구조물은 `range` 블록 이내에서 적용됩니다               |
+| `caveRegions`         | 아홉 개 중 하나 | `region` 또는 `region=level`의 목록       |        | 그 안에 있는 플레이어를 노출시키는 동굴 지역. 이름만 쓰면 이 파일의 네임스페이스가 쓰입니다           |
+| `heights`             | 아홉 개 중 하나 | `from:to=level`의 목록                    |        | 그 안에 있는 플레이어를 노출시키는 Y 구간. 한쪽을 비워 두면 그쪽은 제한이 없습니다                    |
+| `levels`              | 예              | 레벨 목록                                 |        | 심각도 단계 목록으로, 첫 항목이 레벨 1입니다. 플레이어는 어떤 소스든 도달한 가장 높은 레벨을 받습니다 |
+| `immunity`            | 아니요          | 물약 이름                                 | 없음   | 이 효과를 가진 대상은 전혀 노출되지 않습니다                                                          |
+| `scanInterval`        | 아니요          | 틱                                        | `20`   | 주변과 인벤토리를 검사하는 주기                                                                       |
+| `range`               | 아니요          | 블록                                      | `10`   | 블록의 노출이 구형으로 미치는 거리                                                                    |
+| `sourcesForNextLevel` | 아니요          | 정수                                      | `0`    | 같은 레벨의 소스가 근처에 이 개수만큼 있으면 레벨이 한 단계 더 올라갑니다. `0`이면 꺼집니다           |
+| `skipsCreative`       | 아니요          | 불리언                                    | `true` | 크리에이티브와 관전 모드 플레이어는 제외합니다                                                        |
 
 ### 레벨
 
@@ -3264,6 +3272,8 @@ Galacticraft의 `EntitySpaceshipBase`나 ExtraPlanets의 `EntityElectricSpaceshi
 | `effects`        | 아니요 | 효과 목록 | 없음   | 함께 적용되는 추가 효과이며, 물약 유형이 쓰는 것과 같은 형식입니다. `duration`이 없으면 검사 주기를 따릅니다            |
 
 레벨 효과는 다음 검사 직후까지 조금 더 지속되므로, 멀어지면 저절로 사라집니다. 노출 피해로 인한 사망 메시지는 `death.attack.rdpl.<file name>`에서 읽으며, 이 키는 팩의 언어 파일이 제공합니다.
+
+플레이어의 발밑에서 성립하는 원인은 스캔할 때마다 확인되므로, 플레이어가 그곳을 벗어나는 즉시 끝납니다.
 
 ### 전염과 날씨
 
@@ -3287,13 +3297,13 @@ Galacticraft의 `EntitySpaceshipBase`나 ExtraPlanets의 `EntityElectricSpaceshi
 
 | 키                  | 필수            | 값                                  | 기본값             | 설명                                                                                                                                            |
 | ------------------- | --------------- | ----------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `carriers`          | 다섯 개 중 하나 | `entity` 또는 `entity=level`의 목록 |                    | 해당 레벨로 항상 위험 요소를 옮기는 몹 또는 `minecraft:player`. 레벨을 생략하면 1입니다                                                         |
+| `carriers`          | 아홉 개 중 하나 | `entity` 또는 `entity=level`의 목록 |                    | 해당 레벨로 항상 위험 요소를 옮기는 몹 또는 `minecraft:player`. 레벨을 생략하면 1입니다                                                         |
 | `contagious`        | 아니요          | 불리언                              | `false`            | 노출된 모든 대상이 자신이 가진 레벨로 위험 요소를 옮깁니다                                                                                      |
 | `catchers`          | 아니요          | 엔티티 이름 목록                    | `minecraft:player` | 감염될 수 있는 대상. 몹은 보균자와 보유자에게서만 감염되며, 블록, 아이템, 날씨로는 감염되지 않습니다                                            |
 | `contagionRange`    | 아니요          | 블록                                | `4`                | 보균자나 보유자의 영향이 구형으로 미치는 거리                                                                                                   |
 | `contagionChance`   | 아니요          | `0`부터 `1`까지                     | `0.1`              | 보균자나 보유자를 검사할 때마다, 범위 안의 각 감염 대상이 감염될 확률                                                                           |
 | `contagionDuration` | 아니요          | 틱                                  | `1200`             | 감염된 위험 요소가 감염된 레벨을 유지하는 시간. 다시 감염되면 시간이 처음부터 다시 시작됩니다                                                   |
-| `weather`           | 다섯 개 중 하나 | `kind` 또는 `kind=level`의 목록     |                    | `rain`은 비를 맞는 플레이어를 노출시킵니다. 비가 내리는 생물 군계에서 머리 위가 트인 하늘인 경우입니다. `thunder`는 뇌우가 치는 동안 적용됩니다 |
+| `weather`           | 아홉 개 중 하나 | `kind` 또는 `kind=level`의 목록     |                    | `rain`은 비를 맞는 플레이어를 노출시킵니다. 비가 내리는 생물 군계에서 머리 위가 트인 하늘인 경우입니다. `thunder`는 뇌우가 치는 동안 적용됩니다 |
 | `weatherDimensions` | 아니요          | `dim` 목록                          | 모든 차원          | 날씨가 노출시키는 숫자 차원 id                                                                                                                  |
 
 감염된 위험 요소는 검사에서 소스 하나가 더 있는 것으로 계산되며, 다른 소스와 마찬가지로 가장 높은 레벨이 적용되고 `immunity`도 이를 막아 줍니다. `contagionRange`와 `contagionChance`가 `0`보다 크고 파일이 `carriers`를 지정하거나 `contagious`를 설정한 경우가 아니면 아무것도 퍼지지 않으며, 몹은 어느 파일이든 그렇게 한 경우에만 검사됩니다.
