@@ -54,6 +54,7 @@ public final class ContentDimensionParser {
     private static final int STARS = 1500;
     private static final float STAR_SIZE = 0.15F;
     private static final Set<String> KNOWN_TERRAIN = Set.of(DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END);
+    private static final List<String> COLOR_MODES = List.of("multiply", "solid");
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
 
     private ContentDimensionParser() {}
@@ -243,7 +244,8 @@ public final class ContentDimensionParser {
         }
         return new RainDef(particle, sound, Math.max(0.0F, Json.getFloat(json, "volume", 0.2F)), Math.max(0, Json.getInt(json, "interval", 3)),
                 ContentParser.color(Json.getString(json, "color", WHITE), key + " rain color"),
-                ContentParser.color(Json.getString(json, "snowColor", WHITE), key + " rain snowColor"), angle, Json.getFloat(json, "heading", 0.0F), Json.getBoolean(json, "splashUpward", false), wind);
+                ContentParser.color(Json.getString(json, "snowColor", WHITE), key + " rain snowColor"),
+                "solid".equals(Json.choice(json, "colorMode", "multiply", "Dimension " + key + " rain", COLOR_MODES)), angle, Json.getFloat(json, "heading", 0.0F), Json.getBoolean(json, "splashUpward", false), wind);
     }
 
     private static WindDef wind(ResourceLocation key, JsonObject json) {

@@ -3722,7 +3722,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4072,6 +4072,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `rain.interval`         | 아니요 | 정수                   | `3`                      | 소리가 얼마나 드물게 재생되는지. 높을수록 드물고, `0`이면 기회마다 재생합니다                                                                 |
 | `rain.color`            | 아니요 | 16진수 색상            | `#FFFFFF`                | 내리는 비의 색조                                                                                                                              |
 | `rain.snowColor`        | 아니요 | 16진수 색상            | `#FFFFFF`                | 내리는 눈의 색조                                                                                                                              |
+| `rain.colorMode`        | 아니요 | `multiply` 또는 `solid` | `multiply`               | `rain.color`가 비 텍스처와 어떻게 합쳐지는지 정합니다. `multiply`는 회청색 줄무늬에 색을 곱하므로 밝은 색은 어둡게 나옵니다. `solid`는 줄무늬의 모양과 투명도를 유지한 채 `rain.color`로 그립니다. 밤의 빛은 여전히 어둡게 만듭니다 |
 | `rain.angle`            | 아니요 | 소수, 0에서 180        | `0`                      | 수직 아래에서부터의 각도: `90`은 옆으로 불고 `180`은 곧장 위로 솟습니다. 최대 75도까지만 기울어진 채 그려집니다                               |
 | `rain.heading`          | 아니요 | 소수, 도               | `0`                      | 부는 방향: `0`은 남쪽, `90`은 서쪽, `180`은 북쪽, `270`은 동쪽                                                                                |
 | `rain.splashUpward`     | 아니요 | 불리언                 | `false`                  | 켜면 솟아오르는 비(`angle`이 `90` 초과)도 여전히 지면에 튀고 소리를 재생합니다                                                                |

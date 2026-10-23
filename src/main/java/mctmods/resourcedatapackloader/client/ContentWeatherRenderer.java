@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.client.render.WhitenedTexture;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.util.Rgb;
 import mctmods.resourcedatapackloader.util.WindGust;
@@ -151,7 +152,7 @@ public final class ContentWeatherRenderer {
         if (drawing == precipitation) { return tesselator.getBuilder(); }
         if (drawing != null) { tesselator.end(); }
         drawing = precipitation;
-        RenderSystem.setShaderTexture(0, precipitation == Biome.Precipitation.RAIN ? RAIN : SNOW);
+        RenderSystem.setShaderTexture(0, precipitation == Biome.Precipitation.RAIN ? rain.solid() ? WhitenedTexture.bound(Minecraft.getInstance().getTextureManager(), RAIN) : RAIN : SNOW);
         tesselator.getBuilder().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.PARTICLE);
         return tesselator.getBuilder();
     }

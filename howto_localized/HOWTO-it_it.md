@@ -3722,7 +3722,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4072,6 +4072,7 @@ Qualsiasi altra chiave in una fascia viene ignorata con un errore nel log, così
 | `rain.interval`         | no           | intero                     | `3`                      | Quanto raramente il suono viene riprodotto; più è alto, più è rado, `0` lo riproduce a ogni occasione                                                                                                  |
 | `rain.color`            | no           | colore esadecimale         | `#FFFFFF`                | Tinta della pioggia che cade                                                                                                                                                                           |
 | `rain.snowColor`        | no           | colore esadecimale         | `#FFFFFF`                | Tinta della neve che cade                                                                                                                                                                              |
+| `rain.colorMode`        | no           | `multiply` o `solid`       | `multiply`               | Come `rain.color` si combina con la texture della pioggia: `multiply` colora le strisce grigio-azzurre, quindi i colori vivaci risultano scuri; `solid` disegna le strisce in `rain.color`, mantenendone forma e trasparenza; la luce notturna le scurisce comunque |
 | `rain.angle`            | no           | decimale, da 0 a 180       | `0`                      | Gradi rispetto alla verticale: `90` soffia di lato, `180` sale dritta verso l'alto. Viene disegnata inclinata di 75 gradi al massimo                                                                   |
 | `rain.heading`          | no           | decimale, gradi            | `0`                      | Da che parte soffia: `0` sud, `90` ovest, `180` nord, `270` est                                                                                                                                        |
 | `rain.splashUpward`     | no           | booleano                   | `false`                  | Se attivato, la pioggia che sale (`angle` oltre `90`) schizza comunque a terra e riproduce il suo suono                                                                                                |
