@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
+import mctmods.resourcedatapackloader.client.ContentReach;
 import mctmods.resourcedatapackloader.client.HoldView;
 
 import net.minecraft.client.renderer.EntityRenderer;
@@ -12,4 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "createWorldIcon", at = @At("HEAD"), cancellable = true) private void rdpl$iconAfterTheFog(CallbackInfo ci) {
         if (HoldView.showing()) { ci.cancel(); }
     }
+
+    @Inject(method = "getMouseOver", at = @At("RETURN")) private void rdpl$weaponReach(float partialTicks, CallbackInfo ci) { ContentReach.pick(partialTicks); }
 }

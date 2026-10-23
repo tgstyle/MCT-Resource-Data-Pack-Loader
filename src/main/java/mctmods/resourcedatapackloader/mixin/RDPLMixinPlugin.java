@@ -177,7 +177,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             }
             if (optimizationsOff) { return false; }
         }
-        if (mixinClassName.endsWith(".MixinWorldServerWeather")) { return !spongePresent(); }
+        if (mixinClassName.endsWith(".MixinWorldServerWeather") || mixinClassName.endsWith(".MixinNetHandlerPlayServerReach")) { return !spongePresent(); }
         if (!mixinClassName.endsWith(".MixinWorldLight") && !mixinClassName.endsWith(".MixinChunkLight")) { return true; }
         if (lightingReplaced == null) {
             lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null

@@ -179,6 +179,7 @@
     "common.MixinMineshaftCorridor",
     "common.MixinNetHandlerPlayServer",
     "common.MixinNetHandlerPlayServerBuild",
+    "common.MixinNetHandlerPlayServerReach",
     "common.MixinNetherBridgeThrone",
     "common.MixinPacketBufferBlockPosWrite",
     "common.MixinPathNavigate",

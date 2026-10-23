@@ -32,6 +32,7 @@ import mctmods.resourcedatapackloader.content.card.CardScan;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.content.item.ContentItemContainer;
+import mctmods.resourcedatapackloader.content.item.ContentWeapons;
 import mctmods.resourcedatapackloader.content.item.ContentWorn;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
@@ -369,6 +370,7 @@ public class ResourceDataPackLoader {
 
     @Mod.EventHandler public void onServerStopped(FMLServerStoppedEvent event) {
         ContentStructureSearch.forget();
+        ContentWeapons.clear();
         ContentEnvironments.serverStopped();
         ContentSpawnSwitch.serverStopped();
         ContentGrowSwitch.serverStopped();
