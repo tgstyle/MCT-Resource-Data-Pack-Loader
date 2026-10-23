@@ -135,62 +135,62 @@ Ein Pack hat zwei Wurzeln, dieselben zwei wie ein Vanilla-Pack. `assets/` hält,
 
 Unter `data/`:
 
-| Pfad                                         | Was darin liegt                                                                                                                                                |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<namespace>/blocks/*.json`                  | Blockdefinitionen. [Blöcke](#blöcke)                                                                                                                           |
-| `<namespace>/items/*.json`                   | Itemdefinitionen. [Items](#items)                                                                                                                              |
-| `<namespace>/fluids/*.json`                  | Flüssigkeiten, mit Block und Eimer. [Flüssigkeiten](#flüssigkeiten)                                                                                            |
-| `<namespace>/materials/*.json`               | Werkzeug- und Rüstungsmaterialien. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                            |
-| `<namespace>/tabs/*.json`                    | Kreativtabs. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                  |
-| `<namespace>/sounds/*.json`                  | Sound-Events. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                 |
-| `<namespace>/biomes/*.json`                  | Biomdefinitionen. [Biome](#biome)                                                                                                                              |
-| `<namespace>/worldgen/*.json`                | Was generiert, und wo. [Worldgen-Einträge](#worldgen-einträge)                                                                                                 |
-| `<namespace>/caveregions/*.json`             | Benannte Regionen, über den Untergrund gelegt. [Höhlenregionen](#höhlenregionen)                                                                               |
-| `<namespace>/dimensions/*.json`              | Dimensionsdefinitionen. [Dimensionen](#dimensionen)                                                                                                            |
-| `<namespace>/worldtemplates/*.json`          | Die Einstellungen einer ganzen Welt in einer Datei. [Weltvorlagen](#weltvorlagen)                                                                              |
-| `<namespace>/worldintro/*.json`              | Seiten, die beim Betreten der Welt gezeigt werden. [Welt-Intro](#welt-intro)                                                                                   |
-| `<namespace>/gates/*.json`                   | Bedingungen für Portale und Dimensionen. [Portale und Tore](#portale-und-tore)                                                                                 |
-| `<namespace>/gamerules/*.json`               | Spielregeln für neue Welten. [Spielregeln](#spielregeln)                                                                                                       |
-| `<namespace>/teams/*.json`                   | Seiten auf dem Vanilla-Scoreboard und wer ihnen beitritt. [Teams](#teams)                                                                                      |
-| `<namespace>/scoring/*.json`                 | Ziele, Punkte und wie eine Partie endet. [Wertung](#wertung)                                                                                                   |
-| `<namespace>/raids/*.json`                   | Wellen, die ein Dorf heimsuchen, wenn ein Spieler ein Omen hineinträgt. [Raids](#raids)                                                                        |
-| `<namespace>/entities/*.json`                | Entity-Varianten, aufgebaut auf vorhandenen Entities. [Entity-Varianten](#entity-varianten)                                                                    |
-| `<namespace>/hardness/*.json`                | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen)                                                                |
-| `<namespace>/anvils/*.json`                  | Verzauberungen, die ein Amboss auf ein genanntes Item legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk)           |
-| `<namespace>/cards/*.json`                   | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die dieser Mod selbst ausgibt. [Karten](#karten)                                         |
-| `<namespace>/dice/*.json`                    | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks)                   |
-| `<namespace>/games/*.json`                   | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                        |
-| `<namespace>/ranks/*.json`                   | Zufällige Stufen, die ein Mob beim Erscheinen würfelt: zusätzliche Gesundheit, Schaden, Effekte, Beute und ein Namensschild. [Mob-Ränge](#mob-ränge)           |
-| `<namespace>/orders/*.json`                  | Arbeiten, die Entity-Varianten für einen Spieler an einer Truhe erledigen. [Arbeitsaufträge](#arbeitsaufträge)                                                 |
-| `<namespace>/exposures/*.json`               | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen ausgesetzt sind. [Expositionen](#expositionen) |
-| `<namespace>/overrides/<target>/<name>.json` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                           |
-| `<namespace>/villages/*.json`                | Grundstücke, die eine Stadt oder ein Dorf bauen kann. [Dorfgrundstücke](#dorfgrundstücke)                                                                      |
-| `<namespace>/pathintersects/*.json`          | Muster, die an Straßenkreuzungen gemalt werden. [Dorfwege](#dorfwege)                                                                                          |
-| `<namespace>/structuremaps/*.json`           | Vorlagen, auf einem Raster zu einem großen Bauwerk zusammengesetzt. [Strukturkarten](#strukturkarten)                                                          |
-| `<namespace>/citymaps/*.json`                | Ein gezeichneter Straßenplan, nach dem eine Stadt angelegt wird, statt einen zu würfeln. [Stadtpläne](#stadtpläne)                                             |
-| `<namespace>/portalframes/*.json`            | Rahmen, die ein Spieler bauen und anzünden kann. [Portalrahmen](#portalrahmen)                                                                                 |
-| `<namespace>/blastplaster/*.json`            | Was Blast Plaster nach einer Explosion tut, pro Dimension. [Blast Plaster Integration](#blast-plaster-integration)                                             |
-| `<namespace>/structures/*.nbt`               | Vorlagen, für Setzlinge, `imprint`, Strukturkarten und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                              |
-| `<namespace>/recipes/*.json`                 | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                        |
-| `<namespace>/recipe_removals/*.json`         | Handwerksrezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                     |
-| `<namespace>/disabled/*.json`                | Blöcke und Items, aus dem Spiel genommen. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                      |
-| `<namespace>/furnace/*.json`                 | Ofenrezepte, hinzugefügt und entfernt. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                             |
-| `<namespace>/tooltips/*.json`                | Zusätzliche Tooltip-Zeilen. [Tooltips](#tooltips)                                                                                                              |
-| `<namespace>/fuels/*.json`                   | Brenndauern. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                                                       |
-| `<namespace>/brewing/*.json`                 | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                      |
-| `<namespace>/potions/*.json`                 | Trankeffekte. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                   |
-| `<namespace>/potion_types/*.json`            | Abgefüllte Tränke aus diesen Effekten. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                          |
-| `<namespace>/villagers/*.json`               | Berufe der Dorfbewohner. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                   |
-| `<namespace>/trades/*.json`                  | Was Berufe kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                           |
-| `<namespace>/loot_tables/*.json`             | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                            |
-| `<namespace>/loot_injections/*.json`         | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                              |
-| `<namespace>/block_drops/*.json`             | Zusätzliche oder ersetzende Drops, Erfahrung eingeschlossen, für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops)                                 |
-| `<namespace>/harvests/*.json`                | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                             |
-| `<namespace>/player_loot/*.json`             | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                |
-| `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                      |
-| `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                  |
-| `<namespace>/tags/<kind>/*.json`             | Tags, im Format des Spiels selbst. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                            |
-| `<namespace>/registry_remap/*.json`          | Alte Namen, auf neue abgebildet. [Registry-Umbenennungen](#registry-umbenennungen)                                                                             |
+| Pfad                                         | Was darin liegt                                                                                                                                                                                               |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json`                  | Blockdefinitionen. [Blöcke](#blöcke)                                                                                                                                                                          |
+| `<namespace>/items/*.json`                   | Itemdefinitionen. [Items](#items)                                                                                                                                                                             |
+| `<namespace>/fluids/*.json`                  | Flüssigkeiten, mit Block und Eimer. [Flüssigkeiten](#flüssigkeiten)                                                                                                                                           |
+| `<namespace>/materials/*.json`               | Werkzeug- und Rüstungsmaterialien. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                           |
+| `<namespace>/tabs/*.json`                    | Kreativtabs. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                 |
+| `<namespace>/sounds/*.json`                  | Sound-Events. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                |
+| `<namespace>/biomes/*.json`                  | Biomdefinitionen. [Biome](#biome)                                                                                                                                                                             |
+| `<namespace>/worldgen/*.json`                | Was generiert, und wo. [Worldgen-Einträge](#worldgen-einträge)                                                                                                                                                |
+| `<namespace>/caveregions/*.json`             | Benannte Regionen, über den Untergrund gelegt. [Höhlenregionen](#höhlenregionen)                                                                                                                              |
+| `<namespace>/dimensions/*.json`              | Dimensionsdefinitionen. [Dimensionen](#dimensionen)                                                                                                                                                           |
+| `<namespace>/worldtemplates/*.json`          | Die Einstellungen einer ganzen Welt in einer Datei. [Weltvorlagen](#weltvorlagen)                                                                                                                             |
+| `<namespace>/worldintro/*.json`              | Seiten, die beim Betreten der Welt gezeigt werden. [Welt-Intro](#welt-intro)                                                                                                                                  |
+| `<namespace>/gates/*.json`                   | Bedingungen für Portale und Dimensionen. [Portale und Tore](#portale-und-tore)                                                                                                                                |
+| `<namespace>/gamerules/*.json`               | Spielregeln für neue Welten. [Spielregeln](#spielregeln)                                                                                                                                                      |
+| `<namespace>/teams/*.json`                   | Seiten auf dem Vanilla-Scoreboard und wer ihnen beitritt. [Teams](#teams)                                                                                                                                     |
+| `<namespace>/scoring/*.json`                 | Ziele, Punkte und wie eine Partie endet. [Wertung](#wertung)                                                                                                                                                  |
+| `<namespace>/raids/*.json`                   | Wellen, die ein Dorf heimsuchen, wenn ein Spieler ein Omen hineinträgt. [Raids](#raids)                                                                                                                       |
+| `<namespace>/entities/*.json`                | Entity-Varianten, aufgebaut auf vorhandenen Entities. [Entity-Varianten](#entity-varianten)                                                                                                                   |
+| `<namespace>/hardness/*.json`                | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen)                                                                                                               |
+| `<namespace>/anvils/*.json`                  | Verzauberungen, die ein Amboss auf ein genanntes Item legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk)                                                          |
+| `<namespace>/cards/*.json`                   | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die dieser Mod selbst ausgibt. [Karten](#karten)                                                                                        |
+| `<namespace>/dice/*.json`                    | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks)                                                                  |
+| `<namespace>/games/*.json`                   | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                                                                       |
+| `<namespace>/ranks/*.json`                   | Zufällige Stufen, die ein Mob beim Erscheinen würfelt: zusätzliche Gesundheit, Schaden, Effekte, Beute und ein Namensschild. [Mob-Ränge](#mob-ränge)                                                          |
+| `<namespace>/orders/*.json`                  | Arbeiten, die Entity-Varianten für einen Spieler an einer Truhe erledigen. [Arbeitsaufträge](#arbeitsaufträge)                                                                                                |
+| `<namespace>/exposures/*.json`               | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen, Biomen, Strukturen, Höhlenregionen oder Höhen ausgesetzt sind. [Expositionen](#expositionen) |
+| `<namespace>/overrides/<target>/<name>.json` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                                                                          |
+| `<namespace>/villages/*.json`                | Grundstücke, die eine Stadt oder ein Dorf bauen kann. [Dorfgrundstücke](#dorfgrundstücke)                                                                                                                     |
+| `<namespace>/pathintersects/*.json`          | Muster, die an Straßenkreuzungen gemalt werden. [Dorfwege](#dorfwege)                                                                                                                                         |
+| `<namespace>/structuremaps/*.json`           | Vorlagen, auf einem Raster zu einem großen Bauwerk zusammengesetzt. [Strukturkarten](#strukturkarten)                                                                                                         |
+| `<namespace>/citymaps/*.json`                | Ein gezeichneter Straßenplan, nach dem eine Stadt angelegt wird, statt einen zu würfeln. [Stadtpläne](#stadtpläne)                                                                                            |
+| `<namespace>/portalframes/*.json`            | Rahmen, die ein Spieler bauen und anzünden kann. [Portalrahmen](#portalrahmen)                                                                                                                                |
+| `<namespace>/blastplaster/*.json`            | Was Blast Plaster nach einer Explosion tut, pro Dimension. [Blast Plaster Integration](#blast-plaster-integration)                                                                                            |
+| `<namespace>/structures/*.nbt`               | Vorlagen, für Setzlinge, `imprint`, Strukturkarten und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                             |
+| `<namespace>/recipes/*.json`                 | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                       |
+| `<namespace>/recipe_removals/*.json`         | Handwerksrezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                    |
+| `<namespace>/disabled/*.json`                | Blöcke und Items, aus dem Spiel genommen. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                                                                     |
+| `<namespace>/furnace/*.json`                 | Ofenrezepte, hinzugefügt und entfernt. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                                                                            |
+| `<namespace>/tooltips/*.json`                | Zusätzliche Tooltip-Zeilen. [Tooltips](#tooltips)                                                                                                                                                             |
+| `<namespace>/fuels/*.json`                   | Brenndauern. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                                                                                                      |
+| `<namespace>/brewing/*.json`                 | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                                     |
+| `<namespace>/potions/*.json`                 | Trankeffekte. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                                                  |
+| `<namespace>/potion_types/*.json`            | Abgefüllte Tränke aus diesen Effekten. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                         |
+| `<namespace>/villagers/*.json`               | Berufe der Dorfbewohner. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                                  |
+| `<namespace>/trades/*.json`                  | Was Berufe kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                          |
+| `<namespace>/loot_tables/*.json`             | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                           |
+| `<namespace>/loot_injections/*.json`         | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                             |
+| `<namespace>/block_drops/*.json`             | Zusätzliche oder ersetzende Drops, Erfahrung eingeschlossen, für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops)                                                                                |
+| `<namespace>/harvests/*.json`                | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                            |
+| `<namespace>/player_loot/*.json`             | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                               |
+| `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                     |
+| `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                 |
+| `<namespace>/tags/<kind>/*.json`             | Tags, im Format des Spiels selbst. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                           |
+| `<namespace>/registry_remap/*.json`          | Alte Namen, auf neue abgebildet. [Registry-Umbenennungen](#registry-umbenennungen)                                                                                                                            |
 
 Unter `assets/`:
 
@@ -2948,13 +2948,17 @@ Auftragsschlüssel:
 
 Der Pfad der Datei ist der Name der Gefahr, und ihre Todesmeldung kommt aus dem Sprachschlüssel `death.attack.rdpl.<Dateiname>`. Expositionen werden nur geladen, solange `load` an und `vanillaClients` aus ist.
 
-Eine vom Pack definierte Gefahr: benannte Blöcke, Items und Dimensionen belasten Spieler, die in der Nähe dieser Blöcke stehen, diese Items bei sich tragen oder sich in diesen Dimensionen aufhalten, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Gefahr kann auch von Mobs und Spielern in der Nähe übertragen werden oder mit dem Regen fallen ([Ansteckung und Wetter](#ansteckung-und-wetter)). Eine Datei definiert eine Gefahr, mehrere laufen nebeneinander.
+Eine vom Pack definierte Gefahr: benannte Blöcke, Items, Dimensionen, Biome, Strukturen, Höhlenregionen und Höhen belasten Spieler, die in der Nähe dieser Blöcke stehen, diese Items bei sich tragen oder sich in diesen Dimensionen aufhalten, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Gefahr kann auch von Mobs und Spielern in der Nähe übertragen werden oder mit dem Regen fallen ([Ansteckung und Wetter](#ansteckung-und-wetter)). Eine Datei definiert eine Gefahr, mehrere laufen nebeneinander.
 
 ```json
 {
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
   "dimensions": [ "minecraft:the_nether" ],
+  "biomes": [ "minecraft:desert=2", "#minecraft:is_badlands" ],
+  "structures": [ "minecraft:mansion", "#minecraft:village", "mypack:ruin=2" ],
+  "caveRegions": [ "mypack:glowcave=2" ],
+  "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
   "scanInterval": 20,
   "range": 10,
@@ -2970,17 +2974,21 @@ Eine vom Pack definierte Gefahr: benannte Blöcke, Items und Dimensionen belaste
 }
 ```
 
-| Schlüssel             | Pflicht        | Wert                                 | Standard | Was er macht                                                                                      |
-| --------------------- | -------------- | ------------------------------------ | -------- | ------------------------------------------------------------------------------------------------- |
-| `blocks`              | eines der fünf | Liste aus `block` oder `block=stufe` |          | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1                                 |
-| `items`               | eines der fünf | Liste aus `item` oder `item=stufe`   |          | Items, die einen Spieler belasten, der sie trägt                                                  |
-| `dimensions`          | eines der fünf | Liste aus `dim` oder `dim=stufe`     |          | Dimensions-IDs, die jeden Spieler darin belasten                                                  |
-| `levels`              | ja             | Liste von Stufen                     |          | Die Schwereleiter, der erste Eintrag ist Stufe 1. Ein Spieler bekommt die höchste erreichte Stufe |
-| `immunity`            | nein           | Trankname                            | keiner   | Ein Effekt, dessen Träger gar nicht belastet wird                                                 |
-| `scanInterval`        | nein           | Ticks                                | `20`     | Wie oft Umgebung und Inventar geprüft werden                                                      |
-| `range`               | nein           | Blöcke                               | `10`     | Wie weit ein Block wirkt, als Kugel                                                               |
-| `sourcesForNextLevel` | nein           | int                                  | `0`      | So viele Quellen einer Stufe in der Nähe heben sie um eine weitere an. `0` schaltet das ab        |
-| `skipsCreative`       | nein           | boolean                              | `true`   | Kreativ- und Zuschauerspieler bleiben verschont                                                   |
+| Schlüssel             | Pflicht        | Wert                                         | Standard | Was er macht                                                                                                                        |
+| --------------------- | -------------- | -------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | eines der neun | Liste aus `block` oder `block=stufe`         |          | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1                                                                   |
+| `items`               | eines der neun | Liste aus `item` oder `item=stufe`           |          | Items, die einen Spieler belasten, der sie trägt                                                                                    |
+| `dimensions`          | eines der neun | Liste aus `dim` oder `dim=stufe`             |          | Dimensions-IDs, die jeden Spieler darin belasten                                                                                    |
+| `biomes`              | eines der neun | Liste aus `biome` oder `biome=stufe`         |          | Biome, die jeden Spieler belasten, der darin steht. `#` nennt einen Biom-Tag                                                        |
+| `structures`          | eines der neun | Liste aus `structure` oder `structure=stufe` |          | Strukturen, die einen Spieler darin belasten. `#` nennt einen Struktur-Tag. Eine Pack-Struktur zählt im Umkreis von `range` Blöcken |
+| `caveRegions`         | eines der neun | Liste aus `region` oder `region=stufe`       |          | Höhlenregionen, die einen Spieler darin belasten. Ein Name ohne Namespace nimmt den Namespace dieser Datei                          |
+| `heights`             | eines der neun | Liste aus `von:bis=stufe`                    |          | Y-Bänder, die einen Spieler darin belasten. Eine Seite leer zu lassen heißt keine Grenze                                            |
+| `levels`              | ja             | Liste von Stufen                             |          | Die Schwereleiter, der erste Eintrag ist Stufe 1. Ein Spieler bekommt die höchste erreichte Stufe                                   |
+| `immunity`            | nein           | Trankname                                    | keiner   | Ein Effekt, dessen Träger gar nicht belastet wird                                                                                   |
+| `scanInterval`        | nein           | Ticks                                        | `20`     | Wie oft Umgebung und Inventar geprüft werden                                                                                        |
+| `range`               | nein           | Blöcke                                       | `10`     | Wie weit ein Block wirkt, als Kugel                                                                                                 |
+| `sourcesForNextLevel` | nein           | int                                          | `0`      | So viele Quellen einer Stufe in der Nähe heben sie um eine weitere an. `0` schaltet das ab                                          |
+| `skipsCreative`       | nein           | boolean                                      | `true`   | Kreativ- und Zuschauerspieler bleiben verschont                                                                                     |
 
 ### Stufen
 
@@ -2994,6 +3002,8 @@ Eine vom Pack definierte Gefahr: benannte Blöcke, Items und Dimensionen belaste
 | `effects`        | nein    | Liste von Effekten | keine    | Zusätzliche Effekte, gleiche Form wie bei Trankarten. Ohne `duration` folgen sie dem Prüfintervall                                            |
 
 Die Stufeneffekte halten etwas über die nächste Prüfung hinaus, Weggehen lässt sie also von selbst auslaufen. Der Tod durch den Schaden liest seine Meldung aus `death.attack.rdpl.<Dateiname>`, die die Sprachdateien des Packs liefern.
+
+Eine Quelle, die an den Füßen des Spielers gilt, wird bei jedem Scan geprüft und endet daher in dem Moment, in dem der Spieler sie verlässt.
 
 ### Ansteckung und Wetter
 
@@ -3017,13 +3027,13 @@ Zwei weitere Quellen in derselben Datei. Träger und belastete Wesen geben die G
 
 | Schlüssel           | Pflicht        | Wert                                   | Standard           | Was er macht                                                                                                                             |
 | ------------------- | -------------- | -------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `carriers`          | eines der fünf | Liste aus `entity` oder `entity=stufe` |                    | Mobs oder `minecraft:player`, die die Gefahr immer auf dieser Stufe weitergeben. Ohne Stufe gilt 1                                       |
+| `carriers`          | eines der neun | Liste aus `entity` oder `entity=stufe` |                    | Mobs oder `minecraft:player`, die die Gefahr immer auf dieser Stufe weitergeben. Ohne Stufe gilt 1                                       |
 | `contagious`        | nein           | boolean                                | `false`            | Wer belastet ist, gibt die Gefahr auf seiner aktuellen Stufe weiter                                                                      |
 | `catchers`          | nein           | Liste von Entity-Namen                 | `minecraft:player` | Wer sich anstecken kann. Ein Mob steckt sich nur bei Trägern und belasteten Wesen an; Blöcke, Items und Wetter wirken nicht auf ihn      |
 | `contagionRange`    | nein           | Blöcke                                 | `4`                | Wie weit ein Träger oder belastetes Wesen reicht, als Kugel                                                                              |
 | `contagionChance`   | nein           | `0` bis `1`                            | `0.1`              | Die Chance je Prüfung des Trägers oder belasteten Wesens, dass sich jedes empfängliche Wesen in Reichweite ansteckt                      |
 | `contagionDuration` | nein           | Ticks                                  | `1200`             | Wie lange eine Ansteckung die erreichte Stufe hält. Eine neue Ansteckung startet die Zeit neu                                            |
-| `weather`           | eines der fünf | Liste aus `art` oder `art=stufe`       |                    | `rain` belastet einen Spieler, auf den Regen fällt: freier Himmel über ihm in einem Biom, in dem es regnet. `thunder` zählt bei Gewitter |
+| `weather`           | eines der neun | Liste aus `art` oder `art=stufe`       |                    | `rain` belastet einen Spieler, auf den Regen fällt: freier Himmel über ihm in einem Biom, in dem es regnet. `thunder` zählt bei Gewitter |
 | `weatherDimensions` | nein           | Liste aus `dim`                        | jede Dimension     | Dimensions-IDs, in denen das Wetter belastet                                                                                             |
 
 Eine Ansteckung zählt beim Prüfen als weitere Quelle, die höchste Stufe gewinnt wie bei jeder anderen, und `immunity` schützt auch davor. Die Gefahr breitet sich nur aus, wenn `contagionRange` und `contagionChance` über `0` liegen und die Datei `carriers` nennt oder `contagious` setzt; Mobs werden nur betrachtet, wenn mindestens eine Datei das tut.

@@ -135,62 +135,62 @@ Balíček má dva kořeny, stejné dva jako vanilla balíček. `assets/` obsahuj
 
 V `data/`:
 
-| Cesta                                        | Co obsahuje                                                                                                                                    |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<namespace>/blocks/*.json`                  | Definice bloků. [Bloky](#bloky)                                                                                                                |
-| `<namespace>/items/*.json`                   | Definice předmětů. [Předměty](#předměty)                                                                                                       |
-| `<namespace>/fluids/*.json`                  | Tekutiny s blokem a kbelíkem. [Tekutiny](#tekutiny)                                                                                            |
-| `<namespace>/materials/*.json`               | Materiály nástrojů a zbroje. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                      |
-| `<namespace>/tabs/*.json`                    | Karty kreativního režimu. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                         |
-| `<namespace>/sounds/*.json`                  | Zvukové události. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                 |
-| `<namespace>/biomes/*.json`                  | Definice biomů. [Biomy](#biomy)                                                                                                                |
-| `<namespace>/worldgen/*.json`                | Co se generuje a kde. [Položky worldgenu](#položky-worldgenu)                                                                                  |
-| `<namespace>/caveregions/*.json`             | Pojmenované oblasti rozprostřené po podzemí. [Oblasti jeskyní](#oblasti-jeskyní)                                                               |
-| `<namespace>/dimensions/*.json`              | Definice dimenzí. [Dimenze](#dimenze)                                                                                                          |
-| `<namespace>/worldtemplates/*.json`          | Nastavení celého světa v jednom souboru. [Šablony světa](#šablony-světa)                                                                       |
-| `<namespace>/worldintro/*.json`              | Stránky zobrazené, když hráč vstoupí do světa. [Úvod do světa](#úvod-do-světa)                                                                 |
-| `<namespace>/gates/*.json`                   | Podmínky pro portály a dimenze. [Portály a brány](#portály-a-brány)                                                                            |
-| `<namespace>/gamerules/*.json`               | Herní pravidla pro nové světy. [Herní pravidla](#herní-pravidla)                                                                               |
-| `<namespace>/teams/*.json`                   | Strany ve vanilla scoreboardu a to, co se k nim připojuje. [Týmy](#týmy)                                                                       |
-| `<namespace>/scoring/*.json`                 | Cíle, body a způsob, jak zápas končí. [Bodování](#bodování)                                                                                    |
-| `<namespace>/raids/*.json`                   | Vlny, které přijdou na vesnici, když do ní hráč přinese znamení. [Nájezdy](#nájezdy)                                                           |
-| `<namespace>/entities/*.json`                | Varianty entit postavené na již existujících entitách. [Varianty entit](#varianty-entit)                                                       |
-| `<namespace>/hardness/*.json`                | Doba těžby a násobitele výbuchu pro skupiny bloků. [Skupiny tvrdosti](#skupiny-tvrdosti)                                                       |
-| `<namespace>/anvils/*.json`                  | Kouzla, která kovadlina dá pojmenovanému předmětu, pokrok, který tím hráč získá, a zámek do té doby. [Práce s kovadlinou](#práce-s-kovadlinou) |
-| `<namespace>/cards/*.json`                   | Karty na obrazovce zobrazené při spouštěči a zprávy, které říká sám tento mód. [Karty](#karty)                                                 |
-| `<namespace>/dice/*.json`                    | Kostky balíčku s váženými stěnami, balíčky karet, kdo uslyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)           |
-| `<namespace>/games/*.json`                   | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                  |
-| `<namespace>/ranks/*.json`                   | Náhodné úrovně, které mob získá při objevení: zdraví navíc, poškození, efekty, kořist a jmenovka. [Hodnosti mobů](#hodnosti-mobů)              |
-| `<namespace>/orders/*.json`                  | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                 |
-| `<namespace>/exposures/*.json`               | Nebezpečí, která ohrožují hráče poblíž pojmenovaných bloků, nesoucí pojmenované předměty nebo v pojmenovaných dimenzích. [Expozice](#expozice) |
-| `<namespace>/overrides/<target>/<name>.json` | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností)                         |
-| `<namespace>/villages/*.json`                | Pozemky, které může město nebo vesnice postavit. [Pozemky vesnic](#pozemky-vesnic)                                                             |
-| `<namespace>/pathintersects/*.json`          | Vzory umístěné tam, kde se setkávají vesnické cesty. [Cesty vesnic](#cesty-vesnic)                                                             |
-| `<namespace>/structuremaps/*.json`           | Šablony složené do jedné velké budovy na mřížce. [Mapy struktur](#mapy-struktur)                                                               |
-| `<namespace>/citymaps/*.json`                | Nakreslený plán ulic, podle něhož se město rozloží místo losování. [Mapy rozložení měst](#mapy-rozložení-měst)                                 |
-| `<namespace>/portalframes/*.json`            | Rámy, které může hráč postavit a zapálit. [Rámy portálů](#rámy-portálů)                                                                        |
-| `<namespace>/blastplaster/*.json`            | Co Blast Plaster udělá po výbuchu, podle dimenze. [Integrace Blast Plaster](#integrace-blast-plaster)                                          |
-| `<namespace>/structures/*.nbt`               | Šablony pro sazenice, `imprint` a přepisy módů. [Co můžeš přepsat](#co-můžeš-přepsat)                                                          |
-| `<namespace>/recipes/*.json`                 | Výrobní recepty, přidané nebo nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                 |
-| `<namespace>/recipe_removals/*.json`         | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                     |
-| `<namespace>/disabled/*.json`                | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                      |
-| `<namespace>/furnace/*.json`                 | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                      |
-| `<namespace>/tooltips/*.json`                | Další řádky popisků. [Popisky předmětů](#popisky-předmětů)                                                                                     |
-| `<namespace>/fuels/*.json`                   | Doby hoření. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                             |
-| `<namespace>/brewing/*.json`                 | Recepty pro varný stojan. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                 |
-| `<namespace>/potions/*.json`                 | Efekty lektvarů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                          |
-| `<namespace>/potion_types/*.json`            | Lahvové lektvary sestavené z těchto efektů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                               |
-| `<namespace>/villagers/*.json`               | Povolání vesničanů. [Vesničané a obchody](#vesničané-a-obchody)                                                                                |
-| `<namespace>/trades/*.json`                  | Co povolání kupují a prodávají. [Vesničané a obchody](#vesničané-a-obchody)                                                                    |
-| `<namespace>/loot_tables/*.json`             | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                              |
-| `<namespace>/loot_injections/*.json`         | Pool přidaný do již existující tabulky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                  |
-| `<namespace>/block_drops/*.json`             | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků)                                              |
-| `<namespace>/harvests/*.json`                | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                   |
-| `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                       |
-| `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                 |
-| `<namespace>/functions/*.mcfunction`         | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                          |
-| `<namespace>/tags/<kind>/*.json`             | Tagy, ve vlastním formátu hry. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                    |
-| `<namespace>/registry_remap/*.json`          | Staré názvy přiřazené novým. [Přejmenování v registru](#přejmenování-v-registru)                                                               |
+| Cesta                                        | Co obsahuje                                                                                                                                                                                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json`                  | Definice bloků. [Bloky](#bloky)                                                                                                                                                                      |
+| `<namespace>/items/*.json`                   | Definice předmětů. [Předměty](#předměty)                                                                                                                                                             |
+| `<namespace>/fluids/*.json`                  | Tekutiny s blokem a kbelíkem. [Tekutiny](#tekutiny)                                                                                                                                                  |
+| `<namespace>/materials/*.json`               | Materiály nástrojů a zbroje. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                            |
+| `<namespace>/tabs/*.json`                    | Karty kreativního režimu. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                               |
+| `<namespace>/sounds/*.json`                  | Zvukové události. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                                       |
+| `<namespace>/biomes/*.json`                  | Definice biomů. [Biomy](#biomy)                                                                                                                                                                      |
+| `<namespace>/worldgen/*.json`                | Co se generuje a kde. [Položky worldgenu](#položky-worldgenu)                                                                                                                                        |
+| `<namespace>/caveregions/*.json`             | Pojmenované oblasti rozprostřené po podzemí. [Oblasti jeskyní](#oblasti-jeskyní)                                                                                                                     |
+| `<namespace>/dimensions/*.json`              | Definice dimenzí. [Dimenze](#dimenze)                                                                                                                                                                |
+| `<namespace>/worldtemplates/*.json`          | Nastavení celého světa v jednom souboru. [Šablony světa](#šablony-světa)                                                                                                                             |
+| `<namespace>/worldintro/*.json`              | Stránky zobrazené, když hráč vstoupí do světa. [Úvod do světa](#úvod-do-světa)                                                                                                                       |
+| `<namespace>/gates/*.json`                   | Podmínky pro portály a dimenze. [Portály a brány](#portály-a-brány)                                                                                                                                  |
+| `<namespace>/gamerules/*.json`               | Herní pravidla pro nové světy. [Herní pravidla](#herní-pravidla)                                                                                                                                     |
+| `<namespace>/teams/*.json`                   | Strany ve vanilla scoreboardu a to, co se k nim připojuje. [Týmy](#týmy)                                                                                                                             |
+| `<namespace>/scoring/*.json`                 | Cíle, body a způsob, jak zápas končí. [Bodování](#bodování)                                                                                                                                          |
+| `<namespace>/raids/*.json`                   | Vlny, které přijdou na vesnici, když do ní hráč přinese znamení. [Nájezdy](#nájezdy)                                                                                                                 |
+| `<namespace>/entities/*.json`                | Varianty entit postavené na již existujících entitách. [Varianty entit](#varianty-entit)                                                                                                             |
+| `<namespace>/hardness/*.json`                | Doba těžby a násobitele výbuchu pro skupiny bloků. [Skupiny tvrdosti](#skupiny-tvrdosti)                                                                                                             |
+| `<namespace>/anvils/*.json`                  | Kouzla, která kovadlina dá pojmenovanému předmětu, pokrok, který tím hráč získá, a zámek do té doby. [Práce s kovadlinou](#práce-s-kovadlinou)                                                       |
+| `<namespace>/cards/*.json`                   | Karty na obrazovce zobrazené při spouštěči a zprávy, které říká sám tento mód. [Karty](#karty)                                                                                                       |
+| `<namespace>/dice/*.json`                    | Kostky balíčku s váženými stěnami, balíčky karet, kdo uslyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                 |
+| `<namespace>/games/*.json`                   | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                                                                        |
+| `<namespace>/ranks/*.json`                   | Náhodné úrovně, které mob získá při objevení: zdraví navíc, poškození, efekty, kořist a jmenovka. [Hodnosti mobů](#hodnosti-mobů)                                                                    |
+| `<namespace>/orders/*.json`                  | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                                                                       |
+| `<namespace>/exposures/*.json`               | Nebezpečí, která ohrožují hráče poblíž pojmenovaných bloků, nesoucí pojmenované předměty nebo v pojmenovaných dimenzích, biomech, strukturách, oblastech jeskyní nebo výškách. [Expozice](#expozice) |
+| `<namespace>/overrides/<target>/<name>.json` | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností)                                                                               |
+| `<namespace>/villages/*.json`                | Pozemky, které může město nebo vesnice postavit. [Pozemky vesnic](#pozemky-vesnic)                                                                                                                   |
+| `<namespace>/pathintersects/*.json`          | Vzory umístěné tam, kde se setkávají vesnické cesty. [Cesty vesnic](#cesty-vesnic)                                                                                                                   |
+| `<namespace>/structuremaps/*.json`           | Šablony složené do jedné velké budovy na mřížce. [Mapy struktur](#mapy-struktur)                                                                                                                     |
+| `<namespace>/citymaps/*.json`                | Nakreslený plán ulic, podle něhož se město rozloží místo losování. [Mapy rozložení měst](#mapy-rozložení-měst)                                                                                       |
+| `<namespace>/portalframes/*.json`            | Rámy, které může hráč postavit a zapálit. [Rámy portálů](#rámy-portálů)                                                                                                                              |
+| `<namespace>/blastplaster/*.json`            | Co Blast Plaster udělá po výbuchu, podle dimenze. [Integrace Blast Plaster](#integrace-blast-plaster)                                                                                                |
+| `<namespace>/structures/*.nbt`               | Šablony pro sazenice, `imprint` a přepisy módů. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                |
+| `<namespace>/recipes/*.json`                 | Výrobní recepty, přidané nebo nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                       |
+| `<namespace>/recipe_removals/*.json`         | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                           |
+| `<namespace>/disabled/*.json`                | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                            |
+| `<namespace>/furnace/*.json`                 | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                                            |
+| `<namespace>/tooltips/*.json`                | Další řádky popisků. [Popisky předmětů](#popisky-předmětů)                                                                                                                                           |
+| `<namespace>/fuels/*.json`                   | Doby hoření. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                                                                   |
+| `<namespace>/brewing/*.json`                 | Recepty pro varný stojan. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                                       |
+| `<namespace>/potions/*.json`                 | Efekty lektvarů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                                                |
+| `<namespace>/potion_types/*.json`            | Lahvové lektvary sestavené z těchto efektů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                     |
+| `<namespace>/villagers/*.json`               | Povolání vesničanů. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                                      |
+| `<namespace>/trades/*.json`                  | Co povolání kupují a prodávají. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                          |
+| `<namespace>/loot_tables/*.json`             | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                    |
+| `<namespace>/loot_injections/*.json`         | Pool přidaný do již existující tabulky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                        |
+| `<namespace>/block_drops/*.json`             | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků)                                                                                                    |
+| `<namespace>/harvests/*.json`                | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                         |
+| `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
+| `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
+| `<namespace>/functions/*.mcfunction`         | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                |
+| `<namespace>/tags/<kind>/*.json`             | Tagy, ve vlastním formátu hry. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                          |
+| `<namespace>/registry_remap/*.json`          | Staré názvy přiřazené novým. [Přejmenování v registru](#přejmenování-v-registru)                                                                                                                     |
 
 V `assets/`:
 
@@ -2948,13 +2948,17 @@ Klíče zakázky:
 
 Cesta k souboru je název nebezpečí a jeho zpráva o smrti pochází z klíče lang `death.attack.rdpl.<file name>`. Expozice se načítají, jen když je `load` zapnuto a `vanillaClients` vypnuto.
 
-Nebezpečí definované balíčkem: pojmenované bloky, předměty a dimenze vystavují hráče, kteří stojí poblíž těch bloků, nosí ty předměty nebo se zdržují v těch dimenzích, po úrovních, přičemž každá úroveň uplatňuje efekty a pravidelné poškození. Nebezpečí lze také chytit od okolních mobů a hráčů, nebo padat s deštěm ([Nákaza a počasí](#nákaza-a-počasí)). Jeden soubor definuje jedno nebezpečí; několik jich běží vedle sebe.
+Nebezpečí definované balíčkem: pojmenované bloky, předměty, dimenze, biomy, struktury, oblasti jeskyní a výšky vystavují hráče, kteří stojí poblíž těch bloků, nosí ty předměty nebo se zdržují v těch dimenzích, po úrovních, přičemž každá úroveň uplatňuje efekty a pravidelné poškození. Nebezpečí lze také chytit od okolních mobů a hráčů, nebo padat s deštěm ([Nákaza a počasí](#nákaza-a-počasí)). Jeden soubor definuje jedno nebezpečí; několik jich běží vedle sebe.
 
 ```json
 {
   "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
   "items": [ "mypack:nuclear_waste" ],
   "dimensions": [ "minecraft:the_nether" ],
+  "biomes": [ "minecraft:desert=2", "#minecraft:is_badlands" ],
+  "structures": [ "minecraft:mansion", "#minecraft:village", "mypack:ruin=2" ],
+  "caveRegions": [ "mypack:glowcave=2" ],
+  "heights": [ "-64:0=2", "200:=1" ],
   "immunity": "mypack:antirad",
   "scanInterval": 20,
   "range": 10,
@@ -2970,17 +2974,21 @@ Nebezpečí definované balíčkem: pojmenované bloky, předměty a dimenze vys
 }
 ```
 
-| Klíč                  | Povinné      | Hodnota                           | Výchozí | Co dělá                                                                                                     |
-| --------------------- | ------------ | --------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| `blocks`              | jeden z pěti | seznam `block` nebo `block=level` |         | Bloky, které vystavují hráče stojícího poblíž. Bez úrovně znamená 1                                         |
-| `items`               | jeden z pěti | seznam `item` nebo `item=level`   |         | Předměty, které vystavují hráče, jenž je nese nebo nosí                                                     |
-| `dimensions`          | jeden z pěti | seznam `dim` nebo `dim=level`     |         | Id dimenzí, které vystavují každého hráče v nich                                                            |
-| `levels`              | ano          | seznam úrovní                     |         | Žebříček závažnosti, první položka je úroveň 1. Hráč dostane nejvyšší úroveň, které kterýkoli zdroj dosáhne |
-| `immunity`            | ne           | název lektvaru                    | žádný   | Efekt, jehož nositel není vystaven vůbec                                                                    |
-| `scanInterval`        | ne           | ticky                             | `20`    | Jak často se kontroluje okolí a inventář                                                                    |
-| `range`               | ne           | bloky                             | `10`    | Jak daleko sahá expozice bloku, jako koule                                                                  |
-| `sourcesForNextLevel` | ne           | celé číslo                        | `0`     | Tolik blízkých zdrojů jedné úrovně ji posune o úroveň dál. `0` to vypne                                     |
-| `skipsCreative`       | ne           | boolean                           | `true`  | Hráči v kreativním režimu a v režimu pozorovatele zůstanou nedotčeni                                        |
+| Klíč                  | Povinné        | Hodnota                                   | Výchozí | Co dělá                                                                                                                             |
+| --------------------- | -------------- | ----------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`              | jeden z devíti | seznam `block` nebo `block=level`         |         | Bloky, které vystavují hráče stojícího poblíž. Bez úrovně znamená 1                                                                 |
+| `items`               | jeden z devíti | seznam `item` nebo `item=level`           |         | Předměty, které vystavují hráče, jenž je nese nebo nosí                                                                             |
+| `dimensions`          | jeden z devíti | seznam `dim` nebo `dim=level`             |         | Id dimenzí, které vystavují každého hráče v nich                                                                                    |
+| `biomes`              | jeden z devíti | seznam `biome` nebo `biome=level`         |         | Biomy, které vystavují každého hráče, jenž v nich stojí. `#` označuje značku biomu                                                  |
+| `structures`          | jeden z devíti | seznam `structure` nebo `structure=level` |         | Struktury, které vystavují hráče uvnitř nich. `#` označuje značku struktury. Struktura z balíčku platí do vzdálenosti `range` bloků |
+| `caveRegions`         | jeden z devíti | seznam `region` nebo `region=level`       |         | Oblasti jeskyní, které vystavují hráče v nich. Holý název převezme jmenný prostor tohoto souboru                                    |
+| `heights`             | jeden z devíti | seznam `from:to=level`                    |         | Pásma výšky Y, která vystavují hráče v nich. Nechte jednu stranu prázdnou, aby neměla žádný limit                                   |
+| `levels`              | ano            | seznam úrovní                             |         | Žebříček závažnosti, první položka je úroveň 1. Hráč dostane nejvyšší úroveň, které kterýkoli zdroj dosáhne                         |
+| `immunity`            | ne             | název lektvaru                            | žádný   | Efekt, jehož nositel není vystaven vůbec                                                                                            |
+| `scanInterval`        | ne             | ticky                                     | `20`    | Jak často se kontroluje okolí a inventář                                                                                            |
+| `range`               | ne             | bloky                                     | `10`    | Jak daleko sahá expozice bloku, jako koule                                                                                          |
+| `sourcesForNextLevel` | ne             | celé číslo                                | `0`     | Tolik blízkých zdrojů jedné úrovně ji posune o úroveň dál. `0` to vypne                                                             |
+| `skipsCreative`       | ne             | boolean                                   | `true`  | Hráči v kreativním režimu a v režimu pozorovatele zůstanou nedotčeni                                                                |
 
 ### Úrovně
 
@@ -2994,6 +3002,8 @@ Nebezpečí definované balíčkem: pojmenované bloky, předměty a dimenze vys
 | `effects`        | ne      | seznam efektů  | žádný   | Další efekty uplatněné současně, ve stejném tvaru jako u typů lektvarů. Bez `duration` se řídí oknem skenování                               |
 
 Efekty úrovně trvají o něco déle než do dalšího skenování, takže když hráč odejde, vyprchají samy. Zpráva o smrti způsobené poškozením z expozice se čte z `death.attack.rdpl.<file name>`, což zajišťují lang soubory balíčku.
+
+Zdroj, který platí u hráčových nohou, se ověřuje při každé kontrole, takže přestane působit, jakmile hráč místo opustí.
 
 ### Nákaza a počasí
 
@@ -3015,16 +3025,16 @@ Dva další zdroje, zapsané ve stejném souboru. Nositelé a vystavení nositel
 }
 ```
 
-| Klíč                | Povinné      | Hodnota                             | Výchozí            | Co dělá                                                                                                            |
-| ------------------- | ------------ | ----------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| `carriers`          | jeden z pěti | seznam `entity` nebo `entity=level` |                    | Moby, nebo `minecraft:player`, které nebezpečí vždy předávají na dané úrovni. Bez úrovně platí 1                   |
-| `contagious`        | ne           | boolean                             | `false`            | Každý vystavený předává nebezpečí na úrovni, kterou drží                                                           |
-| `catchers`          | ne           | seznam názvů entit                  | `minecraft:player` | Kdo se může nakazit. Mob se nakazí jen od nositelů, nikdy z bloků, předmětů ani počasí                             |
-| `contagionRange`    | ne           | bloky                               | `4`                | Jak daleko nositel dosáhne, jako koule                                                                             |
-| `contagionChance`   | ne           | `0` až `1`                          | `0.1`              | Šance, že se při každém skenování nositele nakazí každý příjemce v dosahu                                          |
-| `contagionDuration` | ne           | ticky                               | `1200`             | Jak dlouho nakažené nebezpečí drží získanou úroveň. Nová nákaza spustí čas znovu                                   |
-| `weather`           | jeden z pěti | seznam `kind` nebo `kind=level`     |                    | `rain` vystavuje hráče, na kterého prší: otevřená obloha nad hlavou v biomu, kde prší. `thunder` platí během bouře |
-| `weatherDimensions` | ne           | seznam `dim`                        | každá dimenze      | Id dimenzí, kde počasí vystavuje                                                                                   |
+| Klíč                | Povinné        | Hodnota                             | Výchozí            | Co dělá                                                                                                            |
+| ------------------- | -------------- | ----------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `carriers`          | jeden z devíti | seznam `entity` nebo `entity=level` |                    | Moby, nebo `minecraft:player`, které nebezpečí vždy předávají na dané úrovni. Bez úrovně platí 1                   |
+| `contagious`        | ne             | boolean                             | `false`            | Každý vystavený předává nebezpečí na úrovni, kterou drží                                                           |
+| `catchers`          | ne             | seznam názvů entit                  | `minecraft:player` | Kdo se může nakazit. Mob se nakazí jen od nositelů, nikdy z bloků, předmětů ani počasí                             |
+| `contagionRange`    | ne             | bloky                               | `4`                | Jak daleko nositel dosáhne, jako koule                                                                             |
+| `contagionChance`   | ne             | `0` až `1`                          | `0.1`              | Šance, že se při každém skenování nositele nakazí každý příjemce v dosahu                                          |
+| `contagionDuration` | ne             | ticky                               | `1200`             | Jak dlouho nakažené nebezpečí drží získanou úroveň. Nová nákaza spustí čas znovu                                   |
+| `weather`           | jeden z devíti | seznam `kind` nebo `kind=level`     |                    | `rain` vystavuje hráče, na kterého prší: otevřená obloha nad hlavou v biomu, kde prší. `thunder` platí během bouře |
+| `weatherDimensions` | ne             | seznam `dim`                        | každá dimenze      | Id dimenzí, kde počasí vystavuje                                                                                   |
 
 Nakažené nebezpečí se ve skenování počítá jako další zdroj, vyhrává nejvyšší úroveň jako u každého jiného, a chrání proti němu i `immunity`. Nic se nešíří, dokud jsou `contagionRange` a `contagionChance` nad `0` a soubor nepojmenuje `carriers` nebo nenastaví `contagious`; moby se sledují jen tehdy, když to nějaký soubor požaduje.
 
