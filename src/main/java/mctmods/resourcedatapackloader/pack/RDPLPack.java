@@ -92,7 +92,7 @@ public final class RDPLPack {
     private void indexHome(Path base, boolean versioned) {
         Path assets = base.resolve(ASSETS);
         if (!Files.isDirectory(assets)) { return; }
-        try (Stream<Path> stream = Files.list(assets)) { stream.filter(Files::isDirectory).filter(this::ownsNamespace).forEach(dir -> indexNamespace(dir, versioned)); }
+        try (Stream<Path> stream = Files.list(assets)) { stream.sorted().filter(Files::isDirectory).filter(this::ownsNamespace).forEach(dir -> indexNamespace(dir, versioned)); }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces", name, ex);
         }
@@ -113,10 +113,10 @@ public final class RDPLPack {
         Map<String, List<String>> out = new TreeMap<>();
         if (!Files.isDirectory(home)) { return out; }
         try (Stream<Path> stream = Files.list(home)) {
-            for (Path dir : (Iterable<Path>) stream.filter(Files::isDirectory)::iterator) {
+            for (Path dir : (Iterable<Path>) stream.sorted().filter(Files::isDirectory)::iterator) {
                 List<String> paths = new ArrayList<>();
                 try (Stream<Path> files = Files.walk(dir)) {
-                    for (String path : (Iterable<String>) files.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) { paths.add(path); }
+                    for (String path : (Iterable<String>) files.sorted().filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) { paths.add(path); }
                 }
                 Collections.sort(paths);
                 out.put(trimSeparator(dir.getFileName().toString()), paths);
@@ -140,7 +140,7 @@ public final class RDPLPack {
         boolean carriedOnly = modernRoot && !versioned;
         int nested = 0;
         try (Stream<Path> stream = Files.walk(dir)) {
-            for (String path : (Iterable<String>) stream.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
+            for (String path : (Iterable<String>) stream.sorted().filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
                 if (path.startsWith(PackManager.ROOT_DIRECTORY + "/")) { nested++; }
                 else if (!carriedOnly || Port.unchanged(path)) { paths.add(path); }
             }
