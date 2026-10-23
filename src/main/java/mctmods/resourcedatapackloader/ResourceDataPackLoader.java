@@ -38,6 +38,7 @@ import mctmods.resourcedatapackloader.content.ContentWelcome;
 import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.card.CardScan;
+import mctmods.resourcedatapackloader.content.item.ContentWeapons;
 import mctmods.resourcedatapackloader.content.util.ContentDisabledEvents;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
@@ -249,6 +250,10 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onOpen);
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onTick);
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onChunk);
+        NeoForge.EVENT_BUS.addListener(ContentWeapons::onModifiers);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
+        NeoForge.EVENT_BUS.addListener(ContentWeapons::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onServerStarted);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, ContentHardness::onBreak);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onAdvancement);
@@ -516,6 +521,7 @@ import java.util.Set;
     private void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
         CityBorder.forget();
+        ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }

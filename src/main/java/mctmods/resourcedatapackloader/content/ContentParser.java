@@ -314,7 +314,8 @@ public final class ContentParser {
                 Json.getString(json, "locates", "").trim(),
                 ContentParserContainers.curioSlot(key, json),
                 Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
-                Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)));
+                Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)),
+                ContentParserWeapons.weapon(key, json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

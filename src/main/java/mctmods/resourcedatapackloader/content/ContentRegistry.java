@@ -155,6 +155,11 @@ public final class ContentRegistry {
 
     public static Collection<ItemDef> itemDefs() { return Collections.unmodifiableCollection(ITEM_DEFS.values()); }
 
+    @Nullable public static ItemDef itemDef(ResourceLocation id) {
+        ItemEntry entry = ITEMS.get(id);
+        return entry == null ? null : entry.def();
+    }
+
     public static Collection<FluidDef> fluidDefs() { return Collections.unmodifiableCollection(FLUID_DEFS.values()); }
 
     public static Collection<MaterialDef> materialDefs() { return Collections.unmodifiableCollection(MATERIAL_DEFS.values()); }
