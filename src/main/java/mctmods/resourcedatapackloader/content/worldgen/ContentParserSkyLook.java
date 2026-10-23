@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 
 public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
-    private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow");
+    private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow", "grassTint", "foliageTint");
     private static final List<String> FACES = List.of("up", "down", "north", "east", "south", "west");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
@@ -43,7 +43,7 @@ public final class ContentParserSkyLook {
                 sky.has("heat") ? heat(key, Json.getJsonObject(sky, "heat")) : null, color(key, sky, "snowColor"), color(key, sky, "waterFogColor"), color(key, sky, "lavaFogColor"),
                 color(key, sky, "starColor"), unit(key, sky, "starTwinkle", 0.0F), color(key, sky, "lightningColor"), skybox(key, sky),
                 sky.has("aurora") ? aurora(key, Json.getJsonObject(sky, "aurora")) : null, Json.getBoolean(sky, "rainbow", false),
-                color(key, sun, "color"), color(key, sun, "auraColor"));
+                color(key, sun, "color"), color(key, sun, "auraColor"), color(key, sky, "grassTint"), color(key, sky, "foliageTint"));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
