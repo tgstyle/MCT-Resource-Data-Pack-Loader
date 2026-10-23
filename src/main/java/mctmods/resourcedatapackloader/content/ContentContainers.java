@@ -17,7 +17,7 @@ import net.minecraftforge.registries.RegisterEvent;
 public final class ContentContainers {
     public static final ResourceLocation ID = ResourceDataPackLoader.id("container");
     private static final ResourceLocation STORAGE_ID = ResourceDataPackLoader.id("entity_storage");
-    public static final ContainerDef FALLBACK = new ContainerDef(3, 9, "", false, null, null, 0, 0, "");
+    public static final ContainerDef FALLBACK = new ContainerDef(3, 9, "", false, null, null, 0, 0);
     public static final Held<BlockEntityType<ContentContainerBlockEntity>> TYPE = new Held<>("pack container block entity type");
     public static final Held<MenuType<ContentContainerMenu>> MENU = new Held<>("pack container menu type");
     public static final Held<MenuType<EntityStorageMenu>> STORAGE_MENU = new Held<>("entity storage menu type");

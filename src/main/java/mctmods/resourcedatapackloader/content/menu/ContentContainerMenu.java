@@ -88,8 +88,8 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
     private static ContainerDef read(FriendlyByteBuf extra) {
         int rows = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_ROWS);
         int columns = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_COLUMNS);
-        if (!extra.readBoolean()) { return new ContainerDef(rows, columns, "", false, null, null, 0, 0, ""); }
-        return new ContainerDef(rows, columns, "", false, null, extra.readResourceLocation(), extra.readVarInt(), extra.readVarInt(), "");
+        if (!extra.readBoolean()) { return new ContainerDef(rows, columns, "", false, null, null, 0, 0); }
+        return new ContainerDef(rows, columns, "", false, null, extra.readResourceLocation(), extra.readVarInt(), extra.readVarInt());
     }
 
     public static boolean storable(ItemStack stack) {

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
+import mctmods.resourcedatapackloader.content.def.CurioSlotDef;
 import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.PotionDef;
@@ -128,10 +129,15 @@ public final class ContentGenerated {
         Set<String> slots = new LinkedHashSet<>();
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
             ItemDef def = entry.def();
-            if (entry.block() == null && def != null && def.holds() != null && def.holds().worn()) {
-                if (ContainerDef.ANY_SLOT.equals(def.holds().curioSlot())) { slots.addAll(BAUBLES_SLOTS); }
-                else { slots.add(def.holds().curioSlot()); }
+            if (entry.block() == null && def != null && def.slotted()) {
+                if (ContainerDef.ANY_SLOT.equals(def.curioSlot())) { slots.addAll(BAUBLES_SLOTS); }
+                else { slots.add(def.curioSlot()); }
             }
+        }
+        for (CurioSlotDef made : ContentCurioSlots.defs()) {
+            slots.remove(made.id());
+            data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + made.id() + PackManager.JSON_SUFFIX, ContentCurioSlots.slotJson(made));
+            data(ResourceDataPackLoader.MOD_ID, "curios/entities/" + made.id() + PackManager.JSON_SUFFIX, ContentCurioSlots.entitiesJson(made));
         }
         if (slots.isEmpty()) { return; }
         JsonArray named = Json.arr();
@@ -156,7 +162,7 @@ public final class ContentGenerated {
         }
         if (def != null) {
             for (String tag : ContentFormats.equipmentTags(def)) { tag(itemTags, tag, entry.id()); }
-            if (def.holds() != null && def.holds().worn()) { tag(itemTags, "curios:" + def.holds().curioSlot(), entry.id()); }
+            if (def.slotted()) { tag(itemTags, "curios:" + def.curioSlot(), entry.id()); }
         }
     }
 

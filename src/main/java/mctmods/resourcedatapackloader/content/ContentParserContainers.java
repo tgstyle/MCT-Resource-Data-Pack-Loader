@@ -1,11 +1,14 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.AttributeDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
@@ -59,10 +62,36 @@ public final class ContentParserContainers {
         boolean chest = asked != null;
         ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(Settings.lower(asked.getAsString()), key) : null;
         return new ContainerDef(rows, columns, Settings.lower(Json.getString(held, "lootTable", "")),
-                chest, sheet, texture, wide, tall, curioSlot(key, held));
+                chest, sheet, texture, wide, tall);
     }
 
-    private static String curioSlot(ResourceLocation key, JsonObject held) {
+    static String curioSlot(ResourceLocation key, JsonObject json) {
+        String top = slotNamed(key, json);
+        if (!top.isEmpty() || !GsonHelper.isObjectNode(json, "container")) { return top; }
+        return slotNamed(key, json.getAsJsonObject("container"));
+    }
+
+    static List<AttributeDef> wornAttributes(ResourceLocation key, JsonObject json) {
+        List<AttributeDef> found = new ArrayList<>();
+        if (!json.has("wornAttributes")) { return found; }
+        for (JsonElement element : Json.getJsonArray(json, "wornAttributes")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A worn attribute in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            String attribute = Json.getString(entry, "attribute", "");
+            int operation = Json.getInt(entry, "operation", 0);
+            if (attribute.isEmpty() || operation < 0 || operation > 2) {
+                ContentLog.LOGGER.error("A worn attribute in {} names no attribute or an operation outside 0 to 2, skipping it", key);
+                continue;
+            }
+            found.add(new AttributeDef(attribute, "", Json.getFloat(entry, "amount", 0.0F), operation));
+        }
+        return found;
+    }
+
+    private static String slotNamed(ResourceLocation key, JsonObject held) {
         String asked = Settings.lower(Json.getString(held, "curioSlot", ""));
         if (!asked.isEmpty()) { return asked; }
         String old = Settings.lower(Json.getString(held, "bauble", ""));
@@ -76,7 +105,7 @@ public final class ContentParserContainers {
             return "";
         }
         if (TOLD_BAUBLE.add(key.toString())) {
-            ContentLog.LOGGER.info("The container on {} names the 1.12.2 setting 'bauble' as '{}'. It is read as curioSlot '{}'; write curioSlot on this line", key, old, mapped);
+            ContentLog.LOGGER.info("{} names the 1.12.2 setting 'bauble' as '{}'. It is read as curioSlot '{}'; write curioSlot on this line", key, old, mapped);
         }
         return mapped;
     }

@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.compat;
 
-import mctmods.resourcedatapackloader.content.item.ContentContainerItem;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.entity.LivingEntity;
@@ -28,7 +27,7 @@ public final class ContentCurios {
         return absent;
     }
 
-    public static List<ItemStack> worn(LivingEntity wearer) {
+    public static List<ItemStack> worn(LivingEntity wearer, Predicate<ItemStack> ours) {
         List<ItemStack> found = new ArrayList<>();
         if (missing()) { return found; }
         Api held = bound();
@@ -37,12 +36,11 @@ public final class ContentCurios {
             Object lazy = held.inventoryOf().invoke(null, wearer);
             Object handler = lazy == null ? null : ((Optional<?>) held.resolve().invoke(lazy)).orElse(null);
             if (handler == null) { return found; }
-            Predicate<ItemStack> ours = stack -> stack.getItem() instanceof ContentContainerItem;
             for (Object result : (List<?>) held.findCurios().invoke(handler, ours)) { found.add((ItemStack) held.stackOf().invoke(result)); }
         }
         catch (ReflectiveOperationException | RuntimeException ex) {
             broken = true;
-            ContentLog.LOGGER.error("Curios is installed but its API did not answer as expected, so worn containers cannot be opened with the key", ex);
+            ContentLog.LOGGER.error("Curios is installed but its API did not answer as expected, so worn items cannot be read", ex);
         }
         return found;
     }
@@ -61,7 +59,7 @@ public final class ContentCurios {
         }
         catch (ReflectiveOperationException ex) {
             broken = true;
-            ContentLog.LOGGER.error("Curios is installed but its API is not the shape this mod expects, so worn containers cannot be opened with the key", ex);
+            ContentLog.LOGGER.error("Curios is installed but its API is not the shape this mod expects, so worn items cannot be read", ex);
             return null;
         }
     }
