@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockContainer extends ContentBlock {
     public static final int MAX_VARIANTS = BlockDef.MAX_META;
-    private static final ContainerDef PLAIN = new ContainerDef(3, 9, "", false, null, null, 0, 0, "");
+    private static final ContainerDef PLAIN = new ContainerDef(3, 9, "", false, null, null, 0, 0);
     private final ContainerDef container;
 
     public static ContentBlockContainer create(BlockDef def) { return BlockVariants.construct(def, ContentBlockContainer::new); }

@@ -31,9 +31,12 @@ public final class ItemDef {
     public final String rollStore;
     public final boolean passesTurn;
     public final String locates;
+    public final String bauble;
+    public final List<PotionEffectDef> wornEffects;
+    public final List<AttributeDef> wornAttributes;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -58,7 +61,12 @@ public final class ItemDef {
         this.rollStore = rollStore;
         this.passesTurn = passesTurn;
         this.locates = locates;
+        this.bauble = bauble;
+        this.wornEffects = wornEffects;
+        this.wornAttributes = wornAttributes;
     }
+
+    public boolean worn() { return !bauble.isEmpty() && (!wornEffects.isEmpty() || !wornAttributes.isEmpty()); }
 
     @Nullable public ItemVariant at(int meta) { return byMeta.get(meta); }
 

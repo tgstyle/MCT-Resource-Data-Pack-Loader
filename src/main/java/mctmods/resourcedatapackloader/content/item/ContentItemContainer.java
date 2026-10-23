@@ -12,7 +12,6 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.World;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class ContentItemContainer extends ContentItem {
     private static Boolean baubles;
@@ -20,7 +19,7 @@ public class ContentItemContainer extends ContentItem {
 
     public ContentItemContainer(ItemDef def) {
         super(def);
-        this.holds = def.holds == null ? new ContainerDef(1, 9, "", false, null, null, 0, 0, "") : def.holds;
+        this.holds = def.holds == null ? new ContainerDef(1, 9, "", false, null, null, 0, 0) : def.holds;
         setMaxStackSize(1);
     }
 
@@ -29,11 +28,6 @@ public class ContentItemContainer extends ContentItem {
     public static boolean baubled() {
         if (baubles == null) { baubles = net.minecraftforge.fml.common.Loader.isModLoaded("baubles"); }
         return baubles;
-    }
-
-    @Override @Nullable public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, @Nullable net.minecraft.nbt.NBTTagCompound nbt) {
-        if (holds.bauble.isEmpty() || !baubled()) { return super.initCapabilities(stack, nbt); }
-        return mctmods.resourcedatapackloader.content.compat.BaublesPouch.provider(holds.bauble);
     }
 
     @Override @Nonnull public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {

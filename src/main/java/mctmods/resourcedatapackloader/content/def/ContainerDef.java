@@ -14,9 +14,8 @@ public final class ContainerDef {
     @Nullable public final ResourceLocation guiTexture;
     public final int guiWidth;
     public final int guiHeight;
-    public final String bauble;
 
-    public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, String bauble) {
+    public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight) {
         this.rows = rows;
         this.columns = columns;
         this.lootTable = lootTable;
@@ -25,7 +24,6 @@ public final class ContainerDef {
         this.guiTexture = guiTexture;
         this.guiWidth = guiWidth;
         this.guiHeight = guiHeight;
-        this.bauble = bauble;
     }
 
     public int size() { return rows * columns; }

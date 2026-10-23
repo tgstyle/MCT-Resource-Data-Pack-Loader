@@ -13,16 +13,28 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class BaublesPouch {
+    private static final Map<String, ICapabilityProvider> PROVIDERS = new HashMap<>();
     private static boolean told = false;
 
     private BaublesPouch() {}
 
     @Nullable public static ICapabilityProvider provider(String named) {
+        if (PROVIDERS.containsKey(named)) { return PROVIDERS.get(named); }
+        ICapabilityProvider made = make(named);
+        PROVIDERS.put(named, made);
+        return made;
+    }
+
+    @Nullable private static ICapabilityProvider make(String named) {
         BaubleType type = typeOf(named);
         if (type == null) { return null; }
         BaubleItem bauble = new BaubleItem(type);
@@ -31,6 +43,16 @@ public final class BaublesPouch {
 
             @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) { return capability == BaublesCapabilities.CAPABILITY_ITEM_BAUBLE ? BaublesCapabilities.CAPABILITY_ITEM_BAUBLE.cast(bauble) : null; }
         };
+    }
+
+    public static List<ItemStack> wornStacks(EntityPlayer player) {
+        IBaublesItemHandler worn = BaublesApi.getBaublesHandler(player);
+        List<ItemStack> found = new ArrayList<>();
+        for (int slot = 0; slot < worn.getSlots(); slot++) {
+            ItemStack stack = worn.getStackInSlot(slot);
+            if (!stack.isEmpty()) { found.add(stack); }
+        }
+        return found;
     }
 
     @Nullable private static BaubleType typeOf(String named) {

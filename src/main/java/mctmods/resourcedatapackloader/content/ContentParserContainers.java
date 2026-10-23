@@ -9,7 +9,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.JsonUtils;
-import net.minecraft.util.ResourceLocation;import javax.annotation.Nullable;
+import net.minecraft.util.ResourceLocation;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
 
 public final class ContentParserContainers {
     private ContentParserContainers() {}
@@ -42,8 +45,33 @@ public final class ContentParserContainers {
         boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
         ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key.toString()) : null;
         return new ContainerDef(rows, columns, Json.getString(held, "lootTable", "").trim(),
-                chest, sheet, texture, wide, tall,
-                Settings.lower(Json.getString(held, "bauble", "")));
+                chest, sheet, texture, wide, tall);
+    }
+
+    static String bauble(JsonObject json) {
+        String named = Settings.lower(Json.getString(json, "bauble", ""));
+        if (!named.isEmpty() || !json.has("container") || !json.get("container").isJsonObject()) { return named; }
+        return Settings.lower(Json.getString(json.getAsJsonObject("container"), "bauble", ""));
+    }
+
+    static List<AttributeDef> wornAttributes(ResourceLocation key, JsonObject json) {
+        List<AttributeDef> found = new ArrayList<>();
+        if (!json.has("wornAttributes")) { return found; }
+        for (JsonElement element : Json.getJsonArray(json, "wornAttributes")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A worn attribute in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            String attribute = Json.getString(entry, "attribute", "");
+            int operation = Json.getInt(entry, "operation", 0);
+            if (attribute.isEmpty() || operation < 0 || operation > 2) {
+                ContentLog.LOGGER.error("A worn attribute in {} names no attribute or an operation outside 0 to 2, skipping it", key);
+                continue;
+            }
+            found.add(new AttributeDef(attribute, "", Json.getFloat(entry, "amount", 0.0F), operation));
+        }
+        return found;
     }
 
     static boolean chested(JsonObject json) {

@@ -32,6 +32,7 @@ import mctmods.resourcedatapackloader.content.card.CardScan;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.content.item.ContentItemContainer;
+import mctmods.resourcedatapackloader.content.item.ContentWorn;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
@@ -280,6 +281,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(ContentPregenDimensions.class);
         MinecraftForge.EVENT_BUS.register(ContentPregenHold.class);
         MinecraftForge.EVENT_BUS.register(CityGrid.class);
+        ContentWorn.register();
         if (Config.worldgen.worldgenDebug) {
             MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
             MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);

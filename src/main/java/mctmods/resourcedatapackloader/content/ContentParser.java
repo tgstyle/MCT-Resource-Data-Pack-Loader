@@ -327,7 +327,10 @@ public final class ContentParser {
                 Json.getString(json, "rolls", "").trim(),
                 Json.getString(json, "rollStore", "").trim(),
                 Json.getBoolean(json, "passesTurn", false),
-                Json.getString(json, "locates", "").trim());
+                Json.getString(json, "locates", "").trim(),
+                ContentParserContainers.bauble(json),
+                Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
+                Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
