@@ -349,14 +349,8 @@ public final class ContentDimensions {
                     land = overworldNoise ? ContentSkyLand.raise(settings, def.maxHeight(), dimension, "Dimension " + dimension) : null;
                 }
                 if (def.seaLevel() >= 0) { settings.addProperty("sea_level", def.seaLevel()); }
-                if (def.lavaOceans()) {
-                    JsonObject lava = new JsonObject();
-                    lava.addProperty("Name", "minecraft:lava");
-                    JsonObject properties = new JsonObject();
-                    properties.addProperty("level", "0");
-                    lava.add("Properties", properties);
-                    settings.add("default_fluid", lava);
-                }
+                JsonObject sea = OceanFluid.state(def.oceanFluid(), def.lavaOceans(), "Dimension " + dimension);
+                if (sea != null) { settings.add("default_fluid", sea); }
                 Identifier id = Identifier.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
                 String settingsPath = "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX;
                 GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), settingsPath, LineCompat.worldgenOut(settingsPath, settings).toString());

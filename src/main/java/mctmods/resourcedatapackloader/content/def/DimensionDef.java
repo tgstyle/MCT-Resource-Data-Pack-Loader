@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, List<PickDef> biomeList, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
+public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, List<PickDef> biomeList, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans, String oceanFluid,
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
                            @Nullable Identifier respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options,
@@ -28,7 +28,7 @@ public record DimensionDef(Identifier key, String terrain, List<String> flatOpti
 
     public boolean shapesHeight() { return minHeight != UNSET && maxHeight != UNSET; }
 
-    public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans || LegacyTerrainShape.of(options).any(); }
+    public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans || !oceanFluid.isEmpty() || LegacyTerrainShape.of(options).any(); }
 
     public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld || traits.sky() != null || traits.rain() != null; }
 
