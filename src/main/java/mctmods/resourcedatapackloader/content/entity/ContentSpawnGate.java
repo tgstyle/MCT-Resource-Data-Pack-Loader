@@ -16,9 +16,16 @@ public final class ContentSpawnGate {
     private ContentSpawnGate() {}
 
     public static boolean barred(Entity entity) {
+        if (!(entity.level() instanceof ServerLevel level)) { return false; }
         EntityVariantDef def = ContentEntities.def(entity);
-        if (def == null || def.gate() == SpawnGateDef.NONE || !(entity.level() instanceof ServerLevel level)) { return false; }
-        SpawnGateDef gate = def.gate();
+        if (def != null && def.gate() != SpawnGateDef.NONE && fails(def.gate(), level, entity)) { return true; }
+        for (SpawnGateDef lock : SpawnLocks.gates(entity)) {
+            if (fails(lock, level, entity)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean fails(SpawnGateDef gate, ServerLevel level, Entity entity) {
         if (!gate.dimensions().isEmpty() && !inDimension(gate, level)) { return true; }
         if (gate.timed() && !CardPlace.within(CardPlace.timeOfDay(level), gate.timeFrom(), gate.timeTo())) { return true; }
         if (gate.dayAtLeast() >= 0L && CardPlace.day(level) < gate.dayAtLeast()) { return true; }

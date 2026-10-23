@@ -53,6 +53,7 @@ public final class RecipeLoading {
     public static void begin(Map<ResourceLocation, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, BiConsumer<ResourceLocation, JsonElement> parse) {
         rebuilt = false;
         RecipeRemovals.reload();
+        RecipeLocks.reload();
         FurnaceRecipes.reload();
         FurnaceRecipes.begin();
         RecipeBlocking.reload();

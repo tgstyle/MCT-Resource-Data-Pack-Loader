@@ -37,6 +37,7 @@
         "common.MixinIOWorker",
         "common.MixinPlayerBreakRestriction",
         "common.MixinAnvilMenu",
+        "common.MixinCraftingMenu",
         "common.MixinItemCombinerMenu",
         "common.IItemEntity",
         "common.IMobCategory",
