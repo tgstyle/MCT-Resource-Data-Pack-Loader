@@ -37,6 +37,7 @@ import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentOrders;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -455,6 +456,11 @@ import java.util.Set;
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onBreak);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onChunkLoad);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onInteract);
+                }
+                if (ContentRanks.load()) {
+                    MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentRanks::onJoin);
+                    MinecraftForge.EVENT_BUS.addListener(ContentRanks::onDeath);
+                    MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
                 }
                 ContentOverrides.reload();
             });

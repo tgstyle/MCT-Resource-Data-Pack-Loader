@@ -65,6 +65,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 
 **Kreaturen und Gefahren**
 - [Entity-Varianten](#entity-varianten)
+- [Mob-Ränge](#mob-ränge)
 - [Arbeitsaufträge](#arbeitsaufträge)
 - [Expositionen](#expositionen)
 
@@ -159,6 +160,7 @@ Unter `data/`:
 | `<namespace>/cards/*.json`                   | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die dieser Mod selbst ausgibt. [Karten](#karten)                                         |
 | `<namespace>/dice/*.json`                    | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks)                   |
 | `<namespace>/games/*.json`                   | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                        |
+| `<namespace>/ranks/*.json`                   | Zufällige Stufen, die ein Mob beim Erscheinen würfelt: zusätzliche Gesundheit, Schaden, Effekte, Beute und ein Namensschild. [Mob-Ränge](#mob-ränge)           |
 | `<namespace>/orders/*.json`                  | Arbeiten, die Entity-Varianten für einen Spieler an einer Truhe erledigen. [Arbeitsaufträge](#arbeitsaufträge)                                                 |
 | `<namespace>/exposures/*.json`               | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen ausgesetzt sind. [Expositionen](#expositionen) |
 | `<namespace>/overrides/<target>/<name>.json` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                           |
@@ -489,7 +491,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                        |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                      |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                       |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                               |                                                                                                               |
 
 Die rechte Spalte ist eine harte Grenze: Blöcke, Items, Entity-Typen, Sounds und Trankeffekte, die ein Vanilla-Client nicht hat, lassen sich ihm nicht beschreiben, und das eigene Portal einer Dimension ist einer der Blöcke des Packs; Expositionen werden nur zusammen mit diesen Inhalten geladen. Die linke Spalte funktioniert, weil alles darin entweder vollständig serverseitig läuft, den Client als Datenpaket-Einträge erreicht, die Vanilla ohnehin liest (Biome, Höhlenregionen, Dimensionstypen), oder ihn über Netzwerkpakete erreicht, die Vanilla ohnehin spricht (vom Server gefülltes Ergebnisfeld der Werkbank, gewöhnliche Fortschrittspakete, Statusmeldungen bei abgelehnten Toren, ein Vorgenerierungs-Halt aus Vanilla-Paketen für Spielmodus, Titel und Teleport).
@@ -2811,6 +2813,38 @@ Ein Filtereintrag. Der erste passende Eintrag entscheidet, und was zu keinem Ein
 | `tag`     | eines der drei | Item-Tag-ID     | keiner   | Jedes Item unter diesem Tag, etwa `forge:ingots/iron`                                                                         |
 | `fluid`   | eines der drei | Flüssigkeits-ID | keiner   | Eine Flüssigkeit mit ihrer ID, etwa `minecraft:water`. Nur ein Flüssigkeitsfilter liest ihn                                   |
 | `max`     | nein           | int             | `0`      | Wie viel davon höchstens zugleich gelagert wird, über alle Slots gezählt, bei einer Flüssigkeit in mB. `0` heißt keine Grenze |
+
+## Mob-Ränge
+
+*kreaturen und gefahren*
+
+`<namespace>/ranks/*.json`
+
+Der Dateipfad ist der Name des Rangs, und mehrere Dateien werden zusammengeführt. Ein Rang ist eine mögliche Stufe für Mobs, die erscheinen. Wenn ein Mob zum ersten Mal in die Welt kommt, wählt das Spiel unter allen Rängen, die ihn nennen, nach `weight` einen aus und wendet ihn dauerhaft an: Der Rang wird mit dem Mob gespeichert und nie neu gewürfelt. Ein Rang nur mit `entities` und `weight` ist eine schlichte Stufe; mit ihr legt man fest, wie häufig gewöhnliche Mobs bleiben. Ränge wirken auf jeden Mob, auch auf Vanilla-Mobs und Entitätsvarianten, und eine Variante behält ihren eigenen Namen. Ein Rang wirkt zusammen mit dem `mobs`-Block einer Umgebung: Beides multipliziert die Werte des Mobs.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| Schlüssel  | Pflicht | Wert                              | Standard       | Was er macht                                                                                                                                                                            |
+| ---------- | ------- | --------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | nein    | Liste von Entitäts-IDs oder Arten | `["#monster"]` | Die Mobs, auf die der Rang fallen kann: IDs wie `minecraft:zombie` oder `#monster`, `#creature`, `#ambient`, `#water_creature`. Eine Entitätsvariante wird mit ihrer eigenen ID genannt |
+| `weight`   | nein    | Ganzzahl, 1 oder mehr             | `1`            | Wie wahrscheinlich der Rang gegenüber den anderen ist, die denselben Mob nennen: sein Gewicht geteilt durch die Summe                                                                   |
+| `name`     | nein    | Text                              | keiner         | Ein Name über dem Mob. `%s` wird zum eigenen Namen des Mobs. Ein Mob, der schon einen eigenen Namen hat, behält ihn                                                                     |
+| `health`   | nein    | Zahl über 0                       | `1`            | Multipliziert die maximale Gesundheit des Mobs. Der Mob erscheint mit voller Gesundheit                                                                                                 |
+| `damage`   | nein    | Zahl, 0 oder mehr                 | `1`            | Multipliziert den Nahkampfschaden des Mobs                                                                                                                                              |
+| `effects`  | nein    | Liste                             | keiner         | Dauerhafte Effekte, jeweils ein Objekt mit einer `potion`-ID und einem `amplifier`, Standard `0`. Ihre Partikel sind ausgeblendet                                                       |
+| `loot`     | nein    | Zahl, 1 oder mehr                 | `1`            | Multipliziert jeden stapelbaren Gegenstand, den der Mob fallen lässt. Der Bruchteil ist die Chance auf einen weiteren Gegenstand pro Stapel                                             |
+
+Werkzeuge, Rüstung und die Ausrüstung, die ein Mob trug, werden nicht multipliziert, und Mobs mit Inventar, etwa Packtiere, werden übersprungen. Ein Fehler in einer Rangdatei, etwa ein unbekannter Schlüssel, eine nicht vorhandene Entitäts-ID oder ein Wert außerhalb des Bereichs, wird protokolliert und die ganze Datei übersprungen. Wird eine Rangdatei gelöscht, bleiben Mobs, die den Rang schon gewürfelt haben, unverändert, und ein Mob, den kein Rang nennt, bleibt unberührt. Nur der Server liest Ränge, daher können Vanilla-Clients beitreten.
 
 ## Arbeitsaufträge
 
