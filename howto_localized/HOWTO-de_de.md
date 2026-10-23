@@ -3097,6 +3097,7 @@ Ein Auftrag ist eine Arbeit, die die als Abnehmer genannten Entity-Varianten fü
 - **Ein Schild.** Setze ein Schild an oder neben eine Truhe und schreibe das `sign`-Wort des Auftrags in die erste Zeile. Der Auftrag öffnet sich an dieser Truhe, und die zweite Zeile des Schilds zeigt, wie viele Items noch fehlen. Wer das Schild oder die Truhe abbaut, bricht ihn ab.
 - **Ein Werkzeug.** Klicke einen Arbeiter ohne Schleichen mit einem Werkzeug der Art `tool` des Auftrags an. Der Arbeiter nimmt das Werkzeug, ein Werkzeug, das er hielt, bekommst du zurück, und er arbeitet den Auftrag an der nächsten Truhe in seinem Bereich ab.
 - **Eine Vorratstruhe.** Benenne eine Truhe im Amboss in `stockName` um und stelle sie auf. Jedes Item in ihrer ersten Reihe wird zu einem vollen Stapel aufgefüllt: Arbeiter holen es aus anderen Truhen im Bereich des ersten `haul`-Auftrags des Packs, mit dessen Abnehmern, Vorrang und Bereich.
+- **Ein Dorfgrundstück.** Ein Grundstück mit einem `orderSign` stellt das Schild selbst auf. Die Truhe muss direkt unter dem Schild oder daneben stehen, und die Vorlage des Grundstücks muss sie enthalten. Jeder freie Arbeiter, den die `takers` des Auftrags nennen (einer, den kein Spieler angeheuert hat und der in keinem Team ist), darf ihn bearbeiten, und er erzeugt freie Arbeiter wie jeder Auftrag. Er zahlt keine Punkte, keine Beute und keine Funktion aus, weil ihn kein Spieler geöffnet hat; gib ihm `standing`, damit er offen bleibt. Ein Schild, dessen Wort zu keinem Auftrag passt, meldet beim Laden seines Chunks einen Fehler. Auf einem gedrehten Strukturkarten-Grundstück sitzt das Schild relativ zum Grundriss der ganzen Karte, sodass es bei einem Teil, das kleiner als seine Zelle ist, um die Zellengröße minus Teilbreite versetzt liegt.
 
 ```json
 {
@@ -5612,7 +5613,11 @@ Ein `template` setzt stattdessen eine deiner `.nbt`-Strukturen, gedreht zum Dorf
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -5637,6 +5642,10 @@ Ein `template`, dessen `structure` eine deiner [Strukturkarten](#strukturkarten)
 | `villagerX`      | allen       | int              | `1`              | Wo sie erscheinen, quer über das Grundstück                                                                                                                         |
 | `villagerY`      | allen       | int              | `1`              | Wo sie erscheinen, über dem Boden                                                                                                                                   |
 | `villagerZ`      | allen       | int              | `1`              | Wo sie erscheinen, in das Grundstück hinein                                                                                                                         |
+| `orderSign`      | template    | Text             | keine            | `sign`-Wort eines Auftrags, Groß-/Kleinschreibung egal. Das Grundstück stellt das Schild auf, der Auftrag öffnet an der Truhe daneben, nur für freie Arbeiter       |
+| `orderX`         | template    | int              | `1`              | Wo das Schild steht, quer über das Grundstück                                                                                                                       |
+| `orderY`         | template    | int              | `1`              | Wo das Schild steht, über dem Boden                                                                                                                                 |
+| `orderZ`         | template    | int              | `1`              | Wo das Schild steht, in das Grundstück hinein                                                                                                                       |
 
 ## Stadtpläne
 

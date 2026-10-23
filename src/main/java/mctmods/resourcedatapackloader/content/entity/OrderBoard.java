@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.OrderDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.SavedData;
 
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -68,16 +69,16 @@ public final class OrderBoard extends WorldSavedData {
         return compound;
     }
 
-    public WorkOrder open(World world, OrderDef def, BlockPos chest, @Nullable BlockPos sign, EntityPlayer by, boolean stock) {
+    public WorkOrder open(World world, OrderDef def, BlockPos chest, @Nullable BlockPos sign, @Nullable EntityPlayer by, boolean stock) {
         for (WorkOrder order : orders) {
             if (order.def == def && order.chest.equals(chest) && order.stock == stock) { return order; }
         }
-        ScorePlayerTeam side = ContentOrders.teamOf(by);
-        WorkOrder order = new WorkOrder(nextId++, def, chest.toImmutable(), sign == null ? null : sign.toImmutable(), side == null ? "" : side.getName(), by.getUniqueID(), stock, def.limit);
+        ScorePlayerTeam side = by == null ? null : ContentOrders.teamOf(by);
+        WorkOrder order = new WorkOrder(nextId++, def, chest.toImmutable(), sign == null ? null : sign.toImmutable(), side == null ? "" : side.getName(), by == null ? null : by.getUniqueID(), stock, def.limit);
         order.idleSince = world.getTotalWorldTime();
         orders.add(order);
         markDirty();
-        ContentLog.LOGGER.info("{} opened the {} order {} at the chest at {}, {}, {}{}", by.getName(), def.job.name().toLowerCase(Locale.ROOT), def.name, chest.getX(), chest.getY(), chest.getZ(), side == null ? "" : " for team " + side.getName());
+        ContentLog.LOGGER.info("{} opened the {} order {} at the chest at {}, {}, {}{}", by == null ? "A village plot" : by.getName(), def.job.name().toLowerCase(Locale.ROOT), def.name, chest.getX(), chest.getY(), chest.getZ(), side == null ? "" : " for team " + side.getName());
         refresh(world, order, world.getTotalWorldTime());
         return order;
     }
@@ -249,11 +250,16 @@ public final class OrderBoard extends WorldSavedData {
     }
 
     @Nullable private static BlockPos standing(World world, BlockPos chest) {
-        if (world.isAirBlock(chest.up()) && world.isAirBlock(chest.up(2))) { return chest.up(); }
+        if (clear(world, chest.up()) && clear(world, chest.up(2))) { return chest.up(); }
         for (EnumFacing side : EnumFacing.Plane.HORIZONTAL) {
             BlockPos pos = chest.offset(side);
-            if (world.isAirBlock(pos) && world.isAirBlock(pos.up()) && world.getBlockState(pos.down()).isSideSolid(world, pos.down(), EnumFacing.UP)) { return pos; }
+            if (clear(world, pos) && clear(world, pos.up()) && world.getBlockState(pos.down()).isSideSolid(world, pos.down(), EnumFacing.UP)) { return pos; }
         }
         return null;
+    }
+
+    private static boolean clear(World world, BlockPos pos) {
+        Material material = world.getBlockState(pos).getMaterial();
+        return material.isReplaceable() && !material.isLiquid();
     }
 }

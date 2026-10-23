@@ -33,11 +33,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +47,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentOrders {
+    public static final String PLOT_MARK = "rdplPlotOrder";
     private static final String BOSS = "rdplBoss";
     private static final String TEAM = "team:";
     private static final String TAG = "tag:";
@@ -223,31 +225,65 @@ public final class ContentOrders {
 
     @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) { if (!event.getWorld().isRemote) { OrderBoard.of(event.getWorld()).cancelAt(event.getPos()); } }
 
+    public static void plotSign(World world, BlockPos pos) {
+        if (DEFS.isEmpty()) { return; }
+        PENDING.computeIfAbsent(world.provider.getDimension(), dimension -> new HashMap<>()).put(pos.toImmutable(), new Pending(null, world.getTotalWorldTime() + SIGN_WAIT));
+    }
+
+    @SubscribeEvent public static void onChunkLoad(ChunkEvent.Load event) { plotSigns(event.getWorld(), event.getChunk().getTileEntityMap().values()); }
+
+    public static void plotSigns(World world, Collection<TileEntity> tiles) {
+        if (world.isRemote) { return; }
+        for (TileEntity tile : new ArrayList<>(tiles)) {
+            if (tile instanceof TileEntitySign && tile.getTileData().getBoolean(PLOT_MARK)) { plotSign(world, tile.getPos()); }
+        }
+    }
+
+    private static void clearMark(TileEntity tile) {
+        if (!tile.getTileData().hasKey(PLOT_MARK)) { return; }
+        tile.getTileData().removeTag(PLOT_MARK);
+        tile.markDirty();
+    }
+
     private static void signs(World world) {
         Map<BlockPos, Pending> waiting = PENDING.get(world.provider.getDimension());
         if (waiting == null || waiting.isEmpty()) { return; }
         long now = world.getTotalWorldTime();
-        Iterator<Map.Entry<BlockPos, Pending>> walk = waiting.entrySet().iterator();
-        while (walk.hasNext()) {
-            Map.Entry<BlockPos, Pending> entry = walk.next();
-            BlockPos pos = entry.getKey();
-            if (now > entry.getValue().until || !world.isBlockLoaded(pos)) {
-                walk.remove();
+        for (BlockPos pos : new ArrayList<>(waiting.keySet())) {
+            Pending pending = waiting.get(pos);
+            if (pending == null) { continue; }
+            if (now > pending.until || !world.isBlockLoaded(pos)) {
+                waiting.remove(pos);
                 continue;
             }
             TileEntity tile = world.getTileEntity(pos);
             if (!(tile instanceof TileEntitySign)) {
-                walk.remove();
+                waiting.remove(pos);
                 continue;
             }
             String word = ((TileEntitySign) tile).signText[0].getUnformattedText().trim();
             if (word.isEmpty()) { continue; }
-            walk.remove();
+            waiting.remove(pos);
             OrderDef def = bySign(word);
-            EntityPlayer by = world.getPlayerEntityByUUID(entry.getValue().player);
+            if (pending.player == null) {
+                plotOrder(world, tile, def, word);
+                continue;
+            }
+            EntityPlayer by = world.getPlayerEntityByUUID(pending.player);
             BlockPos chest = def == null || by == null ? null : beside(world, pos);
             if (chest != null) { OrderBoard.of(world).open(world, def, chest, pos, by, false); }
         }
+    }
+
+    private static void plotOrder(World world, TileEntity sign, @Nullable OrderDef def, String word) {
+        BlockPos pos = sign.getPos();
+        if (def == null) { ContentLog.LOGGER.error("Village plot sign at {}, {}, {} names the order word '{}', which no order has", pos.getX(), pos.getY(), pos.getZ(), word); }
+        else {
+            BlockPos chest = beside(world, pos);
+            if (chest == null) { ContentLog.LOGGER.error("Village plot sign at {}, {}, {} names the order word '{}', but no chest is below it or beside it, so the order stays closed", pos.getX(), pos.getY(), pos.getZ(), word); }
+            else { OrderBoard.of(world).open(world, def, chest, pos, null, false); }
+        }
+        clearMark(sign);
     }
 
     @Nullable private static OrderDef bySign(String word) {
@@ -342,10 +378,10 @@ public final class ContentOrders {
     }
 
     private static final class Pending {
-        private final UUID player;
+        @Nullable private final UUID player;
         private final long until;
 
-        private Pending(UUID player, long until) {
+        private Pending(@Nullable UUID player, long until) {
             this.player = player;
             this.until = until;
         }

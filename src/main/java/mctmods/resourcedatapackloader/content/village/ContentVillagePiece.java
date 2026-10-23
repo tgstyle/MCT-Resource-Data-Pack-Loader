@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.village;
 import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
+import mctmods.resourcedatapackloader.content.entity.ContentOrders;
+import mctmods.resourcedatapackloader.content.worldgen.ContentImprint;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
 import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
@@ -10,17 +12,21 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockStandingSign;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -72,7 +78,29 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         if (def.isTemplate()) { template(world, def, box); }
         else { farm(world, random, def, box); }
         if (def.villagers > 0) { residents(world, def, box); }
+        if (def.isTemplate() && !def.orderSign.isEmpty()) { orderSign(world, def, box); }
         return true;
+    }
+
+    private void orderSign(World world, VillageDef def, StructureBoundingBox box) {
+        Rotation rotation = rotation();
+        BlockPos turned = Template.transformedBlockPos(new PlacementSettings().setRotation(rotation), new BlockPos(def.orderX, def.orderY, def.orderZ));
+        StructureMapDef map = ContentStructureMaps.byName(def.structure);
+        BlockPos pos;
+        if (map == null) { pos = turned.add(corner(rotation)); }
+        else {
+            boolean swapped = rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90;
+            BlockPos span = new BlockPos(swapped ? map.cellsDeep * map.cell : map.cellsWide * map.cell, 1, swapped ? map.cellsWide * map.cell : map.cellsDeep * map.cell);
+            pos = new BlockPos(boundingBox.minX + ContentImprint.backX(rotation, span) + turned.getX(), boundingBox.minY + turned.getY(), boundingBox.minZ + ContentImprint.backZ(rotation, span) + turned.getZ());
+        }
+        if (!box.isVecInside(pos)) { return; }
+        world.setBlockState(pos, Blocks.STANDING_SIGN.getDefaultState().withProperty(BlockStandingSign.ROTATION, rotation.ordinal() * 4), 2);
+        TileEntity tile = world.getTileEntity(pos);
+        if (!(tile instanceof TileEntitySign)) { return; }
+        ((TileEntitySign) tile).signText[0] = new TextComponentString(def.orderSign);
+        tile.getTileData().setBoolean(ContentOrders.PLOT_MARK, true);
+        tile.markDirty();
+        ContentOrders.plotSign(world, pos);
     }
 
     private void residents(World world, VillageDef def, StructureBoundingBox box) {

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.world.cube;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.content.entity.ContentOrders;
 import mctmods.resourcedatapackloader.content.rubic.world.EntityContainer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
@@ -262,6 +263,7 @@ public class Cube implements ICube {
             return;
         }
         this.world.addTileEntities(this.tileEntityMap.values());
+        ContentOrders.plotSigns(this.world, this.tileEntityMap.values());
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
         boolean raised = false;

@@ -30,8 +30,12 @@ public final class VillageDef {
     public final int villagerY;
     public final int villagerZ;
     public final List<String> requires;
+    public final String orderSign;
+    public final int orderX;
+    public final int orderY;
+    public final int orderZ;
 
-    public VillageDef(ResourceLocation registryName, String type, int weight, int leastCount, int mostCount, int width, int height, int depth, int apron, List<String> crops, String edge, String soil, boolean water, int rowWidth, String structure, String ground, int integrity, int villagers, String villagerEntity, int villagerX, int villagerY, int villagerZ, List<String> requires, String lootTable) {
+    public VillageDef(ResourceLocation registryName, String type, int weight, int leastCount, int mostCount, int width, int height, int depth, int apron, List<String> crops, String edge, String soil, boolean water, int rowWidth, String structure, String ground, int integrity, int villagers, String villagerEntity, int villagerX, int villagerY, int villagerZ, List<String> requires, String lootTable, String orderSign, int orderX, int orderY, int orderZ) {
         this.registryName = registryName;
         this.type = type;
         this.weight = weight;
@@ -56,6 +60,10 @@ public final class VillageDef {
         this.villagerY = villagerY;
         this.villagerZ = villagerZ;
         this.requires = requires;
+        this.orderSign = orderSign;
+        this.orderX = orderX;
+        this.orderY = orderY;
+        this.orderZ = orderZ;
     }
 
     public boolean isTemplate() { return TEMPLATE.equals(type); }

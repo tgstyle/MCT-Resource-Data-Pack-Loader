@@ -3097,6 +3097,7 @@ Una orden es un trabajo que las variantes de entidad nombradas como sus encargad
 - **Un cartel.** Coloca un cartel sobre un cofre o junto a él y escribe la palabra `sign` de la orden en la primera línea. La orden se abre en ese cofre, y la segunda línea del cartel muestra cuántos ítems faltan. Romper el cartel, o el cofre, la cancela.
 - **Una herramienta.** Haz clic derecho sobre un trabajador, sin agacharte, con una herramienta del tipo `tool` de la orden. El trabajador toma la herramienta, la que tenía vuelve a ti, y trabaja la orden en el cofre más cercano dentro de su área.
 - **Un cofre de existencias.** Renombra un cofre a `stockName` en un yunque y colócalo. Cada ítem de su primera fila se mantiene lleno hasta un montón completo: los trabajadores lo traen de otros cofres dentro del área de la primera orden `haul` del paquete, con los encargados, la prioridad y el área de esa orden.
+- **Una parcela de aldea.** Una parcela que indica un `orderSign` levanta ella misma el cartel. El cofre debe estar justo debajo del cartel o a su lado, y la plantilla de la parcela debe incluirlo. Cualquier trabajador libre que los `takers` de la orden nombren (uno que ningún jugador contrató y que no está en ningún equipo) puede trabajarla, y genera trabajadores libres como cualquier orden. No paga puntos, botín ni función, porque ningún jugador la abrió; dale `standing` para mantenerla abierta. Un cartel cuya palabra no coincide con ninguna orden registra un error al cargarse su chunk. En una parcela de mapa de estructuras girada, el cartel se coloca respecto a la huella del mapa completo, así que con una pieza más pequeña que su celda queda desplazado en el tamaño de la celda menos el ancho de la pieza.
 
 ```json
 {
@@ -5612,7 +5613,11 @@ Una `template` coloca en su lugar una de tus estructuras `.nbt`, girada para mir
   "width": 9,
   "height": 6,
   "depth": 9,
-  "structure": "mypack:blacksmith_shed"
+  "structure": "mypack:blacksmith_shed",
+  "orderSign": "Mine",
+  "orderX": 3,
+  "orderY": 1,
+  "orderZ": 2
 }
 ```
 
@@ -5637,6 +5642,10 @@ Una `template` cuyo `structure` nombra uno de tus [mapas de estructuras](#mapas-
 | `villagerX`      | todas     | entero           | `1`         | Dónde aparecen, a lo ancho de la parcela                                                                                                                            |
 | `villagerY`      | todas     | entero           | `1`         | Dónde aparecen, sobre el suelo                                                                                                                                      |
 | `villagerZ`      | todas     | entero           | `1`         | Dónde aparecen, hacia dentro de la parcela                                                                                                                          |
+| `orderSign`      | template  | cadena           | ninguno     | La palabra `sign` de una orden, sin distinguir mayúsculas. La parcela levanta ese cartel y la orden se abre en el cofre junto a él, solo para trabajadores libres   |
+| `orderX`         | template  | entero           | `1`         | Dónde está el cartel, a lo ancho de la parcela                                                                                                                      |
+| `orderY`         | template  | entero           | `1`         | Dónde está el cartel, sobre el suelo                                                                                                                                |
+| `orderZ`         | template  | entero           | `1`         | Dónde está el cartel, hacia el interior de la parcela                                                                                                               |
 
 ## Mapas de trazado de ciudades
 

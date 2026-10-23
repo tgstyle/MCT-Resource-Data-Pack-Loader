@@ -196,6 +196,11 @@ public final class ContentParserWorldgen {
             ContentLog.LOGGER.error("Village plot {} is a template but names no structure, ignoring it", key);
             return null;
         }
+        String orderSign = Json.getString(json, "orderSign", "").trim();
+        if (!orderSign.isEmpty() && !VillageDef.TEMPLATE.equals(type)) {
+            ContentLog.LOGGER.error("Village plot {} is a farm and names the order sign '{}', which only a template plot stands, ignoring the sign", key, orderSign);
+            orderSign = "";
+        }
         return new VillageDef(key, type,
                 Math.max(1, Json.getInt(json, "weight", 3)),
                 Math.max(0, Json.getInt(json, "leastCount", 1)),
@@ -218,7 +223,11 @@ public final class ContentParserWorldgen {
                 Json.getInt(json, "villagerY", 1),
                 Json.getInt(json, "villagerZ", 1),
                 strings(json, "requires"),
-                Json.getString(json, "lootTable", ""));
+                Json.getString(json, "lootTable", ""),
+                orderSign,
+                Json.getInt(json, "orderX", 1),
+                Json.getInt(json, "orderY", 1),
+                Json.getInt(json, "orderZ", 1));
     }
 
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
