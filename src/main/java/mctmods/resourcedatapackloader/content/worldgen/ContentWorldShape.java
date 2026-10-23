@@ -71,7 +71,7 @@ public final class ContentWorldShape {
             "largebiomes", new String[] { "large_biomes", "large_biomes" }, "large_biomes", new String[] { "large_biomes", "large_biomes" },
             "amplified", new String[] { "amplified", "amplified" }, "flat", new String[] { "flat", "overworld" }, "superflat", new String[] { "flat", "overworld" },
             "customized", new String[] { "normal", "overworld" }, "default_1_1", new String[] { "normal", "overworld" });
-    private static final Set<String> OPTION_KEYS = Set.of("seaLevel", "useLavaOceans", "fixedBiome");
+    private static final Set<String> OPTION_KEYS = Set.of("seaLevel", "useLavaOceans", "oceanFluid", "fixedBiome");
     static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
     private static final Set<ResourceKey<NoiseGeneratorSettings>> OVERWORLD_NOISE = Set.of(NoiseGeneratorSettings.OVERWORLD, NoiseGeneratorSettings.LARGE_BIOMES, NoiseGeneratorSettings.AMPLIFIED);
@@ -114,10 +114,10 @@ public final class ContentWorldShape {
 
     private record Unvoided(long seed, NoiseBasedChunkGenerator generator, RandomState random) {}
 
-    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves, @Nullable String fixedBiome) {
+    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, String oceanFluid, boolean deepCaves, @Nullable String fixedBiome) {
         boolean tall() { return minY != VANILLA_MIN || maxY != VANILLA_MAX; }
 
-        boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans || fixedBiome != null || ContentOptionNoise.shapes() || ContentOptionFeatures.active(); }
+        boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans || !oceanFluid.isEmpty() || fixedBiome != null || ContentOptionNoise.shapes() || ContentOptionFeatures.active(); }
 
         boolean flat() { return "flat".equals(base[0]); }
     }
@@ -164,7 +164,7 @@ public final class ContentWorldShape {
         presetId = shape.id();
         presetName = shape.name();
         Summary.info("worldshape", "Generated world preset " + shape.id() + " (" + shape.name() + ") on " + shape.base()[0] + ": overworld " + shape.minY() + ".." + shape.maxY()
-                + (shape.deepStone() == null ? "" : ", deep stone " + shape.deepStone()) + (shape.deepCaves() ? ", caves to the floor" : "") + (shape.seaLevel() >= 0 ? ", sea level " + shape.seaLevel() : "") + (shape.lavaOceans() ? ", lava oceans" : "")
+                + (shape.deepStone() == null ? "" : ", deep stone " + shape.deepStone()) + (shape.deepCaves() ? ", caves to the floor" : "") + (shape.seaLevel() >= 0 ? ", sea level " + shape.seaLevel() : "") + (shape.lavaOceans() ? ", lava oceans" : "") + (shape.oceanFluid().isEmpty() ? "" : ", ocean fluid " + shape.oceanFluid())
                 + (ContentBedrock.bedrockAsked() ? ", flat bedrock " + ContentBedrock.layers() + " layer(s)" : "") + (ContentVoidWorld.voidAsked() ? ", void " + ContentVoidWorld.voidDimensions() : ""));
     }
 
@@ -193,18 +193,20 @@ public final class ContentWorldShape {
         }
         int seaLevel = -1;
         boolean lavaOceans = false;
+        String oceanFluid = "";
         String fixedBiome = null;
         JsonObject options = "flat".equals(base[0]) ? null : ContentTerrain.customizedOptions();
         if (options != null) {
             seaLevel = Json.getInt(options, "seaLevel", -1);
             lavaOceans = Json.getBoolean(options, "useLavaOceans", false);
+            oceanFluid = Json.getString(options, "oceanFluid", "").trim();
             fixedBiome = options.has("fixedBiome") ? ContentTerrain.shippedBiome(Json.getString(options, "fixedBiome", "-1").trim()) : null;
             for (String key : options.keySet()) {
                 if (!OPTION_KEYS.contains(key) && !ContentPopulateControl.readsOption(key) && ContentOptionOres.ignores(key) && ContentOptionNoise.ignores(key) && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read", key); }
             }
         }
         boolean deepCaves = ContentDeepCaves.carves(minY, "The overworld");
-        return new Shape(id, name, base, minY, maxY, deepStone.isEmpty() ? null : deepStone, seaLevel, lavaOceans, deepCaves, fixedBiome);
+        return new Shape(id, name, base, minY, maxY, deepStone.isEmpty() ? null : deepStone, seaLevel, lavaOceans, oceanFluid, deepCaves, fixedBiome);
     }
 
     private static JsonObject dimension(Shape shape, String dimension, boolean flatBedrock, boolean isVoid) {
@@ -384,14 +386,8 @@ public final class ContentWorldShape {
         noise.addProperty("min_y", shape.minY());
         noise.addProperty("height", shape.maxY() - shape.minY());
         if (shape.seaLevel() >= 0) { settings.addProperty("sea_level", shape.seaLevel()); }
-        if (shape.lavaOceans()) {
-            JsonObject lava = new JsonObject();
-            lava.addProperty("Name", "minecraft:lava");
-            JsonObject properties = new JsonObject();
-            properties.addProperty("level", "0");
-            lava.add("Properties", properties);
-            settings.add("default_fluid", lava);
-        }
+        JsonObject sea = OceanFluid.state(shape.oceanFluid(), shape.lavaOceans(), "generatorOptions");
+        if (sea != null) { settings.add("default_fluid", sea); }
         ContentOptionNoise.Shifted shifted = ContentOptionNoise.apply(settings, shape.id(), "large_biomes".equals(shape.base()[0]), shape.maxY());
         if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, ownId(shape, "overworld"), shape.minY(), shifted); }
         if (shape.deepStone() == null) { return; }
