@@ -644,6 +644,8 @@ thatmod.jar
   "growth": { "stages": 8, "growth": 10 },
   "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
   "portal": { "dimension": "mypack:ruby_world" },
+  "container": { "rows": 3, "columns": 9 },
+  "bell": { "swing": true, "sound": "minecraft:block.note_block.bell" },
   "variants": {
     "ruby_ore": {
       "hardness": 3.0,
@@ -917,9 +919,26 @@ thatmod.jar
     "rows": 6,
     "columns": 9,
     "lootTable": "minecraft:chests/simple_dungeon",
-    "chestModel": true
+    "chestModel": true,
+    "guiTexture": "mypack:textures/gui/crate.png",
+    "guiWidth": 176,
+    "guiHeight": 222
   },
   "variants": { "crate": { "hardness": 2.5 } }
+}
+```
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container",
+  "container": {
+    "rows": 2,
+    "columns": 9,
+    "curioSlot": "belt"
+  },
+  "variants": { "pouch": { "maxSize": 1 } }
 }
 ```
 
@@ -1357,6 +1376,15 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
   "attackSpeed": -2.4,
   "cooldown": 40,
   "rolls": "d6",
+  "rollStore": "dice_total",
+  "locates": "Village",
+  "passesTurn": false,
+  "attackReach": 3.0,
+  "sweep": { "shape": "box", "damage": 0.5 },
+  "combo": { "window": 30, "steps": [ { "damage": 1.0 }, { "damage": 2.0 } ] },
+  "curioSlot": "ring",
+  "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
+  "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1488,6 +1516,7 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
     "steps": [
       { "damage": 1.0 },
       { "damage": 1.5 },
+      { "damage": 2.0, "sweep": { "shape": "line", "reach": 5.0, "width": 2.0 } },
       { "damage": 3.0, "sweep": { "shape": "circle", "reach": 3.0 } }
     ]
   }
@@ -2106,9 +2135,19 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "beneficial": true,
   "instant": false,
   "effectiveness": 0.5,
+  "iconTexture": "mypack:textures/effect/ruby_sight.png",
   "attributes": [
     { "attribute": "minecraft:generic.movement_speed", "uuid": "91AEAA56-376B-4498-935B-2F7F68070635", "amount": 0.2, "operation": 2 }
   ]
+}
+```
+
+`<namespace>/potions/*.json`
+
+```json
+{
+  "color": "C0304A",
+  "icon": { "x": 2, "y": 1 }
 }
 ```
 
@@ -2183,6 +2222,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 {
   "item": "minecraft:iron_sword",
   "with": "minecraft:wooden_sword",
+  "result": "minecraft:golden_sword",
   "levels": 3,
   "enchantments": { "minecraft:sharpness": 2 },
   "grants": "mypack:sword_rite",
@@ -2227,6 +2267,18 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 }
 ```
 
+`<namespace>/block_drops/*.json`
+
+```json
+{
+  "block": "minecraft:wheat",
+  "properties": { "age": "7" },
+  "drops": [
+    { "item": "minecraft:gold_nugget", "chance": 0.1 }
+  ]
+}
+```
+
 | 키            | 필수   | 값               | 기본값  | 설명                                                                                                                         |
 | ------------- | ------ | ---------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `block`       | 예     | 블록 id          |         | 규칙이 지켜보는 블록                                                                                                         |
@@ -2262,6 +2314,16 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 {
   "requires": ["config:enableRightClickHarvest"],
   "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+`<namespace>/harvests/*.json`
+
+```json
+{
+  "crops": ["minecraft:beetroots", "minecraft:nether_wart"],
+  "age": 3,
   "replant": true
 }
 ```
@@ -2361,6 +2423,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
       "maxUses": 12,
       "xp": 2,
       "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "buySecondary": { "item": "minecraft:paper", "min": 1 },
       "sell": { "item": "mypack:ruby", "min": 1 }
     }
   ]
@@ -2404,6 +2467,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "lootTable": "mypack:entities/angry_cow",
   "profession": "mypack:jeweller",
   "baby": 0.05,
+  "keepsBaseBaby": false,
   "becomes": [
     { "variant": "mypack:angry_cow", "weight": 95 },
     { "variant": "mypack:little_angry_cow", "weight": 5 }
@@ -2415,11 +2479,17 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "jumpMultiplier": 1.0,
   "fallDamage": 1.0,
   "maxFallHeight": 3,
+  "stepHeight": 0.6,
+  "climbs": false,
+  "teleports": true,
+  "walks": false,
   "breathesUnderwater": false,
   "swims": false,
   "amphibious": false,
   "waterSlowdown": 0.8,
   "absorption": 0,
+  "hurtResistance": 20,
+  "ignoresEffects": ["minecraft:poison"],
   "experience": 3,
   "creatureAttribute": "undefined",
   "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
@@ -2438,6 +2508,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "steerable": false,
   "width": 0.9,
   "height": 1.4,
+  "bright": false,
   "pathPriorities": { "WATER": 0.0, "LAVA": -1.0, "DANGER_FIRE": 8.0, "DOOR_WOOD_CLOSED": 0.0 },
   "egg": { "primary": "AABBCC", "secondary": "112233" },
   "attributes": {
@@ -2451,9 +2522,16 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "hostile": true,
   "targets": ["minecraft:player"],
   "passive": false,
+  "attackReach": 3.0,
+  "knockback": 0.4,
+  "hitEffects": true,
+  "hitFire": true,
+  "threatLeast": 1,
+  "threatHostile": 2,
   "persistent": false,
   "silent": false,
   "picksUpLoot": false,
+  "collectsExperience": false,
   "hideArmor": false,
   "hideHeld": false,
   "tint": "C0304A",
@@ -2469,6 +2547,18 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "explosionPower": 3.0,
   "explosionFuse": 30,
   "explosionFire": false,
+  "digs": false,
+  "throwReturns": false,
+  "charges": false,
+  "pounces": false,
+  "sniffs": 0,
+  "fleesWhenHurt": 0.0,
+  "sleepsByDay": false,
+  "home": 0,
+  "patrols": false,
+  "swoops": false,
+  "gusts": false,
+  "gustPower": 1.5,
   "equipment": {
     "mainhand": "minecraft:tnt",
     "offhand": "minecraft:shield",
@@ -2485,6 +2575,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "trackingRange": 80,
   "trackVelocity": true,
   "trackingFrequency": 3,
+  "tasks": [ "-wander", { "task": "watchClosest", "priority": 6, "entity": "minecraft:player", "distance": 8 } ],
   "requires": ["mypack"]
 }
 ```
@@ -2705,12 +2796,30 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "-wander",
     { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
     { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
-    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 },
+    { "task": "wander", "priority": 8, "speed": 1.0, "chance": 120 },
+    { "task": "follow", "priority": 5, "speed": 1.0, "near": 3, "distance": 10 },
+    { "task": "leapAtTarget", "priority": 1, "leap": 0.5 },
+    { "task": "tempt", "priority": 4, "items": ["minecraft:wheat"], "speed": 1.2, "scared": false },
+    { "task": "attackMelee", "priority": 2, "speed": 1.2, "memory": true },
+    { "task": "openDoor", "priority": 6, "close": true },
+    { "task": "moveThroughVillage", "priority": 5, "speed": 1.0, "nocturnal": true },
+    { "task": "nearestAttackableTarget", "priority": 2, "entity": "minecraft:zombie", "sight": true, "nearby": false },
+    { "task": "hurtByTarget", "priority": 1, "help": true }
   ]
 }
 ```
 
 목록은 `hostile`, `passive`와 위의 동작이 일을 마친 뒤에 적용되므로 마지막 결정권이 있습니다. 몸을 움직이는 작업은 서로를 막습니다. 우선순위에서 앞선 어떤 것도 생물을 움직이고 있지 않을 때만 실행되며, 몬스터가 가지고 오는 공격은 2에 있으므로 좀비의 도약이나 도주에는 우선순위 1이 필요하고 그러지 않으면 차례가 오지 않습니다. 거미와 늑대가 도약을 공격보다 앞에 두는 것도 같은 이유입니다. 기반이 이미 실행하는 작업은 대체되지 않고 한 번 더 추가되므로, 먼저 옛것을 제거하세요. 일부 작업은 그것이 구동하는 것이 있는 기반에서만 의미가 있습니다. 활 전투에는 쏘는 기반이, 앉기에는 길들일 수 있는 기반이, 거래에는 주민이 필요합니다. 그것을 실을 수 없는 기반에서 요청하면 로그에 필요한 기반이 표시되고 변형은 그것 없이 동작합니다. 이 버전의 주민은 작업이 아니라 게임의 브레인으로 작동하므로, 아래의 주민 행은 브레인이 작업에 맡겨 둔 것에만 닿습니다.
+
+```json
+{
+  "entity": "minecraft:witch",
+  "tasks": [
+    { "task": "attackRanged", "priority": 2, "speed": 1.0, "cooldown": 30, "distance": 12 }
+  ]
+}
+```
 
 | 키          | 유형               | 기본값        | 설명                                                                                                                                                                                                                                |
 | ----------- | ------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -2820,6 +2929,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 {
   "dimensions": ["minecraft:the_nether"],
   "structures": ["minecraft:fortress"],
+  "radius": 32,
   "timeFrom": 13000,
   "timeTo": 23000,
   "dayAtLeast": 3,
@@ -2852,6 +2962,14 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 ```json
 {
   "entities": ["minecraft:blaze", "mymod:thing"],
+  "dimensions": ["minecraft:the_nether"],
+  "structures": ["minecraft:fortress"],
+  "radius": 32,
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "objective": "kills",
+  "scoreAtLeast": 5,
   "advancement": "minecraft:story/enter_the_nether"
 }
 ```
@@ -3088,6 +3206,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
       "sign": "Farm",
       "tool": "hoe",
       "standing": 64,
+      "area": 16,
       "takers": ["mypack:farmer"]
     },
     {
@@ -3263,7 +3382,8 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "mineshafts": false,
     "strongholds": true
   },
-  "roles": { "ocean": "mypack:ruby_ocean" }
+  "roles": { "ocean": "mypack:ruby_ocean" },
+  "requires": ["mypack"]
 }
 ```
 
@@ -3347,6 +3467,9 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "topBlock": "mypack:ruby_grass",
   "fillerBlock": "minecraft:dirt",
   "stoneBlock": "mypack:ruby_stone",
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.5,
+  "skyThickness": 2.0,
   "baseBiome": "minecraft:forest",
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
@@ -3557,15 +3680,28 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "waterVaporizes": false,
     "cloudHeight": 160,
     "cloudColor": "5B3E6A",
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
     "groundLevel": 63,
     "movementFactor": 4.0,
     "fogColor": "20102A",
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
     "showFog": false,
     "skyColor": "3B1E4A",
     "fixedTime": 18000,
     "sunriseColors": true,
     "ambientLight": 0.1,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
     "starBrightness": 0.8,
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 },
     "renderSky": true,
     "renderClouds": true,
     "renderWeather": true,
@@ -3586,11 +3722,12 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
-  "gameRules": { "doMobSpawning": "false" }
+  "gameRules": { "doMobSpawning": "false" },
+  "portal": { "frames": ["mypack:standing_gate"], "ignitedBy": "minecraft:flint_and_steel" }
 }
 ```
 
@@ -3849,6 +3986,14 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 바닐라에는 차원 고유의 하늘 이미지, 오로라, 무지개를 지정하는 키가 없으므로 이 키들은 모든 버전에서 똑같이 동작합니다.
 
+```json
+{
+  "sky": {
+    "skybox": { "panorama": "mypack:textures/sky/panorama.png" }
+  }
+}
+```
+
 | 키                | 필수   | 값          | 기본값   | 설명                                                                                        |
 | ----------------- | ------ | ----------- | -------- | ------------------------------------------------------------------------------------------- |
 | `skybox.<face>`   | 아니요 | 텍스처 경로 | 없음     | 정육면체의 한 면: `up`, `down`, `north`, `east`, `south`, `west`. 여섯 면을 모두 지정하세요 |
@@ -3975,11 +4120,11 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5 }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
-      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+      "mobs": { "entities": ["#monster"], "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
     },
     "bounty": {
       "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
@@ -3988,7 +4133,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
       ]
     },
     "longnight": {
-      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 3.0, "wakeAt": 1000 }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -4115,7 +4260,8 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "platform": true,
     "platformBlock": "mypack:ruby_block",
     "sound": "block.portal.travel",
-    "owned": true
+    "owned": true,
+    "walkIn": false
   },
   "variants": { "ruby_portal": { "hardness": -1, "light": 11 } }
 }
@@ -4362,6 +4508,10 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "weight": 3,
   "minHeight": -56,
   "maxHeight": 16,
+  "waterLevel": 0,
+  "skyStone": "minecraft:end_stone",
+  "skyIslands": 0.5,
+  "skyThickness": 2.0,
   "dimensions": ["minecraft:overworld"],
   "biome": "minecraft:mushroom_fields",
   "floorCover": "minecraft:mycelium",
@@ -4382,7 +4532,8 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "ambientSound": "minecraft:block.water.ambient",
   "soundChance": 0.02,
   "particle": "minecraft:dripping_water",
-  "particleChance": 0.002
+  "particleChance": 0.002,
+  "requires": ["mypack"]
 }
 ```
 
@@ -4417,12 +4568,6 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 *동굴 지역*
 
-| 설정                    | 유형       | 기본값 | 설명                                                                                                                                                             |
-| ----------------------- | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `caveRegionCells`       | 정수, 블록 | `128`  | 지역 셀의 너비                                                                                                                                                   |
-| `caveRegionCellsY`      | 정수, 블록 | `64`   | 지역 셀의 높이                                                                                                                                                   |
-| `caveRegionPlainWeight` | 정수       | `4`    | 각 셀의 추첨에서 지역이 없는 일반 지하의 가중치. 높일수록 지역이 없는 지하가 더 많이 남습니다. 가중치 1인 지역이 하나뿐이면 셀의 약 5분의 1이 그 지역을 받습니다 |
-
 `<namespace>/worldtemplates/*.json`
 
 ```json
@@ -4434,6 +4579,12 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   }
 }
 ```
+
+| 설정                    | 유형       | 기본값 | 설명                                                                                                                                                             |
+| ----------------------- | ---------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caveRegionCells`       | 정수, 블록 | `128`  | 지역 셀의 너비                                                                                                                                                   |
+| `caveRegionCellsY`      | 정수, 블록 | `64`   | 지역 셀의 높이                                                                                                                                                   |
+| `caveRegionPlainWeight` | 정수       | `4`    | 각 셀의 추첨에서 지역이 없는 일반 지하의 가중치. 높일수록 지역이 없는 지하가 더 많이 남습니다. 가중치 1인 지역이 하나뿐이면 셀의 약 5분의 1이 그 지역을 받습니다 |
 
 지하의 얼마만큼이 일반으로 남는지는 `caveRegionPlainWeight`라는 `terrain` 키이며 기본값은 `4`입니다. 가중치 1인 지역이 하나뿐이면 셀의 약 5분의 1이 그 지역을 받습니다. 덮개는 지붕 아래에서 적용되므로 지표 위에 닿는 지역도 지표에는 절대 나타나지 않습니다. 덮개는 어느 생성기가 깎았든 모든 동굴에서 작동합니다.
 
@@ -4691,6 +4842,12 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "taper": "needle",
     "outline": "minecraft:obsidian",
     "fill": "minecraft:glowstone",
+    "middle": "minecraft:calcite",
+    "budding": "minecraft:budding_amethyst",
+    "buddingChance": 0.083,
+    "crystal": "minecraft:amethyst_cluster",
+    "crystalChance": 0.35,
+    "crack": 0.2,
     "surface": ["minecraft:grass_block"],
     "seeSky": true,
     "checkStay": true,
@@ -4719,6 +4876,8 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "density": 0.8,
     "rich": "mypack:rich_ruby_ore",
     "poor": "mypack:poor_ruby_ore",
+    "richAt": 0.88,
+    "poorAt": 0.4,
     "rarity": 400,
     "rarityIsPerChunk": false
   }
@@ -4825,6 +4984,16 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 *모양*
 
 바닐라 구조물은 `terrain` 설정의 `structureAt`으로 정확한 지점에 고정합니다. `structure=x,z` 항목을 한 줄에 하나씩 쓰며, 예를 들면 `"structureAt": ["villages=1000,-500"]`입니다. **x와 z는 청크 좌표가 아니라 블록 좌표**이며, 구조물은 그 블록이 속한 청크에서 생성됩니다. `terrainAdaptation`이 마을을 도시 거리로 깔 때는 고정된 마을의 우물이 그 블록 위에 서고, 그 블록이 구역 가장자리에서 몇 블록 안에 있으면 구역이 허용하는 한 가장 가까운 곳에 섭니다. 다른 구조물과 그렇게 깔리지 않은 마을은 그 청크에서 게임이 시작하는 곳에서 시작합니다. 원하는 인스턴스마다 항목 하나를 둡니다. 간격, 분리, 최소 스폰 거리, 평지 검사는 모두 무시되므로 그 지점은 팩이 책임져야 하며, 청크 하나보다 가깝게 고정된 두 개는 같은 청크에 구조물 두 개를 놓습니다. 구조물은 일단 세워진 뒤에는 평소 규칙에 따라 해당 청크의 지면에 자리 잡습니다.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureAt": ["villages=1000,-500"]
+  }
+}
+```
 
 | 설정          | 유형                 | 기본값 | 설명                                                                                                                                                                                                          |
 | ------------- | -------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4976,6 +5145,7 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
   "ground": 0,
   "spacing": 64,
   "chance": 25,
+  "dimensions": ["minecraft:overworld"],
   "layers": [
     {
       "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
@@ -4989,6 +5159,16 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
               "...",
               ".a."]
     }
+  ]
+}
+```
+
+```json
+{
+  "cell": 32,
+  "at": [1000, -500],
+  "layers": [
+    { "palette": { "a": "mypack:keep_base" }, "map": ["a"] }
   ]
 }
 ```
@@ -5336,6 +5516,13 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
 
 *사전 생성*
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[chunks]
+pregenBorderLimit = 8192
+```
+
 | 키                            | 설명                                                                                                                                                                                                                                            | 설정하는 이유                                                                            |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `pregenOnNewWorld`            | 누군가 플레이하기 전에 스폰 주변에 만드는 반경(청크 단위). 12가 하한이며 0은 아무것도 만들지 않는다는 뜻이 아니라 그 하한을 뜻합니다. 게임이 스폰 주변 12개 청크를 스스로 만들기 때문입니다. 게임이 만드는 것보다 더 멀리까지 닿으려면 올리세요 | 게임이 이미 만드는 땅 너머로 팩이 얼마나 멀리 닿을지 정합니다                            |
@@ -5535,13 +5722,28 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
   "name": "red",
   "displayName": "Red Team",
   "color": "red",
+  "prefix": "[R] ",
+  "suffix": "!",
+  "scoreboard": true,
   "friendlyFire": false,
+  "mobFriendlyFire": false,
+  "seeFriendlyInvisibles": true,
+  "nameTags": "always",
+  "deathMessages": "always",
+  "collision": "always",
   "joinable": false,
+  "balance": false,
   "entities": ["mypack:zombie_a", "mypack:sapper_a"],
+  "spawnBox": [0, 60, 0, 16, 80, 16],
   "picks": 0,
   "picksFrom": ["players"],
-  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
+  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }, { "item": "minecraft:iron_sword", "unbreakable": true }],
   "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" },
+  "spawn": "0,64,0",
+  "lead": "topScore",
+  "leadOn": "kaboom",
+  "leadIs": "Steve",
+  "leadSays": "You are the current round leader",
   "leadRuns": "mypack:lead_chosen"
 }
 ```
@@ -5629,20 +5831,38 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
   "displayName": "Kills",
   "criterion": "dummy",
   "display": "sidebar",
+  "render": "integer",
   "teamTotals": true,
+  "individuals": false,
+  "carries": false,
+  "awardsTo": "totals",
   "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
-    "death": -1
+    "death": -1,
+    "raid": true,
+    "order": true,
+    "ownKill": -1
   },
-  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "opens": { "by": "leader", "lobby": "0,64,0", "says": "Waiting for {leader} to start the round", "leaderSays": "Type /rdpl round start", "lobbyJoins": true, "joinsSays": "Round is in progress, you can join after it ends" },
   "ends": {
-    "afterMinutes": 10
+    "afterMinutes": 10,
+    "atScore": 100,
+    "afterRounds": 3,
+    "lastStanding": false,
+    "outSays": "You are out until the round ends",
+    "locksTeams": true,
+    "resets": true,
+    "intermissionSeconds": 10,
+    "intermissionSays": "Round cooldown {seconds}",
+    "startsSays": "Round starting in {seconds}"
   },
   "results": {
     "card": true,
     "title": "Final standings",
     "icon": "minecraft:tnt",
+    "image": "mypack:textures/gui/results.png",
+    "background": "1E2630",
     "seconds": 15
   }
 }
@@ -5762,7 +5982,12 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
     "teams": ["miners", "raiders"],
     "passPercent": 51,
     "voteSeconds": 30,
-    "cooldownSeconds": 60
+    "cooldownSeconds": 60,
+    "leadSays": "{player} reset the round",
+    "voteSays": "{player} calls a vote to reset the round",
+    "tallySays": "Reset the round? {yes} yes, {no} no, {seconds}",
+    "passSays": "The vote passed, so the round is reset",
+    "failSays": "The vote failed, so the round goes on"
   }
 }
 ```
@@ -5813,6 +6038,7 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
     "held": "frozen",
     "endsAtScore": 10,
     "cycles": 5,
+    "mobTags": ["duelist"],
     "mobTypes": ["minecraft:zombie"]
   }
 }
@@ -5856,6 +6082,8 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
   "color": "red",
   "waveDelay": 300,
   "spawnDistance": 32,
+  "reach": 96,
+  "timeout": 48000,
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
@@ -5923,7 +6151,7 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
   "image": "mypack:textures/gui/desert_card.png",
   "color": "3A2A10",
   "ticks": 120,
-  "when": { "timeFrom": 0, "timeTo": 12000 },
+  "when": { "timeFrom": 0, "timeTo": 12000, "biomes": ["minecraft:desert"], "dayAtLeast": 3, "advancement": "minecraft:story/mine_stone", "gameMode": "survival", "team": "red", "objective": "kills", "scoreAtLeast": 5 },
   "repeat": "once_per_player"
 }
 ```
@@ -5932,7 +6160,9 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
 {
   "lines": ["{text}", "Speak to the gatekeeper for more."],
   "icon": "minecraft:ender_eye",
-  "cooldown": 30
+  "cooldown": 30,
+  "audience": "player",
+  "runs": "mypack:card_shown"
 }
 ```
 
@@ -5987,6 +6217,34 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
 ### 트리거 설정
 
 *카드*
+
+```json
+{
+  "trigger": "kill",
+  "dimension": "minecraft:the_nether",
+  "biomes": ["minecraft:desert"],
+  "structures": ["minecraft:village_plains"],
+  "radius": 32,
+  "advancement": "minecraft:story/mine_stone",
+  "item": "minecraft:diamond_sword",
+  "entity": "minecraft:zombie",
+  "count": 3,
+  "below": 0,
+  "above": 64,
+  "time": 13000,
+  "day": 5,
+  "minutes": 30,
+  "roll": "2d6",
+  "order": "Mine",
+  "exposure": "heat",
+  "level": 2,
+  "atLeast": 10,
+  "atMost": 12,
+  "objective": "kills",
+  "score": 5,
+  "requires": ["mypack"]
+}
+```
 
 | 설정                 | 유형                              | 기본값     | 설명                                                                                                                                                                                                                                                     |
 | -------------------- | --------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -6113,7 +6371,45 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
     "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
-    "coin": "{player} tosses the old coin: {result}"
+    "coin": "{player} tosses the old coin: {result}",
+    "pickplayer": "{player} picks a player: {result}",
+    "pickteam": "{player} picks a team: {result}",
+    "heads": "heads",
+    "tails": "tails",
+    "lastnone": "No rolls yet",
+    "nobody": "There is nobody to pick from",
+    "notallowed": "You are not allowed to run that part of /rdplserver game",
+    "usage": "/rdplserver game <coin|die|dice|deck|teamroll|tiebreak>",
+    "die": "{player} rolls {dice}: {result}",
+    "packdie": "{player} rolls {die}: {result}",
+    "dice": "{player} rolls {dice}: {rolls} = {result}",
+    "advantage": "{player} rolls {dice} with advantage: {first} and {second}, keeps {result}",
+    "disadvantage": "{player} rolls {dice} with disadvantage: {first} and {second}, keeps {result}",
+    "pickmember": "{player} picks from {team}: {result}",
+    "draw": "{player} draws from {deck}: {result} ({left} left)",
+    "reshuffled": "{deck} was empty, so it is reshuffled: {player} draws {result} ({left} left)",
+    "shuffle": "{player} shuffles {deck}: {left} cards",
+    "left": "{deck} has {left} card(s) left",
+    "empty": "{deck} is empty, so shuffle it first",
+    "nodeck": "There is no deck called {deck}",
+    "teamroll": "{member} rolls {dice}: {result}",
+    "teamrollwin": "{result} wins the team roll with {score}",
+    "tiebreak": "The tie in {objective} between {sides} goes to {result}",
+    "notie": "{objective} has no tie at the top",
+    "noobjective": "There is no objective called {objective}",
+    "turn": "{group}'s turn: {seconds} seconds",
+    "turnclock": "{group}'s turn: {seconds}",
+    "turnwarn": "{group}: {seconds} seconds left",
+    "turnout": "{group} ran out of time",
+    "turnpass": "{group} passes the turn",
+    "turngap": "Next turn in {seconds}",
+    "notturn": "It is not your turn",
+    "noturns": "No turns are running",
+    "badsides": "A die has 2 to 1000 sides, not {sides}",
+    "badroll": "'{roll}' is not a roll such as 2d6+1, with 1 to 100 dice of 2 to 1000 sides",
+    "badaudience": "'{audience}' is not self, team, all, radius <blocks> or silent",
+    "nodie": "There is no die called {name}",
+    "noteam": "There is no team called {team}"
   }
 }
 ```
@@ -6230,6 +6526,7 @@ RDPL은 다음 글꼴과 문자를 제공합니다. 카드, 안내, 소개의 `f
   "rules": { "quietDraw": 100, "repeatDraw": 3 },
   "clock": { "minutes": 10, "addSeconds": 2 },
   "ai": 2,
+  "quiet": false,
   "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
 }
 ```
@@ -7029,6 +7326,7 @@ xxoxoxx
     "ambientCap": 15,
     "waterCreatureCap": 5,
     "monsterSpawnLight": 0,
+    "skyAnimals": true,
     "threatItems": ["minecraft:diamond_sword=5,1", "minecraft:diamond=1,16,batch"],
     "threatLevels": [10, 25, 50],
     "threatMost": -1,
@@ -7079,7 +7377,8 @@ xxoxoxx
     "flatBedrockFiller": "minecraft:cobblestone",
     "flatBedrockFillers": ["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"],
     "flatBedrockBiomeTypes": ["minecraft:is_ocean"],
-    "flatBedrockRetrogen": true
+    "flatBedrockRetrogen": true,
+    "flatBedrockRetrogenKey": "0001"
   }
 }
 ```
@@ -7136,6 +7435,90 @@ xxoxoxx
 *그룹별 역할*
 
 `control.chunks`가 이 그룹을 정합니다. 스폰 청크 반경, 사전 생성, Retrogen과 초기화, 환영 문구, 알림 카드, 게임의 토스트입니다.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "retrogen": false,
+    "adoptExistingChunks": false,
+    "saysCard": true,
+    "saysIcon": "minecraft:compass",
+    "saysColor": "1E2630",
+    "saysImage": "rubyworld:textures/gui/card.png",
+    "saysBackground": true,
+    "saysFont": "rubyworld:runes",
+    "toasts": true,
+    "pregenOnNewWorld": 63,
+    "pregenToBorder": false,
+    "pregenAllDimensions": false,
+    "pregenResume": true,
+    "pregenChunksInFlight": 32,
+    "pregenBackup": false,
+    "resetClearsEntities": true,
+    "resetClearsScores": true,
+    "resetClearsInventory": false,
+    "resetClearsExperience": false,
+    "spawnChunkRadius": 128,
+    "spawnChunkRadii": ["minecraft:overworld=64"],
+    "welcomeSays": ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"],
+    "pregenDimensions": ["minecraft:overworld", "minecraft:the_nether"],
+    "pregenDimensionsWhenEntered": ["minecraft:the_end"],
+    "pregenRunningSays": "Building your world, %d%% done",
+    "pregenFinishedSays": "Your world is ready",
+    "pregenStoppedSays": "World building stopped",
+    "pregenSpectatingSays": "Spectating until the world is ready",
+    "pregenLogo": "center",
+    "pregenBackupSays": "Pack requested world backup",
+    "resetSays": "Pack requested map reset",
+    "resetSendsTo": "spawn",
+    "resetRuns": "rubyworld:rebuild_arena"
+  }
+}
+```
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[worldgen]
+retrogen = false
+adoptExistingChunks = false
+
+[chunks]
+saysCard = true
+saysIcon = "minecraft:compass"
+saysColor = "1E2630"
+saysImage = "rubyworld:textures/gui/card.png"
+saysBackground = true
+saysFont = "rubyworld:runes"
+toasts = true
+pregenOnNewWorld = 63
+pregenToBorder = false
+pregenAllDimensions = false
+pregenResume = true
+pregenChunksInFlight = 32
+pregenBackup = false
+resetClearsEntities = true
+resetClearsScores = true
+resetClearsInventory = false
+resetClearsExperience = false
+spawnChunkRadius = 128
+spawnChunkRadii = ["minecraft:overworld=64"]
+welcomeSays = ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"]
+pregenBorderLimit = 8192
+pregenDimensions = ["minecraft:overworld", "minecraft:the_nether"]
+pregenDimensionsWhenEntered = ["minecraft:the_end"]
+pregenRunningSays = "Building your world, %d%% done"
+pregenFinishedSays = "Your world is ready"
+pregenStoppedSays = "World building stopped"
+pregenSpectatingSays = "Spectating until the world is ready"
+pregenLogo = "center"
+pregenBackupSays = "Pack requested world backup"
+resetSays = "Pack requested map reset"
+resetSendsTo = "spawn"
+resetRuns = "rubyworld:rebuild_arena"
+```
 
 | 설정                          | 유형            | 기본값                                   | 설명                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ----------------------------- | --------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7243,6 +7626,11 @@ xxoxoxx
     "worldMaxHeight": 384,
     "terrainOffset": 48,
     "deepStone": "minecraft:blackstone",
+    "skyStone": "minecraft:end_stone",
+    "skyShape": "islands",
+    "skyIslands": 0.5,
+    "skyThickness": 2.0,
+    "skyHeights": [330, 380],
     "noiseCaves": "deep",
     "worldSpawn": "0,72,0",
     "worldBorder": 4096,
@@ -7379,6 +7767,23 @@ xxoxoxx
 
 `control.recipes`가 이 그룹을 정합니다. 제작 및 화로 레시피 차단과 그 허용 목록입니다. 1.12.2는 모든 조리 레시피를 하나의 화로 목록에 두었으므로, 화로 차단에는 용광로, 훈연기, 모닥불 레시피도 함께 포함됩니다. 1.12.2에는 없었으므로 석재 절단기와 대장장이 레시피는 차단되지 않습니다.
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[recipes]
+blockRecipes = true
+recipeWhitelist = ["minecraft", "mypack"]
+blockedRecipeMods = ["tconstruct"]
+recipeMatch = "recipe"
+blockFurnaceRecipes = true
+furnaceWhitelist = ["minecraft", "mypack"]
+blockedFurnaceMods = ["tconstruct"]
+logBlockedRecipes = true
+furnace = true
+removals = true
+skipMissingItems = true
+```
+
 | 설정                  | 유형                       | 기본값          | 설명                                                                                                                                                                                                                                                         |
 | --------------------- | -------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `blockRecipes`        | 불리언                     | `false`         | `recipeWhitelist`에 있는 모드의 레시피를 제외한 모든 제작 레시피를 제거합니다. 화이트리스트에는 기본적으로 `minecraft`만 들어 있으므로 바닐라 레시피는 남고 다른 모드의 레시피는 모두 사라집니다. 팩 자체 레시피를 유지하려면 팩의 네임스페이스를 나열하세요 |
@@ -7399,6 +7804,31 @@ xxoxoxx
 
 `control.commands`가 이 그룹을 정합니다. 이 모드 자체의 명령어를 누가 실행할 수 있는지, 즉 goto 권한 레벨입니다.
 
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "locateLevel": 2,
+    "gotoLevel": 3,
+    "gotoNextLevel": 3,
+    "gotoBackLevel": 3,
+    "gotoPlaceLevels": ["rubyworld:crypt=2"]
+  }
+}
+```
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[commands]
+locateLevel = 2
+gotoLevel = 3
+gotoNextLevel = 3
+gotoBackLevel = 3
+gotoPlaceLevels = ["rubyworld:crypt=2"]
+```
+
 | 설정              | 유형      | 기본값    | 설명                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ----------------- | --------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `locateLevel`     | 정수, 0~4 | `2`       | 바닐라 /locate를 실행하는 데 필요한 권한 레벨입니다. 2는 바닐라 본래의 값이므로 설정하기 전에는 아무것도 바뀌지 않습니다. 0은 모든 플레이어가 실행할 수 있게 하고, 3은 운영자에게만 맡기며, 4는 레벨 4 운영자로 제한합니다                                                                                                                                                                                                                                                                                                                                  |
@@ -7412,6 +7842,18 @@ xxoxoxx
 *그룹별 역할*
 
 이 `worldgen` 키들은 어떤 그룹에도 속하지 않으며 설정에만 있습니다.
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[worldgen]
+worldgenDebug = false
+worldTemplate = "auto"
+tellWorldType = true
+worldBorderLimit = 60000000
+retrogenKey = "0000"
+retrogenChunksPerTick = 2
+```
 
 | 설정                    | 유형             | 기본값     | 설명                                                                                                                                                                                                                   |
 | ----------------------- | ---------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7428,6 +7870,17 @@ xxoxoxx
 
 팩 폴더를 찾고 제공하는 방식입니다. 설정 전용입니다.
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[packs]
+rootDirectory = "rdploader"
+overrideResourcePacks = true
+warnOnCaseMismatch = true
+logContents = false
+traceUnresolvedVariables = false
+```
+
 | 설정                       | 유형   | 기본값      | 설명                                                                                                                                                          |
 | -------------------------- | ------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `rootDirectory`            | 문자열 | `rdploader` | 팩을 불러오는 폴더로, .minecraft 디렉터리를 기준으로 한 상대 경로입니다. 절대 경로도 쓸 수 있습니다. 재시작이 필요합니다                                      |
@@ -7441,6 +7894,31 @@ xxoxoxx
 *그룹별 역할*
 
 블록, 아이템, 유체, 그 밖에 팩이 정의하는 모든 것입니다. 설정 전용입니다.
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[content]
+load = true
+vanillaClients = false
+sounds = true
+fuels = true
+tooltips = true
+potions = true
+brewing = true
+villagers = true
+entities = true
+overrides = true
+disabled = true
+hardness = true
+shovelPaths = true
+shovelPathBecomes = ""
+shovelPathReverts = ""
+hoeTilling = true
+hoeTillsInto = ""
+caneMaxHeight = 3
+cactusMaxHeight = 3
+```
 
 | 설정                | 유형        | 기본값    | 설명                                                                                                                                                                                                                                                  |
 | ------------------- | ----------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7470,6 +7948,18 @@ xxoxoxx
 
 전리품, 함수, 레지스트리 이름입니다. 설정 전용입니다.
 
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[data]
+lootInjections = true
+playerLoot = true
+registryRemaps = true
+anvils = true
+blockDrops = true
+functions = true
+```
+
 | 설정             | 유형   | 기본값 | 설명                                                                                                                                                           |
 | ---------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | 불리언 | `true` | 이미 존재하는 전리품 테이블을 통째로 대체하지 않고 풀을 추가하는 loot_injections/*.json 파일을 적용합니다                                                      |
@@ -7484,6 +7974,18 @@ xxoxoxx
 *그룹별 역할*
 
 바닐라 동작을 약간 바꾸는 항목들입니다. 설정 전용이지만, 팩도 설정할 수 있는 `privacy`는 예외입니다. [추가: 바닐라 조정](#추가-바닐라-조정)을 참고하세요.
+
+`config/resourcedatapackloader-common.toml`
+
+```toml
+[tweaks]
+promptLeafDecay = true
+lenientPaths = true
+unbreakableSpawners = false
+experimentalWarning = false
+privacy = true
+darkSplash = true
+```
 
 | 설정                  | 유형   | 기본값  | 설명                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | --------------------- | ------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -7905,6 +8407,133 @@ Blast Plaster는 폭발 뒤의 동작을 처리합니다. 구덩이를 블록 �
 *참조*
 
 1.12.2 팩이 쓸 수 있지만 이 버전은 읽지 않는 것과 그 이유입니다. 이를 쓴 팩도 로드되지만 키는 아무 일도 하지 않습니다. *아직 이어지지 않음*이라고 적힌 행은 해당 부분이 포팅된 뒤 1.12.2에 추가되었으며 아직 넘어와야 합니다. 다른 모든 행은 이 엔진에서 넘어올 수 없거나 넘어올 필요가 없습니다. 이 표는 각 라인이 움직이는 대로 최신으로 유지됩니다.
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "basic",
+  "meta": 0,
+  "oreDict": "oreRuby",
+  "modelMeta": 0,
+  "variants": { "ruby_ore": { "hardness": 3.0 } }
+}
+```
+
+`<namespace>/biomes/*.json`
+
+```json
+{
+  "id": 5,
+  "baseHeight": 0.2,
+  "heightVariation": 0.1
+}
+```
+
+`<namespace>/dimensions/*.json`
+
+```json
+{
+  "id": 7,
+  "suffix": "_ruby",
+  "keepLoaded": true
+}
+```
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "rubicWorld": true,
+    "rubicHeightLimit": 512,
+    "regionCacheLimit": 64,
+    "deepRavines": true,
+    "oreVeins": true,
+    "readCofhWorldFiles": true,
+    "loadingScreenPercent": true,
+    "disableOptimizations": true,
+    "fixTinkersModelErrors": true,
+    "modernChestPlacement": false
+  }
+}
+```
+
+`<namespace>/entities/*.json`
+
+```json
+{
+  "entity": "minecraft:cow",
+  "galacticraft": true
+}
+```
+
+`<namespace>/overrides/<target>/<name>.json`
+
+```json
+{
+  "harvestTool": "shears"
+}
+```
+
+`<namespace>/villagers/*.json`
+
+```json
+{
+  "careers": ["farmer"]
+}
+```
+
+`<namespace>/trades/*.json`
+
+```json
+{
+  "trades": [
+    { "profession": "minecraft:farmer", "career": "farmer", "buy": { "item": "minecraft:wheat" }, "sell": { "item": "minecraft:emerald" } }
+  ]
+}
+```
+
+`<namespace>/gamerules/*.json`
+
+```json
+{
+  "minecraft:overworld": { "gameLoopFunction": "mypack:tick" }
+}
+```
+
+`<namespace>/biomes/*.json`
+
+```json
+{
+  "placement": { "villageSpawn": true }
+}
+```
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "oreDictionary": true,
+    "disableOverrides": false,
+    "tolerateMissingInAdvancements": true,
+    "terrainWorldTypes": ["default"],
+    "terrainWorldTypesAreBlacklist": false,
+    "pregenKeepLoaded": true,
+    "pregenPauseAbove": 90,
+    "pregenMillisPerRound": 50,
+    "pregenRelightSays": "Relighting",
+    "hurryWritesAbove": 100,
+    "rubicWorldDimensions": ["minecraft:overworld"],
+    "rubicWorldDimensionsAreBlacklist": false,
+    "verticalCubeLoadDistance": 8,
+    "cubeGCInterval": 20,
+    "cubeGenMillisPerRound": 20,
+    "cubesSentPerTick": 25
+  }
+}
+```
 
 | 키                                                                                                                                                                  | 위치                                                                                          | 이유                                                                                                                                                                                                                                                                                          |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
