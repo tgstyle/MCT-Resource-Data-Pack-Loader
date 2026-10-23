@@ -67,14 +67,12 @@ public final class ContentSkyRenderer {
 
     private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, @Nullable Identifier moonTexture, float moonSize) {
         List<SkyOccluder> bodies = new ArrayList<>();
-        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, sky.sunSize(), false, new Identifier[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, sky.sunSize(), false, false, new Identifier[] {sky.sunTexture()}, 1, 1)); }
         if (sky.bodies() == null) {
-            if (moonSize > 0.0F) { bodies.add(moonTexture == null ? new SkyOccluder(0.0F, moonSize, true, MOONS, 1, 1) : new SkyOccluder(0.0F, moonSize, true, new Identifier[] {moonTexture}, 4, 2)); }
+            if (moonSize > 0.0F) { bodies.add(moonTexture == null ? new SkyOccluder(0.0F, moonSize, true, false, MOONS, 1, 1) : new SkyOccluder(0.0F, moonSize, true, false, new Identifier[] {moonTexture}, 4, 2)); }
         }
         else {
-            for (DimensionTraitsDef.Body body : sky.bodies()) {
-                if (body.followsTime()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), false, new Identifier[] {body.texture()}, 1, 1)); }
-            }
+            for (DimensionTraitsDef.Body body : sky.bodies()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), false, !body.followsTime(), new Identifier[] {body.texture()}, 1, 1)); }
         }
         return bodies.toArray(new SkyOccluder[0]);
     }
@@ -86,9 +84,7 @@ public final class ContentSkyRenderer {
             if (moonSize > 0.0F) { offsets[at] = quantized(moonAngle - starAngle); }
         }
         else {
-            for (DimensionTraitsDef.Body body : sky.bodies()) {
-                if (body.followsTime()) { offsets[at++] = quantized(sunAngle - starAngle + (float) Math.toRadians(body.angle())); }
-            }
+            for (DimensionTraitsDef.Body body : sky.bodies()) { offsets[at++] = body.followsTime() ? quantized(sunAngle - starAngle + (float) Math.toRadians(body.angle())) : quantized((float) Math.toRadians(body.angle()) - Math.round(starAngle * 1.0E3F) / 1.0E3F); }
         }
         return offsets;
     }

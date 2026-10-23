@@ -43,11 +43,15 @@ public final class ContentStarField {
         return colors;
     }
 
-    public static float[][] groups(int count, float smallest, SkyOccluder[] occluders) {
+    public static float[][] stars(int count, float smallest) {
         float[][] stars = new float[Math.max(count, 0)][];
         RandomSource random = RandomSource.createThreadLocalInstance(10842L);
         float spread = smallest * 2.0F / 3.0F;
-        for (int star = 0; star < stars.length; ++star) { stars[star] = star(random, smallest, spread, occluders); }
+        for (int star = 0; star < stars.length; ++star) { stars[star] = star(random, smallest, spread); }
+        return stars;
+    }
+
+    public static float[][] groups(float[][] stars) {
         float[][] groups = new float[GROUPS][];
         for (int group = 0; group < GROUPS; ++group) {
             int shown = 0;
@@ -66,7 +70,7 @@ public final class ContentStarField {
         return groups;
     }
 
-    @Nullable private static float[] star(RandomSource random, float smallest, float spread, SkyOccluder[] occluders) {
+    @Nullable private static float[] star(RandomSource random, float smallest, float spread) {
         float x = random.nextFloat() * 2.0F - 1.0F;
         float y = random.nextFloat() * 2.0F - 1.0F;
         float z = random.nextFloat() * 2.0F - 1.0F;
@@ -76,7 +80,7 @@ public final class ContentStarField {
         Vector3f center = new Vector3f(x, y, z).normalize(ContentSkyShapes.SIZE);
         float spin = (float) (random.nextDouble() * (float) Math.PI * 2.0D);
         Matrix3f turn = new Matrix3f().rotateTowards(new Vector3f(center).negate(), new Vector3f(0.0F, 1.0F, 0.0F)).rotateZ(-spin);
-        float[] corners = new float[12];
+        float[] corners = new float[16];
         float[][] offsets = {{size, -size}, {size, size}, {-size, size}, {-size, -size}};
         for (int corner = 0; corner < 4; ++corner) {
             Vector3f point = new Vector3f(offsets[corner][0], offsets[corner][1], 0.0F).mul(turn).add(center);
@@ -84,9 +88,10 @@ public final class ContentStarField {
             corners[corner * 3 + 1] = point.y;
             corners[corner * 3 + 2] = point.z;
         }
-        for (SkyOccluder body : occluders) {
-            if (body.covers(center.x, center.y, center.z, size * 1.5F)) { return null; }
-        }
+        corners[12] = center.x;
+        corners[13] = center.y;
+        corners[14] = center.z;
+        corners[15] = size * 1.5F;
         return corners;
     }
 }

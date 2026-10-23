@@ -10,10 +10,12 @@ import java.io.InputStream;
 public final class SkyOccluder {
     private static final double RADIUS = ContentSkyShapes.SIZE;
     private static final int THRESHOLD = 8;
+    private static final double MARGIN = 0.055D;
     private static int generation;
     private final float tilt;
     private final float size;
     private final boolean moon;
+    private final boolean fixed;
     private final Identifier[] textures;
     private final int columns;
     private final int rows;
@@ -23,16 +25,24 @@ public final class SkyOccluder {
     private int width;
     private int height;
 
-    SkyOccluder(float tilt, float size, boolean moon, Identifier[] textures, int columns, int rows) {
+    SkyOccluder(float tilt, float size, boolean moon, boolean fixed, Identifier[] textures, int columns, int rows) {
         this.tilt = tilt;
         this.size = size;
         this.moon = moon;
+        this.fixed = fixed;
         this.textures = textures;
         this.columns = columns;
         this.rows = rows;
     }
 
     void turn(float angle) { this.angle = angle; }
+
+    boolean fixed() { return fixed; }
+
+    boolean sweeps(double x, double reach) {
+        double gap = Math.abs(Math.asin(Mth.clamp(x, -1.0D, 1.0D)) - Math.asin(-Math.sin(tilt)));
+        return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
+    }
 
     static void invalidate() { ++generation; }
 
@@ -48,7 +58,7 @@ public final class SkyOccluder {
         double pz = z1 * RADIUS / (y2 * size);
         double u = moon ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
         double v = moon ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
-        double r = reach / (2.0D * size);
+        double r = (fixed ? reach + MARGIN * (RADIUS / y2) * (RADIUS / y2) : reach) / (2.0D * size);
         if (u + r < 0.0D || u - r > 1.0D || v + r < 0.0D || v - r > 1.0D) { return false; }
         if (mask == null || loaded != generation) { load(); }
         int fromX = clamp((int) Math.floor((u - r) * width), width);
