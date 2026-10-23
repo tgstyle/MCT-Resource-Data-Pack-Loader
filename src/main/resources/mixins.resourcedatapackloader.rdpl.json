@@ -37,6 +37,7 @@
         "common.IServerLevel",
         "common.MixinPlayerBreakRestriction",
         "common.MixinAnvilMenu",
+        "common.MixinCraftingMenu",
         "common.MixinItemCombinerMenu",
         "common.MixinItemStack",
         "common.MixinItemParser",

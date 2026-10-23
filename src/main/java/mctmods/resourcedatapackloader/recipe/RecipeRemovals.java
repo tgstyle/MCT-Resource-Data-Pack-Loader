@@ -1,55 +1,27 @@
 package mctmods.resourcedatapackloader.recipe;
 
-import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 public final class RecipeRemovals {
     private static final String REMOVE = "remove";
-    private static final String NAMES = "names";
-    private static final String NAMESPACES = "namespaces";
-    private static final String OUTPUTS = "outputs";
-    private static final Set<String> NAMED = new LinkedHashSet<>();
-    private static final Set<String> PREFIXES = new LinkedHashSet<>();
-    private static final Set<Item> OUTPUT_ITEMS = new LinkedHashSet<>();
+    private static final RecipeSelector SELECTOR = new RecipeSelector();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private RecipeRemovals() {}
 
     public static void reload() {
         if (!GENERATION.stale()) { return; }
-        NAMED.clear();
-        PREFIXES.clear();
-        OUTPUT_ITEMS.clear();
+        SELECTOR.clear();
         if (!Config.recipes.removals()) { return; }
-        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
+        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", SELECTOR::read);
     }
-
-    private static void read(ResourceLocation key, JsonObject json) {
-        for (JsonElement element : array(json, NAMES)) {
-            String name = element.getAsString();
-            if (name.endsWith("*")) { PREFIXES.add(name.substring(0, name.length() - 1)); }
-            else { NAMED.add(name); }
-        }
-        for (JsonElement element : array(json, NAMESPACES)) { PREFIXES.add(element.getAsString() + ":"); }
-        for (JsonElement element : array(json, OUTPUTS)) {
-            Item item = ContentStacks.find(key, element.getAsString());
-            if (item != null) { OUTPUT_ITEMS.add(item); }
-        }
-    }
-
-    private static JsonArray array(JsonObject json, String member) { return json.has(member) ? Json.getJsonArray(json, member) : new JsonArray(); }
 
     public static boolean isRemoval(JsonElement json) {
         if (!json.isJsonObject()) { return false; }
@@ -57,14 +29,7 @@ public final class RecipeRemovals {
         catch (RuntimeException notBoolean) { return false; }
     }
 
-    public static boolean removesName(ResourceLocation id) {
-        String name = id.toString();
-        if (NAMED.contains(name)) { return true; }
-        for (String prefix : PREFIXES) {
-            if (name.startsWith(prefix)) { return true; }
-        }
-        return false;
-    }
+    public static boolean removesName(ResourceLocation id) { return SELECTOR.matchesName(id); }
 
-    public static boolean removesOutput(ItemStack result) { return !result.isEmpty() && OUTPUT_ITEMS.contains(result.getItem()); }
+    public static boolean removesOutput(ItemStack result) { return SELECTOR.matchesOutput(result); }
 }
