@@ -3726,7 +3726,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4076,6 +4076,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `rain.interval`         | 否   | 整数                      | `3`                      | 雨声播放得有多稀疏；越大越稀疏，`0` 表示每次机会都播放                                                         |
 | `rain.color`            | 否   | 十六进制颜色              | `#FFFFFF`                | 落下的雨的色调                                                                                                 |
 | `rain.snowColor`        | 否   | 十六进制颜色              | `#FFFFFF`                | 落下的雪的色调                                                                                                 |
+| `rain.colorMode`        | 否   | `multiply` 或 `solid`     | `multiply`               | `rain.color` 如何与雨的纹理结合：`multiply` 给灰蓝色的雨丝染色，所以明亮的颜色会变暗；`solid` 以 `rain.color` 绘制雨丝，保留其形状和透明度；夜间光照仍会使其变暗 |
 | `rain.angle`            | 否   | 浮点数，0 到 180          | `0`                      | 偏离正下方的角度：`90` 为横向吹，`180` 为笔直向上飘。绘制时最多倾斜 75 度                                      |
 | `rain.heading`          | 否   | 浮点数，单位为度          | `0`                      | 吹向哪个方向：`0` 为南，`90` 为西，`180` 为北，`270` 为东                                                      |
 | `rain.splashUpward`     | 否   | 布尔值                    | `false`                  | 开启后，向上飘的雨（`angle` 大于 `90`）仍会在地面溅起水花并发出声音                                            |

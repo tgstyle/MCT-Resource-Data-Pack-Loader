@@ -3726,7 +3726,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4076,6 +4076,7 @@ Jakýkoli jiný klíč v okně se ignoruje s chybou v logu, stejně jako `precip
 | `rain.interval`         | ne      | celé číslo                   | `3`                      | Jak zřídka se zvuk přehrává; vyšší je řidší, `0` ho přehraje při každé příležitosti                                                                        |
 | `rain.color`            | ne      | hexadecimální barva          | `#FFFFFF`                | Odstín padajícího deště                                                                                                                                    |
 | `rain.snowColor`        | ne      | hexadecimální barva          | `#FFFFFF`                | Odstín padajícího sněhu                                                                                                                                    |
+| `rain.colorMode`        | ne      | `multiply` nebo `solid`      | `multiply`               | Jak se `rain.color` spojí s texturou deště: `multiply` obarví šedomodré pruhy, takže jasné barvy vyjdou tmavé; `solid` vykreslí pruhy přesně v `rain.color` a zachová jejich tvar i průhlednost; noční světlo je i tak ztmaví |
 | `rain.angle`            | ne      | desetinné číslo, 0 až 180    | `0`                      | Stupně od svislice dolů: `90` fouká do strany, `180` stoupá přímo nahoru. Kreslí se nakloněný nejvýše o 75 stupňů                                          |
 | `rain.heading`          | ne      | desetinné číslo, stupně      | `0`                      | Kam fouká: `0` jih, `90` západ, `180` sever, `270` východ                                                                                                  |
 | `rain.splashUpward`     | ne      | boolean                      | `false`                  | Při zapnutí déšť, který stoupá (`angle` nad `90`), stále cáká na zem a přehrává svůj zvuk                                                                  |

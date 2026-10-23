@@ -3726,7 +3726,7 @@ Minecraft и так выбирает вариант по позиции блок
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4076,6 +4076,7 @@ Minecraft и так выбирает вариант по позиции блок
 | `rain.interval`         | нет   | int                    | `3`                      | Как редко играет звук; больше — реже, `0` — при каждой возможности                                                                                          |
 | `rain.color`            | нет   | hex-цвет               | `#FFFFFF`                | Оттенок падающего дождя                                                                                                                                     |
 | `rain.snowColor`        | нет   | hex-цвет               | `#FFFFFF`                | Оттенок падающего снега                                                                                                                                     |
+| `rain.colorMode`        | нет   | `multiply` или `solid` | `multiply`               | Как `rain.color` сочетается с текстурой дождя: `multiply` окрашивает серо-голубые штрихи, поэтому яркие цвета получаются тёмными; `solid` рисует штрихи в цвете `rain.color`, сохраняя их форму и прозрачность; ночной свет всё равно их затемняет |
 | `rain.angle`            | нет   | float, от 0 до 180     | `0`                      | Угол от отвесного падения в градусах: `90` — дождь летит вбок, `180` — поднимается вертикально вверх. Рисуется с наклоном не больше 75 градусов             |
 | `rain.heading`          | нет   | float, градусы         | `0`                      | Куда дует: `0` — на юг, `90` — на запад, `180` — на север, `270` — на восток                                                                                |
 | `rain.splashUpward`     | нет   | boolean                | `false`                  | Включено — у дождя, идущего вверх (`angle` больше `90`), остаются брызги на земле и звук                                                                    |

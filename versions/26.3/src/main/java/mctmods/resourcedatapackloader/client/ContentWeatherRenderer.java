@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.client.render.WhitenedTexture;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.util.RainSplash;
 
@@ -37,6 +38,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
     private final ContentWeatherShape shape;
     @Nullable private GpuBuffer vertexBuffer;
     private boolean ready;
+    private Identifier rainTexture = RAIN;
 
     public ContentWeatherRenderer(RainDef rain) {
         this.rain = rain;
@@ -48,6 +50,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
         int columnCount = weather.rainColumns.size() + weather.snowColumns.size();
         ready = columnCount != 0 && mc.level != null && !ContentDimensionEffects.cameraAboveCeiling();
         if (!ready) { return; }
+        rainTexture = rain.solid() ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN;
         int indexCount;
         try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(columnCount * DefaultVertexFormat.PARTICLE.getVertexSize() * 4)) {
             BufferBuilder builder = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.PARTICLE);
@@ -89,7 +92,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
         pass.setUniform("Sampler2", mc.gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
         pass.setIndexBuffer(indices.getBuffer(), indices.type());
         pass.setVertexBuffer(0, vertexBuffer.slice());
-        draw(pass, mc.getTextureManager().getTexture(RAIN), 0, rainCount);
+        draw(pass, mc.getTextureManager().getTexture(rainTexture), 0, rainCount);
         draw(pass, mc.getTextureManager().getTexture(SNOW), rainCount, weather.snowColumns.size());
         pass.popDebugGroup();
     }

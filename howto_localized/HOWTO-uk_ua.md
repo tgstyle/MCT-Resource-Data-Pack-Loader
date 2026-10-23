@@ -3726,7 +3726,7 @@ Minecraft уже обирає варіант за позицією блока, �
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4076,6 +4076,7 @@ Minecraft уже обирає варіант за позицією блока, �
 | `rain.interval`         | ні          | ціле число                  | `3`                      | Як рідко відтворюється звук; більше значення означає рідше, `0` відтворює його за кожної нагоди                                              |
 | `rain.color`            | ні          | hex-колір                   | `#FFFFFF`                | Відтінок дощу, що падає                                                                                                                      |
 | `rain.snowColor`        | ні          | hex-колір                   | `#FFFFFF`                | Відтінок снігу, що падає                                                                                                                     |
+| `rain.colorMode`        | ні          | `multiply` або `solid`      | `multiply`               | Як `rain.color` поєднується з текстурою дощу: `multiply` фарбує сіро-блакитні смуги, тому яскраві кольори виходять темними; `solid` малює смуги в кольорі `rain.color`, зберігаючи їхню форму та прозорість; нічне світло все одно їх затемнює |
 | `rain.angle`            | ні          | дробове число від 0 до 180  | `0`                      | Градуси від прямовисного напрямку вниз: `90` дме вбік, `180` здіймається прямо вгору. Малюється з нахилом щонайбільше 75 градусів            |
 | `rain.heading`          | ні          | дробове число, градуси      | `0`                      | Куди він дме: `0` південь, `90` захід, `180` північ, `270` схід                                                                              |
 | `rain.splashUpward`     | ні          | логічне значення            | `false`                  | Якщо ввімкнено, дощ, що здіймається (`angle` понад `90`), усе одно бризкає на землю й відтворює свій звук                                    |

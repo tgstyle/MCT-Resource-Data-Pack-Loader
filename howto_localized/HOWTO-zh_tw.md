@@ -3726,7 +3726,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4076,6 +4076,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `rain.interval`         | 否   | 整數                | `3`                      | 音效播放的稀疏程度；越高越稀疏，`0` 則每次機會都播放                                                 |
 | `rain.color`            | 否   | 十六進位顏色        | `#FFFFFF`                | 落雨的色調                                                                                           |
 | `rain.snowColor`        | 否   | 十六進位顏色        | `#FFFFFF`                | 落雪的色調                                                                                           |
+| `rain.colorMode`        | 否   | `multiply` 或 `solid` | `multiply`               | `rain.color` 如何與雨的紋理結合：`multiply` 會為灰藍色的雨絲染色，所以明亮的顏色會變暗；`solid` 以 `rain.color` 繪製雨絲，保留其形狀與透明度；夜間光照仍會使其變暗 |
 | `rain.angle`            | 否   | 浮點數，0 到 180    | `0`                      | 偏離正下方的度數：`90` 為橫向吹，`180` 為直直向上升。繪製時最多傾斜 75 度                            |
 | `rain.heading`          | 否   | 浮點數，度          | `0`                      | 吹向哪個方向：`0` 南，`90` 西，`180` 北，`270` 東                                                    |
 | `rain.splashUpward`     | 否   | 布林值              | `false`                  | 開啟時，上升的雨（`angle` 超過 `90`）仍會在地面濺起並播放聲音                                        |

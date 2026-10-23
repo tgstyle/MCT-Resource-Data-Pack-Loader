@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.client.render.WhitenedTexture;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.util.RainSplash;
 
@@ -68,6 +69,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
                 indexType = indices.type();
             }
         }
+        Identifier rainTexture = rain.solid() ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN;
         GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), new Vector3f(), new Matrix4f());
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL Weather", color, OptionalInt.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
             pass.setPipeline(pipeline);
@@ -76,7 +78,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
             pass.bindTexture("Sampler2", mc.gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
             pass.setIndexBuffer(indexBuffer, indexType);
             pass.setVertexBuffer(0, vertexBuffer);
-            draw(pass, mc.getTextureManager().getTexture(RAIN), 0, rainCount);
+            draw(pass, mc.getTextureManager().getTexture(rainTexture), 0, rainCount);
             draw(pass, mc.getTextureManager().getTexture(SNOW), rainCount, weather.snowColumns.size());
         }
         return true;

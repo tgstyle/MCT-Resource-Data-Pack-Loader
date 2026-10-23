@@ -3726,7 +3726,7 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
     "freeze": false,
     "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "colorMode": "solid", "snowColor": "#FFFFFF", "angle": 30, "heading": 90, "splashUpward": true },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
   "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
@@ -4076,6 +4076,7 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 | `rain.interval`         | いいえ | 整数                    | `3`                      | 音が鳴る頻度の低さ。大きいほどまばらで、`0` では機会のたびに鳴ります                                                                                 |
 | `rain.color`            | いいえ | 16進カラー              | `#FFFFFF`                | 降る雨の色合い                                                                                                                                       |
 | `rain.snowColor`        | いいえ | 16進カラー              | `#FFFFFF`                | 降る雪の色合い                                                                                                                                       |
+| `rain.colorMode`        | いいえ | `multiply` または `solid` | `multiply`               | `rain.color` が雨のテクスチャとどう合わさるか。`multiply` は灰青色の筋に色を掛けるため、明るい色は暗くなります。`solid` は筋の形と透明度を保ったまま `rain.color` の色で描きます。夜の光では引き続き暗くなります |
 | `rain.angle`            | いいえ | 小数、0から180          | `0`                      | 真下からの角度。`90` は真横に吹き、`180` は真上に昇ります。傾いて描かれるのは最大75度までです                                                        |
 | `rain.heading`          | いいえ | 小数、度                | `0`                      | 吹く向き。`0` が南、`90` が西、`180` が北、`270` が東                                                                                                |
 | `rain.splashUpward`     | いいえ | 真偽値                  | `false`                  | オンにすると、昇る雨（`angle` が `90` 超）も地面で跳ねて音を鳴らします                                                                               |
