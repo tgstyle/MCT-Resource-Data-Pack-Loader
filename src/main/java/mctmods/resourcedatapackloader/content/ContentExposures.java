@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
@@ -12,6 +13,7 @@ import mctmods.resourcedatapackloader.util.ExposureSpread;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -59,11 +61,13 @@ public final class ContentExposures {
     private static void tick(ExposureDef def, EntityPlayer player) {
         if (def.skipsCreative && (player.isCreative() || player.isSpectator())) {
             applyLevel(def, player, 0);
+            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def.name, 0); }
             return;
         }
         if (player.ticksExisted % def.scanInterval == 0) {
             int level = scan(def, player);
             applyLevel(def, player, level);
+            if (player instanceof EntityPlayerMP) { CardEvents.exposureLevel((EntityPlayerMP) player, def.name, level); }
             spreadFrom(def, player, level);
         }
         damageTick(def, player);

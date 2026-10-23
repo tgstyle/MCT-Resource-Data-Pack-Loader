@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.util.Stacks;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.stats.StatList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -17,10 +18,12 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public final class CardEvents {
     private static final ResourceLocation CARD = ResourceDataPackLoader.id("card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
+    private static final Map<UUID, Map<String, Integer>> LEVELS = new HashMap<>();
 
     private CardEvents() {}
 
@@ -74,6 +77,22 @@ public final class CardEvents {
         }
     }
 
+    public static void exposureLevel(EntityPlayerMP player, String hazard, int level) {
+        Integer before = LEVELS.computeIfAbsent(player.getUniqueID(), id -> new HashMap<>()).put(hazard, level);
+        if (before == null || before == level) { return; }
+        for (CardRule rule : CardRules.on(CardRule.EXPOSURE_LEVEL)) {
+            if (!rule.exposure.isEmpty() && !rule.exposure.equals(hazard)) { continue; }
+            if (rule.level == null || rule.level == level) { CardFire.fire(rule, player); }
+        }
+    }
+
+    public static void roundStart(MinecraftServer server) {
+        List<CardRule> rules = CardRules.on(CardRule.ROUND_START);
+        if (rules.isEmpty()) { return; }
+        List<EntityPlayerMP> players = server.getPlayerList().getPlayers();
+        for (CardRule rule : rules) { CardScan.fireAll(rule, players); }
+    }
+
     @SubscribeEvent public static void onAdvancement(AdvancementEvent event) {
         if (!(event.getEntityPlayer() instanceof EntityPlayerMP)) { return; }
         String earned = event.getAdvancement().getId().toString();
@@ -90,6 +109,7 @@ public final class CardEvents {
         CardFire.forget(event.player.getUniqueID());
         CardScan.forget(event.player.getUniqueID());
         CardSend.forget(event.player.getUniqueID());
+        LEVELS.remove(event.player.getUniqueID());
     }
 
     private static void item(List<CardRule> rules, EntityPlayerMP player, ItemStack stack) {

@@ -24,9 +24,11 @@ public final class CardRule {
     static final String SCORE = "score";
     static final String ROLL = "roll";
     static final String ORDER_DONE = "order_done";
+    static final String EXPOSURE_LEVEL = "exposure_level";
+    static final String ROUND_START = "round_start";
     static final String BUILTIN = "builtin";
     static final List<String> TRIGGERS = Collections.unmodifiableList(Arrays.asList(COMMAND, FIRST_JOIN, DIMENSION_ENTER, BIOME_ENTER, STRUCTURE_ENTER, ADVANCEMENT,
-            TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE));
+            TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE, EXPOSURE_LEVEL, ROUND_START));
     static final List<String> SCANNED = Collections.unmodifiableList(Arrays.asList(BIOME_ENTER, STRUCTURE_ENTER, Y_LEVEL, PLAY_TIME, SCORE));
     static final String PLAYER = "player";
     static final String EVERYONE = "everyone";
@@ -57,6 +59,8 @@ public final class CardRule {
     int score;
     String roll = "";
     String order = "";
+    String exposure = "";
+    @Nullable Integer level;
     @Nullable Integer atLeast;
     @Nullable Integer atMost;
     @Nullable CardWhen when;

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.card.CardFire;
 import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.card.CardLook;
@@ -510,6 +511,7 @@ public final class ContentScoring {
         roundOver();
         mctmods.resourcedatapackloader.content.ContentTeams.placeAtSpawns(server);
         mctmods.resourcedatapackloader.content.ContentTeams.standInsNow(server);
+        CardEvents.roundStart(server);
         ContentScoringLobby.DUE.clear();
         ContentScoringLobby.SHOWN.clear();
     }

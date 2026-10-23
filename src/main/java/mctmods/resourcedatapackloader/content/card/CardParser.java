@@ -49,6 +49,8 @@ final class CardParser {
         rule.score = Json.getInt(json, "score", 1);
         rule.roll = ContentDice.notation(Json.getString(json, "roll", "").trim());
         rule.order = Json.getString(json, "order", "").trim();
+        rule.exposure = Json.getString(json, "exposure", "").trim();
+        rule.level = json.has("level") ? Json.getInt(json, "level") : null;
         rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
         rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
         if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when")); }

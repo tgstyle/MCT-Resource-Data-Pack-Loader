@@ -105,7 +105,7 @@ public final class CardScan {
         }
     }
 
-    private static void fireAll(CardRule rule, List<EntityPlayerMP> here) {
+    static void fireAll(CardRule rule, List<EntityPlayerMP> here) {
         for (EntityPlayerMP player : here) {
             CardFire.fire(rule, player);
             if (!CardRule.PLAYER.equals(rule.audience)) { return; }
