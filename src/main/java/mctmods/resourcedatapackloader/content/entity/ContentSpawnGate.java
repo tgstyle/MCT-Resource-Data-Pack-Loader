@@ -16,7 +16,14 @@ public final class ContentSpawnGate {
 
     public static boolean barred(Entity entity) {
         SpawnGateDef gate = ContentEntities.spawnGate(entity);
-        if (gate == SpawnGateDef.NONE) { return false; }
+        if (gate != SpawnGateDef.NONE && fails(gate, entity)) { return true; }
+        for (SpawnGateDef lock : SpawnLocks.gates(entity)) {
+            if (fails(lock, entity)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean fails(SpawnGateDef gate, Entity entity) {
         World world = entity.world;
         if (!gate.dimensions.isEmpty() && !inDimension(gate, world.provider.getDimension())) { return true; }
         if (gate.timed() && !CardPlace.within(CardPlace.timeOfDay(world), gate.timeFrom, gate.timeTo)) { return true; }

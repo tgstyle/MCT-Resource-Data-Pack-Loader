@@ -19,6 +19,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onRemoveRecipes(RegistryEvent.Register<IRecipe> event) {
         RecipeSpared.settle(event.getRegistry());
         RecipeRemovals.apply(event.getRegistry());
+        RecipeLocks.reload();
         RecipeBlocking.apply(event.getRegistry());
     }
 }

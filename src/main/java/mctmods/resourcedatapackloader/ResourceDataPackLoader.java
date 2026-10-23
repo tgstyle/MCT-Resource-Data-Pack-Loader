@@ -99,6 +99,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
+import mctmods.resourcedatapackloader.content.entity.SpawnLocks;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLootSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMobSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTradeSwitch;
@@ -233,6 +234,7 @@ public class ResourceDataPackLoader {
         ContentBoards.load();
         if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
         if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBlockBell.class); }
+        SpawnLocks.load();
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(ContentMobExperience.class);

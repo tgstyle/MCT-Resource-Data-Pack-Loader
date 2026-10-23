@@ -115,6 +115,7 @@
     "common.MixinCommandTP",
     "common.MixinCommandTeleport",
     "common.MixinCommandsHeightLimits",
+    "common.MixinContainerCrafting",
     "common.MixinContainerRepair",
     "common.MixinContainerRepairOutput",
     "common.MixinCraftingHelper",

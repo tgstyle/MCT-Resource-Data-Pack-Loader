@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.content.card.CardPlace;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.entity.ContentTasks;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
@@ -181,7 +180,7 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "walks", false),
                 Json.getBoolean(json, "throwReturns", false),
                 Json.getString(sounds, "throw", ""),
-                rocket(key, json), storage(key, json), gate(key, json), bar, phases(key, json, bar != null));
+                rocket(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null));
     }
 
     private static List<PhaseDef> phases(ResourceLocation key, JsonObject json, boolean hasBar) {
@@ -231,20 +230,6 @@ public final class ContentParserEntities {
         }
         phases.sort((a, b) -> Float.compare(b.below, a.below));
         return phases;
-    }
-
-    private static SpawnGateDef gate(ResourceLocation key, JsonObject json) {
-        String objective = Json.getString(json, "objective", "").trim();
-        Integer least = json.has("scoreAtLeast") ? Json.getInt(json, "scoreAtLeast") : null;
-        if (objective.isEmpty() != (least == null)) {
-            ContentLog.LOGGER.error("Entity variant {} sets only one of objective and scoreAtLeast, so it leaves the score condition out", key);
-            objective = "";
-            least = null;
-        }
-        SpawnGateDef gate = new SpawnGateDef(strings(json, "dimensions"), strings(json, "structures"), Math.max(1, Json.getInt(json, "radius", CardPlace.NEAR)),
-                CardPlace.tickOf(json, "timeFrom"), CardPlace.tickOf(json, "timeTo"), json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L,
-                Json.getString(json, "advancement", "").trim(), objective, least);
-        return gate.any() ? gate : SpawnGateDef.NONE;
     }
 
     private static <T> Map<String, T> numbers(ResourceLocation key, JsonObject json, String member, String what, Function<JsonElement, T> read) {
