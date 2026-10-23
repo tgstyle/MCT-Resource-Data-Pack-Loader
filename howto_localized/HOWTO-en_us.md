@@ -65,6 +65,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 
 **Creatures and hazards**
 - [Entity variants](#entity-variants)
+- [Mob ranks](#mob-ranks)
 - [Work orders](#work-orders)
 - [Exposures](#exposures)
 
@@ -159,6 +160,7 @@ Under `data/`:
 | `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                           |
 | `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)   |
 | `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games) |
+| `<namespace>/ranks/*.json`                   | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                |
 | `<namespace>/orders/*.json`                  | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                         |
 | `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions. [Exposures](#exposures)                  |
 | `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                   |
@@ -489,7 +491,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                 |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
 
 The right-hand column is a hard stop: blocks, items, entity types, sounds and potion effects a vanilla client does not have cannot be described to it, and a dimension's own portal is one of the pack's blocks; exposures load only alongside that content. The left-hand column works because everything there either runs entirely server-side, reaches the client as data pack entries vanilla already reads (biomes, cave regions, dimension types), or reaches it through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
@@ -2815,6 +2817,38 @@ A filter entry. The first entry that matches decides, and anything no entry matc
 | `tag`   | one of the three | item tag id | none    | Every item under that tag, such as `c:ingots/iron`                                         |
 | `fluid` | one of the three | fluid id    | none    | A fluid by its id, such as `minecraft:water`. Read by a fluid filter only                  |
 | `max`   | no               | int         | `0`     | The most of it held at once, counted over all slots, or in mB for a fluid. `0` is no limit |
+
+## Mob ranks
+
+*creatures and hazards*
+
+`<namespace>/ranks/*.json`
+
+The file's path is the rank's name, and several files stack. A rank is one possible tier for the mobs that spawn. When a mob joins the world for the first time, the game picks one rank from all the ranks that name it, by `weight`, and applies it for good: the rank is saved with the mob and never rolled again. A rank with nothing but `entities` and `weight` is a plain tier, so use one to decide how common ordinary mobs stay. Ranks work on any mob, vanilla ones and entity variants included, and a variant keeps its own name. A rank stacks with an environment's `mobs` block: both multiply the mob's stats.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| Key        | Required | Value                       | Default        | What it does                                                                                                                                                       |
+| ---------- | -------- | --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities` | no       | list of entity ids or kinds | `["#monster"]` | The mobs the rank can roll on: ids such as `minecraft:zombie`, or `#monster`, `#creature`, `#ambient`, `#water_creature`. An entity variant is named by its own id |
+| `weight`   | no       | int, 1 or more              | `1`            | How likely the rank is against the other ranks that name the same mob: its weight divided by the total                                                             |
+| `name`     | no       | string                      | none           | A name shown above the mob. `%s` becomes the mob's own name. A mob that already has a custom name keeps it                                                         |
+| `health`   | no       | number above 0              | `1`            | Multiplies the mob's maximum health. The mob spawns with full health                                                                                               |
+| `damage`   | no       | number, 0 or more           | `1`            | Multiplies the mob's melee attack damage                                                                                                                           |
+| `effects`  | no       | list                        | none           | Permanent effects, each an object with a `potion` id and an `amplifier`, default `0`. Their particles are hidden                                                   |
+| `loot`     | no       | number, 1 or more           | `1`            | Multiplies each stackable item the mob drops. The fraction is the chance of one more item per stack                                                                |
+
+Tools, armor and the gear a mob carried are not multiplied, and mobs that carry an inventory, such as pack animals, are skipped. A mistake in a rank file, such as an unknown key, an entity id that does not exist or a value out of range, is logged and the whole file is skipped. Deleting a rank file leaves the mobs that already rolled it as they are, and a mob that no rank names is left alone. Only the server reads ranks, so vanilla clients can join.
 
 ## Work orders
 

@@ -205,7 +205,7 @@ public final class ContentEntityParser {
         return picks;
     }
 
-    private static Map<String, Integer> effects(Identifier key, JsonObject json) {
+    static Map<String, Integer> effects(Identifier key, JsonObject json) {
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (!json.has("effects")) { return effects; }
         for (JsonElement element : Json.getJsonArray(json, "effects")) {

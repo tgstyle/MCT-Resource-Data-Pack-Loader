@@ -3,13 +3,13 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
+import mctmods.resourcedatapackloader.content.entity.MobStats;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -18,7 +18,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -34,7 +33,6 @@ import javax.annotation.Nullable;
 public final class ContentMobSwitch {
     private static final List<String> KEYS = List.of("entities", "health", "damage", "speed", "equipment");
     private static final List<String> SLOTS = List.of("mainhand", "offhand", "head", "chest", "legs", "feet");
-    private static final List<String> KINDS = List.of("monster", "creature", "ambient", "water_creature");
     private static final String RECORD = "rdplMobSwitch";
     private static final String SET = "set";
     private static final String GEAR = "gear";
@@ -64,7 +62,7 @@ public final class ContentMobSwitch {
             }
             Double number = "entities".equals(key) || "equipment".equals(key) ? null : ContentSpawnSwitch.number(value);
             switch (key) {
-                case "entities" -> named = entities(owner, def, value);
+                case "entities" -> named = MobStats.entities(owner, "mobs.entities", value, def.ids, def.kinds);
                 case "equipment" -> equipment(owner, def, value);
                 case "health" -> {
                     if (number == null || number <= 0.0D) { ContentLog.LOGGER.error("{} gives mobs.health that is not a number above 0, ignoring it", owner); }
@@ -80,32 +78,8 @@ public final class ContentMobSwitch {
                 }
             }
         }
-        if (!named) { def.kinds.add("monster"); }
+        if (!named) { def.kinds.add(MobStats.MONSTER); }
         return def;
-    }
-
-    private static boolean entities(String owner, MobSwitchDef def, JsonElement element) {
-        if (!element.isJsonArray()) {
-            ContentLog.LOGGER.error("{} gives mobs.entities that is not a list of entity ids or kinds, ignoring it", owner);
-            return false;
-        }
-        for (JsonElement listedEntry : element.getAsJsonArray()) {
-            if (!listedEntry.isJsonPrimitive()) {
-                ContentLog.LOGGER.error("{} gives a mobs.entities entry that is not text, ignoring it", owner);
-                continue;
-            }
-            String text = Settings.lower(listedEntry.getAsString());
-            if (text.startsWith("#")) {
-                String kind = text.substring(1);
-                if (KINDS.contains(kind)) { def.kinds.add(kind); }
-                else { ContentLog.LOGGER.error("{} gives mobs.entities '{}', which is not one of #monster, #creature, #ambient or #water_creature, ignoring it", owner, text); }
-                continue;
-            }
-            Identifier id = Identifier.tryParse(text);
-            if (id == null) { ContentLog.LOGGER.error("{} gives mobs.entities '{}', which is not an entity id, ignoring it", owner, text); }
-            else { def.ids.add(id); }
-        }
-        return true;
     }
 
     private static void equipment(String owner, MobSwitchDef def, JsonElement element) {
@@ -147,10 +121,6 @@ public final class ContentMobSwitch {
         }
     }
 
-    private static boolean targets(MobSwitchDef def, Mob mob) {
-        return def.ids.contains(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType())) || def.kinds.contains(mob.getType().getCategory().getName());
-    }
-
     public static void onJoin(EntityJoinLevelEvent event) {
         if (ready && event.getLevel() instanceof ServerLevel && event.getEntity() instanceof Mob mob) { settle(mob); }
     }
@@ -158,24 +128,18 @@ public final class ContentMobSwitch {
     private static void settle(Mob mob) {
         if (!ready || !mob.isAlive() || !(mob.level() instanceof ServerLevel level)) { return; }
         MobSwitchDef def = ContentEnvironments.mobs(level, mob.blockPosition());
-        String wanted = targets(def, mob) ? level.dimension().identifier() + "/" + def.name : "";
+        String wanted = MobStats.targets(def.ids, def.kinds, mob) ? level.dimension().identifier() + "/" + def.name : "";
         String held = mob.getPersistentData().getCompoundOrEmpty(RECORD).getStringOr(SET, "");
         if (held.equals(wanted)) { return; }
         if (!held.isEmpty()) { strip(mob); }
         if (!wanted.isEmpty()) { apply(mob, def, wanted); }
     }
 
-    private static void scale(Mob mob, Holder<Attribute> attribute, Identifier id, float multiplier) {
-        AttributeInstance instance = mob.getAttribute(attribute);
-        if (instance != null && multiplier != 1.0F) { instance.addOrReplacePermanentModifier(new AttributeModifier(id, multiplier - 1.0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)); }
-    }
-
     private static void apply(Mob mob, MobSwitchDef def, String wanted) {
         float before = mob.getHealth();
-        scale(mob, Attributes.MAX_HEALTH, HEALTH, def.health);
-        scale(mob, Attributes.ATTACK_DAMAGE, DAMAGE, def.damage);
-        scale(mob, Attributes.MOVEMENT_SPEED, SPEED, def.speed);
-        if (def.health != 1.0F) { mob.setHealth(before * def.health); }
+        if (MobStats.scale(mob, Attributes.MAX_HEALTH, HEALTH, def.health)) { mob.setHealth(before * def.health); }
+        MobStats.scale(mob, Attributes.ATTACK_DAMAGE, DAMAGE, def.damage);
+        MobStats.scale(mob, Attributes.MOVEMENT_SPEED, SPEED, def.speed);
         CompoundTag gear = new CompoundTag();
         for (Map.Entry<EquipmentSlot, MobSwitchDef.Gear> entry : def.equipment.entrySet()) {
             EquipmentSlot slot = entry.getKey();

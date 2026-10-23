@@ -74,7 +74,7 @@ final class ContentEntityApply {
         if (!(entity instanceof LivingEntity living)) { return; }
         if (first) {
             if (def.absorption() > 0.0F) { living.setAbsorptionAmount(def.absorption()); }
-            effects(living, def);
+            effects(living, def.effects(), def.key());
         }
         attributes(living, def, first);
         AttributeInstance stride = living.getAttribute(Attributes.STEP_HEIGHT);
@@ -122,11 +122,11 @@ final class ContentEntityApply {
         }
     }
 
-    private static void effects(LivingEntity mob, EntityVariantDef def) {
-        for (Map.Entry<String, Integer> entry : def.effects().entrySet()) {
+    static void effects(LivingEntity mob, Map<String, Integer> effects, Identifier owner) {
+        for (Map.Entry<String, Integer> entry : effects.entrySet()) {
             Holder<MobEffect> effect = ContentEffects.find(entry.getKey());
             if (effect == null) {
-                ContentLog.LOGGER.errorOnce(MISSING, def.key() + " " + entry.getKey(), "Entity variant {} wants effect {}, which nothing registers", def.key(), entry.getKey());
+                ContentLog.LOGGER.errorOnce(MISSING, owner + " " + entry.getKey(), "{} wants effect {}, which nothing registers", owner, entry.getKey());
                 continue;
             }
             mob.addEffect(new MobEffectInstance(effect, MobEffectInstance.INFINITE_DURATION, entry.getValue(), false, false));

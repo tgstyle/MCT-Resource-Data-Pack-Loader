@@ -65,6 +65,7 @@
 
 **생물과 위험 요소**
 - [엔티티 변형](#엔티티-변형)
+- [몹 등급](#몹-등급)
 - [작업 지시](#작업-지시)
 - [노출](#노출)
 
@@ -159,6 +160,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/cards/*.json`                   | 트리거에 따라 화면에 표시되는 카드와 이 모드가 직접 전하는 메시지. [카드](#카드)                            |
 | `<namespace>/dice/*.json`                    | 면마다 가중치가 있는 팩 주사위, 카드 덱, 굴림을 누가 듣는지, 결과의 문구. [주사위와 덱](#주사위와-덱)       |
 | `<namespace>/games/*.json`                   | 몹을 말로 쓰는 보드 게임: 판, 말과 그 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                  |
+| `<namespace>/ranks/*.json`                   | 몹이 스폰될 때 뽑을 수 있는 무작위 단계: 추가 체력, 피해, 효과, 전리품, 이름표. [몹 등급](#몹-등급)         |
 | `<namespace>/orders/*.json`                  | 엔티티 변형이 상자 앞의 플레이어를 위해 하는 일. [작업 지시](#작업-지시)                                    |
 | `<namespace>/exposures/*.json`               | 지정한 블록 근처, 지정한 아이템을 지녔을 때, 지정한 차원에서 플레이어를 노출시키는 위험 요소. [노출](#노출) |
 | `<namespace>/overrides/<target>/<name>.json` | 기존 블록, 아이템, 물약 유형의 속성을 그 자리에서 바꾸는 것. [속성 재정의](#속성-재정의)                    |
@@ -489,7 +491,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                               |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                             |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                              |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                           |                                                                                                                      |
 
 오른쪽 열은 절대적인 한계입니다. 바닐라 클라이언트에 없는 블록, 아이템, 엔티티 유형, 소리, 물약 효과는 클라이언트에 설명할 수 없고, 차원의 자체 포털도 팩의 블록 중 하나이며, 노출은 그 콘텐츠와 함께일 때만 로드됩니다. 왼쪽 열이 동작하는 것은 거기 있는 모든 것이 전부 서버 측에서 돌거나, 바닐라가 이미 읽는 데이터 팩 항목(생물 군계, 동굴 지역, 차원 유형)으로 클라이언트에 전달되거나, 바닐라가 이미 쓰는 패킷(서버가 채우는 제작 결과 칸, 일반 발전 과제 패킷, 상태 메시지로 표시되는 게이트 거부, 바닐라의 게임 모드, 제목, 순간 이동 패킷으로 이루어진 사전 생성 대기)으로 전달되기 때문입니다.
@@ -2815,6 +2817,38 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `tag`   | 셋 중 하나 | 아이템 태그 id | 없음   | `c:ingots/iron`처럼 해당 태그에 속한 모든 아이템                                             |
 | `fluid` | 셋 중 하나 | 유체 id        | 없음   | `minecraft:water`처럼 id로 지정하는 유체. 유체 필터만 읽습니다                               |
 | `max`   | 아니요     | 정수           | `0`    | 한 번에 보관하는 최대량으로, 모든 칸에 걸쳐 세거나 유체는 mB로 셉니다. `0`은 제한 없음입니다 |
+
+## 몹 등급
+
+*생물과 위험 요소*
+
+`<namespace>/ranks/*.json`
+
+파일 경로가 등급의 이름이며, 여러 파일이 겹쳐 적용됩니다. 등급은 스폰하는 몹이 가질 수 있는 단계 중 하나입니다. 몹이 처음 월드에 들어오면, 그 몹을 지정한 모든 등급 중에서 `weight`에 따라 하나가 뽑혀 영구적으로 적용됩니다. 등급은 몹과 함께 저장되며 다시 뽑히지 않습니다. `entities`와 `weight`만 있는 등급은 평범한 단계이므로, 일반 몹이 얼마나 자주 나오는지 정하는 데 쓸 수 있습니다. 등급은 바닐라 몹과 엔티티 변형을 포함한 모든 몹에 적용되며, 변형은 자신의 이름을 유지합니다. 등급은 환경의 `mobs` 블록과 함께 적용되어, 둘 다 몹의 능력치에 곱해집니다.
+
+```json
+{
+  "entities": ["minecraft:zombie", "#monster"],
+  "weight": 10,
+  "name": "Brute %s",
+  "health": 2.0,
+  "damage": 1.5,
+  "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
+  "loot": 2.0
+}
+```
+
+| 키         | 필수   | 값                         | 기본값         | 설명                                                                                                                                                  |
+| ---------- | ------ | -------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | 아니요 | 엔티티 ID 또는 종류의 목록 | `["#monster"]` | 등급이 뽑힐 수 있는 몹. `minecraft:zombie` 같은 ID, 또는 `#monster`, `#creature`, `#ambient`, `#water_creature`. 엔티티 변형은 자신의 ID로 지정합니다 |
+| `weight`   | 아니요 | 1 이상의 정수              | `1`            | 같은 몹을 지정한 다른 등급에 비해 얼마나 잘 뽑히는지. 가중치를 합계로 나눈 값입니다                                                                   |
+| `name`     | 아니요 | 문자열                     | 없음           | 몹 위에 표시되는 이름. `%s`는 몹 자신의 이름이 됩니다. 이미 사용자 지정 이름이 있는 몹은 그것을 유지합니다                                            |
+| `health`   | 아니요 | 0보다 큰 수                | `1`            | 몹의 최대 체력에 곱합니다. 몹은 체력이 가득 찬 채로 스폰됩니다                                                                                        |
+| `damage`   | 아니요 | 0 이상의 수                | `1`            | 몹의 근접 공격 피해에 곱합니다                                                                                                                        |
+| `effects`  | 아니요 | 목록                       | 없음           | 영구 효과. 각각 `potion` ID와 `amplifier`(기본값 `0`)를 가진 오브젝트입니다. 입자는 숨겨집니다                                                        |
+| `loot`     | 아니요 | 1 이상의 수                | `1`            | 몹이 떨어뜨리는 쌓을 수 있는 아이템마다 곱합니다. 소수 부분은 스택마다 하나 더 나올 확률입니다                                                        |
+
+도구, 방어구, 몹이 들고 있던 장비는 곱해지지 않으며, 짐 나르는 동물처럼 인벤토리를 가진 몹은 건너뜁니다. 등급 파일의 실수(알 수 없는 키, 존재하지 않는 엔티티 ID, 범위를 벗어난 값 등)는 로그에 기록되고 파일 전체를 건너뜁니다. 등급 파일을 지워도 이미 그 등급을 뽑은 몹은 그대로 남고, 어떤 등급도 지정하지 않은 몹은 바뀌지 않습니다. 등급은 서버만 읽으므로 바닐라 클라이언트도 접속할 수 있습니다.
 
 ## 작업 지시
 
