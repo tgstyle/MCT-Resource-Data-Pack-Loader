@@ -66,6 +66,7 @@ Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres le
 - [Drops de bloques](#drops-de-bloques)
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Minería de vetas](#minería-de-vetas)
+- [Transporte](#transporte)
 - [Botín de jugadores](#botín-de-jugadores)
 - [Variedad de comida](#variedad-de-comida)
 - [Aldeanos y comercio](#aldeanos-y-comercio)
@@ -202,6 +203,7 @@ Bajo `data/`:
 | `<namespace>/block_drops/*.json`             | Drops adicionales o sustitutivos para bloques que un pack no posee. [Drops de bloques](#drops-de-bloques)                                                                                                  |
 | `<namespace>/harvests/*.json`                | Cultivos que se cosechan y se replantan con clic derecho. [Cosecha con clic derecho](#cosecha-con-clic-derecho)                                                                                            |
 | `<namespace>/veins/*.json`                   | Grupos de bloques que una herramienta extrae de una vez, con un límite y un coste de hambre. [Minería de vetas](#minería-de-vetas)                                                                         |
+| `<namespace>/carries/*.json`                 | Bloques y mobs que un jugador agachado recoge y vuelve a dejar. [Transporte](#transporte)                                                                                                                  |
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                                                                        |
 | `<namespace>/diets/*.json`                   | Reglas que hacen que una comida repetida alimente menos y una dieta variada alimente más. [Variedad de comida](#variedad-de-comida)                                                                        |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                |
@@ -2789,6 +2791,32 @@ Romper un mineral con un pico normalmente rompe solo ese bloque. Un archivo aqu�
 | `requires` | no          | lista de cadenas                                                                                             | ninguno     | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición           |
 
 Tocar significa compartir cara, arista o esquina, así que un bloque tiene 26 vecinos. Solo en supervivencia: los jugadores en creativo y los espectadores rompen un solo bloque como siempre. Se detiene cuando la herramienta se rompe o la barra de comida del jugador llega a 0. Cada bloque extra suelta sus drops habituales, con la Fortuna de la herramienta en mano y todas las reglas de Drops de bloques, y desgasta la herramienta un uso. No actúa sobre un bloque que conserva un grupo de dureza. Son datos de pack solo de servidor y no necesitan nada en el cliente. Un archivo sin bloques ni herramientas válidos se ignora con una línea de error.
+
+## Transporte
+
+*fabricación, botín y comercio*
+
+`<namespace>/carries/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan.
+
+Un jugador que se agacha y hace clic derecho con la mano principal vacía recoge un bloque o mob de la lista, y agachado con clic derecho en un bloque lo vuelve a dejar en la cara pulsada. Un bloque transportado conserva los datos de su entidad de bloque y un mob transportado todos los datos de su entidad. Quien carga se mueve a media velocidad, una línea de la barra de acción dice qué lleva, y lo que lleva se guarda en los datos del jugador tras la muerte y al reconectar.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Clave      | Obligatorio | Valor                   | Por defecto | Qué hace                                                                                                                                   |
+| ---------- | ----------- | ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `blocks`   | no          | lista de ids de bloque  | ninguno     | Los bloques que se pueden transportar, de vanilla o de un pack. Un bloque que nada registra se omite con una línea de registro             |
+| `mobs`     | no          | lista de ids de entidad | ninguno     | Los mobs que se pueden transportar, por id de entidad, de vanilla o de un pack. Un id que nada registra se omite con una línea de registro |
+| `requires` | no          | lista de cadenas        | ninguno     | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición                       |
+
+Solo ids, sin etiquetas. Las estructuras de dos bloques, como puertas, plantas altas y camas, no se pueden transportar, ni tampoco los bloques protegidos o con dureza inferior a 0. Los jinetes de un mob se bajan al recogerlo, la correa no recibe trato especial y no se dibuja nada en quien carga. Los datos transportados no pasan por el data fixer al actualizar el juego, y una carga cuyo bloque o mob ya no se resuelve se borra con una línea de error en el registro. Un mob de un pack con interfaz de almacenamiento, estando agachado, se recoge en vez de abrirla.
 
 ## Botín de jugadores
 

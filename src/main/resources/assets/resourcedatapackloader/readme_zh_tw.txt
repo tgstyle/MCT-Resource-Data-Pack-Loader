@@ -207,6 +207,7 @@ hardness 檔案為一組方塊設定挖掘時間和爆炸抗性，exposures 檔�
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 方塊有以下幾種形態，由「type」欄位決定：
 
