@@ -204,9 +204,10 @@ hardness 文件为一组方块设定挖掘时间和爆炸抗性，exposures 文�
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
-    tooltips
-    harvests
-    carries
+    tooltips         harvests         carries          dialogs
+    veins            diets            enchantments     dice
+    games            orders           ranks            recipe_locks
+    spawn_locks
 
 方块有以下几种形态，由“type”字段决定：
 

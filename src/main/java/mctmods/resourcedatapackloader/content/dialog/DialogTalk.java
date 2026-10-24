@@ -21,6 +21,8 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.trading.Merchant;
 import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +33,7 @@ import javax.annotation.Nullable;
 
 public final class DialogTalk {
     public static final int CLOSE = -1;
-    private static final double REACH = 8.0D;
+    public static final double REACH = 8.0D;
     private static final String NPC = "{npc}";
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
 
@@ -93,8 +95,18 @@ public final class DialogTalk {
         if (reply.close()) {
             SESSIONS.remove(player.getUUID());
             RDPLNetwork.sendTalk(player, MessageTalk.ending());
+            if (reply.trade()) { trade(player, session, npc); }
         }
         else { show(player, session, npc); }
+    }
+
+    private static void trade(ServerPlayer player, Session session, Entity npc) {
+        if (!(npc instanceof Merchant merchant) || merchant.getTradingPlayer() != null) {
+            ContentLog.LOGGER.info("Dialog {} trade reply from {} opened nothing: the speaker is not a free merchant", session.def.key(), player.getName().getString());
+            return;
+        }
+        merchant.setTradingPlayer(player);
+        merchant.openTradingScreen(player, npc.getDisplayName(), npc instanceof Villager villager ? villager.getVillagerData().getLevel() : 1);
     }
 
     public static void forget(UUID player) { SESSIONS.remove(player); }

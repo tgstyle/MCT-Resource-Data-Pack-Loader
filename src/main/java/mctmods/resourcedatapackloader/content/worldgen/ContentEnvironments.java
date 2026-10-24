@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GrowSwitchDef;
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
@@ -236,6 +237,18 @@ public final class ContentEnvironments {
     public static List<String> active(ResourceLocation dimension) { return ACTIVE.getOrDefault(dimension, List.of(DEFAULT)); }
 
     public static void set(MinecraftServer server, ResourceLocation dimension, String name, boolean on) {
+        List<String> before = active(dimension);
+        change(server, dimension, name, on);
+        announce(server, dimension, before);
+    }
+
+    static void announce(MinecraftServer server, ResourceLocation dimension, List<String> before) {
+        List<String> entered = new ArrayList<>(active(dimension));
+        entered.removeAll(before);
+        if (!entered.isEmpty()) { CardEvents.environmentChanged(server, dimension, entered); }
+    }
+
+    static void change(MinecraftServer server, ResourceLocation dimension, String name, boolean on) {
         List<String> now = new ArrayList<>(active(dimension));
         if (local(dimension, name)) {
             now.remove(name);

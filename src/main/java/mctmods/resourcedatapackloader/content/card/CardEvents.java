@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.util.Functions;
 
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +17,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.neoforge.event.entity.player.ItemEntityPickupEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,10 +56,25 @@ public final class CardEvents {
         ResourceLocation fallen = EntityType.getKey(event.getEntity().getType());
         for (CardRule rule : rules) {
             if (!fallen.equals(ResourceLocation.tryParse(rule.entity))) { continue; }
+            if (!rule.rank.isEmpty() && !rule.rank.equals(ContentRanks.rankOf(event.getEntity()))) { continue; }
             if (rule.count > 1 && CardStorage.tallyFor(player, rule.key) < rule.count) { continue; }
             if (rule.count > 1) { CardStorage.clearTallyFor(player, rule.key); }
             CardFire.fire(rule, player);
         }
+    }
+
+    public static void raidEnded(ServerPlayer player, String raid, boolean won) {
+        for (CardRule rule : CardRules.on(won ? CardRule.RAID_WON : CardRule.RAID_LOST)) {
+            if (rule.raid.isEmpty() || rule.raid.equals(raid)) { CardFire.fire(rule, player); }
+        }
+    }
+
+    public static void downed(ServerPlayer player) {
+        for (CardRule rule : CardRules.on(CardRule.DOWNED)) { CardFire.fire(rule, player); }
+    }
+
+    public static void revived(ServerPlayer player) {
+        for (CardRule rule : CardRules.on(CardRule.REVIVED)) { CardFire.fire(rule, player); }
     }
 
     public static void exposureLevel(ServerPlayer player, ExposureDef def, int level) {
@@ -79,6 +96,19 @@ public final class CardEvents {
         if (rules.isEmpty()) { return; }
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         for (CardRule rule : rules) { CardScan.fireAll(rule, players); }
+    }
+
+    public static void environmentChanged(MinecraftServer server, ResourceLocation dimension, List<String> entered) {
+        List<CardRule> rules = CardRules.on(CardRule.ENVIRONMENT_CHANGE);
+        if (rules.isEmpty()) { return; }
+        List<ServerPlayer> here = new ArrayList<>();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.level().dimension().location().equals(dimension)) { here.add(player); }
+        }
+        if (here.isEmpty()) { return; }
+        for (CardRule rule : rules) {
+            if (rule.environment.isEmpty() || entered.contains(rule.environment)) { CardScan.fireAll(rule, here); }
+        }
     }
 
     public static void orderDone(ServerPlayer player, String sign) {

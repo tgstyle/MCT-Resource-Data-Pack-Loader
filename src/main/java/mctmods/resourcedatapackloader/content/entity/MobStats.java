@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -42,7 +43,7 @@ public final class MobStats {
         return listed;
     }
 
-    public static boolean targets(List<String> entities, Mob mob) {
+    public static boolean targets(List<String> entities, Entity mob) {
         if (entities.isEmpty()) { return false; }
         String id = String.valueOf(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType()));
         String kind = "#" + mob.getType().getCategory().getName();

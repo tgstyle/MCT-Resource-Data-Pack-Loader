@@ -31,6 +31,13 @@ public final class CardPlace {
 
     public static boolean elsewhere(String wanted, Level level) { return !wanted.isEmpty() && !wanted.equals(dimensionName(level)); }
 
+    public static boolean inAny(List<String> wanted, Level level) {
+        for (String name : wanted) {
+            if (!elsewhere(name, level)) { return true; }
+        }
+        return false;
+    }
+
     static String dimensionName(ServerPlayer player) { return dimensionName(player.level()); }
 
     private static String dimensionName(Level level) { return level.dimension().location().toString(); }

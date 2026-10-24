@@ -22,14 +22,16 @@ public final class BossBars {
 
     private BossBars() {}
 
-    @Nullable public static BossBarDef read(Object owner, JsonObject json) {
+    @Nullable public static BossBarDef read(Object owner, JsonObject json) { return read(owner, json, BossEvent.BossBarColor.PURPLE, BossEvent.BossBarOverlay.PROGRESS); }
+
+    @Nullable public static BossBarDef read(Object owner, JsonObject json, BossEvent.BossBarColor fallbackColor, BossEvent.BossBarOverlay fallbackStyle) {
         if (!json.has(KEY)) { return null; }
         if (!json.get(KEY).isJsonObject()) {
             ContentLog.LOGGER.error("{} sets {} to something that is not an object with a name, color and style, so it has no boss bar", owner, KEY);
             return null;
         }
         JsonObject bar = json.getAsJsonObject(KEY);
-        return new BossBarDef(Json.getString(bar, "name", "").trim(), pick(owner, bar, "color", BossEvent.BossBarColor.class, BossEvent.BossBarColor.PURPLE), pick(owner, bar, "style", BossEvent.BossBarOverlay.class, BossEvent.BossBarOverlay.PROGRESS), background(owner, bar));
+        return new BossBarDef(Json.getString(bar, "name", "").trim(), pick(owner, bar, "color", BossEvent.BossBarColor.class, fallbackColor), pick(owner, bar, "style", BossEvent.BossBarOverlay.class, fallbackStyle), background(owner, bar));
     }
 
     @Nullable private static BossBackgroundDef background(Object owner, JsonObject bar) {

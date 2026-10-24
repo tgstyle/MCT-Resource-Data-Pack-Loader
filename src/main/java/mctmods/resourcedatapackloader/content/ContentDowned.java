@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.DownDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public final class ContentDowned {
     private static final Map<UUID, State> DOWNED = new HashMap<>();
@@ -105,6 +107,7 @@ public final class ContentDowned {
         effects(player);
         ContentLog.LOGGER.info("{} is downed and bleeds out in {} seconds", player.getGameProfile().getName(), def.down().seconds());
         Says.tell(player, CardIds.DOWNED, def.color(), def.down().says().replace("{seconds}", String.valueOf(def.down().seconds())));
+        CardEvents.downed(player);
     }
 
     private static void onAttack(LivingIncomingDamageEvent event) {
@@ -154,24 +157,37 @@ public final class ContentDowned {
         if (player.getHealth() > 1.0F) { player.setHealth(1.0F); }
         hold(player, state);
         if (state.left % EFFECT_EVERY == 0) { effects(player); }
-        if (!attended(server, player, state)) {
+        ServerPlayer reviver = reviver(server, player, state);
+        if (reviver == null) {
             state.reviving = 0;
             return;
         }
         state.reviving++;
-        if (state.reviving >= state.down.reviveSeconds() * 20) { revive(player, state); }
+        if (state.reviving >= state.down.reviveSeconds() * 20) { revive(player, state, reviver); }
     }
 
-    private static boolean attended(MinecraftServer server, ServerPlayer down, State state) {
+    public static void clear(MinecraftServer server) {
+        if (DOWNED.isEmpty()) { return; }
+        for (UUID id : new ArrayList<>(DOWNED.keySet())) {
+            DOWNED.remove(id);
+            ServerPlayer player = server.getPlayerList().getPlayer(id);
+            if (player == null) { continue; }
+            player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
+            player.removeEffect(MobEffects.GLOWING);
+            player.setHealth(player.getMaxHealth());
+        }
+    }
+
+    @Nullable private static ServerPlayer reviver(MinecraftServer server, ServerPlayer down, State state) {
         for (ServerPlayer near : server.getPlayerList().getPlayers()) {
             if (near == down || !near.isShiftKeyDown() || near.isSpectator() || near.level() != down.level() || DOWNED.containsKey(near.getUUID()) || near.distanceToSqr(down) > REACH_SQUARED) { continue; }
             TeamDef def = ContentTeams.defOf(near);
-            if (def != null && def.name().equals(state.side)) { return true; }
+            if (def != null && def.name().equals(state.side)) { return near; }
         }
-        return false;
+        return null;
     }
 
-    private static void revive(ServerPlayer player, State state) {
+    private static void revive(ServerPlayer player, State state, ServerPlayer reviver) {
         DOWNED.remove(player.getUUID());
         player.removeEffect(MobEffects.MOVEMENT_SLOWDOWN);
         player.removeEffect(MobEffects.GLOWING);
@@ -179,6 +195,8 @@ public final class ContentDowned {
         ContentLog.LOGGER.info("{} is revived", player.getGameProfile().getName());
         TeamDef def = ContentTeams.named(state.side);
         Says.tell(player, CardIds.REVIVED, def == null ? ChatFormatting.WHITE : def.color(), state.down.revivedSays());
+        ContentScoring.revived(reviver);
+        CardEvents.revived(player);
     }
 
     private static void kill(ServerPlayer player) {

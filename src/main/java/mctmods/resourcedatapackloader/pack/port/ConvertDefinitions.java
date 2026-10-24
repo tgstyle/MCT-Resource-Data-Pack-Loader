@@ -89,6 +89,43 @@ final class ConvertDefinitions {
         return out;
     }
 
+    static JsonArray exposureBiomes(JsonArray names, Ported pack) {
+        JsonArray out = new JsonArray();
+        for (JsonElement element : names) {
+            if (!element.isJsonPrimitive()) {
+                out.add(element);
+                continue;
+            }
+            String text = element.getAsString();
+            int split = text.indexOf('=');
+            String name = (split < 0 ? text : text.substring(0, split)).trim();
+            if (name.indexOf(':') < 0) {
+                out.add(element);
+                continue;
+            }
+            String mapped = pack.owns(name) ? name : Ids.biome(name);
+            if (!mapped.equals(name)) { pack.rewrote(); }
+            out.add(mapped + (split < 0 ? "" : text.substring(split)));
+        }
+        return out;
+    }
+
+    static void environmentLoot(JsonObject json, Ported pack) {
+        if (!GsonHelper.isObjectNode(json, "environments")) { return; }
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("environments").entrySet()) {
+            if (!entry.getValue().isJsonObject()) { continue; }
+            JsonObject environment = entry.getValue().getAsJsonObject();
+            if (!GsonHelper.isObjectNode(environment, "loot")) { continue; }
+            JsonObject loot = new JsonObject();
+            for (Map.Entry<String, JsonElement> table : environment.getAsJsonObject("loot").entrySet()) {
+                JsonElement held = table.getValue();
+                loot.add(Ids.lootTable(table.getKey()), held.isJsonPrimitive() ? new JsonPrimitive(Ids.lootTable(held.getAsString())) : held);
+            }
+            if (!loot.equals(environment.get("loot"))) { pack.rewrote(); }
+            environment.add("loot", loot);
+        }
+    }
+
     static JsonArray furnaceRemovals(JsonArray removals, Ported pack) {
         JsonArray out = new JsonArray();
         for (JsonElement element : removals) {
@@ -232,6 +269,18 @@ final class ConvertDefinitions {
         }
     }
 
+    static void tooltips(JsonObject json, Ported pack) {
+        if (!GsonHelper.isArrayNode(json, "enchantments")) { return; }
+        for (JsonElement element : json.getAsJsonArray("enchantments")) {
+            if (!element.isJsonObject() || !GsonHelper.isValidPrimitive(element.getAsJsonObject(), "enchantment")) { continue; }
+            JsonObject entry = element.getAsJsonObject();
+            String mapped = Ids.enchantment(entry.get("enchantment").getAsString());
+            if (mapped == null || mapped.equals(entry.get("enchantment").getAsString())) { continue; }
+            entry.addProperty("enchantment", mapped);
+            pack.rewrote();
+        }
+    }
+
     static void oreDictTags(JsonObject json, String list, Ported pack) {
         if (!GsonHelper.isArrayNode(json, list)) { return; }
         for (JsonElement element : json.getAsJsonArray(list)) {
@@ -248,6 +297,7 @@ final class ConvertDefinitions {
         for (JsonElement element : json.getAsJsonArray("orders")) {
             if (!element.isJsonObject()) { continue; }
             JsonObject entry = element.getAsJsonObject();
+            ConvertLoot.lootTable(entry, "loot", pack);
             if (!GsonHelper.isValidPrimitive(entry, "blocks")) { continue; }
             String blocks = entry.get("blocks").getAsString().trim();
             if (blocks.isEmpty() || blocks.contains(":")) { continue; }

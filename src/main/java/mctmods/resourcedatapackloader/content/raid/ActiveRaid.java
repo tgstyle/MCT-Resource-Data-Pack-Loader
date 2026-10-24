@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.raid;
 
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
@@ -79,7 +80,7 @@ public final class ActiveRaid {
         this.waves = waves;
         this.points = points;
         this.cooldown = def.waveDelay();
-        this.bar = BossBars.create(Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10);
+        this.bar = def.bossBar() == null ? BossBars.create(Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10) : BossBars.create(def.bossBar(), Component.literal(def.name()));
     }
 
     public static void start(ServerLevel level, RaidDef def, BlockPos center, boolean free) {
@@ -132,7 +133,7 @@ public final class ActiveRaid {
         if (alive.isEmpty() && wave < waves) {
             if (cooldown > 0) {
                 cooldown--;
-                bar.setName(Component.literal(def.name()));
+                bar.setName(Component.literal(def.title()));
                 bar.setProgress(Mth.clamp((def.waveDelay() - cooldown) / (float) def.waveDelay(), 0.0F, 1.0F));
                 if (cooldown % 20 == 0) { players(level); }
                 return;
@@ -149,7 +150,7 @@ public final class ActiveRaid {
             float health = 0.0F;
             for (LivingEntity one : alive) { health += one.getHealth(); }
             bar.setProgress(waveHealth <= 0.0F ? 0.0F : Mth.clamp(health / waveHealth, 0.0F, 1.0F));
-            bar.setName(Component.literal(!alive.isEmpty() && alive.size() <= 2 ? def.name() + " - Raiders Remaining: " + alive.size() : def.name()));
+            bar.setName(Component.literal(!alive.isEmpty() && alive.size() <= 2 ? def.title() + " - Raiders Remaining: " + alive.size() : def.title()));
             if (underway(center)) { ContentRaids.hide(level, center, def.reach()); }
         }
         if (wave >= waves && alive.isEmpty() && ++quiet >= QUIET_BEFORE_VICTORY) { end(level, Status.VICTORY); }
@@ -264,6 +265,7 @@ public final class ActiveRaid {
         if (ending == Status.VICTORY) {
             for (ServerPlayer player : present) { reward(level, player); }
         }
+        for (ServerPlayer player : present) { CardEvents.raidEnded(player, def.key().toString(), ending == Status.VICTORY); }
         if (function.isEmpty()) { return; }
         for (ServerPlayer player : present) { Functions.runAs(player, function, "Raid " + def.key()); }
     }
@@ -283,9 +285,9 @@ public final class ActiveRaid {
         bar.setVisible(true);
         if (status == Status.VICTORY) {
             bar.setProgress(0.0F);
-            bar.setName(Component.literal(def.name() + " - Victory"));
+            bar.setName(Component.literal(def.title() + " - Victory"));
         }
-        else { bar.setName(Component.literal(def.name() + " - Defeat")); }
+        else { bar.setName(Component.literal(def.title() + " - Defeat")); }
     }
 
     private void players(ServerLevel level) { BossBars.sync(bar, inReach(level)); }

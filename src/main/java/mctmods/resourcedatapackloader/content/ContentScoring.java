@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.card.CardLook;
 import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
@@ -122,6 +123,7 @@ public final class ContentScoring {
         Entity died = event.getEntity();
         if (!(died.level() instanceof ServerLevel level)) { return; }
         String killed = kindOf(died);
+        String rank = ContentRanks.rankOf(died);
         Entity killer = event.getSource().getEntity();
         String killerSide = killer == null ? null : sideOf(level, killer);
         String diedSide = sideOf(level, died);
@@ -129,7 +131,8 @@ public final class ContentScoring {
         boolean scored = false;
         for (ScoreDef def : BY_NAME.values()) {
             if (def.unfed()) { continue; }
-            Integer worth = def.killPoints().get(killed);
+            Integer worth = rank.isEmpty() ? null : def.killPoints().get(killed + "@" + rank);
+            if (worth == null) { worth = def.killPoints().get(killed); }
             if (worth != null && killer != null) {
                 scored = true;
                 int points = own ? def.ownKillPoints() : worth;
@@ -149,6 +152,12 @@ public final class ContentScoring {
     public static void raidWon(ServerPlayer player, int points) { awarded(player, points, ScoreDef::raidPoints); }
 
     public static void orderDone(ServerPlayer player, int points) { awarded(player, points, ScoreDef::orderPoints); }
+
+    public static void revived(ServerPlayer reviver) {
+        for (ScoreDef def : BY_NAME.values()) {
+            if (def.revivePoints() != 0) { credit(reviver.serverLevel(), def, reviver, def.revivePoints()); }
+        }
+    }
 
     private static void awarded(ServerPlayer player, int points, Predicate<ScoreDef> takes) {
         if (points == 0 || BY_NAME.isEmpty()) { return; }
@@ -225,6 +234,7 @@ public final class ContentScoring {
     static void finish(MinecraftServer server, ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name())) { return; }
         ContentScoringBar.over(def);
+        ContentDowned.clear(server);
         ContentTurns.over(server, def, winner);
         List<String> lines = standings(server, def);
         if (def.endsLastStanding()) { backIn(server); }
@@ -329,6 +339,7 @@ public final class ContentScoring {
         for (ScoreDef def : new ArrayList<>(BY_NAME.values())) {
             if (!def.carries() && (def.ends() || def == offered)) { finish(server, def, RESET, null); }
         }
+        ContentDowned.clear(server);
         resetting = offered;
         waiting = Math.max(1, offered.endsIntermission());
         ContentLog.LOGGER.info("The round was reset, so the map is reset in {} second(s)", waiting);

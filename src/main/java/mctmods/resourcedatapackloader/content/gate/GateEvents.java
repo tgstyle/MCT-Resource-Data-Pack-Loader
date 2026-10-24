@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.gate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -56,6 +57,7 @@ public final class GateEvents {
         for (GateDef def : ContentGates.all()) {
             if (def.killed().isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!fallen.equals(ResourceLocation.tryParse(def.killed()))) { continue; }
+            if (!def.killedRank().isEmpty() && !def.killedRank().equals(ContentRanks.rankOf(event.getEntity()))) { continue; }
             int slain = GateStorage.tally(player, def);
             if (slain < def.killedCount()) { continue; }
             if (def.killedDrops().isEmpty()) {
