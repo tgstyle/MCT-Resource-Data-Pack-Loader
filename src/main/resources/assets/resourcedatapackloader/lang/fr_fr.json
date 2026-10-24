@@ -192,7 +192,7 @@
   "rdpl.command.nogate": "Aucune porte ne s'appelle %s",
   "rdpl.command.nocard": "Aucune règle de carte ne s'appelle %s",
   "rdpl.command.notalking": "Aucun dialogue n'est ouvert",
-  "rdpl.command.cardshown":"Carte %s montrée à %s joueur(s)",  "rdpl.command.noraid": "Aucun raid ne s'appelle %s",
+  "rdpl.command.cardshown": "Carte %s montrée à %s joueur(s)",  "rdpl.command.noraid": "Aucun raid ne s'appelle %s",
   "rdpl.command.raidbusy": "Le raid %s ne peut pas commencer là, un autre est déjà en cours à proximité",
   "rdpl.command.raidstarted": "Le raid %s commence en %s, %s, %s",  "rdpl.command.noenvironment": "La dimension %s n'a aucun environnement nommé %s",
   "rdpl.command.environmentset": "La dimension %s utilise maintenant l'environnement %s",

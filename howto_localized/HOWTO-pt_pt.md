@@ -6840,7 +6840,7 @@ Os títulos e as linhas das cartas, as mensagens Says e as notas de boas-vindas 
 
 `<namespace>/dialogs/*.json`
 
-O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se. Cada ficheiro é um diálogo, e o seu id é `<namespace>:<file name>`. Uma variante de entidade abre um diálogo através da chave `dialog`: um clique direito nessa entidade passa a mostrar o nó `start` do diálogo, em vez do que a entidade faz normalmente com um clique direito, como o ecrã de troca de um aldeão.
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se. Cada ficheiro é um diálogo, e o seu id é `<namespace>:<file name>`. Uma variante de entidade abre um diálogo através da chave `dialog`: um clique direito nessa entidade passa a mostrar o nó `start` do diálogo, em vez do que a entidade faz normalmente com um clique direito, como o ecrã de troca de um aldeão. Um painel alto desloca-se com a roda do rato ou com a barra à direita.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ A primeira resposta vai para o nó `who`, que tem um `title` próprio e uma resp
 
 *diálogos*
 
-| Definição    | Tipo                                          | Predefinição        | O que faz                                                                                           |
-| ------------ | --------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `start`      | texto                                         | nenhum, obrigatório | O nome do nó em que uma conversa começa. Um diálogo cujo `start` não é um dos seus nós é descartado |
-| `nodes`      | objeto                                        | nenhum, obrigatório | Os nós, cada um com o seu nome. No máximo 64                                                        |
-| `title`      | texto                                         | o nome da variante  | A primeira linha do painel. `{npc}` é o nome da entidade                                            |
-| `icon`       | texto                                         | `saysIcon`          | Como numa carta, vê [A carta](#a-carta)                                                             |
-| `color`      | texto                                         | `saysColor`         | Como numa carta, vê [A carta](#a-carta)                                                             |
-| `image`      | texto                                         | `saysImage`         | Como numa carta, vê [A carta](#a-carta)                                                             |
-| `background` | booleano                                      | `saysBackground`    | Como numa carta, vê [A carta](#a-carta)                                                             |
-| `font`       | texto                                         | `saysFont`          | Como numa carta, vê [A carta](#a-carta)                                                             |
-| `requires`   | lista de ids de mods ou namespaces de pacotes | nenhum              | O ficheiro é ignorado, a menos que todos estejam presentes                                          |
+| Definição         | Tipo                                          | Predefinição        | O que faz                                                                                           |
+| ----------------- | --------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| `start`           | texto                                         | nenhum, obrigatório | O nome do nó em que uma conversa começa. Um diálogo cujo `start` não é um dos seus nós é descartado |
+| `nodes`           | objeto                                        | nenhum, obrigatório | Os nós, cada um com o seu nome. No máximo 64                                                        |
+| `title`           | texto                                         | o nome da variante  | A primeira linha do painel. `{npc}` é o nome da entidade                                            |
+| `icon`            | texto                                         | `saysIcon`          | Como numa carta, vê [A carta](#a-carta)                                                             |
+| `color`           | texto                                         | `saysColor`         | Como numa carta, vê [A carta](#a-carta)                                                             |
+| `image`           | texto                                         | `saysImage`         | Como numa carta, vê [A carta](#a-carta)                                                             |
+| `background`      | booleano                                      | `saysBackground`    | Como numa carta, vê [A carta](#a-carta)                                                             |
+| `font`            | texto                                         | `saysFont`          | Como numa carta, vê [A carta](#a-carta)                                                             |
+| `titleColor`      | texto                                         | `FFFFFF`            | Cor do título como texto hexadecimal, por exemplo `FFFF55`                                          |
+| `textColor`       | texto                                         | `E8E8E8`            | Cor das linhas do nó como texto hexadecimal                                                         |
+| `replyColor`      | texto                                         | `FFFFFF`            | Cor das respostas como texto hexadecimal                                                            |
+| `hoverColor`      | texto                                         | `FFFF55`            | Cor da resposta sob o ponteiro, como texto hexadecimal                                              |
+| `hoverBackground` | texto                                         | `FFFFFF`            | Cor da faixa atrás da resposta sob o ponteiro, como texto hexadecimal. É desenhada translúcida      |
+| `history`         | booleano                                      | `true`              | `false` remove os botões `<` e `>` que recuam pelas linhas já mostradas nesta conversa              |
+| `requires`        | lista de ids de mods ou namespaces de pacotes | nenhum              | O ficheiro é ignorado, a menos que todos estejam presentes                                          |
 
 ### Chaves do nó
 

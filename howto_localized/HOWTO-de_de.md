@@ -6840,7 +6840,7 @@ Titel und Zeilen von Karten, Says-Meldungen sowie die Willkommens- und Warte-Hin
 
 `<namespace>/dialogs/*.json`
 
-Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Jede Datei ist ein Dialog, und seine ID ist `<namespace>:<Dateiname>`. Eine Entity-Variante öffnet einen Dialog über ihren Schlüssel `dialog`: Ein Rechtsklick auf diese Entity zeigt dann den `start`-Knoten des Dialogs, an der Stelle dessen, was die Entity sonst bei einem Rechtsklick tut, etwa den Handelsbildschirm eines Dorfbewohners.
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Jede Datei ist ein Dialog, und seine ID ist `<namespace>:<Dateiname>`. Eine Entity-Variante öffnet einen Dialog über ihren Schlüssel `dialog`: Ein Rechtsklick auf diese Entity zeigt dann den `start`-Knoten des Dialogs, an der Stelle dessen, was die Entity sonst bei einem Rechtsklick tut, etwa den Handelsbildschirm eines Dorfbewohners. Ein hohes Panel lässt sich mit dem Mausrad oder der Leiste rechts scrollen.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ Die erste Antwort führt zum Knoten `who`, der einen eigenen `title` und eine An
 
 *dialoge*
 
-| Einstellung  | Typ                                      | Standard              | Was sie macht                                                                                                          |
-| ------------ | ---------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `start`      | Text                                     | keiner, Pflicht       | Der Name des Knotens, an dem ein Gespräch beginnt. Ein Dialog, dessen `start` keiner seiner Knoten ist, wird verworfen |
-| `nodes`      | Objekt                                   | keiner, Pflicht       | Die Knoten, jeder unter seinem eigenen Namen. Bis zu 64                                                                |
-| `title`      | Text                                     | der Name der Variante | Die erste Zeile der Tafel. `{npc}` ist der Name der Entity                                                             |
-| `icon`       | Text                                     | `saysIcon`            | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
-| `color`      | Text                                     | `saysColor`           | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
-| `image`      | Text                                     | `saysImage`           | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
-| `background` | boolean                                  | `saysBackground`      | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
-| `font`       | Text                                     | `saysFont`            | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
-| `requires`   | Liste von Mod-IDs oder Pack-Namensräumen | keine                 | Die Datei wird übersprungen, solange nicht alle vorhanden sind                                                         |
+| Einstellung       | Typ                                      | Standard              | Was sie macht                                                                                                                    |
+| ----------------- | ---------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `start`           | Text                                     | keiner, Pflicht       | Der Name des Knotens, an dem ein Gespräch beginnt. Ein Dialog, dessen `start` keiner seiner Knoten ist, wird verworfen           |
+| `nodes`           | Objekt                                   | keiner, Pflicht       | Die Knoten, jeder unter seinem eigenen Namen. Bis zu 64                                                                          |
+| `title`           | Text                                     | der Name der Variante | Die erste Zeile der Tafel. `{npc}` ist der Name der Entity                                                                       |
+| `icon`            | Text                                     | `saysIcon`            | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                               |
+| `color`           | Text                                     | `saysColor`           | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                               |
+| `image`           | Text                                     | `saysImage`           | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                               |
+| `background`      | boolean                                  | `saysBackground`      | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                               |
+| `font`            | Text                                     | `saysFont`            | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                               |
+| `titleColor`      | Text                                     | `FFFFFF`              | Farbe des Titels als Hex-Text, zum Beispiel `FFFF55`                                                                             |
+| `textColor`       | Text                                     | `E8E8E8`              | Farbe der Zeilen des Knotens als Hex-Text                                                                                        |
+| `replyColor`      | Text                                     | `FFFFFF`              | Farbe der Antworten als Hex-Text                                                                                                 |
+| `hoverColor`      | Text                                     | `FFFF55`              | Farbe der Antwort unter dem Mauszeiger als Hex-Text                                                                              |
+| `hoverBackground` | Text                                     | `FFFFFF`              | Farbe des Balkens hinter der Antwort unter dem Mauszeiger als Hex-Text. Er wird durchscheinend gezeichnet                        |
+| `history`         | boolean                                  | `true`                | `false` entfernt die Schaltflächen `<` und `>`, mit denen man durch die bereits gezeigten Zeilen dieses Gesprächs zurückblättert |
+| `requires`        | Liste von Mod-IDs oder Pack-Namensräumen | keine                 | Die Datei wird übersprungen, solange nicht alle vorhanden sind                                                                   |
 
 ### Knotenschlüssel
 

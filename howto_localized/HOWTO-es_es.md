@@ -6840,7 +6840,7 @@ Los títulos y líneas de las tarjetas, los mensajes Says y las notas de bienven
 
 `<namespace>/dialogs/*.json`
 
-El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se apilan. Cada archivo es un diálogo, y su id es `<namespace>:<file name>`. Una variante de entidad abre un diálogo mediante su clave `dialog`: un clic derecho en esa entidad muestra entonces el nodo `start` del diálogo, en lugar de lo que la entidad haga normalmente con un clic derecho, como la pantalla de comercio de un aldeano.
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se apilan. Cada archivo es un diálogo, y su id es `<namespace>:<file name>`. Una variante de entidad abre un diálogo mediante su clave `dialog`: un clic derecho en esa entidad muestra entonces el nodo `start` del diálogo, en lugar de lo que la entidad haga normalmente con un clic derecho, como la pantalla de comercio de un aldeano. Un panel alto se desplaza con la rueda del ratón o con la barra de la derecha.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ La primera respuesta va al nodo `who`, que tiene su propio `title` y una respues
 
 *diálogos*
 
-| Ajuste       | Tipo                                              | Por defecto              | Qué hace                                                                                                          |
-| ------------ | ------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `start`      | texto                                             | ninguno, obligatorio     | El nombre del nodo en el que se abre una conversación. Un diálogo cuyo `start` no es uno de sus nodos se descarta |
-| `nodes`      | objeto                                            | ninguno, obligatorio     | Los nodos, cada uno con su propio nombre. Hasta 64                                                                |
-| `title`      | texto                                             | el nombre de la variante | La primera línea del panel. `{npc}` es el nombre de la entidad                                                    |
-| `icon`       | texto                                             | `saysIcon`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `color`      | texto                                             | `saysColor`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `image`      | texto                                             | `saysImage`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `background` | booleano                                          | `saysBackground`         | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `font`       | texto                                             | `saysFont`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `requires`   | lista de ids de mod o espacios de nombres de pack | ninguno                  | El archivo se omite a menos que estén presentes todos                                                             |
+| Ajuste            | Tipo                                              | Por defecto              | Qué hace                                                                                                          |
+| ----------------- | ------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `start`           | texto                                             | ninguno, obligatorio     | El nombre del nodo en el que se abre una conversación. Un diálogo cuyo `start` no es uno de sus nodos se descarta |
+| `nodes`           | objeto                                            | ninguno, obligatorio     | Los nodos, cada uno con su propio nombre. Hasta 64                                                                |
+| `title`           | texto                                             | el nombre de la variante | La primera línea del panel. `{npc}` es el nombre de la entidad                                                    |
+| `icon`            | texto                                             | `saysIcon`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `color`           | texto                                             | `saysColor`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `image`           | texto                                             | `saysImage`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `background`      | booleano                                          | `saysBackground`         | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `font`            | texto                                             | `saysFont`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `titleColor`      | texto                                             | `FFFFFF`                 | Color del título como texto hexadecimal, por ejemplo `FFFF55`                                                     |
+| `textColor`       | texto                                             | `E8E8E8`                 | Color de las líneas del nodo como texto hexadecimal                                                               |
+| `replyColor`      | texto                                             | `FFFFFF`                 | Color de las respuestas como texto hexadecimal                                                                    |
+| `hoverColor`      | texto                                             | `FFFF55`                 | Color de la respuesta bajo el puntero como texto hexadecimal                                                      |
+| `hoverBackground` | texto                                             | `FFFFFF`                 | Color de la franja detrás de la respuesta bajo el puntero como texto hexadecimal. Se dibuja translúcida           |
+| `history`         | booleano                                          | `true`                   | `false` quita los botones `<` y `>` con los que se retrocede por las líneas ya mostradas en esta conversación     |
+| `requires`        | lista de ids de mod o espacios de nombres de pack | ninguno                  | El archivo se omite a menos que estén presentes todos                                                             |
 
 ### Claves del nodo
 

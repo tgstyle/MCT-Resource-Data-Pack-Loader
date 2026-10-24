@@ -5,10 +5,10 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 
-public record MessageTalk(int npc, boolean end, String title, List<String> lines, List<String> replies, ItemStack icon, String image, int background, boolean panel, String font) {
+public record MessageTalk(int npc, boolean end, String title, List<String> lines, List<String> replies, ItemStack icon, String image, int background, boolean panel, String font, int titleColor, int textColor, int replyColor, int hoverColor, int hoverBackground, boolean history) {
     private static final int MOST = 16;
 
-    public static MessageTalk ending() { return new MessageTalk(0, true, "", List.of(), List.of(), ItemStack.EMPTY, "", 0, true, ""); }
+    public static MessageTalk ending() { return new MessageTalk(0, true, "", List.of(), List.of(), ItemStack.EMPTY, "", 0, true, "", -1, -1, -1, -1, -1, true); }
 
     public static void write(MessageTalk message, FriendlyByteBuf buf) {
         buf.writeInt(message.npc);
@@ -21,9 +21,16 @@ public record MessageTalk(int npc, boolean end, String title, List<String> lines
         buf.writeInt(message.background);
         buf.writeBoolean(message.panel);
         buf.writeUtf(message.font);
+        buf.writeInt(message.titleColor);
+        buf.writeInt(message.textColor);
+        buf.writeInt(message.replyColor);
+        buf.writeInt(message.hoverColor);
+        buf.writeInt(message.hoverBackground);
+        buf.writeBoolean(message.history);
     }
 
-    public static MessageTalk read(FriendlyByteBuf buf) { return new MessageTalk(buf.readInt(), buf.readBoolean(), buf.readUtf(), strings(buf), strings(buf), buf.readItem(), buf.readUtf(), buf.readInt(), buf.readBoolean(), buf.readUtf()); }
+    public static MessageTalk read(FriendlyByteBuf buf) { return new MessageTalk(buf.readInt(), buf.readBoolean(), buf.readUtf(), strings(buf), strings(buf), buf.readItem(), buf.readUtf(), buf.readInt(), buf.readBoolean(), buf.readUtf(),
+            buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readInt(), buf.readBoolean()); }
 
     private static void strings(FriendlyByteBuf buf, List<String> strings) {
         int count = Math.min(strings.size(), MOST);

@@ -6840,7 +6840,7 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 
 `<namespace>/dialogs/*.json`
 
-The file name is yours to choose, only the folder is read, and several files stack. Each file is one dialog, and its id is `<namespace>:<file name>`. An entity variant opens a dialog through its `dialog` key: a right-click on that entity then shows the dialog's `start` node, in place of whatever the entity does on a right-click, such as a villager's trade screen.
+The file name is yours to choose, only the folder is read, and several files stack. Each file is one dialog, and its id is `<namespace>:<file name>`. An entity variant opens a dialog through its `dialog` key: a right-click on that entity then shows the dialog's `start` node, in place of whatever the entity does on a right-click, such as a villager's trade screen. A tall panel scrolls with the mouse wheel or the bar on its right.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ The first reply goes to the `who` node, which has a `title` of its own and a rep
 
 *dialogs*
 
-| Setting      | Type                               | Default            | What it does                                                                                    |
-| ------------ | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `start`      | text                               | none, required     | The name of the node a talk opens at. A dialog whose `start` is not one of its nodes is dropped |
-| `nodes`      | object                             | none, required     | The nodes, each under its own name. Up to 64                                                    |
-| `title`      | text                               | the variant's name | The first line of the panel. `{npc}` is the entity's name                                       |
-| `icon`       | text                               | `saysIcon`         | As on a card, see [The card](#the-card)                                                         |
-| `color`      | text                               | `saysColor`        | As on a card, see [The card](#the-card)                                                         |
-| `image`      | text                               | `saysImage`        | As on a card, see [The card](#the-card)                                                         |
-| `background` | boolean                            | `saysBackground`   | As on a card, see [The card](#the-card)                                                         |
-| `font`       | text                               | `saysFont`         | As on a card, see [The card](#the-card)                                                         |
-| `requires`   | list of mod ids or pack namespaces | none               | The file is skipped unless all are present                                                      |
+| Setting           | Type                               | Default            | What it does                                                                                        |
+| ----------------- | ---------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------- |
+| `start`           | text                               | none, required     | The name of the node a talk opens at. A dialog whose `start` is not one of its nodes is dropped     |
+| `nodes`           | object                             | none, required     | The nodes, each under its own name. Up to 64                                                        |
+| `title`           | text                               | the variant's name | The first line of the panel. `{npc}` is the entity's name                                           |
+| `icon`            | text                               | `saysIcon`         | As on a card, see [The card](#the-card)                                                             |
+| `color`           | text                               | `saysColor`        | As on a card, see [The card](#the-card)                                                             |
+| `image`           | text                               | `saysImage`        | As on a card, see [The card](#the-card)                                                             |
+| `background`      | boolean                            | `saysBackground`   | As on a card, see [The card](#the-card)                                                             |
+| `font`            | text                               | `saysFont`         | As on a card, see [The card](#the-card)                                                             |
+| `titleColor`      | text                               | `FFFFFF`           | Color of the title as hex text, such as `FFFF55`                                                    |
+| `textColor`       | text                               | `E8E8E8`           | Color of the lines of the node as hex text                                                          |
+| `replyColor`      | text                               | `FFFFFF`           | Color of the replies as hex text                                                                    |
+| `hoverColor`      | text                               | `FFFF55`           | Color of the reply under the pointer, as hex text                                                   |
+| `hoverBackground` | text                               | `FFFFFF`           | Color of the band behind the reply under the pointer, as hex text. It is drawn translucent          |
+| `history`         | boolean                            | `true`             | `false` removes the `<` and `>` buttons that page back through the lines already shown in this talk |
+| `requires`        | list of mod ids or pack namespaces | none               | The file is skipped unless all are present                                                          |
 
 ### Node keys
 

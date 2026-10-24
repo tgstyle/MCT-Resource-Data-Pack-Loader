@@ -192,7 +192,7 @@
   "rdpl.command.nogate": "Nenhum portão se chama %s",
   "rdpl.command.nocard": "Nenhuma regra de carta se chama %s",
   "rdpl.command.notalking": "Nenhum diálogo está aberto",
-  "rdpl.command.cardshown":"A carta %s foi mostrada a %s jogador(es)",  "rdpl.command.noraid": "Nenhuma invasão se chama %s",
+  "rdpl.command.cardshown": "A carta %s foi mostrada a %s jogador(es)",  "rdpl.command.noraid": "Nenhuma invasão se chama %s",
   "rdpl.command.raidbusy": "A invasão %s não pode começar ali, já há outra em andamento por perto",
   "rdpl.command.raidstarted": "A invasão %s começa em %s, %s, %s",  "rdpl.command.noenvironment": "A dimensão %s não tem nenhum ambiente chamado %s",
   "rdpl.command.environmentset": "A dimensão %s agora usa o ambiente %s",

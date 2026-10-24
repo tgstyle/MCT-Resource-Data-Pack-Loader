@@ -6840,7 +6840,7 @@ Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou
 
 `<namespace>/dialogs/*.json`
 
-Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jeden dialog a jeho id je `<namespace>:<file name>`. Varianta entity otevře dialog přes klíč `dialog`: pravý klik na tuto entitu pak ukáže uzel `start` dialogu místo toho, co entita při pravém kliku jinak dělá, třeba místo obchodní obrazovky vesničana.
+Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jeden dialog a jeho id je `<namespace>:<file name>`. Varianta entity otevře dialog přes klíč `dialog`: pravý klik na tuto entitu pak ukáže uzel `start` dialogu místo toho, co entita při pravém kliku jinak dělá, třeba místo obchodní obrazovky vesničana. Vysoký panel se posouvá kolečkem myši nebo lištou vpravo.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ První odpověď vede do uzlu `who`, který má vlastní `title` a odpověď zp�
 
 *dialogy*
 
-| Nastavení    | Typ                                   | Výchozí          | Co dělá                                                                                     |
-| ------------ | ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------- |
-| `start`      | text                                  | žádný, povinné   | Název uzlu, ve kterém rozhovor začíná. Dialog, jehož `start` není mezi jeho uzly, se zahodí |
-| `nodes`      | objekt                                | žádný, povinné   | Uzly, každý pod svým názvem. Nejvýše 64                                                     |
-| `title`      | text                                  | jméno varianty   | První řádek panelu. `{npc}` je jméno entity                                                 |
-| `icon`       | text                                  | `saysIcon`       | Jako na kartě, viz [Karta](#karta)                                                          |
-| `color`      | text                                  | `saysColor`      | Jako na kartě, viz [Karta](#karta)                                                          |
-| `image`      | text                                  | `saysImage`      | Jako na kartě, viz [Karta](#karta)                                                          |
-| `background` | boolean                               | `saysBackground` | Jako na kartě, viz [Karta](#karta)                                                          |
-| `font`       | text                                  | `saysFont`       | Jako na kartě, viz [Karta](#karta)                                                          |
-| `requires`   | seznam id módů nebo namespace balíčků | žádný            | Soubor se přeskočí, pokud nejsou přítomny všechny                                           |
+| Nastavení         | Typ                                   | Výchozí          | Co dělá                                                                                              |
+| ----------------- | ------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| `start`           | text                                  | žádný, povinné   | Název uzlu, ve kterém rozhovor začíná. Dialog, jehož `start` není mezi jeho uzly, se zahodí          |
+| `nodes`           | objekt                                | žádný, povinné   | Uzly, každý pod svým názvem. Nejvýše 64                                                              |
+| `title`           | text                                  | jméno varianty   | První řádek panelu. `{npc}` je jméno entity                                                          |
+| `icon`            | text                                  | `saysIcon`       | Jako na kartě, viz [Karta](#karta)                                                                   |
+| `color`           | text                                  | `saysColor`      | Jako na kartě, viz [Karta](#karta)                                                                   |
+| `image`           | text                                  | `saysImage`      | Jako na kartě, viz [Karta](#karta)                                                                   |
+| `background`      | boolean                               | `saysBackground` | Jako na kartě, viz [Karta](#karta)                                                                   |
+| `font`            | text                                  | `saysFont`       | Jako na kartě, viz [Karta](#karta)                                                                   |
+| `titleColor`      | text                                  | `FFFFFF`         | Barva nadpisu jako hexadecimální text, například `FFFF55`                                            |
+| `textColor`       | text                                  | `E8E8E8`         | Barva řádků uzlu jako hexadecimální text                                                             |
+| `replyColor`      | text                                  | `FFFFFF`         | Barva odpovědí jako hexadecimální text                                                               |
+| `hoverColor`      | text                                  | `FFFF55`         | Barva odpovědi pod kurzorem jako hexadecimální text                                                  |
+| `hoverBackground` | text                                  | `FFFFFF`         | Barva pruhu za odpovědí pod kurzorem jako hexadecimální text. Kreslí se průhledně                    |
+| `history`         | boolean                               | `true`           | `false` odstraní tlačítka `<` a `>`, kterými se listuje zpět řádky již zobrazenými v tomto rozhovoru |
+| `requires`        | seznam id módů nebo namespace balíčků | žádný            | Soubor se přeskočí, pokud nejsou přítomny všechny                                                    |
 
 ### Klíče uzlu
 

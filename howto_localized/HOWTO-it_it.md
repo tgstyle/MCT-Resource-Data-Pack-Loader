@@ -6840,7 +6840,7 @@ Titoli e righe delle carte, messaggi Says e note di benvenuto e di attesa accett
 
 `<namespace>/dialogs/*.json`
 
-Il nome del file lo scegli tu, viene letta solo la cartella, e più file si sommano. Ogni file è un dialogo, e il suo id è `<namespace>:<file name>`. Una variante di entità apre un dialogo tramite la chiave `dialog`: un clic destro su quell'entità mostra allora il nodo `start` del dialogo, al posto di ciò che l'entità fa normalmente con un clic destro, come la schermata di scambio di un abitante.
+Il nome del file lo scegli tu, viene letta solo la cartella, e più file si sommano. Ogni file è un dialogo, e il suo id è `<namespace>:<file name>`. Una variante di entità apre un dialogo tramite la chiave `dialog`: un clic destro su quell'entità mostra allora il nodo `start` del dialogo, al posto di ciò che l'entità fa normalmente con un clic destro, come la schermata di scambio di un abitante. Un pannello alto scorre con la rotellina del mouse o con la barra a destra.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ La prima risposta porta al nodo `who`, che ha un proprio `title` e una risposta 
 
 *dialoghi*
 
-| Impostazione | Tipo                                    | Predefinito            | Cosa fa                                                                                                           |
-| ------------ | --------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `start`      | testo                                   | nessuno, obbligatorio  | Il nome del nodo da cui parte una conversazione. Un dialogo il cui `start` non è uno dei suoi nodi viene scartato |
-| `nodes`      | oggetto JSON                            | nessuno, obbligatorio  | I nodi, ciascuno con il proprio nome. Fino a 64                                                                   |
-| `title`      | testo                                   | il nome della variante | La prima riga del pannello. `{npc}` è il nome dell'entità                                                         |
-| `icon`       | testo                                   | `saysIcon`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `color`      | testo                                   | `saysColor`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `image`      | testo                                   | `saysImage`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `background` | booleano                                | `saysBackground`       | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `font`       | testo                                   | `saysFont`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `requires`   | elenco di id di mod o namespace di pack | nessuno                | Il file viene saltato a meno che tutti siano presenti                                                             |
+| Impostazione      | Tipo                                    | Predefinito            | Cosa fa                                                                                                           |
+| ----------------- | --------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `start`           | testo                                   | nessuno, obbligatorio  | Il nome del nodo da cui parte una conversazione. Un dialogo il cui `start` non è uno dei suoi nodi viene scartato |
+| `nodes`           | oggetto JSON                            | nessuno, obbligatorio  | I nodi, ciascuno con il proprio nome. Fino a 64                                                                   |
+| `title`           | testo                                   | il nome della variante | La prima riga del pannello. `{npc}` è il nome dell'entità                                                         |
+| `icon`            | testo                                   | `saysIcon`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `color`           | testo                                   | `saysColor`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `image`           | testo                                   | `saysImage`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `background`      | booleano                                | `saysBackground`       | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `font`            | testo                                   | `saysFont`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `titleColor`      | testo                                   | `FFFFFF`               | Colore del titolo come testo esadecimale, per esempio `FFFF55`                                                    |
+| `textColor`       | testo                                   | `E8E8E8`               | Colore delle righe del nodo come testo esadecimale                                                                |
+| `replyColor`      | testo                                   | `FFFFFF`               | Colore delle risposte come testo esadecimale                                                                      |
+| `hoverColor`      | testo                                   | `FFFF55`               | Colore della risposta sotto il puntatore, come testo esadecimale                                                  |
+| `hoverBackground` | testo                                   | `FFFFFF`               | Colore della banda dietro la risposta sotto il puntatore, come testo esadecimale. Viene disegnata semitrasparente |
+| `history`         | booleano                                | `true`                 | `false` toglie i pulsanti `<` e `>` con cui si torna indietro tra le righe già mostrate in questo dialogo         |
+| `requires`        | elenco di id di mod o namespace di pack | nessuno                | Il file viene saltato a meno che tutti siano presenti                                                             |
 
 ### Chiavi del nodo
 

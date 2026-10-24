@@ -6840,7 +6840,7 @@ Les titres et lignes de carte, les messages Says et les notes d'accueil et d'att
 
 `<namespace>/dialogs/*.json`
 
-Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent. Chaque fichier est un dialogue, et son id est `<namespace>:<nom du fichier>`. Une variante d'entité ouvre un dialogue par sa clé `dialog` : un clic droit sur cette entité affiche alors le nœud `start` du dialogue, à la place de ce que l'entité fait d'habitude sur un clic droit, comme l'écran d'échange d'un villageois.
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent. Chaque fichier est un dialogue, et son id est `<namespace>:<nom du fichier>`. Une variante d'entité ouvre un dialogue par sa clé `dialog` : un clic droit sur cette entité affiche alors le nœud `start` du dialogue, à la place de ce que l'entité fait d'habitude sur un clic droit, comme l'écran d'échange d'un villageois. Un panneau haut défile avec la molette de la souris ou la barre à droite.
 
 ```json
 {
@@ -6870,17 +6870,23 @@ La première réponse mène au nœud `who`, qui a son propre `title` et une rép
 
 *dialogues*
 
-| Réglage      | Type                                        | Défaut                | Rôle                                                                                                        |
-| ------------ | ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `start`      | texte                                       | aucun, requis         | Le nom du nœud où s'ouvre une conversation. Un dialogue dont le `start` n'est aucun de ses nœuds est écarté |
-| `nodes`      | objet                                       | aucun, requis         | Les nœuds, chacun sous son propre nom. Jusqu'à 64                                                           |
-| `title`      | texte                                       | le nom de la variante | La première ligne du panneau. `{npc}` est le nom de l'entité                                                |
-| `icon`       | texte                                       | `saysIcon`            | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `color`      | texte                                       | `saysColor`           | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `image`      | texte                                       | `saysImage`           | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `background` | booléen                                     | `saysBackground`      | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `font`       | texte                                       | `saysFont`            | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `requires`   | liste d'ids de mod ou de namespaces de pack | aucun                 | Le fichier est ignoré sauf si tous sont présents                                                            |
+| Réglage           | Type                                        | Défaut                | Rôle                                                                                                                        |
+| ----------------- | ------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `start`           | texte                                       | aucun, requis         | Le nom du nœud où s'ouvre une conversation. Un dialogue dont le `start` n'est aucun de ses nœuds est écarté                 |
+| `nodes`           | objet                                       | aucun, requis         | Les nœuds, chacun sous son propre nom. Jusqu'à 64                                                                           |
+| `title`           | texte                                       | le nom de la variante | La première ligne du panneau. `{npc}` est le nom de l'entité                                                                |
+| `icon`            | texte                                       | `saysIcon`            | Comme sur une carte, voir [La carte](#la-carte)                                                                             |
+| `color`           | texte                                       | `saysColor`           | Comme sur une carte, voir [La carte](#la-carte)                                                                             |
+| `image`           | texte                                       | `saysImage`           | Comme sur une carte, voir [La carte](#la-carte)                                                                             |
+| `background`      | booléen                                     | `saysBackground`      | Comme sur une carte, voir [La carte](#la-carte)                                                                             |
+| `font`            | texte                                       | `saysFont`            | Comme sur une carte, voir [La carte](#la-carte)                                                                             |
+| `titleColor`      | texte                                       | `FFFFFF`              | Couleur du titre en texte hexadécimal, par exemple `FFFF55`                                                                 |
+| `textColor`       | texte                                       | `E8E8E8`              | Couleur des lignes du nœud en texte hexadécimal                                                                             |
+| `replyColor`      | texte                                       | `FFFFFF`              | Couleur des réponses en texte hexadécimal                                                                                   |
+| `hoverColor`      | texte                                       | `FFFF55`              | Couleur de la réponse sous le pointeur, en texte hexadécimal                                                                |
+| `hoverBackground` | texte                                       | `FFFFFF`              | Couleur de la bande derrière la réponse sous le pointeur, en texte hexadécimal. Elle est dessinée translucide               |
+| `history`         | booléen                                     | `true`                | `false` retire les boutons `<` et `>` qui font revenir en arrière dans les lignes déjà affichées pendant cette conversation |
+| `requires`        | liste d'ids de mod ou de namespaces de pack | aucun                 | Le fichier est ignoré sauf si tous sont présents                                                                            |
 
 ### Clés du nœud
 

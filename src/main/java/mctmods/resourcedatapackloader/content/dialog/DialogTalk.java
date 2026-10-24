@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public final class DialogTalk {
     public static final int CLOSE = -1;
@@ -119,7 +120,8 @@ public final class DialogTalk {
         List<String> replies = new ArrayList<>();
         for (DialogDef.Reply reply : shown) { replies.add(line(reply.text(), player, name)); }
         if (shown.isEmpty()) { SESSIONS.remove(player.getUUID()); }
-        if (RDPLNetwork.reaches(player)) { RDPLNetwork.sendTalk(player, new MessageTalk(npc.getId(), false, title, lines, replies, icon(def), image(def), background(def), panel(def), font(def))); }
+        if (RDPLNetwork.reaches(player)) { RDPLNetwork.sendTalk(player, new MessageTalk(npc.getId(), false, title, lines, replies, icon(def), image(def), background(def), panel(def), font(def),
+                    tint(def, def.titleColor()), tint(def, def.textColor()), tint(def, def.replyColor()), tint(def, def.hoverColor()), tint(def, def.hoverBackground()), def.history() == null || def.history())); }
         else { chat(player, title, lines, replies); }
     }
 
@@ -147,4 +149,6 @@ public final class DialogTalk {
     private static boolean panel(DialogDef def) { return def.background() == null ? Says.panel() : def.background(); }
 
     private static String font(DialogDef def) { return def.font() == null ? Says.font() : def.font(); }
+
+    private static int tint(DialogDef def, @Nullable String value) { return value == null || value.isEmpty() ? -1 : ContentParser.color(value, "dialog " + def.key()) & 0xFFFFFF; }
 }
