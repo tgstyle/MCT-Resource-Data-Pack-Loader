@@ -76,7 +76,7 @@ public final class ContentMapStructure extends Structure {
         int spanX = swapped ? deep : wide;
         int spanZ = swapped ? wide : deep;
         int anchor = ContentWorldShape.surfaceAt(context, originX + spanX / 2, originZ + spanZ / 2);
-        return new Spot(seed, originX, originZ, turn, anchor + 1 - def.ground() * def.cell());
+        return new Spot(seed, originX, originZ, turn, Math.max(def.baseY(anchor, seed), context.heightAccessor().getMinY() + 1));
     }
 
     public static void lay(GenerationContext context, StructureMapDef def, long seed, Rotation turn, int x, int z, int base, StructurePiecesBuilder builder) { pieces(context, def, new Spot(seed, x, z, turn, base), x, z, false, builder); }
@@ -128,7 +128,7 @@ public final class ContentMapStructure extends Structure {
                     }
                     Vec3i span = piece.get().getSize(spot.turn());
                     if (Math.max(span.getX(), span.getZ()) > StructureMapDef.CELL_MOST) { ContentStructureMaps.oversize(def, named, Math.max(span.getX(), span.getZ())); }
-                    builder.addPiece(new ContentMapPiece(context.structureTemplateManager(), template, spot.turn(), new BlockPos(cornerX + ContentImprint.backX(spot.turn(), span), layerY, cornerZ + ContentImprint.backZ(spot.turn(), span))));
+                    builder.addPiece(new ContentMapPiece(context.structureTemplateManager(), template, spot.turn(), new BlockPos(cornerX + ContentImprint.backX(spot.turn(), span), layerY, cornerZ + ContentImprint.backZ(spot.turn(), span)), def.key(), cellSeed));
                     placed++;
                 }
             }

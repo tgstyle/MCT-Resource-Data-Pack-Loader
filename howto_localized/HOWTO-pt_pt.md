@@ -5219,15 +5219,38 @@ Um mapa de estruturas junta modelos num único edifício com nome, numa grelha, 
 }
 ```
 
-| Definição    | Tipo                     | Predefinição | O que faz                                                                                                                                                                                                   |
-| ------------ | ------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cell`       | número                   | `32`         | O passo da grelha em blocos, até 48. Um modelo mais pequeno do que a célula fica no canto da célula, pelo que as peças de tamanho inteiro se encostam sem juntas                                            |
-| `ground`     | número                   | `0`          | Que camada tem o piso à superfície do terreno. As camadas anteriores escavam para baixo, e é assim que um edifício ganha caves                                                                              |
-| `at`         | dois números             | nenhum       | Fixa uma cópia em coordenadas de bloco exatas, tal como `structureAt` fixa uma aldeia                                                                                                                       |
-| `spacing`    | número                   | `0`          | Espalha cópias numa grelha com este número de chunks de distância, com variação sorteada a partir da semente do mundo. `0` não espalha nenhuma, pelo que um mapa só com `at` se constrói exatamente uma vez |
-| `chance`     | número                   | `100`        | A percentagem dos pontos da grelha que constroem uma cópia                                                                                                                                                  |
-| `dimensions` | lista de ids de dimensão | todas        | Onde o mapa se pode construir, incluindo as dimensões do próprio pacote                                                                                                                                     |
-| `layers`     | lista                    | nenhum       | As camadas, de baixo para cima, cada uma com um `palette` e um `map`                                                                                                                                        |
+Um mapa também pode afundar-se sob o terreno e preencher os spawners e os baús que os seus modelos contêm:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Definição    | Tipo                     | Predefinição | O que faz                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------ | ------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cell`       | número                   | `32`         | O passo da grelha em blocos, até 48. Um modelo mais pequeno do que a célula fica no canto da célula, pelo que as peças de tamanho inteiro se encostam sem juntas                                                                                                                                                                                                                                        |
+| `ground`     | número                   | `0`          | Que camada tem o piso à superfície do terreno. As camadas anteriores escavam para baixo, e é assim que um edifício ganha caves                                                                                                                                                                                                                                                                          |
+| `at`         | dois números             | nenhum       | Fixa uma cópia em coordenadas de bloco exatas, tal como `structureAt` fixa uma aldeia                                                                                                                                                                                                                                                                                                                   |
+| `spacing`    | número                   | `0`          | Espalha cópias numa grelha com este número de chunks de distância, com variação sorteada a partir da semente do mundo. `0` não espalha nenhuma, pelo que um mapa só com `at` se constrói exatamente uma vez                                                                                                                                                                                             |
+| `chance`     | número                   | `100`        | A percentagem dos pontos da grelha que constroem uma cópia                                                                                                                                                                                                                                                                                                                                              |
+| `depth`      | número ou dois números   | nenhum       | Afunda a construção sob o terreno: o piso da camada `ground` fica este número de blocos abaixo da superfície amostrada, em vez de ficar nela. Dois números são um mínimo e um máximo, e cada cópia sorteia o seu a partir da semente do mundo. Aplica-se às cópias que o mapa espalha ou fixa com `at`; um mapa que uma aldeia ou uma cidade coloca continua a assentar a camada `ground` na superfície |
+| `spawners`   | lista de ids de entidade | nenhum       | O mob de cada spawner dos modelos do mapa que foi guardado sem nenhum ou apenas com um porco. Uma entrada pode levar um peso, como `id=2`; um spawner guardado com um mob que não seja um porco mantém-no. Um id que nada regista (a variante de entidade de um pacote enquanto `vanillaClients` está ativado) fica fora do sorteio                                                                     |
+| `loot`       | id de tabela de saque    | nenhum       | A tabela de saque de cada baú e baú armadilhado dos modelos do mapa que foi guardado sem tabela de saque e sem itens; um baú guardado com qualquer um dos dois mantém-no                                                                                                                                                                                                                                |
+| `dimensions` | lista de ids de dimensão | todas        | Onde o mapa se pode construir, incluindo as dimensões do próprio pacote                                                                                                                                                                                                                                                                                                                                 |
+| `layers`     | lista                    | nenhum       | As camadas, de baixo para cima, cada uma com um `palette` e um `map`                                                                                                                                                                                                                                                                                                                                    |
 
 Uma paleta indica modelos pela chave de registo a partir de `<namespace>/structures/` de um pacote.
 
@@ -5238,6 +5261,8 @@ Uma paleta indica modelos pela chave de registo a partir de `<namespace>/structu
 | `.`                                         | Uma célula vazia, nada é colocado                                                                                                                                               |
 
 Cada cópia sorteia uma das quatro orientações a partir da semente do mundo e o edifício inteiro roda em conjunto, modelos incluídos, pelo que as paredes que se encontram entre células continuam a encontrar-se; um mapa roda mas nunca é espelhado. A camada do solo assenta na superfície do terreno amostrada sob o meio do edifício, e o mapa inteiro partilha essa altura única. Um mapa espalhado é, para o jogo, uma estrutura por si só, colocada através de um conjunto de estruturas escrito por ti, pelo que cada chunk constrói apenas a sua fatia da grelha e um edifício que abrange muitos chunks surge sem geração em cascata, seja qual for a ordem em que os chunks carregam. Uma [parcela de aldeia](#parcelas-de-aldeias) do tipo `template` também pode indicar um mapa como `structure`, o que faz do conjunto um edifício da cidade.
+
+Um mapa escava o terreno: cada bloco que um modelo contém, ar incluído, substitui o que lá estava, enquanto uma célula vazia ou o espaço em redor de um modelo mais pequeno continua sólido, por isso dê a cada sala o seu ar no modelo e a um poço as suas células até à superfície.
 
 ## Parcelas de aldeias
 

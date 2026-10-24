@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.compat.LineCompat;
+import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -73,7 +74,7 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
         return swaps;
     }
 
-    @Nullable private static Identifier id(String text) {
+    @Nullable static Identifier id(String text) {
         String lowered = Settings.lower(text);
         return lowered.isEmpty() ? null : Identifier.tryParse(lowered);
     }
@@ -102,8 +103,18 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
         }
     }
 
+    static void startMaps(MinecraftServer server, Collection<StructureMapDef> maps) {
+        Set<Identifier> checked = new LinkedHashSet<>();
+        for (StructureMapDef def : maps) {
+            if (def.loot() != null && absent(server, checked, def.loot())) { ContentLog.LOGGER.error("Structure map {} gives loot {}, which names no loot table, so the chests it fills drop nothing", def.key(), def.loot()); }
+        }
+    }
+
+    private static boolean absent(MinecraftServer server, Set<Identifier> checked, Identifier id) {
+        return !EMPTY.equals(id) && checked.add(id) && table(server, id) == LootTable.EMPTY;
+    }
+
     private static void missing(MinecraftServer server, Set<Identifier> checked, Identifier id) {
-        if (EMPTY.equals(id) || !checked.add(id)) { return; }
-        if (table(server, id) == LootTable.EMPTY) { ContentLog.LOGGER.error("{} names no loot table, so an environment loot swap that gives it has no effect", id); }
+        if (absent(server, checked, id)) { ContentLog.LOGGER.error("{} names no loot table, so an environment loot swap that gives it has no effect", id); }
     }
 }

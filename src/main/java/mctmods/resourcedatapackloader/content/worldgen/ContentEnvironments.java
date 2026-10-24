@@ -279,6 +279,7 @@ public final class ContentEnvironments {
         ContentSpawnSwitch.checkWeights(SPAWNS.values());
         ContentMobSwitch.start(event.getServer(), MOBLINES.values());
         ContentLootSwitch.start(event.getServer(), LOOTS.values());
+        ContentLootSwitch.startMaps(event.getServer(), ContentStructureMaps.defs());
         ContentTradeSwitch.start(TRADELINES.values());
         for (ServerLevel level : event.getServer().getAllLevels()) { ContentRuleSwitch.settle(level); }
     }
