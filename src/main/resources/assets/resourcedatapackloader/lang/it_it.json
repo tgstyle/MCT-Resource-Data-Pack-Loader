@@ -327,5 +327,7 @@
   "rdpl.team.join.closed": "%s non è una squadra a cui puoi unirti",
   "rdpl.team.join.waiting": "Un round è in corso, quindi entrerai in %s quando finisce",
   "rdpl.team.join.ok": "Sei entrato in %s",
+  "rdpl.socket.empty": "Castone vuoto",
+  "rdpl.socket.filled": "Castone: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }

@@ -61,6 +61,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Sprachtore](#sprachtore)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
+- [Affixe und Fassungen](#affixe-und-fassungen)
 - [Zaubertisch](#zaubertisch)
 - [Blockdrops](#blockdrops)
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
@@ -161,6 +162,8 @@ Unter `data/`:
 | `<namespace>/raids/*.json`                   | Wellen, die ein Dorf heimsuchen, wenn ein Spieler ein Omen hineinträgt. [Raids](#raids)                                                                                                                       |
 | `<namespace>/entities/*.json`                | Entity-Varianten, aufgebaut auf vorhandenen Entities. [Entity-Varianten](#entity-varianten)                                                                                                                   |
 | `<namespace>/hardness/*.json`                | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen)                                                                                                               |
+| `<namespace>/affixes/*.json` | Zufällige Attributboni und Fassungen, die ein Gegenstand auswürfelt, wenn ein Spieler ihn zum ersten Mal hält. [Affixe und Fassungen](#affixe-und-fassungen) |
+| `<namespace>/gems/*.json` | Gegenstände, die ein Amboss für einen Attributbonus in eine Fassung setzt. [Affixe und Fassungen](#affixe-und-fassungen) |
 | `<namespace>/anvils/*.json`                  | Verzauberungen, die ein Amboss auf ein genanntes Item legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk)                                                          |
 | `<namespace>/enchanting/*.json`              | Was der Zaubertisch anbietet, verlangt und nimmt: je Verzauberung, je Item und insgesamt. [Zaubertisch](#zaubertisch)                                                                                         |
 | `<namespace>/cards/*.json`                   | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die dieser Mod selbst ausgibt. [Karten](#karten)                                                                                        |
@@ -500,7 +503,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | Server allein genügt                                                                                                                                      | Pack muss auch auf den Client                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                        |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                      |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                      |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                       |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                               |                                                                                                               |
@@ -2518,6 +2521,70 @@ Eine Datei mit `match` ändert, wie der Amboss das genannte Item repariert und k
 | `penalty`       | nein    | `"vanilla"`, `"none"` oder `{ "factor": n }`   | `"vanilla"`                            | Wie die Kosten früherer Arbeit mit jeder Nutzung wachsen. Vanilla verdoppelt sie und zählt eins dazu, `none` lässt sie, wo sie sind, und ein Faktor von 0 bis 16 multipliziert sie und zählt eins dazu |
 | `repair`        | nein    | boolean                                        | `true`                                 | Bei `false` repariert der Amboss es nicht                                                                                                                                                              |
 | `combine`       | nein    | boolean                                        | `true`                                 | Bei `false` vereint der Amboss keine zwei davon; verzauberte Bücher wirken weiterhin                                                                                                                   |
+
+## Affixe und Fassungen
+
+*herstellung, beute und handel*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+Die Dateinamen sind deine Sache, nur die Ordner werden gelesen, und mehrere Dateien stapeln sich. Eine Affix-Datei nennt einen Gegenstand und die Boni, die er auswürfeln kann, eine Edelstein-Datei nennt einen Gegenstand, der in eine Fassung passt.
+
+Ein passender Gegenstand wird einmal ausgewürfelt, wenn ein Spieler ihn zum ersten Mal hält, und behält, was er bekommen hat. Edelsteine kommen am Amboss für die Stufen des Edelsteins in seine Fassungen. Der Gegenstand darf sich nicht stapeln. Ein entferntes Paket lässt die ausgewürfelten Werte auf dem Stapel zurück.
+
+Liegt ein ausgewürfelter Gegenstand mit einer leeren Fassung im linken Slot eines Ambosses und ein Edelstein im rechten, bietet der Amboss den Gegenstand zurück an, mit dem Edelstein in der ersten leeren Fassung und dem Bonus des Edelsteins dazu, und verbraucht einen Edelstein. Ein Gegenstand ohne leere Fassung bekommt nichts angeboten, und ein Edelstein wird nie wieder herausgenommen. Der Tooltip des Gegenstands zeigt jedes Affix mit seinem `name`, dann jede Fassung, leer oder mit ihrem Edelstein.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Schlüssel | Pflicht | Wert                          | Standard | Was er macht                                                                                              |
+| --------- | ------- | ----------------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `item`    | ja      | Gegenstandsname |          | Der Gegenstand, der auswürfelt. Er darf sich nicht stapeln: ein stapelbarer Gegenstand ist ein Fehler und die Datei wird übersprungen |
+| `rolls`   | nein    | `{ "min", "max" }`            | `1`      | Wie viele verschiedene Affixe er auswürfelt                                                               |
+| `sockets` | nein    | `{ "min", "max" }`            | `0`      | Wie viele Edelstein-Fassungen er auswürfelt                                                               |
+| `affixes` | ja      | Liste von Objekten            |          | Was er auswürfeln kann, jeder Eintrag wie unten. Ein Eintrag mit unbekanntem Attribut wird übersprungen   |
+
+Jeder Eintrag in `affixes` kennt:
+
+| Schlüssel   | Pflicht | Wert                                                            | Standard | Was er macht                                                                                                      |
+| ----------- | ------- | --------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `name`      | nein    | Text oder Sprachschlüssel                                       | keiner   | Die Zeile, die der Tooltip des Gegenstands dafür zeigt                                                            |
+| `attribute` | ja      | Attributname                                                    |          | Was er ändert, etwa `generic.attackDamage` oder `generic.maxHealth`                                               |
+| `min`       | nein    | Zahl                                                            | `0`      | Das Mindeste, das er addiert                                                                                      |
+| `max`       | nein    | Zahl                                                            | `min`    | Das Meiste, das er addiert. Gleiche Werte geben einen genauen Bonus, sonst wird zwischen beiden gewürfelt        |
+| `operation` | nein    | `0`, `1` oder `2`                                               | `0`      | `0` addiert zum Attribut, `1` multipliziert seinen Grundwert, `2` die Summe                                       |
+| `slot`      | nein    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` oder `any` | `any`    | In welchem Slot der Gegenstand sein muss, damit der Bonus zählt                                                   |
+| `weight`    | nein    | int                                                             | `1`      | Wie wahrscheinlich er neben den anderen ist. Die Affixe eines Gegenstands sind voneinander verschieden, nach Gewicht gezogen |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Schlüssel   | Pflicht | Wert                                                            | Standard      | Was er macht                                                                                         |
+| ----------- | ------- | --------------------------------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------- |
+| `item`      | ja      | Gegenstandsname                                  |               | Der Edelstein, der in den rechten Slot des Ambosses kommt                                            |
+| `name`      | nein    | Text oder Sprachschlüssel                                       | der Gegenstand | Was der Tooltip zeigt, sobald der Edelstein in einer Fassung sitzt                                   |
+| `attribute` | ja      | Attributname                                                    |               | Was der Edelstein ändert                                                                             |
+| `amount`    | nein    | Zahl                                                            | `0`           | Was er addiert                                                                                       |
+| `operation` | nein    | `0`, `1` oder `2`                                               | `0`           | Wie bei einem Affix                                                                                  |
+| `slot`      | nein    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` oder `any` | `any`         | Wie bei einem Affix                                                                                  |
+| `levels`    | nein    | int                                                             | `1`           | Die Erfahrungsstufen, die das Einsetzen kostet, mindestens 1 und immer unter der Teuer-Grenze des Ambosses |
 
 ## Zaubertisch
 
@@ -8371,6 +8438,7 @@ functions = true
 | `lootInjections` | boolean | `true`   | loot_injections/*.json-Dateien anwenden, die Pools zu Beutetabellen hinzufügen, die es schon gibt, statt die ganze Tabelle zu ersetzen                                                                          |
 | `playerLoot`     | boolean | `true`   | player_loot/*.json-Dateien anwenden, die beim Tod eines Spielers eine Beutetabelle würfeln und das Ergebnis fallen lassen, zusätzlich zum oder anstelle des Inventars                                           |
 | `registryRemaps` | boolean | `true`   | registry_remap-Dateien anwenden, die einen Registry-Eintrag umbenennen, damit vor der Umbenennung gespeicherte Welten ihre Blöcke und Items behalten, statt sie zu verlieren                                    |
+| `affixes`        | boolean | `true`   | affixes/*.json- und gems/*.json-Dateien anwenden, die einem Item beim ersten Halten durch einen Spieler zufällige Attributboni und Fassungen geben und einen Amboss einen Edelstein in eine Fassung setzen lassen |
 | `anvils`         | boolean | `true`   | anvils/*.json-Dateien anwenden, mit denen ein Amboss einem Item für Erfahrungsstufen genannte Verzauberungen gibt, beim Herausnehmen einen Fortschritt einbringt und das Item bis dahin vom Gebrauch zurückhält |
 | `enchanting`     | boolean | `true`   | enchanting/*.json-Dateien anwenden, die ändern, was der Zaubertisch anbietet, verlangt und nimmt: je Verzauberung, je Item und für den ganzen Tisch                                                             |
 | `blockDrops`     | boolean | `true`   | block_drops/*.json-Dateien anwenden, die dem Drop eines Blocks bei jedem Zerbrechen etwas hinzufügen oder ihn ersetzen, Erfahrung eingeschlossen, für Blöcke, die keinem Pack gehören                           |

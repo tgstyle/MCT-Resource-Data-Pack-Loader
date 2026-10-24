@@ -327,5 +327,7 @@
   "rdpl.team.join.closed": "%s 不是你能加入的隊伍",
   "rdpl.team.join.waiting": "對局進行中，所以你會在結束後加入 %s",
   "rdpl.team.join.ok": "你已加入 %s",
+  "rdpl.socket.empty": "空插槽",
+  "rdpl.socket.filled": "插槽：%s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }

@@ -327,5 +327,7 @@
   "rdpl.team.join.closed": "%s n'est pas une équipe que vous pouvez rejoindre",
   "rdpl.team.join.waiting": "Une manche est en cours, vous rejoindrez donc %s à sa fin",
   "rdpl.team.join.ok": "Vous avez rejoint %s",
+  "rdpl.socket.empty": "Châsse vide",
+  "rdpl.socket.filled": "Châsse : %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <faces|nom>|dice <lancer>|advantage [lancer]|disadvantage [lancer]|pick <player|team [équipe]>|deck <draw|shuffle|left> <nom>|teamroll [lancer]|tiebreak [objectif]|last [nombre]|pass> [store <objectif>] [audience <self|team|all|radius <blocs>|silent>]"
 }

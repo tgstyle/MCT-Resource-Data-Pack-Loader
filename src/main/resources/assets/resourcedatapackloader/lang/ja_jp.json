@@ -327,5 +327,7 @@
   "rdpl.team.join.closed": "%s は参加できるチームではありません",
   "rdpl.team.join.waiting": "ラウンド進行中のため、終了後に %s へ参加します",
   "rdpl.team.join.ok": "%s に参加しました",
+  "rdpl.socket.empty": "空きソケット",
+  "rdpl.socket.filled": "ソケット: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <面数|名前>|dice <ロール>|advantage [ロール]|disadvantage [ロール]|pick <プレイヤー|team [チーム]>|deck <draw|shuffle|left> <名前>|teamroll [ロール]|tiebreak [目標]|last [件数]|pass> [store <目標>] [audience <self|team|all|radius <ブロック>|silent>]"
 }
