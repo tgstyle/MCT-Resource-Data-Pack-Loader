@@ -515,12 +515,14 @@ RDPLは1つか2つのレシピを置き換えるのに向いています。自�
 | サーバーだけで足りるもの                                                                                                                                  | クライアントにもパックが必要なもの                                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                       |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                                                     |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                                      |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                                         |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                                                        |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（クライアント用のフォルダーです。クライアントがない場合は入れません） |
 | 制御レイヤー全体、設定、事前生成                                                                                                                          |                                                                                                                                              |
 
 右側の列は絶対の線引きです。バニラのクライアントが持たないブロック、アイテム、エンティティタイプ、サウンド、ポーション効果は、そのクライアントに説明できません。ディメンション固有のポータルもパックのブロックの1つです。曝露は、そのコンテンツと一緒にあるときにだけ読み込まれます。左側の列が機能するのは、そこにあるものがすべて、完全にサーバー側で動くか、バニラがすでに読むデータパックのエントリ（バイオーム、洞窟エリア、ディメンションタイプ）としてクライアントに届くか、バニラがすでに話すパケット（サーバーが満たすクラフト結果スロット、通常の進捗パケット、ステータスメッセージによるゲートの拒否、バニラのゲームモード・タイトル・テレポートのパケットで作った事前生成の待機）を通して届くか、のいずれかだからです。
+
+サーバーに残り、描画するのはModの専用クライアントだけです：ボスバーの `background`、ハートのファイルの `heartColors`、金床のファイルの `tooExpensive`、エンチャントのファイルの `enchantCosts` と `lapisCosts`、アフィックスとジェムソケットの名前、ワールドの読み込み時に一度だけ設定されるもの以外のディメンションの `sky` キー、その `ambience`、天候の `rain` と `wind`、そして環境が行うすべての `sky` と `ambience` の変化（季節の色味を含む）。`vanillaClients` がオンのとき、パックが設定するそれぞれの項目はログに名前が出て、残りのファイルはそのまま適用されます。
 
 セットアップ：
 
@@ -529,7 +531,7 @@ RDPLは1つか2つのレシピを置き換えるのに向いています。自�
 3. このバージョンでは、エンティティのバリアントは独自のエンティティタイプなので、右側の列に属します。`vanillaClients` がオンだとスキップされ、そのスポーンも一緒にスキップされ、ログにその名前が出ます。
 4. サーバーには通常どおりインストールします。Modが必須とし、同じく何も登録しないBlast Plasterも一緒に入れてください。プレイヤーのマシンには何も入れません。プレイヤーには `/rdpl` が存在しません。
 5. 同じバージョンの、まっさらなバニラのクライアントで1回参加して試します。失敗ははっきり表れます。接続が入口で拒否され、あとで静かに壊れることはありません。
-6. 見た目の差が2つあることを許容します。サーバーが追加したレシピはクラフトできますが、レシピブックには表示されません。また、陸地を作る間の待機は、アクションバーに進捗を出すだけの通常のスペクテイターの待機で、Mod自身のクライアントが描く霧とロゴはありません。
+6. 見た目の差が3つあることを許容します。サーバーが追加したレシピはクラフトできますが、レシピブックには表示されません。陸地を作る間の待機は、アクションバーに進捗を出すだけの通常のスペクテイターの待機で、Mod自身のクライアントが描く霧とロゴはありません。そして村人との会話はチャットの行として届き、各返答は番号付きの行としてクリックでき、クリックすると `/rdplserver talk <number>` が実行されます。
 
 ## レジストリ名の変更
 

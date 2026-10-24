@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.def.WindDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,6 +28,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentDimensionParser {
+    private static final List<String> WEATHER_DRAWN = List.of("rain", "wind");
     private static final int CLOUD_HEIGHT = 128;
     private static final int CYCLE_LOW = 1000;
     private static final int THUNDER_LOW = 3600;
@@ -58,6 +60,18 @@ public final class ContentDimensionParser {
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
 
     private ContentDimensionParser() {}
+
+    static void drawn(ResourceLocation key, JsonObject json) {
+        String owner = "Dimension " + key;
+        for (String member : Json.getJsonObject(json, "sky", new JsonObject()).keySet()) {
+            if (!ContentEnvironments.FIXED.contains(member)) { VanillaClients.clientDrawn(owner, "sky." + member); }
+        }
+        if (json.has("ambience")) { VanillaClients.clientDrawn(owner, "ambience"); }
+        JsonObject weather = Json.getJsonObject(json, "weather", new JsonObject());
+        for (String member : WEATHER_DRAWN) {
+            if (weather.has(member)) { VanillaClients.clientDrawn(owner, "weather." + member); }
+        }
+    }
 
     static DimensionDef parse(ResourceLocation key, JsonObject json) {
         JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());

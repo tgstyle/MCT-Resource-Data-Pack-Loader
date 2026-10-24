@@ -515,12 +515,14 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | Stačí jen server                                                                                                                                          | Potřebuje balíček i na klientovi                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                         |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                          |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                             |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                  |
 
 Pravý sloupec je tvrdá zarážka: bloky, předměty, typy entit, zvuky a efekty lektvarů, které vanilla klient nemá, mu nelze popsat a vlastní portál dimenze je jedním z bloků balíčku; expozice se načítají jen spolu s tímto obsahem. Levý sloupec funguje, protože všechno v něm buď běží zcela na straně serveru, dorazí ke klientovi jako položky datového balíčku, které vanilla už čte (biomy, oblasti jeskyní, typy dimenzí), nebo dorazí přes pakety, kterými vanilla už mluví (výsledný slot výroby plněný serverem, běžné pakety pokroků, odmítnutí bran ve stavových zprávách a podržení při předgenerování složené z vanilla paketů herního režimu, titulku a teleportu).
+
+Zůstává na serveru a vykresluje ji jen vlastní klient módu: `background` lišty bosse, `heartColors` v souboru srdcí, `tooExpensive` v souboru kovadliny, `enchantCosts` a `lapisCosts` v souboru zaklínání, názvy affixů a soketů pro drahokamy, klíče `sky` dimenze kromě těch, které se nastaví jednou při načtení světa, její `ambience` a počasí `rain` a `wind`, a každá změna `sky` a `ambience`, kterou prostředí provede, včetně odstínů ročních období. Se zapnutým `vanillaClients` se každá taková hodnota, kterou balíček nastaví, jmenuje v logu a zbytek jejího souboru platí dál.
 
 Nastavení:
 
@@ -529,7 +531,7 @@ Nastavení:
 3. Varianty entit jsou na této verzi samostatné typy entit, takže patří do pravého sloupce: se zapnutým `vanillaClients` se přeskočí, spolu s nimi i jejich spawny, a log je jmenuje.
 4. Nainstaluj na server jako obvykle, s Blast Plaster, který mód vyžaduje a který také nic neregistruje. Na počítače hráčů nejde nic; `/rdpl` pro ně existovat nebude.
 5. Otestuj jedním čistým připojením vanilla klienta téže verze. Selhání jsou hlasitá: připojení se odmítne hned u dveří, nerozbije se tiše později.
-6. Dvě přijaté kosmetické mezery: recepty přidané serverem se vyrobí, ale neobjeví se v knize receptů, a podržení, zatímco se tvoří země, je prosté podržení v režimu pozorovatele s postupem na liště akcí, bez mlhy a loga, které kreslí klient samotného módu.
+6. Tři přijaté kosmetické mezery: recepty přidané serverem se vyrobí, ale neobjeví se v knize receptů; podržení, zatímco se tvoří země, je prosté podržení v režimu pozorovatele s postupem na liště akcí, bez mlhy a loga, které kreslí klient samotného módu; a dialog vesnického obyvatele přichází jako řádky chatu, každá odpověď jako očíslovaný řádek, na který se dá kliknout, a ten spustí `/rdplserver talk <number>`.
 
 ## Přejmenování v registru
 

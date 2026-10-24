@@ -33,7 +33,7 @@ public final class ContentTooltips {
         if (!GENERATION.stale()) { return ITEMS.isEmpty() && ENCHANTMENTS.isEmpty(); }
         ITEMS.clear();
         ENCHANTMENTS.clear();
-        if (!Config.content.tooltips()) { return true; }
+        if (!Config.content.tooltips() || Config.content.vanillaClients()) { return true; }
         Json.eachObject(PackManager.TOOLTIPS, "tooltip file", ContentTooltips::read);
         boolean none = ITEMS.isEmpty() && ENCHANTMENTS.isEmpty();
         if (!none) { Summary.info("tooltips", "Loaded tooltip lines for " + ITEMS.size() + " item(s) and " + ENCHANTMENTS.size() + " enchantment(s)"); }

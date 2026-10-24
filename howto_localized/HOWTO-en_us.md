@@ -515,12 +515,14 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | Server alone is enough                                                                                                                                    | Needs the pack on the client too                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                                |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                 |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                    |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                                   |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
 
 The right-hand column is a hard stop: blocks, items, entity types, sounds and potion effects a vanilla client does not have cannot be described to it, and a dimension's own portal is one of the pack's blocks; exposures load only alongside that content. The left-hand column works because everything there either runs entirely server-side, reaches the client as data pack entries vanilla already reads (biomes, cave regions, dimension types), or reaches it through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
+
+Kept on the server, drawn only by the mod's own client: a boss bar's `background`, `heartColors` in a hearts file, an anvil file's `tooExpensive`, an enchanting file's `enchantCosts` and `lapisCosts`, the names of affixes and gem sockets, a dimension's `sky` keys other than the ones set once when the world loads, its `ambience` and its weather `rain` and `wind`, and every `sky` and `ambience` change an environment makes, a season's tints included. With `vanillaClients` on, each one a pack sets is named in the log, and the rest of its file still applies.
 
 Setup:
 
@@ -529,7 +531,7 @@ Setup:
 3. Entity variants are entity types of their own on this version, so they belong to the right-hand column: with `vanillaClients` on they are skipped, their spawns with them, and the log names them.
 4. Install on the server as usual, with Blast Plaster, which the mod requires and which registers nothing either. Nothing goes on players' machines; `/rdpl` will not exist for them.
 5. Test with one clean vanilla client join of the same version. Failures are loud: the connection is refused at the door, not quietly broken later.
-6. Two accepted cosmetic gaps: server-added recipes craft but do not appear in the recipe book, and the hold while land is made is a plain spectator hold with the progress on the action bar, without the fog and the logo the mod's own client draws.
+6. Three accepted cosmetic gaps: server-added recipes craft but do not appear in the recipe book; the hold while land is made is a plain spectator hold with the progress on the action bar, without the fog and the logo the mod's own client draws; and a villager's dialog arrives as chat lines, with each reply as a numbered line to click, which runs `/rdplserver talk <number>`.
 
 ## Registry renames
 

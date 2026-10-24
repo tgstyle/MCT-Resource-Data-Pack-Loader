@@ -515,12 +515,14 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 | 서버만 있으면 충분                                                                                                                                        | 클라이언트에도 팩이 필요                                                                                             |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                               |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                             |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                              |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                 |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                                |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                           |                                                                                                                      |
 
 오른쪽 열은 절대적인 한계입니다. 바닐라 클라이언트에 없는 블록, 아이템, 엔티티 유형, 소리, 물약 효과는 클라이언트에 설명할 수 없고, 차원의 자체 포털도 팩의 블록 중 하나이며, 노출은 그 콘텐츠와 함께일 때만 로드됩니다. 왼쪽 열이 동작하는 것은 거기 있는 모든 것이 전부 서버 측에서 돌거나, 바닐라가 이미 읽는 데이터 팩 항목(생물 군계, 동굴 지역, 차원 유형)으로 클라이언트에 전달되거나, 바닐라가 이미 쓰는 패킷(서버가 채우는 제작 결과 칸, 일반 발전 과제 패킷, 상태 메시지로 표시되는 게이트 거부, 바닐라의 게임 모드, 제목, 순간 이동 패킷으로 이루어진 사전 생성 대기)으로 전달되기 때문입니다.
+
+서버에만 남고, 모드 자체의 클라이언트만 그립니다: 보스 바의 `background`, 하트 파일의 `heartColors`, 모루 파일의 `tooExpensive`, 인챈트 파일의 `enchantCosts`와 `lapisCosts`, 접두어와 보석 소켓의 이름, 월드를 불러올 때 한 번 설정되는 것을 제외한 차원의 `sky` 키, 그 `ambience`와 날씨의 `rain`과 `wind`, 그리고 환경이 만드는 모든 `sky`와 `ambience` 변화(계절별 색조 포함). `vanillaClients`를 켜면 팩이 설정한 각 항목이 로그에 이름으로 기록되고, 그 파일의 나머지는 그대로 적용됩니다.
 
 설정 방법:
 
@@ -529,7 +531,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 3. 엔티티 변형은 이 버전에서 각자 하나의 엔티티 유형이므로 오른쪽 열에 속합니다. `vanillaClients`를 켜면 건너뛰어지고 그 스폰도 함께 건너뛰며, 로그에 이름이 남습니다.
 4. 평소처럼 서버에 설치하되, 이 모드가 필요로 하며 마찬가지로 아무것도 등록하지 않는 Blast Plaster도 함께 설치하세요. 플레이어의 컴퓨터에는 아무것도 설치하지 않으며, 플레이어에게 `/rdpl`은 존재하지 않습니다.
 5. 같은 버전의 깨끗한 바닐라 클라이언트로 한 번 접속해 테스트하세요. 실패는 분명하게 드러납니다. 나중에 조용히 망가지는 것이 아니라 입구에서 연결이 거부됩니다.
-6. 받아들여야 하는 외형상의 차이가 둘 있습니다. 서버가 추가한 레시피는 제작은 되지만 레시피 책에 나타나지 않고, 땅이 만들어지는 동안의 대기는 진행 상황이 액션바에 표시되는 일반 관전자 대기이며 모드 자체 클라이언트가 그리는 안개와 로고는 없습니다.
+6. 받아들여야 하는 외형상의 차이가 셋 있습니다. 서버가 추가한 레시피는 제작은 되지만 레시피 책에 나타나지 않고, 땅이 만들어지는 동안의 대기는 진행 상황이 액션바에 표시되는 일반 관전자 대기이며 모드 자체 클라이언트가 그리는 안개와 로고는 없습니다. 그리고 주민과의 대화는 채팅 줄로 도착하며, 각 응답은 클릭할 수 있는 번호 줄로 나타나고 클릭하면 `/rdplserver talk <number>`가 실행됩니다.
 
 ## 레지스트리 이름 변경
 
