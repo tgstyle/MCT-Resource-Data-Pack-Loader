@@ -18,7 +18,6 @@ import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -42,7 +41,7 @@ public final class RDPLPack {
     @Nullable private final Path archiveFile;
     @Nullable private final Set<String> ownedNamespaces;
     @Nullable private final Ported ported;
-    private final Map<String, Set<String>> index = new HashMap<>();
+    private final Map<String, Set<String>> index = new TreeMap<>();
     private final Set<String> fromOwn = new HashSet<>();
     private int fileCount;
     @Nullable private ZipFile archive;
