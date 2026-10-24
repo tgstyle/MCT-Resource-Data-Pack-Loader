@@ -61,6 +61,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Puertas de idioma](#puertas-de-idioma)
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
+- [Mesa de encantamientos](#mesa-de-encantamientos)
 - [Drops de bloques](#drops-de-bloques)
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Botín de jugadores](#botín-de-jugadores)
@@ -161,6 +162,7 @@ Bajo `data/`:
 | `<namespace>/entities/*.json`                | Variantes de entidades construidas sobre entidades que ya existen. [Variantes de entidades](#variantes-de-entidades)                                                                                       |
 | `<namespace>/hardness/*.json`                | Tiempo de minado y multiplicadores de explosión para grupos de bloques. [Grupos de dureza](#grupos-de-dureza)                                                                                              |
 | `<namespace>/anvils/*.json`                  | Encantamientos que un yunque pone a un ítem con nombre, un logro que otorga y un bloqueo hasta entonces. [Trabajo en el yunque](#trabajo-en-el-yunque)                                                     |
+| `<namespace>/enchanting/*.json`              | Lo que la mesa de encantamientos ofrece, pide y quita: por encantamiento, por ítem y en conjunto. [Mesa de encantamientos](#mesa-de-encantamientos)                                                        |
 | `<namespace>/cards/*.json`                   | Tarjetas en pantalla mostradas por un disparador y los mensajes que dice el propio mod. [Tarjetas](#tarjetas)                                                                                              |
 | `<namespace>/dice/*.json`                    | Dados del pack con caras ponderadas, mazos de cartas, quién oye una tirada y la redacción de los resultados. [Dados y mazos](#dados-y-mazos)                                                               |
 | `<namespace>/games/*.json`                   | Juegos de tablero con criaturas como piezas: el tablero, las piezas y cómo se mueven, y lo que paga un resultado. [Juegos de tablero](#juegos-de-tablero)                                                  |
@@ -498,7 +500,7 @@ Un pack puede vivir solo en el servidor, con jugadores en clientes de vanilla pu
 | Basta con el servidor                                                                                                                                     | Necesita el pack también en el cliente                                                                                   |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                   |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                 |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                 |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                  |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (carpetas de cliente: sin cliente, déjalas fuera) |
 | toda la capa de control, los ajustes y la pregeneración                                                                                                   |                                                                                                                          |
@@ -2277,6 +2279,118 @@ Coloca el ítem indicado en la ranura izquierda de un yunque y su ítem `with` e
 Las reparaciones y combinaciones propias del yunque no se tocan: esto solo responde cuando la izquierda contiene un ítem indicado y la derecha contiene su `with`.
 
 Un mob con `collectsExperience` también gasta aquí sus niveles. Mientras tenga `item` en la mano principal y `with` en la secundaria y tenga `levels` que pagar, va hasta un yunque, un yunque astillado o un yunque dañado situado a 16 bloques en horizontal y 4 arriba o abajo, y lo trabaja una vez que está a 3 bloques: los niveles se descuentan de los suyos igual que de los de un jugador, `with` se consume, el yunque se desgasta como con un jugador, y el trabajo acaba en su mano principal. Al pasar por encima de un ítem soltado que algún trabajo de yunque nombre en `with`, lo recoge a su mano secundaria. `grants` y `locks` solo afectan a los jugadores, así que un mob no obtiene nada de `grants` y ningún bloqueo lo frena.
+
+### Demasiado caro
+
+Un archivo con `tooExpensive` mueve el punto en el que el yunque se rinde. Un trabajo que cuesta esos niveles o más muestra «¡Demasiado caro!» y no se puede sacar, salvo en modo creativo, y un simple cambio de nombre sigue costando como mucho un nivel menos. Puede ir en su propio archivo o junto a un trabajo, y gana el archivo cargado el último.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Clave          | Obligatorio | Valor                | Por defecto | Qué hace                                                                        |
+| -------------- | ----------- | -------------------- | ----------- | ------------------------------------------------------------------------------- |
+| `tooExpensive` | sí          | entero, de 1 a 32767 | `40`        | El coste en niveles a partir del cual el trabajo en el yunque es demasiado caro |
+
+### Reglas del yunque
+
+Un archivo con `match` cambia cómo el yunque repara y combina el ítem que nombra. Una clave omitida mantiene la forma vanilla, así que un archivo con solo `match` funciona exactamente como vanilla. El cambio de nombre nunca se toca: su nivel y el coste de trabajo previo que llevan los ítems se siguen sumando a cualquier coste fijado aquí.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Clave           | Obligatorio | Valor                                        | Por defecto                               | Qué hace                                                                                                                                                             |
+| --------------- | ----------- | -------------------------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | sí          | nombre de ítem, `#tag` o `*`                 |                                           | El ítem de la ranura izquierda al que se aplica la regla. Un nombre de ítem gana a un tag y un tag a `*`; entre dos del mismo tipo gana el archivo cargado el último |
+| `repairWith`    | no          | nombre de ítem, `#tag` o `*`                 | el material de reparación propio del ítem | Lo que lo repara desde la ranura derecha                                                                                                                             |
+| `repairPerUnit` | no          | número mayor que 0 hasta 1                   | `0.25`                                    | La parte de la durabilidad total que devuelve cada ítem de reparación                                                                                                |
+| `repairCost`    | no          | entero de 1 a 32767, o `{ "multiplier": n }` | vanilla                                   | Los niveles que cuesta una reparación. Un número sustituye el precio vanilla, y un multiplicador mayor que 0 hasta 100 lo escala, redondeado y como mínimo 1         |
+| `combineCost`   | no          | como `repairCost`                            | vanilla                                   | Lo mismo al unir dos de ese ítem                                                                                                                                     |
+| `bookCost`      | no          | como `repairCost`                            | vanilla                                   | Lo mismo con un libro encantado en la ranura derecha                                                                                                                 |
+| `penalty`       | no          | `"vanilla"`, `"none"` o `{ "factor": n }`    | `"vanilla"`                               | Cómo crece el coste de trabajo previo con cada uso. Vanilla lo duplica y suma uno, `none` lo deja donde está, y un factor de 0 a 16 lo multiplica y suma uno         |
+| `repair`        | no          | booleano                                     | `true`                                    | Con `false` el yunque no lo repara                                                                                                                                   |
+| `combine`       | no          | booleano                                     | `true`                                    | Con `false` el yunque no une dos de ellos; los libros encantados siguen aplicándose                                                                                  |
+
+## Mesa de encantamientos
+
+*fabricación, botín y comercio*
+
+`<namespace>/enchanting/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se suman. Un archivo con `enchantment` da forma a un encantamiento, uno con `match` a un ítem, y cualquier otro ajusta la mesa entera. Una clave omitida mantiene la forma vanilla, así que un archivo con solo `enchantment` o `match` no cambia nada. El ajuste `enchanting` de la categoría `data` de la configuración desactiva toda la carpeta.
+
+### Cada encantamiento
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Clave         | Obligatorio | Valor                   | Por defecto | Qué hace                                                                                  |
+| ------------- | ----------- | ----------------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| `enchantment` | sí          | nombre de encantamiento |             | El encantamiento al que se refiere el archivo                                             |
+| `off`         | no          | booleano                | `false`     | Con `true` la mesa nunca lo ofrece; el botín, el comercio y los yunques todavía pueden    |
+| `weight`      | no          | entero, 1 o más         | el suyo     | Con qué frecuencia sale frente a los demás; en vanilla va de 1 para los más raros a 10    |
+| `minLevel`    | no          | entero, 1 o más         | el suyo     | El nivel más bajo que ofrece la mesa                                                      |
+| `maxLevel`    | no          | entero, 1 o más         | el suyo     | El nivel más alto que ofrece la mesa, que puede pasar del máximo propio del encantamiento |
+
+La mesa solo ofrece encantamientos del tag `#minecraft:in_enchanting_table`, así que uno que añada un pack también debe estar en ese tag; `off` deja uno fuera sin tocar el tag.
+
+### Cada ítem
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Clave            | Obligatorio | Valor                             | Por defecto               | Qué hace                                                                                                                                                                              |
+| ---------------- | ----------- | --------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | sí          | nombre de ítem, `#tag` o `*`      |                           | El ítem en la mesa. Un nombre de ítem gana a un tag y un tag a `*`; entre dos del mismo tipo gana el archivo cargado el último                                                        |
+| `enchantable`    | no          | booleano                          | vanilla                   | `true` deja que la mesa acepte un ítem que vanilla rechaza, y `false` rechaza uno que aceptaría                                                                                       |
+| `enchantability` | no          | entero, 1 o más                   | el propio del ítem        | Lo bien que acepta encantamientos: un valor más alto saca encantamientos más fuertes y más numerosos. En vanilla va de 1 a 25; las herramientas de diamante tienen 10 y las de oro 22 |
+| `enchantments`   | no          | lista de nombres de encantamiento | lo que encaja con el ítem | Los únicos encantamientos que la mesa puede sacar para él, encajen o no de otro modo                                                                                                  |
+
+Un ítem que se vuelve encantable sin tener encantabilidad propia necesita también `enchantability`, o nunca saldrá nada para él.
+
+### La mesa entera
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Clave           | Obligatorio | Valor                                | Por defecto | Qué hace                                                                                                                 |
+| --------------- | ----------- | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `enchantLevels` | no          | lista de 3 enteros, cada uno 1 o más | al azar     | El nivel que pide cada ranura, de arriba abajo, en lugar del sorteado; sus encantamientos se sortean también a ese nivel |
+| `enchantCosts`  | no          | lista de 3 enteros, cada uno 0 o más | `[1, 2, 3]` | Los niveles que quita cada ranura al elegirla                                                                            |
+| `lapisCosts`    | no          | lista de 3 enteros, cada uno 1 o más | `[1, 2, 3]` | El lapislázuli que quita cada ranura al elegirla, que debe estar en la mesa                                              |
+| `shelfCap`      | no          | entero, 0 o más                      | `15`        | Cuántas librerías cuentan como máximo                                                                                    |
+| `shelfPower`    | no          | número de 0 a 16                     | `1`         | Cuánto cuenta cada librería, redondeado sobre el total                                                                   |
+
+La pantalla sigue dibujando el uno, dos y tres de vanilla junto a las ranuras y en sus descripciones emergentes; lo que la mesa comprueba y quita sigue al archivo.
 
 ## Drops de bloques
 
@@ -8035,6 +8149,7 @@ functions = true
 | `playerLoot`     | booleano | `true`      | Aplica los archivos player_loot/*.json, que tiran una tabla de botín cuando muere un jugador y sueltan lo que produce, además del inventario o en lugar de él                                                    |
 | `registryRemaps` | booleano | `true`      | Aplica los archivos registry_remap, que renombran una entrada de registro para que los mundos guardados antes del cambio de nombre conserven sus bloques e ítems en lugar de perderlos                           |
 | `anvils`         | booleano | `true`      | Aplica los archivos anvils/*.json, que permiten que un yunque ponga encantamientos con nombre en un ítem a cambio de un coste en niveles, consiga un logro al retirarlo y retenga un ítem sin uso hasta entonces |
+| `enchanting`     | booleano | `true`      | Aplica los archivos enchanting/*.json, que cambian lo que la mesa de encantamientos ofrece, pide y quita: por encantamiento, por ítem y para la mesa entera                                                      |
 | `blockDrops`     | booleano | `true`      | Aplica los archivos block_drops/*.json, que añaden o sustituyen lo que suelta un bloque cada vez que se rompe, experiencia incluida, para bloques que un pack no posee                                           |
 | `functions`      | booleano | `true`      | Carga los archivos .mcfunction de los packs, para que funcionen en todos los mundos                                                                                                                              |
 

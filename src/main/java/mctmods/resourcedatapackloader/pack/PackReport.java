@@ -34,6 +34,7 @@ final class PackReport {
         collect(off, !Config.data.lootInjectionsOff(), "data.lootInjections", PackManager.JSON, PackManager.LOOT_INJECTIONS);
         collect(off, !Config.data.blockDropsOff(), "data.blockDrops", PackManager.JSON, PackManager.BLOCK_DROPS);
         collect(off, !Config.data.anvilsOff(), "data.anvils", PackManager.JSON, PackManager.ANVILS);
+        collect(off, !Config.data.enchantingOff(), "data.enchanting", PackManager.JSON, PackManager.ENCHANTING);
         collect(off, !Config.data.playerLootOff(), "data.playerLoot", PackManager.JSON, PackManager.PLAYER_LOOT);
         collect(off, !Config.data.registryRemapsOff(), "data.registryRemaps", PackManager.JSON, PackManager.REGISTRY_REMAP);
         collect(off, !Config.worldgen.loadOff(), "worldgen.load", PackManager.JSON, PackManager.WORLDGEN);

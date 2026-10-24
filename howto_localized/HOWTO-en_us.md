@@ -61,6 +61,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
+- [Enchanting table](#enchanting-table)
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
 - [Player loot](#player-loot)
@@ -161,6 +162,7 @@ Under `data/`:
 | `<namespace>/entities/*.json`                | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                                                                        |
 | `<namespace>/hardness/*.json`                | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                                                                      |
 | `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                            |
+| `<namespace>/enchanting/*.json`              | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                    |
 | `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                       |
 | `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                               |
 | `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
@@ -498,7 +500,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | Server alone is enough                                                                                                                                    | Needs the pack on the client too                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled`                                                                 | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                 |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
@@ -2277,6 +2279,118 @@ Put the named item in an anvil's left slot and its `with` item in the right, and
 The anvil's own repairs and combinations are untouched: this only answers when the left holds a named item and the right holds its `with`.
 
 A mob with `collectsExperience` spends its levels here as well. While it holds `item` in its main hand and `with` in its off hand and has `levels` to pay, it walks to an anvil, a chipped anvil or a damaged anvil within 16 blocks across and 4 up or down, and works it once it is within 3 blocks: the levels come off its own as they come off a player's, `with` is used up, the anvil wears as it does under a player, and the work ends up in its main hand. As it walks over a dropped item that some anvil work names under `with`, it picks it up into its off hand. `grants` and `locks` only concern players, so a mob earns nothing from `grants` and no lock holds it back.
+
+### Too expensive
+
+A file holding `tooExpensive` moves the point where the anvil gives up. Work that costs that many levels or more shows Too Expensive! and cannot be taken out, except in creative, and a rename alone still costs at most one level less. It can sit in its own file or beside a piece of work, and the file loaded last wins.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Key            | Required | Value           | Default | What it does                                             |
+| -------------- | -------- | --------------- | ------- | -------------------------------------------------------- |
+| `tooExpensive` | yes      | int, 1 to 32767 | `40`    | The level cost at which anvil work becomes too expensive |
+
+### Anvil rules
+
+A file holding `match` changes how the anvil repairs and combines the item it names. A key left out keeps vanilla's way, so a file with `match` alone works exactly as vanilla does. Renaming is never touched: its one level and the prior-work cost the items carry still come on top of any cost set here.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Key             | Required | Value                                         | Default                        | What it does                                                                                                                                                     |
+| --------------- | -------- | --------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | yes      | item name, `#tag` or `*`                      |                                | The left-slot item the rule is for. An item name wins over a tag and a tag over `*`; between two of the same kind the file loaded last wins                      |
+| `repairWith`    | no       | item name, `#tag` or `*`                      | the item's own repair material | What repairs it from the right slot                                                                                                                              |
+| `repairPerUnit` | no       | number above 0 up to 1                        | `0.25`                         | The share of full durability each repair item gives back                                                                                                         |
+| `repairCost`    | no       | int from 1 to 32767, or `{ "multiplier": n }` | vanilla                        | The levels a repair costs. A number replaces vanilla's price, and a multiplier above 0 up to 100 scales it, rounded and at least 1                               |
+| `combineCost`   | no       | as `repairCost`                               | vanilla                        | The same for joining two of the item                                                                                                                             |
+| `bookCost`      | no       | as `repairCost`                               | vanilla                        | The same for an enchanted book in the right slot                                                                                                                 |
+| `penalty`       | no       | `"vanilla"`, `"none"` or `{ "factor": n }`    | `"vanilla"`                    | How the prior-work cost grows with each use. Vanilla doubles it and adds one, `none` leaves it where it is, and a factor from 0 to 16 multiplies it and adds one |
+| `repair`        | no       | boolean                                       | `true`                         | `false` and the anvil will not repair it                                                                                                                         |
+| `combine`       | no       | boolean                                       | `true`                         | `false` and the anvil will not join two of it; enchanted books still apply                                                                                       |
+
+## Enchanting table
+
+*crafting, loot and trade*
+
+`<namespace>/enchanting/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. A file holding `enchantment` shapes one enchantment, a file holding `match` shapes one item, and any other file sets the table as a whole. A key left out keeps vanilla's way, so a file with only `enchantment` or `match` changes nothing. The `enchanting` setting in the `data` config category turns the whole folder off.
+
+### Each enchantment
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Key           | Required | Value            | Default | What it does                                                                          |
+| ------------- | -------- | ---------------- | ------- | ------------------------------------------------------------------------------------- |
+| `enchantment` | yes      | enchantment name |         | Which enchantment the file is for                                                     |
+| `off`         | no       | boolean          | `false` | `true` and the table never offers it; loot, trades and anvils still can               |
+| `weight`      | no       | int, 1 or more   | its own | How often it is picked against the others; vanilla's run from 1 for the rarest to 10  |
+| `minLevel`    | no       | int, 1 or more   | its own | The lowest level the table offers                                                     |
+| `maxLevel`    | no       | int, 1 or more   | its own | The highest level the table offers, which may go past the enchantment's own top level |
+
+The table only offers enchantments in the `#minecraft:in_enchanting_table` tag, so one a pack adds must be in that tag as well; `off` keeps one out without touching the tag.
+
+### Each item
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Key              | Required | Value                     | Default            | What it does                                                                                                                                   |
+| ---------------- | -------- | ------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | yes      | item name, `#tag` or `*`  |                    | The item in the table. An item name wins over a tag and a tag over `*`; between two of the same kind the file loaded last wins                 |
+| `enchantable`    | no       | boolean                   | vanilla            | `true` lets the table take an item vanilla turns away, and `false` turns away one it would take                                                |
+| `enchantability` | no       | int, 1 or more            | the item's own     | How well it takes enchantments: higher rolls stronger ones and more of them. Vanilla's run from 1 to 25; diamond tools are 10 and gold ones 22 |
+| `enchantments`   | no       | list of enchantment names | what fits the item | The only enchantments the table may roll for it, whether or not they would fit it otherwise                                                    |
+
+An item made enchantable that has no enchantability of its own needs `enchantability` as well, or nothing is ever rolled for it.
+
+### The whole table
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Key             | Required | Value                     | Default     | What it does                                                                                                           |
+| --------------- | -------- | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | no       | list of 3 ints, 1 or more | rolled      | The level each slot, top to bottom, asks for in place of the rolled one; its enchantments are rolled at that level too |
+| `enchantCosts`  | no       | list of 3 ints, 0 or more | `[1, 2, 3]` | The levels each slot takes once picked                                                                                 |
+| `lapisCosts`    | no       | list of 3 ints, 1 or more | `[1, 2, 3]` | The lapis lazuli each slot takes once picked, which must be in the table                                               |
+| `shelfCap`      | no       | int, 0 or more            | `15`        | How many bookshelves count at most                                                                                     |
+| `shelfPower`    | no       | number from 0 to 16       | `1`         | What each bookshelf counts as, rounded over the lot                                                                    |
+
+The screen still draws vanilla's one, two and three beside the slots and in their tooltips; what the table checks and takes follows the file.
 
 ## Block drops
 
@@ -8035,6 +8149,7 @@ functions = true
 | `playerLoot`     | boolean | `true`  | Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory                                        |
 | `registryRemaps` | boolean | `true`  | Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them                                  |
 | `anvils`         | boolean | `true`  | Apply anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then |
+| `enchanting`     | boolean | `true`  | Apply enchanting/*.json files, which change what the enchanting table offers, asks and takes: per enchantment, per item and for the whole table                                 |
 | `blockDrops`     | boolean | `true`  | Apply block_drops/*.json files, which add to or replace what a block drops whenever it breaks, experience included, for blocks a pack does not own                              |
 | `functions`      | boolean | `true`  | Load .mcfunction files from packs, so they work in every world                                                                                                                  |
 
