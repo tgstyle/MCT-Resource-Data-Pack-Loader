@@ -66,6 +66,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
+- [Portage](#portage)
 - [Butin des joueurs](#butin-des-joueurs)
 - [Variété alimentaire](#variété-alimentaire)
 - [Villageois et échanges](#villageois-et-échanges)
@@ -202,6 +203,7 @@ Sous `data/` :
 | `<namespace>/block_drops/*.json`             | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                                      |
 | `<namespace>/harvests/*.json`                | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                                              |
 | `<namespace>/veins/*.json`                   | Groupes de blocs qu'un outil mine d'un seul coup, avec une limite et un coût en faim. [Minage de filons](#minage-de-filons)                                                                     |
+| `<namespace>/carries/*.json`                 | Blocs et mobs qu'un joueur accroupi ramasse et repose. [Portage](#portage)                                                                                                                      |
 | `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                         |
 | `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                          |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                        |
@@ -2791,6 +2793,32 @@ Casser un minerai à la pioche ne casse normalement que ce seul bloc. Un fichier
 | `requires` | non    | liste de chaînes                                                                                               | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition             |
 
 Se toucher veut dire partager une face, une arête ou un coin, si bien qu'un bloc a 26 voisins. En survie seulement : les joueurs en créatif et les spectateurs cassent un seul bloc comme d'habitude. Cela s'arrête quand l'outil se brise ou que la barre de faim du joueur tombe à 0. Chaque bloc supplémentaire donne ses drops habituels, avec la Fortune de l'outil tenu et toutes les règles de Butins des blocs, et use l'outil d'une utilisation. Cela ne s'applique pas à un bloc qu'un groupe de dureté conserve. Ce sont des données de pack côté serveur seulement, sans rien à prévoir côté client. Un fichier sans blocs ni outils valides est ignoré avec une ligne d'erreur.
+
+## Portage
+
+*artisanat, butin et commerce*
+
+`<namespace>/carries/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+Un joueur qui s'accroupit et fait un clic droit la main principale vide ramasse un bloc ou un mob de la liste, et accroupi, un clic droit sur un bloc le repose sur la face visée. Un bloc porté garde les données de son bloc-entité et un mob porté toutes ses données d'entité. Le porteur avance à demi-vitesse, une ligne de la barre d'action indique ce qu'il porte, et cette charge reste dans les données du joueur après la mort et la reconnexion.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Clé        | Requis | Valeur               | Défaut | Rôle                                                                                                                                          |
+| ---------- | ------ | -------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | non    | liste d'id de blocs  | aucun  | Les blocs qui peuvent être portés, vanilla ou d'un pack. Un bloc qu'aucun mod n'enregistre est ignoré avec une ligne de journal               |
+| `mobs`     | non    | liste d'id d'entités | aucun  | Les mobs qui peuvent être portés, par id d'entité, vanilla ou d'un pack. Un id qu'aucun mod n'enregistre est ignoré avec une ligne de journal |
+| `requires` | non    | liste de chaînes     | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                               |
+
+Ids seulement, pas de tags. Les structures de deux blocs, comme les portes, les grandes plantes et les lits, ne peuvent pas être portées, ni les blocs protégés ou de dureté inférieure à 0. Les passagers d'un mob descendent quand on le ramasse, la laisse n'a pas de traitement particulier et rien n'est dessiné sur le porteur. Les données portées ne passent pas par le data fixer lors des mises à jour du jeu, et une charge dont le bloc ou le mob ne se résout plus est effacée avec une ligne d'erreur dans le journal. Un mob de pack accroupi qui a une interface de stockage est ramassé au lieu de l'ouvrir.
 
 ## Butin des joueurs
 

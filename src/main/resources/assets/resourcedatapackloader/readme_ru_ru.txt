@@ -215,6 +215,7 @@ priority равным -1, чтобы он оставался под всем о�
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Блоки бывают таких форм, их задаёт поле "type":
 

@@ -206,6 +206,7 @@ hardness 文件为一组方块设定挖掘时间和爆炸抗性，exposures 文�
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 方块有以下几种形态，由“type”字段决定：
 

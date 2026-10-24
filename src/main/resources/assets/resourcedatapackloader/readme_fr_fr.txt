@@ -225,6 +225,7 @@ Chacun de ceux-ci est un dossier sous data/<yourpack> :
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Les blocs existent sous ces formes, fixées par le champ "type" :
 

@@ -66,6 +66,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Drops de blocos](#drops-de-blocos)
 - [Colheita com clique direito](#colheita-com-clique-direito)
 - [Mineração de veios](#mineração-de-veios)
+- [Carregar](#carregar)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Variedade de comida](#variedade-de-comida)
 - [Aldeões e trocas](#aldeões-e-trocas)
@@ -202,6 +203,7 @@ Em `data/`:
 | `<namespace>/block_drops/*.json`             | Drops extras ou substitutos para blocos que um pacote não possui. [Drops de blocos](#drops-de-blocos)                                                                                    |
 | `<namespace>/harvests/*.json`                | Plantações colhidas e replantadas com o clique direito. [Colheita com clique direito](#colheita-com-clique-direito)                                                                      |
 | `<namespace>/veins/*.json`                   | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de veios](#mineração-de-veios)                                                             |
+| `<namespace>/carries/*.json`                 | Blocos e mobs que um jogador agachado pega e coloca de volta. [Carregar](#carregar)                                                                                                      |
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                          |
 | `<namespace>/diets/*.json`                   | Regras que fazem uma comida repetida alimentar menos e uma dieta variada alimentar mais. [Variedade de comida](#variedade-de-comida)                                                     |
 | `<namespace>/advancements/*.json`            | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                       |
@@ -2791,6 +2793,32 @@ Quebrar um minério com uma picareta normalmente quebra só aquele bloco. Um arq
 | `requires` | não         | lista de strings                                                                                             | nenhum | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição          |
 
 Tocar significa dividir uma face, uma aresta ou um canto, então cada bloco tem 26 vizinhos. Só no modo sobrevivência: jogadores no criativo e espectadores quebram um bloco só, como sempre. Para quando a ferramenta quebra ou a barra de comida do jogador chega a 0. Cada bloco extra solta seus drops de sempre, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e gasta um uso da ferramenta. Não age sobre um bloco que um grupo de dureza mantém. São dados de pack só de servidor e não precisam de nada no cliente. Um arquivo sem blocos ou ferramentas válidos é ignorado com uma linha de erro.
+
+## Carregar
+
+*criação, saque e comércio*
+
+`<namespace>/carries/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Um jogador que se agacha e clica com o botão direito com a mão principal vazia pega um bloco ou mob da lista, e agachado com o botão direito num bloco o coloca de volta na face clicada. Um bloco carregado mantém os dados da sua entidade de bloco e um mob carregado todos os dados da sua entidade. Quem carrega se move à metade da velocidade, uma linha da barra de ação diz o que está sendo carregado, e a carga fica nos dados do jogador depois da morte e ao reconectar.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Chave      | Obrigatória | Valor                    | Padrão | O que faz                                                                                                                               |
+| ---------- | ----------- | ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | não         | lista de ids de bloco    | nenhum | Os blocos que podem ser carregados, do vanilla ou de um pack. Um bloco que nada registra é ignorado com uma linha de log                |
+| `mobs`     | não         | lista de ids de entidade | nenhum | Os mobs que podem ser carregados, por id de entidade, do vanilla ou de um pack. Um id que nada registra é ignorado com uma linha de log |
+| `requires` | não         | lista de strings         | nenhum | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição                             |
+
+Só ids, sem tags. Estruturas de dois blocos, como portas, plantas altas e camas, não podem ser carregadas, nem blocos protegidos ou com dureza abaixo de 0. Os passageiros de um mob são soltos quando ele é pego, a guia não recebe tratamento especial e nada é desenhado em quem carrega. Os dados carregados não passam pelo data fixer ao atualizar o jogo, e uma carga cujo bloco ou mob não é mais encontrado é apagada com uma linha de erro no log. Um mob de pack agachado que tenha interface de armazenamento é pego em vez de abri-la.
 
 ## Saque de jogadores
 

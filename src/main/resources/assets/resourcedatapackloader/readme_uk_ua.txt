@@ -214,6 +214,7 @@ assets, так само, як будь-який інший файл у цій т
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Блоки бувають таких форм, їх задає поле "type":
 

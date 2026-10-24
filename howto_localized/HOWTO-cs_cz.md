@@ -66,6 +66,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Dropy z bloků](#dropy-z-bloků)
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
+- [Nošení](#nošení)
 - [Kořist hráčů](#kořist-hráčů)
 - [Pestrost jídla](#pestrost-jídla)
 - [Vesničané a obchody](#vesničané-a-obchody)
@@ -202,6 +203,7 @@ V `data/`:
 | `<namespace>/block_drops/*.json`             | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků)                                                                                                    |
 | `<namespace>/harvests/*.json`                | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                         |
 | `<namespace>/veins/*.json`                   | Skupiny bloků, které nástroj vytěží naráz, s limitem a cenou v hladu. [Těžení žil](#těžení-žil)                                                                                                      |
+| `<namespace>/carries/*.json`                 | Bloky a moby, které hráč v plížení zvedne a položí. [Nošení](#nošení)                                                                                                                                |
 | `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
@@ -2791,6 +2793,32 @@ Rozbití rudy krumpáčem normálně rozbije jen ten jeden blok. Soubor zde pojm
 | `requires` | ne      | seznam řetězců                                                                                   | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice              |
 
 Dotýkat se znamená mít společnou stěnu, hranu nebo roh, takže blok má 26 sousedů. Funguje jen v přežití: hráči v kreativním režimu a diváci rozbíjejí jeden blok jako obvykle. Zastaví se, když se nástroj rozbije nebo hladina jídla hráče klesne na 0. Každý další blok dá své obvyklé dropy, s Fortunou drženého nástroje a všemi pravidly z části Dropy z bloků, a nástroj opotřebuje o jedno použití. Na blok, který drží skupina tvrdosti, se nespustí. Jsou to data balíčku jen pro server a na klientovi nepotřebují nic. Soubor bez platných bloků nebo nástrojů se ignoruje s řádkem chyby.
+
+## Nošení
+
+*výroba, kořist a obchod*
+
+`<namespace>/carries/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Hráč, který se plíží a klikne pravým tlačítkem s prázdnou hlavní rukou, zvedne uvedený blok nebo moba a plížení s pravým klikem na blok ho znovu položí na kliknutou stěnu. Nesený blok si ponechá data své blokové entity a nesený mob všechna svá data entity. Nosič se pohybuje poloviční rychlostí, řádek nad lištou předmětů říká, co nese, a náklad zůstane v datech hráče i po smrti a opětovném připojení.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Klíč       | Povinný | Hodnota         | Výchozí | Co dělá                                                                                                                    |
+| ---------- | ------- | --------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | ne      | seznam id bloků | žádný   | Bloky, které lze nést, vanilkové nebo z balíčku. Blok, který nic nezaregistruje, se přeskočí s řádkem v logu               |
+| `mobs`     | ne      | seznam ID entit | žádný   | Moby, které lze nést, podle ID entity, vanilkové nebo z balíčku. ID, které nic nezaregistruje, se přeskočí s řádkem v logu |
+| `requires` | ne      | seznam řetězců  | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice                      |
+
+Jen ID, žádné štítky. Dvoublokové stavby jako dveře, vysoké rostliny a postele nést nejde, stejně jako chráněné bloky a bloky s tvrdostí pod 0. Jezdci moba se při zvednutí shodí, vodítko se zvlášť neřeší a na nosiči se nic nevykresluje. Nesená data se při přechodu na novější verzi hry neopravují a náklad, jehož blok nebo mob už neexistuje, se smaže s chybovým řádkem v logu. Plížící se mob z balíčku s úložným rozhraním se zvedne místo otevření.
 
 ## Kořist hráčů
 

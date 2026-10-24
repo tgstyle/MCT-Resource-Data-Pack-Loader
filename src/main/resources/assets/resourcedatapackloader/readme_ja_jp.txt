@@ -217,6 +217,7 @@ Modが優先され、自作のバリアントはスキップされます。
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 ブロックには、"type" フィールドで指定する次の形があります。
 

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentCarry;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.FilterDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
@@ -184,6 +185,7 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
         Entity target = event.getTarget();
         StorageDef def = def(target);
         if (event.getHand() != InteractionHand.MAIN_HAND || def == null) { return; }
+        if (event.getEntity().isShiftKeyDown() && event.getEntity().getMainHandItem().isEmpty() && ContentCarry.listsMob(target)) { return; }
         if (!event.getEntity().isSecondaryUseActive()) {
             if (poured(event)) {
                 event.setCanceled(true);

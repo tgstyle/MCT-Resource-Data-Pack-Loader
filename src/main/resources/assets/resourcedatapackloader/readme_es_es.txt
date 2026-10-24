@@ -219,6 +219,7 @@ Cada una de estas es una carpeta bajo data/<yourpack>:
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Los bloques vienen en estas formas, fijadas por el campo "type":
 

@@ -213,6 +213,7 @@ Každé z těchto je složka pod data/<yourpack>:
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Bloky se dodávají v těchto tvarech, určených polem "type":
 
