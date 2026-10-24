@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -117,9 +118,15 @@ public final class ContentEnchanting {
         int[] levels = perSlot(key, json, "enchantLevels", 1);
         if (levels != null) { AnvilCosts.serveLevels(levels); }
         int[] paid = perSlot(key, json, "enchantCosts", 0);
-        if (paid != null) { AnvilCosts.servePaid(paid); }
+        if (paid != null) {
+            AnvilCosts.servePaid(paid);
+            VanillaClients.clientDrawn("Enchanting file " + key, "enchantCosts");
+        }
         int[] lapis = perSlot(key, json, "lapisCosts", 1);
-        if (lapis != null) { AnvilCosts.serveLapis(lapis); }
+        if (lapis != null) {
+            AnvilCosts.serveLapis(lapis);
+            VanillaClients.clientDrawn("Enchanting file " + key, "lapisCosts");
+        }
         int cap = whole(key, json, SHELF_CAP, 0);
         if (cap >= 0) { shelfCap = cap; }
         if (json.has(SHELF_POWER)) { shelfPower = Json.ranged(json, SHELF_POWER, 1.0F, 0.0F, MOST_SHELF_POWER, key); }

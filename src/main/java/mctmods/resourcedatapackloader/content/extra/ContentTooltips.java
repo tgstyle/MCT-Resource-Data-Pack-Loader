@@ -32,7 +32,7 @@ public final class ContentTooltips {
         if (GENERATION.stale()) {
             ITEMS.clear();
             ENCHANTMENTS.clear();
-            if (Config.content.tooltips) {
+            if (Config.content.tooltips && !Config.content.vanillaClients) {
                 Json.eachObject(PackManager.TOOLTIPS, "tooltip file", ContentTooltips::read);
                 if (wanted()) { Summary.info("tooltips", "Loaded tooltip lines for " + ITEMS.size() + " item entry/entries and " + ENCHANTMENTS.size() + " enchantment(s)"); }
             }

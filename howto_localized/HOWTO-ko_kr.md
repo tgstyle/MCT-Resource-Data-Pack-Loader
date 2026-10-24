@@ -513,17 +513,19 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 
 팩은 서버에만 둘 수 있고, 플레이어는 순정 바닐라 클라이언트를 쓸 수 있습니다. 단 한 가지 제약이 있습니다. **팩의 어느 것도 무언가를 등록해서는 안 됩니다.** 두 모드 id 모두 어떤 원격이든 받아들이며, 판단은 팩이 합니다. 바닐라 클라이언트는 자기에게 들어 있는 레지스트리로 플레이하므로, 레지스트리에 추가하는 팩은 양쪽에 있어야 합니다.
 
-| 서버에만 있어도 충분함                                                                                                                                            | 클라이언트에도 팩이 필요함                                                                |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                  |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                               |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                    |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                   | `villagers`                                                                               |
-| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)              |
-| `teams`, `scoring`, `ranks`                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요) |
-| 제어 계층 전체, 설정, 사전 생성                                                                                                                                   |                                                                                           |
+| 서버에만 있어도 충분함                                                                                                                                            | 클라이언트에도 팩이 필요함                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                                                        |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                                                          |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                   | `villagers`                                                                                                                     |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
+| `teams`, `scoring`, `ranks`                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
+| 제어 계층 전체, 설정, 사전 생성                                                                                                                                   |                                                                                                                                 |
 
 오른쪽 열은 절대적인 한계입니다. 알 수 없는 차원으로 보내진 바닐라 클라이언트는 연결이 끊기고, 알 수 없는 블록은 클라이언트에 설명할 수 없습니다. 왼쪽 열이 동작하는 이유는 거기 있는 모든 것이 전부 서버 측에서 실행되거나 바닐라가 이미 쓰는 패킷으로 클라이언트에 전달되기 때문입니다(서버가 채우는 제작 결과 슬롯, 일반 발전 과제 패킷, 상태 메시지 형태의 게이트 거부 알림, 바닐라의 게임 모드/타이틀/순간이동 패킷으로 구성된 사전 생성 보류).
+
+서버에 남아 있으며 모드 자체의 클라이언트만 그립니다: 보스바의 `background`, 하트 파일의 `heartColors`, 모루 파일의 `tooExpensive`, 마법 부여 파일의 `enchantCosts`와 `lapisCosts`, 그리고 접두 속성(affix)과 보석 소켓의 이름입니다. `vanillaClients`를 켜면 팩이 설정한 각 항목이 로그에 이름과 함께 기록되고, 그 파일의 나머지는 그대로 적용됩니다.
 
 `worldtemplates`는 한 가지 예외를 빼면 서버 측입니다. **`rubicWorld`는 `vanillaClients`와 함께 쓸 수 없습니다.** Rubic 월드는 큐브로 이루어져 있고, 모드가 없는 클라이언트에는 큐브를 보낼 수 없으므로 로그인 때 거부되거나 아무것도 보이지 않게 됩니다. 둘을 모두 설정하면 모든 플레이어를 돌려보내는 서버가 되는 대신 새 월드가 Rubic이 아닌 일반 월드로 만들어지고 로그에 이유가 남습니다. *이미* Rubic 월드로 만들어진 월드에서 `vanillaClients`를 켜는 것은 게임을 아예 멈추는 유일한 경우입니다. 그런 저장 데이터를 일반 월드로 불러오면 망가지므로, 건드리지 않은 채 두어 여러분이 결정하게 합니다.
 
@@ -538,6 +540,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
    - 서버가 추가한 레시피는 제작되지만 레시피 책에는 나타나지 않습니다.
    - 월드 소개가 표시되지 않습니다. 바닐라 클라이언트는 기다려 주지도 않아서, 곧바로 환영 메시지를 받고 다른 모두와 함께 사전 생성 보류에서 풀려나며 `/rdpl round start`를 지연시키지도 않습니다.
    - 이 모드가 카드로 보여 주는 것, 예를 들어 결과, 리더 알림, `saysCard` 줄은 채팅 줄로 도착하고, 로비의 안내 같은 화면 중앙 메모는 타이틀로 도착합니다.
+   - 마을 주민과의 대화는 채팅 줄로 도착하며, 각 응답은 번호가 붙은 줄로 나타나 클릭하면 `/rdplserver talk <number>`를 실행합니다.
    - 경도 그룹은 서버가 블록을 부수는 데 걸리는 시간을 정하지만, 클라이언트의 균열 애니메이션은 블록의 평소 속도로 진행됩니다. 스택 크기, 내구도, 경도, 빛처럼 클라이언트도 읽는 수치를 재정의해도 그쪽에는 여전히 이전 값이 표시됩니다.
    - 경도 그룹의 `adventure` 채굴은 동작하지 않습니다. 모험 모드의 바닐라 클라이언트는 들고 있는 아이템이 자기 `CanDestroy` 태그에 그 블록을 지정하지 않으면 파기를 시작조차 하지 않습니다.
    - 비활성화된 블록이나 아이템은 바닐라 클라이언트의 크리에이티브 탭에 여전히 표시되며, 이는 클라이언트가 직접 구성하기 때문입니다. 그 외 비활성화의 모든 것은 서버에서 동작합니다.

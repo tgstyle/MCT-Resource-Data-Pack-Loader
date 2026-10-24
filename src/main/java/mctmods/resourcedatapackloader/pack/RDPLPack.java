@@ -254,16 +254,19 @@ public final class RDPLPack {
         }
     }
 
-    public int count(String type, String ext) {
+    public int count(String type, String ext) { return files(type, ext).size(); }
+
+    public List<String> files(String type, String ext) {
         String prefix = type + "/";
         String suffix = "." + ext;
-        int total = 0;
-        for (Set<String> paths : index.values()) {
-            for (String path : paths) {
-                if (path.startsWith(prefix) && path.endsWith(suffix)) { total++; }
+        List<String> names = new ArrayList<>();
+        for (Map.Entry<String, Set<String>> entry : index.entrySet()) {
+            for (String path : entry.getValue()) {
+                if (path.startsWith(prefix) && path.endsWith(suffix)) { names.add(entry.getKey() + ":" + path.substring(prefix.length(), path.length() - suffix.length())); }
             }
         }
-        return total;
+        Collections.sort(names);
+        return names;
     }
 
     public synchronized void close() throws IOException {

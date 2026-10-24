@@ -513,17 +513,19 @@ RDPL 適合用來取代一兩個配方，而你自己內容的配方則應該加
 
 資源包可以只存在於伺服器上，讓玩家使用純原版用戶端，但有一項限制：**資源包中不得註冊任何東西**。兩個模組 id 都接受任何遠端；由資源包自行決定。原版用戶端使用它隨附的登錄表來遊玩，因此對登錄表有所新增的資源包必須兩端都安裝。
 
-| 只裝在伺服器就夠了                                                                                                                              | 用戶端也需要資源包                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                          | `blocks`、`items`、`fluids`、`materials`                                        |
-| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                       | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`                     |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                              | `biomes`、`dimensions`、`portalframes`                                          |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers`                                                                     |
-| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（限用戶端認得的職業：原版的，或兩端都有的模組的）            | `entities`、`worldintro`、`texts`（介紹永遠不會顯示給原版用戶端）               |
-| `teams`、`scoring`、`ranks`                                                                                                                     | `models`、`blockstates`、`textures`、`lang`（用戶端資料夾，沒有用戶端時請省略） |
-| 整個控制層、設定與預先生成                                                                                                                      |                                                                                 |
+| 只裝在伺服器就夠了                                                                                                                              | 用戶端也需要資源包                                                                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                          | `blocks`、`items`、`fluids`、`materials`                                                                               |
+| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                       | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，詞綴和寶石槽的名稱） |
+| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                              | `biomes`、`dimensions`、`portalframes`                                                                                 |
+| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers`                                                                                                            |
+| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（限用戶端認得的職業：原版的，或兩端都有的模組的）            | `entities`、`worldintro`、`texts`（介紹永遠不會顯示給原版用戶端）                                                      |
+| `teams`、`scoring`、`ranks`                                                                                                                     | `models`、`blockstates`、`textures`、`lang`（用戶端資料夾，沒有用戶端時請省略）                                        |
+| 整個控制層、設定與預先生成                                                                                                                      |                                                                                                                        |
 
 右側欄是硬性限制：原版用戶端被送往未知的維度時會斷線，而未知的方塊也無法描述給它。左側欄之所以可行，是因為其中的一切不是完全在伺服端執行，就是透過原版已經支援的封包傳到用戶端（由伺服器填入的合成結果欄位、一般的進度封包、狀態訊息形式的閘門拒絕提示，以及由原版遊戲模式、標題與傳送封包組成的預先生成停留）。
+
+這些內容保留在伺服端，只由模組自己的用戶端繪製：Boss 血條的 `background`、心形檔案中的 `heartColors`、鐵砧檔案中的 `tooExpensive`、附魔檔案中的 `enchantCosts` 和 `lapisCosts`，以及詞綴和寶石槽的名稱。開啟 `vanillaClients` 後，資源包設定的每一項都會在日誌中列出名稱，該檔案的其餘部分仍然生效。
 
 `worldtemplates` 屬於伺服端，但有一個例外：**`rubicWorld` 不能與 `vanillaClients` 並用**。Rubic 世界由立方體構成，沒有安裝本模組的用戶端無法收到這些立方體，因此會在登入時被拒絕，或什麼都看不到。兩者同時設定時，新世界會建成一般世界而不是 rubic 世界，日誌會說明原因，免得伺服器把每位玩家都拒於門外。對於一個*已經*建成 rubic 世界的世界開啟 `vanillaClients`，是唯一會讓遊戲直接停止的情況：把這樣的存檔當成一般世界載入會毀掉它，因此它會保持原狀，交由你決定。
 
@@ -538,6 +540,7 @@ RDPL 適合用來取代一兩個配方，而你自己內容的配方則應該加
    - 伺服器新增的配方可以合成，但不會出現在配方書中。
    - 不會顯示世界介紹。原版用戶端也不會被等待：它會立刻受到歡迎，與其他所有人一起從預先生成停留中被釋放，而且絕不會拖住 `/rdpl round start`。
    - 本模組以卡片顯示的任何內容，例如結果、領先通知或 `saysCard` 的行，都會以聊天列的形式送達，而大廳這類畫面中央的提示則以標題形式送達。
+   - 村民的對話以聊天列的形式送達，每則回覆都是一行帶編號的文字，點擊即執行 `/rdplserver talk <number>`。
    - 硬度群組設定的是伺服器破壞方塊所需的時間，但用戶端的裂痕動畫仍以該方塊平常的速度進行。對用戶端也會讀取的數值進行覆寫，例如堆疊數量、耐久度、硬度或光照，在用戶端仍會顯示舊值。
    - 硬度群組的 `adventure` 挖掘無法運作：除非手持物品在自己的 `CanDestroy` 標籤中指明該方塊，否則處於冒險模式的原版用戶端永遠不會開始挖掘。
    - 被停用的方塊或物品仍會顯示在原版用戶端的創造模式分頁中，因為該分頁由用戶端自行建立；停用的其他一切都能從伺服器端運作。

@@ -513,17 +513,19 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当添加在随
 
 资源包可以只放在服务器上，让玩家使用纯原版客户端，但有一个约束：**其中任何内容都不能注册任何东西**。两个模组 id 都接受任何远端；由资源包自己决定。原版客户端使用它自带的注册表进行游戏，所以向注册表添加内容的资源包必须两端都有。
 
-| 只放服务端就够                                                                                                                                  | 客户端也需要该资源包                                                              |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                          | `blocks`、`items`、`fluids`、`materials`                                          |
-| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                       | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`                       |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                              | `biomes`、`dimensions`、`portalframes`                                            |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers`                                                                       |
-| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的）          | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                 |
-| `teams`、`scoring`、`ranks`                                                                                                                     | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放） |
-| 整个控制层、设置和预生成                                                                                                                        |                                                                                   |
+| 只放服务端就够                                                                                                                                  | 客户端也需要该资源包                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                          | `blocks`、`items`、`fluids`、`materials`                                                                               |
+| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                       | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，词缀和宝石槽的名称） |
+| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                              | `biomes`、`dimensions`、`portalframes`                                                                                 |
+| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers`                                                                                                            |
+| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的）          | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                                                      |
+| `teams`、`scoring`、`ranks`                                                                                                                     | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放）                                      |
+| 整个控制层、设置和预生成                                                                                                                        |                                                                                                                        |
 
 右栏是硬性限制：原版客户端被送往未知维度时会断开连接，而未知方块也无法向它描述。左栏之所以可行，是因为其中的一切要么完全在服务端运行，要么通过原版本就能理解的数据包传到客户端（由服务端填充的合成结果槽、普通的进度数据包、状态消息形式的闸门拒绝提示，以及由原版游戏模式/标题/传送数据包构成的预生成等候）。
+
+这些内容保留在服务端，只由模组自己的客户端绘制：Boss 血条的 `background`、心形文件中的 `heartColors`、铁砧文件中的 `tooExpensive`、附魔文件中的 `enchantCosts` 和 `lapisCosts`，以及词缀和宝石槽的名称。开启 `vanillaClients` 后，资源包设置的每一项都会在日志中被点名，该文件的其余部分仍然生效。
 
 `worldtemplates` 属于服务端，只有一个例外：**`rubicWorld` 不能与 `vanillaClients` 一起使用**。rubic 世界由立方体构成，没有该模组的客户端无法接收它们，因此它会在登录时被拒之门外，或什么也看不到。两者同时设置时，新世界会按普通世界而非 rubic 世界创建，并且日志会说明原因，而不是留下一个把每位玩家都拒之门外的服务器。对一个*已经*作为 rubic 世界创建的世界开启 `vanillaClients`，是唯一会让游戏直接停止的情况：把这样的存档按普通世界加载会毁掉它，所以它会原封不动，留给你决定。
 
@@ -538,6 +540,7 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当添加在随
    - 服务端添加的配方可以合成，但不会出现在配方书中。
    - 世界介绍不会显示。原版客户端也不会被等待：它会立即受到欢迎，与其他所有人一起从预生成等候中放行，并且永远不会拖延 `/rdpl round start`。
    - 本模组显示为卡片的任何内容，例如结果、主导者通知或 `saysCard` 的行，会以聊天行的形式送达，而像大厅那样的屏幕中央提示则以标题形式送达。
+   - 村民的对话以聊天行的形式送达，每条回复都是一行带编号的文字，点击即执行 `/rdplserver talk <number>`。
    - 硬度分组设置服务器破坏方块所需的时间，但客户端的裂纹动画仍按该方块通常的速度进行。对于客户端也会读取的数值（如堆叠上限、耐久度、硬度或光照）的覆盖，客户端那边仍会显示旧值。
    - 硬度分组的 `adventure` 挖掘不起作用：除非手持物品在自己的 `CanDestroy` 标签中写明了该方块，否则处于冒险模式的原版客户端永远不会开始挖掘。
    - 被禁用的方块或物品仍会出现在原版客户端的创造模式标签页中，因为这是客户端自己构建的；禁用的其他一切都可以通过服务器实现。

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -17,7 +18,7 @@ final class PackReport {
         clientSide(off, Config.content.load, "content.load", PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS);
         clientSide(off, Config.content.sounds, "content.sounds", PackManager.SOUNDS);
         collect(off, Config.content.fuels, "content.fuels", PackManager.JSON, PackManager.FUELS);
-        collect(off, Config.content.tooltips, "content.tooltips", PackManager.JSON, PackManager.TOOLTIPS);
+        clientSide(off, Config.content.tooltips, "content.tooltips", PackManager.TOOLTIPS);
         collect(off, Config.content.oreDictionary, "content.oreDictionary", PackManager.JSON, PackManager.OREDICT);
         collect(off, Config.content.disabled, "content.disabled", PackManager.JSON, PackManager.DISABLED);
         clientSide(off, Config.content.potions, "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);
@@ -54,10 +55,7 @@ final class PackReport {
     private static void collect(List<String[]> off, boolean enabled, String setting, String ext, String... types) { because(off, enabled, setting + " is off in the config", ext, types); }
 
     private static void clientSide(List<String[]> off, boolean enabled, String setting, String... types) {
-        if (Config.content.vanillaClients) {
-            because(off, false, "content.vanillaClients is on and they are the sort a client would need too", PackManager.JSON, types);
-            return;
-        }
+        if (Config.content.vanillaClients) { return; }
         collect(off, enabled, setting, PackManager.JSON, types);
     }
 
@@ -77,6 +75,15 @@ final class PackReport {
         }
         ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first{}", packs.size(), root,
                 fromMods == 0 ? "" : ", " + fromMods + " of them shipped inside a mod jar and listed in config/mods.json");
+        if (Config.content.vanillaClients) {
+            for (RDPLPack pack : packs) {
+                for (String folder : Arrays.asList(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.ENCHANTMENTS, PackManager.VILLAGERS, PackManager.BIOMES, PackManager.DIMENSIONS, PackManager.CELESTIAL, PackManager.ENTITIES, PackManager.TOOLTIPS)) {
+                    List<String> skipped = pack.files(folder, PackManager.JSON);
+                    if (skipped.isEmpty()) { continue; }
+                    ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on: {}", pack.getName(), skipped.size(), folder, String.join(", ", skipped));
+                }
+            }
+        }
         if (!Config.packs.logContents) { return; }
         for (RDPLPack pack : packs) {
             String priority = pack.getPriority() >= 0 ? " priority=" + pack.getPriority() : "";

@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import com.google.gson.JsonElement;
@@ -117,7 +118,10 @@ public final class ContentAnvils {
         if (!json.has(TOO_EXPENSIVE)) { return false; }
         int cap = Json.getInt(json, TOO_EXPENSIVE, AnvilCosts.VANILLA_CAP);
         if (cap < 1 || cap > AnvilCosts.HIGHEST) { ContentLog.LOGGER.error("Anvil file {} sets {} to {}, outside 1 to {}, ignoring it", key, TOO_EXPENSIVE, cap, AnvilCosts.HIGHEST); }
-        else { AnvilCosts.serveCap(cap); }
+        else {
+            AnvilCosts.serveCap(cap);
+            VanillaClients.clientDrawn("Anvil file " + key, "tooExpensive");
+        }
         return true;
     }
 
