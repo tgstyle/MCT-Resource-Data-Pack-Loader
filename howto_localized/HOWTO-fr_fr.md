@@ -75,6 +75,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 **Créatures et dangers**
 - [Variantes d'entités](#variantes-dentités)
 - [Rangs de mobs](#rangs-de-mobs)
+- [Récompenses de santé maximale](#récompenses-de-santé-maximale)
 - [Ordres de travail](#ordres-de-travail)
 - [Expositions](#expositions)
 
@@ -167,8 +168,8 @@ Sous `data/` :
 | `<namespace>/raids/*.json`                   | Vagues qui s'abattent sur un village quand un joueur y apporte un présage. [Raids](#raids)                                                                                                      |
 | `<namespace>/entities/*.json`                | Variantes d'entités construites sur des entités existantes. [Variantes d'entités](#variantes-dentités)                                                                                          |
 | `<namespace>/hardness/*.json`                | Temps de minage et multiplicateurs d'explosion pour des groupes de blocs. [Groupes de dureté](#groupes-de-dureté)                                                                               |
-| `<namespace>/affixes/*.json` | Bonus d'attribut aléatoires et châsses qu'un objet tire la première fois qu'un joueur le tient. [Affixes et châsses](#affixes-et-châsses) |
-| `<namespace>/gems/*.json` | Objets qu'une enclume enchâsse pour un bonus d'attribut. [Affixes et châsses](#affixes-et-châsses) |
+| `<namespace>/affixes/*.json`                 | Bonus d'attribut aléatoires et châsses qu'un objet tire la première fois qu'un joueur le tient. [Affixes et châsses](#affixes-et-châsses)                                                       |
+| `<namespace>/gems/*.json`                    | Objets qu'une enclume enchâsse pour un bonus d'attribut. [Affixes et châsses](#affixes-et-châsses)                                                                                              |
 | `<namespace>/anvils/*.json`                  | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle octroie, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume)                                          |
 | `<namespace>/enchanting/*.json`              | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                 |
 | `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                                                                       |
@@ -176,6 +177,7 @@ Sous `data/` :
 | `<namespace>/dice/*.json`                    | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets)                                                    |
 | `<namespace>/games/*.json`                   | Jeux de plateau avec des créatures comme pièces : le plateau, les pièces et leur façon de se déplacer, et ce que rapporte un résultat. [Jeux de plateau](#jeux-de-plateau)                      |
 | `<namespace>/ranks/*.json`                   | Paliers aléatoires qu'un mob peut tirer en apparaissant : santé en plus, dégâts, effets, butin et une étiquette de nom. [Rangs de mobs](#rangs-de-mobs)                                         |
+| `<namespace>/hearts/*.json`                  | Cœurs en plus qu'un joueur gagne grâce à des progrès, un régime varié ou le score d'une équipe, conservés avec le joueur. [Récompenses de santé maximale](#récompenses-de-santé-maximale)       |
 | `<namespace>/orders/*.json`                  | Travaux que des variantes d'entité font pour un joueur à un coffre. [Ordres de travail](#ordres-de-travail)                                                                                     |
 | `<namespace>/exposures/*.json`               | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions, biomes, structures, régions de grottes ou hauteurs nommés. [Expositions](#expositions) |
 | `<namespace>/overrides/<target>/<name>.json` | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés)                                                      |
@@ -513,7 +515,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | Le serveur seul suffit                                                                                                                                    | Nécessite le pack aussi sur le client                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                      |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                                    |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                     |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                             |                                                                                                                             |
@@ -2614,24 +2616,24 @@ Avec un objet déjà tiré qui a une châsse vide dans la case gauche d'une encl
 }
 ```
 
-| Clé       | Requis | Valeur                       | Défaut | Ce que ça fait                                                                                        |
-| --------- | ------ | ---------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| `item`    | oui    | nom d'objet    |        | L'objet qui tire. Il ne doit pas s'empiler : un objet empilable est une erreur et le fichier est ignoré |
-| `rolls`   | non    | `{ "min", "max" }`           | `1`    | Combien d'affixes différents il tire                                                                  |
-| `sockets` | non    | `{ "min", "max" }`           | `0`    | Combien de châsses à gemme il tire                                                                    |
-| `affixes` | oui    | liste d'objets               |        | Ce qu'il peut tirer, chaque entrée comme ci-dessous. Une entrée à l'attribut inconnu est ignorée      |
+| Clé       | Requis | Valeur             | Défaut | Ce que ça fait                                                                                          |
+| --------- | ------ | ------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| `item`    | oui    | nom d'objet        |        | L'objet qui tire. Il ne doit pas s'empiler : un objet empilable est une erreur et le fichier est ignoré |
+| `rolls`   | non    | `{ "min", "max" }` | `1`    | Combien d'affixes différents il tire                                                                    |
+| `sockets` | non    | `{ "min", "max" }` | `0`    | Combien de châsses à gemme il tire                                                                      |
+| `affixes` | oui    | liste d'objets     |        | Ce qu'il peut tirer, chaque entrée comme ci-dessous. Une entrée à l'attribut inconnu est ignorée        |
 
 Chaque entrée de `affixes` accepte :
 
-| Clé         | Requis | Valeur                                                           | Défaut  | Ce que ça fait                                                                                              |
-| ----------- | ------ | ---------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| `name`      | non    | texte, ou une clé de langue                                      | aucun   | La ligne que l'infobulle de l'objet montre pour lui                                                         |
-| `attribute` | oui    | nom d'attribut                                                   |         | Ce qu'il change, comme `generic.attackDamage` ou `generic.maxHealth`                                        |
-| `min`       | non    | nombre                                                           | `0`     | Le minimum qu'il ajoute                                                                                     |
-| `max`       | non    | nombre                                                           | `min`   | Le maximum qu'il ajoute. Des valeurs égales donnent un bonus exact, sinon on tire entre les deux           |
-| `operation` | non    | `0`, `1` ou `2`                                                  | `0`     | `0` ajoute à l'attribut, `1` multiplie sa base, `2` multiplie le total                                      |
-| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`   | L'emplacement où l'objet doit se trouver pour que le bonus compte                                           |
-| `weight`    | non    | entier                                                           | `1`     | Sa probabilité face aux autres. Les affixes d'un objet sont différents les uns des autres, tirés selon le poids |
+| Clé         | Requis | Valeur                                                          | Défaut | Ce que ça fait                                                                                                  |
+| ----------- | ------ | --------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
+| `name`      | non    | texte, ou une clé de langue                                     | aucun  | La ligne que l'infobulle de l'objet montre pour lui                                                             |
+| `attribute` | oui    | nom d'attribut                                                  |        | Ce qu'il change, comme `generic.attackDamage` ou `generic.maxHealth`                                            |
+| `min`       | non    | nombre                                                          | `0`    | Le minimum qu'il ajoute                                                                                         |
+| `max`       | non    | nombre                                                          | `min`  | Le maximum qu'il ajoute. Des valeurs égales donnent un bonus exact, sinon on tire entre les deux                |
+| `operation` | non    | `0`, `1` ou `2`                                                 | `0`    | `0` ajoute à l'attribut, `1` multiplie sa base, `2` multiplie le total                                          |
+| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any` | `any`  | L'emplacement où l'objet doit se trouver pour que le bonus compte                                               |
+| `weight`    | non    | entier                                                          | `1`    | Sa probabilité face aux autres. Les affixes d'un objet sont différents les uns des autres, tirés selon le poids |
 
 ```json
 {
@@ -2645,15 +2647,15 @@ Chaque entrée de `affixes` accepte :
 }
 ```
 
-| Clé         | Requis | Valeur                                                           | Défaut    | Ce que ça fait                                                                                      |
-| ----------- | ------ | ---------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------- |
-| `item`      | oui    | nom d'objet                                        |           | La gemme, qui va dans la case droite de l'enclume                                                   |
-| `name`      | non    | texte, ou une clé de langue                                      | l'objet   | Ce que l'infobulle montre une fois la gemme dans une châsse                                         |
-| `attribute` | oui    | nom d'attribut                                                   |           | Ce que la gemme change                                                                              |
-| `amount`    | non    | nombre                                                           | `0`       | Ce qu'elle ajoute                                                                                   |
-| `operation` | non    | `0`, `1` ou `2`                                                  | `0`       | Comme pour un affixe                                                                                |
-| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`     | Comme pour un affixe                                                                                |
-| `levels`    | non    | entier                                                           | `1`       | Les niveaux d'expérience que coûte la pose de la gemme, 1 au minimum et toujours sous le seuil de trop cher de l'enclume |
+| Clé         | Requis | Valeur                                                          | Défaut  | Ce que ça fait                                                                                                           |
+| ----------- | ------ | --------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `item`      | oui    | nom d'objet                                                     |         | La gemme, qui va dans la case droite de l'enclume                                                                        |
+| `name`      | non    | texte, ou une clé de langue                                     | l'objet | Ce que l'infobulle montre une fois la gemme dans une châsse                                                              |
+| `attribute` | oui    | nom d'attribut                                                  |         | Ce que la gemme change                                                                                                   |
+| `amount`    | non    | nombre                                                          | `0`     | Ce qu'elle ajoute                                                                                                        |
+| `operation` | non    | `0`, `1` ou `2`                                                 | `0`     | Comme pour un affixe                                                                                                     |
+| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any` | `any`   | Comme pour un affixe                                                                                                     |
+| `levels`    | non    | entier                                                          | `1`     | Les niveaux d'expérience que coûte la pose de la gemme, 1 au minimum et toujours sous le seuil de trop cher de l'enclume |
 
 ## Table d'enchantement
 
@@ -2936,19 +2938,26 @@ Normalement, un aliment nourrit pareil, quel que soit le nombre de fois où on l
 {
   "memory": 8,
   "repeat": [1.0, 0.5, 0.25],
-  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+  "exempt": ["minecraft:rotten_flesh", "minecraft:spider_eye", "#c:foods/raw_meat"],
+  "variety": [ { "distinct": 4, "multiplier": 1.25, "effects": [ { "potion": "minecraft:regeneration", "duration": 200 } ] },
+               { "distinct": 7, "multiplier": 1.5, "effects": [ { "potion": "minecraft:resistance" } ], "runs": "mypack:diet/well_fed" } ]
 }
 ```
 
-| Clé        | Requis | Valeur             | Défaut  | Rôle                                                                                                                                                                      |
-| ---------- | ------ | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `memory`   | non    | int ≥ 1            | `10`    | Le nombre de repas que chaque joueur retient ; le plus ancien est oublié en premier                                                                                       |
-| `repeat`   | non    | liste de float ≥ 0 | `[1.0]` | Le multiplicateur de la 1re, 2e, 3e fois où le même aliment figure parmi les repas retenus ; la dernière entrée se répète                                                 |
-| `variety`  | non    | liste d'objets     | aucun   | Chaque objet a `distinct` (int ≥ 1) et `multiplier` (float ≥ 0) : dès que les repas retenus comptent autant d'aliments différents, le gain est multiplié par `multiplier` |
-| `groups`   | non    | liste de textes    | aucun   | Identifiants d'objets ou noms `#ore` ; un aliment correspondant compte comme cette entrée, donc un nom de minerai vaut un aliment ; la première l'emporte                 |
-| `messages` | non    | objet              | —       | Barre d'action après un repas : `repeat` si le multiplicateur de répétition est sous 1, `variety` s'il est au-dessus ; texte, clé ou `""` ; défaut `rdpl.diet.*`          |
+| Clé        | Requis | Valeur                  | Défaut  | Rôle                                                                                                                                                                                                                                                              |
+| ---------- | ------ | ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | non    | int ≥ 1                 | `10`    | Le nombre de repas que chaque joueur retient ; le plus ancien est oublié en premier                                                                                                                                                                               |
+| `repeat`   | non    | liste de float ≥ 0      | `[1.0]` | Le multiplicateur de la 1re, 2e, 3e fois où le même aliment figure parmi les repas retenus ; la dernière entrée se répète                                                                                                                                         |
+| `variety`  | non    | liste d'objets          | aucun   | Chaque objet a `distinct` (int ≥ 1) et `multiplier` (float ≥ 0) : dès que les repas retenus comptent autant d'aliments différents, le gain est multiplié par `multiplier`                                                                                         |
+| `groups`   | non    | liste de textes         | aucun   | Identifiants d'objets ou noms `#ore` ; un aliment correspondant compte comme cette entrée, donc une étiquette vaut un aliment ; la première l'emporte                                                                                                             |
+| `exempt`   | non    | liste de textes         | aucun   | Identifiants d'objet ou étiquettes d'objet écrites avec `#` ; un aliment qui correspond à une entrée est laissé tranquille : il n'est ni mémorisé ni compté, et son gain n'est jamais modifié. Prime sur `groups`                                                 |
+| `effects`  | non    | liste d'objets          | aucun   | Dans un objet `variety` : effets donnés après chaque repas tant que ce palier est le plus haut atteint par le joueur. Chacun a `potion` (un identifiant d'effet), `duration` en ticks (défaut `1200`), `amplifier`, `ambient` et `showParticles` (défaut `false`) |
+| `runs`     | non    | identifiant de fonction | aucun   | Dans un objet `variety` : une fonction exécutée en tant que le joueur au repas qui le fait monter dans ce palier depuis en dessous, une fois par franchissement                                                                                                   |
+| `messages` | non    | objet                   | —       | Barre d'action après un repas : `repeat` si le multiplicateur de répétition est sous 1, `variety` s'il est au-dessus ; texte, clé ou `""` ; défaut `rdpl.diet.*`                                                                                                  |
 
-Une valeur incorrecte consigne une erreur avec le nom du fichier, et ce fichier est ignoré.
+Une valeur incorrecte consigne une erreur avec le nom du fichier, et ce fichier est ignoré. Un effet qui n'existe pas est ignoré au moment de le donner. `runs` se déclenche de nouveau si des repas sortent de la mémoire, que le joueur retombe sous le palier puis y remonte. Une entrée `exempt` qui ne correspond à rien consigne un avertissement avec le nom du fichier et de l'entrée, et seule cette entrée est ignorée ; le reste du fichier est chargé.
+
+Partout où une condition d'équipe ou de score est lue, comme le `when` d'une carte, un passage ou une récompense de cœurs gagnés, `dietAtLeast` (entier ≥ 1) fonctionne à côté : elle est vraie tant que les repas mémorisés du joueur comptent au moins autant d'aliments différents, `groups` appliqués. Sans fichier de Variété alimentaire, elle n'est jamais remplie et le journal consigne une erreur.
 
 Quand un joueur finit de manger, la faim et la saturation que l'aliment a réellement rendues (après le plafond propre à vanilla) sont multipliées par un seul nombre : l'entrée de `repeat` selon le nombre de fois où l'aliment figure déjà parmi les repas retenus (aucune fois, c'est la 1re entrée), multipliée par le palier de `variety` ayant le plus grand `distinct` atteint, où qu'il se trouve dans le fichier. `distinct` compte les aliments différents parmi les repas retenus, celui-ci compris, une fois la liste ramenée à `memory`. Le gain de faim est arrondi à des demi-cuisses entières et le nouveau niveau de faim reste entre 0 et 20 ; la saturation est mise à l'échelle de la même façon et ne dépasse jamais le nouveau niveau de faim. Avec l'exemple ci-dessus, une deuxième pomme d'affilée rend moitié moins, et le quatrième aliment différent en mémoire rend 1,25 fois plus.
 
@@ -3765,6 +3774,75 @@ Le chemin du fichier est le nom du rang, et plusieurs fichiers se combinent. Un 
 | `loot`     | non    | nombre, 1 ou plus                | `1`            | Multiplie chaque objet empilable que le mob lâche. La fraction est la chance d'un objet de plus par pile                                                                                  |
 
 Les outils, l'armure et l'équipement que portait le mob ne sont pas multipliés, et les mobs qui portent un inventaire, comme les bêtes de somme, sont ignorés. Une erreur dans un fichier de rang, comme une clé inconnue, un id d'entité inexistant ou une valeur hors limites, est consignée et tout le fichier est ignoré. Supprimer un fichier de rang laisse tels quels les mobs qui ont déjà tiré ce rang, et un mob qu'aucun rang ne nomme reste intact. Seul le serveur lit les rangs, donc les clients vanilla peuvent se connecter.
+
+## Récompenses de santé maximale
+
+*créatures et dangers*
+
+`<namespace>/hearts/*.json`
+
+Un fichier ici permet aux joueurs de gagner de la santé maximale en plus, à partir de sources que vous nommez : un progrès, un régime varié issu de [Variété alimentaire](#variété-alimentaire), une liste d'aliments mangés ou le score d'une équipe. Ce qu'un joueur a gagné est conservé avec le joueur. Sans fichier, rien ne change.
+
+Le nom du fichier est libre, seul le dossier est lu. Les `rewards` de tous les fichiers sont utilisées ensemble. Pour chaque clé de premier niveau, le premier fichier qui la définit l'emporte, et les autres sont consignés dans le journal et ignorés.
+
+```json
+{
+  "startHearts": 10,
+  "cap": 20,
+  "keepOnDeath": true,
+  "style": "bar",
+  "sound": "minecraft:entity.player.levelup",
+  "particle": "minecraft:heart",
+  "heartColors": ["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"],
+  "rewards": [
+    { "id": "nether", "advancement": "minecraft:nether/root", "hearts": 1 },
+    { "id": "varied", "diet": 4, "hearts": 1, "repeat": "always", "times": 3 },
+    { "id": "fish", "foods": ["minecraft:cooked_cod", "minecraft:cooked_salmon", "#c:foods/raw_fish", "minecraft:bread"], "count": 3, "hearts": 1 },
+    { "id": "champ", "team": "red", "objective": "wins", "scoreAtLeast": 5, "hearts": 2, "requires": ["somepack"], "message": "mypack.hearts.champ" }
+  ]
+}
+```
+
+| Clé           | Requis | Valeur                              | Défaut                                         | Rôle                                                                                                             |
+| ------------- | ------ | ----------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `startHearts` | non    | nombre, 0,5 ou plus, par pas de 0,5 | `10`                                           | Les cœurs qu'un joueur a avant d'en gagner ; `10` correspond à vanilla                                           |
+| `cap`         | non    | nombre, `startHearts` ou plus       | aucun                                          | Le maximum de cœurs au total, cœurs de départ compris                                                            |
+| `keepOnDeath` | non    | true ou false                       | `true`                                         | `false` : la mort remet à 0 chaque compte gagné                                                                  |
+| `style`       | non    | `bar` ou `chat`                     | `bar`                                          | Où s'affiche le message d'une récompense : la barre d'action ou le chat                                          |
+| `sound`       | non    | identifiant de son ou `""`          | `""`                                           | Joué sur le joueur lors d'une récompense                                                                         |
+| `particle`    | non    | identifiant de particule ou `""`    | `""`                                           | Créée sur le joueur lors d'une récompense ; particules simples seulement                                         |
+| `heartColors` | non    | liste de `"#RRGGBB"`                | `["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"]` | La teinte de la 2e, de la 3e et des couches de cœurs suivantes, la dernière couleur se répétant (voir À l'écran) |
+| `rewards`     | non    | liste d'objets                      | aucun                                          | Les récompenses, avec les clés ci-dessous                                                                        |
+
+Chaque entrée de `rewards` :
+
+| Clé                         | Requis | Valeur                                                                 | Défaut                      | Rôle                                                                                                                                                                                                                      |
+| --------------------------- | ------ | ---------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                        | oui    | texte, unique dans le fichier                                          | aucun                       | Nomme la récompense dans la sauvegarde, donc à conserver quand on modifie la récompense                                                                                                                                   |
+| `advancement`               | non    | identifiant de progrès                                                 | aucun                       | Déclencheur : le progrès est obtenu                                                                                                                                                                                       |
+| `diet`                      | non    | entier                                                                 | aucun                       | Déclencheur : un repas amène le joueur à ce nombre `distinct` d'un palier `variety` de [Variété alimentaire](#variété-alimentaire)                                                                                        |
+| `foods`                     | non    | liste d'identifiants d'objets ou d'étiquettes d'objet écrites avec `#` | aucun                       | Déclencheur : aliments à manger. Chaque entrée compte une fois, la première fois qu'un aliment qui lui correspond est mangé ; une étiquette est un seul genre d'aliment                                                   |
+| `count`                     | non    | entier, de 1 à la longueur de `foods`                                  | la longueur de `foods`      | Avec `foods` : combien d'entrées doivent avoir été mangées                                                                                                                                                                |
+| `team`                      | non    | nom d'équipe                                                           | aucun                       | Déclencheur : le joueur est dans cette équipe                                                                                                                                                                             |
+| `objective`, `scoreAtLeast` | non    | texte, entier                                                          | aucun                       | Déclencheur : le score du joueur dans l'objectif est d'au moins cette valeur. Les deux sont nécessaires ; avec `team`, les deux conditions doivent être remplies                                                          |
+| `dietAtLeast`               | non    | entier                                                                 | aucun                       | Déclencheur : les repas mémorisés du joueur comptent au moins autant d'aliments différents (voir Variété alimentaire). Il faut un fichier de Variété alimentaire ; avec `team`, les deux conditions doivent être remplies |
+| `hearts`                    | oui    | nombre supérieur à 0, par pas de 0,5                                   | aucun                       | Les cœurs que donne une récompense                                                                                                                                                                                        |
+| `repeat`                    | non    | `once_per_player` ou `always`                                          | `once_per_player`           | `always` : chaque nouveau déclencheur récompense à nouveau                                                                                                                                                                |
+| `times`                     | non    | entier, 1 ou plus                                                      | `1`, illimité avec `always` | Le nombre maximal de récompenses qu'un joueur peut tirer de celle-ci                                                                                                                                                      |
+| `requires`                  | non    | liste d'identifiants de mods ou d'espaces de noms de packs             | aucun                       | La récompense est ignorée si tous ne sont pas présents                                                                                                                                                                    |
+| `message`                   | non    | clé de langue ou `""`                                                  | `rdpl.hearts.gained`        | Affiché lors d'une récompense ; `""` n'affiche rien                                                                                                                                                                       |
+
+**Un seul déclencheur par récompense.** Définissez exactement un parmi `advancement`, `diet`, `foods` ou les clés de condition `team`, `objective`, `scoreAtLeast` et `dietAtLeast`. Sinon le journal nomme le fichier et l'`id`, et la récompense est ignorée. `advancement` récompense quand le progrès est obtenu. `diet` récompense quand un repas fait passer le joueur de sous ce nombre `distinct` à celui-ci ou au-delà ; il faut un fichier de Variété alimentaire avec un palier `variety` de ce `distinct`, et sans lui rien n'est jamais accordé. `foods` récompense une seule fois, quand les entrées mangées atteignent `count` ; `repeat` et `times` ne s'y appliquent pas. Une condition d'équipe, de score ou d'alimentation récompense quand elle passe de faux à vrai, vérifiée toutes les 5 secondes tant qu'une telle récompense existe.
+
+**Conservé avec le joueur.** Les récompenses sont comptées par récompense dans les données sauvegardées du joueur lui-même, donc les cœurs gagnés survivent à la mort, à la déconnexion et au changement de dimension. La santé maximale en plus est elle aussi conservée avec le joueur : un joueur à 24 de santé maximale qui se déconnecte à 23 revient avec 23. Le maximum est `startHearts` plus les cœurs de chaque récompense, jamais au-dessus de `cap` ; les dix cœurs de vanilla sont `startHearts: 10`.
+
+**Santé.** Quand le maximum monte, la santé actuelle monte dans la même proportion. Quand il baisse, la santé est ramenée au nouveau maximum. Réapparaître après une mort remplit la santé.
+
+**Mort.** Avec `keepOnDeath` à `true`, les cœurs gagnés restent. Avec `false`, la mort remet chaque compte à 0 et fait oublier les aliments mangés, et une récompense ne se regagne que par un nouveau déclencheur.
+
+**Rattrapage.** À la connexion et après `/rdpl reload`, les cœurs de chaque joueur en ligne sont recalculés à partir des comptes sauvegardés et des règles actuelles. Une récompense dont le joueur n'a pas encore de compte et dont la condition est déjà remplie (le progrès est fait, le palier de régime atteint, les aliments mangés atteignent `count`, la condition d'équipe ou de score est vraie) est alors accordée, sans message. Une récompense remise à 0 par une mort n'est pas rattrapée de nouveau. Une récompense retirée des fichiers garde son compte dans la sauvegarde mais ne donne rien tant qu'elle est absente, et recompte si elle revient.
+
+**À l'écran.** Une santé au-dessus de 20 ne crée pas de nouvelles rangées de cœurs. Chaque tranche de 10 cœurs en plus est une couche dessinée sur la même première rangée : la deuxième couche avec la première couleur de `heartColors`, la troisième avec la deuxième, et ainsi de suite. Une couche en état (poison, wither, gel) montre cet aspect de vanilla sans teinte, et l'absorption se place au-dessus de la rangée comme dans vanilla. Les couleurs viennent du serveur, envoyées à la connexion et après un rechargement ; un client qui ne les a pas reçues utilise la liste par défaut.
 
 ## Ordres de travail
 
@@ -6956,6 +7034,7 @@ Une carte qui se déclenche alors qu'un joueur a encore l'introduction du monde 
 | `portway`, `network`        | texte         | Le joueur a dans sa liste, ou parmi les relais globaux, un relais de cet id de bloc ou de ce réseau. L'un ou l'autre peut manquer |
 | `gameMode`                  | texte         | Le joueur est dans ce mode de jeu : `survival`, `creative`, `adventure` ou `spectator`                                            |
 | `team`                      | texte         | Le joueur est dans cette équipe du tableau des scores                                                                             |
+| `dietAtLeast`               | entier        | Les repas mémorisés du joueur comptent au moins autant d'aliments différents (demande un fichier de Variété alimentaire)          |
 | `objective`, `scoreAtLeast` | texte, entier | Le score du joueur dans l'objectif est au moins celui-ci                                                                          |
 
 ### La carte
@@ -8724,7 +8803,7 @@ functions = true
 | `lootInjections` | booléen | `true` | Applique les fichiers loot_injections/*.json, qui ajoutent des pools à des tables de butin déjà existantes au lieu de remplacer la table entière                                                                           |
 | `playerLoot`     | booléen | `true` | Applique les fichiers player_loot/*.json, qui tirent une table de butin à la mort d'un joueur et font tomber ce qu'elle produit, en plus de l'inventaire ou à sa place                                                     |
 | `registryRemaps` | booléen | `true` | Applique les fichiers registry_remap, qui renomment une entrée de registre pour que les mondes sauvegardés avant le renommage conservent leurs blocs et objets au lieu de les perdre                                       |
-| `affixes`        | booléen | `true` | Applique les fichiers affixes/*.json et gems/*.json, qui donnent à un objet des bonus d'attribut aléatoires et des châsses la première fois qu'un joueur le tient, et permettent à une enclume d'enchâsser une gemme |
+| `affixes`        | booléen | `true` | Applique les fichiers affixes/*.json et gems/*.json, qui donnent à un objet des bonus d'attribut aléatoires et des châsses la première fois qu'un joueur le tient, et permettent à une enclume d'enchâsser une gemme       |
 | `anvils`         | booléen | `true` | Applique les fichiers anvils/*.json, qui permettent à une enclume de poser des enchantements nommés sur un objet contre un coût en niveaux, d'accorder un progrès quand il est retiré, et d'en interdire l'usage jusque-là |
 | `enchanting`     | booléen | `true` | Applique les fichiers enchanting/*.json, qui changent ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et pour la table entière                                                      |
 | `blockDrops`     | booléen | `true` | Applique les fichiers block_drops/*.json, qui ajoutent à ce qu'un bloc fait tomber quand il se brise, ou le remplacent, expérience comprise, pour les blocs dont le pack n'est pas propriétaire                            |

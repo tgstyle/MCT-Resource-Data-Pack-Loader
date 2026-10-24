@@ -82,6 +82,7 @@
   "rdpl.portal.owned": "Este portal pertence a outra pessoa",
   "rdpl.diet.repeat": "Esta comida está a ficar enjoativa",
   "rdpl.diet.variety": "Uma alimentação variada sabe bem",
+  "rdpl.hearts.gained": "Sentes-te mais resistente.",
   "rdpl.carry.block": "A transportar %s (baixa-te e clica com o botão direito para o pousar)",
   "rdpl.carry.mob": "A transportar %s (baixa-te e clica com o botão direito num bloco para o pousar)",
   "rdpl.carry.down": "Pousaste %s",

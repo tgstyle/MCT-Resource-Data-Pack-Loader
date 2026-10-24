@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3fc;
 import org.lwjgl.system.MemoryStack;
@@ -31,6 +32,8 @@ public final class LineClientCompat {
     public static final String SUBMIT_MODEL = "Lnet/minecraft/client/renderer/SubmitNodeCollector;submitModel(Lnet/minecraft/client/model/Model;Ljava/lang/Object;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IIILnet/minecraft/client/renderer/texture/UvMapping;I)V";
 
     private LineClientCompat() {}
+
+    public static int hurtCooldown(Player player) { return player.damageCooldownTime; }
 
     public static RenderType translucentBody(Identifier texture) { return RenderTypes.entityTranslucentCull(texture); }
 

@@ -17,6 +17,12 @@ public final class ClientCompat {
 
     public static void setScreen(Minecraft mc, @Nullable Screen screen) { mc.setScreen(screen); }
 
+    public static boolean hudHidden(Minecraft mc) { return mc.options.hideGui; }
+
+    public static int leftHeight(Minecraft mc) { return mc.gui.leftHeight; }
+
+    public static void addLeftHeight(Minecraft mc, int amount) { mc.gui.leftHeight += amount; }
+
     public static ChatComponent chat(Minecraft mc) { return mc.gui.getChat(); }
 
     public static RenderType cutoutBlockSheet() { return Sheets.cutoutBlockSheet(); }

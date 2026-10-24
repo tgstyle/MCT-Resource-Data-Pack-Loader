@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.dialog.ContentDialogs;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -321,6 +322,8 @@ public final class CommandShared {
         ContentBoards.rebuild(server);
         CardRules.load();
         ContentDialogs.load();
+        ContentHearts.load();
+        ContentHearts.refresh(server);
         for (ServerLevel level : server.getAllLevels()) {
             ContentTeams.field(level);
             ContentScoring.keep(level);
