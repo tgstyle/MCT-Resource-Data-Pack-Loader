@@ -2857,6 +2857,35 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 
 Una pila es `item` con `min` (`1`) y `max` (`min`), de modo que un precio fijo es simplemente `min`.
 
+Un comercio también puede depender del jugador que abre la ventana. Quien no cumple una condición no ve el comercio, y los demás jugadores no se ven afectados. Todas las condiciones deben cumplirse a la vez, y se comprueban cada vez que se abre la ventana.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Clave                       | Obligatorio | Valor            | Por defecto | Qué hace                                                                                                                                                                                                                                                                     |
+| --------------------------- | ----------- | ---------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | no          | `namespace:path` | ninguno     | Solo un jugador con este logro ve el comercio                                                                                                                                                                                                                                |
+| `team`                      | no          | nombre de equipo | ninguno     | Solo un miembro de este equipo del marcador ve el comercio                                                                                                                                                                                                                   |
+| `objective`, `scoreAtLeast` | no          | texto, entero    | ninguno     | Solo un jugador cuya puntuación en el objetivo sea al menos este valor ve el comercio. Hacen falta ambas, y un jugador sin puntuación no lo cumple                                                                                                                           |
+| `priceScale`                | no          | objeto           | ninguno     | Multiplica la cantidad de `buy` por `clamp(1 + score * perPoint, min, max)`, redondeada, como mínimo 1 y como máximo el tamaño de la pila. `objective` y `perPoint` son obligatorios, `min` vale `0.0` por defecto y `max` `10.0`, y un jugador sin puntuación cuenta como 0 |
+
+`priceScale` cambia solo `buy`, nunca `buySecondary`, y al coste escalado se le siguen aplicando encima la demanda y la reputación propias del juego. El juego distingue un comercio condicional de los demás comercios del aldeano por su profesión y sus ítems (`buy`, `buySecondary` y `sell`), así que dale ítems que ningún otro comercio de esa profesión use. Dos comercios del pack con los mismos ítems: el segundo se omite y se registra en el log. Los aldeanos cuyos comercios ya se generaron los conservan.
+
 ---
 
 # Criaturas y peligros

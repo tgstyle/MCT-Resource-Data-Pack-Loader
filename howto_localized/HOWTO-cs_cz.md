@@ -2857,6 +2857,35 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 
 Stack je `item` s `min` (`1`) a `max` (`min`), takže pevná cena je prostě `min`.
 
+Obchod může záviset i na hráči, který otevře okno. Hráč, který podmínku nesplní, obchod nevidí, ostatních hráčů se to netýká. Platit musí všechny podmínky najednou a kontrolují se při každém otevření okna.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Klíč                        | Povinné | Hodnota          | Výchozí | Co dělá                                                                                                                                                                                                                                     |
+| --------------------------- | ------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | ne      | `namespace:path` | žádný   | Obchod vidí jen hráč, který získal tento pokrok                                                                                                                                                                                             |
+| `team`                      | ne      | název týmu       | žádný   | Obchod vidí jen člen tohoto týmu na scoreboardu                                                                                                                                                                                             |
+| `objective`, `scoreAtLeast` | ne      | text, celé číslo | žádný   | Obchod vidí jen hráč, jehož skóre v daném objectivu je alespoň tato hodnota. Potřeba jsou obě a hráč bez skóre neprojde                                                                                                                     |
+| `priceScale`                | ne      | objekt           | žádný   | Vynásobí počet `buy` hodnotou `clamp(1 + score * perPoint, min, max)`, zaokrouhlí, minimálně 1 a maximálně velikost stacku. `objective` a `perPoint` jsou povinné, `min` je výchozí `0.0` a `max` `10.0`, a hráč bez skóre se počítá jako 0 |
+
+`priceScale` mění jen `buy`, nikdy `buySecondary`, a na přepočtenou cenu se navíc použije poptávka a reputace ze hry. Podmíněný obchod hra odliší od ostatních obchodů vesničana podle povolání a jeho předmětů (`buy`, `buySecondary` a `sell`), takže mu dejte předměty, které žádný jiný obchod tohoto povolání nepoužívá. Dva obchody z packu se stejnými předměty: pozdější se přeskočí a zapíše do logu. Vesničané, kterým už byly obchody vygenerovány, si je ponechají.
+
 ---
 
 # Tvorové a nebezpečí

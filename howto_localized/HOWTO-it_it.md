@@ -2857,6 +2857,35 @@ Il nome del file lo scegli tu, viene letta solo la cartella, e più file si somm
 
 Una pila è `item` con `min` (`1`) e `max` (`min`), quindi un prezzo fisso è semplicemente `min`.
 
+Uno scambio può dipendere anche dal giocatore che apre la finestra. Chi non soddisfa una condizione non vede lo scambio, e gli altri giocatori non ne sono toccati. Tutte le condizioni devono valere insieme, e vengono controllate a ogni apertura della finestra.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Chiave                      | Obbligatorio | Valore             | Predefinito | Cosa fa                                                                                                                                                                                                                                                                                        |
+| --------------------------- | ------------ | ------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | no           | `namespace:path`   | nessuno     | Solo un giocatore con questo progresso vede lo scambio                                                                                                                                                                                                                                         |
+| `team`                      | no           | nome della squadra | nessuno     | Solo un membro di questa squadra del tabellone vede lo scambio                                                                                                                                                                                                                                 |
+| `objective`, `scoreAtLeast` | no           | testo, intero      | nessuno     | Solo un giocatore il cui punteggio nell'obiettivo è almeno questo valore vede lo scambio. Servono entrambi, e un giocatore senza punteggio non lo soddisfa                                                                                                                                     |
+| `priceScale`                | no           | oggetto            | nessuno     | Moltiplica la quantità di `buy` per `clamp(1 + score * perPoint, min, max)`, arrotondata, almeno 1 e al massimo la dimensione della pila. `objective` e `perPoint` sono obbligatori, `min` vale `0.0` per impostazione predefinita e `max` `10.0`, e un giocatore senza punteggio conta come 0 |
+
+`priceScale` cambia solo `buy`, mai `buySecondary`, e al costo scalato si applicano comunque anche la domanda e la reputazione del gioco. Il gioco distingue uno scambio condizionale dagli altri scambi del villico dalla sua professione e dai suoi oggetti (`buy`, `buySecondary` e `sell`), perciò dagli oggetti che nessun altro scambio di quella professione usa. Due scambi del pack con gli stessi oggetti: il secondo viene saltato e scritto nel log. I villici i cui scambi sono già stati generati li mantengono.
+
 ---
 
 # Creature e pericoli

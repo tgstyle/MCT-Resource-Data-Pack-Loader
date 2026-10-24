@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentGenerated;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.def.PriceScaleDef;
 import mctmods.resourcedatapackloader.content.def.TradeDef;
 import mctmods.resourcedatapackloader.content.def.TradeStackDef;
 import mctmods.resourcedatapackloader.content.def.VillagerDef;
@@ -13,6 +14,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableSet;
@@ -168,7 +170,21 @@ public final class ContentVillagers {
                 level, buy, stack(entry, "buySecondary"), sell,
                 Math.max(1, Json.getInt(entry, "maxUses", 12)),
                 Math.max(0, Json.getInt(entry, "xp", 2)),
-                Json.strings(entry, "requires"));
+                Json.strings(entry, "requires"),
+                Json.getString(entry, "advancement", "").trim(),
+                Standing.parse(entry),
+                scale(key, entry));
+    }
+
+    @Nullable private static PriceScaleDef scale(Identifier key, JsonObject entry) {
+        if (!entry.has("priceScale")) { return null; }
+        JsonObject json = Json.getJsonObject(entry, "priceScale");
+        String objective = Json.getString(json, "objective", "").trim();
+        if (objective.isEmpty() || !json.has("perPoint")) {
+            ContentLog.LOGGER.error("A priceScale in {} needs an objective and a perPoint, ignoring it", key);
+            return null;
+        }
+        return new PriceScaleDef(objective, Json.getFloat(json, "perPoint"), Json.getFloat(json, "min", 0.0F), Json.getFloat(json, "max", 10.0F));
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
@@ -287,6 +303,7 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.error("Trade in {} asks for level {} of profession '{}', which that profession does not offer, skipping it", def.key(), def.level(), def.profession());
                 continue;
             }
+            if (!ContentTradeGate.register(named.toString(), def, listing.buy(), listing.buySecondary(), listing.sell())) { continue; }
             int number = numbered.merge(def.key(), 1, Integer::sum);
             Identifier trade = def.key().withSuffix("/" + number);
             GeneratedResources.put(PackType.SERVER_DATA, trade.getNamespace(), VILLAGER_TRADES + "/" + trade.getPath() + PackManager.JSON_SUFFIX, ContentTrade.json(def, listing.buy(), listing.buySecondary(), listing.sell()).toString());
@@ -302,6 +319,7 @@ public final class ContentVillagers {
             GeneratedResources.put(PackType.SERVER_DATA, tag.getKey().getNamespace(), TRADE_TAGS + "/" + tag.getKey().getPath() + PackManager.JSON_SUFFIX, json.toString());
         }
         for (Map.Entry<Identifier, Integer> added : made.entrySet()) { Summary.info("content_trades." + added.getKey(), "Added " + added.getValue() + " villager trade(s) from packs to " + added.getKey()); }
+        ContentTradeGate.summarize();
     }
 
     @Nullable private static Identifier professionId(TradeDef def) {

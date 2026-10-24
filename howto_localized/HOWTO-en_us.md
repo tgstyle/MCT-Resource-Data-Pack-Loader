@@ -2857,6 +2857,35 @@ The file name is yours to choose, only the folder is read, and several files sta
 
 A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `min`.
 
+A trade can also depend on the player who opens the window. A player who fails a condition does not see the trade, and other players are unaffected. Every condition must hold at once, and they are checked each time the window opens.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Key                         | Required | Value            | Default | What it does                                                                                                                                                                                                                                        |
+| --------------------------- | -------- | ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | no       | `namespace:path` | none    | Only a player who has this advancement sees the trade                                                                                                                                                                                               |
+| `team`                      | no       | team name        | none    | Only a member of this scoreboard team sees the trade                                                                                                                                                                                                |
+| `objective`, `scoreAtLeast` | no       | text, int        | none    | Only a player whose score in the objective is at least this value sees the trade. Both are needed, and a player with no score fails                                                                                                                 |
+| `priceScale`                | no       | object           | none    | Multiplies the `buy` count by `clamp(1 + score * perPoint, min, max)`, rounded, at least 1 and at most the stack size. `objective` and `perPoint` are required, `min` defaults to `0.0` and `max` to `10.0`, and a player with no score counts as 0 |
+
+`priceScale` changes `buy` only, never `buySecondary`, and the scaled cost still gets the game's own demand and reputation adjustments on top. The game tells a conditional trade apart from the villager's other trades by its profession and its items (`buy`, `buySecondary` and `sell`), so give it items that no other trade of that profession uses. Two pack trades with the same items: the later one is skipped and logged. Villagers whose trades were already generated keep them.
+
 ---
 
 # Creatures and hazards

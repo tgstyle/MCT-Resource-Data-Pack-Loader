@@ -1,13 +1,16 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.extra.ContentTradeGate;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.interfaces.ITradeSwitchHolder;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTradeSwitch;
 
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -43,4 +46,6 @@ import javax.annotation.Nullable;
     @Inject(method = "readAdditionalSaveData", at = @At("TAIL")) private void rdpl$readTrades(ValueInput input, CallbackInfo ci) { ContentTradeSwitch.read(this, input); }
 
     @Inject(method = "finalizeSpawn", at = @At("TAIL")) private void rdpl$joblessProfession(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData groupData, CallbackInfoReturnable<SpawnGroupData> cir) { ContentVillagers.spawned((Villager) (Object) this, spawnReason); }
+
+    @Inject(method = "updateSpecialPrices", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/npc/villager/Villager;getPlayerReputation(Lnet/minecraft/world/entity/player/Player;)I")) private void rdpl$scaledPrice(Player player, CallbackInfo ci) { if (player instanceof ServerPlayer served) { ContentTradeGate.scale((Villager) (Object) this, served); } }
 }
