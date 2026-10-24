@@ -243,6 +243,7 @@ public final class ContentDimensionParser {
         return new RainDef(particle, sound, Math.max(0.0F, Json.getFloat(json, "volume", 0.2F)), Math.max(0, Json.getInt(json, "interval", 3)),
                 ContentParser.color(Json.getString(json, "color", WHITE), key + " rain color"),
                 ContentParser.color(Json.getString(json, "snowColor", WHITE), key + " rain snowColor"),
+                json.has("splashColor") ? ContentParser.color(Json.getString(json, "splashColor", WHITE), key + " rain splashColor") & 0xFFFFFF : -1,
                 "solid".equals(Json.choice(json, "colorMode", "multiply", "Dimension " + key + " rain", COLOR_MODES)), angle, Json.getFloat(json, "heading", 0.0F), Json.getBoolean(json, "splashUpward", false), wind);
     }
 

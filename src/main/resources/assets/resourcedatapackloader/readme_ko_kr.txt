@@ -208,9 +208,10 @@ assets 아래에 직접 제공해야 합니다.
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
-    tooltips
-    harvests
-    carries
+    tooltips         harvests         carries          dialogs
+    veins            diets            enchantments     dice
+    games            orders           ranks            recipe_locks
+    spawn_locks
 
 블록은 "type" 필드로 정하는 다음 형태로 나뉩니다.
 

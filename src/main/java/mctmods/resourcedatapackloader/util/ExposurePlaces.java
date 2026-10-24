@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.ExposureBandDef;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -23,11 +24,17 @@ public final class ExposurePlaces {
     private ExposurePlaces() {}
 
     public static int level(ExposureDef def, ServerPlayer player) {
-        if (def.biomes().isEmpty() && def.structures().isEmpty() && def.caveRegions().isEmpty() && def.heights().isEmpty()) { return 0; }
+        if (def.biomes().isEmpty() && def.environments().isEmpty() && def.structures().isEmpty() && def.caveRegions().isEmpty() && def.heights().isEmpty()) { return 0; }
         ServerLevel level = player.level();
         BlockPos feet = player.blockPosition();
         warnUnknown(def, level);
-        return Math.max(Math.max(biomeLevel(def, level, feet), structureLevel(def, level, feet)), Math.max(regionLevel(def, level, feet), heightLevel(def, feet.getY())));
+        return Math.max(Math.max(Math.max(biomeLevel(def, level, feet), environmentLevel(def, level)), structureLevel(def, level, feet)), Math.max(regionLevel(def, level, feet), heightLevel(def, feet.getY())));
+    }
+
+    private static int environmentLevel(ExposureDef def, ServerLevel level) {
+        int reached = 0;
+        for (String name : ContentEnvironments.active(level.dimension().identifier())) { reached = Math.max(reached, def.environments().getOrDefault(name, 0)); }
+        return reached;
     }
 
     private static int biomeLevel(ExposureDef def, ServerLevel level, BlockPos feet) {

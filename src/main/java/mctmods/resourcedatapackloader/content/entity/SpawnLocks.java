@@ -7,48 +7,46 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonObject;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class SpawnLocks {
-    private static final Map<Identifier, List<SpawnGateDef>> GATES = new HashMap<>();
+    private static final List<Lock> LOCKS = new ArrayList<>();
 
     private SpawnLocks() {}
 
     public static void load() {
-        GATES.clear();
+        LOCKS.clear();
         Json.eachObject(PackManager.SPAWN_LOCKS, "spawn lock file", SpawnLocks::read);
-        if (!GATES.isEmpty()) { Summary.info("entities.locks", "Loaded spawn locks for " + GATES.size() + " entity type(s)"); }
+        if (!LOCKS.isEmpty()) { Summary.info("entities.locks", "Loaded " + LOCKS.size() + " spawn lock(s)"); }
     }
 
     static List<SpawnGateDef> gates(Entity entity) {
-        if (GATES.isEmpty()) { return List.of(); }
-        return GATES.getOrDefault(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()), List.of());
+        if (LOCKS.isEmpty()) { return List.of(); }
+        List<SpawnGateDef> found = new ArrayList<>();
+        for (Lock lock : LOCKS) {
+            if (MobStats.targets(lock.ids(), lock.kinds(), entity)) { found.add(lock.gate()); }
+        }
+        return found;
     }
 
     private static void read(Identifier key, JsonObject json) {
-        List<String> entities = Json.strings(json, "entities");
-        if (entities.isEmpty()) {
-            ContentLog.LOGGER.error("Spawn lock file {} names no entities, ignoring it", key);
+        String owner = "Spawn lock file " + key;
+        List<Identifier> ids = new ArrayList<>();
+        List<String> kinds = new ArrayList<>();
+        if (!json.has("entities") || !MobStats.entities(owner, "entities", json.get("entities"), ids, kinds) || ids.isEmpty() && kinds.isEmpty()) {
+            ContentLog.LOGGER.error("{} names no entities, ignoring it", owner);
             return;
         }
         SpawnGateDef gate = SpawnGateDef.read(key, json, "Spawn lock file");
         if (gate == SpawnGateDef.NONE) {
-            ContentLog.LOGGER.error("Spawn lock file {} sets no spawn condition, ignoring it", key);
+            ContentLog.LOGGER.error("{} sets no spawn condition, ignoring it", owner);
             return;
         }
-        for (String entity : entities) {
-            Identifier name = Identifier.tryParse(entity);
-            if (name == null) {
-                ContentLog.LOGGER.error("Spawn lock file {} names '{}', which is not an entity name, ignoring it", key, entity);
-                continue;
-            }
-            GATES.computeIfAbsent(name, ignored -> new ArrayList<>()).add(gate);
-        }
+        LOCKS.add(new Lock(ids, kinds, gate));
     }
+
+    private record Lock(List<Identifier> ids, List<String> kinds, SpawnGateDef gate) {}
 }

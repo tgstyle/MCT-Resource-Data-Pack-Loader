@@ -198,6 +198,22 @@ final class ConvertDefinitions {
         if (changed) { flatNote("Team file " + team + " gives a spawnBox", box.toString(), pack); }
     }
 
+    static void environmentLoot(JsonObject json, Ported pack) {
+        if (!GsonHelper.isObjectNode(json, "environments")) { return; }
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("environments").entrySet()) {
+            if (!entry.getValue().isJsonObject() || !GsonHelper.isObjectNode(entry.getValue().getAsJsonObject(), "loot")) { continue; }
+            JsonObject loot = entry.getValue().getAsJsonObject().getAsJsonObject("loot");
+            for (Map.Entry<String, JsonElement> table : new ArrayList<>(loot.entrySet())) {
+                String key = Ids.lootTable(table.getKey());
+                JsonElement value = table.getValue().isJsonPrimitive() ? new JsonPrimitive(Ids.lootTable(table.getValue().getAsString())) : table.getValue();
+                if (key.equals(table.getKey()) && value.equals(table.getValue())) { continue; }
+                loot.remove(table.getKey());
+                loot.add(key, value);
+                pack.rewrote();
+            }
+        }
+    }
+
     static void groundLevel(JsonObject json, String dimension, Ported pack) {
         int shift = pack.shiftIn(dimension);
         JsonObject sky = GsonHelper.isObjectNode(json, "sky") ? json.getAsJsonObject("sky") : new JsonObject();
@@ -232,6 +248,20 @@ final class ConvertDefinitions {
         }
     }
 
+    static void tooltips(JsonObject json, Ported pack) {
+        if (!GsonHelper.isArrayNode(json, "enchantments")) { return; }
+        for (JsonElement element : json.getAsJsonArray("enchantments")) {
+            if (!element.isJsonObject()) { continue; }
+            JsonObject entry = element.getAsJsonObject();
+            if (!GsonHelper.isValidPrimitive(entry, "enchantment")) { continue; }
+            String held = entry.get("enchantment").getAsString().trim();
+            String mapped = held.isEmpty() ? null : Ids.enchantment(held);
+            if (mapped == null || mapped.equals(held)) { continue; }
+            entry.addProperty("enchantment", mapped);
+            pack.rewrote();
+        }
+    }
+
     static void oreDictTags(JsonObject json, String list, Ported pack) {
         if (!GsonHelper.isArrayNode(json, list)) { return; }
         for (JsonElement element : json.getAsJsonArray(list)) {
@@ -248,6 +278,7 @@ final class ConvertDefinitions {
         for (JsonElement element : json.getAsJsonArray("orders")) {
             if (!element.isJsonObject()) { continue; }
             JsonObject entry = element.getAsJsonObject();
+            ConvertLoot.lootTable(entry, "loot", pack);
             if (!GsonHelper.isValidPrimitive(entry, "blocks")) { continue; }
             String blocks = entry.get("blocks").getAsString().trim();
             if (blocks.isEmpty() || blocks.contains(":")) { continue; }

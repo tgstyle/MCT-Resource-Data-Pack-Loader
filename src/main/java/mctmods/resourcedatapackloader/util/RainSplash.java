@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.SingleQuadParticle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -65,7 +66,10 @@ public final class RainSplash {
             FluidState fluid = level.getFluidState(landed);
             double y = Math.max(state.getCollisionShape(level, landed).max(Direction.Axis.Y, dx, dz), fluid.getHeight(level, landed));
             boolean hot = fluid.is(FluidTags.LAVA) || state.is(Blocks.MAGMA_BLOCK) || CampfireBlock.isLitCampfire(state);
-            level.addParticle(hot ? ParticleTypes.SMOKE : splash, landed.getX() + dx, landed.getY() + y, landed.getZ() + dz, 0.0D, 0.0D, 0.0D);
+            if (hot || rain.splashColor() < 0) { level.addParticle(hot ? ParticleTypes.SMOKE : splash, landed.getX() + dx, landed.getY() + y, landed.getZ() + dz, 0.0D, 0.0D, 0.0D); }
+            else if (mc.particleEngine.createParticle(splash, landed.getX() + dx, landed.getY() + y, landed.getZ() + dz, 0.0D, 0.0D, 0.0D) instanceof SingleQuadParticle quad) {
+                quad.setColor((rain.splashColor() >> 16 & 255) / 255.0F, (rain.splashColor() >> 8 & 255) / 255.0F, (rain.splashColor() & 255) / 255.0F);
+            }
         }
         if (landed == null) { return; }
         if (rain.interval() > 0 && random.nextInt(rain.interval()) >= soundCounter++) { return; }

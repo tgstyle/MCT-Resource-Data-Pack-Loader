@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
         ItemStack output = resultSlots.getItem(0);
         if (output.isEmpty()) { return; }
         RecipeHolder<?> used = resultSlots.getRecipeUsed();
-        if (used == null || !RecipeLocks.barred(player, used.id().identifier(), output)) { return; }
+        if (used == null || !RecipeLocks.barred(serverPlayer, used.id().identifier(), output)) { return; }
         resultSlots.setItem(0, ItemStack.EMPTY);
         menu.setRemoteSlot(0, ItemStack.EMPTY);
         serverPlayer.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), 0, ItemStack.EMPTY));

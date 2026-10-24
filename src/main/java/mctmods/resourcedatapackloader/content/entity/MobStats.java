@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -44,8 +45,8 @@ public final class MobStats {
         return true;
     }
 
-    public static boolean targets(Collection<Identifier> ids, Collection<String> kinds, Mob mob) {
-        return ids.contains(BuiltInRegistries.ENTITY_TYPE.getKey(mob.getType())) || kinds.contains(mob.getType().getCategory().getName());
+    public static boolean targets(Collection<Identifier> ids, Collection<String> kinds, Entity entity) {
+        return ids.contains(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType())) || kinds.contains(entity.getType().getCategory().getName());
     }
 
     public static boolean scale(Mob mob, Holder<Attribute> attribute, Identifier id, float multiplier) {

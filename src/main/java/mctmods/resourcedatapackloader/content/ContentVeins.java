@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
@@ -34,7 +35,7 @@ public final class ContentVeins {
 
     private ContentVeins() {}
 
-    private record Rule(BlockGroup group, List<ItemStack> tools, int limit, float hunger) {
+    private record Rule(BlockGroup group, List<ItemStack> tools, int limit, float hunger, String advancement) {
         boolean holds(ItemStack held) {
             for (ItemStack tool : tools) {
                 if (ContentStacks.matches(held, tool)) { return true; }
@@ -63,11 +64,12 @@ public final class ContentVeins {
             ContentLog.LOGGER.error("Vein mining {} names no registered blocks or no registered tools, ignoring it", key);
             return;
         }
-        RULES.add(new Rule(group, tools, Mth.clamp(Json.getInt(json, "limit", 16), 1, 256), Math.max(0.0F, Json.getFloat(json, "hunger", 0.1F))));
+        RULES.add(new Rule(group, tools, Mth.clamp(Json.getInt(json, "limit", 16), 1, 256), Math.max(0.0F, Json.getFloat(json, "hunger", 0.1F)), Json.getString(json, "advancement", "").trim()));
     }
 
-    @Nullable private static Rule ruleFor(BlockState state, ItemStack held) {
+    @Nullable private static Rule ruleFor(ServerPlayer player, BlockState state, ItemStack held) {
         for (Rule rule : RULES) {
+            if (!rule.advancement().isEmpty() && !Advancements.has(player, rule.advancement())) { continue; }
             if (rule.group().contains(state) && rule.holds(held)) { return rule; }
         }
         return null;
@@ -79,7 +81,7 @@ public final class ContentVeins {
         if (GENERATION.stale()) { reload(); }
         if (RULES.isEmpty()) { return; }
         BlockState state = event.getState();
-        Rule rule = ruleFor(state, player.getMainHandItem());
+        Rule rule = ruleFor(player, state, player.getMainHandItem());
         if (rule == null) { return; }
         veining = true;
         try {

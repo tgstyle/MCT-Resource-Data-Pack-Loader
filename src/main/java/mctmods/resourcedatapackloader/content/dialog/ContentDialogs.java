@@ -52,6 +52,8 @@ public final class ContentDialogs {
         }
     }
 
+    public static List<String> keys() { return new ArrayList<>(BY_KEY.keySet()); }
+
     @Nullable public static DialogDef find(String asked) {
         DialogDef exact = BY_KEY.get(asked);
         if (exact != null) { return exact; }
@@ -113,13 +115,14 @@ public final class ContentDialogs {
             ContentLog.LOGGER.error("Dialog {} node {} has a reply with no text, skipping it", key, node);
             return null;
         }
-        String target = Json.getString(json, "goto", "").trim();
+        boolean trade = Json.getBoolean(json, "trade", false);
+        String target = trade ? "" : Json.getString(json, "goto", "").trim();
         if (!target.isEmpty() && !names.contains(target)) {
             ContentLog.LOGGER.error("Dialog {} node {} has a reply '{}' that goes to '{}', which is not one of its nodes, so it is skipped", key, node, text, target);
             return null;
         }
         CardWhen when = json.has("when") ? CardParser.when(Json.getJsonObject(json, "when")) : null;
-        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, "runs", "").trim(), when, target.isEmpty() && Json.getBoolean(json, "close", true));
+        return new DialogDef.Reply(text, target, Json.getString(json, "card", "").trim(), Json.getString(json, "runs", "").trim(), when, trade || target.isEmpty() && Json.getBoolean(json, "close", true), trade);
     }
 
     @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }

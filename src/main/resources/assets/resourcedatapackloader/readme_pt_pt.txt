@@ -217,9 +217,10 @@ Cada um destes é uma pasta em data/<yourpack>:
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
-    tooltips
-    harvests
-    carries
+    tooltips         harvests         carries          dialogs
+    veins            diets            enchantments     dice
+    games            orders           ranks            recipe_locks
+    spawn_locks
 
 Os blocos vêm nestas formas, definidas pelo campo "type":
 

@@ -7,7 +7,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public record ScoreDef(String name, String displayName, ObjectiveCriteria criterion, String slot, @Nullable ObjectiveCriteria.RenderType render, boolean teamTotals,
-                       boolean individuals, Map<String, Integer> killPoints, int deathPoints, int endsAtScore, int endsAfterMinutes, int endsAfterRounds, boolean resultsCard,
+                       boolean individuals, Map<String, Integer> killPoints, int deathPoints, int revivePoints, int endsAtScore, int endsAfterMinutes, int endsAfterRounds, boolean resultsCard,
                        String resultsTitle, String resultsIcon, String resultsImage, int resultsBackground, int resultsTicks, boolean carries, boolean endsResets,
                        int endsIntermission, String awardsTo, boolean endsLocksTeams, int ownKillPoints, String intermissionSays, String startsSays, String opensBy,
                        String opensSays, String opensLeaderSays, @Nullable Place opensLobby, boolean opensLobbyJoins, String opensJoinsSays, boolean endsLastStanding,
