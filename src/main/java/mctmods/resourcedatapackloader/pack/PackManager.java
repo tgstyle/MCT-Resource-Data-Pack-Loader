@@ -101,6 +101,7 @@ public final class PackManager {
     public static final String AFFIXES = "affixes";
     public static final String GEMS = "gems";
     public static final String HARVESTS = "harvests";
+    public static final String VEINS = "veins";
     public static final String ENCHANTING = "enchanting";
     public static final String ORDERS = "orders";
     public static final String RANKS = "ranks";

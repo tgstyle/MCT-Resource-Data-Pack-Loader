@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -16,7 +17,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import net.minecraftforge.registries.ForgeRegistries;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 public final class ContentStates {
@@ -35,6 +38,21 @@ public final class ContentStates {
     }
 
     public record Spec(BlockState state, @Nullable CompoundTag tag, boolean exact) {}
+
+    public static int bind(BlockMatchDef match, Object owner, String part, Consumer<Block> whole, Consumer<BlockState> exact) {
+        Block block = Registered.find(ForgeRegistries.BLOCKS, match.block());
+        if (block == null) {
+            ContentLog.LOGGER.error("{} names block {} under {}, which is not registered, leaving it out", owner, match.block(), part);
+            return 0;
+        }
+        if (match.properties().isEmpty()) {
+            whole.accept(block);
+            return 1;
+        }
+        List<BlockState> states = matching(block, match.properties(), owner + " " + part);
+        states.forEach(exact);
+        return states.isEmpty() ? 0 : 1;
+    }
 
     public static List<BlockState> matching(Block block, Map<String, String> properties, Object context) {
         Map<Property<?>, Comparable<?>> wanted = wanted(block, properties, context);

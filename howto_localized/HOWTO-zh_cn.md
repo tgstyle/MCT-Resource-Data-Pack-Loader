@@ -65,6 +65,7 @@
 - [附魔台](#附魔台)
 - [方块掉落物](#方块掉落物)
 - [右键收获](#右键收获)
+- [矿脉连锁挖掘](#矿脉连锁挖掘)
 - [玩家战利品](#玩家战利品)
 - [村民与交易](#村民与交易)
 
@@ -199,6 +200,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/loot_injections/*.json`         | 加入已有战利品表的一个池。[可以覆盖的内容](#可以覆盖的内容)                                                           |
 | `<namespace>/block_drops/*.json`             | 为资源包并不拥有的方块新增或替换的掉落物。[方块掉落物](#方块掉落物)                                                   |
 | `<namespace>/harvests/*.json`                | 右键即可收获并补种的作物。[右键收获](#右键收获)                                                                       |
+| `<namespace>/veins/*.json`                   | 工具一次挖完的方块组，可设上限和饥饿消耗。[矿脉连锁挖掘](#矿脉连锁挖掘)                                               |
 | `<namespace>/player_loot/*.json`             | 玩家死亡时抽取的战利品表。[玩家战利品](#玩家战利品)                                                                   |
 | `<namespace>/advancements/*.json`            | 进度。[可以覆盖的内容](#可以覆盖的内容)                                                                               |
 | `<namespace>/functions/*.mcfunction`         | 函数文件。[可以覆盖的内容](#可以覆盖的内容)                                                                           |
@@ -506,7 +508,7 @@ RDPL 适合替换一两个配方，而你自己内容的配方则应随资源包
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                       |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                        |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                        |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（客户端文件夹：没有客户端时，请不要放） |
 | 整个控制层、设置和预生成                                                                                                                                  |                                                                                                                |
 
@@ -2753,6 +2755,36 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `requires` | 否   | 字符串列表   | 无                     | 必须存在的模组 ID、资源包命名空间或 `config:` 选项，与所有定义相同                   |
 
 任何带有整数属性 `age` 的方块都可以列入。未成熟的作物、潜行的玩家和旁观者仍按普通右键处理。掉落与破坏该作物时相同，会计入手持工具的时运以及“方块掉落”一节的所有规则；重新种下时，若掉落物中有一颗该作物的种子，就会从中扣除一颗。村民的 `harvestFarmland` 任务是独立的，不受影响。
+
+## 矿脉连锁挖掘
+
+*合成、战利品与交易*
+
+`<namespace>/veins/*.json`
+
+文件名可自行决定，只读取文件夹，多个文件会叠加。
+
+用镐子挖矿石，通常只会破坏那一个方块。这里的文件会指定一组方块和能一次挖完它们的工具：生存模式下的玩家用主手中的某个工具破坏组内方块时，与它相邻的同类方块也会由近到远一并破坏，直到达到上限。没有文件时一切照旧；想把选择权交给玩家的资源包，可以在 `requires` 中加入 `config:` 条目，做法与“资源包选项”一节相同。
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| 键         | 必需 | 值                                                                               | 默认值 | 作用                                                                              |
+| ---------- | ---- | -------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------- |
+| `blocks`   | 是   | 方块 ID 列表，写法与硬度分组相同：1.12.2 用 `meta`，1.20.1 及以后用 `properties` |        | 方块组。同一条矿脉只含同一种方块，组内两种不同的方块不会连在一起                  |
+| `tools`    | 是   | 物品 ID 列表，1.12.2 中为 `modid:item:meta`                                      |        | 第一个方块被破坏时持在主手中的工具。不存在的物品会被跳过并写入日志                |
+| `limit`    | 否   | int，1 到 256                                                                    | `16`   | 除第一个方块外最多破坏的方块数                                                    |
+| `hunger`   | 否   | float，0 或更大                                                                  | `0.1`  | 每多破坏一个方块消耗的饥饿点数。1 点相当于 4 点消耗度。第一个方块照常消耗原版的量 |
+| `requires` | 否   | 字符串列表                                                                       | 无     | 必须存在的模组 ID、资源包命名空间或 `config:` 选项，与所有定义相同                |
+
+相邻指面、棱或角相接，所以一个方块有 26 个邻居。只在生存模式下生效：创造和旁观模式的玩家仍只破坏一个方块。工具损坏或玩家饱食度降到 0 时停止。每个额外方块都会掉落平常的战利品，会计入手持工具的时运以及“方块掉落”一节的所有规则，并让工具磨损一次。对硬度分组保留的方块不会生效。这只是服务端的资源包数据，客户端无需任何东西。没有任何有效方块或工具的文件会被忽略并写入一行错误日志。
 
 ## 玩家战利品
 

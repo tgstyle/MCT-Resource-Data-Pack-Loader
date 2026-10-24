@@ -15,7 +15,6 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Json;
-import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonArray;
@@ -41,7 +40,6 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
@@ -128,34 +126,12 @@ public final class ContentHardness {
         anyRolls = rolls;
     }
 
-    @Nullable private static Block named(HardnessDef def, BlockMatchDef name, String where) {
-        Block block = Registered.find(ForgeRegistries.BLOCKS, name.block());
-        if (block == null) { ContentLog.LOGGER.error("Hardness group {} names block {} under {}, which is not registered, leaving it out", def.key(), name.block(), where); }
-        return block;
-    }
-
     private static int deny(HardnessDef def, BlockMatchDef name) {
-        Block block = named(def, name, "except");
-        if (block == null) { return 0; }
-        if (name.properties().isEmpty()) {
-            DENIED.put(block, def);
-            return 1;
-        }
-        List<BlockState> states = ContentStates.matching(block, name.properties(), def.key() + " except");
-        for (BlockState state : states) { DENIED_EXACT.put(state, def); }
-        return states.isEmpty() ? 0 : 1;
+        return ContentStates.bind(name, "Hardness group " + def.key(), "except", held -> DENIED.put(held, def), state -> DENIED_EXACT.put(state, def));
     }
 
     private static int bind(HardnessDef def, BlockMatchDef name) {
-        Block block = named(def, name, "blocks");
-        if (block == null) { return 0; }
-        if (name.properties().isEmpty()) {
-            WHOLE.computeIfAbsent(block, held -> new ArrayList<>()).add(def);
-            return 1;
-        }
-        List<BlockState> states = ContentStates.matching(block, name.properties(), def.key() + " blocks");
-        for (BlockState state : states) { EXACT.computeIfAbsent(state, held -> new ArrayList<>()).add(def); }
-        return states.isEmpty() ? 0 : 1;
+        return ContentStates.bind(name, "Hardness group " + def.key(), "blocks", held -> WHOLE.computeIfAbsent(held, any -> new ArrayList<>()).add(def), state -> EXACT.computeIfAbsent(state, any -> new ArrayList<>()).add(def));
     }
 
     public static boolean anyRolls() { return anyRolls; }
@@ -430,7 +406,7 @@ public final class ContentHardness {
     @Nullable private static HardnessDef read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "hardness group");
         if (json == null) { return null; }
-        List<BlockMatchDef> blocks = matches(key, json, "blocks");
+        List<BlockMatchDef> blocks = ContentParser.matches(key, json, "blocks");
         if (blocks.isEmpty()) {
             ContentLog.LOGGER.error("Hardness group {} names no blocks, ignoring it", key);
             return null;
@@ -448,7 +424,7 @@ public final class ContentHardness {
         }
         JsonObject adventure = Json.getJsonObject(json, "adventure", new JsonObject());
         JsonObject becomes = Json.getJsonObject(json, "becomes", new JsonObject());
-        return new HardnessDef(key, blocks, matches(key, json, "except"),
+        return new HardnessDef(key, blocks, ContentParser.matches(key, json, "except"),
                 mining[0], mining[1], blast[0], blast[1], buckets,
                 minHeight, maxHeight, Json.strings(json, "requires"), field(json),
                 Json.getBoolean(json, "keeps", false), json.has("adventure"),
@@ -491,21 +467,5 @@ public final class ContentHardness {
         }
         float value = Json.asFloat(element, name, 1.0F);
         return new float[] { value, value };
-    }
-
-    private static List<BlockMatchDef> matches(ResourceLocation key, JsonObject json, String name) {
-        List<BlockMatchDef> values = new ArrayList<>();
-        if (!json.has(name)) { return values; }
-        JsonElement element = json.get(name);
-        if (!element.isJsonArray()) {
-            BlockMatchDef match = ContentParser.match(key, element);
-            if (match != null) { values.add(match); }
-            return values;
-        }
-        for (JsonElement held : element.getAsJsonArray()) {
-            BlockMatchDef match = ContentParser.match(key, held);
-            if (match != null) { values.add(match); }
-        }
-        return values;
     }
 }

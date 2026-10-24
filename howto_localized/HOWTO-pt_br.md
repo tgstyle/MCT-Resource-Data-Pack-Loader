@@ -65,6 +65,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Mesa de encantamento](#mesa-de-encantamento)
 - [Drops de blocos](#drops-de-blocos)
 - [Colheita com clique direito](#colheita-com-clique-direito)
+- [Mineração de veios](#mineração-de-veios)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Aldeões e trocas](#aldeões-e-trocas)
 
@@ -199,6 +200,7 @@ Em `data/`:
 | `<namespace>/loot_injections/*.json`         | Um grupo adicionado a uma tabela que já existe. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                |
 | `<namespace>/block_drops/*.json`             | Drops extras ou substitutos para blocos que um pacote não possui. [Drops de blocos](#drops-de-blocos)                                                                                    |
 | `<namespace>/harvests/*.json`                | Plantações colhidas e replantadas com o clique direito. [Colheita com clique direito](#colheita-com-clique-direito)                                                                      |
+| `<namespace>/veins/*.json`                   | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de veios](#mineração-de-veios)                                                             |
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                          |
 | `<namespace>/advancements/*.json`            | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                       |
 | `<namespace>/functions/*.mcfunction`         | Arquivos de função. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                            |
@@ -506,7 +508,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                  |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                   |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                   |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (pastas de cliente: sem cliente, deixe-as de fora) |
 | toda a camada de controle, as configurações e a pré-geração                                                                                               |                                                                                                                           |
 
@@ -2753,6 +2755,36 @@ Clicar com o botão direito numa plantação madura normalmente não faz nada. U
 | `requires` | não         | lista de strings      | nenhum                           | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição                                |
 
 Qualquer bloco com uma propriedade inteira `age` pode ser citado. Uma plantação que não está madura, um jogador agachado e um espectador ficam com o clique direito de sempre. Os drops são os que quebrar a plantação daria, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e o replantio tira deles uma semente da plantação, se houver. A tarefa `harvestFarmland` do aldeão é separada e não muda.
+
+## Mineração de veios
+
+*criação, saque e comércio*
+
+`<namespace>/veins/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Quebrar um minério com uma picareta normalmente quebra só aquele bloco. Um arquivo aqui indica um grupo de blocos e as ferramentas que o mineram de uma vez: quando um jogador no modo sobrevivência quebra um bloco do grupo com uma dessas ferramentas na mão principal, os blocos do mesmo tipo que o tocam também são quebrados, os mais próximos primeiro, até um limite. Sem arquivo nada muda, e um pack que queira deixar a escolha para o jogador coloca uma entrada `config:` em `requires`, como descrito em Opções de pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Chave      | Obrigatória | Valor                                                                                                        | Padrão | O que faz                                                                                                            |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | sim         | lista de ids de bloco, com `meta` (1.12.2) ou `properties` (1.20.1 e posteriores) como em um grupo de dureza |        | O grupo. Só blocos de um mesmo tipo formam um veio, nunca dois blocos diferentes do grupo                            |
+| `tools`    | sim         | lista de ids de item, `modid:item:meta` na 1.12.2                                                            |        | Segurado na mão principal quando o primeiro bloco quebra. Um item que não existe é ignorado com uma linha no log     |
+| `limit`    | não         | int, de 1 a 256                                                                                              | `16`   | Máximo de blocos quebrados além do primeiro                                                                          |
+| `hunger`   | não         | float, 0 ou mais                                                                                             | `0.1`  | Pontos de fome por bloco extra. 1 ponto equivale a 4 de exaustão. O primeiro bloco custa o valor habitual do vanilla |
+| `requires` | não         | lista de strings                                                                                             | nenhum | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição          |
+
+Tocar significa dividir uma face, uma aresta ou um canto, então cada bloco tem 26 vizinhos. Só no modo sobrevivência: jogadores no criativo e espectadores quebram um bloco só, como sempre. Para quando a ferramenta quebra ou a barra de comida do jogador chega a 0. Cada bloco extra solta seus drops de sempre, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e gasta um uso da ferramenta. Não age sobre um bloco que um grupo de dureza mantém. São dados de pack só de servidor e não precisam de nada no cliente. Um arquivo sem blocos ou ferramentas válidos é ignorado com uma linha de erro.
 
 ## Saque de jogadores
 
