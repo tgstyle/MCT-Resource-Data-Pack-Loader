@@ -5217,15 +5217,38 @@ Une carte de structures assemble des modèles en un seul bâtiment nommé sur un
 }
 ```
 
-| Réglage      | Type                     | Défaut | Rôle                                                                                                                                                                                                           |
-| ------------ | ------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cell`       | nombre                   | `32`   | Le pas de la grille en blocs, jusqu'à 48. Un modèle plus petit que la cellule se place au coin de la cellule, de sorte que les pièces pleine taille se jouxtent sans raccord visible                           |
-| `ground`     | nombre                   | `0`    | Quelle couche pose son sol à la surface du terrain. Les couches qui la précèdent creusent vers le bas, ce qui donne des sous-sols au bâtiment                                                                  |
-| `at`         | deux nombres             | aucun  | Épingle une copie à des coordonnées de bloc exactes, comme `structureAt` épingle un village                                                                                                                    |
-| `spacing`    | nombre                   | `0`    | Disperse des copies sur une grille espacée d'autant de chunks, avec un décalage aléatoire tiré de la graine du monde. `0` n'en disperse aucune, donc une carte avec seulement `at` ne se construit qu'une fois |
-| `chance`     | nombre                   | `100`  | Le pourcentage d'emplacements de la grille qui construisent une copie                                                                                                                                          |
-| `dimensions` | liste d'ids de dimension | toutes | Où la carte peut se construire, y compris dans les dimensions propres à un pack                                                                                                                                |
-| `layers`     | liste                    | aucun  | Les couches, de bas en haut, chacune avec une `palette` et une `map`                                                                                                                                           |
+Une carte peut aussi s'enfoncer sous le terrain et remplir les spawners et les coffres que contiennent ses modèles :
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Réglage      | Type                     | Défaut | Rôle                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------ | ------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cell`       | nombre                   | `32`   | Le pas de la grille en blocs, jusqu'à 48. Un modèle plus petit que la cellule se place au coin de la cellule, de sorte que les pièces pleine taille se jouxtent sans raccord visible                                                                                                                                                                                                                                                |
+| `ground`     | nombre                   | `0`    | Quelle couche pose son sol à la surface du terrain. Les couches qui la précèdent creusent vers le bas, ce qui donne des sous-sols au bâtiment                                                                                                                                                                                                                                                                                       |
+| `at`         | deux nombres             | aucun  | Épingle une copie à des coordonnées de bloc exactes, comme `structureAt` épingle un village                                                                                                                                                                                                                                                                                                                                         |
+| `spacing`    | nombre                   | `0`    | Disperse des copies sur une grille espacée d'autant de chunks, avec un décalage aléatoire tiré de la graine du monde. `0` n'en disperse aucune, donc une carte avec seulement `at` ne se construit qu'une fois                                                                                                                                                                                                                      |
+| `chance`     | nombre                   | `100`  | Le pourcentage d'emplacements de la grille qui construisent une copie                                                                                                                                                                                                                                                                                                                                                               |
+| `depth`      | nombre ou deux nombres   | aucun  | Enfonce le bâtiment sous le terrain : le sol de la couche `ground` se trouve à autant de blocs sous la surface échantillonnée, au lieu d'être à sa hauteur. Deux nombres donnent un minimum et un maximum, et chaque copie tire le sien à partir de la graine du monde. S'applique aux copies que la carte disperse ou épingle avec `at` ; une carte qu'un village ou une ville place pose toujours sa couche `ground` à la surface |
+| `spawners`   | liste d'ids d'entité     | aucun  | Le mob de chaque spawner des modèles de la carte qui a été enregistré sans mob ou avec un simple cochon. Une entrée peut porter un poids, comme `id=2` ; un spawner enregistré avec un autre mob qu'un cochon le garde. Un id qu'aucun registre ne connaît (la variante d'entité d'un pack quand `vanillaClients` est activé) est écarté du tirage                                                                                  |
+| `loot`       | id de table de butin     | aucun  | La table de butin de chaque coffre et coffre piégé des modèles de la carte qui a été enregistré sans table de butin et sans objets ; un coffre enregistré avec l'un des deux le garde                                                                                                                                                                                                                                               |
+| `dimensions` | liste d'ids de dimension | toutes | Où la carte peut se construire, y compris dans les dimensions propres à un pack                                                                                                                                                                                                                                                                                                                                                     |
+| `layers`     | liste                    | aucun  | Les couches, de bas en haut, chacune avec une `palette` et une `map`                                                                                                                                                                                                                                                                                                                                                                |
 
 Une palette désigne des modèles par leur clé de registre, depuis le dossier `<namespace>/structures/` d'un pack.
 
@@ -5236,6 +5259,8 @@ Une palette désigne des modèles par leur clé de registre, depuis le dossier `
 | `.`                                         | Une cellule vide, rien n'est placé                                                                                                                                                                        |
 
 Chaque copie tire l'une des quatre orientations à partir de la graine du monde et tout le bâtiment tourne d'un bloc, modèles compris, de sorte que les murs qui se rejoignent d'une cellule à l'autre se rejoignent toujours ; une carte tourne mais ne se reflète jamais. La couche de sol pose son plancher à la surface du terrain échantillonnée sous le milieu du bâtiment, et toute la carte partage cette unique hauteur. Une carte dispersée est une structure à part entière pour le jeu, placée par un ensemble de structures écrit pour vous : chaque chunk ne construit donc que sa propre tranche de la grille, et un bâtiment s'étendant sur de nombreux chunks arrive sans génération en cascade, quel que soit l'ordre de chargement des chunks. Une [parcelle de village](#parcelles-de-village) de type `template` peut aussi désigner une carte comme `structure`, ce qui fait du composite un bâtiment de ville.
+
+Une carte creuse le terrain : chaque bloc qu'un modèle contient, air compris, remplace ce qui s'y trouvait, tandis qu'une cellule vide ou l'espace autour d'un modèle plus petit reste plein ; il faut donc donner à chaque salle son air dans le modèle et à un puits ses cellules jusqu'à la surface.
 
 ## Parcelles de village
 

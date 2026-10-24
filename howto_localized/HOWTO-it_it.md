@@ -5217,15 +5217,38 @@ Una mappa delle strutture compone dei modelli in un unico edificio con nome su u
 }
 ```
 
-| Impostazione | Tipo                       | Predefinito | Cosa fa                                                                                                                                                                                                    |
-| ------------ | -------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cell`       | numero                     | `32`        | Il passo della griglia in blocchi, fino a 48. Un modello più piccolo della cella sta nell'angolo della cella, così i pezzi a grandezza piena si affiancano senza interruzioni                              |
-| `ground`     | numero                     | `0`         | Quale strato poggia sulla superficie del terreno. Gli strati prima di esso scavano verso il basso, ed è così che un edificio ottiene gli scantinati                                                        |
-| `at`         | due numeri                 | nessuno     | Fissa una copia a coordinate di blocco precise, come `structureAt` fissa un villaggio                                                                                                                      |
-| `spacing`    | numero                     | `0`         | Sparge le copie su una griglia con questa distanza in chunk, con una variazione derivata dal seed del mondo. `0` non ne sparge nessuna, quindi una mappa con solo `at` si costruisce esattamente una volta |
-| `chance`     | numero                     | `100`       | La percentuale di punti della griglia in cui si costruisce una copia                                                                                                                                       |
-| `dimensions` | elenco di id di dimensione | tutte       | Dove la mappa può essere costruita, comprese le dimensioni del pack stesso                                                                                                                                 |
-| `layers`     | elenco                     | nessuno     | Gli strati, dal basso verso l'alto, ciascuno con una `palette` e una `map`                                                                                                                                 |
+Una mappa può anche affondare sotto il terreno e riempire gli spawner e i bauli che contengono i suoi modelli:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Impostazione | Tipo                       | Predefinito | Cosa fa                                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------ | -------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cell`       | numero                     | `32`        | Il passo della griglia in blocchi, fino a 48. Un modello più piccolo della cella sta nell'angolo della cella, così i pezzi a grandezza piena si affiancano senza interruzioni                                                                                                                                                                                                                                        |
+| `ground`     | numero                     | `0`         | Quale strato poggia sulla superficie del terreno. Gli strati prima di esso scavano verso il basso, ed è così che un edificio ottiene gli scantinati                                                                                                                                                                                                                                                                  |
+| `at`         | due numeri                 | nessuno     | Fissa una copia a coordinate di blocco precise, come `structureAt` fissa un villaggio                                                                                                                                                                                                                                                                                                                                |
+| `spacing`    | numero                     | `0`         | Sparge le copie su una griglia con questa distanza in chunk, con una variazione derivata dal seed del mondo. `0` non ne sparge nessuna, quindi una mappa con solo `at` si costruisce esattamente una volta                                                                                                                                                                                                           |
+| `chance`     | numero                     | `100`       | La percentuale di punti della griglia in cui si costruisce una copia                                                                                                                                                                                                                                                                                                                                                 |
+| `depth`      | numero o due numeri        | nessuno     | Affonda l'edificio sotto il terreno: il pavimento dello strato `ground` si trova a tanti blocchi sotto la superficie campionata invece che su di essa. Due numeri indicano un minimo e un massimo, e ogni copia estrae il proprio dal seme del mondo. Vale per le copie che la mappa distribuisce o fissa con `at`; una mappa che un villaggio o una città piazza continua a posare lo strato `ground` in superficie |
+| `spawners`   | elenco di id di entità     | nessuno     | Il mob per ogni spawner dei modelli della mappa salvato senza mob o con un semplice maiale. Una voce può avere un peso, come `id=2`; uno spawner salvato con un mob diverso da un maiale lo mantiene. Un id che nulla registra (la variante di entità di un pack quando `vanillaClients` è attivo) viene escluso dall'estrazione                                                                                     |
+| `loot`       | id di loot table           | nessuno     | La loot table per ogni baule e baule trappola dei modelli della mappa salvato senza loot table e senza oggetti; un baule salvato con una loot table o con degli oggetti resta com'è                                                                                                                                                                                                                                  |
+| `dimensions` | elenco di id di dimensione | tutte       | Dove la mappa può essere costruita, comprese le dimensioni del pack stesso                                                                                                                                                                                                                                                                                                                                           |
+| `layers`     | elenco                     | nessuno     | Gli strati, dal basso verso l'alto, ciascuno con una `palette` e una `map`                                                                                                                                                                                                                                                                                                                                           |
 
 Una palette indica i modelli tramite chiave di registro da `<namespace>/structures/` di un pack.
 
@@ -5236,6 +5259,8 @@ Una palette indica i modelli tramite chiave di registro da `<namespace>/structur
 | `.`                                         | Una cella vuota, nulla viene piazzato                                                                                                                                                                  |
 
 Ogni copia sorteggia uno dei quattro orientamenti dal seed del mondo e l'intero edificio ruota insieme, modelli compresi, così i muri che si incontrano tra le celle continuano a incontrarsi; una mappa ruota ma non viene mai specchiata. Lo strato di terra poggia sulla superficie del terreno campionata sotto il centro dell'edificio, e l'intera mappa condivide quell'unica altezza. Una mappa sparsa è una struttura a sé per il gioco, piazzata tramite un insieme di strutture scritto per te, quindi ogni chunk costruisce solo la propria fetta della griglia e un edificio che si estende su molti chunk arriva senza generazione a cascata, in qualunque ordine si carichino i chunk. Anche un [lotto di villaggio](#lotti-dei-villaggi) di tipo `template` può indicare una mappa come propria `structure`, il che rende l'insieme un edificio della città.
+
+Una mappa scava nel terreno: ogni blocco che un modello contiene, aria compresa, sostituisce ciò che c'era, mentre una cella vuota o lo spazio attorno a un modello più piccolo resta solido, quindi nel modello va messa l'aria di ogni stanza e a un pozzo vanno date le sue celle fino alla superficie.
 
 ## Lotti dei villaggi
 
