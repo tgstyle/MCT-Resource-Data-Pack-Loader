@@ -115,19 +115,22 @@ public final class ContentSeasons {
         List<String> target = seasons.order.get(index);
         List<String> before = ContentEnvironments.active(base.id);
         for (String name : before.subList(1, before.size())) {
-            if (seasons.seasonal.contains(name) && !target.contains(name)) { ContentEnvironments.set(server, base.id, name, false); }
+            if (seasons.seasonal.contains(name) && !target.contains(name)) { ContentEnvironments.change(server, base.id, name, false); }
         }
         String whole = null;
         for (String name : target) {
             if (!ContentEnvironments.local(base, name)) { whole = name; }
         }
         String current = before.get(0);
-        if (whole != null && !whole.equals(current)) { ContentEnvironments.set(server, base.id, whole, true); }
-        else if (whole == null && seasons.seasonal.contains(current)) { ContentEnvironments.set(server, base.id, ContentEnvironments.DEFAULT, true); }
+        if (whole != null && !whole.equals(current)) { ContentEnvironments.change(server, base.id, whole, true); }
+        else if (whole == null && seasons.seasonal.contains(current)) { ContentEnvironments.change(server, base.id, ContentEnvironments.DEFAULT, true); }
         for (String name : target) {
-            if (ContentEnvironments.local(base, name) && !ContentEnvironments.active(base.id).contains(name)) { ContentEnvironments.set(server, base.id, name, true); }
+            if (ContentEnvironments.local(base, name) && !ContentEnvironments.active(base.id).contains(name)) { ContentEnvironments.change(server, base.id, name, true); }
         }
-        if (!before.equals(ContentEnvironments.active(base.id))) { ContentLog.LOGGER.info("Dimension {} enters the season '{}' on day {}", base.registryName, target.get(0), day); }
+        if (!before.equals(ContentEnvironments.active(base.id))) {
+            ContentEnvironments.announce(server, base.id, before);
+            ContentLog.LOGGER.info("Dimension {} enters the season '{}' on day {}", base.registryName, target.get(0), day);
+        }
     }
 
     static void forget() {

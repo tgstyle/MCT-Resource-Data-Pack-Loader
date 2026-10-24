@@ -8,37 +8,36 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonObject;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public final class SpawnLocks {
-    private static final Map<ResourceLocation, List<SpawnGateDef>> GATES = new HashMap<>();
-    private static boolean loaded;
+    private static final List<Lock> LOCKS = new ArrayList<>();
 
     private SpawnLocks() {}
 
     public static void load() {
-        if (loaded) { return; }
-        loaded = true;
+        LOCKS.clear();
         Json.eachObject(PackManager.SPAWN_LOCKS, "spawn lock file", SpawnLocks::read);
-        if (!GATES.isEmpty()) { Summary.info("entities.locks", "Loaded spawn locks for " + GATES.size() + " entity type(s)"); }
+        if (!LOCKS.isEmpty()) { Summary.info("entities.locks", "Loaded " + LOCKS.size() + " spawn lock(s)"); }
     }
 
     static List<SpawnGateDef> gates(Entity entity) {
-        if (GATES.isEmpty()) { return Collections.emptyList(); }
-        ResourceLocation name = EntityList.getKey(entity);
-        List<SpawnGateDef> found = name == null ? null : GATES.get(name);
+        if (LOCKS.isEmpty()) { return Collections.emptyList(); }
+        List<SpawnGateDef> found = null;
+        for (Lock lock : LOCKS) {
+            if (!MobStats.targets(lock.entities, entity)) { continue; }
+            if (found == null) { found = new ArrayList<>(); }
+            found.add(lock.gate);
+        }
         return found == null ? Collections.emptyList() : found;
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        List<String> entities = Json.strings(json, "entities");
-        if (entities.isEmpty()) {
+        List<String> entities = json.has("entities") ? MobStats.entities("Spawn lock file " + key, "entities", json.get("entities")) : null;
+        if (entities == null || entities.isEmpty()) {
             ContentLog.LOGGER.error("Spawn lock file {} names no entities, ignoring it", key);
             return;
         }
@@ -47,6 +46,16 @@ public final class SpawnLocks {
             ContentLog.LOGGER.error("Spawn lock file {} sets no spawn condition, ignoring it", key);
             return;
         }
-        for (String entity : entities) { GATES.computeIfAbsent(new ResourceLocation(entity), name -> new ArrayList<>()).add(gate); }
+        LOCKS.add(new Lock(entities, gate));
+    }
+
+    private static final class Lock {
+        final List<String> entities;
+        final SpawnGateDef gate;
+
+        Lock(List<String> entities, SpawnGateDef gate) {
+            this.entities = entities;
+            this.gate = gate;
+        }
     }
 }

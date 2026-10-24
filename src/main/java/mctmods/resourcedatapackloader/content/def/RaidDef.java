@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.BossInfo;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class RaidDef {
     public final ResourceLocation registryName;
@@ -21,8 +22,10 @@ public final class RaidDef {
     public final int points;
     public final String loot;
     public final boolean anywhere;
+    @Nullable public final BossBarDef bossBar;
+    public final String title;
 
-    public RaidDef(ResourceLocation registryName, String omen, String name, BossInfo.Color color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout, String sound, String wins, String loses, List<String> bells, int points, String loot, boolean anywhere) {
+    public RaidDef(ResourceLocation registryName, String omen, String name, BossInfo.Color color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout, String sound, String wins, String loses, List<String> bells, int points, String loot, boolean anywhere, @Nullable BossBarDef bossBar) {
         this.registryName = registryName;
         this.omen = omen;
         this.name = name;
@@ -39,6 +42,8 @@ public final class RaidDef {
         this.points = points;
         this.loot = loot;
         this.anywhere = anywhere;
+        this.bossBar = bossBar;
+        this.title = bossBar != null && !bossBar.name.isEmpty() ? bossBar.name : name;
     }
 
     public static final class Group {

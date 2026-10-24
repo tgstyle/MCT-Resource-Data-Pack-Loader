@@ -2436,18 +2436,23 @@ The file name is yours to choose, only the folder is read, and several files sta
 ```json
 {
   "advancement": "mypack:deep_miner",
+  "team": "miners",
+  "objective": "kills",
+  "scoreAtLeast": 5,
   "names": ["minecraft:diamond_pickaxe", "thermalfoundation:*"],
   "namespaces": ["tconstruct"],
   "outputs": ["minecraft:diamond_sword"]
 }
 ```
 
-| Key           | Required | Value              | Default | What it does                                                                                                        |
-| ------------- | -------- | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------- |
-| `advancement` | yes      | `namespace:path`   | none    | The advancement a player needs before these recipes craft. A file without it is skipped and the log says so         |
-| `names`       | no       | list               | none    | Recipe names to hold back. A trailing `*` matches every name starting with that text, such as `thermalfoundation:*` |
-| `namespaces`  | no       | list               | none    | Every recipe of these namespaces                                                                                    |
-| `outputs`     | no       | list of item names | none    | Every recipe that crafts one of these items                                                                         |
+| Key                         | Required | Value              | Default | What it does                                                                                                                                                                                                                    |
+| --------------------------- | -------- | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | no       | `namespace:path`   | none    | The advancement a player needs before these recipes craft. A lock needs this or a standing (`team`, or `objective` with `scoreAtLeast`); with both set, a player needs both. A file with neither is skipped and the log says so |
+| `names`                     | no       | list               | none    | Recipe names to hold back. A trailing `*` matches every name starting with that text, such as `thermalfoundation:*`                                                                                                             |
+| `namespaces`                | no       | list               | none    | Every recipe of these namespaces                                                                                                                                                                                                |
+| `outputs`                   | no       | list of item names | none    | Every recipe that crafts one of these items                                                                                                                                                                                     |
+| `team`                      | no       | text               | none    | The scoreboard team a player must be on                                                                                                                                                                                         |
+| `objective`, `scoreAtLeast` | no       | text, int          | none    | The player's score in the objective must be at least this. Both are needed                                                                                                                                                      |
 
 A player without the advancement sees an empty result slot for a matching recipe, in a crafting table, in the 2x2 inventory grid and when the recipe book fills the grid; a player who has it crafts as usual. Furnaces, anvils and automated crafters are not held back. Several files stack, and a recipe that matches two files needs both advancements. A file that selects no recipe is skipped, and the log says so.
 
@@ -2952,17 +2957,19 @@ Breaking an ore with a pickaxe normally breaks that one block. A file here names
   "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
   "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
   "limit": 16,
-  "hunger": 0.5
+  "hunger": 0.5,
+  "advancement": "mypack:found_ore"
 }
 ```
 
-| Key        | Required | Value                                                                                             | Default | What it does                                                                                              |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
-| `blocks`   | yes      | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group |         | The group. Only blocks of one kind join a vein, never two different blocks of the group                   |
-| `tools`    | yes      | list of item ids, `modid:item:meta` in 1.12.2                                                     |         | Held in the main hand when the first block breaks. An item that does not exist is skipped with a log line |
-| `limit`    | no       | int, 1 to 256                                                                                     | `16`    | Most blocks broken besides the first                                                                      |
-| `hunger`   | no       | float, 0 or more                                                                                  | `0.1`   | Hunger points per extra block. 1 point is 4 exhaustion. The first block costs vanilla's usual amount      |
-| `requires` | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                  |
+| Key           | Required | Value                                                                                             | Default | What it does                                                                                                  |
+| ------------- | -------- | ------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `blocks`      | yes      | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group |         | The group. Only blocks of one kind join a vein, never two different blocks of the group                       |
+| `tools`       | yes      | list of item ids, `modid:item:meta` in 1.12.2                                                     |         | Held in the main hand when the first block breaks. An item that does not exist is skipped with a log line     |
+| `limit`       | no       | int, 1 to 256                                                                                     | `16`    | Most blocks broken besides the first                                                                          |
+| `hunger`      | no       | float, 0 or more                                                                                  | `0.1`   | Hunger points per extra block. 1 point is 4 exhaustion. The first block costs vanilla's usual amount          |
+| `advancement` | no       | text                                                                                              | none    | An advancement the player must have for this group to work for them. Without it the group applies to everyone |
+| `requires`    | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                      |
 
 Connected means touching by face, edge or corner, so a block has 26 neighbors. Survival only: creative and spectator players break one block as usual. It stops when the tool breaks or the player's food level reaches 0. Every extra block gives its usual drops, with the Fortune of the held tool and every rule under Block drops, and wears the tool one use. It does not run on a block a hardness group keeps. This is server pack data and needs nothing on the client. A file with no valid blocks or tools is ignored with an error line.
 
@@ -2979,48 +2986,18 @@ A player who sneaks and right-clicks with an empty main hand picks up a listed b
 ```json
 {
   "requires": ["config:enableCarrying"],
-  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", { "block": "mypack:crate", "meta": 2 }],
   "mobs": ["minecraft:cow", "minecraft:sheep"]
 }
 ```
 
-| Key        | Required | Value              | Default | What it does                                                                                                           |
-| ---------- | -------- | ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `blocks`   | no       | list of block ids  | none    | The blocks that can be carried, vanilla or from a pack. A block nothing registers is skipped with a log line           |
-| `mobs`     | no       | list of entity ids | none    | The mobs that can be carried, by entity id, vanilla or from a pack. An id nothing registers is skipped with a log line |
-| `requires` | no       | list of strings    | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                               |
+| Key        | Required | Value                              | Default | What it does                                                                                                                                                                                                                            |
+| ---------- | -------- | ---------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | no       | list of block ids or match objects | none    | The blocks that can be carried, vanilla or from a pack. Each entry is written as a `blocks` entry of vein mining: an id, `modid:block:meta`, or an object with `block` and `meta`. A block nothing registers is skipped with a log line |
+| `mobs`     | no       | list of entity ids                 | none    | The mobs that can be carried, by entity id, vanilla or from a pack. An id nothing registers is skipped with a log line                                                                                                                  |
+| `requires` | no       | list of strings                    | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                                                                                                                                                |
 
 Ids only, no tags. Two-block structures such as doors, tall plants and beds cannot be carried, nor can protected blocks or blocks with a hardness below 0. A mob's riders are set off when it is picked up, a leash is not special-cased, and nothing is drawn on the carrier. Carried data is not data-fixed across game upgrades, and a carry whose block or mob no longer resolves is cleared with an error line in the log. A sneaking pack mob that has a storage GUI is picked up instead of opening it.
-
-## Vein mining
-
-*crafting, loot and trade*
-
-`<namespace>/veins/*.json`
-
-The file name is yours to choose, only the folder is read, and several files stack.
-
-Breaking an ore with a pickaxe normally breaks that one block. A file here names a group of blocks and the tools that mine it in one go: when a player in survival breaks a block of the group with one of the tools in the main hand, the blocks of the same kind that touch it are broken too, nearest first, up to a limit. Without a file nothing changes, and a pack that wants the choice to be the player's puts a `config:` entry in `requires`, as described under Pack options.
-
-```json
-{
-  "requires": [],
-  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
-  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
-  "limit": 16,
-  "hunger": 0.5
-}
-```
-
-| Key        | Required | Value                                                                                             | Default | What it does                                                                                              |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
-| `blocks`   | yes      | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group |         | The group. Only blocks of one kind join a vein, never two different blocks of the group                   |
-| `tools`    | yes      | list of item ids, `modid:item:meta` in 1.12.2                                                     |         | Held in the main hand when the first block breaks. An item that does not exist is skipped with a log line |
-| `limit`    | no       | int, 1 to 256                                                                                     | `16`    | Most blocks broken besides the first                                                                      |
-| `hunger`   | no       | float, 0 or more                                                                                  | `0.1`   | Hunger points per extra block. 1 point is 4 exhaustion. The first block costs vanilla's usual amount      |
-| `requires` | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                  |
-
-Connected means touching by face, edge or corner, so a block has 26 neighbors. Survival only: creative and spectator players break one block as usual. It stops when the tool breaks or the player's food level reaches 0. Every extra block gives its usual drops, with the Fortune of the held tool and every rule under Block drops, and wears the tool one use. It does not run on a block a hardness group keeps. This is server pack data and needs nothing on the client. A file with no valid blocks or tools is ignored with an error line.
 
 ## Player loot
 
@@ -3081,6 +3058,7 @@ Normally a food feeds the same however often you eat it. A file here makes a foo
 
 ```json
 {
+  "requires": [],
   "memory": 8,
   "repeat": [1.0, 0.5, 0.25],
   "exempt": ["minecraft:rotten_flesh", "minecraft:spider_eye", "#listAllmeatraw"],
@@ -3099,6 +3077,7 @@ Normally a food feeds the same however often you eat it. A file here makes a foo
 | `effects`  | no       | list of objects   | none    | Inside a `variety` object: potion effects given after each meal while that tier is the highest the player has reached. Each has `potion`, `duration` in ticks (default `1200`), `amplifier`, `ambient` and `showParticles` (default `false`) |
 | `runs`     | no       | function id       | none    | Inside a `variety` object: a function run as the player on the meal that lifts them into that tier from below, once per crossing                                                                                                             |
 | `messages` | no       | object            | —       | Action-bar line after a meal: `repeat` when the repeat multiplier is below 1, `variety` when above 1; text, lang key or `""`; defaults `rdpl.diet.*`                                                                                         |
+| `requires` | no       | list of strings   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                                                                                                                                                     |
 
 A bad value logs one error naming the file and skips that file. A potion that does not exist is skipped when the effect is given. `runs` fires again if meals drop out of the memory, the player falls below the tier and climbs back to it. An `exempt` entry that matches nothing logs one warning naming the file and the entry and is skipped alone; the rest of the file loads.
 
@@ -3697,6 +3676,7 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
   "timeTo": 23000,
   "dayAtLeast": 3,
   "advancement": "minecraft:story/mine_stone",
+  "team": "miners",
   "objective": "kills",
   "scoreAtLeast": 5
 }
@@ -3710,9 +3690,10 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 | `timeFrom`, `timeTo`        | no       | int, ticks                     | none            | The window of the day clock it may spawn in, which may run past midnight, such as `13000` to `1000`. Both are needed                                                                                                    |
 | `dayAtLeast`                | no       | int                            | none            | The day number from which it may spawn                                                                                                                                                                                  |
 | `advancement`               | no       | `namespace:path`               | none            | It spawns only while a player within 128 blocks has this advancement                                                                                                                                                    |
+| `team`                      | no       | text                           | none            | It spawns only while a player within 128 blocks is on this scoreboard team                                                                                                                                              |
 | `objective`, `scoreAtLeast` | no       | text, int                      | none            | It spawns only while a player within 128 blocks has at least this score in the objective. Both are needed                                                                                                               |
 
-A variant that sets none of these spawns as before, and one that sets several spawns only where and when all of them hold. They hold back natural spawns, the ones a chunk makes as it generates included; an egg, `/summon`, a spawner and `becomes` are not held back. `advancement`, `objective` and `scoreAtLeast` are judged together for each player within 128 blocks of the spawn point, spectators left out, so one player has to meet all of them, and with nobody that near a variant that sets any of them does not spawn.
+A variant that sets none of these spawns as before, and one that sets several spawns only where and when all of them hold. They hold back natural spawns, the ones a chunk makes as it generates included; an egg, `/summon`, a spawner and `becomes` are not held back. `advancement`, `team`, `objective` and `scoreAtLeast` are judged together for each player within 128 blocks of the spawn point, spectators left out, so one player has to meet all of them, and with nobody that near a variant that sets any of them does not spawn.
 
 ### Spawn locks
 
@@ -3730,10 +3711,10 @@ The file name is yours to choose, only the folder is read, and several files sta
 }
 ```
 
-| Key                                                                                                                  | Required | Value                  | Default | What it does                                                                                                                |
-| -------------------------------------------------------------------------------------------------------------------- | -------- | ---------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `entities`                                                                                                           | yes      | list of entity names   | none    | The mobs to hold back, such as `minecraft:blaze`. A file without it is skipped and the log says so                          |
-| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `objective`, `scoreAtLeast` | no       | as in Spawn conditions | none    | The same keys with the same meaning as under Spawn conditions. A file that sets none of them is skipped and the log says so |
+| Key                                                                                                                          | Required | Value                         | Default | What it does                                                                                                                                                                |
+| ---------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | yes      | list of entity names or kinds | none    | The mobs to hold back: ids such as `minecraft:blaze`, or a kind, `#monster`, `#creature`, `#ambient` or `#water_creature`. A file without it is skipped and the log says so |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | no       | as in Spawn conditions        | none    | The same keys with the same meaning as under Spawn conditions. A file that sets none of them is skipped and the log says so                                                 |
 
 A mob named in several files, or in a variant too, spawns only where and when all of them hold. Natural spawns and the ones a chunk makes as it generates are held back; an egg, `/summon` and a spawner are not.
 
@@ -3957,6 +3938,7 @@ The file's path is the rank's name, and several files stack. A rank is one possi
 ```json
 {
   "entities": ["minecraft:zombie", "#monster"],
+  "dimensions": [-1],
   "weight": 10,
   "name": "Brute %s",
   "health": 2.0,
@@ -3966,15 +3948,16 @@ The file's path is the rank's name, and several files stack. A rank is one possi
 }
 ```
 
-| Key        | Required | Value                       | Default        | What it does                                                                                                                                                       |
-| ---------- | -------- | --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `entities` | no       | list of entity ids or kinds | `["#monster"]` | The mobs the rank can roll on: ids such as `minecraft:zombie`, or `#monster`, `#creature`, `#ambient`, `#water_creature`. An entity variant is named by its own id |
-| `weight`   | no       | int, 1 or more              | `1`            | How likely the rank is against the other ranks that name the same mob: its weight divided by the total                                                             |
-| `name`     | no       | string                      | none           | A name shown above the mob. `%s` becomes the mob's own name. A mob that already has a custom name keeps it                                                         |
-| `health`   | no       | number above 0              | `1`            | Multiplies the mob's maximum health. The mob spawns with full health                                                                                               |
-| `damage`   | no       | number, 0 or more           | `1`            | Multiplies the mob's melee attack damage                                                                                                                           |
-| `effects`  | no       | list                        | none           | Permanent effects, each an object with a `potion` id and an `amplifier`, default `0`. Their particles are hidden                                                   |
-| `loot`     | no       | number, 1 or more           | `1`            | Multiplies each stackable item the mob drops. The fraction is the chance of one more item per stack                                                                |
+| Key          | Required | Value                         | Default         | What it does                                                                                                                                                       |
+| ------------ | -------- | ----------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities`   | no       | list of entity ids or kinds   | `["#monster"]`  | The mobs the rank can roll on: ids such as `minecraft:zombie`, or `#monster`, `#creature`, `#ambient`, `#water_creature`. An entity variant is named by its own id |
+| `weight`     | no       | int, 1 or more                | `1`             | How likely the rank is against the other ranks that name the same mob: its weight divided by the total                                                             |
+| `name`       | no       | string                        | none            | A name shown above the mob. `%s` becomes the mob's own name. A mob that already has a custom name keeps it                                                         |
+| `health`     | no       | number above 0                | `1`             | Multiplies the mob's maximum health. The mob spawns with full health                                                                                               |
+| `damage`     | no       | number, 0 or more             | `1`             | Multiplies the mob's melee attack damage                                                                                                                           |
+| `effects`    | no       | list                          | none            | Permanent effects, each an object with a `potion` id and an `amplifier`, default `0`. Their particles are hidden                                                   |
+| `loot`       | no       | number, 1 or more             | `1`             | Multiplies each stackable item the mob drops. The fraction is the chance of one more item per stack                                                                |
+| `dimensions` | no       | list of ids, names or numbers | every dimension | The dimensions the rank can roll in, by id or name, such as `-1` or `the_nether`. Empty means any dimension                                                        |
 
 Tools, armor and the gear a mob carried are not multiplied, and mobs that carry an inventory, such as pack animals, are skipped. A mistake in a rank file, such as an unknown key, an entity id that does not exist or a value out of range, is logged and the whole file is skipped. Deleting a rank file leaves the mobs that already rolled it as they are, and a mob that no rank names is left alone. Only the server reads ranks, so vanilla clients can join.
 
@@ -4175,24 +4158,25 @@ A pack-defined hazard: named blocks, items, dimensions, biomes, structures, cave
 }
 ```
 
-| Key                   | Required        | Value                                    | Default | What it does                                                                                                                                                                                                                         |
-| --------------------- | --------------- | ---------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `blocks`              | one of the nine | list of `block` or `block=level`         |         | Blocks that expose a player standing near them. No level means 1                                                                                                                                                                     |
-| `items`               | one of the nine | list of `item` or `item=level`           |         | Items that expose a player carrying or wearing them                                                                                                                                                                                  |
-| `dimensions`          | one of the nine | list of `dim` or `dim=level`             |         | Numeric dimension ids that expose any player in them                                                                                                                                                                                 |
-| `biomes`              | one of the nine | list of `biome` or `biome=level`         |         | Biomes that expose any player standing in them. `#` names a BiomeDictionary type                                                                                                                                                     |
-| `structures`          | one of the nine | list of `structure` or `structure=level` |         | Structures that expose a player inside them. A pack structure counts within `range` blocks                                                                                                                                           |
-| `caveRegions`         | one of the nine | list of `region` or `region=level`       |         | Cave regions that expose a player in them. A bare name takes this file's namespace                                                                                                                                                   |
-| `heights`             | one of the nine | list of `from:to=level`                  |         | Y bands that expose a player in them. Leave one side empty for no limit                                                                                                                                                              |
-| `levels`              | yes             | list of levels                           |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches                                                                                                                                      |
-| `immunity`            | no              | potion name                              | none    | An effect whose bearer is not exposed at all                                                                                                                                                                                         |
-| `immuneItems`         | no              | list of item names                       | none    | An entity wearing or holding any one of these (armor slots and both hands) is not exposed at all, like `immunity`. Name one piece per suit part; any single piece is enough. An unknown item name is logged as an error and ignored. |
-| `immuneTeams`         | no              | list of scoreboard team names            | none    | Members of these teams (pack team files or `/scoreboard teams`) are not exposed. An unknown team name never matches.                                                                                                                 |
-| `onClear`             | no              | function name                            | none    | Runs as the player when their level drops to 0, including when they switch to creative.                                                                                                                                              |
-| `scanInterval`        | no              | ticks                                    | `20`    | How often surroundings and inventory are checked                                                                                                                                                                                     |
-| `range`               | no              | blocks                                   | `10`    | How far a block's exposure reaches, as a sphere                                                                                                                                                                                      |
-| `sourcesForNextLevel` | no              | int                                      | `0`     | This many nearby sources of one level push it one level further. `0` turns that off                                                                                                                                                  |
-| `skipsCreative`       | no              | boolean                                  | `true`  | Creative and spectator players are left alone                                                                                                                                                                                        |
+| Key                   | Required       | Value                                        | Default | What it does                                                                                                                                                                                                                         |
+| --------------------- | -------------- | -------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `blocks`              | one of the ten | list of `block` or `block=level`             |         | Blocks that expose a player standing near them. No level means 1                                                                                                                                                                     |
+| `items`               | one of the ten | list of `item` or `item=level`               |         | Items that expose a player carrying or wearing them                                                                                                                                                                                  |
+| `dimensions`          | one of the ten | list of `dim` or `dim=level`                 |         | Numeric dimension ids that expose any player in them                                                                                                                                                                                 |
+| `biomes`              | one of the ten | list of `biome` or `biome=level`             |         | Biomes that expose any player standing in them. `#` names a BiomeDictionary type                                                                                                                                                     |
+| `environments`        | one of the ten | list of `environment` or `environment=level` |         | Environments that expose any player in the dimension while they are on, named as the dimension file names them. `default` counts too. No level means 1                                                                               |
+| `structures`          | one of the ten | list of `structure` or `structure=level`     |         | Structures that expose a player inside them. A pack structure counts within `range` blocks                                                                                                                                           |
+| `caveRegions`         | one of the ten | list of `region` or `region=level`           |         | Cave regions that expose a player in them. A bare name takes this file's namespace                                                                                                                                                   |
+| `heights`             | one of the ten | list of `from:to=level`                      |         | Y bands that expose a player in them. Leave one side empty for no limit                                                                                                                                                              |
+| `levels`              | yes            | list of levels                               |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches                                                                                                                                      |
+| `immunity`            | no             | potion name                                  | none    | An effect whose bearer is not exposed at all                                                                                                                                                                                         |
+| `immuneItems`         | no             | list of item names                           | none    | An entity wearing or holding any one of these (armor slots and both hands) is not exposed at all, like `immunity`. Name one piece per suit part; any single piece is enough. An unknown item name is logged as an error and ignored. |
+| `immuneTeams`         | no             | list of scoreboard team names                | none    | Members of these teams (pack team files or `/scoreboard teams`) are not exposed. An unknown team name never matches.                                                                                                                 |
+| `onClear`             | no             | function name                                | none    | Runs as the player when their level drops to 0, including when they switch to creative.                                                                                                                                              |
+| `scanInterval`        | no             | ticks                                        | `20`    | How often surroundings and inventory are checked                                                                                                                                                                                     |
+| `range`               | no             | blocks                                       | `10`    | How far a block's exposure reaches, as a sphere                                                                                                                                                                                      |
+| `sourcesForNextLevel` | no             | int                                          | `0`     | This many nearby sources of one level push it one level further. `0` turns that off                                                                                                                                                  |
+| `skipsCreative`       | no             | boolean                                      | `true`  | Creative and spectator players are left alone                                                                                                                                                                                        |
 
 ### Levels
 
@@ -4234,16 +4218,16 @@ Two more sources, written in the same file. Carriers and exposed bearers pass th
 }
 ```
 
-| Key                 | Required        | Value                              | Default            | What it does                                                                                                            |
-| ------------------- | --------------- | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| `carriers`          | one of the nine | list of `entity` or `entity=level` |                    | Mobs, or `minecraft:player`, that always pass the hazard on at that level. No level means 1                             |
-| `contagious`        | no              | boolean                            | `false`            | Anyone exposed passes the hazard on at the level they hold                                                              |
-| `catchers`          | no              | list of entity names               | `minecraft:player` | Who can catch it. A mob catches it only from carriers and bearers, never from blocks, items or weather                  |
-| `contagionRange`    | no              | blocks                             | `4`                | How far a carrier or bearer reaches, as a sphere                                                                        |
-| `contagionChance`   | no              | `0` to `1`                         | `0.1`              | The chance, at every scan of the carrier or bearer, that each catcher in reach catches it                               |
-| `contagionDuration` | no              | ticks                              | `1200`             | How long a caught hazard holds the level caught. Catching it again starts the time over                                 |
-| `weather`           | one of the nine | list of `kind` or `kind=level`     |                    | `rain` exposes a player the rain falls on: open sky overhead in a biome where it rains. `thunder` counts during a storm |
-| `weatherDimensions` | no              | list of `dim`                      | every dimension    | Numeric dimension ids where the weather exposes                                                                         |
+| Key                 | Required       | Value                              | Default            | What it does                                                                                                            |
+| ------------------- | -------------- | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `carriers`          | one of the ten | list of `entity` or `entity=level` |                    | Mobs, or `minecraft:player`, that always pass the hazard on at that level. No level means 1                             |
+| `contagious`        | no             | boolean                            | `false`            | Anyone exposed passes the hazard on at the level they hold                                                              |
+| `catchers`          | no             | list of entity names               | `minecraft:player` | Who can catch it. A mob catches it only from carriers and bearers, never from blocks, items or weather                  |
+| `contagionRange`    | no             | blocks                             | `4`                | How far a carrier or bearer reaches, as a sphere                                                                        |
+| `contagionChance`   | no             | `0` to `1`                         | `0.1`              | The chance, at every scan of the carrier or bearer, that each catcher in reach catches it                               |
+| `contagionDuration` | no             | ticks                              | `1200`             | How long a caught hazard holds the level caught. Catching it again starts the time over                                 |
+| `weather`           | one of the ten | list of `kind` or `kind=level`     |                    | `rain` exposes a player the rain falls on: open sky overhead in a biome where it rains. `thunder` counts during a storm |
+| `weatherDimensions` | no             | list of `dim`                      | every dimension    | Numeric dimension ids where the weather exposes                                                                         |
 
 A caught hazard counts as one more source in the scan, the highest level winning as with any other, and `immunity` protects against it as well. Nothing spreads unless `contagionRange` and `contagionChance` are above `0` and the file names `carriers` or sets `contagious`, and mobs are only looked at when some file does.
 
@@ -4957,6 +4941,7 @@ Any other key in a window is ignored with an error in the log, and so is `precip
 | `rain.colorMode`        | no       | `multiply` or `solid`  | `multiply`               | How `rain.color` meets the rain texture: `multiply` tints the gray-blue streaks, so bright colors come out dark; `solid` draws the streaks in `rain.color`, keeping their shape and transparency; night light still darkens them |
 | `rain.angle`            | no       | float, 0 to 180        | `0`                      | Degrees from straight down: `90` blows sideways, `180` rises straight up. It is drawn leaning at most 75 degrees                                                                                                                 |
 | `rain.heading`          | no       | float, degrees         | `0`                      | Which way it blows: `0` south, `90` west, `180` north, `270` east                                                                                                                                                                |
+| `rain.splashColor`      | no       | hex color              | untinted                 | Tint of the splashes where rain lands. Without it they are not tinted                                                                                                                                                            |
 | `rain.splashUpward`     | no       | boolean                | `false`                  | On, rain that rises (`angle` over `90`) still splashes on the ground and plays its sound                                                                                                                                         |
 | `wind.gust`             | no       | float, 0 to 90         | `15`                     | Degrees a gust adds to `angle` at its peak, never past level                                                                                                                                                                     |
 | `wind.every`            | no       | int or `[min, max]`    | `[200, 600]`             | Ticks from one gust to the next                                                                                                                                                                                                  |
@@ -5779,7 +5764,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `requires`        | no       | list of mod ids or pack namespaces | none                             | The gate is skipped unless all are present                                                                                                                                                                                                                                                                                                                                  |
 | `portalBlocks`    | no       | list of block names                | every portal                     | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one                                                                                                                                                                                                                                                                            |
 
-`unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`. `team`, and `objective` with `scoreAtLeast`, open it for a player on that scoreboard team whose score in that objective is at least that much, the same conditions a card's `when` takes; either one also works alone. They are checked as the player goes through, and the gate then opens in its scope like any other unlock. With scope `team` an unlock belongs to the opener's team: everyone on it gets through, players who join later included, and a player on no team unlocks it for themselves alone. `teamAndScore` decides how those two count: `alone` (the default) lets them open the gate by themselves, while `with` makes them a further condition, so the gate opens only once another unlock key is met and the player is also on that team with that score. `killedTally` set to `team` counts every kill by the slayer's team toward `killedCount` together, rather than each player's own (`player`, the default); a slayer on no team still counts alone. `teamless` set to `refuse` turns back a player on no team at a scope `team` gate, rather than letting them unlock it for themselves (`player`, the default).
+`unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. `killedRank` (a mob rank's name) counts only kills of a mob that rolled that rank. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`. `team`, and `objective` with `scoreAtLeast`, open it for a player on that scoreboard team whose score in that objective is at least that much, the same conditions a card's `when` takes; either one also works alone. They are checked as the player goes through, and the gate then opens in its scope like any other unlock. With scope `team` an unlock belongs to the opener's team: everyone on it gets through, players who join later included, and a player on no team unlocks it for themselves alone. `teamAndScore` decides how those two count: `alone` (the default) lets them open the gate by themselves, while `with` makes them a further condition, so the gate opens only once another unlock key is met and the player is also on that team with that score. `killedTally` set to `team` counts every kill by the slayer's team toward `killedCount` together, rather than each player's own (`player`, the default); a slayer on no team still counts alone. `teamless` set to `refuse` turns back a player on no team at a scope `team` gate, rather than letting them unlock it for themselves (`player`, the default).
 
 **Gates for portways.** A [portway](#portways) names a gate in `gate` and stays locked to a player until the gate is open for them, with the same scopes, unlock rules and messages as a portal. Give every portway of a network the same gate to lock the network as one. To open a gate by spending an item at a portway, list the portway block in `portalBlocks` and give the gate a `consume` item. This gate has no `dimension`, and a portway block names it with `"gate": "mypack:northgate_network"`:
 
@@ -7318,6 +7303,8 @@ Three ways to join, and a side may use all of them. `entities` names entity ids,
 
 A member of a side with `down` goes down instead of dying: they are held at 1 hit point, can neither move nor jump (they are taken off any mount and put back where they went down if they shift, and Slowness at its highest shows it), glow, take no damage except from the void, `/kill` and the bleed-out, and cannot attack, use items or click blocks or entities. The void and `/kill` kill a player who is not down outright, and the bleed-out counts as a kill by the enemy who put them down. A revived player comes back at half of their maximum health. Players on no side die as usual, and mobs are untouched. The state is kept in memory only: a player who logs out while down dies, and a server that stops while someone is down brings them back at 1 hit point with the effects gone. The messages show as the cards `rdpl:downed` and `rdpl:revived`
 
+When a round ends or is reset, everyone who is down is cleared at once: the effects are removed and they are back at full health.
+
 ## Scoring
 
 *game modes*
@@ -7343,6 +7330,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1,
+    "revive": 2,
     "raid": true,
     "order": true,
     "ownKill": -1
@@ -7399,13 +7387,14 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 
 *scoring*
 
-| Setting          | Type    | Default | What it does                                                                                                                                                         |
-| ---------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `points.kill`    | object  | empty   | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill                                                                          |
-| `points.death`   | int     | `0`     | Points whenever a member dies, however it died. May be negative                                                                                                      |
-| `points.raid`    | boolean | `false` | Takes the `points` of every [raid](#raids) won: each player in reach is credited that many, on their side's row and, with `individuals`, on their own                |
-| `points.order`   | boolean | `false` | Takes the `points` of every [work order](#work-orders) filled: each rewarded player is credited that many, on their side's row and, with `individuals`, on their own |
-| `points.ownKill` | int     | `0`     | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty                                    |
+| Setting          | Type    | Default | What it does                                                                                                                                                                 |
+| ---------------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill`    | object  | empty   | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill; `entity@rank`, such as `minecraft:zombie@brute`, scores only a mob of that rank |
+| `points.death`   | int     | `0`     | Points whenever a member dies, however it died. May be negative                                                                                                              |
+| `points.revive`  | int     | `0`     | Points for the member who revives a downed teammate, credited to the reviver. May be negative                                                                                |
+| `points.raid`    | boolean | `false` | Takes the `points` of every [raid](#raids) won: each player in reach is credited that many, on their side's row and, with `individuals`, on their own                        |
+| `points.order`   | boolean | `false` | Takes the `points` of every [work order](#work-orders) filled: each rewarded player is credited that many, on their side's row and, with `individuals`, on their own         |
+| `points.ownKill` | int     | `0`     | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty                                            |
 
 `points` is what this mod adds on top of what the game counts, fed into the same objective so `/scoreboard` still reads it. `kill` is worth so many points per entity id killed, credited to the killer's side; `death` is worth so many whenever a member of a side dies, and may be negative. With `teamTotals` the points land on a row named after the team, which is what lets the sidebar show four sides rather than a row for every mob. `individuals` adds a row per member as well, and is off by default because a row per mob UUID reads as noise.
 
@@ -7589,8 +7578,7 @@ While a wave is on the village, its villagers run indoors to the nearest door th
 ```json
 {
   "omen": "mypack:bad_omen",
-  "name": "Raid",
-  "color": "red",
+  "bossBar": { "name": "Raid", "color": "red", "style": "notched_10" },
   "waveDelay": 300,
   "spawnDistance": 32,
   "sound": "mypack:raid_horn",
@@ -7618,6 +7606,7 @@ While a wave is on the village, its villagers run indoors to the nearest door th
 | `omen`          | effect name        | none, required | The effect that starts the raid when its holder is inside a village. Any registered effect will do, a pack's own potion included                                                                                                                                                                                                                  |
 | `name`          | text               | `Raid`         | The boss bar's title                                                                                                                                                                                                                                                                                                                              |
 | `color`         | text               | `red`          | The bar's color: `pink`, `blue`, `red`, `green`, `yellow`, `purple` or `white`                                                                                                                                                                                                                                                                    |
+| `bossBar`       | object             | none           | The boss bar: `name`, `color`, `style` and `background`, as for a creature's `bossBar`. A `name` or `color` left out falls back to the `name` and `color` above, and a `style` left out is `notched_10`                                                                                                                                           |
 | `waves`         | list of waves      | none, required | Each wave is a list of groups, and the waves come in order                                                                                                                                                                                                                                                                                        |
 | `anywhere`      | boolean            | `false`        | When `true`, the omen also starts this raid on a player who is not near any village, centered on the player. Such a raid, and one started with `/rdplserver raid`, needs no village: it cannot be lost, ends only in victory or at `timeout`, and rings every bell within 32 blocks of the center. Points and loot are paid as for any other raid |
 | `waveDelay`     | int                | `300`          | Ticks before the first wave, and between the end of a wave and the next                                                                                                                                                                                                                                                                           |
@@ -7705,35 +7694,40 @@ The third greets a player on the first join with a center card that has no panel
 
 *cards*
 
-| Trigger            | Needs                  | Fires when                                                                                                                                                                                                                                                   |
-| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `command`          | nothing                | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger                                                                                   |
-| `first_join`       | nothing                | A player joins the world for the first time                                                                                                                                                                                                                  |
-| `dimension_enter`  | `dimension`            | A player arrives in that dimension                                                                                                                                                                                                                           |
-| `biome_enter`      | `biomes`               | A player walks into one of those biomes from somewhere else                                                                                                                                                                                                  |
-| `structure_enter`  | `structures`           | A player walks into one of those structures from outside it                                                                                                                                                                                                  |
-| `advancement`      | `advancement`          | A player earns that advancement                                                                                                                                                                                                                              |
-| `time_of_day`      | `time`                 | The day clock passes that tick, `0` to `23999` on the same scale as `time.windows`, scaled to the dimension's `dayLength`, while players are in the dimension. A dimension with `fixedTime` never fires it. A clock set by a command or a bed does not count |
-| `day`              | nothing, or `day`      | A new day begins in the dimension; with `day`, only that day                                                                                                                                                                                                 |
-| `craft`            | `item`                 | A player crafts that item                                                                                                                                                                                                                                    |
-| `pickup`           | `item`                 | A player picks that item up                                                                                                                                                                                                                                  |
-| `kill`             | `entity`               | A player kills that entity, or the `count`th one of it                                                                                                                                                                                                       |
-| `respawn`          | nothing                | A player respawns after dying                                                                                                                                                                                                                                |
-| `death`            | nothing                | A player dies                                                                                                                                                                                                                                                |
-| `y_level`          | `below` or `above`     | A player goes below or above that height                                                                                                                                                                                                                     |
-| `play_time`        | `minutes`              | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
-| `roll`             | nothing, or `roll`     | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
-| `order_done`       | nothing, or `order`    | A work order is filled, once for each player it rewards. With `order`, only an order with that `sign` word fires it                                                                                                                                          |
-| `score`            | `objective`            | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
-| `portway_activate` | nothing                | A player activates a portway by right-clicking it. `portway` or `network` limits it to one                                                                                                                                                                   |
-| `portway_travel`   | nothing                | A trip has passed every check and is about to happen, before the player moves                                                                                                                                                                                |
-| `portway_arrive`   | nothing                | A player has arrived by portway                                                                                                                                                                                                                              |
-| `portway_refused`  | nothing                | A portway or travel item turns a player back. `reason` says why                                                                                                                                                                                              |
-| `portway_paid`     | nothing                | A trip took a price that was not zero                                                                                                                                                                                                                        |
-| `portway_forget`   | nothing                | A stop leaves a player's list, because they forgot it, a command removed it or the portway was gone                                                                                                                                                          |
-| `portway_bind`     | nothing                | A player binds a travel item to a portway                                                                                                                                                                                                                    |
-| `exposure_level`   | nothing, or `exposure` | A player's level in a hazard changes, up or down; with `exposure`, only that hazard, with `level`, only a change that reaches that level. The first check after a join never fires it                                                                        |
-| `round_start`      | nothing                | A round opens, after the count: once for each player, or once for the `audience`. It follows a reset and `/rdplserver round start` alike                                                                                                                     |
+| Trigger              | Needs                     | Fires when                                                                                                                                                                                                                                                   |
+| -------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `command`            | nothing                   | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger                                                                                   |
+| `first_join`         | nothing                   | A player joins the world for the first time                                                                                                                                                                                                                  |
+| `dimension_enter`    | `dimension`               | A player arrives in that dimension                                                                                                                                                                                                                           |
+| `biome_enter`        | `biomes`                  | A player walks into one of those biomes from somewhere else                                                                                                                                                                                                  |
+| `structure_enter`    | `structures`              | A player walks into one of those structures from outside it                                                                                                                                                                                                  |
+| `advancement`        | `advancement`             | A player earns that advancement                                                                                                                                                                                                                              |
+| `time_of_day`        | `time`                    | The day clock passes that tick, `0` to `23999` on the same scale as `time.windows`, scaled to the dimension's `dayLength`, while players are in the dimension. A dimension with `fixedTime` never fires it. A clock set by a command or a bed does not count |
+| `day`                | nothing, or `day`         | A new day begins in the dimension; with `day`, only that day                                                                                                                                                                                                 |
+| `craft`              | `item`                    | A player crafts that item                                                                                                                                                                                                                                    |
+| `pickup`             | `item`                    | A player picks that item up                                                                                                                                                                                                                                  |
+| `kill`               | `entity`                  | A player kills that entity, or the `count`th one of it                                                                                                                                                                                                       |
+| `raid_won`           | nothing, or `raid`        | A raid is won, once for each player in reach. With `raid`, only that raid fires it                                                                                                                                                                           |
+| `raid_lost`          | nothing, or `raid`        | A raid is lost, once for each player in reach. With `raid`, only that raid fires it                                                                                                                                                                          |
+| `respawn`            | nothing                   | A player respawns after dying                                                                                                                                                                                                                                |
+| `death`              | nothing                   | A player dies                                                                                                                                                                                                                                                |
+| `y_level`            | `below` or `above`        | A player goes below or above that height                                                                                                                                                                                                                     |
+| `play_time`          | `minutes`                 | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
+| `roll`               | nothing, or `roll`        | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
+| `order_done`         | nothing, or `order`       | A work order is filled, once for each player it rewards. With `order`, only an order with that `sign` word fires it                                                                                                                                          |
+| `downed`             | nothing                   | A member of a side with `down` goes down instead of dying                                                                                                                                                                                                    |
+| `revived`            | nothing                   | A teammate revives a downed player. The card goes to the revived player                                                                                                                                                                                      |
+| `score`              | `objective`               | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
+| `portway_activate`   | nothing                   | A player activates a portway by right-clicking it. `portway` or `network` limits it to one                                                                                                                                                                   |
+| `portway_travel`     | nothing                   | A trip has passed every check and is about to happen, before the player moves                                                                                                                                                                                |
+| `portway_arrive`     | nothing                   | A player has arrived by portway                                                                                                                                                                                                                              |
+| `portway_refused`    | nothing                   | A portway or travel item turns a player back. `reason` says why                                                                                                                                                                                              |
+| `portway_paid`       | nothing                   | A trip took a price that was not zero                                                                                                                                                                                                                        |
+| `portway_forget`     | nothing                   | A stop leaves a player's list, because they forgot it, a command removed it or the portway was gone                                                                                                                                                          |
+| `portway_bind`       | nothing                   | A player binds a travel item to a portway                                                                                                                                                                                                                    |
+| `exposure_level`     | nothing, or `exposure`    | A player's level in a hazard changes, up or down; with `exposure`, only that hazard, with `level`, only a change that reaches that level. The first check after a join never fires it                                                                        |
+| `round_start`        | nothing                   | A round opens, after the count: once for each player, or once for the `audience`. It follows a reset and `/rdplserver round start` alike                                                                                                                     |
+| `environment_change` | nothing, or `environment` | An environment turns on in a dimension, by a command or a season, or `default` returns: once for each player there, or once for the `audience`. With `environment`, only that environment. Loading a saved world never fires it                              |
 
 Hazard levels are read at each scan, so an `exposure_level` card fires within the hazard's `scanInterval` of the change.
 
@@ -7757,6 +7751,8 @@ A card that fires while a player still has the world intro open waits and shows 
   "item": "minecraft:diamond_sword",
   "entity": "minecraft:zombie",
   "count": 5,
+  "rank": "brute",
+  "raid": "mypack:siege",
   "below": 20,
   "above": 80,
   "time": 6000,
@@ -7785,6 +7781,8 @@ A card that fires while a player still has the world intro open waits and shows 
 | `item`               | text                               | none           | The item, written as elsewhere in a pack, such as `minecraft:diamond_sword`                                                                                                                                        |
 | `entity`             | text                               | none           | The entity id, such as `minecraft:zombie`                                                                                                                                                                          |
 | `count`              | int                                | `1`            | For `kill`: how many kills it takes. The count starts again after the rule fires                                                                                                                                   |
+| `rank`               | text                               | none           | For `kill`: only a mob that rolled this mob rank counts. A bare name gets the card's namespace                                                                                                                     |
+| `raid`               | text                               | none           | For `raid_won` and `raid_lost`: the raid's registry key. Empty means any raid                                                                                                                                      |
 | `below`, `above`     | int                                | none           | For `y_level`: the height to go below or above                                                                                                                                                                     |
 | `time`               | int                                | `0`            | For `time_of_day`: the tick of the day                                                                                                                                                                             |
 | `day`                | int                                | none           | For `day`: the one day to fire on. Without it, every day                                                                                                                                                           |
@@ -7793,6 +7791,7 @@ A card that fires while a player still has the world intro open waits and shows 
 | `order`              | text                               | none           | For `order_done`: the `sign` word of the order. Without it, every filled order fires the rule                                                                                                                      |
 | `exposure`           | text                               | none           | For `exposure_level`: the hazard's file name under `exposures`. Without it, every hazard fires the rule                                                                                                            |
 | `level`              | int                                | none           | For `exposure_level`: fire only when the player's level becomes this one; `0` means no longer exposed. Without it, every change fires                                                                              |
+| `environment`        | text                               | none           | For `environment_change`: the name of the environment that turned on, such as `night`, or `default`. Without it, every environment that turns on fires the rule                                                    |
 | `atLeast`, `atMost`  | int                                | none           | For `roll`: the lowest and the highest total that fires the rule. A coin counts 1 for heads and 0 for tails, a pack die or deck the place of the result in its file, from 1                                        |
 | `objective`, `score` | text, int                          | none, `1`      | For `score`: the objective and the value to reach                                                                                                                                                                  |
 | `portway`            | text                               | none           | For the `portway_*` triggers: the block id of the portway, such as `mypack:northgate`. Without it, any portway                                                                                                     |
@@ -7809,6 +7808,7 @@ A card that fires while a player still has the world intro open waits and shows 
 | Setting                     | Type      | What it checks                                                                                                                |
 | --------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `biomes`                    | list      | The player stands in one of these biomes, written as for the trigger                                                          |
+| `environments`              | list      | One of these environments is on in the player's dimension, `default` included                                                 |
 | `timeFrom`, `timeTo`        | int       | The day clock is inside this window, which may run past midnight, such as `13000` to `1000`                                   |
 | `dayAtLeast`                | int       | The day number is at least this                                                                                               |
 | `advancement`               | text      | The player has this advancement                                                                                               |
@@ -7959,14 +7959,15 @@ The first reply goes to the `who` node, which has a `title` of its own and a rep
 
 *dialogs*
 
-| Setting | Type    | Default               | What it does                                                                                                                                     |
-| ------- | ------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `text`  | text    | none, required        | The reply as the player reads it. A reply without `text` is dropped                                                                              |
-| `goto`  | text    | none                  | The node to go to next, by name. A reply whose `goto` names no node is dropped                                                                   |
-| `card`  | text    | none                  | The id of a rule from [Cards](#cards), shown when the reply is picked. Its `when`, `repeat` and `cooldown` are skipped, and its `runs` still run |
-| `runs`  | text    | none                  | A function run as the player when the reply is picked. This is how a reply runs commands                                                         |
-| `when`  | object  | none                  | The conditions of [When](#when). A reply that fails them is hidden                                                                               |
-| `close` | boolean | `true` without `goto` | Ends the talk after the pick. It does nothing when `goto` is set                                                                                 |
+| Setting | Type    | Default               | What it does                                                                                                                                                                        |
+| ------- | ------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`  | text    | none, required        | The reply as the player reads it. A reply without `text` is dropped                                                                                                                 |
+| `goto`  | text    | none                  | The node to go to next, by name. A reply whose `goto` names no node is dropped                                                                                                      |
+| `card`  | text    | none                  | The id of a rule from [Cards](#cards), shown when the reply is picked. Its `when`, `repeat` and `cooldown` are skipped, and its `runs` still run                                    |
+| `runs`  | text    | none                  | A function run as the player when the reply is picked. This is how a reply runs commands                                                                                            |
+| `when`  | object  | none                  | The conditions of [When](#when). A reply that fails them is hidden                                                                                                                  |
+| `close` | boolean | `true` without `goto` | Ends the talk after the pick. It does nothing when `goto` is set                                                                                                                    |
+| `trade` | boolean | `false`               | Opens the speaker's own trades after the pick and ends the talk, so `goto` is ignored. A speaker that is not a merchant, or is busy trading, opens nothing, and the talk still ends |
 
 A pick runs `runs`, then shows `card`, then goes to `goto` or ends the talk. A dialog holds no state of its own: it is not saved, and a talk that was closed, or cut off when the player logged out, cannot be resumed. A branch that must remember something sets a score or a tag in its function.
 
@@ -10149,6 +10150,8 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver config unused`          | 3     | Option files in `rdploader/config` that no installed pack defines any more |
 | `/rdplserver config prune`           | 3     | Delete those files                                                         |
 
+`/rdplserver reload` now also reloads spawn locks and recipe locks.
+
 #### World and generation
 
 *server commands*
@@ -10213,6 +10216,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver round reset`, `round vote yes`, `round vote no`                             | 0     | The same as the `/rdpl round` forms above, which are passed to these                                                                                                                                                                                                                                                    |
 | `/rdplserver card <rule> [players]`                                                      | 2     | Show a [card rule](#cards) to the players named, or to yourself, by its id or file name. `when`, `repeat` and `cooldown` are skipped                                                                                                                                                                                    |
 | `/rdplserver talk <number>`                                                              | 0     | Pick a reply by its number in the dialog that is open. A vanilla client's clickable replies run it. [Dialogs](#dialogs)                                                                                                                                                                                                 |
+| `/rdplserver talk open <players> <dialog> <npc>`                                         | 2     | Open a dialog for the players named, with the entity named as the speaker, by the dialog's id or file name. The speaker must be in the player's world and within 8 blocks. [Dialogs](#dialogs)                                                                                                                          |
 | `/rdplserver raid <raid> [player or x y z]`                                              | 3     | Start the named [raid](#raids) at a player, at a position or, with neither, at yourself, with no village needed. Refused while another raid is underway within `reach`                                                                                                                                                  |
 | `/rdplserver environment [<dimension> <name>]`                                           | 2     | Switch a dimension to one of its [environments](#environments), or back to its own look with `default`. Alone, it lists every dimension that has environments and the one each is using                                                                                                                                 |
 | `/rdplserver reset`                                                                      | 3     | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |

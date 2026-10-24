@@ -12,18 +12,13 @@ import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import static mctmods.resourcedatapackloader.command.CommandShared.findBiome;
-import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentDice;
-import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentRoundReset;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.RoundSay;
 import mctmods.resourcedatapackloader.content.card.CardRules;
-import mctmods.resourcedatapackloader.content.dialog.ContentDialogs;
-import mctmods.resourcedatapackloader.content.dialog.DialogTalk;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -59,7 +54,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
-import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
@@ -177,6 +171,7 @@ public class ServerCommands extends CommandBase {
         if (args.length >= 2 && "environment".equals(args[0])) { return EnvironmentCommand.complete(args); }
         if (args.length >= 2 && "gate".equals(args[0])) { return GateCommand.complete(server, args); }
         if (args.length >= 2 && "portway".equals(args[0])) { return PortwayCommand.complete(server, args); }
+        if (args.length >= 2 && "talk".equals(args[0])) { return TalkCommand.complete(server, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
         if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
         if (args.length == 3 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
@@ -216,7 +211,7 @@ public class ServerCommands extends CommandBase {
             else if ("back".equals(direction)) { allowGoto(sender, neededFor(place, "gotoBackLevel", Config.commands.gotoBackLevel)); }
             else { allowGoto(sender, neededFor(place, "gotoLevel", Config.commands.gotoLevel)); }
         }
-        else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
+        else if ("card".equals(args[0]) || "talk".equals(args[0]) && TalkCommand.opens(args)) { allow(sender, CardCommand.LEVEL); }
         else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
         else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && !"talk".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
@@ -248,7 +243,7 @@ public class ServerCommands extends CommandBase {
         else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
         else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
         else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
-        else if (args.length == 2 && "talk".equals(args[0])) { talk(sender, args[1]); }
+        else if ("talk".equals(args[0])) { TalkCommand.run(server, sender, args, getUsage(sender)); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -452,19 +447,7 @@ public class ServerCommands extends CommandBase {
         long start = System.currentTimeMillis();
         rescan(sender);
         server.reload();
-        ContentTeams.load();
-        ContentScoring.load();
-        ContentDice.load();
-        ContentBoards.load();
-        ContentBoards.rebuild(server);
-        CardRules.load();
-        ContentDialogs.load();
-        ContentHearts.load();
-        ContentHearts.refresh(server);
-        for (WorldServer world : server.worlds) {
-            ContentTeams.field(world);
-            ContentScoring.keep(world);
-        }
+        CommandShared.refield(server);
         int packs = PackManager.get().getPacks().size();
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.serverreloaded", packs, elapsed(start)));
         send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.command.serverrecipes"));
@@ -542,11 +525,5 @@ public class ServerCommands extends CommandBase {
         if (!(sender instanceof EntityPlayerMP)) { throw new CommandException(Lang.tr(sender, "rdpl.command.introplayer")); }
         ContentIntroPlay.replay((EntityPlayerMP) sender);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.introagain"));
-    }
-
-    private void talk(ICommandSender sender, String number) throws CommandException {
-        EntityPlayerMP player = CommandShared.goer(sender);
-        if (DialogTalk.idle(player)) { throw new CommandException(Lang.tr(sender, "rdpl.command.notalking")); }
-        DialogTalk.pick(player, parseInt(number, 1));
     }
 }

@@ -62,14 +62,16 @@ public final class DialogDef {
         public final String runs;
         @Nullable public final CardWhen when;
         public final boolean close;
+        public final boolean trade;
 
-        public Reply(String text, String target, String card, String runs, @Nullable CardWhen when, boolean close) {
+        public Reply(String text, String target, String card, String runs, @Nullable CardWhen when, boolean close, boolean trade) {
             this.text = text;
             this.target = target;
             this.card = card;
             this.runs = runs;
             this.when = when;
             this.close = close;
+            this.trade = trade;
         }
     }
 }

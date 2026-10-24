@@ -34,7 +34,9 @@ public final class RainSplash {
         EnumParticleTypes type = rain == null ? null : EnumParticleTypes.getByName(rain.particle);
         IParticleFactory factory = type == null ? null : ((IParticleManager) Minecraft.getMinecraft().effectRenderer).getParticleTypes().get(type.getParticleID());
         Particle particle = factory == null ? null : factory.createParticle(type.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D);
-        return particle == null ? new ParticleRain.Factory().createParticle(EnumParticleTypes.WATER_DROP.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D) : particle;
+        Particle made = particle == null ? new ParticleRain.Factory().createParticle(EnumParticleTypes.WATER_DROP.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D) : particle;
+        if (rain != null && rain.splashColor >= 0) { made.setRBGColorF(Colors.red(rain.splashColor) / 255.0F, Colors.green(rain.splashColor) / 255.0F, Colors.blue(rain.splashColor) / 255.0F); }
+        return made;
     }
 
     public static void sound(World world, RainDef rain, BlockPos pos, double x, double y, double z) {

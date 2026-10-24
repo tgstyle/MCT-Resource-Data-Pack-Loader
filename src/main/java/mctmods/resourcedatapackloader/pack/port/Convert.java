@@ -29,7 +29,7 @@ final class Convert {
     private static final Set<String> ITEM_KEYS = set("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "immuneItems", "ignitedBy", "saysIcon", "outputs", "with");
     private static final Set<String> ENTITY_KEYS = set("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes", "picksFrom", "mob", "mobs");
     private static final Set<String> BIOME_KEYS = set("biomes", "biome", "replaces", "baseBiome", "biomeNames", "biomeList", "roles", "biomeWhitelist");
-    private static final Set<String> DIMENSION_KEYS = set("dimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "rubicWorldDimensions");
+    private static final Set<String> DIMENSION_KEYS = set("dimensions", "weatherDimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "rubicWorldDimensions");
     private static final Set<String> DIMENSION_PREFIXED = set("welcomeSays", "worldDifficulty", "cloudHeight", "weatherCeiling", "worldGravity", "worldFallDamage", "worldJumpStrength", "worldTerminalVelocity", "worldBelow", "worldAbove", "flatBedrockFillers", "structureBiomes", "structureBiomesAreBlacklist");
     private static final Set<String> RAW_CONTAINERS = set("palette", "legend", "rows", "map", "pattern", "key", "notes", "attributes", "pathPriorities", "gameRules", "decoration", "spawnRates", "settings");
     private static final Set<String> BEHAVIORS = set("animals", "bush", "path", "till");
@@ -109,6 +109,11 @@ final class Convert {
         return ref == null ? text : ref.text();
     }
 
+    static String biomeString(String text) {
+        String trimmed = text.trim();
+        return notAnId(trimmed) || !Ids.vanilla(trimmed) ? text : Ids.biome(trimmed);
+    }
+
     @Nullable static Ref item(String text, Ported pack, String where) {
         String trimmed = text.trim();
         int components = trimmed.indexOf('[');
@@ -186,6 +191,7 @@ final class Convert {
                 break;
             case "dimensions":
                 ConvertDefinitions.dimension(json, namespace + ":" + file, pack);
+                ConvertDefinitions.environments(json, pack, where);
                 break;
             case "caveregions":
                 renamed(json, "ambientSound", Ids.sound(Json.text(json,"ambientSound")));
@@ -193,6 +199,13 @@ final class Convert {
                 break;
             case "raids":
                 renamed(json, "sound", Ids.sound(Json.text(json,"sound")));
+                ConvertDefinitions.loot(json);
+                break;
+            case "orders":
+                ConvertDefinitions.loot(json);
+                break;
+            case "tooltips":
+                ConvertDefinitions.tooltips(json);
                 break;
             case "anvils":
                 ConvertDefinitions.anvil(json, pack, where);
@@ -309,10 +322,10 @@ final class Convert {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
             Context context = "portway".equals(parentKey) && ("allow".equals(key) || "deny".equals(key)) ? Context.DIMENSION : contextOf(key, inherited);
-            if ("exposures".equals(folder) && ("blocks".equals(key) || "items".equals(key)) && parentKey.isEmpty()) { continue; }
+            if ("exposures".equals(folder) && ("blocks".equals(key) || "items".equals(key) || "dimensions".equals(key) || "biomes".equals(key)) && parentKey.isEmpty()) { continue; }
             if (value.isJsonObject()) {
                 if ("blocks".equals(key) && "worldgen".equals(folder)) { continue; }
-                if ("kill".equals(key) && "points".equals(parentKey)) {
+                if (("kill".equals(key) && "points".equals(parentKey)) || ("weights".equals(key) && "spawning".equals(parentKey))) {
                     entityKeys(value.getAsJsonObject());
                     continue;
                 }
@@ -483,9 +496,11 @@ final class Convert {
 
     private static void entityKeys(JsonObject json) {
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(json.entrySet())) {
-            String named = entry.getKey().trim();
+            String full = entry.getKey().trim();
+            int at = full.indexOf('@');
+            String named = at < 0 ? full : full.substring(0, at);
             if (named.indexOf(':') < 0 || !Ids.vanilla(named)) { continue; }
-            String mapped = Ids.entity(named);
+            String mapped = Ids.entity(named) + (at < 0 ? "" : full.substring(at));
             if (mapped.equals(entry.getKey())) { continue; }
             json.remove(entry.getKey());
             json.add(mapped, entry.getValue());

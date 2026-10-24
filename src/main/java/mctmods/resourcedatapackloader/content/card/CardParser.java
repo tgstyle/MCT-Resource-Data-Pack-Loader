@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -50,7 +51,10 @@ public final class CardParser {
         rule.roll = ContentDice.notation(Json.getString(json, "roll", "").trim());
         rule.order = Json.getString(json, "order", "").trim();
         rule.exposure = Json.getString(json, "exposure", "").trim();
+        rule.environment = Json.getString(json, "environment", "").trim();
         rule.portway = Json.getString(json, "portway", "").trim();
+        rule.raid = Json.getString(json, "raid", "").trim();
+        rule.rank = ContentRanks.key(id.getNamespace(), Json.getString(json, "rank", "").trim());
         rule.network = Json.getString(json, "network", "").trim();
         rule.reason = Json.getString(json, "reason", "").trim();
         rule.level = json.has("level") ? Json.getInt(json, "level") : null;
@@ -78,6 +82,7 @@ public final class CardParser {
     public static CardWhen when(JsonObject json) {
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
+        when.environments = Json.strings(json, "environments");
         when.timeFrom = CardPlace.tickOf(json, "timeFrom");
         when.timeTo = CardPlace.tickOf(json, "timeTo");
         when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;

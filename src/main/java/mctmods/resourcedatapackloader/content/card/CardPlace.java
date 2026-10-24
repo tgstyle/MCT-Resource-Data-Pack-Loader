@@ -28,6 +28,13 @@ public final class CardPlace {
         catch (NumberFormatException ignored) { return !bare(wanted).equals(bare(dimensionName(dimension))); }
     }
 
+    public static boolean inAny(List<String> wanted, int dimension) {
+        for (String name : wanted) {
+            if (!elsewhere(name, dimension)) { return true; }
+        }
+        return false;
+    }
+
     static String dimensionName(int dimension) {
         if (!DimensionManager.isDimensionRegistered(dimension)) { return Integer.toString(dimension); }
         DimensionType type = DimensionManager.getProviderType(dimension);

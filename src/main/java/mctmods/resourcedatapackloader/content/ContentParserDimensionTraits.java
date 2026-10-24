@@ -127,6 +127,7 @@ public final class ContentParserDimensionTraits {
                 Math.max(0, Json.getInt(json, "interval", 3)),
                 ContentTypes.color(Json.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
                 ContentTypes.color(Json.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
+                json.has("splashColor") ? ContentTypes.color(Json.getString(json, "splashColor", WHITE).trim(), key + " rain splashColor") & 0xFFFFFF : -1,
                 "solid".equals(Json.choice(json, "colorMode", "multiply", "Dimension " + key + " rain", COLOR_MODES)),
                 angle,
                 Json.getFloat(json, "heading", 0.0F),

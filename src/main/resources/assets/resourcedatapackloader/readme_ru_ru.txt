@@ -283,8 +283,10 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids            tooltips
-    celestial        raids            harvests         carries
+    celestial        raids            tooltips         harvests
+    carries          dialogs          veins            diets
+    enchantments     dice             games            orders
+    ranks            recipe_locks     spawn_locks
 
 Блоки бывают таких видов, вид задаёт поле "type":
 

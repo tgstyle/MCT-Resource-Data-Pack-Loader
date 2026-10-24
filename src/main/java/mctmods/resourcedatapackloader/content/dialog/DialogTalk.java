@@ -14,8 +14,10 @@ import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.IMerchant;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
@@ -32,7 +34,7 @@ import javax.annotation.Nullable;
 
 public final class DialogTalk {
     public static final int CLOSE = -1;
-    private static final double REACH = 8.0D;
+    public static final double REACH = 8.0D;
     private static final String NPC = "{npc}";
     private static final Map<UUID, Session> SESSIONS = new HashMap<>();
 
@@ -93,8 +95,17 @@ public final class DialogTalk {
         if (reply.close) {
             SESSIONS.remove(player.getUniqueID());
             RDPLNetwork.sendTo(MessageTalk.ending(), player);
+            if (reply.trade) { trade(player, session, npc); }
         }
         else { show(player, session, npc); }
+    }
+
+    private static void trade(EntityPlayerMP player, Session session, Entity npc) {
+        if (!(npc instanceof IMerchant) || ((IMerchant) npc).getCustomer() != null) {
+            ContentLog.LOGGER.info("Dialog {} trade reply from {} opened nothing: the speaker is not a free merchant", session.def.key, player.getName());
+            return;
+        }
+        npc.processInitialInteract(player, EnumHand.MAIN_HAND);
     }
 
     public static void forget(UUID player) { SESSIONS.remove(player); }

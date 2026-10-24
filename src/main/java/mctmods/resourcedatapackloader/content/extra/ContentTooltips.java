@@ -28,14 +28,16 @@ public final class ContentTooltips {
 
     private ContentTooltips() {}
 
-    public static boolean load() {
-        if (!GENERATION.stale()) { return wanted(); }
-        ITEMS.clear();
-        ENCHANTMENTS.clear();
-        if (!Config.content.tooltips) { return false; }
-        Json.eachObject(PackManager.TOOLTIPS, "tooltip file", ContentTooltips::read);
-        if (wanted()) { Summary.info("tooltips", "Loaded tooltip lines for " + ITEMS.size() + " item entry/entries and " + ENCHANTMENTS.size() + " enchantment(s)"); }
-        return wanted();
+    public static boolean none() {
+        if (GENERATION.stale()) {
+            ITEMS.clear();
+            ENCHANTMENTS.clear();
+            if (Config.content.tooltips) {
+                Json.eachObject(PackManager.TOOLTIPS, "tooltip file", ContentTooltips::read);
+                if (wanted()) { Summary.info("tooltips", "Loaded tooltip lines for " + ITEMS.size() + " item entry/entries and " + ENCHANTMENTS.size() + " enchantment(s)"); }
+            }
+        }
+        return !wanted();
     }
 
     private static boolean wanted() { return !ITEMS.isEmpty() || !ENCHANTMENTS.isEmpty(); }

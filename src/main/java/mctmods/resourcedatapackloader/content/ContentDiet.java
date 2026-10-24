@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -41,22 +42,28 @@ public final class ContentDiet {
     private static final String MEALS = "meals";
     private static final Map<UUID, float[]> BEFORE = new HashMap<>();
     private static final Map<PotionEffectDef, Potion> EFFECTS = new IdentityHashMap<>();
+    private static final PackGeneration GENERATION = new PackGeneration();
     private static DietDef diet;
     private static ResourceLocation source;
 
     private ContentDiet() {}
 
-    public static boolean load() {
+    public static void load() {
+        BEFORE.clear();
+        reload();
+    }
+
+    private static void reload() {
         diet = null;
         source = null;
-        BEFORE.clear();
         EFFECTS.clear();
+        GENERATION.stale();
         Json.eachObject(PackManager.DIETS, "diet file", ContentDiet::read);
         if (diet != null) { Summary.info("diet", "Food variety from " + source + ": remembers " + diet.memory + " meal(s)"); }
-        return diet != null;
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         if (diet != null) {
             ContentLog.LOGGER.error("Diet file {} found, but {} already set the diet, so the first one is kept", key, source);
             return;
@@ -70,6 +77,8 @@ public final class ContentDiet {
 
     @SubscribeEvent(receiveCanceled = true) public static void onTick(LivingEntityUseItemEvent.Tick event) {
         if (!(event.getEntityLiving() instanceof EntityPlayerMP)) { return; }
+        if (GENERATION.stale()) { reload(); }
+        if (diet == null) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getEntityLiving();
         FoodStats food = player.getFoodStats();
         float[] seen = BEFORE.computeIfAbsent(player.getUniqueID(), id -> new float[2]);
@@ -81,6 +90,8 @@ public final class ContentDiet {
 
     @SubscribeEvent public static void onFinish(LivingEntityUseItemEvent.Finish event) {
         if (!(event.getEntityLiving() instanceof EntityPlayerMP)) { return; }
+        if (GENERATION.stale()) { reload(); }
+        if (diet == null) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getEntityLiving();
         float[] seen = BEFORE.remove(player.getUniqueID());
         if (seen == null || diet.exempts(event.getItem())) { return; }

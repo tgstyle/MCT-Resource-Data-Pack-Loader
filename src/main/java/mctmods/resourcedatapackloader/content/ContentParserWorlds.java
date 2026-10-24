@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.*;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.content.portal.PortalShapes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLootSwitch;
@@ -531,6 +532,7 @@ public final class ContentParserWorlds {
                 Math.max(1, Json.getInt(unlock, "killedCount", 1)),
                 Json.getString(unlock, "killedDrops", ""),
                 Json.choice(unlock, "killedTally", GateDef.PLAYER, owner, TALLIES),
+                ContentRanks.key(key.getNamespace(), Json.getString(unlock, "killedRank", "").trim()),
                 Standing.parse(unlock),
                 Json.choice(unlock, "teamAndScore", GateDef.ALONE, owner, STANDINGS),
                 strings(json, "portalBlocks"),

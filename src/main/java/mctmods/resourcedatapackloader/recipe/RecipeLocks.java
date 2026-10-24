@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonObject;
@@ -26,15 +27,20 @@ public final class RecipeLocks {
 
     public static boolean barred(EntityPlayer player, ResourceLocation id, ItemStack result) {
         for (Lock lock : LOCKS) {
-            if (lock.selector.matches(id, result) && !Advancements.has(player, lock.advancement)) { return true; }
+            if (lock.selector.matches(id, result) && lock.bars(player)) { return true; }
         }
         return false;
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         String advancement = Json.getString(json, "advancement", "").trim();
-        if (advancement.isEmpty()) {
-            ContentLog.LOGGER.error("Recipe lock file {} names no advancement, ignoring it", key);
+        Standing standing = Standing.parse(json);
+        if (standing.halfScore()) {
+            ContentLog.LOGGER.error("Recipe lock file {} sets only one of objective and scoreAtLeast, so it leaves the score condition out", key);
+            standing = standing.withoutScore();
+        }
+        if (advancement.isEmpty() && !standing.any()) {
+            ContentLog.LOGGER.error("Recipe lock file {} names no advancement or standing, ignoring it", key);
             return;
         }
         RecipeSelector selector = new RecipeSelector();
@@ -43,16 +49,20 @@ public final class RecipeLocks {
             ContentLog.LOGGER.error("Recipe lock file {} selects no recipes, ignoring it", key);
             return;
         }
-        LOCKS.add(new Lock(selector, advancement));
+        LOCKS.add(new Lock(selector, advancement, standing));
     }
 
     private static final class Lock {
         final RecipeSelector selector;
         final String advancement;
+        final Standing standing;
 
-        Lock(RecipeSelector selector, String advancement) {
+        Lock(RecipeSelector selector, String advancement, Standing standing) {
             this.selector = selector;
             this.advancement = advancement;
+            this.standing = standing;
         }
+
+        boolean bars(EntityPlayer player) { return !advancement.isEmpty() && !Advancements.has(player, advancement) || !standing.met(player); }
     }
 }

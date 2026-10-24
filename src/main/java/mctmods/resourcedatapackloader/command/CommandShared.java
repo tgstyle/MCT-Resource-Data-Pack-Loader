@@ -1,10 +1,19 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentBoards;
+import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
+import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.card.CardRules;
+import mctmods.resourcedatapackloader.content.dialog.ContentDialogs;
+import mctmods.resourcedatapackloader.content.entity.SpawnLocks;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
+import mctmods.resourcedatapackloader.recipe.RecipeLocks;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
@@ -16,11 +25,13 @@ import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
@@ -61,6 +72,24 @@ public final class CommandShared {
             String priority = pack.getPriority() >= 0 ? " [" + pack.getPriority() + "]" : "";
             String tier = pack.isOverriding() ? Lang.tr(sender, "rdpl.command.overriding") : "";
             each.accept(pack, "  " + pack.getName() + priority + tier);
+        }
+    }
+
+    static void refield(MinecraftServer server) {
+        ContentTeams.load();
+        ContentScoring.load();
+        ContentDice.load();
+        ContentBoards.load();
+        ContentBoards.rebuild(server);
+        CardRules.load();
+        ContentDialogs.load();
+        ContentHearts.load();
+        ContentHearts.refresh(server);
+        SpawnLocks.load();
+        RecipeLocks.reload();
+        for (WorldServer world : server.worlds) {
+            ContentTeams.field(world);
+            ContentScoring.keep(world);
         }
     }
 

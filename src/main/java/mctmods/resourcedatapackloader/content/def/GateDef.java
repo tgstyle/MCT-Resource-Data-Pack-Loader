@@ -28,6 +28,7 @@ public final class GateDef {
     public final int killedCount;
     public final String killedDrops;
     public final String killedTally;
+    public final String killedRank;
     public final Standing standing;
     public final String teamAndScore;
     public final List<String> portalBlocks;
@@ -36,7 +37,7 @@ public final class GateDef {
     public final boolean safeReturn;
     public final List<String> requires;
 
-    public GateDef(ResourceLocation registryName, int dimension, String name, String scope, String teamless, boolean open, String craft, String consume, int consumeCount, String hold, String advancement, String killed, int killedCount, String killedDrops, String killedTally, Standing standing, String teamAndScore, List<String> portalBlocks, String blockedMessage, String unlockedMessage, boolean safeReturn, List<String> requires) {
+    public GateDef(ResourceLocation registryName, int dimension, String name, String scope, String teamless, boolean open, String craft, String consume, int consumeCount, String hold, String advancement, String killed, int killedCount, String killedDrops, String killedTally, String killedRank, Standing standing, String teamAndScore, List<String> portalBlocks, String blockedMessage, String unlockedMessage, boolean safeReturn, List<String> requires) {
         this.registryName = registryName;
         this.dimension = dimension;
         this.name = name;
@@ -52,6 +53,7 @@ public final class GateDef {
         this.killedCount = killedCount;
         this.killedDrops = killedDrops;
         this.killedTally = killedTally;
+        this.killedRank = killedRank;
         this.standing = standing;
         this.teamAndScore = teamAndScore;
         this.portalBlocks = portalBlocks;

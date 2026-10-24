@@ -394,11 +394,12 @@ public final class ContentParser {
         Map<ResourceLocation, Integer> carriers = leveled(key, json, "carriers", ResourceLocation::new);
         Map<String, Integer> weather = leveled(key, json, "weather", named -> weather(key, named));
         Map<String, Integer> biomes = leveled(key, json, "biomes", named -> named);
+        Map<String, Integer> environments = leveled(key, json, "environments", named -> named);
         Map<String, Integer> structures = leveled(key, json, "structures", named -> named);
         Map<ResourceLocation, Integer> caveRegions = leveled(key, json, "caveRegions", named -> new ResourceLocation(named.contains(":") ? named : key.getNamespace() + ":" + named));
         List<ExposureBandDef> heights = bands(key, json);
-        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty() && biomes.isEmpty() && structures.isEmpty() && caveRegions.isEmpty() && heights.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers, weather, biomes, structures, caveRegions or heights, ignoring it", key);
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty() && biomes.isEmpty() && environments.isEmpty() && structures.isEmpty() && caveRegions.isEmpty() && heights.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers, weather, biomes, environments, structures, caveRegions or heights, ignoring it", key);
             return null;
         }
         Set<ResourceLocation> catchers = new LinkedHashSet<>();
@@ -425,7 +426,7 @@ public final class ContentParser {
                 Math.max(0, Json.getInt(json, "contagionRange", 4)),
                 MathHelper.clamp(Json.getFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F),
                 Math.max(1, Json.getInt(json, "contagionDuration", 1200)),
-                weather, weatherDimensions, biomes, structures, caveRegions, Collections.unmodifiableList(heights),
+                weather, weatherDimensions, biomes, environments, structures, caveRegions, Collections.unmodifiableList(heights),
                 immuneItems, immuneTeams, Json.getString(json, "onClear", "").trim());
     }
 

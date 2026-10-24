@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.content.util.Portways;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.world.BiomeNames;
@@ -11,6 +12,7 @@ import java.util.List;
 
 public final class CardWhen {
     List<String> biomes = Collections.emptyList();
+    List<String> environments = Collections.emptyList();
     int timeFrom = -1;
     int timeTo = -1;
     long dayAtLeast = -1L;
@@ -22,6 +24,7 @@ public final class CardWhen {
 
     public boolean fails(EntityPlayerMP player) {
         if (!biomes.isEmpty() && !BiomeNames.matches(biomes, player.world.getBiome(player.getPosition()))) { return true; }
+        if (!environments.isEmpty() && Collections.disjoint(environments, ContentEnvironments.active(player.dimension))) { return true; }
         if (timeFrom >= 0 && timeTo >= 0 && !CardPlace.within(CardPlace.timeOfDay(player.world), timeFrom, timeTo)) { return true; }
         if (dayAtLeast >= 0L && CardPlace.day(player.world) < dayAtLeast) { return true; }
         if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return true; }

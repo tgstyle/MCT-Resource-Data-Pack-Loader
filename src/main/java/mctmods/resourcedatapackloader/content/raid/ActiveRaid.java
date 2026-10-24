@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.raid;
 
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRaidSwitch;
@@ -73,7 +74,7 @@ public final class ActiveRaid {
         this.waves = waves;
         this.points = points;
         this.cooldown = def.waveDelay;
-        this.bar = BossBars.create(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10);
+        this.bar = def.bossBar == null ? BossBars.create(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10) : BossBars.create(def.bossBar, new TextComponentString(def.name));
     }
 
     public static void start(WorldServer world, RaidDef def, BlockPos center, boolean free) {
@@ -126,7 +127,7 @@ public final class ActiveRaid {
         if (alive.isEmpty() && wave < waves) {
             if (cooldown > 0) {
                 cooldown--;
-                bar.setName(new TextComponentString(def.name));
+                bar.setName(new TextComponentString(def.title));
                 bar.setPercent(MathHelper.clamp((def.waveDelay - cooldown) / (float) def.waveDelay, 0.0F, 1.0F));
                 if (cooldown % 20 == 0) { players(world); }
                 return;
@@ -141,7 +142,7 @@ public final class ActiveRaid {
             float health = 0.0F;
             for (EntityLivingBase one : alive) { health += one.getHealth(); }
             bar.setPercent(waveHealth <= 0.0F ? 0.0F : MathHelper.clamp(health / waveHealth, 0.0F, 1.0F));
-            bar.setName(new TextComponentString(!alive.isEmpty() && alive.size() <= 2 ? def.name + " - Raiders Remaining: " + alive.size() : def.name));
+            bar.setName(new TextComponentString(!alive.isEmpty() && alive.size() <= 2 ? def.title + " - Raiders Remaining: " + alive.size() : def.title));
         }
         if (wave >= waves && alive.isEmpty() && ++quiet >= QUIET_BEFORE_VICTORY) { end(world, Status.VICTORY); }
     }
@@ -258,6 +259,7 @@ public final class ActiveRaid {
         if (ending == Status.VICTORY) {
             for (EntityPlayerMP player : present) { reward(world, player); }
         }
+        for (EntityPlayerMP player : present) { CardEvents.raidEnded(player, def.registryName.toString(), ending == Status.VICTORY); }
         if (function.isEmpty()) { return; }
         for (EntityPlayerMP player : present) { Functions.runAs(player, function, "Raid " + def.registryName); }
     }
@@ -277,9 +279,9 @@ public final class ActiveRaid {
         bar.setVisible(true);
         if (status == Status.VICTORY) {
             bar.setPercent(0.0F);
-            bar.setName(new TextComponentString(def.name + " - Victory"));
+            bar.setName(new TextComponentString(def.title + " - Victory"));
         }
-        else { bar.setName(new TextComponentString(def.name + " - Defeat")); }
+        else { bar.setName(new TextComponentString(def.title + " - Defeat")); }
     }
 
     private void players(WorldServer world) { BossBars.sync(bar, inReach(world)); }

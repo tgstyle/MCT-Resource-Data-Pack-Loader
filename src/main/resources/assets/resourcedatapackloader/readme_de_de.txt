@@ -295,8 +295,10 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids            tooltips
-    celestial        raids            harvests         carries
+    celestial        raids            tooltips         harvests
+    carries          dialogs          veins            diets
+    enchantments     dice             games            orders
+    ranks            recipe_locks     spawn_locks
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 

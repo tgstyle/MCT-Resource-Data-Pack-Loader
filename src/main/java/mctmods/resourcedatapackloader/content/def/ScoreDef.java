@@ -14,6 +14,7 @@ public final class ScoreDef {
     public final boolean individuals;
     public final Map<String, Integer> killPoints;
     public final int deathPoints;
+    public final int revivePoints;
     public final int endsAtScore;
     public final int endsAfterMinutes;
     public final int endsAfterRounds;
@@ -48,7 +49,7 @@ public final class ScoreDef {
 
     public ScoreDef(String name, String displayName, IScoreCriteria criterion, String slot,
                     @Nullable IScoreCriteria.EnumRenderType render, boolean teamTotals, boolean individuals,
-                    Map<String, Integer> killPoints, int deathPoints, int endsAtScore, int endsAfterMinutes, int endsAfterRounds,
+                    Map<String, Integer> killPoints, int deathPoints, int revivePoints, int endsAtScore, int endsAfterMinutes, int endsAfterRounds,
                     boolean resultsCard, String resultsTitle, String resultsIcon, String resultsImage,
                     int resultsBackground, int resultsTicks,
                     boolean carries, boolean endsResets, int endsIntermission, String awardsTo, boolean endsLocksTeams,
@@ -62,6 +63,7 @@ public final class ScoreDef {
         this.individuals = individuals;
         this.killPoints = killPoints;
         this.deathPoints = deathPoints;
+        this.revivePoints = revivePoints;
         this.endsAtScore = endsAtScore;
         this.endsAfterMinutes = endsAfterMinutes;
         this.endsAfterRounds = endsAfterRounds;

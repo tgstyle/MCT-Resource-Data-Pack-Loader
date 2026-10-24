@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import net.minecraft.entity.EntityList;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
@@ -45,7 +46,7 @@ public final class MobStats {
         return found;
     }
 
-    public static boolean targets(List<String> entities, EntityLiving mob) {
+    public static boolean targets(List<String> entities, Entity mob) {
         ResourceLocation key = EntityList.getKey(mob);
         String id = key == null ? "" : key.toString();
         for (String entity : entities) {

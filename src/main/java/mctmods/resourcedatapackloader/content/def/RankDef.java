@@ -14,8 +14,9 @@ public final class RankDef {
     public final float damage;
     public final Map<String, Integer> effects;
     public final float loot;
+    public final List<String> dimensions;
 
-    public RankDef(ResourceLocation key, List<String> entities, int weight, String label, float health, float damage, Map<String, Integer> effects, float loot) {
+    public RankDef(ResourceLocation key, List<String> entities, int weight, String label, float health, float damage, Map<String, Integer> effects, float loot, List<String> dimensions) {
         this.key = key;
         this.entities = Collections.unmodifiableList(entities);
         this.weight = weight;
@@ -24,5 +25,6 @@ public final class RankDef {
         this.damage = damage;
         this.effects = Collections.unmodifiableMap(effects);
         this.loot = loot;
+        this.dimensions = Collections.unmodifiableList(dimensions);
     }
 }

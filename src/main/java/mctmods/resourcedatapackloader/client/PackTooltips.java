@@ -27,6 +27,7 @@ import java.util.Map;
     private static String text(String line) { return TextFormatting.GRAY + translated(line); }
 
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
+        if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();
         List<String> tooltip = event.getToolTip();
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(stack).entrySet()) {

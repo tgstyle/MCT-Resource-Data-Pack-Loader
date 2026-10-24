@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.*;
+import mctmods.resourcedatapackloader.content.entity.ContentRanks;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -65,13 +66,14 @@ public final class ContentParserGames {
         JsonObject opens = Json.getJsonObject(json, "opens", new JsonObject());
         Map<String, Integer> kills = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(points, "kill", new JsonObject()).entrySet()) {
-            kills.put(entry.getKey().trim(), Json.asInt(entry.getValue(), entry.getKey(), 0));
+            kills.put(ContentRanks.killKey(key.getNamespace(), entry.getKey().trim()), Json.asInt(entry.getValue(), entry.getKey(), 0));
         }
         return new ScoreDef(name, Json.getString(json, "displayName", name), criterion, slot, render,
                 Json.getBoolean(json, "teamTotals", true),
                 Json.getBoolean(json, "individuals", false),
                 kills,
                 Json.getInt(points, "death", 0),
+                Json.getInt(points, "revive", 0),
                 Json.getInt(ends, "atScore", 0),
                 Json.getInt(ends, "afterMinutes", 0),
                 Json.getInt(ends, "afterRounds", 0),
@@ -186,7 +188,8 @@ public final class ContentParserGames {
                 bells(json),
                 Json.getInt(json, "points", 0),
                 Json.getString(json, "loot", "").trim(),
-                Json.getBoolean(json, "anywhere", false));
+                Json.getBoolean(json, "anywhere", false),
+                BossBars.read("Raid " + key, json, color, BossInfo.Overlay.NOTCHED_10));
     }
 
     private static List<String> bells(JsonObject json) {

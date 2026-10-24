@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -56,7 +57,7 @@ public final class ContentCarry {
     private static final String ID = "id";
     private static final int EVERY = 10;
     private static final UUID CARRIED = UUID.fromString("6d1f3a52-94c7-4e08-b3a1-7f2c5e9d0b46");
-    private static final Set<Block> BLOCK_RULES = new HashSet<>();
+    private static BlockGroup blockRules = new BlockGroup();
     private static final Set<ResourceLocation> MOB_RULES = new HashSet<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean breaking;
@@ -76,10 +77,10 @@ public final class ContentCarry {
     }
 
     private static void reload() {
-        BLOCK_RULES.clear();
+        blockRules = new BlockGroup();
         MOB_RULES.clear();
         Json.eachObject(PackManager.CARRIES, "carries", ContentCarry::read);
-        if (!BLOCK_RULES.isEmpty() || !MOB_RULES.isEmpty()) { ContentLog.LOGGER.info("Loaded carrying for {} block(s) and {} mob(s)", BLOCK_RULES.size(), MOB_RULES.size()); }
+        if (!blockRules.isEmpty() || !MOB_RULES.isEmpty()) { ContentLog.LOGGER.info("Loaded carrying: {} mob(s), blocks {}", MOB_RULES.size(), blockRules.isEmpty() ? "none" : "listed"); }
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
@@ -89,14 +90,7 @@ public final class ContentCarry {
             return;
         }
         if (json.has(BLOCKS)) {
-            for (JsonElement element : Json.getJsonArray(json, BLOCKS)) {
-                ResourceLocation name = new ResourceLocation(Json.getString(element, BLOCKS));
-                if (!ForgeRegistries.BLOCKS.containsKey(name)) {
-                    ContentLog.LOGGER.error("Carry {} names the block {}, which nothing registers, skipping it", key, name);
-                    continue;
-                }
-                BLOCK_RULES.add(ForgeRegistries.BLOCKS.getValue(name));
-            }
+            for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { blockRules.add(match, key, BLOCKS); }
         }
         if (json.has(MOBS)) {
             for (JsonElement element : Json.getJsonArray(json, MOBS)) {
@@ -132,7 +126,7 @@ public final class ContentCarry {
         World world = event.getWorld();
         BlockPos pos = event.getPos();
         if (world.isRemote) {
-            if (carrying(player) || BLOCK_RULES.contains(world.getBlockState(pos).getBlock())) { consume(event); }
+            if (carrying(player) || blockRules.contains(world.getBlockState(pos))) { consume(event); }
             return;
         }
         EntityPlayerMP mover = (EntityPlayerMP) player;
@@ -143,7 +137,7 @@ public final class ContentCarry {
             return;
         }
         IBlockState state = world.getBlockState(pos);
-        if (!BLOCK_RULES.contains(state.getBlock())) { return; }
+        if (!blockRules.contains(state)) { return; }
         consume(event);
         pickUp(mover, pos, state);
     }

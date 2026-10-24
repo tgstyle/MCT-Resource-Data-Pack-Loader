@@ -295,8 +295,10 @@ Ognuna di queste è una cartella sotto assets/<yourpack>:
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
-    celestial        raids            tooltips
-    celestial        raids            harvests         carries
+    celestial        raids            tooltips         harvests
+    carries          dialogs          veins            diets
+    enchantments     dice             games            orders
+    ranks            recipe_locks     spawn_locks
 
 I blocchi hanno queste forme, definite dal campo "type":
 

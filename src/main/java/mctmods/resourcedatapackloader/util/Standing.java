@@ -39,6 +39,10 @@ public final class Standing {
         return dietAtLeast == 0 || ContentDiet.distinct(player) >= dietAtLeast;
     }
 
+    public boolean halfScore() { return objective.isEmpty() != (scoreAtLeast == null); }
+
+    public Standing withoutScore() { return new Standing(team, "", null, dietAtLeast); }
+
     public boolean any() { return !team.isEmpty() || !objective.isEmpty() && scoreAtLeast != null || dietAtLeast > 0; }
 
     public boolean earnedBy(EntityPlayer player) { return any() && met(player); }

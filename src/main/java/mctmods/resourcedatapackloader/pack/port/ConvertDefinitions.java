@@ -140,6 +140,21 @@ final class ConvertDefinitions {
         }
     }
 
+    static void loot(JsonObject json) {
+        String held = Json.text(json, "loot").trim();
+        if (!held.isEmpty()) { json.addProperty("loot", Ids.lootTable(held)); }
+    }
+
+    static void tooltips(JsonObject json) {
+        if (!JsonUtils.isJsonArray(json, "enchantments")) { return; }
+        for (JsonElement element : json.getAsJsonArray("enchantments")) {
+            if (!element.isJsonObject()) { continue; }
+            JsonObject entry = element.getAsJsonObject();
+            String held = Json.text(entry, "enchantment").trim();
+            if (!held.isEmpty()) { entry.addProperty("enchantment", Ids.enchantment(held)); }
+        }
+    }
+
     static void fuels(JsonObject json, Ported pack, String where) {
         if (!JsonUtils.isJsonArray(json, "fuels")) { return; }
         for (JsonElement element : json.getAsJsonArray("fuels")) {
@@ -182,7 +197,7 @@ final class ConvertDefinitions {
     }
 
     static void exposures(JsonObject json, Ported pack, String where) {
-        for (String key : new String[] {"blocks", "items"}) {
+        for (String key : new String[] {"blocks", "items", "dimensions", "biomes"}) {
             if (!JsonUtils.isJsonArray(json, key)) { continue; }
             JsonArray out = new JsonArray();
             for (JsonElement element : json.remove(key).getAsJsonArray()) {
@@ -190,10 +205,38 @@ final class ConvertDefinitions {
                 int split = text.indexOf('=');
                 String named = split < 0 ? text : text.substring(0, split);
                 String level = split < 0 ? "" : text.substring(split);
-                String mapped = "blocks".equals(key) ? Convert.blockString(named, pack, where) : Convert.itemString(named, pack, where);
-                out.add(element.isJsonPrimitive() ? new JsonPrimitive(mapped + level) : element);
+                out.add(element.isJsonPrimitive() ? new JsonPrimitive(exposed(key, named, pack, where) + level) : element);
             }
             json.add(key, out);
+        }
+    }
+
+    private static String exposed(String key, String named, Ported pack, String where) {
+        switch (key) {
+            case "blocks": return Convert.blockString(named, pack, where);
+            case "items": return Convert.itemString(named, pack, where);
+            case "biomes": return Convert.biomeString(named);
+            default: {
+                Integer number = pack.dimensionNumber(named.trim());
+                if (number != null) { return String.valueOf(number); }
+                if (named.indexOf(':') > 0) { pack.noTwin(named.trim(), where); }
+                return named;
+            }
+        }
+    }
+
+    static void environments(JsonObject json, Ported pack, String where) {
+        if (!json.has("environments") || !json.get("environments").isJsonObject()) { return; }
+        for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("environments").entrySet()) {
+            if (!entry.getValue().isJsonObject()) { continue; }
+            JsonObject environment = entry.getValue().getAsJsonObject();
+            trades(environment, pack, where);
+            if (!environment.has("loot") || !environment.get("loot").isJsonObject()) { continue; }
+            JsonObject loot = environment.getAsJsonObject("loot");
+            for (Map.Entry<String, JsonElement> table : new ArrayList<>(loot.entrySet())) {
+                loot.remove(table.getKey());
+                loot.add(Ids.lootTable(table.getKey()), table.getValue().isJsonPrimitive() ? new JsonPrimitive(Ids.lootTable(table.getValue().getAsString())) : table.getValue());
+            }
         }
     }
 }

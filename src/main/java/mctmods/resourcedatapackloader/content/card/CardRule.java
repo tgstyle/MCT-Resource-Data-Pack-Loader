@@ -24,8 +24,13 @@ public final class CardRule {
     static final String SCORE = "score";
     static final String ROLL = "roll";
     static final String ORDER_DONE = "order_done";
+    static final String DOWNED = "downed";
+    static final String REVIVED = "revived";
     static final String EXPOSURE_LEVEL = "exposure_level";
     static final String ROUND_START = "round_start";
+    static final String ENVIRONMENT_CHANGE = "environment_change";
+    static final String RAID_WON = "raid_won";
+    static final String RAID_LOST = "raid_lost";
     public static final String PORTWAY_ACTIVATE = "portway_activate";
     public static final String PORTWAY_TRAVEL = "portway_travel";
     public static final String PORTWAY_ARRIVE = "portway_arrive";
@@ -35,8 +40,8 @@ public final class CardRule {
     public static final String PORTWAY_BIND = "portway_bind";
     static final String BUILTIN = "builtin";
     static final List<String> TRIGGERS = Collections.unmodifiableList(Arrays.asList(COMMAND, FIRST_JOIN, DIMENSION_ENTER, BIOME_ENTER, STRUCTURE_ENTER, ADVANCEMENT,
-            TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE, EXPOSURE_LEVEL, ROUND_START,
-            PORTWAY_ACTIVATE, PORTWAY_TRAVEL, PORTWAY_ARRIVE, PORTWAY_REFUSED, PORTWAY_PAID, PORTWAY_FORGET, PORTWAY_BIND));
+            TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE, DOWNED, REVIVED, EXPOSURE_LEVEL, ROUND_START,
+            ENVIRONMENT_CHANGE, PORTWAY_ACTIVATE, PORTWAY_TRAVEL, PORTWAY_ARRIVE, PORTWAY_REFUSED, PORTWAY_PAID, PORTWAY_FORGET, PORTWAY_BIND, RAID_WON, RAID_LOST));
     static final List<String> SCANNED = Collections.unmodifiableList(Arrays.asList(BIOME_ENTER, STRUCTURE_ENTER, Y_LEVEL, PLAY_TIME, SCORE));
     static final String PLAYER = "player";
     static final String EVERYONE = "everyone";
@@ -68,7 +73,10 @@ public final class CardRule {
     String roll = "";
     String order = "";
     String exposure = "";
+    String environment = "";
     String portway = "";
+    String raid = "";
+    String rank = "";
     String network = "";
     String reason = "";
     @Nullable Integer level;

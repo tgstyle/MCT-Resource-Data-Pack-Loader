@@ -67,7 +67,6 @@ import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
-import mctmods.resourcedatapackloader.content.extra.ContentTooltips;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentTradeGate;
@@ -253,7 +252,8 @@ public class ResourceDataPackLoader {
         if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
         if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBlockBell.class); }
         SpawnLocks.load();
-        if (ContentDiet.load()) { MinecraftForge.EVENT_BUS.register(ContentDiet.class); }
+        ContentDiet.load();
+        MinecraftForge.EVENT_BUS.register(ContentDiet.class);
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(ContentMobExperience.class);
@@ -331,7 +331,6 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentHeatShimmer.class);
             MinecraftForge.EVENT_BUS.register(ContentDimensionAmbience.class);
             MinecraftForge.EVENT_BUS.register(ProspectTooltip.class);
-            ContentTooltips.load();
             MinecraftForge.EVENT_BUS.register(PackTooltips.class);
             MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
             if (ContentItemContainer.baubled()) { PouchKey.register(); }
