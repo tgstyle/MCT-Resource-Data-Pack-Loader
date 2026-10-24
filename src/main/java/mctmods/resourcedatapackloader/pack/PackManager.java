@@ -68,6 +68,7 @@ public final class PackManager {
     public static final String DIALOGS = "dialogs";
     public static final String POTIONS = "potions";
     public static final String POTION_TYPES = "potion_types";
+    public static final String ENCHANTMENTS = "enchantments";
     public static final String BREWING = "brewing";
     public static final String VILLAGERS = "villagers";
     public static final String TRADES = "trades";

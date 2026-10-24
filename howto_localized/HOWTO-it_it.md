@@ -60,6 +60,7 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 - [Descrizioni comando](#descrizioni-comando)
 - [Porte linguistiche](#porte-linguistiche)
 - [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)
+- [Incantesimi](#incantesimi)
 - [Lavori all'incudine](#lavori-allincudine)
 - [Affissi e castoni](#affissi-e-castoni)
 - [Tavolo per incantesimi](#tavolo-per-incantesimi)
@@ -196,6 +197,7 @@ Sotto `data/`:
 | `<namespace>/brewing/*.json`                 | Ricette dell'alambicco. [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)                                                                                         |
 | `<namespace>/potions/*.json`                 | Effetti delle pozioni. [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)                                                                                          |
 | `<namespace>/potion_types/*.json`            | Pozioni in bottiglia costruite con quegli effetti. [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)                                                              |
+| `<namespace>/enchantments/*.json`            | Incantesimi personalizzati. [Incantesimi](#incantesimi)                                                                                                                                            |
 | `<namespace>/villagers/*.json`               | Professioni dei villici. [Villici e scambi](#villici-e-scambi)                                                                                                                                     |
 | `<namespace>/trades/*.json`                  | Cosa comprano e vendono le professioni. [Villici e scambi](#villici-e-scambi)                                                                                                                      |
 | `<namespace>/loot_tables/*.json`             | Loot table, sostituite. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                        |
@@ -511,7 +513,7 @@ Un pack può stare solo sul server, con giocatori su client vanilla puri, a una 
 | Basta il solo server                                                                                                                                      | Serve il pack anche sul client                                                                                         |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                 |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                               |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (cartelle client: senza client, lasciale fuori) |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                        |                                                                                                                        |
@@ -2452,6 +2454,61 @@ Il nome del file lo scegli tu, viene letta solo la cartella, e più file si somm
 ```
 
 Ogni voce è o `input`, `ingredient` e `output`, che trasforma un oggetto in un altro, oppure `from`, `ingredient` e `to`, che trasforma un tipo di pozione in un altro. `ingredient` è obbligatorio in entrambi i casi, e una voce accetta anche `requires`, così si può saltare una singola ricetta senza saltare il file.
+
+## Incantesimi
+
+*crafting, bottino e scambi*
+
+`<namespace>/enchantments/*.json`
+
+Il percorso del file è il nome di registro dell'incantesimo, quindi `mypack/enchantments/venom_edge.json` registra `mypack:venom_edge`. Si applica agli oggetti della sua `category` e a ogni oggetto indicato in `items`; il tavolo degli incantesimi lo offre, il bottino lo porta e gli abitanti lo scambiano come qualsiasi altro.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Chiave     | Obbligatorio | Valore                                                                                                                              | Predefinito                                       | Cosa fa                                                                                                                                       |
+| ---------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | no           | chiave di traduzione                                                                                                                | `enchantment.<namespace>.<name>`                  | Ciò che vede il giocatore                                                                                                                     |
+| `maxLevel` | no           | numero intero da 1 a 255                                                                                                            | `1`                                               | Il livello massimo. Un valore fuori intervallo viene limitato, con una riga di errore                                                         |
+| `rarity`   | no           | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                          | Quanto spesso lo scelgono il tavolo degli incantesimi e il bottino (peso 10, 5, 2 o 1) e quanto aggiunge al costo dell'incudine (1, 2, 4 o 8) |
+| `slots`    | no           | elenco di `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                    | `["mainhand"]`                                    | Dove l'oggetto va tenuto o indossato perché l'incantesimo conti                                                                               |
+| `category` | no           | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | nessuna                                           | I tipi di oggetto che lo accettano. `weapon` sono le spade e `digger` sono asce, picconi e pale                                               |
+| `items`    | no           | elenco di id di oggetti                                                                                                             | nessuno                                           | Altri oggetti che lo accettano, oppure gli unici quando manca `category`                                                                      |
+| `treasure` | no           | booleano                                                                                                                            | `false`                                           | Si trova solo nel bottino o negli scambi, il tavolo degli incantesimi non lo offre mai                                                        |
+| `minCost`  | no           | oggetto JSON con `base` e `perLevel`                                                                                                | `11` e `10`                                       | La potenza di incantamento che serve al livello                                                                                               |
+| `maxCost`  | no           | oggetto JSON con `base` e `perLevel`                                                                                                | il `base` di `minCost` più 5, e il suo `perLevel` | La massima potenza di incantamento a cui il livello compare ancora                                                                            |
+| `effects`  | no           | elenco di oggetti JSON                                                                                                              | nessuno                                           | Cosa fa l'incantesimo, vedi sotto                                                                                                             |
+| `requires` | no           | elenco di id di mod                                                                                                                 | nessuno                                           | Salta il file quando manca uno di quei mod                                                                                                    |
+
+Un file senza `category` e senza `items` viene saltato con una riga di errore nel log, come uno senza uno slot utilizzabile. Un id in `items` che nessun mod installato fornisce non causa problemi. I costi seguono `base + perLevel * (level - 1)`.
+
+Ogni voce di `effects` ha un `type`:
+
+| Tipo           | Chiavi                                  | Cosa fa                                                                                                                                                                                                                                             |
+| -------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | Conta come punti di protezione sull'armatura indossata, come gli incantesimi di protezione di vanilla. `from` elenca `all`, `fire`, `fall`, `explosion` e `projectile` (se manca vale `all`, che non copre il danno che ignora la protezione)       |
+| `damage`       | `mob`, `amount`                         | Danno extra con l'arma, contro i mob `any` (predefinito), `undead`, `arthropod` o `illager`                                                                                                                                                         |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Dà un effetto di pozione. `on` è `attack` (lo riceve il mob colpito, predefinito) oppure `hurt` (lo riceve l'attaccante quando chi lo porta viene colpito). `potion` è obbligatorio, `duration` è in tick (`100`) e `amplifier` va da 0 a 255 (`0`) |
+
+`amount` e `duration` usano la stessa coppia `base` e `perLevel` dei costi, e `protection` arrotonda entrambi per difetto a punti interi. Un effetto `protection` su uno slot che non è di armatura, e un `apply_effect` che nomina una pozione sconosciuta, vengono saltati con una riga di errore.
+
+Ogni file viene convertito sul server in una voce di incantesimo di vanilla, quindi un client vanilla non ha bisogno di nulla dal pack. Vanilla legge gli incantesimi di un oggetto attraverso il registro degli incantesimi: se un pack viene rimosso e il mondo carica un oggetto che nomina uno dei suoi incantesimi, il log scrive «Tried to load invalid item» e vanilla scarta quella voce, oppure l'intera pila. È così che si comportano i data pack di vanilla, e quando il pack torna non torna nulla.
 
 ## Lavori all'incudine
 

@@ -9,6 +9,7 @@ public final class ConfigContent {
     private final ModConfigSpec.BooleanValue fuels;
     private final ModConfigSpec.BooleanValue tooltips;
     private final ModConfigSpec.BooleanValue potions;
+    private final ModConfigSpec.BooleanValue enchantments;
     private final ModConfigSpec.BooleanValue brewing;
     private final ModConfigSpec.BooleanValue villagers;
     private final ModConfigSpec.BooleanValue entities;
@@ -34,6 +35,7 @@ public final class ConfigContent {
         fuels = builder.comment("Apply fuels/*.json files, which give items a furnace burn time [Default=true]").define("fuels", true);
         tooltips = builder.comment("Apply tooltips/*.json files, which add tooltip lines to items and blocks and a description under an enchantment's name [Default=true]").define("tooltips", true);
         potions = builder.comment("Register the potion effects and potion types described by potions/*.json and potion_types/*.json in packs. Requires a restart [Default=true]").worldRestart().define("potions", true);
+        enchantments = builder.comment("Generate the enchantments described by enchantments/*.json in packs as data pack enchantments. Requires a restart [Default=true]").worldRestart().define("enchantments", true);
         brewing = builder.comment("Apply brewing/*.json files, which add brewing stand recipes [Default=true]").define("brewing", true);
         villagers = builder.comment("Register the villager professions described by villagers/*.json and apply the trades in trades/*.json. Requires a restart [Default=true]").worldRestart().define("villagers", true);
         entities = builder.comment("Register the entity variants described by entities/*.json in packs. Requires a restart [Default=true]").worldRestart().define("entities", true);
@@ -64,6 +66,8 @@ public final class ConfigContent {
     public boolean tooltips() { return Config.loaded() ? tooltips.get() : ConfigCore.flag("content.tooltips", true); }
 
     public boolean potions() { return Config.loaded() ? potions.get() : ConfigCore.flag("content.potions", true); }
+
+    public boolean enchantments() { return Config.loaded() ? enchantments.get() : ConfigCore.flag("content.enchantments", true); }
 
     public boolean brewing() { return Config.loaded() ? brewing.get() : ConfigCore.flag("content.brewing", true); }
 

@@ -60,6 +60,7 @@
 - [툴팁](#툴팁)
 - [언어 게이트](#언어-게이트)
 - [물약, 물약 유형, 양조](#물약-물약-유형-양조)
+- [마법 부여](#마법-부여)
 - [모루 작업](#모루-작업)
 - [접사와 소켓](#접사와-소켓)
 - [마법 부여대](#마법-부여대)
@@ -196,6 +197,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/brewing/*.json`                 | 양조기 레시피. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                    |
 | `<namespace>/potions/*.json`                 | 물약 효과. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                        |
 | `<namespace>/potion_types/*.json`            | 그 효과로 만든 병에 담긴 물약. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                    |
+| `<namespace>/enchantments/*.json`            | 사용자 지정 마법. [마법 부여](#마법-부여)                                                                                                       |
 | `<namespace>/villagers/*.json`               | 주민 직업. [주민과 거래](#주민과-거래)                                                                                                          |
 | `<namespace>/trades/*.json`                  | 직업이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                 |
 | `<namespace>/loot_tables/*.json`             | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                         |
@@ -511,7 +513,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 | 서버만 있으면 충분                                                                                                                                        | 클라이언트에도 팩이 필요                                                                                             |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                               |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                             |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                              |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                           |                                                                                                                      |
@@ -2452,6 +2454,61 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 ```
 
 각 항목은 한 아이템을 다른 아이템으로 양조하는 `input`, `ingredient`, `output`이거나, 한 물약 유형을 다른 물약 유형으로 바꾸는 `from`, `ingredient`, `to`입니다. 어느 쪽이든 `ingredient`는 필수이며, 항목은 `requires`도 받으므로 파일 전체가 아니라 레시피 하나만 건너뛸 수 있습니다.
+
+## 마법 부여
+
+*제작, 전리품, 거래*
+
+`<namespace>/enchantments/*.json`
+
+파일의 경로가 곧 마법의 레지스트리 이름이므로 `mypack/enchantments/venom_edge.json`은 `mypack:venom_edge`를 등록합니다. 마법은 `category`에 해당하는 아이템과 `items`에 적힌 모든 아이템에 붙으며, 다른 마법과 마찬가지로 마법 부여대가 제시하고, 전리품에 실리고, 주민이 거래합니다.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| 키         | 필수   | 값                                                                                                                                  | 기본값                                           | 설명                                                                                               |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `name`     | 아니요 | 번역 키                                                                                                                             | `enchantment.<namespace>.<name>`                 | 플레이어에게 보이는 이름                                                                           |
+| `maxLevel` | 아니요 | 1에서 255 사이의 정수                                                                                                               | `1`                                              | 최고 레벨입니다. 범위를 벗어난 값은 범위 안으로 맞춰지며 오류 줄이 남습니다                        |
+| `rarity`   | 아니요 | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                         | 마법 부여대와 전리품이 고르는 빈도(가중치 10, 5, 2, 1)와 모루 비용에 더해지는 값(1, 2, 4, 8)입니다 |
+| `slots`    | 아니요 | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`의 목록                                                                       | `["mainhand"]`                                   | 마법이 작동하려면 아이템을 들거나 착용해야 하는 위치                                               |
+| `category` | 아니요 | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | 없음                                             | 마법을 붙일 수 있는 아이템 종류입니다. `weapon`은 검, `digger`는 도끼, 곡괭이, 삽입니다            |
+| `items`    | 아니요 | 아이템 ID의 목록                                                                                                                    | 없음                                             | 추가로 마법을 붙일 수 있는 아이템이며, `category`가 없으면 이 아이템만 대상입니다                  |
+| `treasure` | 아니요 | 불리언                                                                                                                              | `false`                                          | 전리품이나 거래에서만 얻을 수 있고 마법 부여대는 절대 제시하지 않습니다                            |
+| `minCost`  | 아니요 | `base`와 `perLevel`을 가진 객체                                                                                                     | `11`과 `10`                                      | 해당 레벨에 필요한 마법 부여 세기                                                                  |
+| `maxCost`  | 아니요 | `base`와 `perLevel`을 가진 객체                                                                                                     | `minCost`의 `base`에 5를 더한 값과 그 `perLevel` | 해당 레벨이 나타날 수 있는 가장 큰 마법 부여 세기                                                  |
+| `effects`  | 아니요 | 객체의 목록                                                                                                                         | 없음                                             | 마법이 하는 일입니다. 아래를 참고하세요                                                            |
+| `requires` | 아니요 | 모드 ID의 목록                                                                                                                      | 없음                                             | 나열한 모드 중 하나라도 없으면 파일을 건너뜁니다                                                   |
+
+`category`와 `items`가 모두 없는 파일은 로그에 오류 줄을 남기고 건너뜁니다. 쓸 수 있는 슬롯이 없는 파일도 마찬가지입니다. `items`의 ID를 설치된 어떤 모드도 제공하지 않아도 문제는 없습니다. 비용은 `base + perLevel * (level - 1)`로 계산됩니다.
+
+`effects`의 각 항목에는 `type`이 있습니다.
+
+| 타입           | 키                                      | 설명                                                                                                                                                                                                     |
+| -------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | 바닐라의 보호 계열 마법처럼 착용한 방어구의 보호 점수로 계산됩니다. `from`에는 `all`, `fire`, `fall`, `explosion`, `projectile`을 적습니다(생략하면 `all`이며, 보호를 무시하는 피해는 포함하지 않습니다) |
+| `damage`       | `mob`, `amount`                         | 무기로 주는 추가 피해입니다. 대상 몹은 `any`(기본값), `undead`, `arthropod`, `illager`입니다                                                                                                             |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | 물약 효과를 줍니다. `on`은 `attack`(맞은 몹이 받음, 기본값) 또는 `hurt`(착용자가 맞았을 때 공격자가 받음)입니다. `potion`은 필수이고, `duration`의 단위는 틱(`100`), `amplifier`는 0에서 255(`0`)입니다  |
+
+`amount`와 `duration`은 비용과 같은 `base`, `perLevel` 쌍을 쓰며, `protection`은 둘 다 버림하여 정수 점수로 만듭니다. 방어구 슬롯이 아닌 곳의 `protection` 효과와 알 수 없는 물약을 가리키는 `apply_effect`는 오류 줄을 남기고 건너뜁니다.
+
+각 파일은 서버에서 바닐라 마법 항목으로 변환되므로 바닐라 클라이언트는 팩에서 아무것도 필요로 하지 않습니다. 바닐라는 아이템의 마법을 마법 레지스트리를 통해 읽습니다. 팩을 제거한 뒤 그 마법을 가리키는 아이템이 월드에 로드되면 로그에 "Tried to load invalid item"이 남고, 바닐라는 그 항목이나 스택 전체를 버립니다. 바닐라 데이터 팩의 동작이 원래 그러하며, 팩을 되돌려도 아무것도 돌아오지 않습니다.
 
 ## 모루 작업
 

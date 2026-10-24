@@ -60,6 +60,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Tooltips](#tooltips)
 - [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
+- [Enchantments](#enchantments)
 - [Anvil work](#anvil-work)
 - [Affixes and sockets](#affixes-and-sockets)
 - [Enchanting table](#enchanting-table)
@@ -196,6 +197,7 @@ Under `data/`:
 | `<namespace>/brewing/*.json`                 | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                    |
 | `<namespace>/potions/*.json`                 | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                           |
 | `<namespace>/potion_types/*.json`            | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                 |
+| `<namespace>/enchantments/*.json`            | Custom enchantments. [Enchantments](#enchantments)                                                                                                               |
 | `<namespace>/villagers/*.json`               | Villager professions. [Villagers and trades](#villagers-and-trades)                                                                                              |
 | `<namespace>/trades/*.json`                  | What professions buy and sell. [Villagers and trades](#villagers-and-trades)                                                                                     |
 | `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                                                           |
@@ -511,7 +513,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | Server alone is enough                                                                                                                                    | Needs the pack on the client too                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                 |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
@@ -2452,6 +2454,61 @@ The file name is yours to choose, only the folder is read, and several files sta
 ```
 
 Each entry is either `input`, `ingredient` and `output`, which brews one item into another, or `from`, `ingredient` and `to`, which turns one potion type into another. `ingredient` is required either way, and an entry also takes `requires`, so one recipe can be skipped without the file being.
+
+## Enchantments
+
+*crafting, loot and trade*
+
+`<namespace>/enchantments/*.json`
+
+The file's path is the enchantment's registry name, so `mypack/enchantments/venom_edge.json` registers `mypack:venom_edge`. It goes on the items of its `category` and on every item named in `items`, and the enchanting table offers it, loot carries it and villagers trade it like any other.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Key        | Required | Value                                                                                                                               | Default                                       | What it does                                                                                                              |
+| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `name`     | no       | translation key                                                                                                                     | `enchantment.<namespace>.<name>`              | What the player sees                                                                                                      |
+| `maxLevel` | no       | whole number, 1 to 255                                                                                                              | `1`                                           | The highest level. A value outside the range is clamped, with an error line                                               |
+| `rarity`   | no       | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                      | How often the enchanting table and loot pick it (weight 10, 5, 2 or 1) and what it adds to an anvil's cost (1, 2, 4 or 8) |
+| `slots`    | no       | list of `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                      | `["mainhand"]`                                | Where the item must be held or worn for the enchantment to count                                                          |
+| `category` | no       | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | none                                          | The item kinds that take it. `weapon` is swords and `digger` is axes, pickaxes and shovels                                |
+| `items`    | no       | list of item ids                                                                                                                    | none                                          | Items that take it as well, or the only ones when there is no `category`                                                  |
+| `treasure` | no       | boolean                                                                                                                             | `false`                                       | Only found as loot or in trades, never offered by the enchanting table                                                    |
+| `minCost`  | no       | object with `base` and `perLevel`                                                                                                   | `11` and `10`                                 | The enchanting power the level needs                                                                                      |
+| `maxCost`  | no       | object with `base` and `perLevel`                                                                                                   | `minCost`'s `base` plus 5, and its `perLevel` | The most enchanting power the level still appears at                                                                      |
+| `effects`  | no       | list of objects                                                                                                                     | none                                          | What the enchantment does, see below                                                                                      |
+| `requires` | no       | list of mod ids                                                                                                                     | none                                          | Skips the file when one of those mods is missing                                                                          |
+
+A file with neither `category` nor `items` is skipped with an error line in the log, and so is one with no usable slot. An id in `items` that no installed mod provides does no harm. Costs follow `base + perLevel * (level - 1)`.
+
+Each entry of `effects` has a `type`:
+
+| Type           | Keys                                    | What it does                                                                                                                                                                                                                      |
+| -------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | Counts as protection points on worn armor, the way vanilla's protection enchantments do. `from` lists `all`, `fire`, `fall`, `explosion` and `projectile` (`all` when left out, which skips damage that ignores protection)       |
+| `damage`       | `mob`, `amount`                         | Extra damage with the weapon, against `any` mob (the default), `undead`, `arthropod` or `illager`                                                                                                                                 |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Gives a potion effect. `on` is `attack` (the mob hit gets it, the default) or `hurt` (the attacker gets it when the wearer is hit). `potion` is required, `duration` is in ticks (`100`) and `amplifier` runs from 0 to 255 (`0`) |
+
+`amount` and `duration` use the same `base` and `perLevel` pair as the costs, and `protection` rounds both down to whole points. A `protection` effect on a slot that is not armor, and an `apply_effect` that names an unknown potion, are skipped with an error line.
+
+Each file is turned into a vanilla enchantment entry on the server, so a vanilla client needs nothing from the pack. Vanilla reads an item's enchantments through the enchantment registry: when a pack is dropped and a world loads an item that names one of its enchantments, the log says "Tried to load invalid item" and vanilla drops that entry, or the whole stack. That is how vanilla data packs behave, and nothing comes back when the pack returns.
 
 ## Anvil work
 

@@ -20,6 +20,7 @@ final class PackReport {
         collect(off, Config.content.fuels(), "content.fuels", PackManager.JSON, PackManager.FUELS);
         collect(off, Config.content.tooltips(), "content.tooltips", PackManager.JSON, PackManager.TOOLTIPS);
         clientSide(off, Config.content.potions(), "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);
+        collect(off, Config.content.enchantments(), "content.enchantments", PackManager.JSON, PackManager.ENCHANTMENTS);
         collect(off, Config.content.brewing(), "content.brewing", PackManager.JSON, PackManager.BREWING);
         clientSide(off, Config.content.villagers(), "content.villagers", PackManager.VILLAGERS);
         collect(off, Config.content.villagers(), "content.villagers", PackManager.JSON, PackManager.TRADES);
