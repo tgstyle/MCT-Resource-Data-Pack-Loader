@@ -7,9 +7,11 @@ import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentRuleClient;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.TalkScreen;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
+import mctmods.resourcedatapackloader.content.dialog.DialogTalk;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.content.menu.ContentPortwayMenu;
@@ -70,6 +72,11 @@ public final class RDPLNetwork {
             ServerPlayer player = context.get().getSender();
             if (player != null && player.containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); }
         }).add();
+        channel.messageBuilder(MessageTalk.class, 13, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageTalk::write).decoder(MessageTalk::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { TalkScreen.receive(message); } }).add();
+        channel.messageBuilder(MessageTalkPick.class, 14, NetworkDirection.PLAY_TO_SERVER).encoder(MessageTalkPick::write).decoder(MessageTalkPick::read).consumerMainThread((message, context) -> {
+            ServerPlayer player = context.get().getSender();
+            if (player != null) { DialogTalk.pick(player, message.index()); }
+        }).add();
     }
 
     public static void openWorn() { if (channel != null) { channel.sendToServer(new MessageOpenWorn()); } }
@@ -106,6 +113,10 @@ public final class RDPLNetwork {
     public static boolean reaches(ServerPlayer player) { return channel != null && !NetworkHooks.isVanillaConnection(player.connection.connection) && channel.isRemotePresent(player.connection.connection); }
 
     public static void sendCard(ServerPlayer player, MessageCard card) { toPlayer(player, card); }
+
+    public static void sendTalk(ServerPlayer player, MessageTalk talk) { toPlayer(player, talk); }
+
+    public static void sendTalkPick(int index) { if (channel != null) { channel.sendToServer(new MessageTalkPick(index)); } }
 
     public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { toPlayer(player, environments); }
 }

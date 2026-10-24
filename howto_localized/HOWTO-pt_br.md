@@ -100,6 +100,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Pontuação](#pontuação)
 - [Invasões](#invasões)
 - [Cartas](#cartas)
+- [Diálogos](#diálogos)
 - [Dados e baralhos](#dados-e-baralhos)
 
 **Controle**
@@ -167,6 +168,7 @@ Em `data/`:
 | `<namespace>/anvils/*.json`                  | Encantamentos que uma bigorna coloca em um item nomeado, um avanço que ele concede e um bloqueio até lá. [Trabalho na bigorna](#trabalho-na-bigorna)                                     |
 | `<namespace>/enchanting/*.json`              | O que a mesa de encantamento oferece, pede e tira: por encantamento, por item e no geral. [Mesa de encantamento](#mesa-de-encantamento)                                                  |
 | `<namespace>/cards/*.json`                   | Cartas na tela exibidas por um gatilho e as mensagens que este mod diz por conta própria. [Cartas](#cartas)                                                                              |
+| `<namespace>/dialogs/*.json`                 | Conversa ramificada com uma variante de entidade: nós de texto e respostas que seguem, executam uma função ou mostram uma carta. [Diálogos](#diálogos)                                   |
 | `<namespace>/dice/*.json`                    | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve uma rolagem e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos)                                          |
 | `<namespace>/games/*.json`                   | Jogos de tabuleiro com criaturas como peças: o tabuleiro, as peças e como se movem, e o que um resultado paga. [Jogos de tabuleiro](#jogos-de-tabuleiro)                                 |
 | `<namespace>/ranks/*.json`                   | Faixas aleatórias que um mob pode sortear ao surgir: vida extra, dano, efeitos, itens soltos e uma etiqueta de nome. [Níveis de mobs](#níveis-de-mobs)                                   |
@@ -3005,6 +3007,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo de verdade escreve só as que 
 | `name`            | não         | texto                                         | nenhum                    | O nome que ela leva no mundo, nas mensagens de morte e no seu ovo                                                                                                                                       |
 | `showName`        | não         | booleano                                      | `false`                   | Mostra o nome sem precisar olhar para ela                                                                                                                                                               |
 | `profession`      | não         | `namespace:name`                              | aleatória                 | Para um aldeão, a profissão que ele exerce                                                                                                                                                              |
+| `dialog`          | não         | texto                                         | nenhum                    | Um diálogo, como `namespace:name`, que um clique direito na entidade abre. [Diálogos](#diálogos)                                                                                                        |
 | `baby`            | não         | booleano ou 0.0 a 1.0                         | `false`                   | Com que frequência uma nasce jovem, e continua assim. `true` é sempre, um número é essa fração delas                                                                                                    |
 | `becomes`         | não         | lista                                         | nenhum                    | Outras variantes em que esta pode se transformar ao surgir, por peso. Veja abaixo                                                                                                                       |
 | `egg`             | não         | booleano ou objeto                            | `true`                    | Um ovo de spawn, colorido como o ovo da entidade que ela copia. `{ "primary": "AABBCC", "secondary": "112233" }` escolhe as suas próprias cores, `false` omite o ovo                                    |
@@ -6831,6 +6834,81 @@ Títulos e linhas de cartas, mensagens Says e as notas de boas-vindas e de reten
 
 `welcomeSays` não é uma regra e mantém seu logotipo; uma regra `first_join` ou `dimension_enter` se soma a ele. As contagens regressivas e os placares da barra de ação de uma rodada permanecem como suas configurações os definem.
 
+## Diálogos
+
+*modos de jogo*
+
+`<namespace>/dialogs/*.json`
+
+O nome do arquivo é de sua escolha, apenas a pasta é lida, e vários arquivos se acumulam. Cada arquivo é um diálogo, e seu id é `<namespace>:<nome do arquivo>`. Uma variante de entidade abre um diálogo pela chave `dialog`: um clique direito nessa entidade passa a mostrar o nó `start` do diálogo, no lugar do que a entidade faz normalmente com um clique direito, como a tela de troca de um aldeão.
+
+```json
+{
+  "start": "hello",
+  "title": "{npc}",
+  "icon": "minecraft:emerald",
+  "color": "3A2A10",
+  "font": "mypack:runes",
+  "nodes": {
+    "hello": {
+      "lines": ["Welcome, {player}.", "What brings you to {biome}?"],
+      "replies": [
+        { "text": "Who are you?", "goto": "who" },
+        { "text": "I want work.", "runs": "mypack:give_work", "card": "mypack:work_card" },
+        { "text": "Adventure only.", "when": { "gameMode": "adventure" } },
+        { "text": "Goodbye." }
+      ]
+    },
+    "who": { "title": "The Guide", "lines": ["I keep the road."], "replies": [{ "text": "Back.", "goto": "hello" }] }
+  }
+}
+```
+
+A primeira resposta vai para o nó `who`, que tem um `title` próprio e uma resposta para voltar. A segunda executa uma função e mostra uma carta. A terceira fica oculta, a menos que o jogador esteja no modo aventura, e a última não tem `goto`, então encerra a conversa.
+
+### Chaves do diálogo
+
+*diálogos*
+
+| Configuração | Tipo                                          | Padrão              | O que faz                                                                                           |
+| ------------ | --------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| `start`      | texto                                         | nenhum, obrigatório | O nome do nó em que uma conversa começa. Um diálogo cujo `start` não é um dos seus nós é descartado |
+| `nodes`      | objeto                                        | nenhum, obrigatório | Os nós, cada um com seu próprio nome. No máximo 64                                                  |
+| `title`      | texto                                         | o nome da variante  | A primeira linha do painel. `{npc}` é o nome da entidade                                            |
+| `icon`       | texto                                         | `saysIcon`          | Como em uma carta, veja [A carta](#a-carta)                                                         |
+| `color`      | texto                                         | `saysColor`         | Como em uma carta, veja [A carta](#a-carta)                                                         |
+| `image`      | texto                                         | `saysImage`         | Como em uma carta, veja [A carta](#a-carta)                                                         |
+| `background` | booleano                                      | `saysBackground`    | Como em uma carta, veja [A carta](#a-carta)                                                         |
+| `font`       | texto                                         | `saysFont`          | Como em uma carta, veja [A carta](#a-carta)                                                         |
+| `requires`   | lista de ids de mods ou namespaces de pacotes | nenhum              | O arquivo é ignorado, a menos que todos estejam presentes                                           |
+
+### Chaves do nó
+
+*diálogos*
+
+| Configuração | Tipo  | Padrão              | O que faz                                                                                                                   |
+| ------------ | ----- | ------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `title`      | texto | o título do diálogo | Substitui o `title` do diálogo enquanto este nó é mostrado                                                                  |
+| `lines`      | lista | nenhum              | Até dezesseis linhas. `{player}`, `{npc}`, `{dim}`, `{biome}` e `{day}` são preenchidos                                     |
+| `replies`    | lista | nenhum              | Até oito respostas, mostradas em uma lista numerada. Um nó sem respostas só mostra as suas linhas, e a conversa termina ali |
+
+### Chaves da resposta
+
+*diálogos*
+
+| Configuração | Tipo     | Padrão              | O que faz                                                                                                                                                       |
+| ------------ | -------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`       | texto    | nenhum, obrigatório | A resposta como o jogador a lê. Uma resposta sem `text` é descartada                                                                                            |
+| `goto`       | texto    | nenhum              | O nó para onde seguir, pelo nome. Uma resposta cujo `goto` não nomeia nenhum nó é descartada                                                                    |
+| `card`       | texto    | nenhum              | O id de uma regra de [Cartas](#cartas), mostrada quando a resposta é escolhida. Seu `when`, `repeat` e `cooldown` são ignorados, e seu `runs` ainda é executado |
+| `runs`       | texto    | nenhum              | Uma função executada como o jogador quando a resposta é escolhida. É assim que uma resposta executa comandos                                                    |
+| `when`       | objeto   | nenhum              | As condições de [Quando](#quando). Uma resposta que não as cumpre fica oculta                                                                                   |
+| `close`      | booleano | `true` sem `goto`   | Encerra a conversa depois da escolha. Não faz nada quando `goto` está definido                                                                                  |
+
+Uma escolha executa primeiro `runs`, depois mostra `card` e então vai para `goto` ou encerra a conversa. Um diálogo não guarda estado próprio: ele não é salvo, e uma conversa que foi fechada, ou cortada quando o jogador saiu do jogo, não pode ser retomada. Um ramo que precise lembrar algo define uma pontuação ou uma tag na sua função.
+
+Um cliente com o mod mostra um diálogo como um painel perto da borda inferior da tela, com uma linha para cada resposta. Clique em uma linha ou pressione o número dela, de 1 a 8; Esc ou a tecla do inventário fecha a conversa. Um cliente vanilla recebe o mesmo texto como linhas de chat, em que cada resposta é um `[n]` clicável que executa `/rdplserver talk n`. O servidor só aceita uma escolha enquanto a entidade estiver viva e a no máximo 8 blocos do jogador, e ignora um número que o nó atual não tem; a tela se fecha sozinha quando o jogador se afasta mais de 8 blocos. Um `start` ausente, uma resposta sem `text` e um `goto` desconhecido são registrados no log e descartam o diálogo ou a resposta; uma variante de entidade cujo `dialog` nenhum pacote fornece é registrada e fica sem diálogo.
+
 ## Dados e baralhos
 
 *modos de jogo*
@@ -8724,6 +8802,7 @@ Em um servidor dedicado, `/rdplserver` faz o mesmo pela cópia da pasta do próp
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0     | Os lados que um pacote escalou e os caminhos para entrar e sair deles, oferecidos só enquanto um pacote escala lados, veja [Equipes](#equipes)                                                                                                                                                                                                               |
 | `/rdplserver round start`, `round reset`, `round vote yes`, `round vote no`              | 0     | Inicia uma rodada que o pacote mantém em um lobby, reinicia uma rodada em andamento ou convoca uma votação para isso, e vota em uma, conforme a pontuação do pacote permitir, e só um jogador inicia uma; oferecido aos jogadores só enquanto um pacote mantém pontuação, veja [Pontuação](#pontuação)                                                       |
 | `/rdplserver card <rule> [players]`                                                      | 2     | Mostra uma [regra de carta](#cartas) aos jogadores indicados, ou a você mesmo, pelo seu id ou nome de arquivo. `when`, `repeat` e `cooldown` são ignorados                                                                                                                                                                                                   |
+| `/rdplserver talk <number>`                                                              | 0     | Escolhe uma resposta pelo número no diálogo aberto. As respostas clicáveis de um cliente vanilla o executam. [Diálogos](#diálogos)                                                                                                                                                                                                                           |
 | `/rdplserver raid <invasão> [jogador ou x y z]`                                          | 3     | Inicia a [invasão](#invasões) indicada em um jogador, em uma posição ou, sem nenhum dos dois, em você, sem vila. É recusado enquanto outra invasão estiver em andamento dentro de `reach`                                                                                                                                                                    |
 | `/rdplserver environment [<dimensão> <nome>]`                                            | 2     | Passa uma dimensão para um dos seus [ambientes](#ambientes), ou devolve a aparência própria dela com `default`. Sozinho, lista cada dimensão que tem ambientes e o que cada uma está usando                                                                                                                                                                  |
 | `/rdplserver reset`                                                                      | 3     | Devolve o mapa ao estado em que o fim de uma rodada o deixa: todos são retidos, as entidades varridas, as pontuações apagadas, `resetRuns` executados, os jogadores colocados em `resetSendsTo` e liberados, e uma rodada abre com a contagem inicial, como as configurações de reset em [Pré-geração](#pré-geração) descrevem. Não é repassado pelo `/rdpl` |

@@ -122,7 +122,7 @@ public final class ContentEntityParser {
                 equipment(key, json),
                 spawns(key, json),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
-                ContentTasks.parse(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null));
+                ContentTasks.parse(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null), Json.getString(json, "dialog", "").trim());
     }
 
     private static List<PhaseDef> phases(ResourceLocation key, JsonObject json, boolean hasBar) {
