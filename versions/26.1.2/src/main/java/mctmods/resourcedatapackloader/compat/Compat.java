@@ -28,6 +28,10 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.feature.LakeFeature;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.scores.PlayerTeam;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class Compat {
@@ -54,6 +58,10 @@ public final class Compat {
     public static EntityType<ArmorStand> armorStand() { return EntityType.ARMOR_STAND; }
 
     public static boolean flies(Mob mob) { return mob instanceof FlyingAnimal; }
+
+    public static void refuseSpecificInteract(Predicate<Player> refused) {
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, (PlayerInteractEvent.EntityInteractSpecific event) -> { if (refused.test(event.getEntity())) { event.setCanceled(true); } });
+    }
 
     public static boolean isSlime(Mob mob) { return mob instanceof Slime; }
 

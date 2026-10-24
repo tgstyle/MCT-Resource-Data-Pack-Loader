@@ -35,6 +35,7 @@ import net.minecraft.world.scores.TeamColor;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class Compat {
@@ -61,6 +62,8 @@ public final class Compat {
     public static EntityType<ArmorStand> armorStand() { return EntityTypes.ARMOR_STAND; }
 
     public static boolean flies(Mob mob) { return mob.getNavigation() instanceof FlyingPathNavigation; }
+
+    @SuppressWarnings("unused") public static void refuseSpecificInteract(Predicate<Player> refused) {}
 
     public static boolean isSlime(Mob mob) { return mob instanceof Slime; }
 

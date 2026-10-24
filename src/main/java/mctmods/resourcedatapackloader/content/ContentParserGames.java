@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.def.DiceDef;
+import mctmods.resourcedatapackloader.content.def.DownDef;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
@@ -235,7 +236,17 @@ public final class ContentParserGames {
                 Json.getString(json, "leadSays", "You are the current round leader"), Json.getString(json, "leadRuns", "").trim(),
                 Json.getBoolean(json, "balance", false), Json.getBoolean(json, "scoreboard", true),
                 Math.max(0, Json.getInt(json, "picks", 0)), Json.names(json, "picksFrom"), gives(key, json),
-                standIn(json), standInAt(key, json), point(key, Json.getString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"));
+                standIn(json), standInAt(key, json), point(key, Json.getString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"), down(json));
+    }
+
+    @Nullable private static DownDef down(JsonObject json) {
+        if (!GsonHelper.isObjectNode(json, "down")) { return null; }
+        JsonObject asked = Json.getJsonObject(json, "down");
+        int seconds = Math.max(0, Json.getInt(asked, "seconds", 0));
+        if (seconds == 0) { return null; }
+        return new DownDef(seconds, Math.max(1, Json.getInt(asked, "reviveSeconds", 5)),
+                Json.getString(asked, "says", "You are down and bleed out in {seconds} seconds unless a teammate revives you"),
+                Json.getString(asked, "revivedSays", "You were revived"));
     }
 
     @Nullable static int[] point(Identifier key, String asked, String refused) {

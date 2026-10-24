@@ -6392,7 +6392,8 @@ A side is a real team on the game's own scoreboard, so `/team list` sees it, it 
   "leadOn": "kaboom",
   "leadIs": "Steve",
   "leadSays": "You are the current round leader",
-  "leadRuns": "mypack:lead_chosen"
+  "leadRuns": "mypack:lead_chosen",
+  "down": { "seconds": 30, "reviveSeconds": 5 }
 }
 ```
 
@@ -6462,6 +6463,19 @@ Three ways to join, and a side may use all of them. `entities` names entity ids,
 | `leadIs`   | text | empty                              | With `appointed`, the player who leads                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `leadSays` | text | `You are the current round leader` | Told to a player as the lead comes to them: as they arrive on a side they lead, as they claim it, or as a `first` lead passes to them, when it carries who left. `{side}` is the side's display name; empty tells nothing                                                                                                                                                                                                                                                                                                                                                                        |
 | `leadRuns` | text | empty                              | A function, `namespace:path`, run once each time the lead passes to a player: the first lead, and every hand-on after. It runs as the lead, at their position, with the permission a function an advancement rewards has, so `@s` is the lead. Checked every second; a lead who is offline is run for when they are next on. A restart decides the lead afresh                                                                                                                                                                                                                                   |
+
+### Going down
+
+*teams*
+
+| Setting         | Type   | Default                                                                         | What it does                                                                                                                                                                                                                                                                                 |
+| --------------- | ------ | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `seconds`       | number | `0`                                                                             | How long a player on this side stays down before bleeding out, in seconds. `0`, or no `down` object, turns it off, so the side's players die as usual and nothing is listened for. A bleed-out is a real death, so score, elimination and loot happen then and not when the player goes down |
+| `reviveSeconds` | number | `5`                                                                             | How long a teammate who is not down must stand within 2 blocks of the downed player, sneaking, to revive them. The progress starts over if they stop sneaking or move away                                                                                                                   |
+| `says`          | text   | `You are down and bleed out in {seconds} seconds unless a teammate revives you` | Told to the player as they go down. `{seconds}` is the bleed-out time. Empty tells nothing                                                                                                                                                                                                   |
+| `revivedSays`   | text   | `You were revived`                                                              | Told to the player when a teammate revives them. Empty tells nothing                                                                                                                                                                                                                         |
+
+A member of a side with `down` goes down instead of dying: they are held at 1 hit point, can neither move nor jump (they are taken off any mount and put back where they went down if they shift, and Slowness at its highest shows it), glow, take no damage except from the void, `/kill` and the bleed-out, and cannot attack, use items or click blocks or entities. The void and `/kill` kill a player who is not down outright, and the bleed-out counts as a kill by the enemy who put them down. A revived player comes back at half of their maximum health. Players on no side die as usual, and mobs are untouched. The state is kept in memory only: a player who logs out while down dies, and a server that stops while someone is down brings them back at 1 hit point with the effects gone. The messages show as the cards `rdpl:downed` and `rdpl:revived`
 
 ## Scoring
 
@@ -6997,6 +7011,8 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 | `rdpl:team_lead`         | The lead of a side comes to a player                            | `leadSays` in [Teams](#teams)                                                                                                    |
 | `rdpl:team_picked`       | A player is picked for a side                                   | the side's `displayName`                                                                                                         |
 | `rdpl:team_round_ended`  | The round ended, so a player is moved to a side                 | the side's `displayName`                                                                                                         |
+| `rdpl:downed`            | A player goes down instead of dying                             | `down.says` in [Teams](#teams)                                                                                                   |
+| `rdpl:revived`           | A teammate revives a downed player                              | `down.revivedSays` in [Teams](#teams)                                                                                            |
 | `rdpl:lobby_joins`       | A player who logs in mid-round is sent to the lobby             | `opens.joinsSays` in [The lobby](#the-lobby)                                                                                     |
 | `rdpl:lobby_note`        | The mid-screen lobby line                                       | `opens.says`, `opens.leaderSays` in [The lobby](#the-lobby)                                                                      |
 | `rdpl:scoring_results`   | The standings at the end of a round, to each player             | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Results](#results) |

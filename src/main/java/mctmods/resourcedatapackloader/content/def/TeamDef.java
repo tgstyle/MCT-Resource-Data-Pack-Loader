@@ -9,7 +9,7 @@ public record TeamDef(String name, String displayName, ChatFormatting color, Str
                       boolean seeFriendlyInvisibles, Team.Visibility nameTags, Team.Visibility deathMessages, Team.CollisionRule collision, List<String> entities,
                       List<String> players, @Nullable int[] spawnBox, boolean joinable, String lead, String leadOn, String leadIs, String leadSays, String leadRuns,
                       boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt,
-                      @Nullable int[] spawnAt) {
+                      @Nullable int[] spawnAt, @Nullable DownDef down) {
     public static final String NONE = "none";
     public static final String FIRST = "first";
     public static final String TOP_SCORE = "topScore";
