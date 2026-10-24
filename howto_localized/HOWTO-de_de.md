@@ -5941,16 +5941,39 @@ Eine Strukturkarte setzt Vorlagen auf einem Raster zu einem benannten Bauwerk zu
 }
 ```
 
-| Einstellung  | Typ         | Standard      | Was sie macht                                                                                                                                                                |
-| ------------ | ----------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`       | Text        | der Dateiname | Wie die Karte in den Logs heißt                                                                                                                                              |
-| `cell`       | Zahl        | `32`          | Der Rasterabstand in Blöcken, bis 48. Eine Vorlage, die kleiner ist als die Zelle, sitzt in der Zellecke, sodass Stücke in voller Größe nahtlos aneinanderstoßen             |
-| `ground`     | Zahl        | `0`           | Welche Ebene auf der Geländeoberfläche aufsetzt. Ebenen davor graben sich ein, so bekommt ein Bauwerk Keller                                                                 |
-| `at`         | zwei Zahlen | keiner        | Setzt eine Kopie an genaue Blockkoordinaten, so wie `structureAt` ein Dorf festlegt                                                                                          |
-| `spacing`    | Zahl        | `0`           | Verstreut Kopien auf einem Raster in diesem Chunkabstand, mit einem Versatz, der aus dem Weltseed kommt. `0` verstreut keine, eine Karte nur mit `at` baut also genau einmal |
-| `chance`     | Zahl        | `100`         | Der Prozentanteil der Rasterplätze, die eine Kopie bauen                                                                                                                     |
-| `dimensions` | Liste       | alle          | Dimensions-IDs, in denen die Karte bauen darf                                                                                                                                |
-| `layers`     | Liste       | keine         | Die Ebenen, von unten nach oben, jede mit `palette` und `map`                                                                                                                |
+Eine Karte kann auch unter das Gelände absinken und die Spawner und Truhen füllen, die ihre Vorlagen enthalten:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Einstellung  | Typ                    | Standard      | Was sie macht                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ---------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | Text                   | der Dateiname | Wie die Karte in den Logs heißt                                                                                                                                                                                                                                                                                                                                                                                        |
+| `cell`       | Zahl                   | `32`          | Der Rasterabstand in Blöcken, bis 48. Eine Vorlage, die kleiner ist als die Zelle, sitzt in der Zellecke, sodass Stücke in voller Größe nahtlos aneinanderstoßen                                                                                                                                                                                                                                                       |
+| `ground`     | Zahl                   | `0`           | Welche Ebene auf der Geländeoberfläche aufsetzt. Ebenen davor graben sich ein, so bekommt ein Bauwerk Keller                                                                                                                                                                                                                                                                                                           |
+| `at`         | zwei Zahlen            | keiner        | Setzt eine Kopie an genaue Blockkoordinaten, so wie `structureAt` ein Dorf festlegt                                                                                                                                                                                                                                                                                                                                    |
+| `spacing`    | Zahl                   | `0`           | Verstreut Kopien auf einem Raster in diesem Chunkabstand, mit einem Versatz, der aus dem Weltseed kommt. `0` verstreut keine, eine Karte nur mit `at` baut also genau einmal                                                                                                                                                                                                                                           |
+| `chance`     | Zahl                   | `100`         | Der Prozentanteil der Rasterplätze, die eine Kopie bauen                                                                                                                                                                                                                                                                                                                                                               |
+| `depth`      | Zahl oder zwei Zahlen  | keiner        | Versenkt das Bauwerk ins Gelände: Der Boden der Bodenebene liegt so viele Blöcke unter der abgetasteten Oberfläche statt auf ihr. Zwei Zahlen sind ein Kleinst- und ein Größtwert, und jede Kopie lost ihren eigenen aus dem Weltseed aus. Gilt für Kopien, die die Karte verteilt oder mit `at` festsetzt; eine Karte, die ein Dorf oder eine Stadt platziert, setzt ihre `ground`-Ebene weiterhin auf die Oberfläche |
+| `spawners`   | Liste von Entitäts-IDs | keiner        | Der Mob für jeden Spawner in den Vorlagen der Karte, der ohne Mob oder nur mit einem Schwein gespeichert wurde. Ein Eintrag kann eine Gewichtung tragen, etwa `id=2`; ein Spawner, der mit einem anderen Mob als einem Schwein gespeichert wurde, behält ihn. Eine ID, die nichts registriert (die Entitätsvariante eines Packs bei aktivem `vanillaClients`), fällt aus der Auslosung heraus                          |
+| `loot`       | Beutetabellen-ID       | keiner        | Die Beutetabelle für jede Truhe und Redstone-Truhe in den Vorlagen der Karte, die ohne Beutetabelle und ohne Gegenstände gespeichert wurde; eine Truhe, die mit einem von beidem gespeichert wurde, bleibt unverändert                                                                                                                                                                                                 |
+| `dimensions` | Liste                  | alle          | Dimensions-IDs, in denen die Karte bauen darf                                                                                                                                                                                                                                                                                                                                                                          |
+| `layers`     | Liste                  | keine         | Die Ebenen, von unten nach oben, jede mit `palette` und `map`                                                                                                                                                                                                                                                                                                                                                          |
 
 Eine Palette nennt Vorlagen per Registry-Schlüssel aus dem `<namespace>/structures/` eines Packs.
 
@@ -5961,6 +5984,8 @@ Eine Palette nennt Vorlagen per Registry-Schlüssel aus dem `<namespace>/structu
 | `.`                                         | Eine leere Zelle, nichts wird gesetzt                                                                                                                                          |
 
 Jede Kopie lost eine der vier Ausrichtungen aus dem Weltseed aus, und das ganze Bauwerk dreht sich gemeinsam, Vorlagen eingeschlossen – Mauern, die sich über Zellen hinweg treffen, treffen sich also weiterhin. Die Bodenebene setzt auf der abgetasteten Geländeoberfläche unter der Mitte des Bauwerks auf. Jeder Chunk baut nur seinen eigenen Ausschnitt des Rasters, ein Bauwerk über viele Chunks entsteht also ohne kaskadierende Generierung, in welcher Reihenfolge die Chunks auch laden. Ein [Dorfgrundstück](#dorfgrundstücke) vom Typ `template` kann in seinem `structure` ebenfalls eine Karte nennen, die Komposition wird dann zum Dorfgebäude.
+
+Eine Karte schneidet ins Gelände: Jeder Block, den eine Vorlage enthält, Luft eingeschlossen, ersetzt, was dort war, während eine leere Zelle oder der Raum um eine kleinere Vorlage fest bleibt. Die Luft jedes Raums gehört deshalb in die Vorlage, und ein Schacht braucht seine Zellen bis zur Oberfläche.
 
 ## Dorfgrundstücke
 

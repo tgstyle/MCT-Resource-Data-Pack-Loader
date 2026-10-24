@@ -5941,16 +5941,39 @@ A structure map composes templates into one named building on a grid, far past t
 }
 ```
 
-| Setting      | Type        | Default       | What it does                                                                                                                                   |
-| ------------ | ----------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`       | text        | the file name | What the map is called in logs                                                                                                                 |
-| `cell`       | number      | `32`          | The grid pitch in blocks, up to 48. A template smaller than the cell sits at the cell's corner, so full-size pieces butt together seamlessly   |
-| `ground`     | number      | `0`           | Which layer floors at the terrain surface. Layers before it dig down, which is how a building gets basements                                   |
-| `at`         | two numbers | none          | Pins one copy at exact block coordinates, the way `structureAt` pins a village                                                                 |
-| `spacing`    | number      | `0`           | Scatters copies on a grid this many chunks apart, jittered from the world seed. `0` scatters none, so a map with only `at` builds exactly once |
-| `chance`     | number      | `100`         | The percent of grid spots that build a copy                                                                                                    |
-| `dimensions` | list        | all           | Dimension ids the map may build in                                                                                                             |
-| `layers`     | list        | none          | The layers, bottom up, each a `palette` and a `map`                                                                                            |
+A map can also sink under the terrain and fill the spawners and chests its templates hold:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Setting      | Type                   | Default       | What it does                                                                                                                                                                                                                                                                                                                                              |
+| ------------ | ---------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | text                   | the file name | What the map is called in logs                                                                                                                                                                                                                                                                                                                            |
+| `cell`       | number                 | `32`          | The grid pitch in blocks, up to 48. A template smaller than the cell sits at the cell's corner, so full-size pieces butt together seamlessly                                                                                                                                                                                                              |
+| `ground`     | number                 | `0`           | Which layer floors at the terrain surface. Layers before it dig down, which is how a building gets basements                                                                                                                                                                                                                                              |
+| `at`         | two numbers            | none          | Pins one copy at exact block coordinates, the way `structureAt` pins a village                                                                                                                                                                                                                                                                            |
+| `spacing`    | number                 | `0`           | Scatters copies on a grid this many chunks apart, jittered from the world seed. `0` scatters none, so a map with only `at` builds exactly once                                                                                                                                                                                                            |
+| `chance`     | number                 | `100`         | The percent of grid spots that build a copy                                                                                                                                                                                                                                                                                                               |
+| `depth`      | number, or two numbers | none          | Sinks the building under the terrain: the ground layer's floor sits this many blocks below the sampled surface instead of at it. Two numbers are a least and a most, and each copy rolls its own from the world seed. Applies to copies the map scatters or pins with `at`; a map a village or city places still floors its `ground` layer at the surface |
+| `spawners`   | list of entity ids     | none          | The mob for every spawner in the map's templates that was saved with none, or with only a pig. An entry may carry a weight, as `id=2`; a spawner saved with a mob other than a pig keeps it. An id nothing registers (a pack's entity variant while `vanillaClients` is on) is left out of the roll                                                       |
+| `loot`       | loot table id          | none          | The loot table for every chest and trapped chest in the map's templates that was saved with no loot table and no items; a chest saved with either keeps it                                                                                                                                                                                                |
+| `dimensions` | list                   | all           | Dimension ids the map may build in                                                                                                                                                                                                                                                                                                                        |
+| `layers`     | list                   | none          | The layers, bottom up, each a `palette` and a `map`                                                                                                                                                                                                                                                                                                       |
 
 A palette names templates by registry key from a pack's `<namespace>/structures/`.
 
@@ -5961,6 +5984,8 @@ A palette names templates by registry key from a pack's `<namespace>/structures/
 | `.`                                         | An empty cell, nothing placed                                                                                                                                       |
 
 Every copy rolls one of the four facings from the world seed and the whole building turns together, templates included, so walls that meet across cells still meet. The ground layer floors at the sampled terrain surface under the building's middle. Each chunk builds only its own slice of the grid, so a building spanning many chunks arrives without cascading generation, whatever order the chunks load in. A [village plot](#village-plots) of type `template` may also name a map as its `structure`, which makes the composite a village building.
+
+A map carves into the terrain: every block a template holds, air included, replaces what was there, while an empty cell or the space around a smaller template stays solid, so give each room its air in the template and a shaft its cells up to the surface.
 
 ## Village plots
 

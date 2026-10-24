@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.portal.PortalShapes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLootSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -189,12 +190,49 @@ public final class ContentParserWorlds {
         if (json.has("dimensions")) {
             dimensions.addAll(Json.ints(Json.getJsonArray(json, "dimensions"), "dimensions"));
         }
-        StructureMapDef def = new StructureMapDef(key, cell, ground, spacing, chance, pinned, dimensions, layers);
+        StructureMapDef def = new StructureMapDef(key, cell, ground, spacing, chance, pinned, dimensions, layers, mapDepth(key, json), mapSpawners(key, json), mapLoot(key, json));
         if (spacing > 0 && spacing * 16 < def.widest) {
             ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest);
             return null;
         }
         return def;
+    }
+
+    @Nullable private static int[] mapDepth(ResourceLocation key, JsonObject json) {
+        if (!json.has("depth")) { return null; }
+        JsonElement held = json.get("depth");
+        List<Integer> numbers = new ArrayList<>();
+        if (held.isJsonArray()) { for (JsonElement entry : held.getAsJsonArray()) { numbers.add(Json.asInt(entry, "depth", -1)); } }
+        else { numbers.add(Json.asInt(held, "depth", -1)); }
+        boolean fine = numbers.size() == 1 || numbers.size() == 2;
+        for (int number : numbers) { fine &= number >= 0; }
+        if (!fine) {
+            ContentLog.LOGGER.error("Structure map {} gives a depth that is not one or two numbers of 0 or more, so the depth is ignored", key);
+            return null;
+        }
+        int least = numbers.get(0);
+        int most = numbers.get(numbers.size() - 1);
+        return new int[] { Math.min(least, most), Math.max(least, most) };
+    }
+
+    private static List<PickDef> mapSpawners(ResourceLocation key, JsonObject json) {
+        List<PickDef> picks = new ArrayList<>();
+        JsonElement held = json.get("spawners");
+        if (held == null) { return picks; }
+        if (held.isJsonArray()) {
+            for (String choice : Json.texts(held.getAsJsonArray(), "spawners")) { picks.add(weighted(choice)); }
+        }
+        else if (held.isJsonPrimitive()) { picks.add(weighted(held.getAsString())); }
+        else { ContentLog.LOGGER.error("Structure map {} gives spawners that are not a mob id or a list of them, so they are ignored", key); }
+        return Collections.unmodifiableList(picks);
+    }
+
+    @Nullable private static ResourceLocation mapLoot(ResourceLocation key, JsonObject json) {
+        if (!json.has("loot")) { return null; }
+        String text = Json.getString(json, "loot", "");
+        ResourceLocation loot = ContentLootSwitch.id(text);
+        if (loot == null) { ContentLog.LOGGER.error("Structure map {} gives loot '{}', which is not a loot table id, so the loot is ignored", key, text); }
+        return loot;
     }
 
     @Nullable public static CityMapDef cityMap(ResourceLocation key, String contents) {

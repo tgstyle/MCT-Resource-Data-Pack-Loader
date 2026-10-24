@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -51,7 +52,7 @@ public final class ContentLootSwitch {
         return swaps.isEmpty() ? null : Collections.unmodifiableMap(swaps);
     }
 
-    @Nullable private static ResourceLocation id(String text) {
+    @Nullable public static ResourceLocation id(String text) {
         String lower = Settings.lower(text);
         String full = lower.indexOf(':') < 0 ? "minecraft:" + lower : lower;
         return ID.matcher(full).matches() ? new ResourceLocation(full) : null;
@@ -67,14 +68,14 @@ public final class ContentLootSwitch {
         Set<ResourceLocation> told = new HashSet<>();
         for (Map<ResourceLocation, ResourceLocation> swaps : ContentEnvironments.allLoot()) {
             for (Map.Entry<ResourceLocation, ResourceLocation> entry : swaps.entrySet()) {
-                check(manager, told, entry.getKey());
-                check(manager, told, entry.getValue());
+                if (missing(manager, told, entry.getKey())) { ContentLog.LOGGER.error("{} names no loot table, so an environment's loot swap that uses it drops nothing", entry.getKey()); }
+                if (missing(manager, told, entry.getValue())) { ContentLog.LOGGER.error("{} names no loot table, so an environment's loot swap that uses it drops nothing", entry.getValue()); }
             }
+        }
+        for (StructureMapDef def : ContentStructureMaps.defs()) {
+            if (def.loot != null && missing(manager, told, def.loot)) { ContentLog.LOGGER.error("{} names no loot table, so the chests structure map {} fills drop nothing", def.loot, def.key); }
         }
     }
 
-    private static void check(LootTableManager manager, Set<ResourceLocation> told, ResourceLocation id) {
-        if (EMPTY.equals(id) || manager.getLootTableFromLocation(id) != LootTable.EMPTY_LOOT_TABLE || !told.add(id)) { return; }
-        ContentLog.LOGGER.error("{} names no loot table, so an environment's loot swap that uses it drops nothing", id);
-    }
+    private static boolean missing(LootTableManager manager, Set<ResourceLocation> told, ResourceLocation id) { return !EMPTY.equals(id) && manager.getLootTableFromLocation(id) == LootTable.EMPTY_LOOT_TABLE && told.add(id); }
 }

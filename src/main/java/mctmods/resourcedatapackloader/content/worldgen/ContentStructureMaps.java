@@ -22,6 +22,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -49,6 +50,8 @@ public class ContentStructureMaps {
     }
 
     public static boolean none() { return DEFS.isEmpty(); }
+
+    static Collection<StructureMapDef> defs() { return DEFS.values(); }
 
     @Nullable public static StructureMapDef byName(String name) { return name == null || name.isEmpty() ? null : DEFS.get(name.toLowerCase(Locale.ROOT)); }
 
@@ -107,7 +110,7 @@ public class ContentStructureMaps {
         if (!footprint.intersectsWith(window.minX, window.minZ, window.maxX, window.maxZ)) { return; }
         int anchor = BeardSurface.surfaceAt(world, originX + footprint.getXSize() / 2, originZ + footprint.getZSize() / 2);
         if (anchor < 0) { anchor = world.getSeaLevel() - 1; }
-        int base = anchor + 1 - def.ground * def.cell;
+        int base = Math.max(def.baseY(anchor, seed), GenHeights.floor(world, 0) + 1);
         int placedCells = cells(world, def, seed, turn, originX, base, originZ, window);
         if (placedCells > 0 && window.isVecInside(new BlockPos(originX, 64, originZ)) && ContentLog.LOGGER.debugEnabled()) {
             ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key, originX, base, originZ, turn, base + def.ground * def.cell);
@@ -169,7 +172,9 @@ public class ContentStructureMaps {
                     settings.setRotation(turn);
                     settings.setRandom(new Random(cellSeed));
                     settings.setBoundingBox(window);
-                    piece.addBlocksToWorld(world, new BlockPos(cornerX + backX, layerY, cornerZ + backZ), settings, FLAGS);
+                    BlockPos placeAt = new BlockPos(cornerX + backX, layerY, cornerZ + backZ);
+                    if (def.fills()) { piece.addBlocksToWorld(world, placeAt, (placed, at, info) -> ContentMapFill.fill(def, cellSeed, at, info), settings, FLAGS); }
+                    else { piece.addBlocksToWorld(world, placeAt, settings, FLAGS); }
                     placedCells++;
                 }
             }

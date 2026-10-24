@@ -5941,16 +5941,39 @@ Mapa struktur skládá šablony do jedné pojmenované budovy na mřížce, dale
 }
 ```
 
-| Nastavení    | Typ       | Výchozí       | Co dělá                                                                                                                                             |
-| ------------ | --------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`       | text      | název souboru | Jak se mapa jmenuje v logu                                                                                                                          |
-| `cell`       | číslo     | `32`          | Rozteč mřížky v blocích, nejvýše 48. Šablona menší než buňka sedí v rohu buňky, takže kusy plné velikosti na sebe bezešvě navazují                  |
-| `ground`     | číslo     | `0`           | Která vrstva má podlahu na povrchu terénu. Vrstvy před ní se zakopávají dolů, čímž budova získá sklepy                                              |
-| `at`         | dvě čísla | žádný         | Připne jednu kopii na přesné souřadnice bloků, tak jako `structureAt` připíná vesnici                                                               |
-| `spacing`    | číslo     | `0`           | Rozmístí kopie na mřížce s tolika chunky rozestupu, rozkolísané ze seedu světa. `0` nerozmístí žádné, takže mapa jen s `at` se postaví právě jednou |
-| `chance`     | číslo     | `100`         | Procento míst mřížky, která postaví kopii                                                                                                           |
-| `dimensions` | seznam    | všechny       | Id dimenzí, v nichž se mapa smí stavět                                                                                                              |
-| `layers`     | seznam    | žádný         | Vrstvy odspodu nahoru, každá se `palette` a `map`                                                                                                   |
+Mapa se také může zanořit pod terén a doplnit spawnery a bedny, které její šablony obsahují:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Nastavení    | Typ                   | Výchozí       | Co dělá                                                                                                                                                                                                                                                                                                                                                             |
+| ------------ | --------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`       | text                  | název souboru | Jak se mapa jmenuje v logu                                                                                                                                                                                                                                                                                                                                          |
+| `cell`       | číslo                 | `32`          | Rozteč mřížky v blocích, nejvýše 48. Šablona menší než buňka sedí v rohu buňky, takže kusy plné velikosti na sebe bezešvě navazují                                                                                                                                                                                                                                  |
+| `ground`     | číslo                 | `0`           | Která vrstva má podlahu na povrchu terénu. Vrstvy před ní se zakopávají dolů, čímž budova získá sklepy                                                                                                                                                                                                                                                              |
+| `at`         | dvě čísla             | žádný         | Připne jednu kopii na přesné souřadnice bloků, tak jako `structureAt` připíná vesnici                                                                                                                                                                                                                                                                               |
+| `spacing`    | číslo                 | `0`           | Rozmístí kopie na mřížce s tolika chunky rozestupu, rozkolísané ze seedu světa. `0` nerozmístí žádné, takže mapa jen s `at` se postaví právě jednou                                                                                                                                                                                                                 |
+| `chance`     | číslo                 | `100`         | Procento míst mřížky, která postaví kopii                                                                                                                                                                                                                                                                                                                           |
+| `depth`      | číslo, nebo dvě čísla | žádný         | Zanoří budovu pod terén: podlaha vrstvy země leží o tolik bloků pod vzorkovaným povrchem, místo aby ležela na něm. Dvě čísla jsou nejmenší a největší hodnota a každá kopie si ze seedu světa vylosuje svou vlastní. Platí pro kopie, které mapa rozmisťuje nebo připíná pomocí `at`; mapa, kterou umisťuje vesnice nebo město, má vrstvu `ground` stále na povrchu |
+| `spawners`   | seznam id entit       | žádný         | Moba pro každý spawner v šablonách mapy, který byl uložen bez moba nebo jen s prasetem. Položka může nést váhu, například `id=2`; spawner uložený s jiným mobem než prase si ho ponechá. Id, které nic neregistruje (varianta entity z balíčku při zapnutém `vanillaClients`), se z losování vynechá                                                                |
+| `loot`       | id tabulky kořisti    | žádný         | Tabulka kořisti pro každou bednu i bednu s pastí v šablonách mapy, která byla uložena bez tabulky kořisti a bez předmětů; bedna uložená s jedním z nich si ho ponechá                                                                                                                                                                                               |
+| `dimensions` | seznam                | všechny       | Id dimenzí, v nichž se mapa smí stavět                                                                                                                                                                                                                                                                                                                              |
+| `layers`     | seznam                | žádný         | Vrstvy odspodu nahoru, každá se `palette` a `map`                                                                                                                                                                                                                                                                                                                   |
 
 Paleta pojmenovává šablony registrovým klíčem ze složky `<namespace>/structures/` balíčku.
 
@@ -5961,6 +5984,8 @@ Paleta pojmenovává šablony registrovým klíčem ze složky `<namespace>/stru
 | `.`                                         | Prázdná buňka, nic se neumístí                                                                                                                   |
 
 Každá kopie losuje jedno ze čtyř natočení ze seedu světa a celá budova se otáčí společně, včetně šablon, takže stěny, které se potkávají přes buňky, se stále potkávají. Vrstva země má podlahu na vzorkovaném povrchu terénu pod středem budovy. Každý chunk staví jen svůj řez mřížky, takže budova rozkládající se přes mnoho chunků dorazí bez kaskádového generování, v jakémkoli pořadí se chunky načítají. [Pozemek vesnice](#pozemky-vesnic) typu `template` může také uvést mapu jako svou `structure`, čímž se kompozit stane budovou vesnice.
+
+Mapa se zařezává do terénu: každý blok, který šablona obsahuje, včetně vzduchu, nahradí to, co tam bylo, zatímco prázdná buňka nebo prostor kolem menší šablony zůstane plný, takže každé místnosti dejte vzduch přímo v šabloně a šachtě buňky až k povrchu.
 
 ## Pozemky vesnic
 

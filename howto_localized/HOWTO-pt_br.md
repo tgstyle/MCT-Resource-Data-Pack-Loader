@@ -5941,16 +5941,39 @@ Um mapa de estruturas compõe modelos em uma única construção nomeada sobre u
 }
 ```
 
-| Configuração | Tipo         | Padrão            | O que faz                                                                                                                                                                                    |
-| ------------ | ------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`       | texto        | o nome do arquivo | Como o mapa é chamado nos logs                                                                                                                                                               |
-| `cell`       | número       | `32`              | O passo da grade em blocos, até 48. Um modelo menor que a célula fica no canto da célula, de modo que peças de tamanho total se encaixam sem emendas                                         |
-| `ground`     | número       | `0`               | Qual camada assenta na superfície do terreno. As camadas anteriores a ela escavam para baixo, e é assim que uma construção ganha porões                                                      |
-| `at`         | dois números | nenhum            | Fixa uma cópia em coordenadas de bloco exatas, do mesmo modo que `structureAt` fixa uma vila                                                                                                 |
-| `spacing`    | número       | `0`               | Espalha cópias em uma grade com este tanto de chunks de distância, com variação a partir da semente do mundo. `0` não espalha nenhuma, então um mapa só com `at` constrói exatamente uma vez |
-| `chance`     | número       | `100`             | A porcentagem de pontos da grade que constroem uma cópia                                                                                                                                     |
-| `dimensions` | lista        | todas             | Ids de dimensão em que o mapa pode construir                                                                                                                                                 |
-| `layers`     | lista        | nenhum            | As camadas, de baixo para cima, cada uma com um `palette` e um `map`                                                                                                                         |
+Um mapa também pode afundar sob o terreno e preencher os spawners e os baús que seus modelos contêm:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Configuração | Tipo                     | Padrão            | O que faz                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------ | ------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`       | texto                    | o nome do arquivo | Como o mapa é chamado nos logs                                                                                                                                                                                                                                                                                                                                                                               |
+| `cell`       | número                   | `32`              | O passo da grade em blocos, até 48. Um modelo menor que a célula fica no canto da célula, de modo que peças de tamanho total se encaixam sem emendas                                                                                                                                                                                                                                                         |
+| `ground`     | número                   | `0`               | Qual camada assenta na superfície do terreno. As camadas anteriores a ela escavam para baixo, e é assim que uma construção ganha porões                                                                                                                                                                                                                                                                      |
+| `at`         | dois números             | nenhum            | Fixa uma cópia em coordenadas de bloco exatas, do mesmo modo que `structureAt` fixa uma vila                                                                                                                                                                                                                                                                                                                 |
+| `spacing`    | número                   | `0`               | Espalha cópias em uma grade com este tanto de chunks de distância, com variação a partir da semente do mundo. `0` não espalha nenhuma, então um mapa só com `at` constrói exatamente uma vez                                                                                                                                                                                                                 |
+| `chance`     | número                   | `100`             | A porcentagem de pontos da grade que constroem uma cópia                                                                                                                                                                                                                                                                                                                                                     |
+| `depth`      | número ou dois números   | nenhum            | Afunda a construção sob o terreno: o piso da camada `ground` fica esta quantidade de blocos abaixo da superfície amostrada, em vez de ficar nela. Dois números são um mínimo e um máximo, e cada cópia sorteia o seu a partir da semente do mundo. Vale para as cópias que o mapa espalha ou fixa com `at`; um mapa que uma vila ou uma cidade posiciona continua assentando a camada `ground` na superfície |
+| `spawners`   | lista de ids de entidade | nenhum            | O mob de cada spawner dos modelos do mapa que foi salvo sem nenhum ou apenas com um porco. Uma entrada pode levar um peso, como `id=2`; um spawner salvo com um mob que não seja um porco o mantém. Um id que nada registra (a variante de entidade de um pacote enquanto `vanillaClients` está ativado) fica fora do sorteio                                                                                |
+| `loot`       | id de tabela de saque    | nenhum            | A tabela de saque de cada baú e baú armadilhado dos modelos do mapa que foi salvo sem tabela de saque e sem itens; um baú salvo com qualquer um dos dois o mantém                                                                                                                                                                                                                                            |
+| `dimensions` | lista                    | todas             | Ids de dimensão em que o mapa pode construir                                                                                                                                                                                                                                                                                                                                                                 |
+| `layers`     | lista                    | nenhum            | As camadas, de baixo para cima, cada uma com um `palette` e um `map`                                                                                                                                                                                                                                                                                                                                         |
 
 Uma paleta nomeia modelos pela chave de registro, a partir de `<namespace>/structures/` de um pacote.
 
@@ -5961,6 +5984,8 @@ Uma paleta nomeia modelos pela chave de registro, a partir de `<namespace>/struc
 | `.`                                         | Uma célula vazia, nada é colocado                                                                                                                                                |
 
 Toda cópia sorteia uma das quatro orientações a partir da semente do mundo e a construção inteira gira junto, modelos incluídos, de modo que paredes que se encontram entre células continuam se encontrando. A camada de chão assenta na superfície amostrada do terreno sob o meio da construção. Cada chunk constrói apenas a sua própria fatia da grade, então uma construção que abrange muitos chunks chega sem geração em cascata, seja qual for a ordem em que os chunks carregam. Um [terreno de vila](#terrenos-de-vilas) do tipo `template` também pode nomear um mapa como seu `structure`, o que faz do composto uma construção da vila.
+
+Um mapa escava o terreno: cada bloco que um modelo contém, ar incluído, substitui o que havia ali, enquanto uma célula vazia ou o espaço ao redor de um modelo menor continua sólido, então dê a cada sala o seu ar no modelo e a um poço as suas células até a superfície.
 
 ## Terrenos de vilas
 
