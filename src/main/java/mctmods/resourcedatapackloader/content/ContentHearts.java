@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 
 import com.google.gson.JsonObject;
 import net.minecraft.core.particles.SimpleParticleType;
@@ -97,7 +98,10 @@ public final class ContentHearts {
         if (def.style != null && first("style", key)) { style = def.style; }
         if (def.sound != null && first("sound", key)) { sound = def.sound; }
         if (def.particle != null && first("particle", key)) { particle = def.particle; }
-        if (def.colors != null && first("heartColors", key)) { colors = def.colors; }
+        if (def.colors != null && first("heartColors", key)) {
+            colors = def.colors;
+            VanillaClients.clientDrawn("Hearts file " + key, "heartColors");
+        }
         for (HeartReward reward : def.rewards) {
             if (ContentRegistry.available(reward.requires, key)) { REWARDS.add(reward); }
         }

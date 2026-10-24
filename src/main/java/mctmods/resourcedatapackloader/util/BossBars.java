@@ -46,6 +46,7 @@ public final class BossBars {
             ContentLog.LOGGER.error("{} sets {} background without a texture, so it has no background", owner, KEY);
             return null;
         }
+        VanillaClients.clientDrawn(owner, KEY + ".background");
         return new BossBackgroundDef(texture, Json.getInt(background, "width", 0), Json.getInt(background, "height", 0), Json.getInt(background, "x", 0), Json.getInt(background, "y", 0));
     }
 

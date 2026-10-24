@@ -18,14 +18,14 @@ final class PackReport {
         clientSide(off, !Config.content.loadOff(), "content.load", PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS);
         clientSide(off, Config.content.sounds(), "content.sounds", PackManager.SOUNDS);
         collect(off, Config.content.fuels(), "content.fuels", PackManager.JSON, PackManager.FUELS);
-        collect(off, Config.content.tooltips(), "content.tooltips", PackManager.JSON, PackManager.TOOLTIPS);
+        clientSide(off, Config.content.tooltips(), "content.tooltips", PackManager.TOOLTIPS);
         clientSide(off, Config.content.potions(), "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);
         collect(off, Config.content.enchantments(), "content.enchantments", PackManager.JSON, PackManager.ENCHANTMENTS);
         collect(off, Config.content.brewing(), "content.brewing", PackManager.JSON, PackManager.BREWING);
         clientSide(off, Config.content.villagers(), "content.villagers", PackManager.VILLAGERS);
         collect(off, Config.content.villagers(), "content.villagers", PackManager.JSON, PackManager.TRADES);
-        clientSide(off, Config.content.biomes(), "content.biomes", PackManager.BIOMES);
-        clientSide(off, Config.content.dimensions(), "content.dimensions", PackManager.DIMENSIONS);
+        collect(off, Config.content.biomes(), "content.biomes", PackManager.JSON, PackManager.BIOMES);
+        collect(off, Config.content.dimensions(), "content.dimensions", PackManager.JSON, PackManager.DIMENSIONS);
         collect(off, Config.content.villages(), "content.villages", PackManager.JSON, PackManager.VILLAGES);
         clientSide(off, Config.content.entities(), "content.entities", PackManager.ENTITIES);
         collect(off, Config.content.hardness(), "content.hardness", PackManager.JSON, PackManager.HARDNESS);
@@ -54,16 +54,18 @@ final class PackReport {
     private static void collect(List<String[]> off, boolean enabled, String setting, String ext, String... folders) { because(off, enabled, setting + " is off in the config", ext, folders); }
 
     private static void clientSide(List<String[]> off, boolean enabled, String setting, String... folders) {
-        if (Config.content.vanillaClients()) {
-            because(off, false, "content.vanillaClients is on and they are the sort a client would need too", PackManager.JSON, folders);
-            return;
-        }
+        if (Config.content.vanillaClients()) { return; }
         collect(off, enabled, setting, PackManager.JSON, folders);
     }
 
     private static void because(List<String[]> off, boolean enabled, String reason, String ext, String... folders) {
         if (enabled) { return; }
         for (String folder : folders) { off.add(new String[] { folder, ext, reason }); }
+    }
+
+    private static void skipped(RDPLPack pack, String folder, String why) {
+        List<String> skipped = pack.files(PackManager.CONTENT, folder, PackManager.JSON);
+        if (!skipped.isEmpty()) { ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on{}: {}", pack.getName(), skipped.size(), folder, why, String.join(", ", skipped)); }
     }
 
     static void report(List<RDPLPack> packs, @Nullable Path root) {
@@ -78,13 +80,10 @@ final class PackReport {
         ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first{}", packs.size(), root,
                 fromMods == 0 ? "" : ", " + fromMods + " of them shipped inside a mod jar and listed in " + PackManager.CONFIG + "/" + ModPacks.CONTROL_FILE);
         if (Config.content.vanillaClients()) {
-            ContentLog.LOGGER.info("vanillaClients is on: nothing a client would have to know is registered from any pack, so clients without the mod can join. Pack blocks, items, fluids, materials, creative tabs, sounds, potion effects and types, villager professions, entity variants and exposures are skipped and named below; everything that lives on the server alone still applies");
+            ContentLog.LOGGER.info("vanillaClients is on: nothing a client would have to know is registered from any pack, so clients without the mod can join. Pack blocks, items, fluids, materials, creative tabs, sounds, potion effects and types, villager professions, entity variants, exposures, tooltips and curio slots are skipped and named below; everything that lives on the server alone still applies");
             for (RDPLPack pack : packs) {
-                for (String folder : List.of(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.VILLAGERS, PackManager.ENTITIES, PackManager.EXPOSURES)) {
-                    List<String> skipped = pack.files(PackManager.CONTENT, folder, PackManager.JSON);
-                    if (skipped.isEmpty()) { continue; }
-                    ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on: {}", pack.getName(), skipped.size(), folder, String.join(", ", skipped));
-                }
+                for (String folder : List.of(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.VILLAGERS, PackManager.ENTITIES, PackManager.EXPOSURES, PackManager.TOOLTIPS)) { skipped(pack, folder, ""); }
+                skipped(pack, PackManager.CURIOSLOTS, " and Curios refuses vanilla clients");
             }
         }
         if (!Config.packs.logContents()) { return; }
