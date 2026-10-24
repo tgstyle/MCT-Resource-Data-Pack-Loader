@@ -55,6 +55,7 @@ import javax.annotation.Nullable;
 
 public final class ContentAnvils {
     private static final Map<ItemStack, AnvilDef> OFFERED = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final String TOO_EXPENSIVE = "tooExpensive";
     private static final int TOLD_EVERY = 40;
     private static final float BREAK_CHANCE = 0.12F;
     private static final List<AnvilDef> DEFS = new ArrayList<>();
@@ -73,9 +74,18 @@ public final class ContentAnvils {
         WITH.clear();
         RESULTS.clear();
         ENCHANTMENTS.clear();
+        AnvilCosts.resetAnvil();
+        AnvilRules.reset();
         if (Config.data.anvilsOff()) { return; }
         Json.eachFile(PackManager.ANVILS, "anvil file", (key, contents) -> {
-            AnvilDef def = read(key, contents);
+            JsonObject json = Json.object(key, contents, "anvil work");
+            if (json == null || !ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+            if (AnvilRules.names(json)) {
+                AnvilRules.read(key, json);
+                return;
+            }
+            if (settings(key, json) && !json.has("item")) { return; }
+            AnvilDef def = read(key, json);
             if (def == null) { return; }
             List<ItemStack> stack = stacks(key, def.item());
             List<ItemStack> with = stacks(key, def.with());
@@ -101,11 +111,19 @@ public final class ContentAnvils {
             ENCHANTMENTS.put(def, found);
         });
         if (!DEFS.isEmpty()) { Summary.info("anvils", "Loaded " + DEFS.size() + " piece(s) of anvil work"); }
+        if (AnvilRules.count() > 0) { Summary.info("anvils", "Loaded " + AnvilRules.count() + " anvil rule(s)"); }
+        if (AnvilCosts.servedCap() != AnvilCosts.VANILLA_CAP) { Summary.info("anvils", "Anvil work costing " + AnvilCosts.servedCap() + " level(s) or more is too expensive"); }
     }
 
-    @Nullable private static AnvilDef read(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "anvil work");
-        if (json == null) { return null; }
+    private static boolean settings(ResourceLocation key, JsonObject json) {
+        if (!json.has(TOO_EXPENSIVE)) { return false; }
+        int cap = Json.getInt(json, TOO_EXPENSIVE, AnvilCosts.VANILLA_CAP);
+        if (cap < 1 || cap > AnvilCosts.HIGHEST) { ContentLog.LOGGER.error("Anvil file {} sets {} to {}, outside 1 to {}, ignoring it", key, TOO_EXPENSIVE, cap, AnvilCosts.HIGHEST); }
+        else { AnvilCosts.serveCap(cap); }
+        return true;
+    }
+
+    @Nullable private static AnvilDef read(ResourceLocation key, JsonObject json) {
         List<String> item = itemsOf(json, "item");
         if (item.isEmpty()) {
             ContentLog.LOGGER.error("Anvil work {} names no item, ignoring it", key);
@@ -209,12 +227,17 @@ public final class ContentAnvils {
     }
 
     public static void onAnvil(AnvilUpdateEvent event) {
-        if (DEFS.isEmpty() || event.getRight().isEmpty()) { return; }
+        if (offerWork(event)) { return; }
+        AnvilRules.apply(event);
+    }
+
+    private static boolean offerWork(AnvilUpdateEvent event) {
+        if (DEFS.isEmpty() || event.getRight().isEmpty()) { return false; }
         AnvilDef def = holding(event.getLeft());
-        if (def == null || !pairs(def, event.getLeft(), event.getRight())) { return; }
+        if (def == null || !pairs(def, event.getLeft(), event.getRight())) { return false; }
         ItemStack output = worked(def, event.getLeft());
         if (output.isEmpty()) {
-            if (!ENCHANTMENTS.get(def).isEmpty() || def.grants().isEmpty()) { return; }
+            if (!ENCHANTMENTS.get(def).isEmpty() || def.grants().isEmpty()) { return false; }
             output = event.getLeft().copy();
             output.setCount(def.itemCount());
         }
@@ -222,6 +245,7 @@ public final class ContentAnvils {
         event.setOutput(output);
         event.setCost(def.levels());
         event.setMaterialCost(def.withCount());
+        return true;
     }
 
     @Nullable public static AnvilDef affordable(Mob mob, int level) {

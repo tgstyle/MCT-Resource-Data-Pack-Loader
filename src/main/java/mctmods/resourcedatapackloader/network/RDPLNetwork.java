@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.client.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
+import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
@@ -29,7 +30,7 @@ import javax.annotation.Nullable;
 
 public final class RDPLNetwork {
     private static final ResourceLocation NAME = ResourceDataPackLoader.id("main");
-    private static final String VERSION = "1";
+    private static final String VERSION = "2";
     @Nullable private static SimpleChannel channel;
 
     private RDPLNetwork() {}
@@ -44,8 +45,9 @@ public final class RDPLNetwork {
             if (FMLEnvironment.dist == Dist.CLIENT) { BlastHush.mark(message); }
             return true;
         }).add();
-        channel.messageBuilder(MessageBossBackground.class, 9, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageBossBackground::write).decoder(MessageBossBackground::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { BossBackgrounds.set(message); } }).add();
+        channel.messageBuilder(MessageBossBackground.class, 11, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageBossBackground::write).decoder(MessageBossBackground::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { BossBackgrounds.set(message); } }).add();
         channel.messageBuilder(MessageToasts.class, 7, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageToasts::write).decoder(MessageToasts::read).consumerMainThread((message, context) -> Toasts.show(message.kinds())).add();
+        channel.messageBuilder(MessageAnvilCosts.class, 10, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageAnvilCosts::write).decoder(MessageAnvilCosts::read).consumerMainThread((message, context) -> AnvilCosts.show(message.cap(), message.paid(), message.lapis(), message.opening())).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } }).add();
         channel.messageBuilder(MessageIntroLandMade.class, 8, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroLandMade()).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); } }).add();
         channel.messageBuilder(MessageEnvironments.class, 9, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageEnvironments::write).decoder(MessageEnvironments::read).consumerMainThread((message, context) -> {
@@ -89,6 +91,8 @@ public final class RDPLNetwork {
     }
 
     public static void sendToasts(ServerPlayer player, int kinds) { toPlayer(player, new MessageToasts(kinds)); }
+
+    public static void sendAnvilCosts(ServerPlayer player) { toPlayer(player, new MessageAnvilCosts(AnvilCosts.servedCap(), AnvilCosts.servedPaid(), AnvilCosts.servedLapis(), AnvilCosts.servedOpening())); }
 
     public static void introDone() { if (channel != null) { channel.sendToServer(new MessageIntroDone()); } }
 
