@@ -64,6 +64,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentTooltips;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.content.extra.ContentTradeGate;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
@@ -199,6 +200,7 @@ public class ResourceDataPackLoader {
         ContentPotions.applyBrewing();
         ContentRegistry.resolveItemPotions();
         ContentVillagers.applyTrades();
+        if (ContentTradeGate.active()) { MinecraftForge.EVENT_BUS.register(ContentTradeGate.class); }
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
         ContentPathIntersects.load();

@@ -31,6 +31,8 @@ public class ContentTrade implements EntityVillager.ITradeList {
         this.sellCount = amount(def.sell);
     }
 
+    public boolean clashes() { return ContentTradeGate.clashes(def, buy, buySecondary, sell); }
+
     private static AmountDef amount(TradeStackDef def) { return def.max <= def.min ? AmountDef.of(def.min) : new AmountDef(def.min, def.max); }
 
     @Override public void addMerchantRecipe(@Nonnull IMerchant merchant, @Nonnull MerchantRecipeList list, @Nonnull Random rand) {

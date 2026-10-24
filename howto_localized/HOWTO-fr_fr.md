@@ -2972,6 +2972,36 @@ Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cu
 
 Une pile s'écrit `item` avec `min` (`1`) et `max` (`min`) : un prix fixe n'est donc que `min`.
 
+Un échange peut aussi dépendre du joueur qui ouvre la fenêtre. Un joueur qui ne remplit pas une condition ne voit pas l'échange, et les autres joueurs ne sont pas touchés. Toutes les conditions doivent être remplies, et elles sont vérifiées à chaque ouverture de la fenêtre.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "career": "farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Clé                         | Requis | Valeur           | Défaut | Rôle                                                                                                                                                                                                                                                            |
+| --------------------------- | ------ | ---------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | non    | `namespace:path` | aucun  | Seul un joueur qui a ce progrès voit l'échange                                                                                                                                                                                                                  |
+| `team`                      | non    | nom d'équipe     | aucun  | Seul un membre de cette équipe du tableau des scores voit l'échange                                                                                                                                                                                             |
+| `objective`, `scoreAtLeast` | non    | texte, entier    | aucun  | Seul un joueur dont le score dans l'objectif atteint au moins cette valeur voit l'échange. Les deux sont nécessaires, et un joueur sans score échoue                                                                                                            |
+| `priceScale`                | non    | objet            | aucun  | Multiplie la quantité de `buy` par `clamp(1 + score * perPoint, min, max)`, arrondie, d'au moins 1 et d'au plus la taille de la pile. `objective` et `perPoint` sont requis, `min` vaut `0.0` par défaut et `max` `10.0`, et un joueur sans score compte pour 0 |
+
+`priceScale` ne change que `buy`, jamais `buySecondary`. Le jeu distingue un échange conditionnel des autres échanges du villageois par sa profession et ses objets (`buy`, `buySecondary` et `sell`, avec leurs métadonnées) : donnez-lui donc des objets qu'aucun autre échange de cette profession n'utilise. Deux échanges du pack avec les mêmes objets : le second est ignoré et consigné dans le journal. Les villageois dont les échanges ont déjà été générés les conservent.
+
 ---
 
 # Créatures et dangers

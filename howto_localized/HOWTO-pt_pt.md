@@ -2972,6 +2972,36 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
 
 Uma pilha é `item` com `min` (`1`) e `max` (`min`), pelo que um preço fixo é apenas `min`.
 
+Uma troca também pode depender do jogador que abre a janela. Quem não cumpre uma condição não vê a troca, e os outros jogadores não são afetados. Todas as condições têm de se verificar ao mesmo tempo, e são avaliadas sempre que a janela é aberta.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "career": "farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Chave                       | Obrigatório | Valor            | Predefinição | O que faz                                                                                                                                                                                                                                                                      |
+| --------------------------- | ----------- | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `advancement`               | não         | `namespace:path` | nenhuma      | Só um jogador com este progresso vê a troca                                                                                                                                                                                                                                    |
+| `team`                      | não         | nome da equipa   | nenhuma      | Só um membro desta equipa do marcador vê a troca                                                                                                                                                                                                                               |
+| `objective`, `scoreAtLeast` | não         | texto, inteiro   | nenhuma      | Só um jogador cuja pontuação no objetivo seja pelo menos este valor vê a troca. São precisos os dois, e um jogador sem pontuação não passa                                                                                                                                     |
+| `priceScale`                | não         | objeto           | nenhuma      | Multiplica a quantidade de `buy` por `clamp(1 + score * perPoint, min, max)`, arredondada, no mínimo 1 e no máximo o tamanho da pilha. `objective` e `perPoint` são obrigatórios, `min` é `0.0` por predefinição e `max` `10.0`, e um jogador sem pontuação conta como 0 |
+
+`priceScale` altera só `buy`, nunca `buySecondary`. O jogo distingue uma troca condicional das outras trocas do aldeão pela profissão e pelos itens (`buy`, `buySecondary` e `sell`, com os seus metadados), por isso dê-lhe itens que nenhuma outra troca dessa profissão use. Duas trocas do pack com os mesmos itens: a segunda é ignorada e registada no log. Os aldeões cujas trocas já foram geradas mantêm-nas.
+
 ---
 
 # Criaturas e perigos

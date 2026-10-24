@@ -2972,6 +2972,36 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 
 Ein Stapel ist `item` mit `min` (`1`) und `max` (`min`), ein fester Preis ist also einfach nur `min`.
 
+Ein Handel kann auch von dem Spieler abhängen, der das Fenster öffnet. Wer eine Bedingung nicht erfüllt, sieht den Handel nicht, andere Spieler bleiben unberührt. Mehrere Bedingungen müssen alle zutreffen, und sie werden bei jedem Öffnen des Fensters geprüft.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "minecraft:farmer",
+      "career": "farmer",
+      "level": 1,
+      "advancement": "mypack:ready",
+      "team": "red",
+      "objective": "rep",
+      "scoreAtLeast": 5,
+      "priceScale": { "objective": "rep", "perPoint": -0.1, "min": 0.5, "max": 2.0 },
+      "buy": { "item": "minecraft:clay_ball", "min": 10 },
+      "sell": { "item": "minecraft:emerald" }
+    }
+  ]
+}
+```
+
+| Schlüssel                   | Pflicht | Wert             | Standard | Was er macht                                                                                                                                                                                                                                                              |
+| --------------------------- | ------- | ---------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement`               | nein    | `namespace:path` | keiner   | Nur ein Spieler mit diesem Fortschritt sieht den Handel                                                                                                                                                                                                                   |
+| `team`                      | nein    | Teamname         | keiner   | Nur ein Mitglied dieses Scoreboard-Teams sieht den Handel                                                                                                                                                                                                                 |
+| `objective`, `scoreAtLeast` | nein    | Text, int        | keiner   | Nur ein Spieler, dessen Punktestand im Ziel mindestens diesen Wert hat, sieht den Handel. Beide werden gebraucht, und ein Spieler ohne Punktestand scheitert                                                                                                              |
+| `priceScale`                | nein    | Objekt           | keiner   | Multipliziert die Anzahl in `buy` mit `clamp(1 + score * perPoint, min, max)`, gerundet, mindestens 1 und höchstens die Stackgröße. `objective` und `perPoint` sind Pflicht, `min` ist standardmäßig `0.0` und `max` `10.0`, und ein Spieler ohne Punktestand zählt als 0 |
+
+`priceScale` ändert nur `buy`, nie `buySecondary`. Einen bedingten Handel unterscheidet das Spiel von den übrigen Handeln des Dorfbewohners anhand von Beruf und Items (`buy`, `buySecondary` und `sell`, mit ihren Metadaten), gib ihm also Items, die kein anderer Handel dieses Berufs benutzt. Zwei Handel aus dem Pack mit denselben Items: Der spätere wird übersprungen und protokolliert. Dorfbewohner, deren Handel schon erzeugt wurden, behalten sie.
+
 ---
 
 # Kreaturen und Gefahren

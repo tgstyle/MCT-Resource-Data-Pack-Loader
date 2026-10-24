@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.extra;
 import mctmods.resourcedatapackloader.content.ContentOwners;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.def.PriceScaleDef;
 import mctmods.resourcedatapackloader.content.def.TradeDef;
 import mctmods.resourcedatapackloader.content.def.TradeStackDef;
 import mctmods.resourcedatapackloader.content.def.VillagerDef;
@@ -11,6 +12,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
@@ -99,7 +101,21 @@ public final class ContentVillagers {
                 Json.getString(entry, "career", ""),
                 level, buy, stack(entry, "buySecondary"), sell,
                 Math.max(1, Json.getInt(entry, "maxUses", 12)),
-                strings(entry, "requires"));
+                strings(entry, "requires"),
+                Json.getString(entry, "advancement", "").trim(),
+                Standing.parse(entry),
+                scale(key, entry));
+    }
+
+    @Nullable private static PriceScaleDef scale(ResourceLocation key, JsonObject entry) {
+        if (!entry.has("priceScale")) { return null; }
+        JsonObject json = Json.getJsonObject(entry, "priceScale");
+        String objective = Json.getString(json, "objective", "").trim();
+        if (objective.isEmpty() || !json.has("perPoint")) {
+            ContentLog.LOGGER.error("A priceScale in {} needs an objective and a perPoint, ignoring it", key);
+            return null;
+        }
+        return new PriceScaleDef(objective, Json.getFloat(json, "perPoint"), Json.getFloat(json, "min", 0.0F), Json.getFloat(json, "max", 10.0F));
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
@@ -135,9 +151,11 @@ public final class ContentVillagers {
             if (listing == null) { continue; }
             VillagerRegistry.VillagerCareer career = career(def);
             if (career == null) { continue; }
+            if (listing.clashes()) { continue; }
             career.addTrade(def.level, listing);
             count++;
         }
+        ContentTradeGate.summarize();
         if (count > 0) { Summary.info("content_trades", "Added " + count + " villager trade(s) from packs"); }
     }
 
