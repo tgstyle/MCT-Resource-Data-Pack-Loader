@@ -15,5 +15,7 @@ import javax.annotation.Nonnull;
         this.def = def;
     }
 
+    public boolean solidLayer() { return "solid".equals(def.renderLayer()); }
+
     @Override public boolean skipRendering(@Nonnull BlockState state, @Nonnull BlockState adjacent, @Nonnull Direction direction) { return def.opaque() && adjacent.is(this) || super.skipRendering(state, adjacent, direction); }
 }
