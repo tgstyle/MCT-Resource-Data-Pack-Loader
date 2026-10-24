@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.item.ContentPortwayItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.item.ContentLocatorItem;
 import mctmods.resourcedatapackloader.content.item.ContentRollItem;
+import mctmods.resourcedatapackloader.content.item.ContentSleepingBagItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -77,7 +78,7 @@ public final class ContentItemTypes {
             case SEED -> seed(def, variant, properties);
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
             case PORTWAY -> portway(def, properties);
-            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
+            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
         };
     }
 

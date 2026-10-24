@@ -1590,6 +1590,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1662,6 +1663,8 @@ Das Ziel wird im Stack gespeichert, das Item zeigt also bis zum nächsten Rechts
 }
 ```
 
+Ein einfaches Item mit `sleepingBag` ist ein Schlafsack. Wer nachts einen Rechtsklick auf die Oberseite eines festen Blocks macht, legt sich auf den Block darüber. Es gelten dieselben Bedingungen wie bei einem Bett: Nacht, eine Dimension, in der geschlafen werden darf, und kein feindliches Wesen im Umkreis von acht Blöcken. Die Nacht wird übersprungen, sobald alle Spieler schlafen, genau wie bei Betten. Das Aufwachen ändert den Spawnpunkt nicht, und der Schlafsack bleibt im Inventar. `cooldown` verhindert, dass er sofort wieder benutzt wird.
+
 ### Item-Dateischlüssel
 
 *items*
@@ -1693,6 +1696,7 @@ Das Ziel wird im Stack gespeichert, das Item zeigt also bis zum nächsten Rechts
 | `wornAttributes` | nein          | Liste von Attributänderungen                    | keine                      | Attributänderungen, die auf dem Träger gehalten werden, solange das Item in seinem Curios-Slot steckt, als `attribute`, `amount` und `operation`                                                                                                                                                                      |
 | `locates`        | nein          | `Village`, `minecraft:river`                    | keine                      | Bei einem schlichten Item sucht ein Rechtsklick den nächsten Ort dieses Namens und richtet das Item wie einen Kompass darauf aus. Der Name ist eine Vanilla-Struktur oder ein Vanilla-Biom oder ein per `locateAs` registrierter Name. Das Item stapelt sich nur einzeln. Siehe den Absatz zum Ortungskompass darüber |
 | `passesTurn`     | nein          | boolean                                         | `false`                    | Bei einem einfachen Item gibt ein Rechtsklick den Zug seines Halters ab, wie `/rdplserver game pass`. Siehe [Züge](#züge)                                                                                                                                                                                             |
+| `sleepingBag`    | nein          | boolean                                         | `false`                    | Bei einem einfachen Item legt ein Rechtsklick auf die Oberseite eines Blocks den Halter dort zum Schlafen hin, die Nacht wird wie bei einem Bett übersprungen. Setzt nie den Spawnpunkt, wird nicht verbraucht. Wirkt nur, wo Schlafen erlaubt ist. Ignoriert bei `locates`, `rolls` oder `passesTurn`                |
 | `requires`       | nein          | Liste von Mod-IDs oder Pack-Namespaces          | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                                                  |
 
 ### Item-Variantenschlüssel

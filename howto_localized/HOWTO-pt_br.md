@@ -1590,6 +1590,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1662,6 +1663,8 @@ O destino fica guardado na pilha, então o item continua apontando para ele até
 }
 ```
 
+Um item simples com `sleepingBag` é um saco de dormir. Com um clique direito na face de cima de um bloco sólido, à noite, quem o segura se deita no bloco acima. Valem as mesmas condições de uma cama: noite, uma dimensão que permita dormir e nenhuma criatura hostil a até oito blocos. A noite é pulada quando todos os jogadores dormem, como com as camas. Acordar não muda o ponto de renascimento, e o saco continua no inventário. `cooldown` impede que ele seja usado de novo logo em seguida.
+
 ### Chaves de arquivo de itens
 
 *itens*
@@ -1693,6 +1696,7 @@ O destino fica guardado na pilha, então o item continua apontando para ele até
 | `wornAttributes` | não           | lista de alterações de atributos              | nenhum                          | Alterações de atributos mantidas em quem usa o item enquanto ele estiver no seu espaço do Curios, como `attribute`, `amount` e `operation`                                                                                                                                         |
 | `locates`        | não           | `Village`, `minecraft:river`                  | nenhum                          | Em um item simples, o clique direito procura o lugar mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registrado com `locateAs`. O item empilha até 1. Veja o parágrafo da bússola localizadora acima |
 | `passesTurn`     | não           | booleano                                      | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Veja [Turnos](#turnos)                                                                                                                                                         |
+| `sleepingBag`    | não           | booleano                                      | `false`                         | Num item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e pula a noite como uma cama. Nunca muda o ponto de renascimento e não é consumido. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn`               |
 | `requires`       | não           | lista de ids de mods ou namespaces de pacotes | nenhum                          | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                           |
 
 ### Chaves de variantes de itens
