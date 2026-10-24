@@ -82,6 +82,7 @@
   "rdpl.portal.owned": "這個傳送門屬於其他玩家",
   "rdpl.diet.repeat": "這種食物吃膩了",
   "rdpl.diet.variety": "飲食多樣，渾身舒暢",
+  "rdpl.hearts.gained": "你感覺更強健了。",
   "rdpl.carry.block": "正在搬運：%s（潛行並按右鍵即可放下）",
   "rdpl.carry.mob": "正在搬運：%s（潛行並對方塊按右鍵即可放下）",
   "rdpl.carry.down": "已放下：%s",

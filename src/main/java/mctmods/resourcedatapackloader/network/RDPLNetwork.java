@@ -6,11 +6,13 @@ import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentRuleClient;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
+import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.TalkScreen;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.dialog.DialogTalk;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
@@ -77,6 +79,7 @@ public final class RDPLNetwork {
             ServerPlayer player = context.get().getSender();
             if (player != null) { DialogTalk.pick(player, message.index()); }
         }).add();
+        channel.messageBuilder(MessageHeartColors.class, 15, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHeartColors::write).decoder(MessageHeartColors::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HeartsHud.show(message.colors()); } }).add();
     }
 
     public static void openWorn() { if (channel != null) { channel.sendToServer(new MessageOpenWorn()); } }
@@ -117,6 +120,8 @@ public final class RDPLNetwork {
     public static void sendTalk(ServerPlayer player, MessageTalk talk) { toPlayer(player, talk); }
 
     public static void sendTalkPick(int index) { if (channel != null) { channel.sendToServer(new MessageTalkPick(index)); } }
+
+    public static void sendHeartColors(ServerPlayer player) { toPlayer(player, new MessageHeartColors(ContentHearts.colors())); }
 
     public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { toPlayer(player, environments); }
 }
