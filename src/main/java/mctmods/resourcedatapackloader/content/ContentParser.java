@@ -182,6 +182,22 @@ public final class ContentParser {
 
     private static void retiredPlantTypes(ResourceLocation key, JsonObject json) { if (!Json.strings(json, PLANT_TYPES).isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Use 'bush' under 'behavesAs' for what 'plains' did, and let any other plant name this block in its own soil list", key, PLANT_TYPES); } }
 
+    public static List<BlockMatchDef> matches(ResourceLocation key, JsonObject json, String name) {
+        List<BlockMatchDef> values = new ArrayList<>();
+        if (!json.has(name)) { return values; }
+        JsonElement element = json.get(name);
+        if (!element.isJsonArray()) {
+            BlockMatchDef match = match(key, element);
+            if (match != null) { values.add(match); }
+            return values;
+        }
+        for (JsonElement held : element.getAsJsonArray()) {
+            BlockMatchDef match = match(key, held);
+            if (match != null) { values.add(match); }
+        }
+        return values;
+    }
+
     @Nullable public static BlockMatchDef match(ResourceLocation key, JsonElement element) {
         if (!element.isJsonObject()) { return match(key, element.getAsString()); }
         JsonObject entry = element.getAsJsonObject();
