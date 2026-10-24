@@ -62,6 +62,7 @@
 - [마법 부여대](#마법-부여대)
 - [블록 드롭](#블록-드롭)
 - [우클릭 수확](#우클릭-수확)
+- [광맥 채굴](#광맥-채굴)
 - [플레이어 전리품](#플레이어-전리품)
 - [주민과 거래](#주민과-거래)
 
@@ -202,6 +203,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/dialogs/*.json`                                                                    | 엔티티 변형과 함께 쓰는 갈래 대화: 텍스트 노드와 선택지. [대화](#대화)                                                                                                   |
 | `<namespace>/dice/*.json`                                                                       | 가중치 면이 있는 팩 주사위, 카드 덱, 굴림 결과를 듣는 대상, 결과 문구. [주사위와 덱](#주사위와-덱)                                                                       |
 | `<namespace>/games/*.json`                                                                      | 몹을 말로 쓰는 보드 게임. 판, 말과 말의 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                                                                             |
+| `<namespace>/veins/*.json`                                                                      | 도구 하나로 한 번에 캐는 블록 그룹으로, 제한과 허기 비용을 정합니다. [광맥 채굴](#광맥-채굴) |
 | `<namespace>/harvests/*.json`                                                                   | 우클릭으로 수확하고 다시 심는 작물. [우클릭 수확](#우클릭-수확)                                                                                                          |
 | `<namespace>/player_loot/*.json`                                                                | 플레이어가 죽을 때 굴리는 전리품 테이블. [플레이어 전리품](#플레이어-전리품)                                                                                             |
 | `<namespace>/advancements/*.json`                                                               | 발전 과제. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                               |
@@ -508,7 +510,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                  |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `sounds`, `tabs`                                               |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                    |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                               | `villagers`                                                                               |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)              |
 | `teams`, `scoring`, `ranks`                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요) |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                                   |                                                                                           |
@@ -2866,6 +2868,36 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `requires` | 아니요 | 문자열 목록  | 없음                            | 있어야 하는 모드 id, 팩 네임스페이스, `config:` 옵션이며 다른 정의와 같습니다                                              |
 
 정수 `age` 속성을 가진 블록이면 무엇이든 지정할 수 있습니다. 덜 자란 작물, 웅크린 플레이어, 관전자는 평소의 우클릭 그대로입니다. 드롭은 작물을 부쉈을 때 나오는 것과 같고, 손에 든 도구의 행운과 블록 드롭의 모든 규칙이 적용되며, 다시 심을 때 드롭에 그 작물의 씨앗이 있으면 하나가 빠집니다. 주민의 `harvestFarmland` 작업은 별개이며 달라지지 않습니다.
+
+## 광맥 채굴
+
+*제작, 전리품, 거래*
+
+`<namespace>/veins/*.json`
+
+파일 이름은 원하는 대로 정할 수 있으며, 폴더만 읽고 여러 파일이 겹쳐 적용됩니다.
+
+곡괭이로 광석을 부수면 보통은 그 블록 하나만 부서집니다. 여기에 파일을 두면 블록 그룹과 그것을 한꺼번에 캐는 도구를 지정할 수 있습니다. 서바이벌의 플레이어가 주로 쓰는 손에 든 도구 중 하나로 그룹의 블록을 부수면, 맞닿아 있는 같은 종류의 블록도 가까운 것부터 제한까지 함께 부서집니다. 파일이 없으면 아무것도 바뀌지 않으며, 선택을 플레이어에게 맡기려는 팩은 팩 옵션에서 설명한 대로 `requires`에 `config:` 항목을 넣습니다.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| 키         | 필수   | 값                                                                                               | 기본값 | 설명                                                                                                   |
+| ---------- | ------ | ------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------ |
+| `blocks`   | 예     | 블록 id 목록. 경도 그룹처럼 1.12.2에서는 `meta`, 1.20.1 이상에서는 `properties`를 쓸 수 있습니다 |        | 그룹. 한 광맥에는 한 종류의 블록만 들어가며, 그룹 안의 서로 다른 두 블록이 이어지는 일은 없습니다      |
+| `tools`    | 예     | 아이템 id 목록. 1.12.2에서는 `modid:item:meta`                                                   |        | 첫 블록이 부서질 때 주로 쓰는 손에 들고 있는 도구. 존재하지 않는 아이템은 로그 한 줄과 함께 건너뜁니다 |
+| `limit`    | 아니요 | int, 1~256                                                                                       | `16`   | 첫 블록 외에 부술 수 있는 최대 블록 수                                                                 |
+| `hunger`   | 아니요 | float, 0 이상                                                                                    | `0.1`  | 추가 블록 하나당 허기 포인트. 1포인트는 소모도 4입니다. 첫 블록은 바닐라의 평소 비용이 듭니다          |
+| `requires` | 아니요 | 문자열 목록                                                                                      | 없음   | 있어야 하는 모드 id, 팩 네임스페이스, `config:` 옵션이며 다른 정의와 같습니다                          |
+
+맞닿는다는 것은 면, 모서리, 꼭짓점으로 닿는다는 뜻이라 블록 하나에 이웃이 26개 있습니다. 서바이벌에서만 작동하며, 크리에이티브와 관전자 플레이어는 평소처럼 블록 하나만 부숩니다. 도구가 부서지거나 플레이어의 음식 수치가 0이 되면 멈춥니다. 추가 블록은 평소대로 드롭을 내놓고, 손에 든 도구의 행운과 블록 드롭의 모든 규칙이 적용되며, 도구 내구도를 한 번씩 깎습니다. 경도 그룹이 유지하는 블록에서는 작동하지 않습니다. 서버 팩에서만 동작하고 클라이언트에는 아무것도 필요 없습니다. 유효한 블록이나 도구가 없는 파일은 오류 한 줄과 함께 무시됩니다.
 
 ## 플레이어 전리품
 

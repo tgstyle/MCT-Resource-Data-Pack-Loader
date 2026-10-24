@@ -62,6 +62,7 @@
 - [Čarovací stůl](#čarovací-stůl)
 - [Dropy z bloků](#dropy-z-bloků)
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
+- [Těžení žil](#těžení-žil)
 - [Kořist hráčů](#kořist-hráčů)
 - [Vesničané a obchody](#vesničané-a-obchody)
 
@@ -202,6 +203,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/dialogs/*.json`                                                                    | Větvený rozhovor s variantou entity: textové uzly a odpovědi, které pokračují, spouštějí funkci nebo ukazují kartu. [Dialogy](#dialogy)                                                                           |
 | `<namespace>/dice/*.json`                                                                       | Kostky balíčku s váženými stranami, balíčky karet, kdo slyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                              |
 | `<namespace>/games/*.json`                                                                      | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                                                                                     |
+| `<namespace>/veins/*.json`                                                                      | Skupiny bloků, které nástroj vytěží naráz, s limitem a cenou v hladu. [Těžení žil](#těžení-žil) |
 | `<namespace>/harvests/*.json`                                                                   | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                                      |
 | `<namespace>/player_loot/*.json`                                                                | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                                          |
 | `<namespace>/advancements/*.json`                                                               | Advancementy. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                               |
@@ -508,7 +510,7 @@ Balíček může žít jen na serveru, zatímco hráči hrají na čistých vani
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                 | `blocks`, `items`, `fluids`, `materials`                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                     | `biomes`, `dimensions`, `portalframes`                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                    | `villagers`                                                                         |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách) | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)       |
 | `teams`, `scoring`, `ranks`                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (složky klienta, bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                       |                                                                                     |
@@ -2866,6 +2868,36 @@ Pravý klik na zralou plodinu normálně nic neudělá. Soubor tady způsobí, �
 | `requires` | ne      | seznam řetězců  | žádný                              | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice                           |
 
 Pojmenovat jde libovolný blok s celočíselnou vlastností `age`. Nezralá plodina, hráč v plížení a divák zůstanou u obvyklého pravého kliku. Dropy jsou ty, které by dalo rozbití plodiny, s Fortunou drženého nástroje a všemi pravidly z části Dropy z bloků, a při opětovném zasazení se z nich odebere jedno semínko plodiny, pokud je v nich. Úkol `harvestFarmland` vesničana je samostatný a beze změny.
+
+## Těžení žil
+
+*výroba, kořist a obchod*
+
+`<namespace>/veins/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Rozbití rudy krumpáčem normálně rozbije jen ten jeden blok. Soubor zde pojmenuje skupinu bloků a nástroje, které ji těží naráz: když hráč v přežití rozbije blok ze skupiny jedním z těchto nástrojů v hlavní ruce, rozbijí se i dotýkající se bloky stejného druhu, od nejbližších, až do limitu. Bez souboru se nic nemění a balíček, který chce nechat volbu na hráči, dá do `requires` položku `config:`, jak je popsáno v části Volby balíčku.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Klíč       | Povinný | Hodnota                                                                                          | Výchozí | Co dělá                                                                                                            |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `blocks`   | ano     | seznam id bloků, s `meta` (1.12.2) nebo `properties` (1.20.1 a novější) jako ve skupině tvrdosti |         | Skupina. Do jedné žíly patří jen bloky jednoho druhu, nikdy dva různé bloky ze skupiny                             |
+| `tools`    | ano     | seznam id předmětů, v 1.12.2 `modid:item:meta`                                                   |         | Drží se v hlavní ruce, když se rozbije první blok. Předmět, který neexistuje, se přeskočí s řádkem v logu          |
+| `limit`    | ne      | int, 1 až 256                                                                                    | `16`    | Nejvíc rozbitých bloků kromě prvního                                                                               |
+| `hunger`   | ne      | float, 0 nebo víc                                                                                | `0.1`   | Body hladu za každý další blok. 1 bod jsou 4 jednotky vyčerpání. První blok stojí obvyklé množství jako ve vanilla |
+| `requires` | ne      | seznam řetězců                                                                                   | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice              |
+
+Dotýkat se znamená mít společnou stěnu, hranu nebo roh, takže blok má 26 sousedů. Funguje jen v přežití: hráči v kreativním režimu a diváci rozbíjejí jeden blok jako obvykle. Zastaví se, když se nástroj rozbije nebo hladina jídla hráče klesne na 0. Každý další blok dá své obvyklé dropy, s Fortunou drženého nástroje a všemi pravidly z části Dropy z bloků, a nástroj opotřebuje o jedno použití. Na blok, který drží skupina tvrdosti, se nespustí. Jsou to data balíčku jen pro server a na klientovi nepotřebují nic. Soubor bez platných bloků nebo nástrojů se ignoruje s řádkem chyby.
 
 ## Kořist hráčů
 

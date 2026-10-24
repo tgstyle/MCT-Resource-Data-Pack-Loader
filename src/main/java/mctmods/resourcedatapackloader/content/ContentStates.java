@@ -133,6 +133,13 @@ public final class ContentStates {
         else { whole.accept(block); }
     }
 
+    public static int bind(BlockMatchDef match, Object owner, String part, Consumer<Block> whole, Consumer<IBlockState> exact) {
+        Block block = block(match.block.toString(), owner + " " + part);
+        if (block == null) { return 0; }
+        sort(match, block, whole, exact, owner);
+        return 1;
+    }
+
     public static IBlockState of(Block block, int meta) {
         if (meta == 0) { return block.getDefaultState(); }
         for (IBlockState candidate : block.getBlockState().getValidStates()) {

@@ -27,6 +27,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.ContentVeins;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.card.CardEvents;
@@ -184,6 +185,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
         MinecraftForge.EVENT_BUS.register(BlockDrops.class);
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
+        MinecraftForge.EVENT_BUS.register(ContentVeins.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
         LootTableList.register(ContentPierCargo.LOOT_TABLE);

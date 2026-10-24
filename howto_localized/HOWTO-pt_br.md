@@ -62,6 +62,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Mesa de encantamento](#mesa-de-encantamento)
 - [Drops de blocos](#drops-de-blocos)
 - [Colheita com clique direito](#colheita-com-clique-direito)
+- [Mineração de veios](#mineração-de-veios)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Aldeões e trocas](#aldeões-e-trocas)
 
@@ -202,6 +203,7 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/dialogs/*.json`                                                                    | Conversa ramificada com uma variante de entidade: nós de texto e respostas que seguem, executam uma função ou mostram uma carta. [Diálogos](#diálogos)                                   |
 | `<namespace>/dice/*.json`                                                                       | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve uma rolagem e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos)                                          |
 | `<namespace>/games/*.json`                                                                      | Jogos de tabuleiro com criaturas como peças: o tabuleiro, as peças e como se movem, e o que um resultado paga. [Jogos de tabuleiro](#jogos-de-tabuleiro)                                 |
+| `<namespace>/veins/*.json`                                                                      | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de veios](#mineração-de-veios) |
 | `<namespace>/harvests/*.json`                                                                   | Plantações colhidas e replantadas com o clique direito. [Colheita com clique direito](#colheita-com-clique-direito)                                                                      |
 | `<namespace>/player_loot/*.json`                                                                | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                          |
 | `<namespace>/advancements/*.json`                                                               | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                       |
@@ -508,7 +510,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                        |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                         | `potions`, `potion_types`, `sounds`, `tabs`                                                     |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                | `biomes`, `dimensions`, `portalframes`                                                          |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                                               | `villagers`                                                                                     |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profissões que o cliente conhece: as do vanilla ou as de um mod presente nos dois lados) | `entities`, `worldintro`, `texts` (a introdução nunca é exibida a um cliente vanilla)           |
 | `teams`, `scoring`, `ranks`                                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (pastas de cliente — sem cliente, deixe-as de fora) |
 | toda a camada de controle, as configurações e a pré-geração                                                                                                                       |                                                                                                 |
@@ -2866,6 +2868,36 @@ Clicar com o botão direito numa plantação madura normalmente não faz nada. U
 | `requires` | não         | lista de strings      | nenhum                           | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição                                |
 
 Qualquer bloco com uma propriedade inteira `age` pode ser citado. Uma plantação que não está madura, um jogador agachado e um espectador ficam com o clique direito de sempre. Os drops são os que quebrar a plantação daria, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e o replantio tira deles uma semente da plantação, se houver. A tarefa `harvestFarmland` do aldeão é separada e não muda.
+
+## Mineração de veios
+
+*criação, saque e comércio*
+
+`<namespace>/veins/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Quebrar um minério com uma picareta normalmente quebra só aquele bloco. Um arquivo aqui indica um grupo de blocos e as ferramentas que o mineram de uma vez: quando um jogador no modo sobrevivência quebra um bloco do grupo com uma dessas ferramentas na mão principal, os blocos do mesmo tipo que o tocam também são quebrados, os mais próximos primeiro, até um limite. Sem arquivo nada muda, e um pack que queira deixar a escolha para o jogador coloca uma entrada `config:` em `requires`, como descrito em Opções de pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Chave      | Obrigatória | Valor                                                                                                        | Padrão | O que faz                                                                                                            |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | sim         | lista de ids de bloco, com `meta` (1.12.2) ou `properties` (1.20.1 e posteriores) como em um grupo de dureza |        | O grupo. Só blocos de um mesmo tipo formam um veio, nunca dois blocos diferentes do grupo                            |
+| `tools`    | sim         | lista de ids de item, `modid:item:meta` na 1.12.2                                                            |        | Segurado na mão principal quando o primeiro bloco quebra. Um item que não existe é ignorado com uma linha no log     |
+| `limit`    | não         | int, de 1 a 256                                                                                              | `16`   | Máximo de blocos quebrados além do primeiro                                                                          |
+| `hunger`   | não         | float, 0 ou mais                                                                                             | `0.1`  | Pontos de fome por bloco extra. 1 ponto equivale a 4 de exaustão. O primeiro bloco custa o valor habitual do vanilla |
+| `requires` | não         | lista de strings                                                                                             | nenhum | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição          |
+
+Tocar significa dividir uma face, uma aresta ou um canto, então cada bloco tem 26 vizinhos. Só no modo sobrevivência: jogadores no criativo e espectadores quebram um bloco só, como sempre. Para quando a ferramenta quebra ou a barra de comida do jogador chega a 0. Cada bloco extra solta seus drops de sempre, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e gasta um uso da ferramenta. Não age sobre um bloco que um grupo de dureza mantém. São dados de pack só de servidor e não precisam de nada no cliente. Um arquivo sem blocos ou ferramentas válidos é ignorado com uma linha de erro.
 
 ## Saque de jogadores
 

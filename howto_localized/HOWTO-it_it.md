@@ -62,6 +62,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Tavolo per incantesimi](#tavolo-per-incantesimi)
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
+- [Estrazione di filoni](#estrazione-di-filoni)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
 - [Villici e scambi](#villici-e-scambi)
 
@@ -202,6 +203,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/dialogs/*.json`                                                                    | Conversazione ramificata con una variante di entità: nodi di testo e risposte che proseguono, eseguono una funzione o mostrano una carta. [Dialoghi](#dialoghi)                                    |
 | `<namespace>/dice/*.json`                                                                       | Dadi del pack con facce con peso, mazzi di carte, chi sente un tiro e la formulazione dei risultati. [Dadi e mazzi](#dadi-e-mazzi)                                                                 |
 | `<namespace>/games/*.json`                                                                      | Giochi da tavolo giocati con i mob come pezzi: la scacchiera, i pezzi e come si muovono, e cosa paga un risultato. [Giochi da tavolo](#giochi-da-tavolo)                                           |
+| `<namespace>/veins/*.json`                                                                      | Gruppi di blocchi che uno strumento estrae in un colpo solo, con un limite e un costo in fame. [Estrazione di filoni](#estrazione-di-filoni) |
 | `<namespace>/harvests/*.json`                                                                   | Colture che si raccolgono e si ripiantano con il clic destro. [Raccolta con clic destro](#raccolta-con-clic-destro)                                                                                |
 | `<namespace>/player_loot/*.json`                                                                | Una loot table tirata quando un giocatore muore. [Bottino dei giocatori](#bottino-dei-giocatori)                                                                                                   |
 | `<namespace>/advancements/*.json`                                                               | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                     |
@@ -508,7 +510,7 @@ Un pack può stare solo sul server, con giocatori su normali client vanilla, a u
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                 | `blocks`, `items`, `fluids`, `materials`                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                     | `biomes`, `dimensions`, `portalframes`                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                    | `villagers`                                                                                   |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (per le professioni che il client conosce: quelle vanilla o di una mod presente su entrambi i lati) | `entities`, `worldintro`, `texts` (l'introduzione non viene mai mostrata a un client vanilla) |
 | `teams`, `scoring`, `ranks`                                                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (cartelle del client: senza client, escludile)    |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                                                     |                                                                                               |
@@ -2866,6 +2868,36 @@ Un clic destro su una coltura matura normalmente non fa nulla. Un file qui fa ra
 | `requires` | no           | elenco di stringhe      | nessuno                                | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                                           |
 
 Si può indicare qualsiasi blocco con una proprietà intera `age`. Una coltura non matura, un giocatore accovacciato e uno spettatore restano al solito clic destro. I drop sono quelli che darebbe la rottura della coltura, con la Fortuna dello strumento in mano e tutte le regole di Drop dei blocchi, e la ripiantatura ne toglie un seme della coltura se ne contengono uno. Il compito `harvestFarmland` di un abitante è a parte e invariato.
+
+## Estrazione di filoni
+
+*crafting, bottino e scambi*
+
+`<namespace>/veins/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e più file si sommano.
+
+Rompere un minerale con un piccone normalmente rompe solo quel blocco. Un file qui indica un gruppo di blocchi e gli strumenti che lo estraggono in un colpo solo: quando un giocatore in sopravvivenza rompe un blocco del gruppo con uno di questi strumenti nella mano principale, si rompono anche i blocchi dello stesso tipo che lo toccano, prima i più vicini, fino a un limite. Senza file non cambia nulla, e un pack che vuole lasciare la scelta al giocatore mette una voce `config:` in `requires`, come descritto in Opzioni dei pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Chiave     | Obbligatorio | Valore                                                                                                         | Predefinito | Cosa fa                                                                                                                    |
+| ---------- | ------------ | -------------------------------------------------------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | sì           | elenco di id di blocchi, con `meta` (1.12.2) o `properties` (1.20.1 e successive) come in un gruppo di durezza |             | Il gruppo. Solo i blocchi di uno stesso tipo formano un filone, mai due blocchi diversi del gruppo                         |
+| `tools`    | sì           | elenco di id di oggetti, `modid:item:meta` in 1.12.2                                                           |             | Tenuto nella mano principale quando si rompe il primo blocco. Un oggetto che non esiste viene saltato con una riga nel log |
+| `limit`    | no           | int, da 1 a 256                                                                                                | `16`        | Numero massimo di blocchi rotti oltre al primo                                                                             |
+| `hunger`   | no           | float, 0 o più                                                                                                 | `0.1`       | Punti di fame per ogni blocco in più. 1 punto vale 4 di esaurimento. Il primo blocco costa la quantità abituale di vanilla |
+| `requires` | no           | elenco di stringhe                                                                                             | nessuno     | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                     |
+
+Toccarsi significa condividere una faccia, uno spigolo o un angolo, quindi un blocco ha 26 vicini. Solo in sopravvivenza: i giocatori in creativa e gli spettatori rompono un solo blocco come sempre. Si ferma quando lo strumento si rompe o la barra del cibo del giocatore arriva a 0. Ogni blocco in più lascia i suoi drop abituali, con la Fortuna dello strumento in mano e tutte le regole di Drop dei blocchi, e consuma lo strumento di un uso. Non agisce su un blocco che un gruppo di durezza mantiene. Sono dati di pack solo lato server e non serve nulla sul client. Un file senza blocchi o strumenti validi viene ignorato con una riga di errore.
 
 ## Bottino dei giocatori
 

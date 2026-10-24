@@ -62,6 +62,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Zaubertisch](#zaubertisch)
 - [Blockdrops](#blockdrops)
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
+- [Adernabbau](#adernabbau)
 - [Spielerbeute](#spielerbeute)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
 
@@ -202,6 +203,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/dialogs/*.json`                                                                    | Verzweigte Gespräche einer Entity-Variante: Textknoten und Antworten, die weiterführen, eine Funktion ausführen oder eine Karte zeigen. [Dialoge](#dialoge)                                                   |
 | `<namespace>/dice/*.json`                                                                       | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks)                                                                  |
 | `<namespace>/games/*.json`                                                                      | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                                                                       |
+| `<namespace>/veins/*.json`                                                                      | Gruppen von Blöcken, die ein Werkzeug in einem Zug abbaut, mit Limit und Hungerkosten. [Adernabbau](#adernabbau) |
 | `<namespace>/harvests/*.json`                                                                   | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                            |
 | `<namespace>/player_loot/*.json`                                                                | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                               |
 | `<namespace>/advancements/*.json`                                                               | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                     |
@@ -508,7 +510,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                              | `blocks`, `items`, `fluids`, `materials`                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                           | `potions`, `potion_types`, `sounds`, `tabs`                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                  | `biomes`, `dimensions`, `portalframes`                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                                 | `villagers`                                                                         |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
 | `teams`, `scoring`, `ranks`                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                                         |                                                                                     |
@@ -2866,6 +2868,36 @@ Ein Rechtsklick auf eine reife Pflanze bewirkt normalerweise nichts. Eine Datei 
 | `requires` | nein    | Liste von Strings   | keine                                    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                        |
 
 Genannt werden kann jeder Block mit einer ganzzahligen Eigenschaft `age`. Eine unreife Pflanze, ein schleichender Spieler und ein Zuschauer bleiben beim üblichen Rechtsklick. Die Drops sind die, die das Abbauen der Pflanze ergäbe, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und beim Neupflanzen wird ihnen ein Samen der Pflanze entnommen, wenn sie einen enthalten. Die Aufgabe `harvestFarmland` eines Dorfbewohners ist davon getrennt und unverändert.
+
+## Adernabbau
+
+*herstellung, beute und handel*
+
+`<namespace>/veins/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Wer ein Erz mit einer Spitzhacke abbaut, bricht normalerweise nur diesen einen Block. Eine Datei hier benennt eine Gruppe von Blöcken und die Werkzeuge, die sie in einem Zug abbauen: Bricht ein Spieler im Überlebensmodus einen Block der Gruppe mit einem dieser Werkzeuge in der Haupthand, brechen auch die angrenzenden Blöcke derselben Art, die nächsten zuerst, bis zu einem Limit. Ohne Datei ändert sich nichts, und ein Pack, das die Wahl dem Spieler überlassen will, setzt einen `config:`-Eintrag in `requires`, wie unter Pack-Optionen beschrieben.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Schlüssel  | Pflicht | Wert                                                                                                    | Standard | Was er macht                                                                                                              |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | ja      | Liste von Block-IDs, mit `meta` (1.12.2) oder `properties` (1.20.1 und neuer) wie bei einer Härtegruppe |          | Die Gruppe. Nur Blöcke einer Art bilden eine Ader, nie zwei verschiedene Blöcke der Gruppe                                |
+| `tools`    | ja      | Liste von Item-IDs, in 1.12.2 `modid:item:meta`                                                         |          | In der Haupthand gehalten, wenn der erste Block bricht. Ein Item, das es nicht gibt, wird mit einer Logzeile übersprungen |
+| `limit`    | nein    | int, 1 bis 256                                                                                          | `16`     | Höchstzahl der Blöcke, die außer dem ersten gebrochen werden                                                              |
+| `hunger`   | nein    | float, 0 oder mehr                                                                                      | `0.1`    | Hungerpunkte pro zusätzlichem Block. 1 Punkt entspricht 4 Erschöpfung. Der erste Block kostet den üblichen Vanilla-Betrag |
+| `requires` | nein    | Liste von Strings                                                                                       | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                    |
+
+Angrenzend heißt, sich an einer Fläche, Kante oder Ecke zu berühren, ein Block hat also 26 Nachbarn. Nur im Überlebensmodus: Spieler im Kreativ- oder Zuschauermodus brechen wie gewohnt einen Block. Es endet, wenn das Werkzeug kaputtgeht oder der Nahrungswert des Spielers 0 erreicht. Jeder zusätzliche Block gibt seine üblichen Drops, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und nutzt das Werkzeug um eine Verwendung ab. Auf einem Block, den eine Härtegruppe behält, läuft es nicht. Es sind reine Server-Packdaten, auf dem Client wird nichts gebraucht. Eine Datei ohne gültige Blöcke oder Werkzeuge wird mit einer Fehlerzeile ignoriert.
 
 ## Spielerbeute
 

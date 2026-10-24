@@ -121,17 +121,11 @@ public final class ContentHardness {
     public static boolean anySwaps() { return !BECOMES.isEmpty(); }
 
     private static int deny(HardnessDef def, BlockMatchDef name) {
-        Block block = ContentStates.block(name.block.toString(), def.registryName + " except");
-        if (block == null) { return 0; }
-        ContentStates.sort(name, block, held -> DENIED.put(held, def), state -> DENIED_EXACT.put(state, def), def.registryName);
-        return 1;
+        return ContentStates.bind(name, def.registryName, "except", held -> DENIED.put(held, def), state -> DENIED_EXACT.put(state, def));
     }
 
     private static int bind(HardnessDef def, BlockMatchDef name) {
-        Block block = ContentStates.block(name.block.toString(), def.registryName + " blocks");
-        if (block == null) { return 0; }
-        ContentStates.sort(name, block, held -> WHOLE.computeIfAbsent(held, any -> new ArrayList<>()).add(def), state -> EXACT.computeIfAbsent(state, any -> new ArrayList<>()).add(def), def.registryName);
-        return 1;
+        return ContentStates.bind(name, def.registryName, "blocks", held -> WHOLE.computeIfAbsent(held, any -> new ArrayList<>()).add(def), state -> EXACT.computeIfAbsent(state, any -> new ArrayList<>()).add(def));
     }
 
     public static boolean anyRolls() { return anyRolls; }
