@@ -7,6 +7,7 @@ public final class ConfigData {
     private final ModConfigSpec.BooleanValue playerLoot;
     private final ModConfigSpec.BooleanValue registryRemaps;
     private final ModConfigSpec.BooleanValue anvils;
+    private final ModConfigSpec.BooleanValue enchanting;
     private final ModConfigSpec.BooleanValue blockDrops;
     private final ModConfigSpec.BooleanValue functions;
 
@@ -16,6 +17,7 @@ public final class ConfigData {
         playerLoot = builder.comment("Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory [Default=true]").define("playerLoot", true);
         registryRemaps = builder.comment("Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them [Default=true]").define("registryRemaps", true);
         anvils = builder.comment("Apply anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then [Default=true]").define("anvils", true);
+        enchanting = builder.comment("Apply enchanting/*.json files, which change what the enchanting table offers, asks and takes: per enchantment, per item and for the whole table [Default=true]").define("enchanting", true);
         blockDrops = builder.comment("Apply block_drops/*.json files, which add to or replace what a block drops whenever it breaks, experience included, for blocks a pack does not own [Default=true]").define("blockDrops", true);
         functions = builder.comment("Load .mcfunction files from packs, so they work in every world [Default=true]").define("functions", true);
         builder.pop();
@@ -28,6 +30,8 @@ public final class ConfigData {
     public boolean registryRemapsOff() { return !ConfigCore.flag(registryRemaps); }
 
     public boolean anvilsOff() { return !ConfigCore.flag(anvils); }
+
+    public boolean enchantingOff() { return !ConfigCore.flag(enchanting); }
 
     public boolean blockDropsOff() { return !ConfigCore.flag(blockDrops); }
 
