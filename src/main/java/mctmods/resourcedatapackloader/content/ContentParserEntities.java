@@ -180,7 +180,8 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "walks", false),
                 Json.getBoolean(json, "throwReturns", false),
                 Json.getString(sounds, "throw", ""),
-                rocket(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null));
+                rocket(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null),
+                Json.getString(json, "dialog", "").trim());
     }
 
     private static List<PhaseDef> phases(ResourceLocation key, JsonObject json, boolean hasBar) {

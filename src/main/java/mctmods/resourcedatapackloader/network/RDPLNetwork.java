@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.IntroLandMadeHandler;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
+import mctmods.resourcedatapackloader.client.TalkScreen;
 import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -53,6 +54,8 @@ public final class RDPLNetwork {
         registerMessage(MessageMultipartDesc.Handler.class, MessageMultipartDesc.class);
         registerMessage(MessageAnvilCosts.Handler.class, MessageAnvilCosts.class);
         registerMessage(MessagePortwayFilter.Handler.class, MessagePortwayFilter.class);
+        registerClient(() -> TalkScreen.Handler.class, MessageTalk.class);
+        registerMessage(MessageTalkPick.Handler.class, MessageTalkPick.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -116,4 +119,9 @@ public final class RDPLNetwork {
     public static void openWornPouch() { channel.sendToServer(new MessagePouchKey()); }
 
     public static void portwayFilter(String text) { channel.sendToServer(new MessagePortwayFilter(text)); }
+
+    public static void sendTalkPick(int index) {
+        if (channel == null) { return; }
+        channel.sendToServer(new MessageTalkPick(index));
+    }
 }

@@ -33,6 +33,8 @@ import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.card.CardScan;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
+import mctmods.resourcedatapackloader.content.dialog.ContentDialogs;
+import mctmods.resourcedatapackloader.content.dialog.DialogEvents;
 import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
 import mctmods.resourcedatapackloader.content.item.ContentItemContainer;
 import mctmods.resourcedatapackloader.content.item.ContentWeapons;
@@ -253,6 +255,8 @@ public class ResourceDataPackLoader {
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
         CardRules.load();
+        ContentDialogs.load();
+        MinecraftForge.EVENT_BUS.register(DialogEvents.class);
         MinecraftForge.EVENT_BUS.register(CardEvents.class);
         MinecraftForge.EVENT_BUS.register(CardScan.class);
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
@@ -359,6 +363,7 @@ public class ResourceDataPackLoader {
         ContentSpawnChunks.reload();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ContentSkyRenderers.reload(); }
         CardRules.load();
+        ContentDialogs.load();
         if (ContentVillages.load()) { ContentVillages.register(); }
     }
 

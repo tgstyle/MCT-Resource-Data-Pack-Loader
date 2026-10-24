@@ -99,6 +99,7 @@
 - [Bodování](#bodování)
 - [Nájezdy](#nájezdy)
 - [Karty](#karty)
+- [Dialogy](#dialogy)
 - [Kostky a balíčky karet](#kostky-a-balíčky-karet)
 
 **Ovládání**
@@ -198,6 +199,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/affixes/*.json` | Náhodné bonusy atributů a patice, které předmět vylosuje, když ho hráč poprvé drží. [Afixy a patice](#afixy-a-patice) |
 | `<namespace>/gems/*.json` | Předměty, které kovadlina vloží do patice za bonus atributu. [Afixy a patice](#afixy-a-patice) |
 | `<namespace>/cards/*.json`                                                                      | Karty na obrazovce zobrazené při spouštěči a zprávy, které tento mód říká sám. [Karty](#karty)                                                                                                                    |
+| `<namespace>/dialogs/*.json`                                                                    | Větvený rozhovor s variantou entity: textové uzly a odpovědi, které pokračují, spouštějí funkci nebo ukazují kartu. [Dialogy](#dialogy)                                                                           |
 | `<namespace>/dice/*.json`                                                                       | Kostky balíčku s váženými stranami, balíčky karet, kdo slyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                              |
 | `<namespace>/games/*.json`                                                                      | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                                                                                     |
 | `<namespace>/harvests/*.json`                                                                   | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                                      |
@@ -3135,6 +3137,7 @@ Všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 | `showName`      | ne      | boolean                                | `false` | Zobrazit jméno, i když se na entitu nedíváš                                                                                                                                                                 |
 | `egg`           | ne      | boolean nebo objekt                    | `true`  | Spawnovací vejce, obarvené jako vejce entity, kterou kopíruje. Objekt s `primary` a `secondary`, například `{ "primary": "AABBCC", "secondary": "112233" }`, zvolí tvé vlastní barvy, `false` vejce vynechá |
 | `becomes`       | ne      | seznam                                 | žádný   | Další varianty, na které se tato může při spawnu změnit, podle váhy. Viz níže                                                                                                                               |
+| `dialog`        | ne      | řetězec                                | žádný   | Dialog jako `namespace:name`, který pravý klik na entitu otevře. [Dialogy](#dialogy)                                                                                                                        |
 | `baby`          | ne      | boolean nebo 0.0 až 1.0                | `false` | Jak často se spawnuje mladá a mladá zůstane. `true` je vždy, číslo je takový podíl z nich                                                                                                                   |
 | `keepsBaseBaby` | ne      | boolean                                | `false` | Zda se spustí i losování mláděte u základu. Bez něj se varianta založená na zombie spawnuje mladá jen tak, jak říká `baby`, bez dítěte z Forge `zombieBabyChance` a bez kuřecího jezdce                     |
 | `profession`    | ne      | `namespace:name`                       | náhodné | U vesničana povolání, které vykonává                                                                                                                                                                        |
@@ -7576,6 +7579,81 @@ Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou
 
 `welcomeSays` není pravidlo a drží si své logo; pravidlo `first_join` nebo `dimension_enter` se k němu přidá. Odpočty a součty kola na action baru zůstávají takové, jak je určují jejich nastavení.
 
+## Dialogy
+
+*herní režimy*
+
+`<namespace>/dialogs/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jeden dialog a jeho id je `<namespace>:<file name>`. Varianta entity otevře dialog přes klíč `dialog`: pravý klik na tuto entitu pak ukáže uzel `start` dialogu místo toho, co entita při pravém kliku jinak dělá, třeba místo obchodní obrazovky vesničana.
+
+```json
+{
+  "start": "hello",
+  "title": "{npc}",
+  "icon": "minecraft:emerald",
+  "color": "3A2A10",
+  "font": "mypack:runes",
+  "nodes": {
+    "hello": {
+      "lines": ["Welcome, {player}.", "What brings you to {biome}?"],
+      "replies": [
+        { "text": "Who are you?", "goto": "who" },
+        { "text": "I want work.", "runs": "mypack:give_work", "card": "mypack:work_card" },
+        { "text": "Adventure only.", "when": { "gameMode": "adventure" } },
+        { "text": "Goodbye." }
+      ]
+    },
+    "who": { "title": "The Guide", "lines": ["I keep the road."], "replies": [{ "text": "Back.", "goto": "hello" }] }
+  }
+}
+```
+
+První odpověď vede do uzlu `who`, který má vlastní `title` a odpověď zpět. Druhá spustí funkci a ukáže kartu. Třetí je skrytá, dokud hráč není v dobrodružném režimu, a poslední nemá `goto`, takže rozhovor končí.
+
+### Klíče dialogu
+
+*dialogy*
+
+| Nastavení    | Typ                                   | Výchozí          | Co dělá                                                                                     |
+| ------------ | ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------- |
+| `start`      | text                                  | žádný, povinné   | Název uzlu, ve kterém rozhovor začíná. Dialog, jehož `start` není mezi jeho uzly, se zahodí |
+| `nodes`      | objekt                                | žádný, povinné   | Uzly, každý pod svým názvem. Nejvýše 64                                                     |
+| `title`      | text                                  | jméno varianty   | První řádek panelu. `{npc}` je jméno entity                                                 |
+| `icon`       | text                                  | `saysIcon`       | Jako na kartě, viz [Karta](#karta)                                                          |
+| `color`      | text                                  | `saysColor`      | Jako na kartě, viz [Karta](#karta)                                                          |
+| `image`      | text                                  | `saysImage`      | Jako na kartě, viz [Karta](#karta)                                                          |
+| `background` | boolean                               | `saysBackground` | Jako na kartě, viz [Karta](#karta)                                                          |
+| `font`       | text                                  | `saysFont`       | Jako na kartě, viz [Karta](#karta)                                                          |
+| `requires`   | seznam id módů nebo namespace balíčků | žádný            | Soubor se přeskočí, pokud nejsou přítomny všechny                                           |
+
+### Klíče uzlu
+
+*dialogy*
+
+| Nastavení | Typ    | Výchozí         | Co dělá                                                                                                        |
+| --------- | ------ | --------------- | -------------------------------------------------------------------------------------------------------------- |
+| `title`   | text   | titulek dialogu | Nahradí `title` dialogu, dokud se tento uzel zobrazuje                                                         |
+| `lines`   | seznam | žádný           | Až šestnáct řádků. `{player}`, `{npc}`, `{dim}`, `{biome}` a `{day}` se doplní                                 |
+| `replies` | seznam | žádný           | Až osm odpovědí, zobrazených jako číslovaný seznam. Uzel bez odpovědí jen ukáže své řádky a rozhovor tam končí |
+
+### Klíče odpovědi
+
+*dialogy*
+
+| Nastavení | Typ     | Výchozí           | Co dělá                                                                                                                                   |
+| --------- | ------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`    | text    | žádný, povinné    | Odpověď tak, jak ji hráč čte. Odpověď bez `text` se zahodí                                                                                |
+| `goto`    | text    | žádný             | Uzel, kam se pokračuje, podle názvu. Odpověď, jejíž `goto` nepojmenuje žádný uzel, se zahodí                                              |
+| `card`    | text    | žádný             | Id pravidla z [Karty](#karty), které se ukáže při výběru odpovědi. Jeho `when`, `repeat` a `cooldown` se přeskočí, `runs` se spustí i tak |
+| `runs`    | text    | žádný             | Funkce spuštěná jako hráč při výběru odpovědi. Takto odpověď spouští příkazy                                                              |
+| `when`    | objekt  | žádný             | Podmínky z [Kdy](#kdy). Odpověď, která je nesplní, je skrytá                                                                              |
+| `close`   | boolean | `true` bez `goto` | Po výběru rozhovor ukončí. Při nastaveném `goto` nic nedělá                                                                               |
+
+Výběr nejdřív spustí `runs`, potom ukáže `card` a pak přejde na `goto` nebo rozhovor ukončí. Dialog si sám nic nepamatuje: neukládá se a rozhovor, který hráč zavřel nebo který přerušilo odhlášení, nelze obnovit. Větev, která si má něco zapamatovat, nastaví ve své funkci skóre nebo štítek.
+
+Klient s módem ukáže dialog jako panel u dolního okraje obrazovky, s jedním řádkem pro každou odpověď. Klikni na řádek nebo stiskni jeho číslo, 1 až 8; Esc nebo klávesa inventáře rozhovor zavře. Vanilla klient dostane stejný text jako řádky chatu, kde je každá odpověď klikací `[n]`, která spustí `/rdplserver talk n`. Server přijme výběr jen tehdy, když entita žije a je nejvýše 8 bloků od hráče, a ignoruje číslo, které aktuální uzel nemá; obrazovka se sama zavře, když se hráč vzdálí o více než 8 bloků. Chybějící `start`, odpověď bez `text` a neznámé `goto` se zapíší do logu a zahodí dialog nebo odpověď; varianta entity, jejíž `dialog` žádný balíček neposkytuje, se zapíše do logu a zůstane bez dialogu.
+
 ## Kostky a balíčky karet
 
 *herní režimy*
@@ -9816,6 +9894,7 @@ Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky 
 | `/rdplserver round start`                                                                | 0      | Totéž jako `/rdpl round start`, které se sem předává                                                                                                                                                                                                                                                               |
 | `/rdplserver round reset`, `round vote yes`, `round vote no`                             | 0      | Totéž jako výše uvedené tvary `/rdpl round`, které se sem předávají                                                                                                                                                                                                                                                |
 | `/rdplserver card <rule> [players]`                                                      | 2      | Ukáže [pravidlo karty](#karty) uvedeným hráčům, nebo tobě, podle jeho id nebo názvu souboru. `when`, `repeat` a `cooldown` se přeskočí                                                                                                                                                                             |
+| `/rdplserver talk <number>`                                                              | 0      | Vybere odpověď podle čísla v otevřeném dialogu. Spouštějí ho klikací odpovědi vanilla klienta. [Dialogy](#dialogy)                                                                                                                                                                                                 |
 | `/rdplserver raid <raid> [hráč nebo x y z]`                                              | 3      | Spustí [nájezd](#nájezdy) daného názvu na hráči, na pozici nebo, bez obojího, na vás, bez vesnice. Odmítne se, dokud v dosahu `reach` probíhá jiný nájezd                                                                                                                                                          |
 | `/rdplserver environment [<dimension> <name>]`                                           | 2      | Přepne dimenzi na jedno z jejích [prostředí](#prostředí), nebo jí pomocí `default` vrátí vlastní podobu. Samotný vypíše každou dimenzi s prostředími a to, které právě používá                                                                                                                                     |
 | `/rdplserver reset`                                                                      | 3      | Vrátí mapu do stavu, v jakém ji nechává konec kola: všichni jsou zadrženi, entity smeteny, skóre vymazáno, spuštěno `resetRuns`, hráči přesunuti na `resetSendsTo` a propuštěni a otevře se kolo s úvodním počtem, jak popisují nastavení resetu v části [Předgenerování](#předgenerování). Z `/rdpl` se nepředává |

@@ -21,6 +21,8 @@ import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.RoundSay;
 import mctmods.resourcedatapackloader.content.card.CardRules;
+import mctmods.resourcedatapackloader.content.dialog.ContentDialogs;
+import mctmods.resourcedatapackloader.content.dialog.DialogTalk;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -73,7 +75,7 @@ import javax.annotation.Nullable;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -158,6 +160,7 @@ public class ServerCommands extends CommandBase {
     private List<String> openTo(ICommandSender sender) {
         List<String> open = new ArrayList<>();
         open.add("intro");
+        open.add("talk");
         if (ContentTeams.any()) { open.add("team"); }
         if (ContentScoring.any()) { open.add("round"); }
         if (sender.canUseCommand(lowestGotoLevel(), getName())) { open.add("goto"); }
@@ -215,7 +218,7 @@ public class ServerCommands extends CommandBase {
         else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
         else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
         else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
-        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
+        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && !"talk".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
@@ -244,6 +247,7 @@ public class ServerCommands extends CommandBase {
         else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
         else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
         else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
+        else if (args.length == 2 && "talk".equals(args[0])) { talk(sender, args[1]); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -453,6 +457,7 @@ public class ServerCommands extends CommandBase {
         ContentBoards.load();
         ContentBoards.rebuild(server);
         CardRules.load();
+        ContentDialogs.load();
         for (WorldServer world : server.worlds) {
             ContentTeams.field(world);
             ContentScoring.keep(world);
@@ -534,5 +539,11 @@ public class ServerCommands extends CommandBase {
         if (!(sender instanceof EntityPlayerMP)) { throw new CommandException(Lang.tr(sender, "rdpl.command.introplayer")); }
         ContentIntroPlay.replay((EntityPlayerMP) sender);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.introagain"));
+    }
+
+    private void talk(ICommandSender sender, String number) throws CommandException {
+        EntityPlayerMP player = CommandShared.goer(sender);
+        if (DialogTalk.idle(player)) { throw new CommandException(Lang.tr(sender, "rdpl.command.notalking")); }
+        DialogTalk.pick(player, parseInt(number, 1));
     }
 }

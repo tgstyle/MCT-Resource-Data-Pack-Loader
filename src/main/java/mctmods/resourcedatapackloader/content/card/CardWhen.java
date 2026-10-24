@@ -9,7 +9,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import java.util.Collections;
 import java.util.List;
 
-final class CardWhen {
+public final class CardWhen {
     List<String> biomes = Collections.emptyList();
     int timeFrom = -1;
     int timeTo = -1;
@@ -20,7 +20,7 @@ final class CardWhen {
     String network = "";
     Standing standing = Standing.NONE;
 
-    boolean fails(EntityPlayerMP player) {
+    public boolean fails(EntityPlayerMP player) {
         if (!biomes.isEmpty() && !BiomeNames.matches(biomes, player.world.getBiome(player.getPosition()))) { return true; }
         if (timeFrom >= 0 && timeTo >= 0 && !CardPlace.within(CardPlace.timeOfDay(player.world), timeFrom, timeTo)) { return true; }
         if (dayAtLeast >= 0L && CardPlace.day(player.world) < dayAtLeast) { return true; }

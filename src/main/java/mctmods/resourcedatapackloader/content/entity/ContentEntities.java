@@ -46,6 +46,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -93,6 +94,10 @@ public final class ContentEntities {
         if (!DEFS.isEmpty()) { Summary.info("entities", "Loaded " + DEFS.size() + " entity variant(s) from packs"); }
         return !DEFS.isEmpty();
     }
+
+    @Nullable public static EntityVariantDef variantOf(Entity entity) { return BY_CLASS.get(entity.getClass()); }
+
+    public static Collection<EntityVariantDef> variants() { return DEFS.values(); }
 
     @Nullable public static ResourceLocation texture(Entity entity) {
         EntityVariantDef def = BY_CLASS.get(entity.getClass());

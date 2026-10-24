@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-final class CardSend {
+public final class CardSend {
     private static final int FADE_IN = 10;
     private static final int FADE_OUT = 20;
     private static final String TEXT = "{text}";
@@ -48,7 +48,7 @@ final class CardSend {
         if (rule.ticks > 0) { look.ticks = rule.ticks; }
     }
 
-    private static String fill(String line, EntityPlayerMP subject, List<String> said) {
+    public static String fill(String line, EntityPlayerMP subject, List<String> said) {
         if (line.indexOf('{') < 0) { return line; }
         return line.replace(TEXT, String.join(" ", said))
                 .replace("{player}", subject.getName())

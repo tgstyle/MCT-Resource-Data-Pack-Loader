@@ -99,6 +99,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Wertung](#wertung)
 - [Raids](#raids)
 - [Karten](#karten)
+- [Dialoge](#dialoge)
 - [Würfel und Decks](#würfel-und-decks)
 
 **Steuerung**
@@ -198,6 +199,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/affixes/*.json` | Zufällige Attributboni und Fassungen, die ein Gegenstand auswürfelt, wenn ein Spieler ihn zum ersten Mal hält. [Affixe und Fassungen](#affixe-und-fassungen) |
 | `<namespace>/gems/*.json` | Gegenstände, die ein Amboss für einen Attributbonus in eine Fassung setzt. [Affixe und Fassungen](#affixe-und-fassungen) |
 | `<namespace>/cards/*.json`                                                                      | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die dieser Mod selbst ausgibt. [Karten](#karten)                                                                                        |
+| `<namespace>/dialogs/*.json`                                                                    | Verzweigte Gespräche einer Entity-Variante: Textknoten und Antworten, die weiterführen, eine Funktion ausführen oder eine Karte zeigen. [Dialoge](#dialoge)                                                   |
 | `<namespace>/dice/*.json`                                                                       | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks)                                                                  |
 | `<namespace>/games/*.json`                                                                      | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                                                                       |
 | `<namespace>/harvests/*.json`                                                                   | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                            |
@@ -3135,6 +3137,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `showName`      | nein    | boolean                                | `false`  | Zeigt den Namen, ohne dass man sie ansieht                                                                                                                                                            |
 | `egg`           | nein    | boolean oder Objekt                    | `true`   | Ein Spawn-Ei, gefärbt wie das der kopierten Entity. Ein Objekt mit `primary` und `secondary`, etwa `{ "primary": "AABBCC", "secondary": "112233" }`, wählt eigene Farben, `false` lässt das Ei weg    |
 | `becomes`       | nein    | Liste                                  | keine    | Andere Varianten, zu denen dieses beim Erscheinen werden kann, nach Gewicht. Siehe unten                                                                                                              |
+| `dialog`        | nein    | Text                                   | keiner   | Ein Dialog als `namespace:name`, den ein Rechtsklick auf die Entity öffnet. [Dialoge](#dialoge)                                                                                                       |
 | `baby`          | nein    | boolean oder 0,0 bis 1,0               | `false`  | Wie oft eines jung erscheint, und es bleibt dabei. `true` heißt immer, eine Zahl heißt dieser Anteil                                                                                                  |
 | `keepsBaseBaby` | nein    | boolean                                | `false`  | Ob der eigene Jung-Wurf der Basis zusätzlich läuft. Ohne ihn erscheint eine Variante auf Zombie-Basis nur so oft jung, wie `baby` sagt, ohne Kind aus Forges `zombieBabyChance` und ohne Hühnerjockey |
 | `profession`    | nein    | `namespace:name`                       | zufällig | Bei einem Dorfbewohner der Beruf, den er ausübt                                                                                                                                                       |
@@ -7576,6 +7579,81 @@ Titel und Zeilen von Karten, Says-Meldungen sowie die Willkommens- und Warte-Hin
 
 `welcomeSays` ist keine Regel und behält sein Logo; eine `first_join`- oder `dimension_enter`-Regel kommt dazu. Die Countdowns und Zwischenstände einer Runde in der Aktionsleiste bleiben so, wie ihre Einstellungen sie machen.
 
+## Dialoge
+
+*spielmodi*
+
+`<namespace>/dialogs/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Jede Datei ist ein Dialog, und seine ID ist `<namespace>:<Dateiname>`. Eine Entity-Variante öffnet einen Dialog über ihren Schlüssel `dialog`: Ein Rechtsklick auf diese Entity zeigt dann den `start`-Knoten des Dialogs, an der Stelle dessen, was die Entity sonst bei einem Rechtsklick tut, etwa den Handelsbildschirm eines Dorfbewohners.
+
+```json
+{
+  "start": "hello",
+  "title": "{npc}",
+  "icon": "minecraft:emerald",
+  "color": "3A2A10",
+  "font": "mypack:runes",
+  "nodes": {
+    "hello": {
+      "lines": ["Welcome, {player}.", "What brings you to {biome}?"],
+      "replies": [
+        { "text": "Who are you?", "goto": "who" },
+        { "text": "I want work.", "runs": "mypack:give_work", "card": "mypack:work_card" },
+        { "text": "Adventure only.", "when": { "gameMode": "adventure" } },
+        { "text": "Goodbye." }
+      ]
+    },
+    "who": { "title": "The Guide", "lines": ["I keep the road."], "replies": [{ "text": "Back.", "goto": "hello" }] }
+  }
+}
+```
+
+Die erste Antwort führt zum Knoten `who`, der einen eigenen `title` und eine Antwort zurück hat. Die zweite führt eine Funktion aus und zeigt eine Karte. Die dritte bleibt verborgen, solange der Spieler nicht im Abenteuermodus ist, und die letzte hat kein `goto`, also beendet sie das Gespräch.
+
+### Dialogschlüssel
+
+*dialoge*
+
+| Einstellung  | Typ                                    | Standard              | Was sie macht                                                                                                          |
+| ------------ | -------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `start`      | Text                                   | keiner, Pflicht       | Der Name des Knotens, an dem ein Gespräch beginnt. Ein Dialog, dessen `start` keiner seiner Knoten ist, wird verworfen |
+| `nodes`      | Objekt                                 | keiner, Pflicht       | Die Knoten, jeder unter seinem eigenen Namen. Bis zu 64                                                                |
+| `title`      | Text                                   | der Name der Variante | Die erste Zeile der Tafel. `{npc}` ist der Name der Entity                                                             |
+| `icon`       | Text                                   | `saysIcon`            | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
+| `color`      | Text                                   | `saysColor`           | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
+| `image`      | Text                                   | `saysImage`           | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
+| `background` | boolean                                | `saysBackground`      | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
+| `font`       | Text                                   | `saysFont`            | Wie auf einer Karte, siehe [Die Karte](#die-karte)                                                                     |
+| `requires`   | Liste von Mod-IDs oder Pack-Namespaces | keine                 | Die Datei wird übersprungen, solange nicht alle vorhanden sind                                                         |
+
+### Knotenschlüssel
+
+*dialoge*
+
+| Einstellung | Typ   | Standard              | Was sie macht                                                                                                                         |
+| ----------- | ----- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`     | Text  | der Titel des Dialogs | Ersetzt den `title` des Dialogs, solange dieser Knoten angezeigt wird                                                                 |
+| `lines`     | Liste | keiner                | Bis zu sechzehn Zeilen. `{player}`, `{npc}`, `{dim}`, `{biome}` und `{day}` werden eingesetzt                                         |
+| `replies`   | Liste | keiner                | Bis zu acht Antworten, als nummerierte Liste angezeigt. Ein Knoten ohne Antworten zeigt nur seine Zeilen, und das Gespräch endet dort |
+
+### Antwortschlüssel
+
+*dialoge*
+
+| Einstellung | Typ     | Standard           | Was sie macht                                                                                                                                                                 |
+| ----------- | ------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `text`      | Text    | keiner, Pflicht    | Die Antwort, wie der Spieler sie liest. Eine Antwort ohne `text` wird verworfen                                                                                               |
+| `goto`      | Text    | keiner             | Der Knoten, zu dem es weitergeht, nach Namen. Eine Antwort, deren `goto` keinen Knoten nennt, wird verworfen                                                                  |
+| `card`      | Text    | keiner             | Die ID einer Regel aus [Karten](#karten), die gezeigt wird, wenn die Antwort gewählt wird. Ihr `when`, `repeat` und `cooldown` werden übersprungen, ihr `runs` läuft trotzdem |
+| `runs`      | Text    | keiner             | Eine Funktion, die als der Spieler läuft, wenn die Antwort gewählt wird. So führt eine Antwort Befehle aus                                                                    |
+| `when`      | Objekt  | keiner             | Die Bedingungen aus [When](#when). Eine Antwort, die sie nicht erfüllt, bleibt verborgen                                                                                      |
+| `close`     | boolean | `true` ohne `goto` | Beendet das Gespräch nach der Wahl. Mit gesetztem `goto` bewirkt es nichts                                                                                                    |
+
+Eine Wahl führt zuerst `runs` aus, zeigt dann `card` und geht danach zu `goto` oder beendet das Gespräch. Ein Dialog hält keinen eigenen Zustand: Er wird nicht gespeichert, und ein Gespräch, das geschlossen oder durch das Ausloggen des Spielers abgebrochen wurde, lässt sich nicht fortsetzen. Ein Zweig, der sich etwas merken soll, setzt in seiner Funktion einen Punktestand oder ein Tag.
+
+Ein Client mit der Mod zeigt einen Dialog als Tafel nahe dem unteren Bildschirmrand, mit einer Zeile je Antwort. Klicke eine Zeile an oder drücke ihre Nummer, 1 bis 8; Esc oder die Inventartaste schließt das Gespräch. Ein Vanilla-Client bekommt denselben Text als Chatzeilen, in denen jede Antwort ein anklickbares `[n]` ist, das `/rdplserver talk n` ausführt. Der Server nimmt eine Wahl nur an, solange die Entity lebt und höchstens 8 Blöcke vom Spieler entfernt ist, und ignoriert eine Nummer, die der aktuelle Knoten nicht hat; der Bildschirm schließt sich von selbst, wenn sich der Spieler mehr als 8 Blöcke entfernt. Ein fehlendes `start`, eine Antwort ohne `text` und ein unbekanntes `goto` werden protokolliert und verwerfen den Dialog oder die Antwort; eine Entity-Variante, deren `dialog` kein Pack liefert, wird protokolliert und hat keinen.
+
 ## Würfel und Decks
 
 *spielmodi*
@@ -9816,6 +9894,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver round start`                                                                 | 0     | Dasselbe wie `/rdpl round start`, das daran weitergereicht wird                                                                                                                                                                                                                                                                                                              |
 | `/rdplserver round reset`, `round vote yes`, `round vote no`                              | 0     | Dasselbe wie die `/rdpl round`-Formen oben, die an diese weitergereicht werden                                                                                                                                                                                                                                                                                               |
 | `/rdplserver card <Regel> [Spieler]`                                                      | 2     | Eine [Kartenregel](#karten) den genannten Spielern oder dir selbst zeigen, nach ihrer ID oder ihrem Dateinamen. `when`, `repeat` und `cooldown` werden übergangen                                                                                                                                                                                                            |
+| `/rdplserver talk <number>`                                                               | 0     | Wählt im offenen Dialog eine Antwort nach ihrer Nummer. Die anklickbaren Antworten eines Vanilla-Clients führen ihn aus. [Dialoge](#dialoge)                                                                                                                                                                                                                                 |
 | `/rdplserver raid <raid> [Spieler oder x y z]`                                            | 3     | Startet den genannten [Raid](#raids) bei einem Spieler, an einer Position oder, ohne beides, bei dir, ohne Dorf. Wird abgelehnt, solange innerhalb von `reach` ein anderer Raid läuft                                                                                                                                                                                        |
 | `/rdplserver environment [<Dimension> <Name>]`                                            | 2     | Eine Dimension auf eine ihrer [Umgebungen](#umgebungen) umschalten oder mit `default` zurück auf ihr eigenes Aussehen. Ohne Angaben listet er jede Dimension mit Umgebungen und die, die sie gerade nutzt                                                                                                                                                                    |
 | `/rdplserver reset`                                                                       | 3     | Setzt die Karte zurück, wie es ein Rundenende tut: Alle werden festgehalten, die Entities weggefegt, die Punkte gelöscht, `resetRuns` ausgeführt, die Spieler nach `resetSendsTo` gesetzt und freigegeben, und eine Runde öffnet mit dem Startzähler, wie die Reset-Einstellungen unter [Vorgenerierung](#vorgenerierung) beschreiben. Wird nicht von `/rdpl` weitergereicht |
