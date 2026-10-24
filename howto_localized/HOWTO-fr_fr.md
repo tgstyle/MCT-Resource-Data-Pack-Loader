@@ -1591,6 +1591,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1663,6 +1664,8 @@ La cible est conservée dans la pile : l'objet continue de la montrer jusqu'au p
 }
 ```
 
+Un objet simple avec `sleepingBag` est un sac de couchage. Un clic droit sur le dessus d'un bloc solide, la nuit, allonge celui qui le tient sur le bloc au-dessus. Les conditions sont celles d'un lit : la nuit, une dimension où l'on peut dormir et aucune créature hostile à moins de huit blocs. La nuit est passée quand tous les joueurs dorment, comme avec les lits. Se réveiller ne change pas le point d'apparition, et le sac reste dans l'inventaire. `cooldown` l'empêche d'être réutilisé aussitôt.
+
 ### Clés de fichier d'objet
 
 *objets*
@@ -1695,6 +1698,7 @@ La cible est conservée dans la pile : l'objet continue de la montrer jusqu'au p
 | `locates`        | non           | `Village`, `minecraft:river`                  | aucun                      | Sur un objet simple, un clic droit cherche le lieu le plus proche de ce nom et oriente l'objet vers lui, comme une boussole. Le nom est une structure ou un biome vanilla, ou un nom enregistré avec `locateAs`. L'objet ne se cumule pas (pile de 1). Voir le paragraphe sur la boussole de repérage, plus haut |
 | `passesTurn`     | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours)                                                                                                                                                                             |
 | `portway`        | portway       | objet                                         | aucun                      | Les réglages d'un objet de voyage : les [clés de relais](#relais) qui valent pour un voyage, plus `consume` et `bind`. Voir [Objets de voyage](#objets-de-voyage)                                                                                                                                                |
+| `sleepingBag`    | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit sur le dessus d'un bloc allonge celui qui le tient pour dormir et passe la nuit comme un lit. Ne change jamais le point d'apparition et n'est pas consommé. Ne marche que là où l'on peut dormir. Ignoré si l'objet a aussi `locates`, `rolls` ou `passesTurn`               |
 | `requires`       | non           | liste d'ids de mods ou de namespaces de packs | aucun                      | Le fichier est ignoré à moins que tous soient présents                                                                                                                                                                                                                                                           |
 
 ### Clés de variantes d'objet

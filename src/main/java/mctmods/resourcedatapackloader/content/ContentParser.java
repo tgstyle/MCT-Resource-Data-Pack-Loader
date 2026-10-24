@@ -330,7 +330,8 @@ public final class ContentParser {
                 Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
                 Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)),
                 ContentParserWeapons.weapon(key, json),
-                ContentParserPortways.item(key, json));
+                ContentParserPortways.item(key, json),
+                Json.getBoolean(json, "sleepingBag", false));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

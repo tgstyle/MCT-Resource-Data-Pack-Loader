@@ -1591,6 +1591,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1663,6 +1664,8 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 }
 ```
 
+带有 `sleepingBag` 的普通物品就是睡袋。夜里右键单击实心方块的顶面，持有者会躺在上方的方块上。使用条件与床相同：必须是夜晚，所在维度允许睡觉，且八格内没有敌对生物。所有玩家都入睡时会跳过夜晚，与床一样。醒来不会改变重生点，睡袋也会留在物品栏中。`cooldown` 可防止它被连续使用。
+
 ### 物品文件键
 
 *物品*
@@ -1695,6 +1698,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | `locates`        | 否              | `Village`, `minecraft:river`              | 无                   | 对普通物品而言，右键会查找该名称最近的地点，并像指南针一样让物品指向那里。名称可以是原版结构或生物群系，也可以是用 `locateAs` 注册的名称。该物品的堆叠上限为 1。参见上方的定位指南针段落 |
 | `passesTurn`     | 否              | 布尔值                                    | `false`              | 在普通物品上，右键会像 `/rdplserver game pass` 那样结束持有者阵营的行动。参见[轮流行动](#轮流行动)                                                                                       |
 | `portway`        | portway         | 对象                                      | 无                   | 传送物品的设置：与行程相关的 [传送通道键](#传送通道)，加上 `consume` 和 `bind`，见[传送物品](#传送物品)                                                                                  |
+| `sleepingBag`    | 否              | 布尔值                                    | `false`              | 对普通物品，右键方块顶面会让持有者躺下睡觉，并像床一样跳过夜晚。不会改变重生点，也不会被消耗。仅在允许睡觉的地方有效。若同时有 `locates`、`rolls` 或 `passesTurn` 则忽略                 |
 | `requires`       | 否              | 模组 id 或资源包命名空间列表              | 无                   | 除非全部存在，否则跳过该文件                                                                                                                                                             |
 
 ### 物品变种键

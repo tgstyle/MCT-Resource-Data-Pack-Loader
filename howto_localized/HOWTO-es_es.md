@@ -1591,6 +1591,7 @@ Todas las claves a la vez. Un archivo real solo escribe las que necesita. Una cl
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1663,6 +1664,8 @@ El destino se guarda en la pila, así que el ítem sigue apuntando a él hasta e
 }
 ```
 
+Un ítem simple con `sleepingBag` es un saco de dormir. Con un clic derecho en la cara superior de un bloque sólido, de noche, quien lo sostiene se tumba en el bloque de encima. Exige las mismas condiciones que una cama: noche, una dimensión que permita dormir y ninguna criatura hostil a menos de ocho bloques. La noche se salta cuando todos los jugadores duermen, igual que con las camas. Al despertar no cambia el punto de reaparición, y el saco sigue en el inventario. `cooldown` evita que se pueda volver a usar enseguida.
+
 ### Claves de archivo de ítems
 
 *ítems*
@@ -1695,6 +1698,7 @@ El destino se guarda en la pila, así que el ítem sigue apuntando a él hasta e
 | `locates`        | no            | `Village`, `minecraft:river`                        | ninguno                               | En un ítem simple, un clic derecho busca el lugar más cercano con ese nombre y orienta el ítem hacia él, como una brújula. El nombre es una estructura o un bioma de vanilla, o uno registrado con `locateAs`. El ítem se apila de uno en uno. Consulta el párrafo de la brújula localizadora, más arriba |
 | `passesTurn`     | no            | booleano                                            | `false`                               | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                                                                                                                                      |
 | `portway`        | portway       | objeto                                              | ninguno                               | Los ajustes de un ítem de viaje: las [claves de pasaje](#pasajes) que valen para un viaje, más `consume` y `bind`. Consulta [Ítems de viaje](#ítems-de-viaje)                                                                                                                                             |
+| `sleepingBag`    | no            | booleano                                            | `false`                               | En un ítem simple, un clic derecho en la cara superior de un bloque tumba a quien lo sostiene para dormir y salta la noche como una cama. Nunca cambia el punto de reaparición y no se gasta. Solo funciona donde se puede dormir. Se ignora si el ítem también tiene `locates`, `rolls` o `passesTurn`   |
 | `requires`       | no            | lista de ids de mods o espacios de nombres de packs | ninguno                               | El archivo se omite a menos que estén todos presentes                                                                                                                                                                                                                                                     |
 
 ### Claves de variantes de ítems

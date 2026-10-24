@@ -1591,6 +1591,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1663,6 +1664,8 @@ La destinazione è conservata nella pila, quindi l'oggetto continua a indicarla 
 }
 ```
 
+Un oggetto semplice con `sleepingBag` è un sacco a pelo. Con un clic destro sulla faccia superiore di un blocco solido, di notte, chi lo tiene si sdraia sul blocco sopra. Servono le stesse condizioni di un letto: notte, una dimensione in cui si può dormire e nessuna creatura ostile entro otto blocchi. La notte viene saltata quando tutti i giocatori dormono, come con i letti. Svegliarsi non cambia il punto di rigenerazione e il sacco resta nell'inventario. `cooldown` impedisce di riusarlo subito.
+
 ### Chiavi del file degli oggetti
 
 *oggetti*
@@ -1695,6 +1698,7 @@ La destinazione è conservata nella pila, quindi l'oggetto continua a indicarla 
 | `locates`        | no            | `Village`, `minecraft:river`                   | nessuno                            | Su un oggetto semplice, un clic destro cerca il luogo più vicino con quel nome e punta l'oggetto verso di esso, come una bussola. Il nome è una struttura o un bioma vanilla, oppure uno registrato con `locateAs`. L'oggetto si impila a 1. Vedi il paragrafo sulla bussola localizzatrice qui sopra |
 | `passesTurn`     | no            | booleano                                       | `false`                            | Per un oggetto semplice, un clic destro passa il turno di chi lo tiene come fa `/rdplserver game pass`. Vedi [A turno](#a-turno)                                                                                                                                                                      |
 | `portway`        | portway       | oggetto                                        | nessuno                            | Le impostazioni di un oggetto da viaggio: le [chiavi del passaggio](#passaggi) che valgono per un viaggio, più `consume` e `bind`. Vedi [Oggetti da viaggio](#oggetti-da-viaggio)                                                                                                                     |
+| `sleepingBag`    | no            | booleano                                       | `false`                            | Per un oggetto semplice, un clic destro sulla faccia superiore di un blocco fa sdraiare chi lo tiene per dormire e salta la notte come un letto. Non cambia mai il punto di rigenerazione e non si consuma. Funziona solo dove si può dormire. Ignorato con `locates`, `rolls` o `passesTurn`         |
 | `requires`       | no            | elenco di id di mod o namespace di pack        | nessuno                            | Il file viene saltato a meno che tutti siano presenti                                                                                                                                                                                                                                                 |
 
 ### Chiavi delle varianti degli oggetti
