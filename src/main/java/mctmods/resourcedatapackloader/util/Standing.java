@@ -31,7 +31,9 @@ public final class Standing {
         return score != null && score >= scoreAtLeast;
     }
 
-    public boolean earnedBy(ServerPlayer player) { return (!team.isEmpty() || !objective.isEmpty() && scoreAtLeast != null) && met(player); }
+    public boolean any() { return !team.isEmpty() || !objective.isEmpty() && scoreAtLeast != null; }
+
+    public boolean earnedBy(ServerPlayer player) { return any() && met(player); }
 
     public static String teamOf(ServerPlayer player) {
         PlayerTeam held = Scores.teamOf(player);

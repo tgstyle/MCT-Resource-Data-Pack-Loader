@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.extra;
 import mctmods.resourcedatapackloader.content.ContentGenerated;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.def.PriceScaleDef;
 import mctmods.resourcedatapackloader.content.def.TradeDef;
 import mctmods.resourcedatapackloader.content.def.TradeStackDef;
 import mctmods.resourcedatapackloader.content.def.VillagerDef;
@@ -12,6 +13,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableSet;
@@ -159,7 +161,21 @@ public final class ContentVillagers {
                 level, buy, stack(entry, "buySecondary"), sell,
                 Math.max(1, Json.getInt(entry, "maxUses", 12)),
                 Math.max(0, Json.getInt(entry, "xp", 2)),
-                Json.strings(entry, "requires"));
+                Json.strings(entry, "requires"),
+                Json.getString(entry, "advancement", "").trim(),
+                Standing.parse(entry),
+                scale(key, entry));
+    }
+
+    @Nullable private static PriceScaleDef scale(ResourceLocation key, JsonObject entry) {
+        if (!entry.has("priceScale")) { return null; }
+        JsonObject json = Json.getJsonObject(entry, "priceScale");
+        String objective = Json.getString(json, "objective", "").trim();
+        if (objective.isEmpty() || !json.has("perPoint")) {
+            ContentLog.LOGGER.error("A priceScale in {} needs an objective and a perPoint, ignoring it", key);
+            return null;
+        }
+        return new PriceScaleDef(objective, Json.getFloat(json, "perPoint"), Json.getFloat(json, "min", 0.0F), Json.getFloat(json, "max", 10.0F));
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
@@ -259,6 +275,7 @@ public final class ContentVillagers {
             listings.add(listing);
             count++;
         }
+        ContentTradeGate.summarize();
         if (count > 0) { Summary.info("content_trades." + profession, "Added " + count + " villager trade(s) from packs to " + profession); }
     }
 
@@ -268,6 +285,7 @@ public final class ContentVillagers {
         ItemStack sell = ContentStacks.parse(def.key(), def.sell().item(), def.sell().min());
         if (buy.isEmpty() || sell.isEmpty()) { return null; }
         ItemStack buySecondary = def.buySecondary().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(def.key(), def.buySecondary().item(), def.buySecondary().min());
+        if (!ContentTradeGate.register(def, buy, buySecondary, sell)) { return null; }
         return new ContentTrade(def, buy, buySecondary, sell);
     }
 
