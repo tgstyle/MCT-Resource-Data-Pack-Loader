@@ -324,5 +324,7 @@
   "rdpl.team.join.closed": "%s não é uma equipa em que possas entrar",
   "rdpl.team.join.waiting": "Há uma ronda em curso, por isso entras em %s quando ela acabar",
   "rdpl.team.join.ok": "Entraste em %s",
+  "rdpl.socket.empty": "Engaste vazio",
+  "rdpl.socket.filled": "Engaste: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <lados|nome>|dice <lançamento>|advantage [lançamento]|disadvantage [lançamento]|pick <jogador|team [equipa]>|deck <draw|shuffle|left> <nome>|teamroll [lançamento]|tiebreak [objetivo]|last [contagem]|pass> [store <objetivo>] [audience <self|team|all|radius <blocos>|silent>]"
 }

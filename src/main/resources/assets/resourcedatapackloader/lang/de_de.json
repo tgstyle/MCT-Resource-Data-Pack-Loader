@@ -324,5 +324,7 @@
   "rdpl.team.join.closed": "%s ist kein Team, dem du beitreten kannst",
   "rdpl.team.join.waiting": "Eine Runde läuft, also trittst du %s nach ihrem Ende bei",
   "rdpl.team.join.ok": "Du bist %s beigetreten",
+  "rdpl.socket.empty": "Leere Fassung",
+  "rdpl.socket.filled": "Fassung: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <Seiten|Name>|dice <Wurf>|advantage [Wurf]|disadvantage [Wurf]|pick <player|team [Team]>|deck <draw|shuffle|left> <Name>|teamroll [Wurf]|tiebreak [Ziel]|last [Anzahl]|pass> [store <Ziel>] [audience <self|team|all|radius <Blöcke>|silent>]"
 }

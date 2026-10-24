@@ -324,5 +324,7 @@
   "rdpl.team.join.closed": "До %s не можна приєднатися",
   "rdpl.team.join.waiting": "Раунд триває, тож ви приєднаєтеся до %s після його завершення",
   "rdpl.team.join.ok": "Ви приєдналися до %s",
+  "rdpl.socket.empty": "Порожнє гніздо",
+  "rdpl.socket.filled": "Гніздо: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }

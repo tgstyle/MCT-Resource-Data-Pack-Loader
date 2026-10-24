@@ -324,5 +324,7 @@
   "rdpl.team.join.closed": "%s není tým, do kterého se můžeš přidat",
   "rdpl.team.join.waiting": "Kolo běží, takže se k %s připojíš, až skončí",
   "rdpl.team.join.ok": "Připojil jsi se k %s",
+  "rdpl.socket.empty": "Prázdná zdířka",
+  "rdpl.socket.filled": "Zdířka: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }

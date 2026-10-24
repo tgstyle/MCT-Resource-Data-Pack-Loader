@@ -324,5 +324,7 @@
   "rdpl.team.join.closed": "В %s нельзя вступить",
   "rdpl.team.join.waiting": "Идёт раунд, поэтому вы вступите в %s после его окончания",
   "rdpl.team.join.ok": "Вы вступили в %s",
+  "rdpl.socket.empty": "Пустое гнездо",
+  "rdpl.socket.filled": "Гнездо: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <грани|имя>|dice <бросок>|advantage [бросок]|disadvantage [бросок]|pick <player|team [команда]>|deck <draw|shuffle|left> <имя>|teamroll [бросок]|tiebreak [цель]|last [число]|pass> [store <цель>] [audience <self|team|all|radius <блоки>|silent>]"
 }
