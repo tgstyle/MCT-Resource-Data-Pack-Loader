@@ -57,6 +57,7 @@
 - [툴팁](#툴팁)
 - [언어 게이트](#언어-게이트)
 - [물약, 물약 유형, 양조](#물약-물약-유형-양조)
+- [마법 부여](#마법-부여)
 - [모루 작업](#모루-작업)
 - [접사와 소켓](#접사와-소켓)
 - [마법 부여대](#마법-부여대)
@@ -193,6 +194,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/brewing/*.json`                                                                    | 양조대 레시피. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                                             |
 | `<namespace>/potions/*.json`                                                                    | 물약 효과. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                                                 |
 | `<namespace>/potion_types/*.json`                                                               | 그 효과로 만든 병에 담긴 물약. [물약, 물약 유형, 양조](#물약-물약-유형-양조)                                                                                             |
+| `<namespace>/enchantments/*.json`                                                               | 사용자 지정 마법. [마법 부여](#마법-부여) |
 | `<namespace>/villagers/*.json`                                                                  | 주민 직업. [주민과 거래](#주민과-거래)                                                                                                                                   |
 | `<namespace>/trades/*.json`                                                                     | 직종이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                                          |
 | `<namespace>/loot_tables/*.json`                                                                | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                  |
@@ -512,7 +514,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 | 서버에만 있어도 충분함                                                                                                                                            | 클라이언트에도 팩이 필요함                                                                |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                  |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `sounds`, `tabs`                                               |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                               |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                    |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)              |
@@ -2594,6 +2596,61 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 
 각 항목은 한 아이템을 다른 아이템으로 양조하는 `input`, `ingredient`, `output`이거나, 한 물약 유형을 다른 물약 유형으로 바꾸는 `from`, `ingredient`, `to`입니다. 어느 쪽이든 `ingredient`는 필수이며, 항목은 `requires`도 받으므로 파일 전체가 아니라 레시피 하나만 건너뛸 수 있습니다.
 
+## 마법 부여
+
+*제작, 전리품, 거래*
+
+`<namespace>/enchantments/*.json`
+
+파일의 경로가 곧 마법의 레지스트리 이름이므로 `mypack/enchantments/venom_edge.json`은 `mypack:venom_edge`를 등록합니다. 마법은 `category`에 해당하는 아이템과 `items`에 적힌 모든 아이템에 붙으며, 다른 마법과 마찬가지로 마법 부여대가 제시하고, 전리품에 실리고, 주민이 거래합니다.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| 키         | 필수   | 값                                                                                                                                  | 기본값                                           | 설명                                                                                    |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| `name`     | 아니요 | 번역 키                                                                                                                             | `enchantment.<namespace>.<name>`                 | 플레이어에게 보이는 이름                                                                |
+| `maxLevel` | 아니요 | 1에서 255 사이의 정수                                                                                                               | `1`                                              | 최고 레벨입니다. 범위를 벗어난 값은 범위 안으로 맞춰지며 오류 줄이 남습니다             |
+| `rarity`   | 아니요 | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                         | 마법 부여대와 전리품이 고르는 빈도입니다. 가중치는 10, 5, 2, 1입니다                    |
+| `slots`    | 아니요 | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`의 목록                                                                       | `["mainhand"]`                                   | 마법이 작동하려면 아이템을 들거나 착용해야 하는 위치                                    |
+| `category` | 아니요 | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | 없음                                             | 마법을 붙일 수 있는 아이템 종류입니다. `weapon`은 검, `digger`는 도끼, 곡괭이, 삽입니다 |
+| `items`    | 아니요 | 아이템 ID의 목록                                                                                                                    | 없음                                             | 추가로 마법을 붙일 수 있는 아이템이며, `category`가 없으면 이 아이템만 대상입니다       |
+| `treasure` | 아니요 | 불리언                                                                                                                              | `false`                                          | 전리품이나 거래에서만 얻을 수 있고 마법 부여대는 절대 제시하지 않습니다                 |
+| `minCost`  | 아니요 | `base`와 `perLevel`을 가진 객체                                                                                                     | `11`과 `10`                                      | 해당 레벨에 필요한 마법 부여 세기                                                       |
+| `maxCost`  | 아니요 | `base`와 `perLevel`을 가진 객체                                                                                                     | `minCost`의 `base`에 5를 더한 값과 그 `perLevel` | 해당 레벨이 나타날 수 있는 가장 큰 마법 부여 세기                                       |
+| `effects`  | 아니요 | 객체의 목록                                                                                                                         | 없음                                             | 마법이 하는 일입니다. 아래를 참고하세요                                                 |
+| `requires` | 아니요 | 모드 ID의 목록                                                                                                                      | 없음                                             | 나열한 모드 중 하나라도 없으면 파일을 건너뜁니다                                        |
+
+`category`와 `items`가 모두 없는 파일은 로그에 오류 줄을 남기고 건너뜁니다. 쓸 수 있는 슬롯이 없는 파일도 마찬가지입니다. `items`의 ID를 설치된 어떤 모드도 제공하지 않아도 문제는 없습니다. 비용은 `base + perLevel * (level - 1)`로 계산됩니다.
+
+`effects`의 각 항목에는 `type`이 있습니다.
+
+| 타입           | 키                                      | 설명                                                                                                                                                                                                     |
+| -------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | 바닐라의 보호 계열 마법처럼 착용한 방어구의 보호 점수로 계산됩니다. `from`에는 `all`, `fire`, `fall`, `explosion`, `projectile`을 적습니다(생략하면 `all`이며, 보호를 무시하는 피해는 포함하지 않습니다) |
+| `damage`       | `mob`, `amount`                         | 무기로 주는 추가 피해입니다. 대상 몹은 `any`(기본값), `undead`, `arthropod`, `illager`입니다                                                                                                             |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | 물약 효과를 줍니다. `on`은 `attack`(맞은 몹이 받음, 기본값) 또는 `hurt`(착용자가 맞았을 때 공격자가 받음)입니다. `potion`은 필수이고, `duration`의 단위는 틱(`100`), `amplifier`는 0에서 255(`0`)입니다  |
+
+`amount`와 `duration`은 비용과 같은 `base`, `perLevel` 쌍을 쓰며, `protection`은 둘 다 버림하여 정수 점수로 만듭니다. 방어구 슬롯이 아닌 곳의 `protection` 효과와 알 수 없는 물약을 가리키는 `apply_effect`는 오류 줄을 남기고 건너뜁니다.
+
+마법 레지스트리는 월드와 함께 저장되며, 사용자 지정 물약과 같습니다. 팩을 제거하면 서버는 Forge의 누락 항목 확인 절차를 거칩니다. 확인을 요구하고 먼저 월드 백업을 만들며, 전용 서버는 `-Dfml.queryResult=confirm`으로 시작하지 않는 한 응답을 기다립니다. ID는 예약된 채로 남아 다른 마법이 차지하지 못하고, 아이템은 태그에 그 ID를 그대로 보관하며, 팩이 없는 동안 바닐라는 이를 무시하고, 팩을 되돌리면 다시 살아납니다.
+
 ## 모루 작업
 
 *제작, 전리품, 거래*
@@ -2932,6 +2989,36 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `requires` | 아니요 | 문자열 목록    | 없음   | 있어야 하는 모드 id, 팩 네임스페이스, `config:` 옵션이며 다른 정의와 같습니다                                              |
 
 id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 두 칸짜리 구조물은 들 수 없고, 보호된 블록이나 경도가 0보다 작은 블록도 들 수 없습니다. 몹을 들어 올리면 탄 개체는 내려지고, 끈은 따로 처리하지 않으며, 든 플레이어에게는 아무것도 그려지지 않습니다. 든 데이터는 게임을 업그레이드할 때 데이터 픽서를 거치지 않고, 블록이나 몹을 더 이상 찾을 수 없는 상태는 로그에 오류 한 줄을 남기고 지워집니다. 보관 화면이 있는 팩 몹은 웅크리고 있으면 화면을 여는 대신 들어 올립니다.
+
+## 광맥 채굴
+
+*제작, 전리품, 거래*
+
+`<namespace>/veins/*.json`
+
+파일 이름은 원하는 대로 정할 수 있으며, 폴더만 읽고 여러 파일이 겹쳐 적용됩니다.
+
+곡괭이로 광석을 부수면 보통은 그 블록 하나만 부서집니다. 여기에 파일을 두면 블록 그룹과 그것을 한꺼번에 캐는 도구를 지정할 수 있습니다. 서바이벌의 플레이어가 주로 쓰는 손에 든 도구 중 하나로 그룹의 블록을 부수면, 맞닿아 있는 같은 종류의 블록도 가까운 것부터 제한까지 함께 부서집니다. 파일이 없으면 아무것도 바뀌지 않으며, 선택을 플레이어에게 맡기려는 팩은 팩 옵션에서 설명한 대로 `requires`에 `config:` 항목을 넣습니다.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| 키         | 필수   | 값                                                                                               | 기본값 | 설명                                                                                                   |
+| ---------- | ------ | ------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------ |
+| `blocks`   | 예     | 블록 id 목록. 경도 그룹처럼 1.12.2에서는 `meta`, 1.20.1 이상에서는 `properties`를 쓸 수 있습니다 |        | 그룹. 한 광맥에는 한 종류의 블록만 들어가며, 그룹 안의 서로 다른 두 블록이 이어지는 일은 없습니다      |
+| `tools`    | 예     | 아이템 id 목록. 1.12.2에서는 `modid:item:meta`                                                   |        | 첫 블록이 부서질 때 주로 쓰는 손에 들고 있는 도구. 존재하지 않는 아이템은 로그 한 줄과 함께 건너뜁니다 |
+| `limit`    | 아니요 | int, 1~256                                                                                       | `16`   | 첫 블록 외에 부술 수 있는 최대 블록 수                                                                 |
+| `hunger`   | 아니요 | float, 0 이상                                                                                    | `0.1`  | 추가 블록 하나당 허기 포인트. 1포인트는 소모도 4입니다. 첫 블록은 바닐라의 평소 비용이 듭니다          |
+| `requires` | 아니요 | 문자열 목록                                                                                      | 없음   | 있어야 하는 모드 id, 팩 네임스페이스, `config:` 옵션이며 다른 정의와 같습니다                          |
+
+맞닿는다는 것은 면, 모서리, 꼭짓점으로 닿는다는 뜻이라 블록 하나에 이웃이 26개 있습니다. 서바이벌에서만 작동하며, 크리에이티브와 관전자 플레이어는 평소처럼 블록 하나만 부숩니다. 도구가 부서지거나 플레이어의 음식 수치가 0이 되면 멈춥니다. 추가 블록은 평소대로 드롭을 내놓고, 손에 든 도구의 행운과 블록 드롭의 모든 규칙이 적용되며, 도구 내구도를 한 번씩 깎습니다. 경도 그룹이 유지하는 블록에서는 작동하지 않습니다. 서버 팩에서만 동작하고 클라이언트에는 아무것도 필요 없습니다. 유효한 블록이나 도구가 없는 파일은 오류 한 줄과 함께 무시됩니다.
 
 ## 플레이어 전리품
 

@@ -57,6 +57,7 @@
 - [Popisky předmětů](#popisky-předmětů)
 - [Jazykové brány](#jazykové-brány)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
+- [Enchanty](#enchanty)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Afixy a patice](#afixy-a-patice)
 - [Čarovací stůl](#čarovací-stůl)
@@ -193,6 +194,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/brewing/*.json`                                                                    | Recepty pro varný stojan. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                                                    |
 | `<namespace>/potions/*.json`                                                                    | Efekty lektvarů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                                                             |
 | `<namespace>/potion_types/*.json`                                                               | Lektvary v lahvičkách sestavené z těchto efektů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                             |
+| `<namespace>/enchantments/*.json`                                                               | Vlastní enchanty. [Enchanty](#enchanty) |
 | `<namespace>/villagers/*.json`                                                                  | Profese vesničanů. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                                                    |
 | `<namespace>/trades/*.json`                                                                     | Co které povolání nakupuje a prodává. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                                 |
 | `<namespace>/loot_tables/*.json`                                                                | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                 |
@@ -512,7 +514,7 @@ Balíček může žít jen na serveru, zatímco hráči hrají na čistých vani
 | Stačí jen server                                                                                                                                       | Vyžaduje balíček i na klientu                                                       |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                 | `blocks`, `items`, `fluids`, `materials`                                            |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                         |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                              | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                     | `biomes`, `dimensions`, `portalframes`                                              |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách) | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)       |
@@ -2594,6 +2596,61 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 
 Každá položka je buď `input`, `ingredient` a `output`, což uvaří jeden předmět na druhý, nebo `from`, `ingredient` a `to`, což změní jeden typ lektvaru na jiný. `ingredient` je povinný v obou případech a položka přijímá i `requires`, takže lze přeskočit jeden recept, aniž by se přeskočil soubor.
 
+## Enchanty
+
+*výroba, kořist a obchod*
+
+`<namespace>/enchantments/*.json`
+
+Cesta souboru je registrační název enchantu, takže `mypack/enchantments/venom_edge.json` zaregistruje `mypack:venom_edge`. Vztahuje se na předměty své `category` a na každý předmět uvedený v `items`; nabízí ho kouzelnický stůl, nese ho kořist a vesničané s ním obchodují jako s kterýmkoli jiným.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Klíč       | Povinný | Hodnota                                                                                                                             | Výchozí                                     | Co dělá                                                                                     |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `name`     | ne      | překladový klíč                                                                                                                     | `enchantment.<namespace>.<name>`            | Co vidí hráč                                                                                |
+| `maxLevel` | ne      | celé číslo od 1 do 255                                                                                                              | `1`                                         | Nejvyšší úroveň. Hodnota mimo rozsah se ořízne a zapíše se chybový řádek                    |
+| `rarity`   | ne      | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                    | Jak často ho vybírá kouzelnický stůl a kořist: váha 10, 5, 2 nebo 1                         |
+| `slots`    | ne      | seznam z `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                     | `["mainhand"]`                              | Kde musí být předmět držen nebo nošen, aby enchant platil                                   |
+| `category` | ne      | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | žádná                                       | Druhy předmětů, které ho přijímají. `weapon` jsou meče a `digger` sekery, krumpáče a lopaty |
+| `items`    | ne      | seznam id předmětů                                                                                                                  | žádný                                       | Další předměty, které ho přijímají, nebo jediné, když chybí `category`                      |
+| `treasure` | ne      | boolean                                                                                                                             | `false`                                     | Nalezne se jen v kořisti nebo v obchodech, kouzelnický stůl ho nenabízí                     |
+| `minCost`  | ne      | objekt s `base` a `perLevel`                                                                                                        | `11` a `10`                                 | Kouzelná síla, kterou úroveň potřebuje                                                      |
+| `maxCost`  | ne      | objekt s `base` a `perLevel`                                                                                                        | `base` z `minCost` plus 5 a jeho `perLevel` | Nejvyšší kouzelná síla, při které se úroveň ještě objeví                                    |
+| `effects`  | ne      | seznam objektů                                                                                                                      | žádný                                       | Co enchant dělá, viz níže                                                                   |
+| `requires` | ne      | seznam id modů                                                                                                                      | žádný                                       | Přeskočí soubor, když některý z modů chybí                                                  |
+
+Soubor bez `category` i `items` se přeskočí s chybovým řádkem v logu, stejně jako soubor bez použitelného slotu. Id v `items`, které žádný nainstalovaný mod neposkytuje, nevadí. Ceny se řídí vzorcem `base + perLevel * (level - 1)`.
+
+Každý záznam v `effects` má `type`:
+
+| Typ            | Klíče                                   | Co dělá                                                                                                                                                                                                                              |
+| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `protection`   | `from`, `amount`                        | Počítá se jako body ochrany na nošené zbroji, stejně jako ochranné enchanty vanilly. `from` uvádí `all`, `fire`, `fall`, `explosion` a `projectile` (bez něj platí `all`, které nepokrývá poškození ignorující ochranu)              |
+| `damage`       | `mob`, `amount`                         | Bonusové poškození zbraní proti mobům `any` (výchozí), `undead`, `arthropod` nebo `illager`                                                                                                                                          |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Uděluje efekt lektvaru. `on` je `attack` (efekt dostane zasažený mob, výchozí) nebo `hurt` (efekt dostane útočník, když je nositel zasažen). `potion` je povinný, `duration` je v tikách (`100`) a `amplifier` jde od 0 do 255 (`0`) |
+
+`amount` a `duration` používají stejnou dvojici `base` a `perLevel` jako ceny a `protection` obě hodnoty zaokrouhlí dolů na celé body. Efekt `protection` na slotu, který není zbroj, a `apply_effect` s neznámým lektvarem se přeskočí s chybovým řádkem.
+
+Registr enchantů se ukládá spolu se světem, stejně jako vlastní lektvary. Odebrání packu pošle server přes výzvu Forge k chybějícím položkám, která žádá o potvrzení a nejdřív zálohuje svět; dedikovaný server na ni čeká, pokud se nespustí s `-Dfml.queryResult=confirm`. Id zůstane rezervované, takže ho nepřevezme jiný enchant, předměty ho drží ve svém tagu, vanilla ho ignoruje, dokud pack chybí, a po vrácení packu je zpět.
+
 ## Práce s kovadlinou
 
 *výroba, kořist a obchod*
@@ -2932,6 +2989,36 @@ Hráč, který se plíží a klikne pravým tlačítkem s prázdnou hlavní ruko
 | `requires` | ne      | seznam řetězců  | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice                      |
 
 Jen ID, žádné štítky. Dvoublokové stavby jako dveře, vysoké rostliny a postele nést nejde, stejně jako chráněné bloky a bloky s tvrdostí pod 0. Jezdci moba se při zvednutí shodí, vodítko se zvlášť neřeší a na nosiči se nic nevykresluje. Nesená data se při přechodu na novější verzi hry neopravují a náklad, jehož blok nebo mob už neexistuje, se smaže s chybovým řádkem v logu. Plížící se mob z balíčku s úložným rozhraním se zvedne místo otevření.
+
+## Těžení žil
+
+*výroba, kořist a obchod*
+
+`<namespace>/veins/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Rozbití rudy krumpáčem normálně rozbije jen ten jeden blok. Soubor zde pojmenuje skupinu bloků a nástroje, které ji těží naráz: když hráč v přežití rozbije blok ze skupiny jedním z těchto nástrojů v hlavní ruce, rozbijí se i dotýkající se bloky stejného druhu, od nejbližších, až do limitu. Bez souboru se nic nemění a balíček, který chce nechat volbu na hráči, dá do `requires` položku `config:`, jak je popsáno v části Volby balíčku.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Klíč       | Povinný | Hodnota                                                                                          | Výchozí | Co dělá                                                                                                            |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------ |
+| `blocks`   | ano     | seznam id bloků, s `meta` (1.12.2) nebo `properties` (1.20.1 a novější) jako ve skupině tvrdosti |         | Skupina. Do jedné žíly patří jen bloky jednoho druhu, nikdy dva různé bloky ze skupiny                             |
+| `tools`    | ano     | seznam id předmětů, v 1.12.2 `modid:item:meta`                                                   |         | Drží se v hlavní ruce, když se rozbije první blok. Předmět, který neexistuje, se přeskočí s řádkem v logu          |
+| `limit`    | ne      | int, 1 až 256                                                                                    | `16`    | Nejvíc rozbitých bloků kromě prvního                                                                               |
+| `hunger`   | ne      | float, 0 nebo víc                                                                                | `0.1`   | Body hladu za každý další blok. 1 bod jsou 4 jednotky vyčerpání. První blok stojí obvyklé množství jako ve vanilla |
+| `requires` | ne      | seznam řetězců                                                                                   | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice              |
+
+Dotýkat se znamená mít společnou stěnu, hranu nebo roh, takže blok má 26 sousedů. Funguje jen v přežití: hráči v kreativním režimu a diváci rozbíjejí jeden blok jako obvykle. Zastaví se, když se nástroj rozbije nebo hladina jídla hráče klesne na 0. Každý další blok dá své obvyklé dropy, s Fortunou drženého nástroje a všemi pravidly z části Dropy z bloků, a nástroj opotřebuje o jedno použití. Na blok, který drží skupina tvrdosti, se nespustí. Jsou to data balíčku jen pro server a na klientovi nepotřebují nic. Soubor bez platných bloků nebo nástrojů se ignoruje s řádkem chyby.
 
 ## Kořist hráčů
 

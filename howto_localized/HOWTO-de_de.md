@@ -57,6 +57,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Tooltips](#tooltips)
 - [Sprachtore](#sprachtore)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
+- [Verzauberungen](#verzauberungen)
 - [Ambosswerk](#ambosswerk)
 - [Affixe und Fassungen](#affixe-und-fassungen)
 - [Zaubertisch](#zaubertisch)
@@ -193,6 +194,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/brewing/*.json`                                                                    | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                                     |
 | `<namespace>/potions/*.json`                                                                    | Trankeffekte. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                                                  |
 | `<namespace>/potion_types/*.json`                                                               | Abgefüllte Tränke aus diesen Effekten. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                         |
+| `<namespace>/enchantments/*.json`                                                               | Eigene Verzauberungen. [Verzauberungen](#verzauberungen) |
 | `<namespace>/villagers/*.json`                                                                  | Berufe der Dorfbewohner. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                                  |
 | `<namespace>/trades/*.json`                                                                     | Was Laufbahnen kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                      |
 | `<namespace>/loot_tables/*.json`                                                                | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                           |
@@ -512,7 +514,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | Server allein genügt                                                                                                                                                | Pack muss auch auf den Client                                                       |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                              | `blocks`, `items`, `fluids`, `materials`                                            |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                           | `potions`, `potion_types`, `sounds`, `tabs`                                         |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                           | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                  | `biomes`, `dimensions`, `portalframes`                                              |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
@@ -2594,6 +2596,61 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 
 Jeder Eintrag ist entweder `input`, `ingredient` und `output`, was ein Item zu einem anderen braut, oder `from`, `ingredient` und `to`, was einen Tranktyp in einen anderen verwandelt. `ingredient` ist in beiden Fällen Pflicht, und ein Eintrag nimmt auch `requires`, sodass ein einzelnes Rezept übersprungen werden kann, ohne dass die ganze Datei übersprungen wird.
 
+## Verzauberungen
+
+*herstellung, beute und handel*
+
+`<namespace>/enchantments/*.json`
+
+Der Pfad der Datei ist der Registrierungsname der Verzauberung, also registriert `mypack/enchantments/venom_edge.json` den Namen `mypack:venom_edge`. Sie sitzt auf den Gegenständen ihrer `category` und auf jedem Gegenstand, der in `items` steht; der Zaubertisch bietet sie an, Beute trägt sie und Dorfbewohner handeln damit wie mit jeder anderen.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Schlüssel  | Pflicht | Wert                                                                                                                                | Standard                                          | Was er macht                                                                                                    |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `name`     | nein    | Übersetzungsschlüssel                                                                                                               | `enchantment.<namespace>.<name>`                  | Was der Spieler sieht                                                                                           |
+| `maxLevel` | nein    | ganze Zahl von 1 bis 255                                                                                                            | `1`                                               | Die höchste Stufe. Ein Wert außerhalb des Bereichs wird begrenzt, mit einer Fehlerzeile                         |
+| `rarity`   | nein    | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                          | Wie oft Zaubertisch und Beute sie wählen: Gewicht 10, 5, 2 oder 1                                               |
+| `slots`    | nein    | Liste aus `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                    | `["mainhand"]`                                    | Wo der Gegenstand gehalten oder getragen werden muss, damit die Verzauberung zählt                              |
+| `category` | nein    | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | keine                                             | Die Gegenstandsarten, die sie aufnehmen. `weapon` sind Schwerter, `digger` sind Äxte, Spitzhacken und Schaufeln |
+| `items`    | nein    | Liste von Gegenstands-IDs                                                                                                           | keine                                             | Weitere Gegenstände, die sie aufnehmen, oder die einzigen, wenn es keine `category` gibt                        |
+| `treasure` | nein    | boolean                                                                                                                             | `false`                                           | Nur als Beute oder im Handel zu finden, der Zaubertisch bietet sie nie an                                       |
+| `minCost`  | nein    | Objekt mit `base` und `perLevel`                                                                                                    | `11` und `10`                                     | Die Verzauberungskraft, die die Stufe braucht                                                                   |
+| `maxCost`  | nein    | Objekt mit `base` und `perLevel`                                                                                                    | `base` von `minCost` plus 5 und dessen `perLevel` | Die höchste Verzauberungskraft, bei der die Stufe noch erscheint                                                |
+| `effects`  | nein    | Liste von Objekten                                                                                                                  | keine                                             | Was die Verzauberung tut, siehe unten                                                                           |
+| `requires` | nein    | Liste von Mod-IDs                                                                                                                   | keine                                             | Überspringt die Datei, wenn einer dieser Mods fehlt                                                             |
+
+Eine Datei ohne `category` und ohne `items` wird mit einer Fehlerzeile im Log übersprungen, ebenso eine ohne brauchbaren Slot. Eine ID in `items`, die kein installierter Mod liefert, schadet nicht. Die Kosten folgen `base + perLevel * (level - 1)`.
+
+Jeder Eintrag in `effects` hat einen `type`:
+
+| Typ            | Schlüssel                               | Was er macht                                                                                                                                                                                                                                                     |
+| -------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | Zählt als Schutzpunkte auf getragener Rüstung, so wie die Schutzverzauberungen von Vanilla. `from` listet `all`, `fire`, `fall`, `explosion` und `projectile` auf (ohne Angabe gilt `all`, das Schaden ausnimmt, der Schutz ignoriert)                           |
+| `damage`       | `mob`, `amount`                         | Zusätzlicher Schaden mit der Waffe, gegen Mobs vom Typ `any` (Standard), `undead`, `arthropod` oder `illager`                                                                                                                                                    |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Gibt einen Trankeffekt. `on` ist `attack` (der getroffene Mob bekommt ihn, Standard) oder `hurt` (der Angreifer bekommt ihn, wenn der Träger getroffen wird). `potion` ist Pflicht, `duration` zählt in Ticks (`100`) und `amplifier` reicht von 0 bis 255 (`0`) |
+
+`amount` und `duration` nutzen dasselbe Paar `base` und `perLevel` wie die Kosten, und `protection` rundet beide auf ganze Punkte ab. Ein `protection`-Effekt auf einem Slot, der keine Rüstung ist, und ein `apply_effect` mit unbekanntem Trank werden mit einer Fehlerzeile übersprungen.
+
+Das Verzauberungsregister wird mit der Welt gespeichert, wie bei eigenen Tränken. Wird das Pack entfernt, schickt der Server die Welt durch die Abfrage von Forge zu fehlenden Einträgen, die eine Bestätigung verlangt und zuerst ein Backup der Welt anlegt; ein dedizierter Server wartet darauf, wenn er nicht mit `-Dfml.queryResult=confirm` gestartet wird. Die ID bleibt reserviert, damit keine andere Verzauberung sie übernimmt, Gegenstände behalten sie in ihrem Tag, Vanilla ignoriert sie, solange das Pack fehlt, und mit dem Pack ist sie wieder da.
+
 ## Ambosswerk
 
 *herstellung, beute und handel*
@@ -2932,6 +2989,36 @@ Wer schleicht und mit leerer Haupthand rechtsklickt, hebt einen aufgeführten Bl
 | `requires` | nein    | Liste von Strings      | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                     |
 
 Nur IDs, keine Tags. Zweiteilige Strukturen wie Türen, hohe Pflanzen und Betten lassen sich nicht tragen, ebenso wenig geschützte Blöcke oder Blöcke mit einer Härte unter 0. Passagiere eines Mobs werden beim Aufheben abgesetzt, eine Leine wird nicht gesondert behandelt, und am Träger wird nichts gezeichnet. Getragene Daten werden bei Spiel-Upgrades nicht per Data Fixer angepasst, und ein Getragenes, dessen Block oder Mob sich nicht mehr auflösen lässt, wird mit einer Fehlerzeile im Log gelöscht. Ein schleichendes Pack-Mob mit Lager-GUI wird aufgehoben, statt dass die GUI öffnet.
+
+## Adernabbau
+
+*herstellung, beute und handel*
+
+`<namespace>/veins/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Wer ein Erz mit einer Spitzhacke abbaut, bricht normalerweise nur diesen einen Block. Eine Datei hier benennt eine Gruppe von Blöcken und die Werkzeuge, die sie in einem Zug abbauen: Bricht ein Spieler im Überlebensmodus einen Block der Gruppe mit einem dieser Werkzeuge in der Haupthand, brechen auch die angrenzenden Blöcke derselben Art, die nächsten zuerst, bis zu einem Limit. Ohne Datei ändert sich nichts, und ein Pack, das die Wahl dem Spieler überlassen will, setzt einen `config:`-Eintrag in `requires`, wie unter Pack-Optionen beschrieben.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Schlüssel  | Pflicht | Wert                                                                                                    | Standard | Was er macht                                                                                                              |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | ja      | Liste von Block-IDs, mit `meta` (1.12.2) oder `properties` (1.20.1 und neuer) wie bei einer Härtegruppe |          | Die Gruppe. Nur Blöcke einer Art bilden eine Ader, nie zwei verschiedene Blöcke der Gruppe                                |
+| `tools`    | ja      | Liste von Item-IDs, in 1.12.2 `modid:item:meta`                                                         |          | In der Haupthand gehalten, wenn der erste Block bricht. Ein Item, das es nicht gibt, wird mit einer Logzeile übersprungen |
+| `limit`    | nein    | int, 1 bis 256                                                                                          | `16`     | Höchstzahl der Blöcke, die außer dem ersten gebrochen werden                                                              |
+| `hunger`   | nein    | float, 0 oder mehr                                                                                      | `0.1`    | Hungerpunkte pro zusätzlichem Block. 1 Punkt entspricht 4 Erschöpfung. Der erste Block kostet den üblichen Vanilla-Betrag |
+| `requires` | nein    | Liste von Strings                                                                                       | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                    |
+
+Angrenzend heißt, sich an einer Fläche, Kante oder Ecke zu berühren, ein Block hat also 26 Nachbarn. Nur im Überlebensmodus: Spieler im Kreativ- oder Zuschauermodus brechen wie gewohnt einen Block. Es endet, wenn das Werkzeug kaputtgeht oder der Nahrungswert des Spielers 0 erreicht. Jeder zusätzliche Block gibt seine üblichen Drops, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und nutzt das Werkzeug um eine Verwendung ab. Auf einem Block, den eine Härtegruppe behält, läuft es nicht. Es sind reine Server-Packdaten, auf dem Client wird nichts gebraucht. Eine Datei ohne gültige Blöcke oder Werkzeuge wird mit einer Fehlerzeile ignoriert.
 
 ## Spielerbeute
 

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.core.util.EarlyConfig;
 import mctmods.resourcedatapackloader.core.util.SplashDark;
 import mctmods.resourcedatapackloader.content.ContentModels;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.extra.ContentEnchantments;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
@@ -49,7 +50,7 @@ import java.util.Map;
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
         Lang.load();
         if (Config.content.vanillaClients) {
-            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, villager professions, biomes, dimensions and entity variants in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates, recipes and trades, still applies");
+            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, enchantments, villager professions, biomes, dimensions and entity variants in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates, recipes and trades, still applies");
         }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug);
         LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",
@@ -75,6 +76,7 @@ import java.util.Map;
             MinecraftForge.EVENT_BUS.register(ContentRegistry.class);
             MinecraftForge.EVENT_BUS.register(ContentSounds.class);
             if (ContentPotions.load()) { MinecraftForge.EVENT_BUS.register(ContentPotions.class); }
+            if (ContentEnchantments.load()) { MinecraftForge.EVENT_BUS.register(ContentEnchantments.class); }
             if (ContentVillagers.load()) { MinecraftForge.EVENT_BUS.register(ContentVillagers.class); }
             if (ContentBiomes.load()) { MinecraftForge.EVENT_BUS.register(ContentBiomes.class); }
             if (FMLCommonHandler.instance().getSide().isClient()) {

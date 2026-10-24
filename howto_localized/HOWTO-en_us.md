@@ -57,6 +57,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Tooltips](#tooltips)
 - [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
+- [Enchantments](#enchantments)
 - [Anvil work](#anvil-work)
 - [Affixes and sockets](#affixes-and-sockets)
 - [Enchanting table](#enchanting-table)
@@ -193,6 +194,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/brewing/*.json`                                                                    | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                    |
 | `<namespace>/potions/*.json`                                                                    | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                           |
 | `<namespace>/potion_types/*.json`                                                               | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                 |
+| `<namespace>/enchantments/*.json`                                                               | Custom enchantments. [Enchantments](#enchantments)                                                                                                               |
 | `<namespace>/villagers/*.json`                                                                  | Villager professions. [Villagers and trades](#villagers-and-trades)                                                                                              |
 | `<namespace>/trades/*.json`                                                                     | What careers buy and sell. [Villagers and trades](#villagers-and-trades)                                                                                         |
 | `<namespace>/loot_tables/*.json`                                                                | Loot tables, replaced. [What you can override](#what-you-can-override)                                                                                           |
@@ -512,7 +514,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | Server alone is enough                                                                                                                                  | Needs the pack on the client too                                                              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                      |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                               | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                               | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                      | `biomes`, `dimensions`, `portalframes`                                                        |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client)              |
@@ -2594,6 +2596,61 @@ The file name is yours to choose, only the folder is read, and several files sta
 
 Each entry is either `input`, `ingredient` and `output`, which brews one item into another, or `from`, `ingredient` and `to`, which turns one potion type into another. `ingredient` is required either way, and an entry also takes `requires`, so one recipe can be skipped without the file being.
 
+## Enchantments
+
+*crafting, loot and trade*
+
+`<namespace>/enchantments/*.json`
+
+The file's path is the enchantment's registry name, so `mypack/enchantments/venom_edge.json` registers `mypack:venom_edge`. It goes on the items of its `category` and on every item named in `items`, and the enchanting table offers it, loot carries it and villagers trade it like any other.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Key        | Required | Value                                                                                                                               | Default                                       | What it does                                                                               |
+| ---------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `name`     | no       | translation key                                                                                                                     | `enchantment.<namespace>.<name>`              | What the player sees                                                                       |
+| `maxLevel` | no       | whole number, 1 to 255                                                                                                              | `1`                                           | The highest level. A value outside the range is clamped, with an error line                |
+| `rarity`   | no       | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                      | How often the enchanting table and loot pick it: weight 10, 5, 2 or 1                      |
+| `slots`    | no       | list of `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                      | `["mainhand"]`                                | Where the item must be held or worn for the enchantment to count                           |
+| `category` | no       | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | none                                          | The item kinds that take it. `weapon` is swords and `digger` is axes, pickaxes and shovels |
+| `items`    | no       | list of item ids                                                                                                                    | none                                          | Items that take it as well, or the only ones when there is no `category`                   |
+| `treasure` | no       | boolean                                                                                                                             | `false`                                       | Only found as loot or in trades, never offered by the enchanting table                     |
+| `minCost`  | no       | object with `base` and `perLevel`                                                                                                   | `11` and `10`                                 | The enchanting power the level needs                                                       |
+| `maxCost`  | no       | object with `base` and `perLevel`                                                                                                   | `minCost`'s `base` plus 5, and its `perLevel` | The most enchanting power the level still appears at                                       |
+| `effects`  | no       | list of objects                                                                                                                     | none                                          | What the enchantment does, see below                                                       |
+| `requires` | no       | list of mod ids                                                                                                                     | none                                          | Skips the file when one of those mods is missing                                           |
+
+A file with neither `category` nor `items` is skipped with an error line in the log, and so is one with no usable slot. An id in `items` that no installed mod provides does no harm. Costs follow `base + perLevel * (level - 1)`.
+
+Each entry of `effects` has a `type`:
+
+| Type           | Keys                                    | What it does                                                                                                                                                                                                                      |
+| -------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | Counts as protection points on worn armor, the way vanilla's protection enchantments do. `from` lists `all`, `fire`, `fall`, `explosion` and `projectile` (`all` when left out, which skips damage that ignores protection)       |
+| `damage`       | `mob`, `amount`                         | Extra damage with the weapon, against `any` mob (the default), `undead`, `arthropod` or `illager`                                                                                                                                 |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Gives a potion effect. `on` is `attack` (the mob hit gets it, the default) or `hurt` (the attacker gets it when the wearer is hit). `potion` is required, `duration` is in ticks (`100`) and `amplifier` runs from 0 to 255 (`0`) |
+
+`amount` and `duration` use the same `base` and `perLevel` pair as the costs, and `protection` rounds both down to whole points. A `protection` effect on a slot that is not armor, and an `apply_effect` that names an unknown potion, are skipped with an error line.
+
+The enchantment registry is saved with the world, like custom potions. Dropping the pack sends the server through Forge's missing-entries prompt, which asks for a confirmation and makes a backup of the world first; a dedicated server waits for it unless it is started with `-Dfml.queryResult=confirm`. The id stays reserved so no other enchantment takes it over, items keep it in their tag, vanilla ignores it while the pack is gone, and putting the pack back brings it back.
+
 ## Anvil work
 
 *crafting, loot and trade*
@@ -2932,6 +2989,36 @@ A player who sneaks and right-clicks with an empty main hand picks up a listed b
 | `requires` | no       | list of strings    | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                               |
 
 Ids only, no tags. Two-block structures such as doors, tall plants and beds cannot be carried, nor can protected blocks or blocks with a hardness below 0. A mob's riders are set off when it is picked up, a leash is not special-cased, and nothing is drawn on the carrier. Carried data is not data-fixed across game upgrades, and a carry whose block or mob no longer resolves is cleared with an error line in the log. A sneaking pack mob that has a storage GUI is picked up instead of opening it.
+
+## Vein mining
+
+*crafting, loot and trade*
+
+`<namespace>/veins/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+Breaking an ore with a pickaxe normally breaks that one block. A file here names a group of blocks and the tools that mine it in one go: when a player in survival breaks a block of the group with one of the tools in the main hand, the blocks of the same kind that touch it are broken too, nearest first, up to a limit. Without a file nothing changes, and a pack that wants the choice to be the player's puts a `config:` entry in `requires`, as described under Pack options.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Key        | Required | Value                                                                                             | Default | What it does                                                                                              |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `blocks`   | yes      | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group |         | The group. Only blocks of one kind join a vein, never two different blocks of the group                   |
+| `tools`    | yes      | list of item ids, `modid:item:meta` in 1.12.2                                                     |         | Held in the main hand when the first block breaks. An item that does not exist is skipped with a log line |
+| `limit`    | no       | int, 1 to 256                                                                                     | `16`    | Most blocks broken besides the first                                                                      |
+| `hunger`   | no       | float, 0 or more                                                                                  | `0.1`   | Hunger points per extra block. 1 point is 4 exhaustion. The first block costs vanilla's usual amount      |
+| `requires` | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                  |
+
+Connected means touching by face, edge or corner, so a block has 26 neighbors. Survival only: creative and spectator players break one block as usual. It stops when the tool breaks or the player's food level reaches 0. Every extra block gives its usual drops, with the Fortune of the held tool and every rule under Block drops, and wears the tool one use. It does not run on a block a hardness group keeps. This is server pack data and needs nothing on the client. A file with no valid blocks or tools is ignored with an error line.
 
 ## Player loot
 

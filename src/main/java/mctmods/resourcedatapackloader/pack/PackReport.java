@@ -21,6 +21,7 @@ final class PackReport {
         collect(off, Config.content.oreDictionary, "content.oreDictionary", PackManager.JSON, PackManager.OREDICT);
         collect(off, Config.content.disabled, "content.disabled", PackManager.JSON, PackManager.DISABLED);
         clientSide(off, Config.content.potions, "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);
+        clientSide(off, Config.content.enchantments, "content.enchantments", PackManager.ENCHANTMENTS);
         collect(off, Config.content.brewing, "content.brewing", PackManager.JSON, PackManager.BREWING);
         clientSide(off, Config.content.villagers, "content.villagers", PackManager.VILLAGERS);
         collect(off, Config.content.villagers, "content.villagers", PackManager.JSON, PackManager.TRADES);

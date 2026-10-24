@@ -57,6 +57,7 @@
 - [工具提示](#工具提示)
 - [語言閘門](#語言閘門)
 - [藥水、藥水類型與釀造](#藥水藥水類型與釀造)
+- [附魔](#附魔)
 - [鐵砧操作](#鐵砧操作)
 - [詞綴與插槽](#詞綴與插槽)
 - [附魔台](#附魔台)
@@ -193,6 +194,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/brewing/*.json`                                                                    | 釀造台配方。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                                             |
 | `<namespace>/potions/*.json`                                                                    | 藥水效果。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                                               |
 | `<namespace>/potion_types/*.json`                                                               | 以這些效果組成的瓶裝藥水。[藥水、藥水類型與釀造](#藥水藥水類型與釀造)                                               |
+| `<namespace>/enchantments/*.json`                                                               | 自訂附魔。[附魔](#附魔) |
 | `<namespace>/villagers/*.json`                                                                  | 村民職業。[村民與交易](#村民與交易)                                                                                 |
 | `<namespace>/trades/*.json`                                                                     | 各職業買進與賣出的東西。[村民與交易](#村民與交易)                                                                   |
 | `<namespace>/loot_tables/*.json`                                                                | 戰利品表，取代原有的。[可以覆寫的內容](#可以覆寫的內容)                                                             |
@@ -512,7 +514,7 @@ RDPL 適合用來取代一兩個配方，而你自己內容的配方則應該加
 | 只裝在伺服器就夠了                                                                                                                   | 用戶端也需要資源包                                                              |
 | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                               | `blocks`、`items`、`fluids`、`materials`                                        |
-| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                            | `potions`、`potion_types`、`sounds`、`tabs`                                     |
+| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                            | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`                     |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                   | `biomes`、`dimensions`、`portalframes`                                          |
 | `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers` |
 | `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（限用戶端認得的職業：原版的，或兩端都有的模組的） | `entities`、`worldintro`、`texts`（介紹永遠不會顯示給原版用戶端）               |
@@ -2594,6 +2596,61 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 
 每個項目要麼是 `input`、`ingredient` 和 `output`，把一種物品釀成另一種；要麼是 `from`、`ingredient` 和 `to`，把一種藥水類型變成另一種。無論哪一種，`ingredient` 都是必填，項目也接受 `requires`，這樣就能略過某一個配方，而不必略過整個檔案。
 
+## 附魔
+
+*合成、戰利品與交易*
+
+`<namespace>/enchantments/*.json`
+
+檔案的路徑就是附魔的註冊名稱，所以 `mypack/enchantments/venom_edge.json` 會註冊 `mypack:venom_edge`。它可以附在 `category` 所屬的物品上，以及 `items` 中列出的每個物品上；和其他附魔一樣，附魔台會提供它，戰利品會帶有它，村民也會拿它交易。
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| 鍵         | 必填 | 值                                                                                                                                  | 預設                                          | 作用                                                       |
+| ---------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------------- |
+| `name`     | 否   | 翻譯鍵                                                                                                                              | `enchantment.<namespace>.<name>`              | 玩家看到的名稱                                             |
+| `maxLevel` | 否   | 1 到 255 的整數                                                                                                                     | `1`                                           | 最高等級。超出範圍的值會被限制在範圍內，並輸出一行錯誤     |
+| `rarity`   | 否   | `common`、`uncommon`、`rare`、`very_rare`                                                                                           | `common`                                      | 附魔台和戰利品選中它的頻率：權重為 10、5、2 或 1           |
+| `slots`    | 否   | `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet` 的清單                                                                       | `["mainhand"]`                                | 物品必須手持或穿戴在哪個位置，附魔才會生效                 |
+| `category` | 否   | `armor`、`armor_head`、`armor_chest`、`armor_legs`、`armor_feet`、`weapon`、`digger`、`fishing_rod`、`breakable`、`bow`、`wearable` | 無                                            | 可以附上它的物品種類。`weapon` 是劍，`digger` 是斧、鎬和鏟 |
+| `items`    | 否   | 物品 ID 的清單                                                                                                                      | 無                                            | 另外可以附上它的物品；沒有 `category` 時，只有這些物品可以 |
+| `treasure` | 否   | 布林值                                                                                                                              | `false`                                       | 只能在戰利品或交易中找到，附魔台從不提供                   |
+| `minCost`  | 否   | 含 `base` 和 `perLevel` 的物件                                                                                                      | `11` 和 `10`                                  | 該等級所需的附魔強度                                       |
+| `maxCost`  | 否   | 含 `base` 和 `perLevel` 的物件                                                                                                      | `minCost` 的 `base` 加 5，以及它的 `perLevel` | 該等級仍會出現的最大附魔強度                               |
+| `effects`  | 否   | 物件清單                                                                                                                            | 無                                            | 附魔的作用，見下文                                         |
+| `requires` | 否   | 模組 ID 的清單                                                                                                                      | 無                                            | 列出的模組缺少任何一個時，跳過該檔案                       |
+
+既沒有 `category` 也沒有 `items` 的檔案會被跳過，並在日誌中輸出一行錯誤；沒有可用欄位的檔案同樣如此。`items` 中的 ID 即使沒有任何已安裝模組提供，也沒有影響。費用依 `base + perLevel * (level - 1)` 計算。
+
+`effects` 的每一項都有一個 `type`：
+
+| 類型           | 鍵                                      | 作用                                                                                                                                                                           |
+| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `protection`   | `from`、`amount`                        | 和原版的保護類附魔一樣，依穿戴護甲的保護點數計算。`from` 列出 `all`、`fire`、`fall`、`explosion` 和 `projectile`（省略時為 `all`，不包含無視保護的傷害）                       |
+| `damage`       | `mob`、`amount`                         | 武器造成的額外傷害，針對 `any`（預設）、`undead`、`arthropod` 或 `illager` 生物                                                                                                |
+| `apply_effect` | `on`、`potion`、`duration`、`amplifier` | 給予藥水效果。`on` 為 `attack`（被擊中的生物獲得，預設）或 `hurt`（穿戴者被擊中時，攻擊者獲得）。`potion` 必填，`duration` 以刻為單位（`100`），`amplifier` 為 0 到 255（`0`） |
+
+`amount` 和 `duration` 使用與費用相同的 `base` 和 `perLevel` 組合，`protection` 會把兩者無條件捨去為整數點數。位於非護甲欄位的 `protection` 效果，以及指向未知藥水的 `apply_effect`，都會被跳過並輸出一行錯誤。
+
+附魔註冊表會隨世界一起儲存，和自訂藥水一樣。移除資源包後，伺服器會經過 Forge 的缺失項目提示：它要求確認，並先替世界做一份備份；專用伺服器會一直等待，除非用 `-Dfml.queryResult=confirm` 啟動。ID 會保持預留，不會被其他附魔佔用，物品會在標籤中保留它，資源包缺失期間原版會忽略它，把資源包放回後它就恢復了。
+
 ## 鐵砧操作
 
 *合成、戰利品與交易*
@@ -2932,6 +2989,36 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `requires` | 否   | 字串清單     | 無   | 必須存在的模組 ID、資源包命名空間或 `config:` 選項，與所有定義相同                                         |
 
 只能寫 ID，不能用標籤。門、高大的植物和床這類兩格結構無法搬運，受保護的方塊和硬度低於 0 的方塊也不能。拿起生物時，騎乘者會被甩下，拴繩不作特殊處理，搬運者身上不會繪製任何東西。搬運的資料在遊戲升級時不會經過資料修復，方塊或生物已無法解析的搬運狀態會被清除，並在記錄檔中記一行錯誤。帶有儲存介面的資源包生物，在潛行時會被拿起，而不是開啟介面。
+
+## 礦脈連鎖挖掘
+
+*合成、戰利品與交易*
+
+`<namespace>/veins/*.json`
+
+檔案名稱由你自行決定，只會讀取這個資料夾，多個檔案會疊加。
+
+用鎬子挖礦石，通常只會破壞那一個方塊。這裡的檔案會指定一組方塊和能一次挖完它們的工具：生存模式下的玩家用主手中的某個工具破壞組內方塊時，與它相鄰的同類方塊也會由近到遠一併破壞，直到達到上限。沒有檔案時一切照舊；想把選擇權交給玩家的資源包，可以在 `requires` 中加入 `config:` 項目，做法與「資源包選項」一節相同。
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| 鍵         | 必填 | 值                                                                               | 預設  | 作用                                                                              |
+| ---------- | ---- | -------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------- |
+| `blocks`   | 是   | 方塊 ID 清單，寫法與硬度群組相同：1.12.2 用 `meta`，1.20.1 及以後用 `properties` |       | 方塊組。同一條礦脈只含同一種方塊，組內兩種不同的方塊不會連在一起                  |
+| `tools`    | 是   | 物品 ID 清單，1.12.2 中為 `modid:item:meta`                                      |       | 第一個方塊被破壞時持在主手中的工具。不存在的物品會被略過並寫入日誌                |
+| `limit`    | 否   | int，1 到 256                                                                    | `16`  | 除第一個方塊外最多破壞的方塊數                                                    |
+| `hunger`   | 否   | float，0 或更大                                                                  | `0.1` | 每多破壞一個方塊消耗的飢餓點數。1 點相當於 4 點消耗度。第一個方塊照常消耗原版的量 |
+| `requires` | 否   | 字串清單                                                                         | 無    | 必須存在的模組 ID、資源包命名空間或 `config:` 選項，與所有定義相同                |
+
+相鄰指面、稜或角相接，所以一個方塊有 26 個鄰居。只在生存模式下生效：創造和旁觀模式的玩家仍只破壞一個方塊。工具損壞或玩家飽食度降到 0 時停止。每個額外方塊都會掉落平常的戰利品，會計入手持工具的幸運以及「方塊掉落」一節的所有規則，並讓工具磨損一次。對硬度群組保留的方塊不會生效。這只是伺服器端的資源包資料，客戶端無需任何東西。沒有任何有效方塊或工具的檔案會被忽略並寫入一行錯誤日誌。
 
 ## 玩家戰利品
 

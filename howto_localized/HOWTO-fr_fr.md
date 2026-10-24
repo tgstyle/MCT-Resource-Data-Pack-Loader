@@ -57,6 +57,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Infobulles](#infobulles)
 - [Passages de langue](#passages-de-langue)
 - [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)
+- [Enchantements](#enchantements)
 - [Travail à l'enclume](#travail-à-lenclume)
 - [Affixes et châsses](#affixes-et-châsses)
 - [Table d'enchantement](#table-denchantement)
@@ -193,6 +194,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/brewing/*.json`                                                                    | Recettes du pupitre d'alchimie. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                                  |
 | `<namespace>/potions/*.json`                                                                    | Effets de potion. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                                                |
 | `<namespace>/potion_types/*.json`                                                               | Potions en bouteille construites à partir de ces effets. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                         |
+| `<namespace>/enchantments/*.json`                                                               | Enchantements personnalisés. [Enchantements](#enchantements) |
 | `<namespace>/villagers/*.json`                                                                  | Professions de villageois. [Villageois et échanges](#villageois-et-échanges)                                                                                                                    |
 | `<namespace>/trades/*.json`                                                                     | Ce que les métiers achètent et vendent. [Villageois et échanges](#villageois-et-échanges)                                                                                                       |
 | `<namespace>/loot_tables/*.json`                                                                | Tables de butin, remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                    |
@@ -512,7 +514,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | Le serveur seul suffit                                                                                                                                                                  | Nécessite aussi le pack sur le client                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                        |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                               | `potions`, `potion_types`, `sounds`, `tabs`                                                     |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                               | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                                     |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                      | `biomes`, `dimensions`, `portalframes`                                                          |
 | `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pour les professions que le client connaît : celles de vanilla, ou d'un mod présent des deux côtés) | `entities`, `worldintro`, `texts` (l'introduction n'est jamais montrée à un client vanilla)     |
@@ -2594,6 +2596,61 @@ Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs f
 
 Chaque entrée est soit `input`, `ingredient` et `output`, qui transforme un objet en un autre, soit `from`, `ingredient` et `to`, qui transforme un type de potion en un autre. `ingredient` est requis dans les deux cas, et une entrée accepte aussi `requires`, de sorte qu'une recette peut être ignorée sans que le fichier le soit.
 
+## Enchantements
+
+*artisanat, butin et commerce*
+
+`<namespace>/enchantments/*.json`
+
+Le chemin du fichier est le nom d'enregistrement de l'enchantement : `mypack/enchantments/venom_edge.json` enregistre donc `mypack:venom_edge`. Il se pose sur les objets de sa `category` et sur chaque objet nommé dans `items` ; la table d'enchantement le propose, le butin le porte et les villageois le vendent comme n'importe quel autre.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Clé        | Requis | Valeur                                                                                                                              | Défaut                                           | Rôle                                                                                                     |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `name`     | non    | clé de traduction                                                                                                                   | `enchantment.<namespace>.<name>`                 | Ce que voit le joueur                                                                                    |
+| `maxLevel` | non    | entier de 1 à 255                                                                                                                   | `1`                                              | Le niveau maximal. Une valeur hors de la plage est ramenée dans la plage, avec une ligne d'erreur        |
+| `rarity`   | non    | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                         | Fréquence à laquelle la table d'enchantement et le butin le choisissent : poids 10, 5, 2 ou 1            |
+| `slots`    | non    | liste de `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                     | `["mainhand"]`                                   | Où l'objet doit être tenu ou porté pour que l'enchantement compte                                        |
+| `category` | non    | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | aucune                                           | Les types d'objets qui l'acceptent. `weapon` désigne les épées et `digger` les haches, pioches et pelles |
+| `items`    | non    | liste d'identifiants d'objets                                                                                                       | aucun                                            | Les autres objets qui l'acceptent, ou les seuls quand il n'y a pas de `category`                         |
+| `treasure` | non    | booléen                                                                                                                             | `false`                                          | Se trouve seulement dans le butin ou les échanges, jamais proposé par la table d'enchantement            |
+| `minCost`  | non    | objet avec `base` et `perLevel`                                                                                                     | `11` et `10`                                     | La puissance d'enchantement qu'exige le niveau                                                           |
+| `maxCost`  | non    | objet avec `base` et `perLevel`                                                                                                     | le `base` de `minCost` plus 5, et son `perLevel` | La plus forte puissance d'enchantement à laquelle le niveau apparaît encore                              |
+| `effects`  | non    | liste d'objets                                                                                                                      | aucun                                            | Ce que fait l'enchantement, voir plus bas                                                                |
+| `requires` | non    | liste d'identifiants de mods                                                                                                        | aucun                                            | Ignore le fichier quand l'un de ces mods manque                                                          |
+
+Un fichier sans `category` ni `items` est ignoré avec une ligne d'erreur dans le journal, tout comme un fichier sans emplacement utilisable. Un identifiant de `items` qu'aucun mod installé ne fournit ne gêne pas. Les coûts suivent `base + perLevel * (level - 1)`.
+
+Chaque entrée de `effects` a un `type` :
+
+| Type           | Clés                                    | Rôle                                                                                                                                                                                                                                                |
+| -------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | Compte comme des points de protection sur l'armure portée, comme les enchantements de protection de vanilla. `from` liste `all`, `fire`, `fall`, `explosion` et `projectile` (`all` si absent, ce qui exclut les dégâts qui ignorent la protection) |
+| `damage`       | `mob`, `amount`                         | Dégâts supplémentaires avec l'arme, contre les mobs `any` (par défaut), `undead`, `arthropod` ou `illager`                                                                                                                                          |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Donne un effet de potion. `on` vaut `attack` (le mob touché le reçoit, par défaut) ou `hurt` (l'attaquant le reçoit quand le porteur est touché). `potion` est requis, `duration` est en ticks (`100`) et `amplifier` va de 0 à 255 (`0`)           |
+
+`amount` et `duration` utilisent la même paire `base` et `perLevel` que les coûts, et `protection` arrondit les deux à l'entier inférieur. Un effet `protection` sur un emplacement qui n'est pas d'armure, et un `apply_effect` qui nomme une potion inconnue, sont ignorés avec une ligne d'erreur.
+
+Le registre des enchantements est enregistré avec le monde, comme les potions personnalisées. Retirer le pack fait passer le serveur par l'invite de Forge pour les entrées manquantes, qui demande une confirmation et fait d'abord une sauvegarde du monde ; un serveur dédié l'attend, sauf s'il est lancé avec `-Dfml.queryResult=confirm`. L'identifiant reste réservé pour qu'aucun autre enchantement ne le reprenne, les objets le gardent dans leur tag, vanilla l'ignore tant que le pack manque, et il revient avec le pack.
+
 ## Travail à l'enclume
 
 *artisanat, butin et commerce*
@@ -2932,6 +2989,36 @@ Un joueur qui s'accroupit et fait un clic droit la main principale vide ramasse 
 | `requires` | non    | liste de chaînes     | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                               |
 
 Ids seulement, pas de tags. Les structures de deux blocs, comme les portes, les grandes plantes et les lits, ne peuvent pas être portées, ni les blocs protégés ou de dureté inférieure à 0. Les passagers d'un mob descendent quand on le ramasse, la laisse n'a pas de traitement particulier et rien n'est dessiné sur le porteur. Les données portées ne passent pas par le data fixer lors des mises à jour du jeu, et une charge dont le bloc ou le mob ne se résout plus est effacée avec une ligne d'erreur dans le journal. Un mob de pack accroupi qui a une interface de stockage est ramassé au lieu de l'ouvrir.
+
+## Minage de filons
+
+*artisanat, butin et commerce*
+
+`<namespace>/veins/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+Casser un minerai à la pioche ne casse normalement que ce seul bloc. Un fichier ici nomme un groupe de blocs et les outils qui le minent d'un seul coup : quand un joueur en survie casse un bloc du groupe avec l'un de ces outils en main principale, les blocs de même nature qui le touchent sont cassés aussi, les plus proches d'abord, jusqu'à une limite. Sans fichier, rien ne change, et un pack qui veut laisser le choix au joueur met une entrée `config:` dans `requires`, comme décrit dans Options de pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:log", "meta": 0 }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Clé        | Requis | Valeur                                                                                                         | Défaut | Rôle                                                                                                                        |
+| ---------- | ------ | -------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | oui    | liste d'id de blocs, avec `meta` (1.12.2) ou `properties` (1.20.1 et suivantes) comme dans un groupe de dureté |        | Le groupe. Seuls des blocs de même nature forment un filon, jamais deux blocs différents du groupe                          |
+| `tools`    | oui    | liste d'id d'objets, `modid:item:meta` en 1.12.2                                                               |        | Tenu en main principale quand le premier bloc se casse. Un objet qui n'existe pas est ignoré avec une ligne dans le journal |
+| `limit`    | non    | int, de 1 à 256                                                                                                | `16`   | Nombre maximal de blocs cassés en plus du premier                                                                           |
+| `hunger`   | non    | float, 0 ou plus                                                                                               | `0.1`  | Points de faim par bloc supplémentaire. 1 point vaut 4 d'épuisement. Le premier bloc coûte le montant habituel de vanilla   |
+| `requires` | non    | liste de chaînes                                                                                               | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition             |
+
+Se toucher veut dire partager une face, une arête ou un coin, si bien qu'un bloc a 26 voisins. En survie seulement : les joueurs en créatif et les spectateurs cassent un seul bloc comme d'habitude. Cela s'arrête quand l'outil se brise ou que la barre de faim du joueur tombe à 0. Chaque bloc supplémentaire donne ses drops habituels, avec la Fortune de l'outil tenu et toutes les règles de Butins des blocs, et use l'outil d'une utilisation. Cela ne s'applique pas à un bloc qu'un groupe de dureté conserve. Ce sont des données de pack côté serveur seulement, sans rien à prévoir côté client. Un fichier sans blocs ni outils valides est ignoré avec une ligne d'erreur.
 
 ## Butin des joueurs
 
