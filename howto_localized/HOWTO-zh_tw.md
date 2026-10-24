@@ -61,6 +61,7 @@
 - [語言閘門](#語言閘門)
 - [藥水、藥水類型與釀造](#藥水藥水類型與釀造)
 - [鐵砧操作](#鐵砧操作)
+- [詞綴與插槽](#詞綴與插槽)
 - [附魔台](#附魔台)
 - [方塊掉落物](#方塊掉落物)
 - [右鍵收穫](#右鍵收穫)
@@ -161,6 +162,8 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/raids/*.json`                   | 玩家把不祥之兆帶進村莊時，前來突襲村莊的各波敵人。[突襲](#突襲)                                                     |
 | `<namespace>/entities/*.json`                | 以既有實體為基礎建立的實體變體。[實體變體](#實體變體)                                                               |
 | `<namespace>/hardness/*.json`                | 針對一組方塊的挖掘時間與爆炸倍率。[硬度群組](#硬度群組)                                                             |
+| `<namespace>/affixes/*.json` | 物品在玩家第一次持有時隨機出的屬性加成與插槽。[詞綴與插槽](#詞綴與插槽) |
+| `<namespace>/gems/*.json` | 鐵砧為換取屬性加成而嵌入插槽的物品。[詞綴與插槽](#詞綴與插槽) |
 | `<namespace>/anvils/*.json`                  | 鐵砧對指定物品施加的附魔、由此獲得的進度，以及在此之前的鎖定。[鐵砧操作](#鐵砧操作)                                 |
 | `<namespace>/enchanting/*.json`              | 附魔台提供什麼、要求什麼、拿走什麼：依附魔、依物品以及整體。 [附魔台](#附魔台)                                      |
 | `<namespace>/cards/*.json`                   | 由觸發器顯示的螢幕卡片，以及本模組自己發出的訊息。[卡片](#卡片)                                                     |
@@ -500,7 +503,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 | 只放伺服器即可                                                                                                                                            | 用戶端也需要資源包                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions` | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`enchanting`、`tags`、`disabled`                                                   | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`                                                     |
+| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`tags`、`disabled`                                                   | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`                                                     |
 | `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`                                                                              | `entities`、`villagers`、`portalframes`                                                                      |
 | `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                            | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
 | 整個控制層、設定與預先生成                                                                                                                                |                                                                                                              |
@@ -2514,6 +2517,70 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `penalty`       | 否   | `"vanilla"`、`"none"` 或 `{ "factor": n }`  | `"vanilla"`        | 累積懲罰每次使用後如何增長。原版將其加倍再加一，`none` 維持不變，0 到 16 的係數將其相乘再加一 |
 | `repair`        | 否   | 布林值                                      | `true`             | 為 `false` 時鐵砧不修復它                                                                     |
 | `combine`       | 否   | 布林值                                      | `true`             | 為 `false` 時鐵砧不合併兩件它；附魔書仍可使用                                                 |
+
+## 詞綴與插槽
+
+*合成、戰利品與交易*
+
+`<namespace>/affixes/*.json`、`<namespace>/gems/*.json`
+
+檔案名稱由你自行決定，只會讀取這些資料夾，多個檔案會疊加。詞綴檔案指定一個物品及其可隨機獲得的加成，寶石檔案指定一個可嵌入插槽的物品。
+
+符合的物品會在玩家第一次持有時隨機一次，並保留隨機到的結果。寶石在鐵砧中按寶石的等級花費嵌入其插槽。物品不能堆疊。移除資料包後，已隨機出的數值仍留在物品堆上。
+
+將帶有空插槽的已隨機物品放在鐵砧左格、寶石放在右格時，鐵砧會交還物品，寶石嵌入第一個空插槽並加上寶石的加成，同時消耗一顆寶石。沒有空插槽的物品不會得到任何結果，寶石也不會再被取出。物品的提示框按 `name` 顯示每個詞綴，接著顯示每個插槽是空的還是嵌有寶石。
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| 鍵        | 必填 | 值                         | 預設   | 作用                                                                                  |
+| --------- | ---- | -------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `item`    | 是   | 物品名稱     |        | 進行隨機的物品。它不能堆疊：可堆疊的物品屬於錯誤，該檔案會被跳過                      |
+| `rolls`   | 否   | `{ "min", "max" }`         | `1`    | 隨機出多少個不同的詞綴                                                                |
+| `sockets` | 否   | `{ "min", "max" }`         | `0`    | 隨機出多少個寶石插槽                                                                  |
+| `affixes` | 是   | 物件清單                   |        | 可隨機出的內容，每個項目如下。屬性未知的項目會被跳過                                  |
+
+`affixes` 的每個項目接受：
+
+| 鍵          | 必填 | 值                                                               | 預設   | 作用                                                                                  |
+| ----------- | ---- | ---------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `name`      | 否   | 文字，或語言鍵                                                   | 無     | 物品提示框中為它顯示的一行                                                            |
+| `attribute` | 是   | 屬性名稱                                                         |        | 它改變的內容，例如 `generic.attackDamage` 或 `generic.maxHealth`                      |
+| `min`       | 否   | 數字                                                             | `0`    | 它增加的最小值                                                                        |
+| `max`       | 否   | 數字                                                             | `min`  | 它增加的最大值。兩值相同則得到精確加成，否則在兩者之間隨機                            |
+| `operation` | 否   | `0`、`1` 或 `2`                                                  | `0`    | `0` 加到屬性上，`1` 乘以其基礎值，`2` 乘以總值                                        |
+| `slot`      | 否   | `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet` 或 `any`  | `any`  | 物品必須處於哪個欄位，加成才生效                                                      |
+| `weight`    | 否   | int                                                              | `1`    | 與其他項目相比的機率。同一物品的詞綴互不相同，按權重抽取                              |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| 鍵          | 必填 | 值                                                               | 預設     | 作用                                                                                  |
+| ----------- | ---- | ---------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `item`      | 是   | 物品名稱                                           |          | 寶石，放在鐵砧的右格                                                                  |
+| `name`      | 否   | 文字，或語言鍵                                                   | 該物品   | 寶石嵌入插槽後提示框所顯示的內容                                                      |
+| `attribute` | 是   | 屬性名稱                                                         |          | 寶石改變的內容                                                                        |
+| `amount`    | 否   | 數字                                                             | `0`      | 它增加的量                                                                            |
+| `operation` | 否   | `0`、`1` 或 `2`                                                  | `0`      | 與詞綴相同                                                                            |
+| `slot`      | 否   | `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet` 或 `any`  | `any`    | 與詞綴相同                                                                            |
+| `levels`    | 否   | int                                                              | `1`      | 嵌入寶石花費的經驗等級，最少為 1，且始終低於鐵砧的「過於昂貴」界線                    |
 
 ## 附魔台
 
@@ -8369,6 +8436,7 @@ functions = true
 | `lootInjections` | 布林值 | `true` | 套用 loot_injections/*.json 檔案，這些檔案為已存在的戰利品表新增獎勵池，而不是取代整張表                           |
 | `playerLoot`     | 布林值 | `true` | 套用 player_loot/*.json 檔案，這些檔案在玩家死亡時抽取戰利品表並掉落其產物，疊加在物品欄之上或取而代之             |
 | `registryRemaps` | 布林值 | `true` | 套用 registry_remap 檔案，這些檔案重新命名登錄表項目，讓重新命名之前儲存的世界保留它們的方塊與物品，而不是遺失     |
+| `affixes`        | 布林值 | `true` | 套用 affixes/*.json 和 gems/*.json 檔案，讓物品在玩家第一次持有時獲得隨機屬性加成與插槽，並讓鐵砧把寶石嵌入插槽 |
 | `anvils`         | 布林值 | `true` | 套用 anvils/*.json 檔案，這些檔案讓鐵砧以等級花費為物品加上指定的附魔，在取出時獲得進度，並在那之前禁止使用該物品  |
 | `enchanting`     | 布林值 | `true` | 套用 enchanting/*.json 檔案，依附魔、依物品以及整張附魔台改變附魔台提供什麼、要求什麼、拿走什麼                    |
 | `blockDrops`     | 布林值 | `true` | 套用 block_drops/*.json 檔案，這些檔案在方塊每次破壞時新增或取代其掉落物（包括經驗值），適用於資源包並不擁有的方塊 |

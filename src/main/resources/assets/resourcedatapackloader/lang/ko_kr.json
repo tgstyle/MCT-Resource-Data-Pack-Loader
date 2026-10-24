@@ -327,5 +327,7 @@
   "rdpl.team.join.closed": "%s은(는) 참가할 수 없는 팀입니다",
   "rdpl.team.join.waiting": "라운드가 진행 중이라 끝나면 %s에 참가합니다",
   "rdpl.team.join.ok": "%s에 참가했습니다",
+  "rdpl.socket.empty": "빈 소켓",
+  "rdpl.socket.filled": "소켓: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }

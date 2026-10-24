@@ -61,6 +61,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Portes de langue](#portes-de-langue)
 - [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)
 - [Travail à l'enclume](#travail-à-lenclume)
+- [Affixes et châsses](#affixes-et-châsses)
 - [Table d'enchantement](#table-denchantement)
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
@@ -161,6 +162,8 @@ Sous `data/` :
 | `<namespace>/raids/*.json`                   | Vagues qui s'abattent sur un village quand un joueur y apporte un présage. [Raids](#raids)                                                                                                      |
 | `<namespace>/entities/*.json`                | Variantes d'entités construites sur des entités existantes. [Variantes d'entités](#variantes-dentités)                                                                                          |
 | `<namespace>/hardness/*.json`                | Temps de minage et multiplicateurs d'explosion pour des groupes de blocs. [Groupes de dureté](#groupes-de-dureté)                                                                               |
+| `<namespace>/affixes/*.json` | Bonus d'attribut aléatoires et châsses qu'un objet tire la première fois qu'un joueur le tient. [Affixes et châsses](#affixes-et-châsses) |
+| `<namespace>/gems/*.json` | Objets qu'une enclume enchâsse pour un bonus d'attribut. [Affixes et châsses](#affixes-et-châsses) |
 | `<namespace>/anvils/*.json`                  | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle octroie, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume)                                          |
 | `<namespace>/enchanting/*.json`              | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                 |
 | `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                                                                       |
@@ -500,7 +503,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | Le serveur seul suffit                                                                                                                                    | Nécessite le pack aussi sur le client                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                      |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                    |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                    |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                     |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                             |                                                                                                                             |
@@ -2514,6 +2517,70 @@ Un fichier qui contient `match` change la façon dont l'enclume répare et combi
 | `penalty`       | non    | `"vanilla"`, `"none"` ou `{ "factor": n }`    | `"vanilla"`                                | Comment le coût des travaux antérieurs grandit à chaque usage. Vanilla le double et ajoute un, `none` le laisse où il est, et un facteur de 0 à 16 le multiplie et ajoute un |
 | `repair`        | non    | booléen                                       | `true`                                     | Avec `false`, l'enclume ne le répare pas                                                                                                                                     |
 | `combine`       | non    | booléen                                       | `true`                                     | Avec `false`, l'enclume ne réunit pas deux de ces objets ; les livres enchantés s'appliquent toujours                                                                        |
+
+## Affixes et châsses
+
+*artisanat, butin et commerce*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+Les noms de fichier sont libres, seuls les dossiers sont lus, et plusieurs fichiers se cumulent. Un fichier d'affixes nomme un objet et les bonus qu'il peut tirer, et un fichier de gemme nomme un objet qui entre dans une châsse.
+
+Un objet correspondant est tiré une seule fois, la première fois qu'un joueur le tient, et garde ce qu'il a tiré. Les gemmes entrent dans ses châsses à l'enclume pour les niveaux de la gemme. L'objet ne doit pas s'empiler. Un pack retiré laisse les valeurs tirées sur la pile.
+
+Avec un objet déjà tiré qui a une châsse vide dans la case gauche d'une enclume et une gemme dans la droite, l'enclume rend l'objet avec la gemme dans sa première châsse vide et le bonus de la gemme ajouté, et consomme une gemme. Un objet sans châsse vide ne se voit rien proposer, et une gemme n'est jamais retirée. L'infobulle de l'objet montre chaque affixe par son `name`, puis chaque châsse, vide ou avec sa gemme.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Clé       | Requis | Valeur                       | Défaut | Ce que ça fait                                                                                        |
+| --------- | ------ | ---------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+| `item`    | oui    | nom d'objet    |        | L'objet qui tire. Il ne doit pas s'empiler : un objet empilable est une erreur et le fichier est ignoré |
+| `rolls`   | non    | `{ "min", "max" }`           | `1`    | Combien d'affixes différents il tire                                                                  |
+| `sockets` | non    | `{ "min", "max" }`           | `0`    | Combien de châsses à gemme il tire                                                                    |
+| `affixes` | oui    | liste d'objets               |        | Ce qu'il peut tirer, chaque entrée comme ci-dessous. Une entrée à l'attribut inconnu est ignorée      |
+
+Chaque entrée de `affixes` accepte :
+
+| Clé         | Requis | Valeur                                                           | Défaut  | Ce que ça fait                                                                                              |
+| ----------- | ------ | ---------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
+| `name`      | non    | texte, ou une clé de langue                                      | aucun   | La ligne que l'infobulle de l'objet montre pour lui                                                         |
+| `attribute` | oui    | nom d'attribut                                                   |         | Ce qu'il change, comme `generic.attackDamage` ou `generic.maxHealth`                                        |
+| `min`       | non    | nombre                                                           | `0`     | Le minimum qu'il ajoute                                                                                     |
+| `max`       | non    | nombre                                                           | `min`   | Le maximum qu'il ajoute. Des valeurs égales donnent un bonus exact, sinon on tire entre les deux           |
+| `operation` | non    | `0`, `1` ou `2`                                                  | `0`     | `0` ajoute à l'attribut, `1` multiplie sa base, `2` multiplie le total                                      |
+| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`   | L'emplacement où l'objet doit se trouver pour que le bonus compte                                           |
+| `weight`    | non    | entier                                                           | `1`     | Sa probabilité face aux autres. Les affixes d'un objet sont différents les uns des autres, tirés selon le poids |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Clé         | Requis | Valeur                                                           | Défaut    | Ce que ça fait                                                                                      |
+| ----------- | ------ | ---------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------- |
+| `item`      | oui    | nom d'objet                                        |           | La gemme, qui va dans la case droite de l'enclume                                                   |
+| `name`      | non    | texte, ou une clé de langue                                      | l'objet   | Ce que l'infobulle montre une fois la gemme dans une châsse                                         |
+| `attribute` | oui    | nom d'attribut                                                   |           | Ce que la gemme change                                                                              |
+| `amount`    | non    | nombre                                                           | `0`       | Ce qu'elle ajoute                                                                                   |
+| `operation` | non    | `0`, `1` ou `2`                                                  | `0`       | Comme pour un affixe                                                                                |
+| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`     | Comme pour un affixe                                                                                |
+| `levels`    | non    | entier                                                           | `1`       | Les niveaux d'expérience que coûte la pose de la gemme, 1 au minimum et toujours sous le seuil de trop cher de l'enclume |
 
 ## Table d'enchantement
 
@@ -8369,6 +8436,7 @@ functions = true
 | `lootInjections` | booléen | `true` | Applique les fichiers loot_injections/*.json, qui ajoutent des pools à des tables de butin déjà existantes au lieu de remplacer la table entière                                                                           |
 | `playerLoot`     | booléen | `true` | Applique les fichiers player_loot/*.json, qui tirent une table de butin à la mort d'un joueur et font tomber ce qu'elle produit, en plus de l'inventaire ou à sa place                                                     |
 | `registryRemaps` | booléen | `true` | Applique les fichiers registry_remap, qui renomment une entrée de registre pour que les mondes sauvegardés avant le renommage conservent leurs blocs et objets au lieu de les perdre                                       |
+| `affixes`        | booléen | `true` | Applique les fichiers affixes/*.json et gems/*.json, qui donnent à un objet des bonus d'attribut aléatoires et des châsses la première fois qu'un joueur le tient, et permettent à une enclume d'enchâsser une gemme |
 | `anvils`         | booléen | `true` | Applique les fichiers anvils/*.json, qui permettent à une enclume de poser des enchantements nommés sur un objet contre un coût en niveaux, d'accorder un progrès quand il est retiré, et d'en interdire l'usage jusque-là |
 | `enchanting`     | booléen | `true` | Applique les fichiers enchanting/*.json, qui changent ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et pour la table entière                                                      |
 | `blockDrops`     | booléen | `true` | Applique les fichiers block_drops/*.json, qui ajoutent à ce qu'un bloc fait tomber quand il se brise, ou le remplacent, expérience comprise, pour les blocs dont le pack n'est pas propriétaire                            |

@@ -220,6 +220,7 @@ public final class ContentAnvils {
 
     public static void onAnvil(AnvilUpdateEvent event) {
         if (offerWork(event)) { return; }
+        if (ContentAffixes.socket(event)) { return; }
         AnvilRules.apply(event);
     }
 

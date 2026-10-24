@@ -327,5 +327,7 @@
   "rdpl.team.join.closed": "%s is not a team you can join",
   "rdpl.team.join.waiting": "A round is running, so you join %s when it ends",
   "rdpl.team.join.ok": "You joined %s",
+  "rdpl.socket.empty": "Empty socket",
+  "rdpl.socket.filled": "Socket: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }
