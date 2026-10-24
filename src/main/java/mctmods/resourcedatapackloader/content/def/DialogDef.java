@@ -15,10 +15,16 @@ public final class DialogDef {
     @Nullable public final String image;
     @Nullable public final Boolean background;
     @Nullable public final String font;
+    @Nullable public final String titleColor;
+    @Nullable public final String textColor;
+    @Nullable public final String replyColor;
+    @Nullable public final String hoverColor;
+    @Nullable public final String hoverBackground;
+    @Nullable public final Boolean history;
     public final List<String> requires;
     public final Map<String, Node> nodes;
 
-    public DialogDef(String key, String start, @Nullable String title, @Nullable String icon, @Nullable String color, @Nullable String image, @Nullable Boolean background, @Nullable String font, List<String> requires, Map<String, Node> nodes) {
+    public DialogDef(String key, String start, @Nullable String title, @Nullable String icon, @Nullable String color, @Nullable String image, @Nullable Boolean background, @Nullable String font, @Nullable String titleColor, @Nullable String textColor, @Nullable String replyColor, @Nullable String hoverColor, @Nullable String hoverBackground, @Nullable Boolean history, List<String> requires, Map<String, Node> nodes) {
         this.key = key;
         this.start = start;
         this.title = title;
@@ -27,6 +33,12 @@ public final class DialogDef {
         this.image = image;
         this.background = background;
         this.font = font;
+        this.titleColor = titleColor;
+        this.textColor = textColor;
+        this.replyColor = replyColor;
+        this.hoverColor = hoverColor;
+        this.hoverBackground = hoverBackground;
+        this.history = history;
         this.requires = requires;
         this.nodes = nodes;
     }

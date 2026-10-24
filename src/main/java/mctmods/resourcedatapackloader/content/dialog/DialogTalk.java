@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import javax.annotation.Nullable;
 
 public final class DialogTalk {
     public static final int CLOSE = -1;
@@ -120,7 +121,8 @@ public final class DialogTalk {
         for (DialogDef.Reply reply : shown) { replies.add(line(reply.text, player, name)); }
         if (shown.isEmpty()) { SESSIONS.remove(player.getUniqueID()); }
         if (RDPLNetwork.vanilla(player)) { chat(player, title, lines, replies); }
-        else { RDPLNetwork.sendTo(new MessageTalk(npc.getEntityId(), title, lines, replies, icon(def), image(def), background(def), panel(def), font(def)), player); }
+        else { RDPLNetwork.sendTo(new MessageTalk(npc.getEntityId(), title, lines, replies, icon(def), image(def), background(def), panel(def), font(def),
+                tint(def, def.titleColor), tint(def, def.textColor), tint(def, def.replyColor), tint(def, def.hoverColor), tint(def, def.hoverBackground), history(def)), player); }
     }
 
     private static String line(String text, EntityPlayerMP player, String name) { return CardSend.fill(text.replace(NPC, name), player, Collections.emptyList()); }
@@ -147,4 +149,8 @@ public final class DialogTalk {
     private static boolean panel(DialogDef def) { return def.background == null ? Says.panel() : def.background; }
 
     private static String font(DialogDef def) { return def.font == null ? Says.font() : def.font; }
+
+    private static int tint(DialogDef def, @Nullable String value) { return value == null || value.isEmpty() ? -1 : ContentTypes.color(value, "dialog " + def.key) & 0xFFFFFF; }
+
+    private static boolean history(DialogDef def) { return def.history == null || def.history; }
 }

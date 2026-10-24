@@ -18,10 +18,16 @@ public class MessageTalk implements IMessage {
     public int background;
     public boolean panel = true;
     public String font = "";
+    public int titleColor = -1;
+    public int textColor = -1;
+    public int replyColor = -1;
+    public int hoverColor = -1;
+    public int hoverBackground = -1;
+    public boolean history = true;
 
     public MessageTalk() {}
 
-    public MessageTalk(int npc, String title, List<String> lines, List<String> replies, ItemStack icon, String image, int background, boolean panel, String font) {
+    public MessageTalk(int npc, String title, List<String> lines, List<String> replies, ItemStack icon, String image, int background, boolean panel, String font, int titleColor, int textColor, int replyColor, int hoverColor, int hoverBackground, boolean history) {
         this.npc = npc;
         this.title = title;
         this.lines = lines;
@@ -31,6 +37,12 @@ public class MessageTalk implements IMessage {
         this.background = background;
         this.panel = panel;
         this.font = font;
+        this.titleColor = titleColor;
+        this.textColor = textColor;
+        this.replyColor = replyColor;
+        this.hoverColor = hoverColor;
+        this.hoverBackground = hoverBackground;
+        this.history = history;
     }
 
     public static MessageTalk ending() {
@@ -50,6 +62,12 @@ public class MessageTalk implements IMessage {
         background = buf.readInt();
         panel = buf.readBoolean();
         font = ByteBufUtils.readUTF8String(buf);
+        titleColor = buf.readInt();
+        textColor = buf.readInt();
+        replyColor = buf.readInt();
+        hoverColor = buf.readInt();
+        hoverBackground = buf.readInt();
+        history = buf.readBoolean();
     }
 
     @Override public void toBytes(ByteBuf buf) {
@@ -63,6 +81,12 @@ public class MessageTalk implements IMessage {
         buf.writeInt(background);
         buf.writeBoolean(panel);
         ByteBufUtils.writeUTF8String(buf, font);
+        buf.writeInt(titleColor);
+        buf.writeInt(textColor);
+        buf.writeInt(replyColor);
+        buf.writeInt(hoverColor);
+        buf.writeInt(hoverBackground);
+        buf.writeBoolean(history);
     }
 
     private static List<String> strings(ByteBuf buf) {
