@@ -6388,7 +6388,8 @@ Strana je skutečný tým na tabulce skóre samotné hry, takže ji vidí `/team
   "leadOn": "kaboom",
   "leadIs": "Steve",
   "leadSays": "You are the current round leader",
-  "leadRuns": "mypack:lead_chosen"
+  "leadRuns": "mypack:lead_chosen",
+  "down": { "seconds": 30, "reviveSeconds": 5 }
 }
 ```
 
@@ -6458,6 +6459,19 @@ Tři způsoby, jak se připojit, a strana smí použít všechny. `entities` poj
 | `leadIs`   | text | prázdný                            | S `appointed` hráč, který vede                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `leadSays` | text | `You are the current round leader` | Řekne se hráči, když k němu vedení přijde: při příchodu na stranu, kterou vede, při nárokování, nebo když na něj přejde vedení `first`, kdy nese, kdo odešel. `{side}` je zobrazované jméno strany; prázdné neřekne nic                                                                                                                                                                                                                                                                                                                                                                                             |
 | `leadRuns` | text | prázdný                            | Funkce, `namespace:path`, spuštěná jednou pokaždé, když vedení přejde na hráče: první vedoucí i každé další předání. Běží jako vedoucí, na jeho pozici, s oprávněním, které má funkce odměňující pokrok, takže `@s` je vedoucí. Kontroluje se každou sekundu; u vedoucího, který je offline, se spustí, až bude příště online. Restart rozhodne o vedoucím znovu                                                                                                                                                                                                                                                    |
+
+### Sražení k zemi
+
+*týmy*
+
+| Nastavení       | Typ   | Výchozí                                                                         | Co dělá                                                                                                                                                                                                                                                                              |
+| --------------- | ----- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `seconds`       | číslo | `0`                                                                             | Jak dlouho hráč této strany zůstane sražený, než vykrvácí, v sekundách. `0` nebo chybějící objekt `down` funkci vypne, takže hráči strany umírají jako obvykle a nic se neposlouchá. Vykrvácení je skutečná smrt, takže skóre, vyřazení i kořist přijdou až tehdy, ne při pádu hráče |
+| `reviveSeconds` | číslo | `5`                                                                             | Jak dlouho musí spoluhráč, který sám není sražený, stát do 2 bloků od sraženého hráče a krčit se, aby ho oživil. Postup začne od nuly, jakmile se přestane krčit nebo odejde                                                                                                         |
+| `says`          | text  | `You are down and bleed out in {seconds} seconds unless a teammate revives you` | Řekne se hráči, když je sražen. `{seconds}` je doba do vykrvácení. Prázdné neřekne nic                                                                                                                                                                                               |
+| `revivedSays`   | text  | `You were revived`                                                              | Řekne se hráči, když ho spoluhráč oživí. Prázdné neřekne nic                                                                                                                                                                                                                         |
+
+Člen strany s `down` je místo smrti sražen: drží se na 1 životu, nemůže se hýbat ani skákat (sesednou z čehokoli, na čem jedou, a když se pohnou, vrátí se na místo, kde byli sraženi; Zpomalení na nejvyšší úrovni to ukazuje), září, nedostává žádné zranění kromě propasti, `/kill` a vykrvácení a nemůže útočit, používat předměty ani klikat na bloky či entity. Propast a `/kill` zabijí hráče, který není sražen, rovnou a vykrvácení se počítá jako zabití nepřítelem, který hráče srazil. Oživený hráč se vrátí s polovinou maximálního zdraví. Hráči bez strany umírají jako obvykle a moby se nemění. Stav se drží jen v paměti: hráč, který se odhlásí, zatímco je sražen, zemře, a server, který se zastaví, když je někdo sražen, ho vrátí s 1 životem a bez účinků. Zprávy se zobrazí jako karty `rdpl:downed` a `rdpl:revived`
 
 ## Bodování
 
@@ -6993,6 +7007,8 @@ Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou
 | `rdpl:team_lead`         | Vedení strany přejde na hráče                                     | `leadSays` v [Týmy](#týmy)                                                                                                        |
 | `rdpl:team_picked`       | Hráč je vybrán pro stranu                                         | `displayName` strany                                                                                                              |
 | `rdpl:team_round_ended`  | Kolo skončilo, takže se hráč přesune na stranu                    | `displayName` strany                                                                                                              |
+| `rdpl:downed`            | Hráč je místo smrti sražen                                        | `down.says` v [Týmy](#týmy)                                                                                                       |
+| `rdpl:revived`           | Spoluhráč oživí sraženého hráče                                   | `down.revivedSays` v [Týmy](#týmy)                                                                                                |
 | `rdpl:lobby_joins`       | Hráč, který se přihlásí uprostřed kola, je poslán do lobby        | `opens.joinsSays` v [Lobby](#lobby)                                                                                               |
 | `rdpl:lobby_note`        | Řádek lobby uprostřed obrazovky                                   | `opens.says`, `opens.leaderSays` v [Lobby](#lobby)                                                                                |
 | `rdpl:scoring_results`   | Pořadí na konci kola, každému hráči                               | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` v [Výsledky](#výsledky) |

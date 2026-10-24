@@ -77,6 +77,7 @@ public final class ContentTeams {
             BY_NAME.put(def.name(), def);
         });
         if (!BY_NAME.isEmpty()) { Summary.info("teams", "Fielding " + BY_NAME.size() + " team(s): " + BY_NAME.keySet()); }
+        ContentDowned.load();
     }
 
     public static Map<String, TeamDef> all() { return BY_NAME; }
