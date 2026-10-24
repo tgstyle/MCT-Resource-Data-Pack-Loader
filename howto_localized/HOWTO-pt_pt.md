@@ -58,6 +58,7 @@ Catorze exemplos funcionais. Coloca qualquer um deles diretamente em `rdploader`
 - [Passagens de idioma](#passagens-de-idioma)
 - [Poções, tipos de poção e preparação](#poções-tipos-de-poção-e-preparação)
 - [Trabalho na bigorna](#trabalho-na-bigorna)
+- [Afixos e engastes](#afixos-e-engastes)
 - [Mesa de encantamentos](#mesa-de-encantamentos)
 - [Itens largados por blocos](#itens-largados-por-blocos)
 - [Colheita com o botão direito](#colheita-com-o-botão-direito)
@@ -194,6 +195,8 @@ Todos os caminhos deste guia estão escritos a partir de `assets/`, pelo que `<n
 | `<namespace>/loot_injections/*.json`                                                            | Um grupo adicionado a uma tabela que já existe. [O que podes substituir](#o-que-podes-substituir)                                                                                           |
 | `<namespace>/block_drops/*.json`                                                                | Itens largados adicionais ou de substituição para blocos que um pacote não possui. [Itens largados por blocos](#itens-largados-por-blocos)                                                  |
 | `<namespace>/anvils/*.json`                                                                     | Encantamentos que uma bigorna aplica a um item com nome, um progresso que ele desbloqueia e um bloqueio até lá. [Trabalho na bigorna](#trabalho-na-bigorna)                                 |
+| `<namespace>/affixes/*.json` | Bónus de atributo aleatórios e engastes que um item sorteia na primeira vez que um jogador o segura. [Afixos e engastes](#afixos-e-engastes) |
+| `<namespace>/gems/*.json` | Itens que uma bigorna encaixa num engaste por um bónus de atributo. [Afixos e engastes](#afixos-e-engastes) |
 | `<namespace>/cards/*.json`                                                                      | Cartas no ecrã mostradas por um acionador e as mensagens que este mod diz por si próprio. [Cartas](#cartas)                                                                                 |
 | `<namespace>/dice/*.json`                                                                       | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve um lançamento e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos)                                           |
 | `<namespace>/games/*.json`                                                                      | Jogos de tabuleiro jogados com mobs como peças: o tabuleiro, as peças e como se movem, e o que paga um resultado. [Jogos de tabuleiro](#jogos-de-tabuleiro)                                 |
@@ -485,6 +488,7 @@ Cada uma destas pastas tem também um interruptor na config, para que um modpack
 | `disableOverrides` | `recipes`  | desligado    | Impede este mod de substituir ou adicionar receitas. Só é preciso se outro coremod entrar em conflito no carregamento de receitas                 |
 | `lootInjections`   | `data`     | ligado       | Aplica `loot_injections/*.json`                                                                                                                   |
 | `enchanting`       | `data`     | ligado       | Aplica `enchanting/*.json`                                                                                                                        |
+| `affixes` | `data` | ligado | Aplica `affixes/*.json` e `gems/*.json` |
 | `blockDrops`       | `data`     | ligado       | Aplica `block_drops/*.json`                                                                                                                       |
 | `registryRemaps`   | `data`     | ligado       | Aplica os ficheiros `registry_remap`, para que os mundos guardados antes de uma renomeação mantenham os seus blocos e itens                       |
 | `load`             | `worldgen` | ligado       | Gera os filões de minério de `worldgen/*.json` em chunks novos. Os chunks existentes não são alterados                                            |
@@ -502,7 +506,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                       |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                         | `potions`, `potion_types`, `sounds`, `tabs`                                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                | `biomes`, `dimensions`, `portalframes`                                                         |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                               | `villagers`                                                                                    |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                                               | `villagers`                                                                                    |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profissões que o cliente conhece: as do vanilla ou as de um mod presente nos dois lados) | `entities`, `worldintro`, `texts` (a introdução nunca é mostrada a um cliente vanilla)         |
 | `teams`, `scoring`, `ranks`                                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (pastas do cliente; sem cliente, deixa-as de fora) |
 | toda a camada de controlo, as definições e a pré-geração                                                                                                                          |                                                                                                |
@@ -2654,6 +2658,70 @@ Um ficheiro com `match` muda a forma como a bigorna repara e combina o item que 
 | `penalty`       | não         | `"vanilla"`, `"none"` ou `{ "factor": n }`                    | `"vanilla"`                             | Como o custo de trabalho anterior cresce a cada uso. O vanilla duplica-o e soma um, `none` deixa-o onde está, e um fator de 0 a 16 multiplica-o e soma um                            |
 | `repair`        | não         | booleano                                                      | `true`                                  | Com `false` a bigorna não o repara                                                                                                                                                   |
 | `combine`       | não         | booleano                                                      | `true`                                  | Com `false` a bigorna não junta dois deles; os livros encantados continuam a aplicar-se                                                                                              |
+
+## Afixos e engastes
+
+*fabrico, saque e comércio*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+Os nomes dos ficheiros são à tua escolha, só as pastas são lidas, e vários ficheiros acumulam-se. Um ficheiro de afixos nomeia um item e os bónus que ele pode sortear, e um ficheiro de gema nomeia um item que encaixa num engaste.
+
+Um item correspondente é sorteado uma vez, na primeira vez que um jogador o segura, e mantém o que sorteou. As gemas entram nos engastes numa bigorna pelos níveis da gema. O item não pode empilhar. Um pacote removido deixa os valores sorteados na pilha.
+
+Com um item já sorteado que tem um engaste vazio na ranhura esquerda de uma bigorna e uma gema na direita, a bigorna devolve o item com a gema no primeiro engaste vazio e o bónus da gema somado, e gasta uma gema. Um item sem engaste vazio não recebe oferta nenhuma, e uma gema nunca é retirada. A dica do item mostra cada afixo pelo seu `name`, depois cada engaste, vazio ou com a sua gema.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Chave     | Obrigatório | Valor                        | Predefinição | O que faz                                                                                          |
+| --------- | ----------- | ---------------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| `item`    | sim         | nome do item, ou `id:meta`   |              | O item que sorteia. Não pode empilhar: um item empilhável é um erro e o ficheiro é ignorado        |
+| `rolls`   | não         | `{ "min", "max" }`           | `1`          | Quantos afixos diferentes ele sorteia                                                              |
+| `sockets` | não         | `{ "min", "max" }`           | `0`          | Quantos engastes de gema ele sorteia                                                               |
+| `affixes` | sim         | lista de objetos             |              | O que ele pode sortear, cada entrada como abaixo. Uma entrada com atributo desconhecido é ignorada |
+
+Cada entrada de `affixes` aceita:
+
+| Chave       | Obrigatório | Valor                                                            | Predefinição | O que faz                                                                                                  |
+| ----------- | ----------- | ---------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
+| `name`      | não         | texto, ou uma chave de idioma                                    | nenhum       | A linha que a dica do item mostra para ele                                                                 |
+| `attribute` | sim         | nome do atributo                                                 |              | O que ele muda, como `generic.attackDamage` ou `generic.maxHealth`                                         |
+| `min`       | não         | número                                                           | `0`          | O mínimo que ele soma                                                                                      |
+| `max`       | não         | número                                                           | `min`        | O máximo que ele soma. Valores iguais dão um bónus exato, senão sorteia-se entre os dois                   |
+| `operation` | não         | `0`, `1` ou `2`                                                  | `0`          | `0` soma ao atributo, `1` multiplica a base, `2` multiplica o total                                        |
+| `slot`      | não         | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`        | A ranhura em que o item tem de estar para o bónus valer                                                    |
+| `weight`    | não         | número inteiro                                                   | `1`          | Quão provável ele é ao lado dos outros. Os afixos de um item são diferentes entre si, escolhidos pelo peso |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Chave       | Obrigatório | Valor                                                            | Predefinição | O que faz                                                                                       |
+| ----------- | ----------- | ---------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------- |
+| `item`      | sim         | nome do item, ou `id:meta`                                       |              | A gema, que vai na ranhura direita da bigorna                                                   |
+| `name`      | não         | texto, ou uma chave de idioma                                    | o item       | O que a dica mostra quando a gema está num engaste                                              |
+| `attribute` | sim         | nome do atributo                                                 |              | O que a gema muda                                                                               |
+| `amount`    | não         | número                                                           | `0`          | O que ela soma                                                                                  |
+| `operation` | não         | `0`, `1` ou `2`                                                  | `0`          | Como num afixo                                                                                  |
+| `slot`      | não         | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`        | Como num afixo                                                                                  |
+| `levels`    | não         | número inteiro                                                   | `1`          | Os níveis de experiência que encaixar a gema custa, no mínimo 1 e sempre abaixo do ponto de caro demais da bigorna |
 
 ## Mesa de encantamentos
 

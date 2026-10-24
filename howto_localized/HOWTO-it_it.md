@@ -58,6 +58,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Varchi di lingua](#varchi-di-lingua)
 - [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)
 - [Lavori all'incudine](#lavori-allincudine)
+- [Affissi e castoni](#affissi-e-castoni)
 - [Tavolo per incantesimi](#tavolo-per-incantesimi)
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
@@ -194,6 +195,8 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/loot_injections/*.json`                                                            | Un pool aggiunto a una tabella già esistente. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                  |
 | `<namespace>/block_drops/*.json`                                                                | Drop aggiuntivi o sostitutivi per blocchi che un pack non possiede. [Drop dei blocchi](#drop-dei-blocchi)                                                                                          |
 | `<namespace>/anvils/*.json`                                                                     | Incantesimi che un'incudine applica a un oggetto con nome, un progresso che ne deriva e un blocco fino ad allora. [Lavori all'incudine](#lavori-allincudine)                                       |
+| `<namespace>/affixes/*.json` | Bonus di attributo casuali e castoni che un oggetto tira la prima volta che un giocatore lo tiene. [Affissi e castoni](#affissi-e-castoni) |
+| `<namespace>/gems/*.json` | Oggetti che un'incudine incastona in un castone per un bonus di attributo. [Affissi e castoni](#affissi-e-castoni) |
 | `<namespace>/cards/*.json`                                                                      | Carte a schermo mostrate da un attivatore e i messaggi che questa mod dice da sé. [Carte](#carte)                                                                                                  |
 | `<namespace>/dice/*.json`                                                                       | Dadi del pack con facce con peso, mazzi di carte, chi sente un tiro e la formulazione dei risultati. [Dadi e mazzi](#dadi-e-mazzi)                                                                 |
 | `<namespace>/games/*.json`                                                                      | Giochi da tavolo giocati con i mob come pezzi: la scacchiera, i pezzi e come si muovono, e cosa paga un risultato. [Giochi da tavolo](#giochi-da-tavolo)                                           |
@@ -485,6 +488,7 @@ Ognuna di queste cartelle ha anche un interruttore nella configurazione, così u
 | `disableOverrides` | `recipes`  | disattivo   | Impedisce a questa mod di sostituire o aggiungere ricette. Serve solo se un altro coremod è in conflitto sul caricamento delle ricette                  |
 | `lootInjections`   | `data`     | attivo      | Applica `loot_injections/*.json`                                                                                                                        |
 | `enchanting`       | `data`     | attivo      | Applica `enchanting/*.json`                                                                                                                             |
+| `affixes` | `data` | attivo | Applica `affixes/*.json` e `gems/*.json` |
 | `blockDrops`       | `data`     | attivo      | Applica `block_drops/*.json`                                                                                                                            |
 | `registryRemaps`   | `data`     | attivo      | Applica i file `registry_remap`, così i mondi salvati prima di una rinomina conservano i propri blocchi e oggetti                                       |
 | `load`             | `worldgen` | attivo      | Genera i filoni di minerale da `worldgen/*.json` nei nuovi chunk. I chunk esistenti non vengono modificati                                              |
@@ -502,7 +506,7 @@ Un pack può stare solo sul server, con giocatori su normali client vanilla, a u
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                 | `blocks`, `items`, `fluids`, `materials`                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                     | `biomes`, `dimensions`, `portalframes`                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                    | `villagers`                                                                                   |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                    | `villagers`                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (per le professioni che il client conosce: quelle vanilla o di una mod presente su entrambi i lati) | `entities`, `worldintro`, `texts` (l'introduzione non viene mai mostrata a un client vanilla) |
 | `teams`, `scoring`, `ranks`                                                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (cartelle del client: senza client, escludile)    |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                                                     |                                                                                               |
@@ -2654,6 +2658,70 @@ Un file che contiene `match` cambia il modo in cui l'incudine ripara e combina l
 | `penalty`       | no           | `"vanilla"`, `"none"` oppure `{ "factor": n }`                           | `"vanilla"`                                      | Come cresce il costo dei lavori precedenti a ogni uso. Vanilla lo raddoppia e aggiunge uno, `none` lo lascia dov'è, e un fattore da 0 a 16 lo moltiplica e aggiunge uno                   |
 | `repair`        | no           | booleano                                                                 | `true`                                           | Con `false` l'incudine non lo ripara                                                                                                                                                      |
 | `combine`       | no           | booleano                                                                 | `true`                                           | Con `false` l'incudine non unisce due di quegli oggetti; i libri incantati si applicano comunque                                                                                          |
+
+## Affissi e castoni
+
+*crafting, bottino e scambi*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+I nomi dei file li scegli tu, vengono lette solo le cartelle e più file si sommano. Un file di affissi nomina un oggetto e i bonus che può tirare, e un file di gemme nomina un oggetto che entra in un castone.
+
+Un oggetto corrispondente viene tirato una volta sola, la prima volta che un giocatore lo tiene, e conserva ciò che ha tirato. Le gemme entrano nei suoi castoni a un'incudine per i livelli della gemma. L'oggetto non deve impilarsi. Un pacchetto rimosso lascia sulla pila i valori tirati.
+
+Con un oggetto già tirato che ha un castone vuoto nello slot sinistro di un'incudine e una gemma in quello destro, l'incudine restituisce l'oggetto con la gemma nel primo castone vuoto e il bonus della gemma aggiunto, e consuma una gemma. Un oggetto senza castoni vuoti non riceve alcuna offerta, e una gemma non viene mai tolta. Il suggerimento dell'oggetto mostra ogni affisso con il suo `name`, poi ogni castone, vuoto o con la sua gemma.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Chiave    | Obbligatorio | Valore                       | Predefinito | Cosa fa                                                                                              |
+| --------- | ------------ | ---------------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `item`    | sì           | nome dell'oggetto, o `id:meta` |             | L'oggetto che tira. Non deve impilarsi: un oggetto impilabile è un errore e il file viene saltato   |
+| `rolls`   | no           | `{ "min", "max" }`           | `1`         | Quanti affissi diversi tira                                                                          |
+| `sockets` | no           | `{ "min", "max" }`           | `0`         | Quanti castoni per gemme tira                                                                        |
+| `affixes` | sì           | elenco di oggetti            |             | Cosa può tirare, ogni voce come sotto. Una voce con un attributo sconosciuto viene saltata           |
+
+Ogni voce di `affixes` accetta:
+
+| Chiave      | Obbligatorio | Valore                                                           | Predefinito | Cosa fa                                                                                                  |
+| ----------- | ------------ | ---------------------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| `name`      | no           | testo, o una chiave di lingua                                    | nessuno     | La riga che il suggerimento dell'oggetto mostra per lui                                                  |
+| `attribute` | sì           | nome dell'attributo                                              |             | Cosa cambia, come `generic.attackDamage` o `generic.maxHealth`                                           |
+| `min`       | no           | numero                                                           | `0`         | Il minimo che aggiunge                                                                                   |
+| `max`       | no           | numero                                                           | `min`       | Il massimo che aggiunge. Valori uguali danno un bonus esatto, altrimenti si tira tra i due               |
+| `operation` | no           | `0`, `1` o `2`                                                   | `0`         | `0` somma all'attributo, `1` moltiplica la sua base, `2` moltiplica il totale                            |
+| `slot`      | no           | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` o `any`   | `any`       | Lo slot in cui deve trovarsi l'oggetto perché il bonus conti                                             |
+| `weight`    | no           | intero                                                           | `1`         | Quanto è probabile rispetto agli altri. Gli affissi di un oggetto sono diversi tra loro, scelti in base al peso |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Chiave      | Obbligatorio | Valore                                                           | Predefinito  | Cosa fa                                                                                       |
+| ----------- | ------------ | ---------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------- |
+| `item`      | sì           | nome dell'oggetto, o `id:meta`                                   |              | La gemma, che va nello slot destro dell'incudine                                              |
+| `name`      | no           | testo, o una chiave di lingua                                    | l'oggetto    | Cosa mostra il suggerimento quando la gemma sta in un castone                                 |
+| `attribute` | sì           | nome dell'attributo                                              |              | Cosa cambia la gemma                                                                          |
+| `amount`    | no           | numero                                                           | `0`          | Cosa aggiunge                                                                                 |
+| `operation` | no           | `0`, `1` o `2`                                                   | `0`          | Come per un affisso                                                                           |
+| `slot`      | no           | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` o `any`   | `any`        | Come per un affisso                                                                           |
+| `levels`    | no           | intero                                                           | `1`          | I livelli di esperienza che costa incastonare la gemma, almeno 1 e sempre sotto la soglia di troppo costoso dell'incudine |
 
 ## Tavolo per incantesimi
 

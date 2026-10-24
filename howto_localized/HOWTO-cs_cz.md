@@ -58,6 +58,7 @@
 - [Jazykové brány](#jazykové-brány)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
+- [Afixy a patice](#afixy-a-patice)
 - [Čarovací stůl](#čarovací-stůl)
 - [Dropy z bloků](#dropy-z-bloků)
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
@@ -194,6 +195,8 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/loot_injections/*.json`                                                            | Pool přidaný do tabulky, která už existuje. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                 |
 | `<namespace>/block_drops/*.json`                                                                | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků)                                                                                                                 |
 | `<namespace>/anvils/*.json`                                                                     | Enchanty, které kovadlina dá pojmenovanému předmětu, advancement, který tím získá, a zámek do té doby. [Práce s kovadlinou](#práce-s-kovadlinou)                                                                  |
+| `<namespace>/affixes/*.json` | Náhodné bonusy atributů a patice, které předmět vylosuje, když ho hráč poprvé drží. [Afixy a patice](#afixy-a-patice) |
+| `<namespace>/gems/*.json` | Předměty, které kovadlina vloží do patice za bonus atributu. [Afixy a patice](#afixy-a-patice) |
 | `<namespace>/cards/*.json`                                                                      | Karty na obrazovce zobrazené při spouštěči a zprávy, které tento mód říká sám. [Karty](#karty)                                                                                                                    |
 | `<namespace>/dice/*.json`                                                                       | Kostky balíčku s váženými stranami, balíčky karet, kdo slyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                              |
 | `<namespace>/games/*.json`                                                                      | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                                                                                     |
@@ -485,6 +488,7 @@ Každá z těchto složek má také přepínač v konfiguraci, takže modpack m�
 | `disableOverrides` | `recipes`  | vypnuto | Zabrání tomuto módu nahrazovat nebo přidávat recepty. Potřeba jen tehdy, když se jiný coremod hádá o načítání receptů                                    |
 | `lootInjections`   | `data`     | zapnuto | Použije `loot_injections/*.json`                                                                                                                         |
 | `enchanting`       | `data`     | zapnuto | Použije `enchanting/*.json`                                                                                                                              |
+| `affixes` | `data` | zapnuto | Použije `affixes/*.json` a `gems/*.json` |
 | `blockDrops`       | `data`     | zapnuto | Použije `block_drops/*.json`                                                                                                                             |
 | `registryRemaps`   | `data`     | zapnuto | Použije soubory `registry_remap`, takže světy uložené před přejmenováním si své bloky a předměty ponechají                                               |
 | `load`             | `worldgen` | zapnuto | Generuje rudné žíly z `worldgen/*.json` v nových chuncích. Existující chunky se nemění                                                                   |
@@ -502,7 +506,7 @@ Balíček může žít jen na serveru, zatímco hráči hrají na čistých vani
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                 | `blocks`, `items`, `fluids`, `materials`                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                     | `biomes`, `dimensions`, `portalframes`                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                    | `villagers`                                                                         |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                    | `villagers`                                                                         |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách) | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)       |
 | `teams`, `scoring`, `ranks`                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (složky klienta, bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                       |                                                                                     |
@@ -2654,6 +2658,70 @@ Soubor s `match` mění, jak kovadlina opravuje a spojuje předmět, který jmen
 | `penalty`       | ne      | `"vanilla"`, `"none"` nebo `{ "factor": n }`          | `"vanilla"`                       | Jak cena předchozí práce roste s každým použitím. Vanilla ji zdvojnásobí a přičte jedna, `none` ji nechá, kde je, a faktor od 0 do 16 ji vynásobí a přičte jedna                    |
 | `repair`        | ne      | boolean                                               | `true`                            | Při `false` ho kovadlina neopraví                                                                                                                                                   |
 | `combine`       | ne      | boolean                                               | `true`                            | Při `false` kovadlina nespojí dva takové předměty; očarované knihy se dál použijí                                                                                                   |
+
+## Afixy a patice
+
+*výroba, kořist a obchod*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+Názvy souborů si zvolíš sám, čtou se jen složky a více souborů se sčítá. Soubor afixů pojmenuje jeden předmět a bonusy, které může vylosovat, soubor drahokamu pojmenuje jeden předmět, který zapadne do patice.
+
+Odpovídající předmět se losuje jednou, když ho hráč poprvé drží, a ponechá si, co vylosoval. Drahokamy se do jeho patic vkládají na kovadlině za úrovně drahokamu. Předmět se nesmí stohovat. Odebraný balíček nechá vylosované hodnoty na stohu.
+
+Když je vylosovaný předmět s prázdnou paticí v levém slotu kovadliny a drahokam v pravém, kovadlina nabídne předmět zpět s drahokamem v první prázdné patici a s bonusem drahokamu navíc a spotřebuje jeden drahokam. Předmět bez prázdné patice nedostane žádnou nabídku a drahokam se už nikdy nevyjme. Popisek předmětu ukazuje každý afix pod jeho `name`, pak každou patici, prázdnou, nebo s jejím drahokamem.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Klíč      | Povinný | Hodnota                    | Výchozí | Co dělá                                                                                              |
+| --------- | ------- | -------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `item`    | ano     | název předmětu, nebo `id:meta` |         | Předmět, který losuje. Nesmí se stohovat: stohovatelný předmět je chyba a soubor se přeskočí        |
+| `rolls`   | ne      | `{ "min", "max" }`         | `1`     | Kolik různých afixů vylosuje                                                                         |
+| `sockets` | ne      | `{ "min", "max" }`         | `0`     | Kolik patic pro drahokamy vylosuje                                                                   |
+| `affixes` | ano     | seznam objektů             |         | Co může vylosovat, každý záznam podle níže. Záznam s neznámým atributem se přeskočí                  |
+
+Každý záznam v `affixes` bere:
+
+| Klíč        | Povinný | Hodnota                                                         | Výchozí | Co dělá                                                                                                   |
+| ----------- | ------- | --------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `name`      | ne      | text, nebo klíč jazyka                                          | žádný   | Řádek, který o něm ukáže popisek předmětu                                                                 |
+| `attribute` | ano     | název atributu                                                  |         | Co mění, například `generic.attackDamage` nebo `generic.maxHealth`                                        |
+| `min`       | ne      | číslo                                                           | `0`     | Nejmíň, kolik přidá                                                                                       |
+| `max`       | ne      | číslo                                                           | `min`   | Nejvíc, kolik přidá. Stejné hodnoty dají přesný bonus, jinak se losuje mezi nimi                          |
+| `operation` | ne      | `0`, `1` nebo `2`                                               | `0`     | `0` přičte k atributu, `1` násobí jeho základ, `2` násobí součet                                          |
+| `slot`      | ne      | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` nebo `any` | `any`   | V jakém slotu musí předmět být, aby se bonus započítal                                                    |
+| `weight`    | ne      | celé číslo                                                      | `1`     | Jak je pravděpodobný vedle ostatních. Afixy jednoho předmětu jsou navzájem různé, vybírané podle váhy     |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Klíč        | Povinný | Hodnota                                                         | Výchozí    | Co dělá                                                                                          |
+| ----------- | ------- | --------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------ |
+| `item`      | ano     | název předmětu, nebo `id:meta`                                  |            | Drahokam, který patří do pravého slotu kovadliny                                                 |
+| `name`      | ne      | text, nebo klíč jazyka                                          | ten předmět | Co popisek ukáže, když drahokam sedí v patici                                                   |
+| `attribute` | ano     | název atributu                                                  |            | Co drahokam mění                                                                                 |
+| `amount`    | ne      | číslo                                                           | `0`        | Co přidá                                                                                         |
+| `operation` | ne      | `0`, `1` nebo `2`                                               | `0`        | Jako u afixu                                                                                     |
+| `slot`      | ne      | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` nebo `any` | `any`      | Jako u afixu                                                                                     |
+| `levels`    | ne      | celé číslo                                                      | `1`        | Úrovně zkušeností, které vložení drahokamu stojí, nejméně 1 a vždy pod hranicí příliš drahé práce kovadliny |
 
 ## Čarovací stůl
 

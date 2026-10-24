@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.ContentExposures;
+import mctmods.resourcedatapackloader.content.ContentAffixes;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.ContentEnchanting;
 import mctmods.resourcedatapackloader.content.ContentBoards;
@@ -274,7 +275,9 @@ public class ResourceDataPackLoader {
         if (Config.worldgen.blockOres && veins.isEmpty()) {
             ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above");
         }
-        if (ContentAnvils.load()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
+        boolean anvils = ContentAnvils.load();
+        if (ContentAffixes.load()) { MinecraftForge.EVENT_BUS.register(ContentAffixes.class); }
+        if (anvils || ContentAffixes.sockets()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
         ContentEnchanting.load();
         if (ContentHardness.load()) {
             ContentHardness.resolve();
@@ -309,7 +312,8 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentHeatShimmer.class);
             MinecraftForge.EVENT_BUS.register(ContentDimensionAmbience.class);
             MinecraftForge.EVENT_BUS.register(ProspectTooltip.class);
-            if (ContentTooltips.load()) { MinecraftForge.EVENT_BUS.register(PackTooltips.class); }
+            ContentTooltips.load();
+            MinecraftForge.EVENT_BUS.register(PackTooltips.class);
             MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
             if (ContentItemContainer.baubled()) { PouchKey.register(); }
         }

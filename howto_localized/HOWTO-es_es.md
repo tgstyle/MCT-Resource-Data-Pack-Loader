@@ -58,6 +58,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 - [Puertas de idioma](#puertas-de-idioma)
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
+- [Afijos y engastes](#afijos-y-engastes)
 - [Mesa de encantamientos](#mesa-de-encantamientos)
 - [Drops de bloques](#drops-de-bloques)
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
@@ -194,6 +195,8 @@ Todas las rutas de esta guía se escriben desde `assets/` en adelante, así que 
 | `<namespace>/loot_injections/*.json`                                                            | Un grupo añadido a una tabla que ya existe. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                            |
 | `<namespace>/block_drops/*.json`                                                                | Drops extra o sustitutivos para bloques que un pack no posee. [Drops de bloques](#drops-de-bloques)                                                                                                        |
 | `<namespace>/anvils/*.json`                                                                     | Encantamientos que un yunque aplica a un ítem con nombre, un logro que concede y un bloqueo hasta entonces. [Trabajo en el yunque](#trabajo-en-el-yunque)                                                  |
+| `<namespace>/affixes/*.json` | Bonificaciones de atributo al azar y engastes que un ítem saca la primera vez que un jugador lo sostiene. [Afijos y engastes](#afijos-y-engastes) |
+| `<namespace>/gems/*.json` | Ítems que un yunque encaja en un engaste a cambio de una bonificación de atributo. [Afijos y engastes](#afijos-y-engastes) |
 | `<namespace>/cards/*.json`                                                                      | Tarjetas en pantalla mostradas con un disparador, y los mensajes que dice el propio mod. [Tarjetas](#tarjetas)                                                                                             |
 | `<namespace>/dice/*.json`                                                                       | Dados del pack con caras ponderadas, mazos de cartas, quién oye una tirada y la redacción de los resultados. [Dados y mazos](#dados-y-mazos)                                                               |
 | `<namespace>/games/*.json`                                                                      | Juegos de tablero con criaturas como piezas: el tablero, las piezas y cómo se mueven, y lo que paga un resultado. [Juegos de tablero](#juegos-de-tablero)                                                  |
@@ -485,6 +488,7 @@ Cada una de estas carpetas tiene además un interruptor en la configuración, de
 | `disableOverrides` | `recipes`  | desactivado | Impide que este mod sustituya o añada recetas. Solo hace falta si otro coremod entra en conflicto con la carga de recetas                                       |
 | `lootInjections`   | `data`     | activado    | Aplica `loot_injections/*.json`                                                                                                                                 |
 | `enchanting`       | `data`     | activado    | Aplica `enchanting/*.json`                                                                                                                                      |
+| `affixes` | `data` | activado | Aplica `affixes/*.json` y `gems/*.json` |
 | `blockDrops`       | `data`     | activado    | Aplica `block_drops/*.json`                                                                                                                                     |
 | `registryRemaps`   | `data`     | activado    | Aplica los archivos de `registry_remap`, para que los mundos guardados antes de un renombrado conserven sus bloques e ítems                                     |
 | `load`             | `worldgen` | activado    | Genera las vetas de mineral de `worldgen/*.json` en chunks nuevos. Los chunks existentes no cambian                                                             |
@@ -502,7 +506,7 @@ Un pack puede vivir solo en el servidor, con jugadores en clientes vanilla puros
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                              | `blocks`, `items`, `fluids`, `materials`                                                       |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                           | `potions`, `potion_types`, `sounds`, `tabs`                                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                  | `biomes`, `dimensions`, `portalframes`                                                         |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                 | `villagers`                                                                                    |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                 | `villagers`                                                                                    |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profesiones que el cliente conoce: las de vanilla o las de un mod presente en ambos lados) | `entities`, `worldintro`, `texts` (la introducción nunca se muestra a un cliente vanilla)      |
 | `teams`, `scoring`, `ranks`                                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (carpetas del cliente: sin cliente, déjalas fuera) |
 | toda la capa de control, los ajustes y la pregeneración                                                                                                                             |                                                                                                |
@@ -2654,6 +2658,70 @@ Un archivo con `match` cambia cómo el yunque repara y combina el ítem que nomb
 | `penalty`       | no          | `"vanilla"`, `"none"` o `{ "factor": n }`                           | `"vanilla"`                               | Cómo crece el coste de trabajo previo con cada uso. Vanilla lo duplica y suma uno, `none` lo deja donde está, y un factor de 0 a 16 lo multiplica y suma uno                          |
 | `repair`        | no          | booleano                                                            | `true`                                    | Con `false` el yunque no lo repara                                                                                                                                                    |
 | `combine`       | no          | booleano                                                            | `true`                                    | Con `false` el yunque no une dos de ellos; los libros encantados siguen aplicándose                                                                                                   |
+
+## Afijos y engastes
+
+*fabricación, botín y comercio*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+Los nombres de archivo los eliges tú, solo se leen las carpetas, y varios archivos se acumulan. Un archivo de afijos nombra un ítem y las bonificaciones que puede sacar al azar, y un archivo de gema nombra un ítem que encaja en un engaste.
+
+Un ítem que coincide se tira una vez, la primera vez que un jugador lo sostiene, y conserva lo que sacó. Las gemas entran en sus engastes en un yunque por los niveles de la gema. El ítem no debe apilarse. Un paquete retirado deja los valores sacados en la pila.
+
+Con un ítem ya tirado que tiene un engaste vacío en la ranura izquierda de un yunque y una gema en la derecha, el yunque devuelve el ítem con la gema en su primer engaste vacío y la bonificación de la gema añadida, y gasta una gema. Un ítem sin engaste vacío no recibe ninguna oferta, y una gema nunca se vuelve a sacar. La descripción emergente del ítem muestra cada afijo con su `name`, luego cada engaste, vacío o con su gema.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Clave     | Obligatorio | Valor                       | Predeterminado | Qué hace                                                                                           |
+| --------- | ----------- | --------------------------- | -------------- | -------------------------------------------------------------------------------------------------- |
+| `item`    | sí          | nombre de ítem, o `id:meta` |                | El ítem que se tira. No debe apilarse: un ítem apilable es un error y se omite el archivo          |
+| `rolls`   | no          | `{ "min", "max" }`          | `1`            | Cuántos afijos distintos saca                                                                      |
+| `sockets` | no          | `{ "min", "max" }`          | `0`            | Cuántos engastes para gemas saca                                                                   |
+| `affixes` | sí          | lista de objetos            |                | Lo que puede sacar, cada entrada como abajo. Una entrada con un atributo desconocido se omite     |
+
+Cada entrada de `affixes` admite:
+
+| Clave       | Obligatorio | Valor                                                           | Predeterminado | Qué hace                                                                                                   |
+| ----------- | ----------- | --------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------- |
+| `name`      | no          | texto, o una clave de idioma                                    | ninguno        | La línea que la descripción emergente del ítem muestra para él                                             |
+| `attribute` | sí          | nombre de atributo                                              |                | Lo que cambia, como `generic.attackDamage` o `generic.maxHealth`                                           |
+| `min`       | no          | número                                                          | `0`            | Lo mínimo que suma                                                                                         |
+| `max`       | no          | número                                                          | `min`          | Lo máximo que suma. Valores iguales dan una bonificación exacta, si no se tira entre ambos                 |
+| `operation` | no          | `0`, `1` o `2`                                                  | `0`            | `0` suma al atributo, `1` multiplica su base, `2` multiplica el total                                      |
+| `slot`      | no          | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` o `any`  | `any`          | La ranura en la que debe estar el ítem para que cuente la bonificación                                     |
+| `weight`    | no          | entero                                                          | `1`            | Qué tan probable es frente a los demás. Los afijos de un ítem son distintos entre sí, elegidos por peso    |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Clave       | Obligatorio | Valor                                                           | Predeterminado | Qué hace                                                                                         |
+| ----------- | ----------- | --------------------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------ |
+| `item`      | sí          | nombre de ítem, o `id:meta`                                     |                | La gema, que va en la ranura derecha del yunque                                                  |
+| `name`      | no          | texto, o una clave de idioma                                    | el ítem        | Lo que muestra la descripción emergente cuando la gema está en un engaste                        |
+| `attribute` | sí          | nombre de atributo                                              |                | Lo que cambia la gema                                                                            |
+| `amount`    | no          | número                                                          | `0`            | Lo que suma                                                                                      |
+| `operation` | no          | `0`, `1` o `2`                                                  | `0`            | Como en un afijo                                                                                 |
+| `slot`      | no          | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` o `any`  | `any`          | Como en un afijo                                                                                 |
+| `levels`    | no          | entero                                                          | `1`            | Los niveles de experiencia que cuesta engastar la gema, 1 como mínimo y siempre por debajo del punto de demasiado caro del yunque |
 
 ## Mesa de encantamientos
 

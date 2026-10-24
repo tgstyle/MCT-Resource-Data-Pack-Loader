@@ -58,6 +58,7 @@
 - [언어 게이트](#언어-게이트)
 - [물약, 물약 유형, 양조](#물약-물약-유형-양조)
 - [모루 작업](#모루-작업)
+- [접사와 소켓](#접사와-소켓)
 - [마법 부여대](#마법-부여대)
 - [블록 드롭](#블록-드롭)
 - [우클릭 수확](#우클릭-수확)
@@ -194,6 +195,8 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/loot_injections/*.json`                                                            | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                          |
 | `<namespace>/block_drops/*.json`                                                                | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                                              |
 | `<namespace>/anvils/*.json`                                                                     | 모루가 이름 있는 아이템에 부여하는 마법, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                                                                   |
+| `<namespace>/affixes/*.json` | 플레이어가 처음 들었을 때 아이템이 굴리는 무작위 속성 보너스와 소켓. [접사와 소켓](#접사와-소켓) |
+| `<namespace>/gems/*.json` | 모루가 속성 보너스를 위해 소켓에 끼우는 아이템. [접사와 소켓](#접사와-소켓) |
 | `<namespace>/cards/*.json`                                                                      | 트리거 시 표시되는 화면 카드와 이 모드가 직접 전하는 메시지. [카드](#카드)                                                                                               |
 | `<namespace>/dice/*.json`                                                                       | 가중치 면이 있는 팩 주사위, 카드 덱, 굴림 결과를 듣는 대상, 결과 문구. [주사위와 덱](#주사위와-덱)                                                                       |
 | `<namespace>/games/*.json`                                                                      | 몹을 말로 쓰는 보드 게임. 판, 말과 말의 이동 방식, 결과에 따른 보상. [보드 게임](#보드-게임)                                                                             |
@@ -485,6 +488,7 @@ rdploader/RDPL1O Seasonal       우선순위와 재정의를 함께 지정
 | `disableOverrides` | `recipes`  | 꺼짐   | 이 모드가 레시피를 교체하거나 추가하지 못하게 합니다. 다른 코어모드가 레시피 로딩에서 충돌할 때만 필요합니다                            |
 | `lootInjections`   | `data`     | 켜짐   | `loot_injections/*.json`을 적용합니다                                                                                                   |
 | `enchanting`       | `data`     | 켜짐   | `enchanting/*.json`을 적용합니다                                                                                                        |
+| `affixes` | `data` | 켜짐 | `affixes/*.json`과 `gems/*.json`을 적용합니다 |
 | `blockDrops`       | `data`     | 켜짐   | `block_drops/*.json`을 적용합니다                                                                                                       |
 | `registryRemaps`   | `data`     | 켜짐   | `registry_remap` 파일을 적용하여, 이름 변경 전에 저장된 월드가 블록과 아이템을 유지합니다                                               |
 | `load`             | `worldgen` | 켜짐   | `worldgen/*.json`의 광맥을 새 청크에 생성합니다. 기존 청크는 바뀌지 않습니다                                                            |
@@ -502,7 +506,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                  |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `sounds`, `tabs`                                               |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                    |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                               | `villagers`                                                                               |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                               | `villagers`                                                                               |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)              |
 | `teams`, `scoring`, `ranks`                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요) |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                                   |                                                                                           |
@@ -2654,6 +2658,70 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `penalty`       | 아니요 | `"vanilla"`, `"none"` 또는 `{ "factor": n }`       | `"vanilla"`             | 쓸 때마다 이전 작업 비용이 늘어나는 방식. 바닐라는 두 배로 하고 1을 더하며, `none`은 그대로 두고, 0부터 16까지의 계수는 그 값을 곱하고 1을 더합니다      |
 | `repair`        | 아니요 | 불리언                                             | `true`                  | `false`면 모루가 그것을 수리하지 않습니다                                                                                                                |
 | `combine`       | 아니요 | 불리언                                             | `true`                  | `false`면 모루가 그것 둘을 합치지 않습니다. 마법이 부여된 책은 여전히 적용됩니다                                                                         |
+
+## 접사와 소켓
+
+*제작, 전리품, 거래*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+파일 이름은 원하는 대로 정할 수 있으며, 폴더만 읽고 여러 파일이 겹쳐 적용됩니다. 접사 파일은 아이템 하나와 그 아이템이 무작위로 얻을 수 있는 보너스를 지정하고, 보석 파일은 소켓에 들어가는 아이템 하나를 지정합니다.
+
+조건에 맞는 아이템은 플레이어가 처음 들었을 때 한 번만 굴려지며, 굴려진 값을 그대로 유지합니다. 보석은 모루에서 보석의 레벨만큼 지불하고 소켓에 넣습니다. 아이템은 겹쳐 쌓이면 안 됩니다. 팩을 제거해도 굴려진 값은 스택에 남습니다.
+
+빈 소켓이 있는 굴려진 아이템을 모루 왼쪽 칸에, 보석을 오른쪽 칸에 두면, 모루는 첫 번째 빈 소켓에 보석을 넣고 보석의 보너스를 더한 아이템을 돌려주며 보석 하나를 소모합니다. 빈 소켓이 없는 아이템에는 아무것도 제시되지 않으며, 보석은 다시 빼낼 수 없습니다. 아이템 툴팁에는 각 접사가 `name`으로 표시되고, 이어서 각 소켓이 비어 있거나 보석이 들어 있는 상태로 표시됩니다.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| 키        | 필수   | 값                         | 기본값 | 설명                                                                                          |
+| --------- | ------ | -------------------------- | ------ | --------------------------------------------------------------------------------------------- |
+| `item`    | 예     | 아이템 이름 또는 `id:meta` |        | 굴려지는 아이템입니다. 겹쳐 쌓이면 안 되며, 쌓이는 아이템은 오류가 되고 파일은 건너뜁니다     |
+| `rolls`   | 아니요 | `{ "min", "max" }`         | `1`    | 서로 다른 접사를 몇 개 굴리는지                                                               |
+| `sockets` | 아니요 | `{ "min", "max" }`         | `0`    | 보석 소켓을 몇 개 굴리는지                                                                    |
+| `affixes` | 예     | 객체 목록                  |        | 굴려질 수 있는 것들이며, 각 항목은 아래와 같습니다. 알 수 없는 속성의 항목은 건너뜁니다       |
+
+`affixes`의 각 항목은 다음을 받습니다.
+
+| 키          | 필수   | 값                                                               | 기본값 | 설명                                                                                      |
+| ----------- | ------ | ---------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| `name`      | 아니요 | 텍스트 또는 언어 키                                              | 없음   | 아이템 툴팁에 표시되는 줄                                                                 |
+| `attribute` | 예     | 속성 이름                                                        |        | 바꾸는 대상입니다. 예: `generic.attackDamage`, `generic.maxHealth`                        |
+| `min`       | 아니요 | 숫자                                                             | `0`    | 더해지는 최솟값                                                                           |
+| `max`       | 아니요 | 숫자                                                             | `min`  | 더해지는 최댓값. 값이 같으면 정확한 보너스가 되고, 다르면 둘 사이에서 굴려집니다          |
+| `operation` | 아니요 | `0`, `1`, `2`                                                    | `0`    | `0`은 속성에 더하고, `1`은 기본값에 곱하고, `2`는 합계에 곱합니다                         |
+| `slot`      | 아니요 | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, `any`    | `any`  | 보너스가 적용되려면 아이템이 있어야 하는 슬롯                                             |
+| `weight`    | 아니요 | 정수                                                             | `1`    | 다른 항목과 비교한 확률. 한 아이템의 접사는 서로 다르며 가중치에 따라 뽑힙니다            |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| 키          | 필수   | 값                                                               | 기본값        | 설명                                                                                      |
+| ----------- | ------ | ---------------------------------------------------------------- | ------------- | ----------------------------------------------------------------------------------------- |
+| `item`      | 예     | 아이템 이름 또는 `id:meta`                                       |               | 모루 오른쪽 칸에 들어가는 보석                                                            |
+| `name`      | 아니요 | 텍스트 또는 언어 키                                              | 그 아이템     | 보석이 소켓에 들어 있을 때 툴팁에 표시되는 것                                             |
+| `attribute` | 예     | 속성 이름                                                        |               | 보석이 바꾸는 대상                                                                        |
+| `amount`    | 아니요 | 숫자                                                             | `0`           | 더해지는 양                                                                               |
+| `operation` | 아니요 | `0`, `1`, `2`                                                    | `0`           | 접사와 같음                                                                               |
+| `slot`      | 아니요 | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, `any`    | `any`         | 접사와 같음                                                                               |
+| `levels`    | 아니요 | 정수                                                             | `1`           | 보석을 끼우는 데 드는 경험치 레벨. 최소 1이며 항상 모루의 너무 비쌈 기준보다 낮습니다     |
 
 ## 마법 부여대
 

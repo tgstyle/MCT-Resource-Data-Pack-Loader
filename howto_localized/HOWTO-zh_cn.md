@@ -58,6 +58,7 @@
 - [语言闸门](#语言闸门)
 - [药水、药水类型与酿造](#药水药水类型与酿造)
 - [铁砧操作](#铁砧操作)
+- [词缀与插槽](#词缀与插槽)
 - [附魔台](#附魔台)
 - [方块掉落物](#方块掉落物)
 - [右键收获](#右键收获)
@@ -194,6 +195,8 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/loot_injections/*.json`                                                            | 添加到已有战利品表中的一个战利品池。[可以覆盖的内容](#可以覆盖的内容)                                                 |
 | `<namespace>/block_drops/*.json`                                                                | 资源包并不拥有的方块的额外或替换掉落物。[方块掉落物](#方块掉落物)                                                     |
 | `<namespace>/anvils/*.json`                                                                     | 铁砧为指定物品附加的附魔、由此获得的进度，以及在此之前的锁定。[铁砧操作](#铁砧操作)                                   |
+| `<namespace>/affixes/*.json` | 物品在玩家第一次持有时随机出的属性加成与插槽。[词缀与插槽](#词缀与插槽) |
+| `<namespace>/gems/*.json` | 铁砧为换取属性加成而嵌入插槽的物品。[词缀与插槽](#词缀与插槽) |
 | `<namespace>/cards/*.json`                                                                      | 由触发器显示的屏幕卡片，以及本模组自己发出的消息。[卡片](#卡片)                                                       |
 | `<namespace>/dice/*.json`                                                                       | 资源包的带权重骰子、卡牌牌堆、谁能听到掷骰，以及结果的文字。[骰子与牌堆](#骰子与牌堆)                                 |
 | `<namespace>/games/*.json`                                                                      | 以生物为棋子的棋盘游戏：棋盘、棋子及其走法，以及结果的奖励。[棋盘游戏](#棋盘游戏)                                     |
@@ -485,6 +488,7 @@ rdploader/RDPL1O Seasonal       priority and override combined
 | `disableOverrides` | `recipes`  | 关     | 阻止本模组替换或添加配方。仅当另一个核心模组在配方加载上冲突时才需要                                    |
 | `lootInjections`   | `data`     | 开     | 应用 `loot_injections/*.json`                                                                           |
 | `enchanting`       | `data`     | 开     | 应用 `enchanting/*.json`                                                                                |
+| `affixes` | `data` | 开 | 应用 `affixes/*.json` 和 `gems/*.json` |
 | `blockDrops`       | `data`     | 开     | 应用 `block_drops/*.json`                                                                               |
 | `registryRemaps`   | `data`     | 开     | 应用 `registry_remap` 文件，使在重命名之前保存的世界保留其方块和物品                                    |
 | `load`             | `worldgen` | 开     | 在新区块中生成 `worldgen/*.json` 里的矿脉。已存在的区块不会改变                                         |
@@ -502,7 +506,7 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当添加在随
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                 | `blocks`、`items`、`fluids`、`materials`                                          |
 | `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                              | `potions`、`potion_types`、`sounds`、`tabs`                                       |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                     | `biomes`、`dimensions`、`portalframes`                                            |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`enchanting`、`player_loot`、`advancements`、`functions`                    | `villagers`                                                                       |
+| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`                    | `villagers`                                                                       |
 | `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的） | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                 |
 | `teams`、`scoring`、`ranks`                                                                                                            | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放） |
 | 整个控制层、设置和预生成                                                                                                               |                                                                                   |
@@ -2654,6 +2658,70 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 | `penalty`       | 否   | `"vanilla"`、`"none"` 或 `{ "factor": n }`  | `"vanilla"`        | 累积惩罚每次使用后如何增长。原版将其翻倍再加一，`none` 保持不变，0 到 16 的系数将其相乘再加一    |
 | `repair`        | 否   | 布尔值                                      | `true`             | 为 `false` 时铁砧不修复它                                                                        |
 | `combine`       | 否   | 布尔值                                      | `true`             | 为 `false` 时铁砧不合并两件它；附魔书仍可使用                                                    |
+
+## 词缀与插槽
+
+*合成、战利品与交易*
+
+`<namespace>/affixes/*.json`、`<namespace>/gems/*.json`
+
+文件名可自行决定，只读取文件夹，多个文件会叠加。词缀文件指定一个物品及其可随机获得的加成，宝石文件指定一个可嵌入插槽的物品。
+
+匹配的物品在玩家第一次持有时随机一次，并保留随机到的结果。宝石在铁砧中按宝石的等级花费嵌入其插槽。物品不能堆叠。移除数据包后，已随机出的数值仍留在物品堆上。
+
+将带有空插槽的已随机物品放在铁砧左槽、宝石放在右槽时，铁砧会返还物品，宝石嵌入第一个空插槽并加上宝石的加成，同时消耗一颗宝石。没有空插槽的物品不会得到任何结果，宝石也不会再被取出。物品的提示框按 `name` 显示每个词缀，随后显示每个插槽是空的还是嵌有宝石。
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| 键        | 必需 | 值                         | 默认值 | 作用                                                                                  |
+| --------- | ---- | -------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `item`    | 是   | 物品名称，或 `id:meta`     |        | 进行随机的物品。它不能堆叠：可堆叠的物品属于错误，该文件会被跳过                      |
+| `rolls`   | 否   | `{ "min", "max" }`         | `1`    | 随机出多少个不同的词缀                                                                |
+| `sockets` | 否   | `{ "min", "max" }`         | `0`    | 随机出多少个宝石插槽                                                                  |
+| `affixes` | 是   | 对象列表                   |        | 可随机出的内容，每个条目如下。属性未知的条目会被跳过                                  |
+
+`affixes` 的每个条目接受：
+
+| 键          | 必需 | 值                                                               | 默认值 | 作用                                                                                  |
+| ----------- | ---- | ---------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| `name`      | 否   | 文本，或语言键                                                   | 无     | 物品提示框中为它显示的一行                                                            |
+| `attribute` | 是   | 属性名称                                                         |        | 它改变的内容，例如 `generic.attackDamage` 或 `generic.maxHealth`                      |
+| `min`       | 否   | 数字                                                             | `0`    | 它增加的最小值                                                                        |
+| `max`       | 否   | 数字                                                             | `min`  | 它增加的最大值。两值相同则得到精确加成，否则在两者之间随机                            |
+| `operation` | 否   | `0`、`1` 或 `2`                                                  | `0`    | `0` 加到属性上，`1` 乘以其基础值，`2` 乘以总值                                        |
+| `slot`      | 否   | `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet` 或 `any`  | `any`  | 物品必须处于哪个栏位，加成才生效                                                      |
+| `weight`    | 否   | int                                                              | `1`    | 与其他条目相比的概率。同一物品的词缀互不相同，按权重抽取                              |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| 键          | 必需 | 值                                                               | 默认值   | 作用                                                                                  |
+| ----------- | ---- | ---------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------- |
+| `item`      | 是   | 物品名称，或 `id:meta`                                           |          | 宝石，放在铁砧的右槽                                                                  |
+| `name`      | 否   | 文本，或语言键                                                   | 该物品   | 宝石嵌入插槽后提示框所显示的内容                                                      |
+| `attribute` | 是   | 属性名称                                                         |          | 宝石改变的内容                                                                        |
+| `amount`    | 否   | 数字                                                             | `0`      | 它增加的量                                                                            |
+| `operation` | 否   | `0`、`1` 或 `2`                                                  | `0`      | 与词缀相同                                                                            |
+| `slot`      | 否   | `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet` 或 `any`  | `any`    | 与词缀相同                                                                            |
+| `levels`    | 否   | int                                                              | `1`      | 嵌入宝石花费的经验等级，最少为 1，且始终低于铁砧的“过于昂贵”界限                      |
 
 ## 附魔台
 

@@ -58,6 +58,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
+- [Affixes and sockets](#affixes-and-sockets)
 - [Enchanting table](#enchanting-table)
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
@@ -194,6 +195,8 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/loot_injections/*.json`                                                            | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                     |
 | `<namespace>/block_drops/*.json`                                                                | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                           |
 | `<namespace>/anvils/*.json`                                                                     | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                            |
+| `<namespace>/affixes/*.json` | Random attribute bonuses and sockets an item rolls the first time a player holds it. [Affixes and sockets](#affixes-and-sockets) |
+| `<namespace>/gems/*.json` | Items an anvil fits into a socket for an attribute bonus. [Affixes and sockets](#affixes-and-sockets) |
 | `<namespace>/cards/*.json`                                                                      | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                       |
 | `<namespace>/dice/*.json`                                                                       | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                               |
 | `<namespace>/games/*.json`                                                                      | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
@@ -485,6 +488,7 @@ Each of these folders also has a switch in the config, so a modpack can turn one
 | `disableOverrides` | `recipes`  | off     | Stops this mod from replacing or adding recipes. Only needed if another coremod conflicts over recipe loading                                           |
 | `lootInjections`   | `data`     | on      | Applies `loot_injections/*.json`                                                                                                                        |
 | `enchanting`       | `data`     | on      | Applies `enchanting/*.json`                                                                                                                             |
+| `affixes` | `data` | on | Applies `affixes/*.json` and `gems/*.json` |
 | `blockDrops`       | `data`     | on      | Applies `block_drops/*.json`                                                                                                                            |
 | `registryRemaps`   | `data`     | on      | Applies the `registry_remap` files, so worlds saved before a rename keep their blocks and items                                                         |
 | `load`             | `worldgen` | on      | Generates the ore veins from `worldgen/*.json` in new chunks. Existing chunks are not changed                                                           |
@@ -502,7 +506,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                               | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                      | `biomes`, `dimensions`, `portalframes`                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                     | `villagers`                                                                                   |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`                                     | `villagers`                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client)              |
 | `teams`, `scoring`, `ranks`                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                    |                                                                                               |
@@ -2654,6 +2658,70 @@ A file holding `match` changes how the anvil repairs and combines the item it na
 | `penalty`       | no       | `"vanilla"`, `"none"` or `{ "factor": n }`    | `"vanilla"`                    | How the prior-work cost grows with each use. Vanilla doubles it and adds one, `none` leaves it where it is, and a factor from 0 to 16 multiplies it and adds one |
 | `repair`        | no       | boolean                                       | `true`                         | `false` and the anvil will not repair it                                                                                                                         |
 | `combine`       | no       | boolean                                       | `true`                         | `false` and the anvil will not join two of it; enchanted books still apply                                                                                       |
+
+## Affixes and sockets
+
+*crafting, loot and trade*
+
+`<namespace>/affixes/*.json`, `<namespace>/gems/*.json`
+
+The file names are yours to choose, only the folders are read, and several files stack. An affix file names one item and the bonuses it can roll, and a gem file names one item that fits a socket.
+
+A matching item is rolled once, the first time a player holds it, and keeps what it rolled. Gems go into its sockets at an anvil for the gem's levels. The item must not stack. A removed pack leaves the rolled values on the stack.
+
+With a rolled item that has an empty socket in an anvil's left slot and a gem in the right, the anvil offers the item back with the gem in its first empty socket and the gem's bonus added, and spends one gem. An item with no empty socket is not offered anything, and a gem is never taken out again. The item's tooltip shows each affix by its `name`, then each socket, empty or holding its gem.
+
+```json
+{
+  "item": "minecraft:diamond_sword",
+  "rolls": { "min": 1, "max": 2 },
+  "sockets": { "min": 0, "max": 3 },
+  "affixes": [
+    { "name": "Keen", "attribute": "generic.attackDamage", "min": 1.0, "max": 3.0, "operation": 0, "slot": "mainhand", "weight": 3 }
+  ]
+}
+```
+
+| Key       | Required | Value                      | Default | What it does                                                                                          |
+| --------- | -------- | -------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `item`    | yes      | item name, or `id:meta`    |         | The item that rolls. It must not stack: a stackable item is an error and the file is skipped        |
+| `rolls`   | no       | `{ "min", "max" }`         | `1`     | How many different affixes it rolls                                                                   |
+| `sockets` | no       | `{ "min", "max" }`         | `0`     | How many gem sockets it rolls                                                                         |
+| `affixes` | yes      | list of objects            |         | What it can roll, each entry as below. An entry with an unknown attribute is skipped                  |
+
+Each entry of `affixes` takes:
+
+| Key         | Required | Value                                                           | Default | What it does                                                                                                   |
+| ----------- | -------- | --------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `name`      | no       | text, or a language key                                         | none    | The line the item's tooltip shows for it                                                                       |
+| `attribute` | yes      | attribute name                                                  |         | What it changes, such as `generic.attackDamage` or `generic.maxHealth`                                         |
+| `min`       | no       | number                                                          | `0`     | The least it adds                                                                                              |
+| `max`       | no       | number                                                          | `min`   | The most it adds. Equal values give an exact bonus, anything else is rolled between the two                    |
+| `operation` | no       | `0`, `1` or `2`                                                 | `0`     | `0` adds to the attribute, `1` multiplies its base, `2` multiplies the total                                   |
+| `slot`      | no       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` or `any` | `any`   | The slot the item must be in for the bonus to count                                                            |
+| `weight`    | no       | int                                                             | `1`     | How likely it is next to the others. The affixes of one item are different from each other, picked by weight   |
+
+```json
+{
+  "item": "minecraft:emerald",
+  "name": "Emerald",
+  "attribute": "generic.maxHealth",
+  "amount": 2.0,
+  "operation": 0,
+  "slot": "any",
+  "levels": 1
+}
+```
+
+| Key         | Required | Value                                                           | Default   | What it does                                                                                              |
+| ----------- | -------- | --------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
+| `item`      | yes      | item name, or `id:meta`                                         |           | The gem, which goes in the anvil's right slot                                                             |
+| `name`      | no       | text, or a language key                                         | the item  | What the tooltip shows once the gem sits in a socket                                                      |
+| `attribute` | yes      | attribute name                                                  |           | What the gem changes                                                                                      |
+| `amount`    | no       | number                                                          | `0`       | What it adds                                                                                              |
+| `operation` | no       | `0`, `1` or `2`                                                 | `0`       | As for an affix                                                                                           |
+| `slot`      | no       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` or `any` | `any`     | As for an affix                                                                                           |
+| `levels`    | no       | int                                                             | `1`       | The experience levels fitting the gem costs, 1 at the least and always below the anvil's too expensive point |
 
 ## Enchanting table
 

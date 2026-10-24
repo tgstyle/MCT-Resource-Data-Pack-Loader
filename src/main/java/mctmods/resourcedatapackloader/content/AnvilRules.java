@@ -89,6 +89,8 @@ public final class AnvilRules {
         return AnvilMath.VANILLA_GROWTH;
     }
 
+    @Nullable static EntityPlayer worker() { return WORKER.get(); }
+
     public static void begin(EntityPlayer player) {
         WORKER.set(player);
         REFUSED.remove();
