@@ -26,6 +26,7 @@ import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentSetup;
+import mctmods.resourcedatapackloader.content.ContentSleepingBags;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.ContentVeins;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
@@ -258,6 +259,7 @@ public class ResourceDataPackLoader {
         ContentBlastPlaster.install();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
+        MinecraftForge.EVENT_BUS.register(ContentSleepingBags.class);
         CardRules.load();
         ContentDialogs.load();
         MinecraftForge.EVENT_BUS.register(DialogEvents.class);

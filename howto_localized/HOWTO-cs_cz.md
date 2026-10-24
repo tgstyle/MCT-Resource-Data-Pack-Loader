@@ -1704,6 +1704,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
   "attackSpeed": -2.4,
   "cooldown": 40,
   "rolls": "d6",
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1790,6 +1791,8 @@ Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do da
 }
 ```
 
+Obyčejný předmět s `sleepingBag` je spacák. Pravým kliknutím na horní stranu pevného bloku se držitel v noci položí na blok nad ním. Platí stejné podmínky jako u postele: noc, dimenze, která spánek povoluje, a žádné nepřátelské stvoření do osmi bloků. Noc se přeskočí, když spí všichni hráči, stejně jako u postelí. Probuzení nezmění bod oživení a spacák zůstane v inventáři. `cooldown` brání tomu, aby se dal hned znovu použít.
+
 ### Klíče souboru předmětu
 
 *předměty*
@@ -1822,6 +1825,7 @@ Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do da
 | `wornAttributes` | ne            | seznam změn atributů                                         | žádný                | Změny atributů držené na nositeli, dokud je předmět ve svém slotu Baubles, jako `attribute`, `amount` a `operation`                                                                                                                                            |
 | `locates`        | ne            | `Village`, `minecraft:river`                                 | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše |
 | `passesTurn`     | ne            | boolean                                                      | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                                                                                                             |
+| `sleepingBag`    | ne            | boolean | `false` | U obyčejného předmětu pravé kliknutí na horní stranu bloku uloží držitele ke spánku a noc se přeskočí jako u postele. Nenastavuje bod oživení a nespotřebuje se. Funguje jen tam, kde je spánek povolen. Ignoruje se s `locates`, `rolls` nebo `passesTurn` |
 | `requires`       | ne            | seznam id módů nebo namespace balíčků                        | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                              |
 
 ### Klíče variant předmětů

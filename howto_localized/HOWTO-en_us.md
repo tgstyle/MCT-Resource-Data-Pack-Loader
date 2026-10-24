@@ -1704,6 +1704,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
   "attackSpeed": -2.4,
   "cooldown": 40,
   "rolls": "d6",
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1790,6 +1791,8 @@ The target is kept in the stack, so the item keeps pointing at it until the next
 }
 ```
 
+A plain item with `sleepingBag` is a sleeping bag. Right-click the top of a solid block at night and the holder lies down on the block above. It needs the same conditions as a bed: night, a dimension that allows sleeping, and no hostile creature within eight blocks. The night is skipped when every player is asleep, as with beds. Waking up does not change the spawn point, and the bag stays in the inventory. `cooldown` keeps it from being used again straight away.
+
 ### Item file keys
 
 *items*
@@ -1822,6 +1825,7 @@ The target is kept in the stack, so the item keeps pointing at it until the next
 | `bauble`         | no            | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | none                   | The Baubles slot the item can be worn in, for any type of item. Ignored when Baubles is not installed                                                                                                                                                         |
 | `wornEffects`    | no            | list of effects                                              | none                   | Potion effects held on the wearer while the item is in its Baubles slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                              |
 | `wornAttributes` | no            | list of attribute changes                                    | none                   | Attribute changes held on the wearer while the item is in its Baubles slot, as `attribute`, `amount` and `operation`                                                                                                                                          |
+| `sleepingBag`    | no            | boolean | `false` | For a plain item, a right-click on top of a block lays the holder down to sleep, skipping the night as a bed does. It never sets the spawn point and is not used up. Works only where sleeping is allowed. Ignored with `locates`, `rolls` or `passesTurn` |
 | `requires`       | no            | list of mod ids or pack namespaces                           | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
 
 ### Item variant keys

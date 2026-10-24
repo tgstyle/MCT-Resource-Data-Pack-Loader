@@ -1704,6 +1704,7 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
   "attackSpeed": -2.4,
   "cooldown": 40,
   "rolls": "d6",
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1790,6 +1791,8 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 }
 ```
 
+帶有 `sleepingBag` 的一般物品就是睡袋。夜裡對實心方塊的頂面按右鍵，持有者會躺在上方的方塊上。使用條件與床相同：必須是夜晚、所在維度允許睡覺，且八格內沒有敵對生物。所有玩家都入睡時會跳過夜晚，與床一樣。醒來不會改變重生點，睡袋也會留在物品欄中。`cooldown` 可避免它被連續使用。
+
 ### 物品檔案鍵
 
 *物品*
@@ -1822,6 +1825,7 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 | `wornAttributes` | 否            | 屬性修改清單                                                 | 無                   | 物品位於其 Baubles 欄位期間持續作用於配戴者的屬性修改，寫作 `attribute`、`amount` 與 `operation`                                                                                           |
 | `locates`        | 否            | `Village`, `minecraft:river`                                 | 無                   | 對一般物品而言，右鍵會尋找該名稱最近的地點，並像指南針一樣讓物品指向那裡。名稱可以是原版結構或生物群系，也可以是用 `locateAs` 註冊的名稱。該物品的堆疊上限為 1。請參閱上方的定位指南針段落 |
 | `passesTurn`     | 否            | 布林值                                                       | `false`              | 對一般物品而言，右鍵會像 `/rdplserver game pass` 一樣跳過持有者的回合。見[輪流行動](#輪流行動)                                                                                             |
+| `sleepingBag`    | 否            | 布林值 | `false` | 對一般物品而言，右鍵方塊頂面會讓持有者躺下睡覺，並像床一樣跳過夜晚。不會改變重生點，也不會被消耗。僅在允許睡覺的地方有效。若同時有 `locates`、`rolls` 或 `passesTurn` 則忽略 |
 | `requires`       | 否            | 模組 id 或資源包命名空間清單                                 | 無                   | 除非全部存在，否則略過此檔案                                                                                                                                                               |
 
 ### 物品變體鍵
