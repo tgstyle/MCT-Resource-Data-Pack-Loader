@@ -6865,17 +6865,23 @@ La première réponse mène au nœud `who`, qui a son propre `title` et une rép
 
 *dialogues*
 
-| Réglage      | Type                                        | Défaut                | Rôle                                                                                                        |
-| ------------ | ------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `start`      | texte                                       | aucun, requis         | Le nom du nœud où s'ouvre une conversation. Un dialogue dont le `start` n'est aucun de ses nœuds est écarté |
-| `nodes`      | objet                                       | aucun, requis         | Les nœuds, chacun sous son propre nom. Jusqu'à 64                                                           |
-| `title`      | texte                                       | le nom de la variante | La première ligne du panneau. `{npc}` est le nom de l'entité                                                |
-| `icon`       | texte                                       | `saysIcon`            | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `color`      | texte                                       | `saysColor`           | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `image`      | texte                                       | `saysImage`           | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `background` | booléen                                     | `saysBackground`      | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `font`       | texte                                       | `saysFont`            | Comme sur une carte, voir [La carte](#la-carte)                                                             |
-| `requires`   | liste d'ids de mod ou de namespaces de pack | aucun                 | Le fichier est ignoré sauf si tous sont présents                                                            |
+| Réglage           | Type                                        | Défaut                | Rôle                                                                                                             |
+| ----------------- | ------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `start`           | texte                                       | aucun, requis         | Le nom du nœud où s'ouvre une conversation. Un dialogue dont le `start` n'est aucun de ses nœuds est écarté      |
+| `nodes`           | objet                                       | aucun, requis         | Les nœuds, chacun sous son propre nom. Jusqu'à 64                                                                |
+| `title`           | texte                                       | le nom de la variante | La première ligne du panneau. `{npc}` est le nom de l'entité                                                     |
+| `icon`            | texte                                       | `saysIcon`            | Comme sur une carte, voir [La carte](#la-carte)                                                                  |
+| `color`           | texte                                       | `saysColor`           | Comme sur une carte, voir [La carte](#la-carte)                                                                  |
+| `image`           | texte                                       | `saysImage`           | Comme sur une carte, voir [La carte](#la-carte)                                                                  |
+| `background`      | booléen                                     | `saysBackground`      | Comme sur une carte, voir [La carte](#la-carte)                                                                  |
+| `font`            | texte                                       | `saysFont`            | Comme sur une carte, voir [La carte](#la-carte)                                                                  |
+| `titleColor`      | texte                                       | `FFFFFF`              | La couleur du titre, en hexadécimal                                                                              |
+| `textColor`       | texte                                       | `E8E8E8`              | La couleur des lignes de texte, en hexadécimal                                                                   |
+| `replyColor`      | texte                                       | `FFFFFF`              | La couleur des réponses, en hexadécimal                                                                          |
+| `hoverColor`      | texte                                       | `FFFF55`              | La couleur de la réponse sous le pointeur, en hexadécimal                                                        |
+| `hoverBackground` | texte                                       | `FFFFFF`              | La couleur de la bande derrière la réponse sous le pointeur, en hexadécimal. Elle est dessinée en transparence   |
+| `history`         | booléen                                     | `true`                | `true` affiche les boutons `<` et `>` pour revenir aux lignes déjà montrées dans ce dialogue. `false` les retire |
+| `requires`        | liste d'ids de mod ou de namespaces de pack | aucun                 | Le fichier est ignoré sauf si tous sont présents                                                                 |
 
 ### Clés du nœud
 
@@ -6902,7 +6908,7 @@ La première réponse mène au nœud `who`, qui a son propre `title` et une rép
 
 Un choix exécute d'abord `runs`, montre ensuite `card`, puis passe à `goto` ou termine la conversation. Un dialogue ne garde aucun état : il n'est pas enregistré, et une conversation fermée, ou coupée par la déconnexion du joueur, ne peut pas être reprise. Une branche qui doit retenir quelque chose attribue un score ou une étiquette dans sa fonction.
 
-Un client avec le mod affiche un dialogue comme un panneau près du bas de l'écran, avec une ligne par réponse. Une ligne se choisit d'un clic ou en appuyant sur son numéro, de 1 à 8 ; Échap ou la touche d'inventaire ferme la conversation. Un client vanilla reçoit le même texte en lignes de chat, où chaque réponse est un `[n]` cliquable qui exécute `/rdplserver talk n`. Le serveur n'accepte un choix que tant que l'entité est vivante et à 8 blocs au plus du joueur, et ignore un numéro que le nœud actuel n'a pas ; l'écran se ferme tout seul quand le joueur s'éloigne de plus de 8 blocs. Un `start` absent, une réponse sans `text` et un `goto` inconnu sont consignés dans le journal et écartent le dialogue ou la réponse ; une variante d'entité dont le `dialog` n'est fourni par aucun pack est consignée et reste sans dialogue.
+Un client avec le mod affiche un dialogue comme un panneau près du bas de l'écran, avec une ligne par réponse. Une ligne se choisit d'un clic ou en appuyant sur son numéro, de 1 à 8 ; Échap ou la touche d'inventaire ferme la conversation. Un client vanilla reçoit le même texte en lignes de chat, où chaque réponse est un `[n]` cliquable qui exécute `/rdplserver talk n`. Le serveur n'accepte un choix que tant que l'entité est vivante et à 8 blocs au plus du joueur, et ignore un numéro que le nœud actuel n'a pas ; l'écran se ferme tout seul quand le joueur s'éloigne de plus de 8 blocs. Un `start` absent, une réponse sans `text` et un `goto` inconnu sont consignés dans le journal et écartent le dialogue ou la réponse ; une variante d'entité dont le `dialog` n'est fourni par aucun pack est consignée et reste sans dialogue. Un panneau haut a une barre de défilement à droite et défile aussi avec la molette de la souris au-dessus du panneau.
 
 ## Dés et paquets
 

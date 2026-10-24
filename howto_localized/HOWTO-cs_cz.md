@@ -6865,17 +6865,23 @@ První odpověď vede do uzlu `who`, který má vlastní `title` a odpověď zp�
 
 *dialogy*
 
-| Nastavení    | Typ                                   | Výchozí          | Co dělá                                                                                     |
-| ------------ | ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------- |
-| `start`      | text                                  | žádný, povinné   | Název uzlu, ve kterém rozhovor začíná. Dialog, jehož `start` není mezi jeho uzly, se zahodí |
-| `nodes`      | objekt                                | žádný, povinné   | Uzly, každý pod svým názvem. Nejvýše 64                                                     |
-| `title`      | text                                  | jméno varianty   | První řádek panelu. `{npc}` je jméno entity                                                 |
-| `icon`       | text                                  | `saysIcon`       | Jako na kartě, viz [Karta](#karta)                                                          |
-| `color`      | text                                  | `saysColor`      | Jako na kartě, viz [Karta](#karta)                                                          |
-| `image`      | text                                  | `saysImage`      | Jako na kartě, viz [Karta](#karta)                                                          |
-| `background` | boolean                               | `saysBackground` | Jako na kartě, viz [Karta](#karta)                                                          |
-| `font`       | text                                  | `saysFont`       | Jako na kartě, viz [Karta](#karta)                                                          |
-| `requires`   | seznam id módů nebo namespace balíčků | žádný            | Soubor se přeskočí, pokud nejsou přítomny všechny                                           |
+| Nastavení         | Typ                                   | Výchozí          | Co dělá                                                                                                             |
+| ----------------- | ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `start`           | text                                  | žádný, povinné   | Název uzlu, ve kterém rozhovor začíná. Dialog, jehož `start` není mezi jeho uzly, se zahodí                         |
+| `nodes`           | objekt                                | žádný, povinné   | Uzly, každý pod svým názvem. Nejvýše 64                                                                             |
+| `title`           | text                                  | jméno varianty   | První řádek panelu. `{npc}` je jméno entity                                                                         |
+| `icon`            | text                                  | `saysIcon`       | Jako na kartě, viz [Karta](#karta)                                                                                  |
+| `color`           | text                                  | `saysColor`      | Jako na kartě, viz [Karta](#karta)                                                                                  |
+| `image`           | text                                  | `saysImage`      | Jako na kartě, viz [Karta](#karta)                                                                                  |
+| `background`      | boolean                               | `saysBackground` | Jako na kartě, viz [Karta](#karta)                                                                                  |
+| `font`            | text                                  | `saysFont`       | Jako na kartě, viz [Karta](#karta)                                                                                  |
+| `titleColor`      | text                                  | `FFFFFF`         | Barva nadpisu jako hex                                                                                              |
+| `textColor`       | text                                  | `E8E8E8`         | Barva řádků textu jako hex                                                                                          |
+| `replyColor`      | text                                  | `FFFFFF`         | Barva odpovědí jako hex                                                                                             |
+| `hoverColor`      | text                                  | `FFFF55`         | Barva odpovědi pod ukazatelem jako hex                                                                              |
+| `hoverBackground` | text                                  | `FFFFFF`         | Barva pásu za odpovědí pod ukazatelem jako hex. Vykresluje se průhledně                                             |
+| `history`         | boolean                               | `true`           | `true` ukáže tlačítka `<` a `>`, kterými se lze vrátit na řádky už zobrazené v tomto rozhovoru. `false` je odstraní |
+| `requires`        | seznam id módů nebo namespace balíčků | žádný            | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                   |
 
 ### Klíče uzlu
 
@@ -6902,7 +6908,7 @@ První odpověď vede do uzlu `who`, který má vlastní `title` a odpověď zp�
 
 Výběr nejdřív spustí `runs`, potom ukáže `card` a pak přejde na `goto` nebo rozhovor ukončí. Dialog si sám nic nepamatuje: neukládá se a rozhovor, který hráč zavřel nebo který přerušilo odhlášení, nelze obnovit. Větev, která si má něco zapamatovat, nastaví ve své funkci skóre nebo štítek.
 
-Klient s módem ukáže dialog jako panel u dolního okraje obrazovky, s jedním řádkem pro každou odpověď. Klikni na řádek nebo stiskni jeho číslo, 1 až 8; Esc nebo klávesa inventáře rozhovor zavře. Vanilla klient dostane stejný text jako řádky chatu, kde je každá odpověď klikací `[n]`, která spustí `/rdplserver talk n`. Server přijme výběr jen tehdy, když entita žije a je nejvýše 8 bloků od hráče, a ignoruje číslo, které aktuální uzel nemá; obrazovka se sama zavře, když se hráč vzdálí o více než 8 bloků. Chybějící `start`, odpověď bez `text` a neznámé `goto` se zapíší do logu a zahodí dialog nebo odpověď; varianta entity, jejíž `dialog` žádný balíček neposkytuje, se zapíše do logu a zůstane bez dialogu.
+Klient s módem ukáže dialog jako panel u dolního okraje obrazovky, s jedním řádkem pro každou odpověď. Klikni na řádek nebo stiskni jeho číslo, 1 až 8; Esc nebo klávesa inventáře rozhovor zavře. Vanilla klient dostane stejný text jako řádky chatu, kde je každá odpověď klikací `[n]`, která spustí `/rdplserver talk n`. Server přijme výběr jen tehdy, když entita žije a je nejvýše 8 bloků od hráče, a ignoruje číslo, které aktuální uzel nemá; obrazovka se sama zavře, když se hráč vzdálí o více než 8 bloků. Chybějící `start`, odpověď bez `text` a neznámé `goto` se zapíší do logu a zahodí dialog nebo odpověď; varianta entity, jejíž `dialog` žádný balíček neposkytuje, se zapíše do logu a zůstane bez dialogu. Vysoký panel má vpravo posuvník a posouvá se také kolečkem myši nad panelem.
 
 ## Kostky a balíčky karet
 

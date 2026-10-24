@@ -6865,17 +6865,23 @@ La prima risposta porta al nodo `who`, che ha un proprio `title` e una risposta 
 
 *dialoghi*
 
-| Impostazione | Tipo                                    | Predefinito            | Cosa fa                                                                                                           |
-| ------------ | --------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `start`      | testo                                   | nessuno, obbligatorio  | Il nome del nodo da cui parte una conversazione. Un dialogo il cui `start` non è uno dei suoi nodi viene scartato |
-| `nodes`      | oggetto JSON                            | nessuno, obbligatorio  | I nodi, ciascuno con il proprio nome. Fino a 64                                                                   |
-| `title`      | testo                                   | il nome della variante | La prima riga del pannello. `{npc}` è il nome dell'entità                                                         |
-| `icon`       | testo                                   | `saysIcon`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `color`      | testo                                   | `saysColor`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `image`      | testo                                   | `saysImage`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `background` | booleano                                | `saysBackground`       | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `font`       | testo                                   | `saysFont`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
-| `requires`   | elenco di id di mod o namespace di pack | nessuno                | Il file viene saltato a meno che tutti siano presenti                                                             |
+| Impostazione      | Tipo                                    | Predefinito            | Cosa fa                                                                                                           |
+| ----------------- | --------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `start`           | testo                                   | nessuno, obbligatorio  | Il nome del nodo da cui parte una conversazione. Un dialogo il cui `start` non è uno dei suoi nodi viene scartato |
+| `nodes`           | oggetto JSON                            | nessuno, obbligatorio  | I nodi, ciascuno con il proprio nome. Fino a 64                                                                   |
+| `title`           | testo                                   | il nome della variante | La prima riga del pannello. `{npc}` è il nome dell'entità                                                         |
+| `icon`            | testo                                   | `saysIcon`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `color`           | testo                                   | `saysColor`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `image`           | testo                                   | `saysImage`            | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `background`      | booleano                                | `saysBackground`       | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `font`            | testo                                   | `saysFont`             | Come su una carta, vedi [La carta](#la-carta)                                                                     |
+| `titleColor`      | testo                                   | `FFFFFF`               | Il colore del titolo, in esadecimale                                                                              |
+| `textColor`       | testo                                   | `E8E8E8`               | Il colore delle righe di testo, in esadecimale                                                                    |
+| `replyColor`      | testo                                   | `FFFFFF`               | Il colore delle risposte, in esadecimale                                                                          |
+| `hoverColor`      | testo                                   | `FFFF55`               | Il colore della risposta sotto il puntatore, in esadecimale                                                       |
+| `hoverBackground` | testo                                   | `FFFFFF`               | Il colore della fascia dietro la risposta sotto il puntatore, in esadecimale. Viene disegnata traslucida          |
+| `history`         | booleano                                | `true`                 | `true` mostra i pulsanti `<` e `>` per tornare alle righe già mostrate in questo dialogo. `false` li toglie       |
+| `requires`        | elenco di id di mod o namespace di pack | nessuno                | Il file viene saltato a meno che tutti siano presenti                                                             |
 
 ### Chiavi del nodo
 
@@ -6902,7 +6908,7 @@ La prima risposta porta al nodo `who`, che ha un proprio `title` e una risposta 
 
 Una scelta esegue prima `runs`, poi mostra `card`, quindi passa a `goto` o chiude la conversazione. Un dialogo non conserva uno stato proprio: non viene salvato, e una conversazione chiusa, o interrotta quando il giocatore si disconnette, non può essere ripresa. Un ramo che deve ricordare qualcosa imposta un punteggio o un tag nella sua funzione.
 
-Un client con la mod mostra un dialogo come un pannello vicino al bordo inferiore dello schermo, con una riga per ogni risposta. Fai clic su una riga o premi il suo numero, da 1 a 8; Esc o il tasto dell'inventario chiude la conversazione. Un client vanilla riceve lo stesso testo come righe di chat, in cui ogni risposta è un `[n]` cliccabile che esegue `/rdplserver talk n`. Il server accetta una scelta solo finché l'entità è viva e a non più di 8 blocchi dal giocatore, e ignora un numero che il nodo attuale non ha; lo schermo si chiude da solo quando il giocatore si allontana di più di 8 blocchi. Uno `start` mancante, una risposta senza `text` e un `goto` sconosciuto vengono scritti nel log e scartano il dialogo o la risposta; una variante di entità il cui `dialog` nessun pack fornisce viene scritta nel log e resta senza dialogo.
+Un client con la mod mostra un dialogo come un pannello vicino al bordo inferiore dello schermo, con una riga per ogni risposta. Fai clic su una riga o premi il suo numero, da 1 a 8; Esc o il tasto dell'inventario chiude la conversazione. Un client vanilla riceve lo stesso testo come righe di chat, in cui ogni risposta è un `[n]` cliccabile che esegue `/rdplserver talk n`. Il server accetta una scelta solo finché l'entità è viva e a non più di 8 blocchi dal giocatore, e ignora un numero che il nodo attuale non ha; lo schermo si chiude da solo quando il giocatore si allontana di più di 8 blocchi. Uno `start` mancante, una risposta senza `text` e un `goto` sconosciuto vengono scritti nel log e scartano il dialogo o la risposta; una variante di entità il cui `dialog` nessun pack fornisce viene scritta nel log e resta senza dialogo. Un pannello alto ha una barra di scorrimento a destra e scorre anche con la rotellina del mouse sopra il pannello.
 
 ## Dadi e mazzi
 

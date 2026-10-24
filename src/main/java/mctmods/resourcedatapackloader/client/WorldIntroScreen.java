@@ -109,7 +109,7 @@ public final class WorldIntroScreen extends Screen {
     @Override public void extractRenderState(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         Crisp.raise(graphics);
         drawPageBackground(graphics, partialTick);
-        graphics.enableScissor(0, 0, Crisp.real(width), Crisp.real(height - FOOTER));
+        graphics.enableScissor(0, 0, width, height - FOOTER);
         layout.draw(graphics, width, height, offset(partialTick), scale, pages.get(page).still());
         graphics.disableScissor();
         for (Renderable widget : renderables) { widget.extractRenderState(graphics, Crisp.fit(mouseX), Crisp.fit(mouseY), partialTick); }

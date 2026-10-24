@@ -6865,17 +6865,23 @@ The first reply goes to the `who` node, which has a `title` of its own and a rep
 
 *dialogs*
 
-| Setting      | Type                               | Default            | What it does                                                                                    |
-| ------------ | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `start`      | text                               | none, required     | The name of the node a talk opens at. A dialog whose `start` is not one of its nodes is dropped |
-| `nodes`      | object                             | none, required     | The nodes, each under its own name. Up to 64                                                    |
-| `title`      | text                               | the variant's name | The first line of the panel. `{npc}` is the entity's name                                       |
-| `icon`       | text                               | `saysIcon`         | As on a card, see [The card](#the-card)                                                         |
-| `color`      | text                               | `saysColor`        | As on a card, see [The card](#the-card)                                                         |
-| `image`      | text                               | `saysImage`        | As on a card, see [The card](#the-card)                                                         |
-| `background` | boolean                            | `saysBackground`   | As on a card, see [The card](#the-card)                                                         |
-| `font`       | text                               | `saysFont`         | As on a card, see [The card](#the-card)                                                         |
-| `requires`   | list of mod ids or pack namespaces | none               | The file is skipped unless all are present                                                      |
+| Setting           | Type                               | Default            | What it does                                                                                                       |
+| ----------------- | ---------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `start`           | text                               | none, required     | The name of the node a talk opens at. A dialog whose `start` is not one of its nodes is dropped                    |
+| `nodes`           | object                             | none, required     | The nodes, each under its own name. Up to 64                                                                       |
+| `title`           | text                               | the variant's name | The first line of the panel. `{npc}` is the entity's name                                                          |
+| `icon`            | text                               | `saysIcon`         | As on a card, see [The card](#the-card)                                                                            |
+| `color`           | text                               | `saysColor`        | As on a card, see [The card](#the-card)                                                                            |
+| `image`           | text                               | `saysImage`        | As on a card, see [The card](#the-card)                                                                            |
+| `background`      | boolean                            | `saysBackground`   | As on a card, see [The card](#the-card)                                                                            |
+| `font`            | text                               | `saysFont`         | As on a card, see [The card](#the-card)                                                                            |
+| `titleColor`      | text                               | `FFFFFF`           | The color of the title, as hex                                                                                     |
+| `textColor`       | text                               | `E8E8E8`           | The color of the lines, as hex                                                                                     |
+| `replyColor`      | text                               | `FFFFFF`           | The color of the replies, as hex                                                                                   |
+| `hoverColor`      | text                               | `FFFF55`           | The color of the reply under the pointer, as hex                                                                   |
+| `hoverBackground` | text                               | `FFFFFF`           | The color of the band behind the reply under the pointer, as hex. It is drawn translucent                          |
+| `history`         | boolean                            | `true`             | `true` shows `<` and `>` buttons that page back through the lines already shown in this talk. `false` removes them |
+| `requires`        | list of mod ids or pack namespaces | none               | The file is skipped unless all are present                                                                         |
 
 ### Node keys
 
@@ -6902,7 +6908,7 @@ The first reply goes to the `who` node, which has a `title` of its own and a rep
 
 A pick runs `runs`, then shows `card`, then goes to `goto` or ends the talk. A dialog holds no state of its own: it is not saved, and a talk that was closed, or cut off when the player logged out, cannot be resumed. A branch that must remember something sets a score or a tag in its function.
 
-A client with the mod shows a dialog as a panel near the bottom of the screen, with one row for each reply. Click a row or press its number, 1 to 8; Esc or the inventory key closes the talk. A vanilla client gets the same text as chat lines, where each reply is a clickable `[n]` that runs `/rdplserver talk n`. The server accepts a pick only while the entity is alive and within 8 blocks of the player, and ignores a number the current node does not have; the screen closes itself when the player moves more than 8 blocks away. A missing `start`, a reply with no `text` and an unknown `goto` are logged and drop the dialog or the reply, and an entity variant whose `dialog` no pack provides is logged and has none.
+A client with the mod shows a dialog as a panel near the bottom of the screen, with one row for each reply. Click a row or press its number, 1 to 8; Esc or the inventory key closes the talk. A vanilla client gets the same text as chat lines, where each reply is a clickable `[n]` that runs `/rdplserver talk n`. The server accepts a pick only while the entity is alive and within 8 blocks of the player, and ignores a number the current node does not have; the screen closes itself when the player moves more than 8 blocks away. A missing `start`, a reply with no `text` and an unknown `goto` are logged and drop the dialog or the reply, and an entity variant whose `dialog` no pack provides is logged and has none. A tall panel gets a scrollbar on its right, and it also scrolls with the mouse wheel over the panel.
 
 ## Dice and decks
 

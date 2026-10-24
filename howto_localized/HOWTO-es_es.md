@@ -6865,17 +6865,23 @@ La primera respuesta va al nodo `who`, que tiene su propio `title` y una respues
 
 *diálogos*
 
-| Ajuste       | Tipo                                              | Por defecto              | Qué hace                                                                                                          |
-| ------------ | ------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `start`      | texto                                             | ninguno, obligatorio     | El nombre del nodo en el que se abre una conversación. Un diálogo cuyo `start` no es uno de sus nodos se descarta |
-| `nodes`      | objeto                                            | ninguno, obligatorio     | Los nodos, cada uno con su propio nombre. Hasta 64                                                                |
-| `title`      | texto                                             | el nombre de la variante | La primera línea del panel. `{npc}` es el nombre de la entidad                                                    |
-| `icon`       | texto                                             | `saysIcon`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `color`      | texto                                             | `saysColor`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `image`      | texto                                             | `saysImage`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `background` | booleano                                          | `saysBackground`         | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `font`       | texto                                             | `saysFont`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
-| `requires`   | lista de ids de mod o espacios de nombres de pack | ninguno                  | El archivo se omite a menos que estén presentes todos                                                             |
+| Ajuste            | Tipo                                              | Por defecto              | Qué hace                                                                                                          |
+| ----------------- | ------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `start`           | texto                                             | ninguno, obligatorio     | El nombre del nodo en el que se abre una conversación. Un diálogo cuyo `start` no es uno de sus nodos se descarta |
+| `nodes`           | objeto                                            | ninguno, obligatorio     | Los nodos, cada uno con su propio nombre. Hasta 64                                                                |
+| `title`           | texto                                             | el nombre de la variante | La primera línea del panel. `{npc}` es el nombre de la entidad                                                    |
+| `icon`            | texto                                             | `saysIcon`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `color`           | texto                                             | `saysColor`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `image`           | texto                                             | `saysImage`              | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `background`      | booleano                                          | `saysBackground`         | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `font`            | texto                                             | `saysFont`               | Igual que en una tarjeta, véase [La tarjeta](#la-tarjeta)                                                         |
+| `titleColor`      | texto                                             | `FFFFFF`                 | El color del título, en hexadecimal                                                                               |
+| `textColor`       | texto                                             | `E8E8E8`                 | El color de las líneas de texto, en hexadecimal                                                                   |
+| `replyColor`      | texto                                             | `FFFFFF`                 | El color de las respuestas, en hexadecimal                                                                        |
+| `hoverColor`      | texto                                             | `FFFF55`                 | El color de la respuesta bajo el puntero, en hexadecimal                                                          |
+| `hoverBackground` | texto                                             | `FFFFFF`                 | El color de la banda detrás de la respuesta bajo el puntero, en hexadecimal. Se dibuja translúcida                |
+| `history`         | booleano                                          | `true`                   | `true` muestra los botones `<` y `>` para volver a las líneas ya mostradas en este diálogo. `false` los quita     |
+| `requires`        | lista de ids de mod o espacios de nombres de pack | ninguno                  | El archivo se omite a menos que estén presentes todos                                                             |
 
 ### Claves del nodo
 
@@ -6902,7 +6908,7 @@ La primera respuesta va al nodo `who`, que tiene su propio `title` y una respues
 
 Una elección ejecuta primero `runs`, luego muestra `card` y después pasa a `goto` o termina la conversación. Un diálogo no guarda estado propio: no se guarda y una conversación que se cerró, o que se cortó al desconectarse el jugador, no se puede reanudar. Una rama que deba recordar algo asigna una puntuación o una etiqueta en su función.
 
-Un cliente con el mod muestra un diálogo como un panel cerca del borde inferior de la pantalla, con una fila por cada respuesta. Haz clic en una fila o pulsa su número, del 1 al 8; Esc o la tecla del inventario cierra la conversación. Un cliente vanilla recibe el mismo texto como líneas de chat, donde cada respuesta es un `[n]` en el que se puede hacer clic y que ejecuta `/rdplserver talk n`. El servidor solo acepta una elección mientras la entidad esté viva y a un máximo de 8 bloques del jugador, e ignora un número que el nodo actual no tiene; la pantalla se cierra sola cuando el jugador se aleja más de 8 bloques. Un `start` ausente, una respuesta sin `text` y un `goto` desconocido se registran en el log y descartan el diálogo o la respuesta; una variante de entidad cuyo `dialog` no aporta ningún pack se registra y se queda sin diálogo.
+Un cliente con el mod muestra un diálogo como un panel cerca del borde inferior de la pantalla, con una fila por cada respuesta. Haz clic en una fila o pulsa su número, del 1 al 8; Esc o la tecla del inventario cierra la conversación. Un cliente vanilla recibe el mismo texto como líneas de chat, donde cada respuesta es un `[n]` en el que se puede hacer clic y que ejecuta `/rdplserver talk n`. El servidor solo acepta una elección mientras la entidad esté viva y a un máximo de 8 bloques del jugador, e ignora un número que el nodo actual no tiene; la pantalla se cierra sola cuando el jugador se aleja más de 8 bloques. Un `start` ausente, una respuesta sin `text` y un `goto` desconocido se registran en el log y descartan el diálogo o la respuesta; una variante de entidad cuyo `dialog` no aporta ningún pack se registra y se queda sin diálogo. Un panel alto tiene una barra de desplazamiento a la derecha y también se desplaza con la rueda del ratón sobre el panel.
 
 ## Dados y mazos
 

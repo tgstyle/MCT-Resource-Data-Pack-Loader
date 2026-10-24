@@ -72,7 +72,8 @@ public final class ContentDialogs {
             return null;
         }
         return new DialogDef(key, start, optional(json, "title"), optional(json, "icon"), optional(json, "color"), optional(json, "image"),
-                json.has("background") ? Json.getBoolean(json, "background") : null, optional(json, "font"), Json.strings(json, "requires"), nodes);
+                json.has("background") ? Json.getBoolean(json, "background") : null, optional(json, "font"),
+                optional(json, "titleColor"), optional(json, "textColor"), optional(json, "replyColor"), optional(json, "hoverColor"), optional(json, "hoverBackground"), json.has("history") ? Json.getBoolean(json, "history") : null, Json.strings(json, "requires"), nodes);
     }
 
     private static Map<String, DialogDef.Node> nodes(String key, JsonObject json) {

@@ -6865,17 +6865,23 @@ A primeira resposta vai para o nó `who`, que tem um `title` próprio e uma resp
 
 *diálogos*
 
-| Configuração | Tipo                                          | Padrão              | O que faz                                                                                           |
-| ------------ | --------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
-| `start`      | texto                                         | nenhum, obrigatório | O nome do nó em que uma conversa começa. Um diálogo cujo `start` não é um dos seus nós é descartado |
-| `nodes`      | objeto                                        | nenhum, obrigatório | Os nós, cada um com seu próprio nome. No máximo 64                                                  |
-| `title`      | texto                                         | o nome da variante  | A primeira linha do painel. `{npc}` é o nome da entidade                                            |
-| `icon`       | texto                                         | `saysIcon`          | Como em uma carta, veja [A carta](#a-carta)                                                         |
-| `color`      | texto                                         | `saysColor`         | Como em uma carta, veja [A carta](#a-carta)                                                         |
-| `image`      | texto                                         | `saysImage`         | Como em uma carta, veja [A carta](#a-carta)                                                         |
-| `background` | booleano                                      | `saysBackground`    | Como em uma carta, veja [A carta](#a-carta)                                                         |
-| `font`       | texto                                         | `saysFont`          | Como em uma carta, veja [A carta](#a-carta)                                                         |
-| `requires`   | lista de ids de mods ou namespaces de pacotes | nenhum              | O arquivo é ignorado, a menos que todos estejam presentes                                           |
+| Configuração      | Tipo                                          | Padrão              | O que faz                                                                                             |
+| ----------------- | --------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------------- |
+| `start`           | texto                                         | nenhum, obrigatório | O nome do nó em que uma conversa começa. Um diálogo cujo `start` não é um dos seus nós é descartado   |
+| `nodes`           | objeto                                        | nenhum, obrigatório | Os nós, cada um com seu próprio nome. No máximo 64                                                    |
+| `title`           | texto                                         | o nome da variante  | A primeira linha do painel. `{npc}` é o nome da entidade                                              |
+| `icon`            | texto                                         | `saysIcon`          | Como em uma carta, veja [A carta](#a-carta)                                                           |
+| `color`           | texto                                         | `saysColor`         | Como em uma carta, veja [A carta](#a-carta)                                                           |
+| `image`           | texto                                         | `saysImage`         | Como em uma carta, veja [A carta](#a-carta)                                                           |
+| `background`      | booleano                                      | `saysBackground`    | Como em uma carta, veja [A carta](#a-carta)                                                           |
+| `font`            | texto                                         | `saysFont`          | Como em uma carta, veja [A carta](#a-carta)                                                           |
+| `titleColor`      | texto                                         | `FFFFFF`            | A cor do título, em hexadecimal                                                                       |
+| `textColor`       | texto                                         | `E8E8E8`            | A cor das linhas de texto, em hexadecimal                                                             |
+| `replyColor`      | texto                                         | `FFFFFF`            | A cor das respostas, em hexadecimal                                                                   |
+| `hoverColor`      | texto                                         | `FFFF55`            | A cor da resposta sob o ponteiro, em hexadecimal                                                      |
+| `hoverBackground` | texto                                         | `FFFFFF`            | A cor da faixa atrás da resposta sob o ponteiro, em hexadecimal. É desenhada translúcida              |
+| `history`         | booleano                                      | `true`              | `true` mostra os botões `<` e `>` para voltar às linhas já mostradas neste diálogo. `false` os remove |
+| `requires`        | lista de ids de mods ou namespaces de pacotes | nenhum              | O arquivo é ignorado, a menos que todos estejam presentes                                             |
 
 ### Chaves do nó
 
@@ -6902,7 +6908,7 @@ A primeira resposta vai para o nó `who`, que tem um `title` próprio e uma resp
 
 Uma escolha executa primeiro `runs`, depois mostra `card` e então vai para `goto` ou encerra a conversa. Um diálogo não guarda estado próprio: ele não é salvo, e uma conversa que foi fechada, ou cortada quando o jogador saiu do jogo, não pode ser retomada. Um ramo que precise lembrar algo define uma pontuação ou uma tag na sua função.
 
-Um cliente com o mod mostra um diálogo como um painel perto da borda inferior da tela, com uma linha para cada resposta. Clique em uma linha ou pressione o número dela, de 1 a 8; Esc ou a tecla do inventário fecha a conversa. Um cliente vanilla recebe o mesmo texto como linhas de chat, em que cada resposta é um `[n]` clicável que executa `/rdplserver talk n`. O servidor só aceita uma escolha enquanto a entidade estiver viva e a no máximo 8 blocos do jogador, e ignora um número que o nó atual não tem; a tela se fecha sozinha quando o jogador se afasta mais de 8 blocos. Um `start` ausente, uma resposta sem `text` e um `goto` desconhecido são registrados no log e descartam o diálogo ou a resposta; uma variante de entidade cujo `dialog` nenhum pacote fornece é registrada e fica sem diálogo.
+Um cliente com o mod mostra um diálogo como um painel perto da borda inferior da tela, com uma linha para cada resposta. Clique em uma linha ou pressione o número dela, de 1 a 8; Esc ou a tecla do inventário fecha a conversa. Um cliente vanilla recebe o mesmo texto como linhas de chat, em que cada resposta é um `[n]` clicável que executa `/rdplserver talk n`. O servidor só aceita uma escolha enquanto a entidade estiver viva e a no máximo 8 blocos do jogador, e ignora um número que o nó atual não tem; a tela se fecha sozinha quando o jogador se afasta mais de 8 blocos. Um `start` ausente, uma resposta sem `text` e um `goto` desconhecido são registrados no log e descartam o diálogo ou a resposta; uma variante de entidade cujo `dialog` nenhum pacote fornece é registrada e fica sem diálogo. Um painel alto tem uma barra de rolagem à direita e também rola com a roda do mouse sobre o painel.
 
 ## Dados e baralhos
 
