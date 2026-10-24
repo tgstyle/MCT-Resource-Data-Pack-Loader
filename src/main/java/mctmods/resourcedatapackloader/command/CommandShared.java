@@ -153,6 +153,7 @@ public final class CommandShared {
                         .then(Commands.literal("revoke").requires(source -> source.hasPermission(MODERATOR))
                                 .then(Commands.argument("player", EntityArgument.player())
                                 .then(Commands.argument("gate", StringArgumentType.greedyString()).suggests((context, suggestions) -> CommandGates.suggestGates(suggestions)).executes(context -> CommandGates.gateFor(context, name, false))))))
+                .then(CommandPortways.tree(name))
                 .then(Commands.literal("reset").requires(staff).executes(context -> {
                     ran(context.getSource(), name, "reset");
                     int swept = ContentReset.run(context.getSource().getServer());

@@ -37,6 +37,7 @@ import javax.annotation.Nullable;
 public final class ContentGates {
     private static final Map<ResourceLocation, GateDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
+    private static final List<GateDef> USABLE = new ArrayList<>();
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     private static final ResourceLocation GATE = ResourceDataPackLoader.id("gate");
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -50,6 +51,7 @@ public final class ContentGates {
         if (!GENERATION.stale()) { return; }
         DEFS.clear();
         BY_DIMENSION.clear();
+        USABLE.clear();
         if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
@@ -58,28 +60,24 @@ public final class ContentGates {
         });
         for (GateDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            BY_DIMENSION.computeIfAbsent(def.dimension(), id -> new ArrayList<>()).add(def);
+            USABLE.add(def);
+            ResourceLocation dimension = def.dimension();
+            if (dimension != null) { BY_DIMENSION.computeIfAbsent(dimension, id -> new ArrayList<>()).add(def); }
         }
-        if (!BY_DIMENSION.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + count() + " gate(s)"); }
-    }
-
-    private static int count() {
-        int total = 0;
-        for (List<GateDef> defs : BY_DIMENSION.values()) { total += defs.size(); }
-        return total;
+        if (!USABLE.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + USABLE.size() + " gate(s)"); }
     }
 
     @Nullable private static GateDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "gate file");
         if (json == null) { return null; }
         String scope = Settings.lower(Json.getString(json, "scope", GateDef.PLAYER));
-        if (!GateDef.PLAYER.equals(scope) && !GateDef.GLOBAL.equals(scope) && !GateDef.TEAM.equals(scope)) {
+        if (!GateDef.SCOPES.contains(scope)) {
             ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {}, {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM, GateDef.PLAYER);
             scope = GateDef.PLAYER;
         }
         String named = Json.getString(json, "dimension", "").trim();
         ResourceLocation dimension = named.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(named));
-        if (dimension == null) {
+        if (!named.isEmpty() && dimension == null) {
             ContentLog.LOGGER.error("Gate {} names dimension '{}', which is not a dimension id, so it guards nothing", key, named);
             return null;
         }
@@ -94,7 +92,7 @@ public final class ContentGates {
                 Json.getBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
     }
 
-    public static boolean idle() { return BY_DIMENSION.isEmpty(); }
+    public static boolean idle() { return USABLE.isEmpty(); }
 
     public static List<GateDef> forDimension(ResourceLocation dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
 
@@ -112,12 +110,14 @@ public final class ContentGates {
         return openFor(player, def) || def.standsAlone() && def.standing().earnedBy(player);
     }
 
+    public static boolean bars(ServerPlayer player, GateDef def) {
+        if (turnedAway(player, def)) { return true; }
+        return def.standsAlone() ? !(openFor(player, def) || def.standing().earnedBy(player)) : !(openFor(player, def) && def.standing().met(player));
+    }
+
     public static boolean admits(ServerPlayer player, GateDef def) {
-        if (turnedAway(player, def)) { return false; }
-        if (!def.standsAlone()) { return openFor(player, def) && def.standing().met(player); }
-        if (openFor(player, def)) { return true; }
-        if (!def.standing().earnedBy(player)) { return false; }
-        unlock(player, def, true);
+        if (bars(player, def)) { return false; }
+        if (def.standsAlone() && !openFor(player, def)) { unlock(player, def, true); }
         return true;
     }
 

@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
+import mctmods.resourcedatapackloader.content.menu.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Toasts;
@@ -65,9 +66,15 @@ public final class RDPLNetwork {
             ServerPlayer player = context.get().getSender();
             if (player != null) { ContentWornContainers.open(player); }
         }).add();
+        channel.messageBuilder(MessagePortwayFilter.class, 12, NetworkDirection.PLAY_TO_SERVER).encoder(MessagePortwayFilter::write).decoder(MessagePortwayFilter::read).consumerMainThread((message, context) -> {
+            ServerPlayer player = context.get().getSender();
+            if (player != null && player.containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); }
+        }).add();
     }
 
     public static void openWorn() { if (channel != null) { channel.sendToServer(new MessageOpenWorn()); } }
+
+    public static void portwayFilter(String text) { if (channel != null) { channel.sendToServer(new MessagePortwayFilter(text)); } }
 
     private static <MSG> boolean toPlayer(ServerPlayer player, MSG message) {
         if (channel == null || !reaches(player)) { return false; }

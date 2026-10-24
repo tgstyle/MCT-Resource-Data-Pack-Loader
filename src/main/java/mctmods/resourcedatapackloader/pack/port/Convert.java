@@ -29,6 +29,7 @@ final class Convert {
     private static final Set<String> BIOME_KEYS = Set.of("biomes", "biome", "replaces", "baseBiome", "biomeNames", "biomeList", "roles", "biomeWhitelist");
     private static final Set<String> DIMENSION_KEYS = Set.of("dimensions", "dimension", "returnDimension", "respawnDimension", "blockOreDimensions", "blockGeneratorDimensions", "blockBiomeDimensions", "flatBedrockDimensions", "voidWorldDimensions", "blockReplacementDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "rubicWorldDimensions");
     private static final Set<String> DIMENSION_PREFIXED = Set.of("welcomeSays", "worldDifficulty", "cloudHeight", "weatherCeiling", "worldGravity", "worldFallDamage", "worldJumpStrength", "worldTerminalVelocity", "worldBelow", "worldAbove", "flatBedrockFillers", "structureBiomes", "structureBiomesAreBlacklist");
+    private static final Set<String> COST_PARTS = Set.of("xp", "item", "health", "hunger");
     private static final Set<String> STATE_KEYS = Set.of("replace", "adjacent", "except", "blocks");
     private static final Set<String> RAW_CONTAINERS = Set.of("palette", "legend", "rows", "map", "pattern", "key", "notes", "attributes", "pathPriorities", "gameRules", "decoration", "spawnRates", "settings");
     private static final Pattern DIM_PREFIX = Pattern.compile("^(-?\\d+)=(.*)$");
@@ -181,7 +182,7 @@ final class Convert {
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(json.entrySet())) {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
-            Context context = contextOf(key, inherited);
+            Context context = "portway".equals(parentKey) && ("allow".equals(key) || "deny".equals(key)) ? Context.DIMENSION : "dimension".equals(key) && COST_PARTS.contains(parentKey) ? Context.NONE : contextOf(key, inherited);
             if (value.isJsonObject()) {
                 if ("blocks".equals(key) && PackManager.WORLDGEN.equals(folder)) { continue; }
                 if ("kill".equals(key) && "points".equals(parentKey)) {

@@ -97,6 +97,15 @@ public final class CardEvents {
         }
     }
 
+    public static void portway(ServerPlayer player, String trigger, String block, String network, String reason) {
+        for (CardRule rule : CardRules.on(trigger)) {
+            if (!rule.portway.isEmpty() && !rule.portway.equals(block)) { continue; }
+            if (!rule.network.isEmpty() && !rule.network.equals(network)) { continue; }
+            if (!rule.reason.isEmpty() && !rule.reason.equals(reason)) { continue; }
+            CardFire.fire(rule, player);
+        }
+    }
+
     public static void onAdvancement(AdvancementEvent.AdvancementEarnEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         String earned = event.getAdvancement().getId().toString();

@@ -25,9 +25,17 @@ public final class CardRule {
     static final String ORDER_DONE = "order_done";
     static final String EXPOSURE_LEVEL = "exposure_level";
     static final String ROUND_START = "round_start";
+    public static final String PORTWAY_ACTIVATE = "portway_activate";
+    public static final String PORTWAY_TRAVEL = "portway_travel";
+    public static final String PORTWAY_ARRIVE = "portway_arrive";
+    public static final String PORTWAY_REFUSED = "portway_refused";
+    public static final String PORTWAY_PAID = "portway_paid";
+    public static final String PORTWAY_FORGET = "portway_forget";
+    public static final String PORTWAY_BIND = "portway_bind";
     static final String BUILTIN = "builtin";
     static final List<String> TRIGGERS = List.of(COMMAND, FIRST_JOIN, DIMENSION_ENTER, BIOME_ENTER, STRUCTURE_ENTER, ADVANCEMENT,
-            TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE, EXPOSURE_LEVEL, ROUND_START);
+            TIME_OF_DAY, DAY, CRAFT, PICKUP, KILL, RESPAWN, DEATH, Y_LEVEL, PLAY_TIME, SCORE, ROLL, ORDER_DONE, EXPOSURE_LEVEL, ROUND_START,
+            PORTWAY_ACTIVATE, PORTWAY_TRAVEL, PORTWAY_ARRIVE, PORTWAY_REFUSED, PORTWAY_PAID, PORTWAY_FORGET, PORTWAY_BIND);
     static final List<String> SCANNED = List.of(BIOME_ENTER, STRUCTURE_ENTER, Y_LEVEL, PLAY_TIME, SCORE);
     static final String PLAYER = "player";
     static final String EVERYONE = "everyone";
@@ -59,6 +67,9 @@ public final class CardRule {
     String roll = "";
     String order = "";
     String exposure = "";
+    String portway = "";
+    String network = "";
+    String reason = "";
     @Nullable Integer level;
     @Nullable Integer atLeast;
     @Nullable Integer atMost;

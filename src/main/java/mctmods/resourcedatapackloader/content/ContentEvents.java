@@ -160,6 +160,7 @@ public final class ContentEvents {
         event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register);
         event.register(Registries.BLOCK_ENTITY_TYPE, ContentContainers::register);
         event.register(Registries.BLOCK_ENTITY_TYPE, ContentBells::register);
+        event.register(Registries.BLOCK_ENTITY_TYPE, ContentPortways::register);
         event.register(Registries.MENU, ContentContainers::registerMenu);
         event.register(Registries.SOUND_EVENT, ContentSounds::register);
         event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions);

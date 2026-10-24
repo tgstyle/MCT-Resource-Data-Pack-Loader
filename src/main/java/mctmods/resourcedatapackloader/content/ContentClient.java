@@ -8,8 +8,10 @@ import mctmods.resourcedatapackloader.client.render.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
 import mctmods.resourcedatapackloader.client.render.ReturningThrowRenderer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.content.menu.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
+import mctmods.resourcedatapackloader.client.screen.ContentPortwayScreen;
 import mctmods.resourcedatapackloader.client.screen.EntityStorageScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
@@ -109,6 +111,8 @@ public final class ContentClient {
             if (menu != null) { MenuScreens.register(menu, ContentContainerScreen::new); }
             MenuType<EntityStorageMenu> storage = ContentContainers.STORAGE_MENU.registeredType();
             if (storage != null) { MenuScreens.register(storage, EntityStorageScreen::new); }
+            MenuType<ContentPortwayMenu> portway = ContentContainers.PORTWAY_MENU.registeredType();
+            if (portway != null) { MenuScreens.register(portway, ContentPortwayScreen::new); }
             for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
                 if (entry.item() instanceof ContentLocatorItem) {
                     ItemProperties.register(entry.item(), ResourceLocation.parse("angle"), new CompassItemPropertyFunction((level, stack, holder) -> CompassItem.isLodestoneCompass(stack) ? CompassItem.getLodestonePosition(stack.getOrCreateTag()) : null));
