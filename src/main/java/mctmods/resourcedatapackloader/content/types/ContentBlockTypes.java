@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.content.block.ContentPortalBlock;
 import mctmods.resourcedatapackloader.content.block.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.content.block.ContentTorchBlock;
 import mctmods.resourcedatapackloader.content.block.ContentVineBlock;
+import mctmods.resourcedatapackloader.content.block.ContentPortwayBlock;
 import mctmods.resourcedatapackloader.content.block.ContentWallBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentWallTorchBlock;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
@@ -74,9 +75,10 @@ public final class ContentBlockTypes {
     public static final String BANNER = "banner";
     public static final String PORTAL = "portal";
     public static final String BELL = "bell";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL);
+    public static final String PORTWAY = "portway";
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL, PORTWAY);
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
-    private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, FALLING, SLAB, WALL);
+    private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, FALLING, SLAB, WALL, PORTWAY);
 
     private ContentBlockTypes() {}
 
@@ -131,6 +133,7 @@ public final class ContentBlockTypes {
             }
             case CONTAINER -> List.of(new Created(id, new ContentContainerBlock(def, properties), ContentRegistry.MAIN));
             case BELL -> List.of(new Created(id, new ContentBellBlock(def, properties.noOcclusion()), ContentRegistry.MAIN));
+            case PORTWAY -> List.of(new Created(id, ContentPortwayBlock.create(def, properties), ContentRegistry.MAIN));
             case LOG -> List.of(new Created(id, new ContentLogBlock(properties), ContentRegistry.MAIN));
             case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, properties.randomTicks().isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)), ContentRegistry.MAIN));
             case SAPLING -> {

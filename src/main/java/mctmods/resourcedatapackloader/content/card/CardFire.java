@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 
 import net.minecraft.SharedConstants;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -43,7 +44,7 @@ public final class CardFire {
     private static boolean blocked(CardRule rule, ServerPlayer subject) {
         if (CardPlace.elsewhere(rule.dimension, subject)) { return true; }
         if (rule.when != null && rule.when.fails(subject)) { return true; }
-        long now = subject.server.overworld().getGameTime();
+        long now = clock(subject.server);
         String key = rule.key;
         if (CardRule.ONCE_PER_PLAYER.equals(rule.repeat) && CardStorage.firedFor(subject, key)) { return true; }
         if (CardRule.ONCE_PER_WORLD.equals(rule.repeat) && CardStorage.firedInWorld(subject.server, key)) { return true; }
@@ -54,6 +55,8 @@ public final class CardFire {
         if (rule.cooldown > 0 || CardRule.ONCE_PER_PLAYER.equals(rule.repeat)) { CardStorage.stampFor(subject, key, now); }
         return false;
     }
+
+    public static long clock(MinecraftServer server) { return server.overworld().getGameTime(); }
 
     private static void runs(CardRule rule, ServerPlayer subject) { if (!rule.runs.isEmpty()) { Functions.runAs(subject, rule.runs, "Card rule " + rule.key); } }
 

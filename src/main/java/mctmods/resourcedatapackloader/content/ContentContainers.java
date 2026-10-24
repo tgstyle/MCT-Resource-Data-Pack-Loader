@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.content.menu.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 import mctmods.resourcedatapackloader.util.Held;
 
@@ -20,10 +21,12 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 public final class ContentContainers {
     public static final ResourceLocation ID = ResourceDataPackLoader.id("container");
     private static final ResourceLocation STORAGE_ID = ResourceDataPackLoader.id("entity_storage");
+    private static final ResourceLocation PORTWAY_ID = ResourceDataPackLoader.id("portway");
     public static final ContainerDef FALLBACK = new ContainerDef(3, 9, "", false, null, null, 0, 0);
     public static final Held<BlockEntityType<ContentContainerBlockEntity>> TYPE = new Held<>("pack container block entity type");
     public static final Held<MenuType<ContentContainerMenu>> MENU = new Held<>("pack container menu type");
     public static final Held<MenuType<EntityStorageMenu>> STORAGE_MENU = new Held<>("entity storage menu type");
+    public static final Held<MenuType<ContentPortwayMenu>> PORTWAY_MENU = new Held<>("portway menu type");
 
     private ContentContainers() {}
 
@@ -41,5 +44,8 @@ public final class ContentContainers {
         MenuType<EntityStorageMenu> storage = IMenuTypeExtension.create(EntityStorageMenu::new);
         STORAGE_MENU.set(storage);
         helper.register(STORAGE_ID, storage);
+        MenuType<ContentPortwayMenu> portway = IMenuTypeExtension.create((id, inventory, extra) -> new ContentPortwayMenu(id, inventory));
+        PORTWAY_MENU.set(portway);
+        helper.register(PORTWAY_ID, portway);
     }
 }
