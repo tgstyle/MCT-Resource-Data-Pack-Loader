@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
+import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentToolTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
@@ -62,7 +63,7 @@ public final class ContentParser {
         if (json == null) { return null; }
         JsonObject exp = Json.getJsonObject(json, "expDrop", new JsonObject());
         String type = Settings.lower(Json.getString(json, "type", DEFAULT_TYPE));
-        boolean opaque = Json.getBoolean(json, "opaque", !ContentParserContainers.chested(json));
+        boolean opaque = Json.getBoolean(json, "opaque", !ContentParserContainers.chested(json) && !ContentBlockTypes.plant(type));
         List<BlockVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
             ResourceLocation id = variantId(key, entry.getKey(), "Block");

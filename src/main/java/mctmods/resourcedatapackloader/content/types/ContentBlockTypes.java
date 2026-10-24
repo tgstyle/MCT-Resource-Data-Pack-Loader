@@ -95,8 +95,9 @@ public final class ContentBlockTypes {
             case "cutout_mipped" -> "minecraft:cutout_mipped";
             case "translucent" -> "minecraft:translucent";
             default -> switch (def.type()) {
-                case LEAVES -> def.opaque() ? null : "minecraft:cutout_mipped";
-                case CROP, SAPLING, FLOWER, CANE, VINE, LADDER, TORCH, DOOR, TRAPDOOR, PANE, BELL -> "minecraft:cutout";
+                case LEAVES, PANE -> "minecraft:cutout_mipped";
+                case PORTAL -> "minecraft:translucent";
+                case CROP, SAPLING, FLOWER, CANE, VINE, LADDER, TORCH, DOOR, TRAPDOOR, BELL -> "minecraft:cutout";
                 default -> def.opaque() ? null : "minecraft:cutout";
             };
         };

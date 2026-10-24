@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
 import mctmods.resourcedatapackloader.client.screen.ContentPortwayScreen;
 import mctmods.resourcedatapackloader.client.screen.EntityStorageScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
+import mctmods.resourcedatapackloader.client.ContentRenderLayers;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.ContentSnowTint;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
@@ -88,6 +89,7 @@ public final class ContentClient {
         modBus.addListener(ContentSnowTint::resolvers);
         modBus.addListener(ContentSnowTint::colors);
         modBus.addListener(ContentSnowTint::models);
+        modBus.addListener(ContentRenderLayers::models);
         modBus.addListener(ContentSeasonTint::resolvers);
         modBus.addListener(ContentSeasonTint::colors);
     }
