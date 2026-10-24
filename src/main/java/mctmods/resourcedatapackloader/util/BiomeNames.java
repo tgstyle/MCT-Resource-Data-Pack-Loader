@@ -39,6 +39,18 @@ public final class BiomeNames {
         return false;
     }
 
+    public static String title(Holder<Biome> biome) {
+        Identifier name = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
+        if (name == null) { return ""; }
+        StringBuilder title = new StringBuilder();
+        for (String word : name.getPath().split("_")) {
+            if (word.isEmpty()) { continue; }
+            if (!title.isEmpty()) { title.append(' '); }
+            title.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return title.toString();
+    }
+
     @Nullable public static TagKey<Biome> tagged(String named) {
         Identifier id = Registered.tagId(named);
         return id == null ? null : TagKey.create(Registries.BIOME, id);

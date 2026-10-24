@@ -694,6 +694,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `banner`     | A banner on a post or against a wall, sixteen standing rotations, carrying your own design                                                                                                                                                            |
 | `ladder`     | Climbable, placed against a wall                                                                                                                                                                                                                      |
 | `torch`      | Wall and floor placement, with a particle. Gives off the variant's `light` as written, so a torch at `0` gives none                                                                                                                                   |
+| `portway`    | Adds itself to the list of stops of whoever uses it and opens a menu to travel to any of them, with optional limits, costs and gates. One or two blocks high, and it can face the player. Has a block entity                                          |
 | `bell`       | A bell like the one the game's villages have: rings when used on its side, by redstone or when a projectile strikes it, swings in its frame, and makes nearby raiders glow. Its blockstate carries the facing and how it hangs                        |
 | `log`        | Rotates to the face you place it against, and carries the `minecraft:logs` tag so tree felling and Blast Plaster treat it as a trunk                                                                                                                  |
 | `leaves`     | Decays, shears, tints and drops a sapling, and carries the `minecraft:leaves` tag. Left `opaque`, they draw solid, like fast leaves; set `"opaque": false` to see through them                                                                        |
@@ -750,6 +751,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `sapling`                    | sapling only   | object                                            | none                                                                                                         | See [Saplings](#saplings)                                                                                                                                                                                                                                                                                                                                                                                           |
 | `portal`                     | portal only    | object                                            | none                                                                                                         | See [Portals and gates](#portals-and-gates)                                                                                                                                                                                                                                                                                                                                                                         |
 | `container`                  | container only | object                                            | none                                                                                                         | See [Containers](#containers)                                                                                                                                                                                                                                                                                                                                                                                       |
+| `portway`                    | portway only   | object                                            | none                                                                                                         | See [Portways](#portways)                                                                                                                                                                                                                                                                                                                                                                                           |
 | `bell`                       | bell only      | object                                            | none                                                                                                         | See [Bells](#bells)                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ### Variant keys
@@ -1091,6 +1093,196 @@ And its blockstate, `assets/mypack/blockstates/village_bell.json`, keyed on `att
 
 **The swing is drawn by the client.** A ring reaches players as a block event, so a dedicated server swings the bell for everyone who has this mod, and a player without it only hears the bell. Sounds, resonance and glowing all happen on the server.
 
+## Portways
+
+*blocks*
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "portway",
+  "material": "rock",
+  "soundType": "stone",
+  "creativeTab": "decorations",
+  "portway": {
+    "activateSound": "minecraft:block.beacon.activate",
+    "travelSound": "minecraft:block.portal.travel",
+    "names": ["Northgate", "Old Mill", "Fern Hollow"],
+    "allow": [],
+    "deny": ["minecraft:the_nether"],
+    "crossDimension": true,
+    "gate": "",
+    "network": "",
+    "global": false,
+    "tall": false,
+    "facing": false,
+    "activateParticle": "minecraft:portal",
+    "travelParticle": "minecraft:portal",
+    "carry": { "mount": false, "leashed": false, "pets": false, "crossDimension": true },
+    "cost": {
+      "xp": { "amount": 0, "perBlocks": 500, "dimension": 3, "max": 3, "points": false },
+      "item": { "id": "minecraft:emerald", "amount": 1, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "health": { "amount": 0, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "hunger": { "amount": 0, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "cooldown": 30
+    },
+    "menu": { "order": "nearest", "previous": "minecraft:arrow", "next": "minecraft:arrow", "page": "minecraft:paper", "sort": "minecraft:compass", "locked": "minecraft:barrier" }
+  },
+  "variants": { "portway": { "hardness": 5.0, "resistance": 30 } }
+}
+```
+
+| Setting            | Type                  | Default                           | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------ | --------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activateSound`    | sound name            | `minecraft:block.beacon.activate` | Played at the portway when a player adds it to their list. Empty plays nothing                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `travelSound`      | sound name            | `minecraft:block.portal.travel`   | Played at both ends when a player travels. Empty plays nothing                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `names`            | list of text          | empty                             | Names for placed portways. Each one takes a name from the list by its position, the same one every time, unless it was named another way. A list of one names them all                                                                                                                                                                                                                                                                                                                              |
+| `allow`            | list of dimension ids | empty                             | The only dimensions where this portway works and whose portways it lists. Empty allows every dimension                                                                                                                                                                                                                                                                                                                                                                                              |
+| `deny`             | list of dimension ids | empty                             | Dimensions where this portway does not work and whose portways it does not list. Beats `allow`                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `crossDimension`   | true or false         | `true`                            | With `false` the menu lists only portways in the same dimension                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `gate`             | gate name             | empty                             | A [gate](#gates) the player must have opened to activate this portway, open its menu and travel to it. Without it the stop shows as locked. Name the same gate on every portway of a network to lock the whole network. Empty asks for none                                                                                                                                                                                                                                                         |
+| `network`          | text                  | empty                             | The group this portway belongs to. A portway lists and travels to portways of its own network only, and the menu leaves out the rest. Empty is the shared default network                                                                                                                                                                                                                                                                                                                           |
+| `global`           | true or false         | `false`                           | With `true` every player sees this portway in the menu without activating it. Otherwise a player sees only the ones they activated                                                                                                                                                                                                                                                                                                                                                                  |
+| `scope`            | text                  | `player`                          | Who shares the stops: `player` keeps a list per player, `team` shares what any member activates with the whole team (a team is a side from the pack's `<namespace>/teams` folder; players join it by being listed in its `players`, with `/rdplserver team join <name>` unless it sets `joinable` to false, with `/rdplserver team join` alone onto the smallest `balance` side, or by its `picks` draw, see [Teams](#who-joins)), `global` as above. Without a team a player keeps a personal list |
+| `tall`             | true or false         | `false`                           | Two blocks high, like a door. See [Tall and facing](#tall-and-facing)                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `facing`           | true or false         | `false`                           | Faces the player who places it, and travelers arrive on that side. See [Tall and facing](#tall-and-facing)                                                                                                                                                                                                                                                                                                                                                                                          |
+| `activateParticle` | particle name         | empty                             | Particles shown at the portway when a player adds it to their list, such as `minecraft:portal`. Empty shows none                                                                                                                                                                                                                                                                                                                                                                                    |
+| `travelParticle`   | particle name         | empty                             | Particles shown where the player leaves and where they arrive. Empty shows none                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `carry`            | object                | none                              | What goes along with the player. See [Carrying](#carrying)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `cost`             | object                | free                              | What a trip costs, see the tables below                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `menu`             | object                | see [Menu](#menu)                 | The travel menu's starting order and its button icons, see the menu table below                                                                                                                                                                                                                                                                                                                                                                                                                     |
+
+### Costs
+
+```json
+{
+  "cost": {
+    "xp": { "amount": 1, "perBlocks": 250, "dimension": 3, "max": 5 },
+    "cooldown": 30
+  }
+}
+```
+
+The `cost` object holds one entry per kind of price, each optional. Leave them all out and a trip is free.
+
+| Part       | Takes                                               | When the player is short                      |
+| ---------- | --------------------------------------------------- | --------------------------------------------- |
+| `xp`       | Experience levels, or points with `points`          | The trip is refused                           |
+| `item`     | Items named by `id`, from the main inventory        | The trip is refused                           |
+| `health`   | Half hearts, never taking the player below one      | Takes what is left, never refuses             |
+| `hunger`   | Food points                                         | Takes what is left, never refuses             |
+| `cooldown` | A plain number of seconds between trips, per player | The trip is refused until the time has passed |
+
+| Key         | Type          | Default | What it does                                                                                                                      |
+| ----------- | ------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `amount`    | whole number  | `0`     | Flat price of every trip                                                                                                          |
+| `perBlocks` | whole number  | `0`     | Adds one for every started `perBlocks` blocks of distance. `0` adds nothing. A trip between dimensions counts its distance as `0` |
+| `dimension` | whole number  | `0`     | Added when the trip crosses dimensions                                                                                            |
+| `max`       | whole number  | `0`     | Highest price of the part. `0` means no limit                                                                                     |
+| `points`    | true or false | `false` | `xp` only. Prices in experience points instead of levels                                                                          |
+| `id`        | item name     | empty   | `item` only. Registry name of the item to pay with                                                                                |
+
+**Cooldown.** The wait starts when the player arrives. It is saved on the player as the game time at which the next trip is allowed, so it survives a restart, and each stop's tooltip shows the seconds left. `/rdplserver portway cooldown` sets or clears it.
+
+### Using a portway
+
+**Using it.** Right-clicking a portway adds the stop, its dimension and position, to that player's own list, which is saved on the player. A stop already in the list says so. Then the travel menu opens. A player who has not opened the portway's `gate`, or stands in a dimension the portway bars, is told so and the menu stays shut.
+
+### Stop names
+
+**Names.** A portway shows the first of these that it has: a name of its own, a name from `names`, or its dimension and position. It has a name of its own when the item was named in an anvil before it was placed, or when a structure template or `/setblock` gives its block entity the string `Name`. A name taken from `names` is never saved, so editing the list renames portways that are already placed. There is no rename screen.
+
+**Tokens and twins.** A name from `names` may hold `{biome}`, which becomes the name of the biome the portway stands in, such as `Dark Forest`. When two stops in a player's menu share a name, each shows its position after it, as in `Northgate (12, 64, -30)`, and its dimension too when they are in different dimensions.
+
+### Menu
+
+**The menu.** It lists the player's stops, the player's own, the global and the team stops as one list, in the order the player picked with the sort button: nearest (the current dimension first, nearest first, then the other dimensions by id), name A to Z (unnamed stops last, by position) or newest found (stops found before this version last). Stops that `allow`, `deny` or `crossDimension` bar are left out, and so are stops of another `network`. A stop whose `gate`, or whose dimension's [gate](#gates), the player has not opened shows as a barrier marked locked, and choosing it gives the refusal. Each stop's tooltip lists what the trip would cost that player and the cooldown seconds left.
+
+**Pages and forgetting.** Each page shows 45 stops. The bottom row holds the previous page arrow at the left, the sort button, the page number in the middle and the next page arrow at the right. Clicking the sort button switches to the next order; its tooltip shows the current order and the one a click picks. The player's choice is saved on the player and kept through relogging, death and dimension changes; until they pick one, the menu's `order` decides. Shift-clicking one of the player's own stops makes them forget it. Global stops and the portway the player stands at ignore it. There is no limit on the number of stops; the menu adds pages as needed.
+
+**Search.** The box at the top right of the menu filters the list as the player types, by the stop's name or, for an unnamed stop, its dimension and position, ignoring case. An empty box shows every stop. A new search goes back to the first page and keeps the chosen order. Right-clicking the box clears it. The search is not saved.
+
+```json
+{ "menu": { "order": "name", "previous": "minecraft:spectral_arrow", "next": "minecraft:spectral_arrow", "page": "minecraft:book", "sort": "minecraft:clock", "locked": "mypack:sealed_rune" } }
+```
+
+| Setting  | Type    | Default             | What it does                                                               |
+| -------- | ------- | ------------------- | -------------------------------------------------------------------------- |
+| order    | text    | `nearest`           | The order a player sees until they pick one: `nearest`, `name` or `newest` |
+| previous | item id | `minecraft:arrow`   | Icon of the previous page button                                           |
+| next     | item id | `minecraft:arrow`   | Icon of the next page button                                               |
+| page     | item id | `minecraft:paper`   | Icon of the page number                                                    |
+| sort     | item id | `minecraft:compass` | Icon of the sort button                                                    |
+| locked   | item id | `minecraft:barrier` | Icon of a stop the player has not unlocked                                 |
+
+Any item works, the pack's own included. An id that is no item is logged once and the default is shown. The menu takes these from the portway or travel item that opened it.
+
+**Traveling.** Choosing a stop teleports the player to a free two-high space beside the target portway: the side it faces first when it has `facing`, then the other sides, then on top (two blocks above for a `tall` one), then the nearest open spot. A rider is dismounted, and the player arrives with no fall distance or momentum. The travel sound and `travelParticle` play at both ends. The price is checked before the trip and taken only once the player has arrived. Players in creative or spectator mode pay nothing and wait for nothing. If the target block is gone or is no longer a portway, or its dimension no longer exists, the stop is removed from the list and the player is told.
+
+**In structures.** A portway has a block entity that holds only its name, so one saved inside a structure `.nbt` template (structure maps, village pieces, placed structures) works the same as one a player places. A global portway joins the shared list when it loads or is activated and leaves it when it is broken.
+
+### Carrying
+
+```json
+{ "carry": { "mount": true, "leashed": true, "pets": true, "crossDimension": false } }
+```
+
+| Key              | Type          | Default | What it does                                                                        |
+| ---------------- | ------------- | ------- | ----------------------------------------------------------------------------------- |
+| `mount`          | true or false | `false` | The mount the player controls goes along, and the player is put back on it          |
+| `leashed`        | true or false | `false` | Mobs within 10 blocks that are leashed to the player go along and are leashed again |
+| `pets`           | true or false | `false` | The player's tamed pets that are not sitting or leashed go along                    |
+| `crossDimension` | true or false | `true`  | With `false` nothing is carried between dimensions                                  |
+
+A trip always dismounts the player, and anything else riding them stays behind.
+
+### Tall and facing
+
+```json
+{
+  "type": "portway",
+  "portway": { "tall": true, "facing": true },
+  "variants": { "portway": { "hardness": 5.0 } }
+}
+```
+
+`tall` makes the portway two blocks high, like a door. Placing it needs room above, it places both halves, and breaking either one removes both and drops a single portway. The stop is the lower half, and using the upper half is the same as using the lower. `facing` turns it to face the player who places it, rotates and mirrors it with a structure template, and makes travelers arrive on the side it faces, looking the way it faces.
+
+The blockstate is keyed by `facing` (`north`, `east`, `south`, `west`) where the portway faces and `half` (`lower`, `upper`) where it is tall, joined in that order, as in `facing=north,half=lower`. RDPL writes that blockstate for you when the pack has none. A structure template holds both halves of a tall portway, just as it does for a door. A pack that ships its own blockstate for a tall portway also ships `models/item/<name>.json` for the item, since RDPL derives no item model from a pack blockstate.
+
+### Travel items
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "portway",
+  "creativeTab": "tools",
+  "portway": {
+    "network": "",
+    "allow": [],
+    "deny": [],
+    "crossDimension": true,
+    "cost": { "cooldown": 60 },
+    "carry": { "pets": true },
+    "travelSound": "minecraft:block.portal.travel",
+    "travelParticle": "minecraft:portal",
+    "consume": true,
+    "bind": true
+  }
+}
+```
+
+| Key       | Type          | Default | What it does                                                             |
+| --------- | ------------- | ------- | ------------------------------------------------------------------------ |
+| `consume` | true or false | `false` | One item is used up after the player has arrived. Creative mode keeps it |
+| `bind`    | true or false | `false` | The item is bound to one portway instead of opening the menu             |
+
+The `portway` object also takes the keys of a portway block that apply to a trip: `network`, `crossDimension`, `allow`, `deny`, `gate`, `cost`, `menu`, `carry`, `travelSound` and `travelParticle`. Without `bind`, using the item opens the menu with every stop of its network. There is no portway to stand at, so nothing shows as here, and distances count from the player. The menu closes if the item leaves that hand. With `bind`, sneak-using the item on a portway of its network that the player knows, or a global one, and whose `gate` they have opened, binds it, and the tooltip shows its name. Using the item in the air then travels to the bound portway with every check the menu makes. An unbound item says so. If the bound portway is gone, the binding is cleared and the stop is forgotten.
+
 ## Models, blockstates and textures
 
 *blocks and items*
@@ -1414,17 +1606,18 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 *items*
 
-| Type            | What you get                                                                      |
-| --------------- | --------------------------------------------------------------------------------- |
-| `basic`         | A plain item. Used when `type` is missing                                         |
-| `food`          | Eaten, with hunger and saturation                                                 |
-| `drink`         | Drunk rather than eaten, returning an empty container                             |
-| `tool`          | Pickaxe, axe, shovel, hoe or sword from a material                                |
-| `armor`         | Helmet, chestplate, leggings or boots from a material                             |
-| `seed`          | Plants one of your crops                                                          |
-| `potion`        | Applies your potion effects when used                                             |
-| `potion_bottle` | Holds your potion types, and shows them in a creative tab                         |
-| `container`     | A pouch: an inventory carried in the hand, or worn, see [Containers](#containers) |
+| Type            | What you get                                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `basic`         | A plain item. Used when `type` is missing                                                                        |
+| `food`          | Eaten, with hunger and saturation                                                                                |
+| `drink`         | Drunk rather than eaten, returning an empty container                                                            |
+| `tool`          | Pickaxe, axe, shovel, hoe or sword from a material                                                               |
+| `armor`         | Helmet, chestplate, leggings or boots from a material                                                            |
+| `seed`          | Plants one of your crops                                                                                         |
+| `potion`        | Applies your potion effects when used                                                                            |
+| `potion_bottle` | Holds your potion types, and shows them in a creative tab                                                        |
+| `portway`       | Travels to a portway: opens the menu of every stop, or goes to the one it is bound to. See [Portways](#portways) |
+| `container`     | A pouch: an inventory carried in the hand, or worn, see [Containers](#containers)                                |
 
 A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion type names such as `["mypack:ruby_tonic"]`. One with an empty list registers nothing, and the log says so.
 
@@ -1491,6 +1684,7 @@ The target is kept in the stack as a `minecraft:lodestone_tracker` component, so
 | `rollStore`      | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line                                                                 |
 | `locates`        | no            | `Village`, `minecraft:river`         | none                   | For a plain item, a right-click finds the nearest place of that name and points the item at it, as a compass does. The name is a vanilla structure or biome, or one registered with `locateAs`. The item stacks to 1. See the locator compass paragraph above |
 | `passesTurn`     | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                                                                                   |
+| `portway`        | portway       | object                               | none                   | The settings of a travel item: the [portway keys](#portways) that apply to a trip, plus `consume` and `bind`. See [Travel items](#travel-items)                                                                                                               |
 | `curioSlot`      | no            | a Curios slot name                   | none                   | The Curios slot the item can be worn in, for any type of item. Ignored when Curios is not installed                                                                                                                                                           |
 | `wornEffects`    | no            | list of effects                      | none                   | Potion effects held on the wearer while the item is in its Curios slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                               |
 | `wornAttributes` | no            | list of attribute changes            | none                   | Attribute changes held on the wearer while the item is in its Curios slot, as `attribute`, `amount` and `operation`                                                                                                                                           |
@@ -4568,23 +4762,36 @@ Every key, shown at once. A real file writes only the ones it needs.
 }
 ```
 
-| Key               | Required | Value                              | Default                          | What it does                                                                                                                                                                        |
-| ----------------- | -------- | ---------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `dimension`       | yes      | dimension id                       |                                  | The dimension it guards                                                                                                                                                             |
-| `name`            | no       | string                             | the file name                    | Shown to the player                                                                                                                                                                 |
-| `scope`           | no       | `player`, `global`, `team`         | `player`                         | One player at a time, the whole world at once, or the opener's whole team                                                                                                           |
-| `teamless`        | no       | `player`, `refuse`                 | `player`                         | With scope `team`, what a player on no team gets: an unlock of their own, or turned back                                                                                            |
-| `open`            | no       | boolean                            | `false`                          | Whether it starts open                                                                                                                                                              |
-| `unlock`          | no       | object                             |                                  | What opens it. See below                                                                                                                                                            |
-| `unlockedMessage` | no       | string                             | `%dim% is now open`              | Shown when it opens                                                                                                                                                                 |
-| `blockedMessage`  | no       | string                             | `You need %item% to enter %dim%` | Shown when it refuses                                                                                                                                                               |
-| `safeReturn`      | no       | boolean                            | `false`                          | A player turned back is set down somewhere safe in the world they tried to leave: beside their bed or charged respawn anchor there when it still stands, else at that world's spawn |
-| `requires`        | no       | list of mod ids or pack namespaces | none                             | The gate is skipped unless all are present                                                                                                                                          |
-| `portalBlocks`    | no       | list of block names                | every portal                     | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one                                                                                    |
+| Key               | Required | Value                              | Default                          | What it does                                                                                                                                                                                                                                                                                                                                                                            |
+| ----------------- | -------- | ---------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension`       | no       | dimension id                       | none                             | The dimension it guards. A gate without one guards no dimension and only locks the [portways](#portways) that name it                                                                                                                                                                                                                                                                   |
+| `name`            | no       | string                             | the file name                    | Shown to the player                                                                                                                                                                                                                                                                                                                                                                     |
+| `scope`           | no       | `player`, `global`, `team`         | `player`                         | One player at a time, the whole world at once, or the opener's whole team (a team is a side from the pack's `<namespace>/teams` folder; players join it by being listed in its `players`, with `/rdplserver team join <name>` unless it sets `joinable` to false, with `/rdplserver team join` alone onto the smallest `balance` side, or by its `picks` draw, see [Teams](#who-joins)) |
+| `teamless`        | no       | `player`, `refuse`                 | `player`                         | With scope `team`, what a player on no team gets: an unlock of their own, or turned back                                                                                                                                                                                                                                                                                                |
+| `open`            | no       | boolean                            | `false`                          | Whether it starts open                                                                                                                                                                                                                                                                                                                                                                  |
+| `unlock`          | no       | object                             |                                  | What opens it. See below                                                                                                                                                                                                                                                                                                                                                                |
+| `unlockedMessage` | no       | string                             | `%dim% is now open`              | Shown when it opens                                                                                                                                                                                                                                                                                                                                                                     |
+| `blockedMessage`  | no       | string                             | `You need %item% to enter %dim%` | Shown when it refuses                                                                                                                                                                                                                                                                                                                                                                   |
+| `safeReturn`      | no       | boolean                            | `false`                          | A player turned back is set down somewhere safe in the world they tried to leave: beside their bed or charged respawn anchor there when it still stands, else at that world's spawn                                                                                                                                                                                                     |
+| `requires`        | no       | list of mod ids or pack namespaces | none                             | The gate is skipped unless all are present                                                                                                                                                                                                                                                                                                                                              |
+| `portalBlocks`    | no       | list of block names                | every portal                     | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one                                                                                                                                                                                                                                                                                        |
 
 `unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`. `team`, and `objective` with `scoreAtLeast`, open it for a player on that scoreboard team whose score in that objective is at least that much, the same conditions a card's `when` takes; either one also works alone. They are checked as the player goes through, and the gate then opens in its scope like any other unlock. With scope `team` an unlock belongs to the opener's team: everyone on it gets through, players who join later included, and a player on no team unlocks it for themselves alone. `teamAndScore` decides how those two count: `alone` (the default) lets them open the gate by themselves, while `with` makes them a further condition, so the gate opens only once another unlock key is met and the player is also on that team with that score. `killedTally` set to `team` counts every kill by the slayer's team toward `killedCount` together, rather than each player's own (`player`, the default); a slayer on no team still counts alone. `teamless` set to `refuse` turns back a player on no team at a scope `team` gate, rather than letting them unlock it for themselves (`player`, the default).
 
 Gates guard the game's own dimensions too: a gate whose `dimension` is `minecraft:the_nether` stands in front of every nether portal.
+
+**Gates for portways.** A [portway](#portways) names a gate in `gate` and stays locked to a player until the gate is open for them, with the same scopes, unlock rules and messages as a portal. Give every portway of a network the same gate to lock the network as one. To open a gate by spending an item at a portway, list the portway block in `portalBlocks` and give the gate a `consume` item. This gate has no `dimension`, and a portway block names it with `"gate": "mypack:northgate_network"`:
+
+```json
+{
+  "name": "Northgate Network",
+  "scope": "player",
+  "unlock": { "consume": "minecraft:emerald", "consumeCount": 3 },
+  "portalBlocks": ["mypack:northgate"]
+}
+```
+
+`/rdplserver gate list` shows `-` for a gate with no dimension.
 
 ## The deep world
 
@@ -6370,28 +6577,35 @@ The third greets a player on the first join with a center card that has no panel
 
 *cards*
 
-| Trigger           | Needs                  | Fires when                                                                                                                                                                                                                                                   |
-| ----------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `command`         | nothing                | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger                                                                                   |
-| `first_join`      | nothing                | A player joins the world for the first time                                                                                                                                                                                                                  |
-| `dimension_enter` | `dimension`            | A player arrives in that dimension                                                                                                                                                                                                                           |
-| `biome_enter`     | `biomes`               | A player walks into one of those biomes from somewhere else                                                                                                                                                                                                  |
-| `structure_enter` | `structures`           | A player walks into one of those structures from outside it                                                                                                                                                                                                  |
-| `advancement`     | `advancement`          | A player earns that advancement                                                                                                                                                                                                                              |
-| `time_of_day`     | `time`                 | The day clock passes that tick, `0` to `23999` on the same scale as `time.windows`, scaled to the dimension's `dayLength`, while players are in the dimension. A dimension with `fixedTime` never fires it. A clock set by a command or a bed does not count |
-| `day`             | nothing, or `day`      | A new day begins in the dimension; with `day`, only that day                                                                                                                                                                                                 |
-| `craft`           | `item`                 | A player crafts that item                                                                                                                                                                                                                                    |
-| `pickup`          | `item`                 | A player picks that item up                                                                                                                                                                                                                                  |
-| `kill`            | `entity`               | A player kills that entity, or the `count`th one of it                                                                                                                                                                                                       |
-| `respawn`         | nothing                | A player respawns after dying                                                                                                                                                                                                                                |
-| `death`           | nothing                | A player dies                                                                                                                                                                                                                                                |
-| `y_level`         | `below` or `above`     | A player goes below or above that height                                                                                                                                                                                                                     |
-| `play_time`       | `minutes`              | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
-| `roll`            | nothing, or `roll`     | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
-| `order_done`      | nothing, or `order`    | A work order is filled, once for each player it rewards. With `order`, only an order with that `sign` word fires it                                                                                                                                          |
-| `score`           | `objective`            | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
-| `exposure_level`  | nothing, or `exposure` | A player's level in a hazard changes, up or down; with `exposure`, only that hazard, with `level`, only a change that reaches that level. The first check after a join never fires it                                                                        |
-| `round_start`     | nothing                | A round opens, after the count: once for each player, or once for the `audience`. It follows a reset and `/rdplserver round start` alike                                                                                                                     |
+| Trigger            | Needs                  | Fires when                                                                                                                                                                                                                                                   |
+| ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `command`          | nothing                | `/rdplserver card <rule> [players]` is run. The command skips `when`, `repeat` and `cooldown`, and still runs `runs`. Any rule can be shown this way, whatever its trigger                                                                                   |
+| `first_join`       | nothing                | A player joins the world for the first time                                                                                                                                                                                                                  |
+| `dimension_enter`  | `dimension`            | A player arrives in that dimension                                                                                                                                                                                                                           |
+| `biome_enter`      | `biomes`               | A player walks into one of those biomes from somewhere else                                                                                                                                                                                                  |
+| `structure_enter`  | `structures`           | A player walks into one of those structures from outside it                                                                                                                                                                                                  |
+| `advancement`      | `advancement`          | A player earns that advancement                                                                                                                                                                                                                              |
+| `time_of_day`      | `time`                 | The day clock passes that tick, `0` to `23999` on the same scale as `time.windows`, scaled to the dimension's `dayLength`, while players are in the dimension. A dimension with `fixedTime` never fires it. A clock set by a command or a bed does not count |
+| `day`              | nothing, or `day`      | A new day begins in the dimension; with `day`, only that day                                                                                                                                                                                                 |
+| `craft`            | `item`                 | A player crafts that item                                                                                                                                                                                                                                    |
+| `pickup`           | `item`                 | A player picks that item up                                                                                                                                                                                                                                  |
+| `kill`             | `entity`               | A player kills that entity, or the `count`th one of it                                                                                                                                                                                                       |
+| `respawn`          | nothing                | A player respawns after dying                                                                                                                                                                                                                                |
+| `death`            | nothing                | A player dies                                                                                                                                                                                                                                                |
+| `y_level`          | `below` or `above`     | A player goes below or above that height                                                                                                                                                                                                                     |
+| `play_time`        | `minutes`              | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
+| `roll`             | nothing, or `roll`     | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total                                                                                                        |
+| `order_done`       | nothing, or `order`    | A work order is filled, once for each player it rewards. With `order`, only an order with that `sign` word fires it                                                                                                                                          |
+| `portway_activate` | nothing                | A player activates a portway by right-clicking it. `portway` or `network` limits it to one                                                                                                                                                                   |
+| `portway_travel`   | nothing                | A trip has passed every check and is about to happen, before the player moves                                                                                                                                                                                |
+| `portway_arrive`   | nothing                | A player has arrived by portway                                                                                                                                                                                                                              |
+| `portway_refused`  | nothing                | A portway or travel item turns a player back. `reason` says why                                                                                                                                                                                              |
+| `portway_paid`     | nothing                | A trip took a price that was not zero                                                                                                                                                                                                                        |
+| `portway_forget`   | nothing                | A stop leaves a player's list, because they forgot it, a command removed it or the portway was gone                                                                                                                                                          |
+| `portway_bind`     | nothing                | A player binds a travel item to a portway                                                                                                                                                                                                                    |
+| `score`            | `objective`            | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
+| `exposure_level`   | nothing, or `exposure` | A player's level in a hazard changes, up or down; with `exposure`, only that hazard, with `level`, only a change that reaches that level. The first check after a join never fires it                                                                        |
+| `round_start`      | nothing                | A round opens, after the count: once for each player, or once for the `audience`. It follows a reset and `/rdplserver round start` alike                                                                                                                     |
 
 Hazard levels are read at each scan, so an `exposure_level` card fires within the hazard's `scanInterval` of the change.
 
@@ -6452,6 +6666,9 @@ A card that fires while a player still has the world intro open waits and shows 
 | `level`              | int                                | none           | For `exposure_level`: fire only when the player's level becomes this one; `0` means no longer exposed. Without it, every change fires                                                                                                                                                   |
 | `atLeast`, `atMost`  | int                                | none           | For `roll`: the lowest and the highest total that fires the rule. A coin counts 1 for heads and 0 for tails, a pack die or deck the place of the result in its file, from 1                                                                                                             |
 | `objective`, `score` | text, int                          | none, `1`      | For `score`: the objective and the value to reach                                                                                                                                                                                                                                       |
+| `portway`            | text                               | none           | For the `portway_*` triggers: the block id of the portway, such as `mypack:northgate`. Without it, any portway                                                                                                                                                                          |
+| `network`            | text                               | none           | For the `portway_*` triggers: the network of the portway. Without it, any network                                                                                                                                                                                                       |
+| `reason`             | text                               | none           | For `portway_refused`: `gate`, `dimension`, `cost`, `cooldown`, `nowhere`, `network`, `travel` or `item`. For `portway_forget`: `gone`, `player` or `command`. Without it, any reason                                                                                                   |
 | `requires`           | list of mod ids or pack namespaces | none           | The file is skipped unless all are present                                                                                                                                                                                                                                              |
 
 ### When
@@ -6460,15 +6677,16 @@ A card that fires while a player still has the world intro open waits and shows 
 
 `when` holds conditions that must all be true at the moment the trigger fires.
 
-| Setting                     | Type      | What it checks                                                                              |
-| --------------------------- | --------- | ------------------------------------------------------------------------------------------- |
-| `biomes`                    | list      | The player stands in one of these biomes, written as for the trigger                        |
-| `timeFrom`, `timeTo`        | int       | The day clock is inside this window, which may run past midnight, such as `13000` to `1000` |
-| `dayAtLeast`                | int       | The day number is at least this                                                             |
-| `advancement`               | text      | The player has this advancement                                                             |
-| `gameMode`                  | text      | The player is in this game mode: `survival`, `creative`, `adventure` or `spectator`         |
-| `team`                      | text      | The player is on this scoreboard team                                                       |
-| `objective`, `scoreAtLeast` | text, int | The player's score in the objective is at least this                                        |
+| Setting                     | Type      | What it checks                                                                                                                |
+| --------------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | list      | The player stands in one of these biomes, written as for the trigger                                                          |
+| `timeFrom`, `timeTo`        | int       | The day clock is inside this window, which may run past midnight, such as `13000` to `1000`                                   |
+| `dayAtLeast`                | int       | The day number is at least this                                                                                               |
+| `advancement`               | text      | The player has this advancement                                                                                               |
+| `portway`, `network`        | text      | The player has a portway of that block id, or of that network, on their list or among the global ones. Either may be left out |
+| `gameMode`                  | text      | The player is in this game mode: `survival`, `creative`, `adventure` or `spectator`                                           |
+| `team`                      | text      | The player is on this scoreboard team                                                                                         |
+| `objective`, `scoreAtLeast` | text, int | The player's score in the objective is at least this                                                                          |
 
 ### The card
 
@@ -6512,29 +6730,32 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 
 *cards*
 
-| Id                      | The message                                                     | Its text comes from                                                                                                              |
-| ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `rdpl:gate_unlocked`    | A gate opens                                                    | `unlockedMessage` in [Gates](#gates)                                                                                             |
-| `rdpl:gate_blocked`     | A closed gate turns a player back, on the action bar            | `blockedMessage` in [Gates](#gates)                                                                                              |
-| `rdpl:team_joined`      | A player joins a side                                           | the side's `displayName`                                                                                                         |
-| `rdpl:team_lead`        | The lead of a side comes to a player                            | `leadSays` in [Teams](#teams)                                                                                                    |
-| `rdpl:team_picked`      | A player is picked for a side                                   | the side's `displayName`                                                                                                         |
-| `rdpl:team_round_ended` | The round ended, so a player is moved to a side                 | the side's `displayName`                                                                                                         |
-| `rdpl:lobby_joins`      | A player who logs in mid-round is sent to the lobby             | `opens.joinsSays` in [The lobby](#the-lobby)                                                                                     |
-| `rdpl:lobby_note`       | The mid-screen lobby line                                       | `opens.says`, `opens.leaderSays` in [The lobby](#the-lobby)                                                                      |
-| `rdpl:scoring_results`  | The standings at the end of a round, to each player             | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Results](#results) |
-| `rdpl:scoring_out`      | A knocked-out player                                            | `ends.outSays` in [How a round ends](#how-a-round-ends)                                                                          |
-| `rdpl:reset_lead`       | The lead resets the round                                       | `reset.leadSays` in [Resetting a round](#resetting-a-round)                                                                      |
-| `rdpl:reset_vote`       | A reset vote is called                                          | `reset.voteSays`                                                                                                                 |
-| `rdpl:reset_pass`       | The vote passes                                                 | `reset.passSays`                                                                                                                 |
-| `rdpl:reset_fail`       | The vote fails                                                  | `reset.failSays`                                                                                                                 |
-| `rdpl:anvil_waits`      | An anvil's work waits on an advancement                         | [Anvil work](#anvil-work)                                                                                                        |
-| `rdpl:threat`           | A player's threat band changes                                  | `threatSays`                                                                                                                     |
-| `rdpl:prospect`         | Each line a prospecting find reports                            | the find                                                                                                                         |
-| `rdpl:prospect_none`    | Prospecting found nothing                                       | the language file                                                                                                                |
-| `rdpl:board_result`     | A board game ends                                               | the language file                                                                                                                |
-| `rdpl:pregen_ended`     | Pregeneration finishes or stops                                 | `pregenFinishedSays`, `pregenStoppedSays` in [Pregeneration](#pregeneration)                                                     |
-| `rdpl:pregen_running`   | The progress line a player sees on joining during pregeneration | `pregenRunningSays`                                                                                                              |
+| Id                       | The message                                                     | Its text comes from                                                                                                              |
+| ------------------------ | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:gate_unlocked`     | A gate opens                                                    | `unlockedMessage` in [Gates](#gates)                                                                                             |
+| `rdpl:gate_blocked`      | A closed gate turns a player back, on the action bar            | `blockedMessage` in [Gates](#gates)                                                                                              |
+| `rdpl:portway_activated` | A player adds a portway to their list, on the action bar        | the language file                                                                                                                |
+| `rdpl:portway_refused`   | A portway turns a player back, on the action bar                | the language file                                                                                                                |
+| `rdpl:portway_forgot`    | A stop leaves a player's list, on the action bar                | the language file                                                                                                                |
+| `rdpl:team_joined`       | A player joins a side                                           | the side's `displayName`                                                                                                         |
+| `rdpl:team_lead`         | The lead of a side comes to a player                            | `leadSays` in [Teams](#teams)                                                                                                    |
+| `rdpl:team_picked`       | A player is picked for a side                                   | the side's `displayName`                                                                                                         |
+| `rdpl:team_round_ended`  | The round ended, so a player is moved to a side                 | the side's `displayName`                                                                                                         |
+| `rdpl:lobby_joins`       | A player who logs in mid-round is sent to the lobby             | `opens.joinsSays` in [The lobby](#the-lobby)                                                                                     |
+| `rdpl:lobby_note`        | The mid-screen lobby line                                       | `opens.says`, `opens.leaderSays` in [The lobby](#the-lobby)                                                                      |
+| `rdpl:scoring_results`   | The standings at the end of a round, to each player             | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Results](#results) |
+| `rdpl:scoring_out`       | A knocked-out player                                            | `ends.outSays` in [How a round ends](#how-a-round-ends)                                                                          |
+| `rdpl:reset_lead`        | The lead resets the round                                       | `reset.leadSays` in [Resetting a round](#resetting-a-round)                                                                      |
+| `rdpl:reset_vote`        | A reset vote is called                                          | `reset.voteSays`                                                                                                                 |
+| `rdpl:reset_pass`        | The vote passes                                                 | `reset.passSays`                                                                                                                 |
+| `rdpl:reset_fail`        | The vote fails                                                  | `reset.failSays`                                                                                                                 |
+| `rdpl:anvil_waits`       | An anvil's work waits on an advancement                         | [Anvil work](#anvil-work)                                                                                                        |
+| `rdpl:threat`            | A player's threat band changes                                  | `threatSays`                                                                                                                     |
+| `rdpl:prospect`          | Each line a prospecting find reports                            | the find                                                                                                                         |
+| `rdpl:prospect_none`     | Prospecting found nothing                                       | the language file                                                                                                                |
+| `rdpl:board_result`      | A board game ends                                               | the language file                                                                                                                |
+| `rdpl:pregen_ended`      | Pregeneration finishes or stops                                 | `pregenFinishedSays`, `pregenStoppedSays` in [Pregeneration](#pregeneration)                                                     |
+| `rdpl:pregen_running`    | The progress line a player sees on joining during pregeneration | `pregenRunningSays`                                                                                                              |
 
 `welcomeSays` is not a rule and keeps its logo; a `first_join` or `dimension_enter` rule adds to it. The action-bar countdowns and tallies of a round stay as their settings make them.
 
@@ -8396,6 +8617,20 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver gate grant <player> <gate>`  | 3     | Open a gate for a player                                    |
 | `/rdplserver gate revoke <player> <gate>` | 3     | Close one again                                             |
 
+#### Portway commands
+
+*server commands*
+
+| Command                                                       | Level | What it does                                                                                                                       |
+| ------------------------------------------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver portway list <player>`                           | 2     | The stops on a player's list                                                                                                       |
+| `/rdplserver portway grant <player> <x> <y> <z> [dimension]`  | 2     | Adds the portway at that position to a player's list. The dimension is the sender's when left out                                  |
+| `/rdplserver portway forget <player> <x> <y> <z> [dimension]` | 2     | Removes one stop from a player's list                                                                                              |
+| `/rdplserver portway forget <player> all`                     | 2     | Empties a player's list                                                                                                            |
+| `/rdplserver portway forget <player> network <name>`          | 2     | Removes the stops of one network                                                                                                   |
+| `/rdplserver portway send <player> <x> <y> <z> [dimension]`   | 2     | Sends a player to the portway there, with carrying, sounds, particles and the arrive card, and without the gate, price or cooldown |
+| `/rdplserver portway cooldown <player> <seconds>`             | 2     | Sets how long a player must wait before the next trip. `0` clears it                                                               |
+
 #### Pregeneration commands
 
 *server commands*
@@ -8480,7 +8715,7 @@ Any roll can end with `store <objective>`, which writes its number to the sender
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "gotoPlaceLevels": ["Crypt=2", "Stronghold=0", "Mansion=4"],
     "locateLevel": 3
   }
 }
@@ -8498,7 +8733,7 @@ Any roll can end with `store <objective>`, which writes its number to the sender
 
 The value is the permission level a sender needs. `3` (operator) is the default. `2` also admits command blocks, so a pack can put a jump on a button or pressure plate without exposing the rest of `/rdplserver`. `0` opens it to any player. The three settings are independent: for example, `next` open to command blocks for a village tour while `back` stays operator-only. A value below 0 counts as 0 and one above 4 as 4, and an operator is always offered `goto` itself, whatever the settings say.
 
-`gotoPlaceLevels` overrides the three settings for single places, as `name=level` entries, as in the example above. The name is whatever you would type after `goto`: a vanilla one such as `village` or `mansion`, or a name registered with `locateAs` on an imprint entry. Matching ignores case. A level of `4` is above operator and closes that place to everyone, the way to hide one place while the rest of `goto` is open.
+`gotoPlaceLevels` overrides the three settings for single places, as `name=level` entries, as in the example above. The name is whatever you would type after `goto`: a vanilla one such as `village` or `mansion`, or a name registered with `locateAs` on an imprint entry. Matching ignores case. A level of `4` is above operator and closes that place to everyone, the way to hide one place while the rest of `goto` is open. Portways are not places for `goto`: travel between portways follows the portway's own keys, and `gotoPlaceLevels` does not apply to it.
 
 An entry sets one level for all three forms of that place. An unlisted place falls back to the three settings above, and an unregistered name never matches. Tab completion follows the same rules, so after `goto` a sender is offered only the places they may actually be carried to.
 

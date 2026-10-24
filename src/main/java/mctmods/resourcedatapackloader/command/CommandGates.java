@@ -48,7 +48,7 @@ final class CommandGates {
         Collection<GateDef> defs = ContentGates.all();
         CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gates", defs.size()));
         for (GateDef def : defs) {
-            MutableComponent line = Component.literal("  " + def.key() + "  dimension=" + def.dimension() + " scope=" + def.scope());
+            MutableComponent line = Component.literal("  " + def.key() + "  dimension=" + (def.dimension() == null ? "-" : def.dimension()) + " scope=" + def.scope());
             if (def.open()) { line.append(Lang.tr(source.getPlayer(), "rdpl.command.open")); }
             CommandShared.send(source, ChatFormatting.WHITE, line);
         }
@@ -86,7 +86,7 @@ final class CommandGates {
         }
         if (grant) { ContentGates.unlock(player, def, false); }
         else { ContentGates.lock(player, def); }
-        CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr(grant ? "rdpl.command.gateopened" : "rdpl.command.gateclosed", def.key(), player.getGameProfile().name(), def.scope()));
+        CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr(grant ? "rdpl.command.gateopened" : "rdpl.command.gateclosed", def.key().toString(),player.getGameProfile().name(), def.scope()));
         return 1;
     }
 }

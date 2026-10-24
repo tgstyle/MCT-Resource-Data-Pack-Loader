@@ -50,6 +50,9 @@ final class CardParser {
         rule.roll = ContentDice.notation(Json.getString(json, "roll", "").trim());
         rule.order = Json.getString(json, "order", "").trim();
         rule.exposure = Json.getString(json, "exposure", "").trim();
+        rule.portway = Json.getString(json, "portway", "").trim();
+        rule.network = Json.getString(json, "network", "").trim();
+        rule.reason = Json.getString(json, "reason", "").trim();
         rule.level = json.has("level") ? Json.getInt(json, "level") : null;
         rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
         rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
@@ -80,6 +83,8 @@ final class CardParser {
         when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;
         when.advancement = Json.getString(json, "advancement", "").trim();
         when.gameMode = Json.getString(json, "gameMode", "").trim();
+        when.portway = Json.getString(json, "portway", "").trim();
+        when.network = Json.getString(json, "network", "").trim();
         when.standing = Standing.parse(json);
         return when;
     }

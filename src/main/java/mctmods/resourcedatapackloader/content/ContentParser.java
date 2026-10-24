@@ -117,7 +117,8 @@ public final class ContentParser {
                 portal(key, json, null, true, false),
                 ContentParserContainers.container(key, json),
                 bell(json),
-                Collections.unmodifiableList(Json.strings(json, "spreadsOnto")));
+                Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
+                ContentParserPortways.portway(key, json));
     }
 
     private static String renderLayer(Identifier key, JsonObject json) {
@@ -315,7 +316,8 @@ public final class ContentParser {
                 ContentParserContainers.curioSlot(key, json),
                 Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
                 Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)),
-                ContentParserWeapons.weapon(key, json));
+                ContentParserWeapons.weapon(key, json),
+                ContentParserPortways.item(key, json));
     }
 
     @Nullable public static FluidDef fluid(Identifier key, String contents) {

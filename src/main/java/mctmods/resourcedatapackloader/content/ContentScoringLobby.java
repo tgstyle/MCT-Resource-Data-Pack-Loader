@@ -52,7 +52,7 @@ public final class ContentScoringLobby {
         if (level == null) { return; }
         double x = lobby.opensLobby().x() + 0.5D;
         double z = lobby.opensLobby().z() + 0.5D;
-        Travel.to(player, level, x, standing(level, x, lobby.opensLobby().y(), z), z, player.getYRot(), 0.0F);
+        if (!Travel.to(player, level, x, standing(level, x, lobby.opensLobby().y(), z), z, player.getYRot(), 0.0F)) { return; }
         ContentScoring.OUT.put(name, player.gameMode.getGameModeForPlayer());
         player.setGameMode(GameType.SPECTATOR);
         if (!lobby.opensJoinsSays().isEmpty()) { Says.tell(player, CardIds.LOBBY_JOINS, ChatFormatting.GRAY, lobby.opensJoinsSays()); }
@@ -129,8 +129,7 @@ public final class ContentScoringLobby {
             double y = standing(level, x, place.y(), z);
             float yaw = (float) (Math.toDegrees(Math.atan2(cz - z, cx - x)) - 90.0D);
             if (!(one instanceof ServerPlayer)) { ORIGINS.putIfAbsent(one.getUUID(), new Spot(one.level().dimension(), one.getX(), one.getY(), one.getZ(), one.getYRot())); }
-            Travel.to(one, level, x, y, z, yaw, 0.0F);
-            if (one instanceof ServerPlayer player) { STILL.put(player.getGameProfile().name(), new Spot(level.dimension(), x, y, z, yaw)); }
+            if (Travel.to(one, level, x, y, z, yaw, 0.0F) && one instanceof ServerPlayer player) { STILL.put(player.getGameProfile().name(), new Spot(level.dimension(), x, y, z, yaw)); }
         }
         ContentLog.LOGGER.info("{} stand around the lobby at {}, {}, {} in {}, {} block(s) out", waiting.size(), place.x(), place.y(), place.z(), place.dimension().identifier(), Math.round(radius * 10.0D) / 10.0D);
     }

@@ -293,7 +293,7 @@ public final class ContentStructureSearch {
         return null;
     }
 
-    private static boolean open(ServerLevel level, BlockPos at) { return level.getBlockState(at).getCollisionShape(level, at).isEmpty() && level.getFluidState(at).isEmpty(); }
+    public static boolean open(ServerLevel level, BlockPos at) { return level.getBlockState(at).getCollisionShape(level, at).isEmpty() && level.getFluidState(at).isEmpty(); }
 
     @Nullable private static BlockPos footing(ServerLevel level, int x, int z) {
         BlockPos.MutableBlockPos ground = new BlockPos.MutableBlockPos();

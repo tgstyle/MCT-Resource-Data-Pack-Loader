@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.content.def.PortwayDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -233,9 +234,23 @@ public final class ContentGeneratedModels {
                 String top = texture(namespace, name + "_top");
                 String bottom = texture(namespace, name + "_bottom");
                 model(def, namespace, name, top == null && bottom == null ? cube(def, texture, "cube_all") : bottomTop(def, texture, top, bottom));
-                blockstate(namespace, name, singleVariant(main));
+                blockstate(namespace, name, ContentBlockTypes.PORTWAY.equals(type) ? portwayStates(def.portway(), main) : singleVariant(main));
             }
         }
+    }
+
+    private static JsonObject portwayStates(@Nullable PortwayDef portway, String main) {
+        boolean facing = portway != null && portway.facing();
+        boolean tall = portway != null && portway.tall();
+        if (!facing && !tall) { return singleVariant(main); }
+        JsonObject variants = new JsonObject();
+        for (int i = 0; i < (facing ? FACINGS.length : 1); i++) {
+            for (String half : tall ? new String[]{"lower", "upper"} : new String[]{""}) {
+                String key = (facing ? "facing=" + FACINGS[i] : "") + (facing && tall ? "," : "") + (tall ? "half=" + half : "");
+                variants.add(key, rotated(main, facing ? FACING_Y[i] : 0, false));
+            }
+        }
+        return Json.obj("variants", variants);
     }
 
     private static JsonObject bell(String main) {

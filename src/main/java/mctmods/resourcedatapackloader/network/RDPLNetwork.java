@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
+import mctmods.resourcedatapackloader.content.menu.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.util.Says;
@@ -49,9 +50,12 @@ public final class RDPLNetwork {
         });
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); } });
         registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); } });
+        registrar.playToServer(MessagePortwayFilter.TYPE, MessagePortwayFilter.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player && player.containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
     }
 
     public static void openWorn() { ClientPacketDistributor.sendToServer(new MessageOpenWorn()); }
+
+    public static void portwayFilter(String text) { ClientPacketDistributor.sendToServer(new MessagePortwayFilter(text)); }
 
     private static boolean send(ServerPlayer player, CustomPacketPayload payload) {
         if (!player.connection.hasChannel(payload.type())) { return false; }
