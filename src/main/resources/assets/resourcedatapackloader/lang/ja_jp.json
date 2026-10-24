@@ -80,6 +80,8 @@
   "rdpl.gui.packList.normal": "RDPL パック",
   "rdpl.gui.packList.override": "RDPL 上書きパック",
   "rdpl.portal.owned": "このポータルは別のプレイヤーのものです",
+  "rdpl.diet.repeat": "この食べ物にも飽きてきた",
+  "rdpl.diet.variety": "いろいろな物を食べると体が喜ぶ",
   "rdpl.portway.activated": "%sを有効にしました（登録済み %s）",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "%s / %s ページ",
