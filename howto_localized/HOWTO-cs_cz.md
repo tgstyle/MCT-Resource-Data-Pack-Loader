@@ -64,6 +64,7 @@
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
 - [Kořist hráčů](#kořist-hráčů)
+- [Pestrost jídla](#pestrost-jídla)
 - [Vesničané a obchody](#vesničané-a-obchody)
 
 **Tvorové a nebezpečí**
@@ -206,6 +207,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/veins/*.json`                                                                      | Skupiny bloků, které nástroj vytěží naráz, s limitem a cenou v hladu. [Těžení žil](#těžení-žil) |
 | `<namespace>/harvests/*.json`                                                                   | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                                      |
 | `<namespace>/player_loot/*.json`                                                                | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                                          |
+| `<namespace>/diets/*.json`                                                                      | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                             |
 | `<namespace>/advancements/*.json`                                                               | Advancementy. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                               |
 | `<namespace>/functions/*.mcfunction`                                                            | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                             |
 | `<namespace>/registry_remap/*.json`                                                             | Staré názvy přiřazené k novým. [Přejmenování v registru](#přejmenování-v-registru)                                                                                                                                |
@@ -2949,6 +2951,40 @@ Jedna funkce kořisti je vlastní funkcí RDPL a lze ji použít v jakékoli tab
 `dropLoose` obchází seznam dropů úplně: předměty se umístí přímo do světa, takže je módy s hroby nikdy nevidí, takže inventář jde do hrobu a předměty z tabulky leží na zemi pro zabijáka. Použij to pro kořist, která patří zabijákovi, a ne do hrobu oběti. Bez módu s hroby to mění málo. Pozor: předměty existují dřív, než by cokoli dále po proudu mohlo dropy zrušit, takže položky, které nesmí přežít zrušenou smrt, by ho měly mít vypnuté.
 
 Nastavením `playerLoot` v kategorii `data` konfigurace na `false` složku úplně vypneš.
+
+## Pestrost jídla
+
+*výroba, kořist a obchod*
+
+`<namespace>/diets/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a platí jen jeden soubor: když jich je víc, použije se první načtený a ostatní se zapíšou do logu a ignorují.
+
+Běžně jídlo sytí stejně, ať ho jíš kolikrát chceš. Soubor tady způsobí, že jídlo, které je už mezi nedávnými jídly hráče, sytí méně, a pestrý jídelníček sytí více. Bez souboru se nic nemění a nic se nesleduje.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Klíč       | Povinný | Hodnota          | Výchozí | Co dělá                                                                                                                                                             |
+| ---------- | ------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | ne      | int ≥ 1          | `10`    | Kolik jídel si každý hráč pamatuje; nejstarší se zapomene první                                                                                                     |
+| `repeat`   | ne      | seznam float ≥ 0 | `[1.0]` | Násobitel pro 1., 2., 3. případ, kdy je totéž jídlo mezi zapamatovanými jídly; poslední položka se opakuje                                                          |
+| `variety`  | ne      | seznam objektů   | žádné   | Každý objekt má `distinct` (int ≥ 1) a `multiplier` (float ≥ 0): jakmile zapamatovaná jídla obsahují tolik různých druhů, přírůstek se vynásobí číslem `multiplier` |
+| `groups`   | ne      | seznam textů     | žádné   | ID předmětů nebo názvy `#ore`; jídlo odpovídající položce se počítá jako ta položka, takže jeden název rudy je jedno jídlo; platí první shoda                       |
+| `messages` | ne      | objekt           | —       | Řádek na akčním panelu po jídle: `repeat` při násobiteli opakování pod 1, `variety` nad 1; text, klíč jazyka nebo `""`; výchozí `rdpl.diet.*`                       |
+
+Chybná hodnota zapíše jednu chybu s názvem souboru a celý soubor se přeskočí.
+
+Když hráč dojí, hlad a sytost, které jídlo skutečně doplnilo (po vanilkovém stropu), se vynásobí jedním číslem: položkou `repeat` podle toho, kolikrát už jídlo mezi zapamatovanými jídly je (žádné je 1. položka), krát stupeň `variety` s největším dosaženým `distinct`, ať stojí v souboru kdekoli. `distinct` počítá různá jídla mezi zapamatovanými včetně právě snězeného, po oříznutí seznamu na `memory`. Přírůstek hladu se zaokrouhlí na celé půlikony hladu a nová úroveň hladu zůstane mezi 0 a 20; sytost se škáluje stejně a nikdy nevystoupí nad novou úroveň hladu. U příkladu výše druhé jablko v řadě doplní polovinu a čtvrté různé jídlo v paměti 1,25krát tolik.
+
+Počítá se každé jídlo, vanilkové, z modu i z balíčku, včetně toho nastaveného přes `overrides`. Jídlo, které nic nedoplní, se nepamatuje. Dort a vše, co se nejí použitím předmětu, se netýká. Jídla se ukládají u každého hráče a přežijí smrt i restart.
+
+Jídlo s variantami, například zlaté jablko, se počítá po variantách jako samostatné jídlo.
 
 ## Vesničané a obchody
 

@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.ContentEnchanting;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentDiet;
 import mctmods.resourcedatapackloader.content.ContentHarvests;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
@@ -248,6 +249,7 @@ public class ResourceDataPackLoader {
         if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
         if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBlockBell.class); }
         SpawnLocks.load();
+        if (ContentDiet.load()) { MinecraftForge.EVENT_BUS.register(ContentDiet.class); }
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(ContentMobExperience.class);

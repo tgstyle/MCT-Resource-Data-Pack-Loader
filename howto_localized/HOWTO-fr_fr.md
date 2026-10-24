@@ -64,6 +64,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
 - [Butin des joueurs](#butin-des-joueurs)
+- [Variété alimentaire](#variété-alimentaire)
 - [Villageois et échanges](#villageois-et-échanges)
 
 **Créatures et dangers**
@@ -206,6 +207,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/veins/*.json`                                                                      | Groupes de blocs qu'un outil mine d'un seul coup, avec une limite et un coût en faim. [Minage de filons](#minage-de-filons) |
 | `<namespace>/harvests/*.json`                                                                   | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                                              |
 | `<namespace>/player_loot/*.json`                                                                | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                         |
+| `<namespace>/diets/*.json`                                                                      | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                     |
 | `<namespace>/advancements/*.json`                                                               | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                        |
 | `<namespace>/functions/*.mcfunction`                                                            | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                          |
 | `<namespace>/registry_remap/*.json`                                                             | Anciens noms associés à de nouveaux. [Renommages du registre](#renommages-du-registre)                                                                                                          |
@@ -2949,6 +2951,40 @@ Une fonction de butin est propre à RDPL, utilisable dans toute table avec une e
 `dropLoose` contourne entièrement la liste des butins : les objets sont posés directement dans le monde, les mods de tombes ne les voient donc jamais — l'inventaire va dans la tombe, les objets de la table traînent au sol pour le tueur. À utiliser pour des dépouilles qui reviennent au tueur plutôt qu'à la tombe de la victime. Sans mod de tombes, cela change peu de choses. Mise en garde : les objets existent avant que quoi que ce soit en aval puisse annuler les butins, donc les entrées qui ne doivent pas survivre à une mort annulée devraient s'en passer.
 
 Réglez `playerLoot` de la catégorie `data` de la configuration sur `false` pour désactiver entièrement le dossier.
+
+## Variété alimentaire
+
+*artisanat, butin et commerce*
+
+`<namespace>/diets/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et un seul fichier compte : s'il y en a plusieurs, le premier chargé est utilisé, les autres sont consignés dans le journal et ignorés.
+
+Normalement, un aliment nourrit pareil, quel que soit le nombre de fois où on le mange. Un fichier ici fait qu'un aliment déjà présent parmi les derniers repas d'un joueur nourrit moins, et qu'un régime varié nourrit plus. Sans fichier, rien ne change et rien n'est suivi.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Clé        | Requis | Valeur             | Défaut  | Rôle                                                                                                                                                                      |
+| ---------- | ------ | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | non    | int ≥ 1            | `10`    | Le nombre de repas que chaque joueur retient ; le plus ancien est oublié en premier                                                                                       |
+| `repeat`   | non    | liste de float ≥ 0 | `[1.0]` | Le multiplicateur de la 1re, 2e, 3e fois où le même aliment figure parmi les repas retenus ; la dernière entrée se répète                                                 |
+| `variety`  | non    | liste d'objets     | aucun   | Chaque objet a `distinct` (int ≥ 1) et `multiplier` (float ≥ 0) : dès que les repas retenus comptent autant d'aliments différents, le gain est multiplié par `multiplier` |
+| `groups`   | non    | liste de textes    | aucun   | Identifiants d'objets ou noms `#ore` ; un aliment correspondant compte comme cette entrée, donc un nom de minerai vaut un aliment ; la première l'emporte                 |
+| `messages` | non    | objet              | —       | Barre d'action après un repas : `repeat` si le multiplicateur de répétition est sous 1, `variety` s'il est au-dessus ; texte, clé ou `""` ; défaut `rdpl.diet.*`          |
+
+Une valeur incorrecte consigne une erreur avec le nom du fichier, et ce fichier est ignoré.
+
+Quand un joueur finit de manger, la faim et la saturation que l'aliment a réellement rendues (après le plafond propre à vanilla) sont multipliées par un seul nombre : l'entrée de `repeat` selon le nombre de fois où l'aliment figure déjà parmi les repas retenus (aucune fois, c'est la 1re entrée), multipliée par le palier de `variety` ayant le plus grand `distinct` atteint, où qu'il se trouve dans le fichier. `distinct` compte les aliments différents parmi les repas retenus, celui-ci compris, une fois la liste ramenée à `memory`. Le gain de faim est arrondi à des demi-cuisses entières et le nouveau niveau de faim reste entre 0 et 20 ; la saturation est mise à l'échelle de la même façon et ne dépasse jamais le nouveau niveau de faim. Avec l'exemple ci-dessus, une deuxième pomme d'affilée rend moitié moins, et le quatrième aliment différent en mémoire rend 1,25 fois plus.
+
+Tout aliment compte, de vanilla, d'un mod ou d'un pack, y compris celui défini par `overrides`. Un aliment qui ne rend rien n'est pas retenu. Le gâteau et tout ce qui ne se mange pas en utilisant un objet ne sont pas couverts. Les repas sont conservés par joueur et survivent à la mort et aux redémarrages.
+
+Un aliment avec variantes, comme la pomme dorée, compte chaque variante comme un aliment à part.
 
 ## Villageois et échanges
 

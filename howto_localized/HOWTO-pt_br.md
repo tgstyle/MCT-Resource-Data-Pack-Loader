@@ -64,6 +64,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Colheita com clique direito](#colheita-com-clique-direito)
 - [Mineração de veios](#mineração-de-veios)
 - [Saque de jogadores](#saque-de-jogadores)
+- [Variedade de comida](#variedade-de-comida)
 - [Aldeões e trocas](#aldeões-e-trocas)
 
 **Criaturas e perigos**
@@ -206,6 +207,7 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/veins/*.json`                                                                      | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de veios](#mineração-de-veios) |
 | `<namespace>/harvests/*.json`                                                                   | Plantações colhidas e replantadas com o clique direito. [Colheita com clique direito](#colheita-com-clique-direito)                                                                      |
 | `<namespace>/player_loot/*.json`                                                                | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                          |
+| `<namespace>/diets/*.json`                                                                      | Regras que fazem uma comida repetida alimentar menos e uma dieta variada alimentar mais. [Variedade de comida](#variedade-de-comida)                     |
 | `<namespace>/advancements/*.json`                                                               | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                       |
 | `<namespace>/functions/*.mcfunction`                                                            | Arquivos de função. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                            |
 | `<namespace>/registry_remap/*.json`                                                             | Nomes antigos mapeados para novos. [Renomeações de registro](#renomeações-de-registro)                                                                                                   |
@@ -2949,6 +2951,40 @@ Uma função de saque é própria do RDPL, utilizável em qualquer tabela com um
 `dropLoose` ignora a lista de drops por completo: os itens são colocados diretamente no mundo, então os mods de túmulos nunca os veem — o inventário vai para o túmulo, os itens da tabela ficam no chão para o assassino. Use para espólios que pertencem ao assassino e não ao túmulo da vítima. Sem um mod de túmulo, muda pouco. Ressalva: os itens passam a existir antes que qualquer coisa adiante possa cancelar os drops, então entradas que não devem sobreviver a uma morte cancelada devem deixá-lo desativado.
 
 Defina `playerLoot` na categoria `data` da config como `false` para desativar a pasta por completo.
+
+## Variedade de comida
+
+*criação, saque e comércio*
+
+`<namespace>/diets/*.json`
+
+O nome do arquivo é livre, só a pasta é lida e só um arquivo vale. Se houver vários, o primeiro carregado é usado e os demais são registrados no log e ignorados.
+
+Normalmente uma comida alimenta o mesmo tanto, não importa quantas vezes seja comida. Com um arquivo aqui, uma comida que já está entre as refeições recentes do jogador alimenta menos, e uma dieta variada alimenta mais. Sem o arquivo nada muda e nada é registrado.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Chave      | Obrigatória | Valor              | Padrão  | O que faz                                                                                                                                                                            |
+| ---------- | ----------- | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `memory`   | não         | int ≥ 1            | `10`    | Quantas refeições cada jogador lembra; a mais antiga é esquecida primeiro                                                                                                            |
+| `repeat`   | não         | lista de float ≥ 0 | `[1.0]` | O multiplicador para a 1ª, 2ª, 3ª vez que a mesma comida aparece entre as refeições lembradas; a última entrada se repete                                                            |
+| `variety`  | não         | lista de objetos   | nenhum  | Cada objeto tem `distinct` (int ≥ 1) e `multiplier` (float ≥ 0): quando as refeições lembradas reúnem essa quantidade de comidas diferentes, o ganho é multiplicado por `multiplier` |
+| `groups`   | não         | lista de textos    | nenhum  | IDs de itens ou nomes `#ore`; uma comida que combina conta como essa entrada, então um nome de minério é uma só comida; vale a primeira correspondência                              |
+| `messages` | não         | objeto             | —       | Linha na barra de ação após comer: `repeat` se o multiplicador de repetição for menor que 1, `variety` se maior; texto, chave de idioma ou `""`; padrão `rdpl.diet.*`                |
+
+Um valor inválido registra um erro no log com o nome do arquivo e esse arquivo é ignorado.
+
+Quando um jogador termina de comer, o que a comida realmente restaurou de fome e saturação (depois dos limites do próprio jogo) é multiplicado por um único fator. O fator é a entrada de `repeat` correspondente a quantas vezes essa comida já está entre as refeições lembradas (a 1ª entrada se não está nenhuma vez), vezes a faixa de `variety` com o maior `distinct` alcançado, seja qual for a posição dela no arquivo. `distinct` é o número de comidas diferentes entre as refeições lembradas, contando a atual, depois de cortar a lista em `memory`. O ganho de fome é arredondado para um ponto inteiro de fome e a nova fome fica entre 0 e 20. A saturação muda pelo mesmo fator, sem passar da nova fome. No exemplo acima, a segunda maçã seguida restaura metade, e a quarta comida diferente lembrada restaura 1,25 vez.
+
+Vale para toda comida do jogo base, de mods e de packs, inclusive as definidas em `overrides`. Uma comida que não restaurou nada não é lembrada. O que não é comido usando um item, como um bolo, fica de fora. O histórico é guardado por jogador e continua depois da morte e de reiniciar.
+
+Variantes de uma comida, como a maçã dourada, contam como comidas diferentes.
 
 ## Aldeões e trocas
 
