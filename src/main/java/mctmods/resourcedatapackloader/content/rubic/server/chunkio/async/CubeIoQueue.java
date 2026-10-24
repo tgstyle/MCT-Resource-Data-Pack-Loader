@@ -91,7 +91,8 @@ import javax.annotation.Nullable;
         }
         PendingCube read = new PendingCube(io, cache, cubeX, cubeY, cubeZ);
         read.waitFor(whenLoaded);
-        cubeReads.put(at, read);
+        PendingCube replaced = cubeReads.put(at, read);
+        if (replaced != null) { forget(at.column()); }
         remember(at.column());
         Chunk column = cache.getLoadedColumn(cubeX, cubeZ);
         if (column != null) { start(read, column); }

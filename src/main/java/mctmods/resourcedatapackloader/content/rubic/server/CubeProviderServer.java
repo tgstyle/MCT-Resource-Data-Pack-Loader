@@ -164,7 +164,11 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             callback.accept(loading);
             return;
         }
-        if (cube == null) { CubeIoQueue.queueCubeLoad(worldServer, cubeIO, this, cubeX, cubeY, cubeZ, req == Requirement.LOAD ? callback : loaded -> callback.accept(getCube(cubeX, cubeY, cubeZ, req))); }
+        if (cube != null) {
+            callback.accept(getCube(cubeX, cubeY, cubeZ, req));
+            return;
+        }
+        CubeIoQueue.queueCubeLoad(worldServer, cubeIO, this, cubeX, cubeY, cubeZ, req == Requirement.LOAD ? callback : loaded -> callback.accept(getCube(cubeX, cubeY, cubeZ, req)));
     }
 
     @Nullable @Override public Cube getCube(int cubeX, int cubeY, int cubeZ, Requirement req) {

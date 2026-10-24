@@ -43,7 +43,6 @@ final class PendingCube extends PendingLoad<Cube> {
         ICubeIO.PartialData<ICube> held = data;
         if (held == null) { throw new IllegalStateException("Nothing was read for " + describe()); }
         if (held.getObject() == null) { return; }
-        if (cache.getLoadedCube(cubeX, cubeY, cubeZ) != null || cache.getLoadedColumn(cubeX, cubeZ) == null) { return; }
         cache.placeReadCube((Cube) held.getObject(), () -> io.loadCubeSyncPart(held));
     }
 
