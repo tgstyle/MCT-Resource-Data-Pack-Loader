@@ -60,6 +60,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Popisky předmětů](#popisky-předmětů)
 - [Podmíněné jazykové soubory](#podmíněné-jazykové-soubory)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
+- [Enchanty](#enchanty)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Afixy a patice](#afixy-a-patice)
 - [Čarovací stůl](#čarovací-stůl)
@@ -196,6 +197,7 @@ V `data/`:
 | `<namespace>/brewing/*.json`                 | Recepty pro varný stojan. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                                       |
 | `<namespace>/potions/*.json`                 | Efekty lektvarů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                                                |
 | `<namespace>/potion_types/*.json`            | Lahvové lektvary sestavené z těchto efektů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)                                                                                     |
+| `<namespace>/enchantments/*.json`            | Vlastní enchanty. [Enchanty](#enchanty)                                                                                                                                                              |
 | `<namespace>/villagers/*.json`               | Povolání vesničanů. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                                      |
 | `<namespace>/trades/*.json`                  | Co povolání kupují a prodávají. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                          |
 | `<namespace>/loot_tables/*.json`             | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                    |
@@ -511,7 +513,7 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | Stačí jen server                                                                                                                                          | Potřebuje balíček i na klientovi                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                         |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                          |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                  |
@@ -2460,6 +2462,61 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 ```
 
 Každá položka je buď `input`, `ingredient` a `output`, což uvaří jeden předmět na druhý, nebo `from`, `ingredient` a `to`, což změní jeden typ lektvaru na jiný. `ingredient` je povinný v obou případech a položka přijímá i `requires`, takže lze přeskočit jeden recept, aniž by se přeskočil soubor.
+
+## Enchanty
+
+*výroba, kořist a obchod*
+
+`<namespace>/enchantments/*.json`
+
+Cesta souboru je registrační název enchantu, takže `mypack/enchantments/venom_edge.json` zaregistruje `mypack:venom_edge`. Vztahuje se na předměty své `category` a na každý předmět uvedený v `items`; nabízí ho kouzelnický stůl, nese ho kořist a vesničané s ním obchodují jako s kterýmkoli jiným.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Klíč       | Povinný | Hodnota                                                                                                                             | Výchozí                                     | Co dělá                                                                                     |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `name`     | ne      | překladový klíč                                                                                                                     | `enchantment.<namespace>.<name>`            | Co vidí hráč                                                                                |
+| `maxLevel` | ne      | celé číslo od 1 do 255                                                                                                              | `1`                                         | Nejvyšší úroveň. Hodnota mimo rozsah se ořízne a zapíše se chybový řádek                    |
+| `rarity`   | ne      | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                    | Jak často ho vybírá kouzelnický stůl a kořist: váha 10, 5, 2 nebo 1                         |
+| `slots`    | ne      | seznam z `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                     | `["mainhand"]`                              | Kde musí být předmět držen nebo nošen, aby enchant platil                                   |
+| `category` | ne      | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | žádná                                       | Druhy předmětů, které ho přijímají. `weapon` jsou meče a `digger` sekery, krumpáče a lopaty |
+| `items`    | ne      | seznam id předmětů                                                                                                                  | žádný                                       | Další předměty, které ho přijímají, nebo jediné, když chybí `category`                      |
+| `treasure` | ne      | boolean                                                                                                                             | `false`                                     | Nalezne se jen v kořisti nebo v obchodech, kouzelnický stůl ho nenabízí                     |
+| `minCost`  | ne      | objekt s `base` a `perLevel`                                                                                                        | `11` a `10`                                 | Kouzelná síla, kterou úroveň potřebuje                                                      |
+| `maxCost`  | ne      | objekt s `base` a `perLevel`                                                                                                        | `base` z `minCost` plus 5 a jeho `perLevel` | Nejvyšší kouzelná síla, při které se úroveň ještě objeví                                    |
+| `effects`  | ne      | seznam objektů                                                                                                                      | žádný                                       | Co enchant dělá, viz níže                                                                   |
+| `requires` | ne      | seznam id modů                                                                                                                      | žádný                                       | Přeskočí soubor, když některý z modů chybí                                                  |
+
+Soubor bez `category` i `items` se přeskočí s chybovým řádkem v logu, stejně jako soubor bez použitelného slotu. Id v `items`, které žádný nainstalovaný mod neposkytuje, nevadí. Ceny se řídí vzorcem `base + perLevel * (level - 1)`.
+
+Každý záznam v `effects` má `type`:
+
+| Typ            | Klíče                                   | Co dělá                                                                                                                                                                                                                              |
+| -------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `protection`   | `from`, `amount`                        | Počítá se jako body ochrany na nošené zbroji, stejně jako ochranné enchanty vanilly. `from` uvádí `all`, `fire`, `fall`, `explosion` a `projectile` (bez něj platí `all`, které nepokrývá poškození ignorující ochranu)              |
+| `damage`       | `mob`, `amount`                         | Bonusové poškození zbraní proti mobům `any` (výchozí), `undead`, `arthropod` nebo `illager`                                                                                                                                          |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Uděluje efekt lektvaru. `on` je `attack` (efekt dostane zasažený mob, výchozí) nebo `hurt` (efekt dostane útočník, když je nositel zasažen). `potion` je povinný, `duration` je v tikách (`100`) a `amplifier` jde od 0 do 255 (`0`) |
+
+`amount` a `duration` používají stejnou dvojici `base` a `perLevel` jako ceny a `protection` obě hodnoty zaokrouhlí dolů na celé body. Efekt `protection` na slotu, který není zbroj, a `apply_effect` s neznámým lektvarem se přeskočí s chybovým řádkem.
+
+Registr enchantů se ukládá spolu se světem, stejně jako vlastní lektvary. Odebrání packu pošle server přes výzvu Forge k chybějícím položkám, která žádá o potvrzení a nejdřív zálohuje svět; dedikovaný server na ni čeká, pokud se nespustí s `-Dfml.queryResult=confirm`. Id zůstane rezervované, takže ho nepřevezme jiný enchant, předměty ho drží ve svém tagu jako textové id, vanilla ho ignoruje, dokud pack chybí, a po vrácení packu je zpět.
 
 ## Práce s kovadlinou
 

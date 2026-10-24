@@ -20,6 +20,7 @@ final class PackReport {
         collect(off, Config.content.fuels(), "content.fuels", PackManager.JSON, PackManager.FUELS);
         collect(off, Config.content.tooltips(), "content.tooltips", PackManager.JSON, PackManager.TOOLTIPS);
         clientSide(off, Config.content.potions(), "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);
+        clientSide(off, Config.content.enchantments(), "content.enchantments", PackManager.ENCHANTMENTS);
         collect(off, Config.content.brewing(), "content.brewing", PackManager.JSON, PackManager.BREWING);
         clientSide(off, Config.content.villagers(), "content.villagers", PackManager.VILLAGERS);
         collect(off, Config.content.villagers(), "content.villagers", PackManager.JSON, PackManager.TRADES);
@@ -77,9 +78,9 @@ final class PackReport {
         ContentLog.LOGGER.info("Loaded {} pack(s) from {}, lowest priority first{}", packs.size(), root,
                 fromMods == 0 ? "" : ", " + fromMods + " of them shipped inside a mod jar and listed in " + PackManager.CONFIG + "/" + ModPacks.CONTROL_FILE);
         if (Config.content.vanillaClients()) {
-            ContentLog.LOGGER.info("vanillaClients is on: nothing a client would have to know is registered from any pack, so clients without the mod can join. Pack blocks, items, fluids, materials, creative tabs, sounds, potion effects and types, villager professions, entity variants and exposures are skipped and named below; everything that lives on the server alone still applies");
+            ContentLog.LOGGER.info("vanillaClients is on: nothing a client would have to know is registered from any pack, so clients without the mod can join. Pack blocks, items, fluids, materials, creative tabs, sounds, potion effects and types, enchantments, villager professions, entity variants and exposures are skipped and named below; everything that lives on the server alone still applies");
             for (RDPLPack pack : packs) {
-                for (String folder : List.of(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.VILLAGERS, PackManager.ENTITIES, PackManager.EXPOSURES)) {
+                for (String folder : List.of(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.ENCHANTMENTS, PackManager.VILLAGERS, PackManager.ENTITIES, PackManager.EXPOSURES)) {
                     List<String> skipped = pack.files(PackManager.CONTENT, folder, PackManager.JSON);
                     if (skipped.isEmpty()) { continue; }
                     ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on: {}", pack.getName(), skipped.size(), folder, String.join(", ", skipped));

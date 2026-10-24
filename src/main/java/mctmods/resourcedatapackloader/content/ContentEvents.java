@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.extra.ContentEnchantments;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
@@ -165,6 +166,7 @@ public final class ContentEvents {
         event.register(Registries.SOUND_EVENT, ContentSounds::register);
         event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions);
         event.register(Registries.POTION, ContentPotions::registerTypes);
+        event.register(Registries.ENCHANTMENT, ContentEnchantments::register);
         event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites);
         event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions);
     }

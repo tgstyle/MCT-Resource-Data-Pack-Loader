@@ -60,6 +60,7 @@
 - [ツールチップ](#ツールチップ)
 - [条件付きの言語ファイル](#条件付きの言語ファイル)
 - [ポーション、ポーションの種類、醸造](#ポーションポーションの種類醸造)
+- [エンチャント](#エンチャント)
 - [金床の作業](#金床の作業)
 - [アフィックスとソケット](#アフィックスとソケット)
 - [エンチャントテーブル](#エンチャントテーブル)
@@ -196,6 +197,7 @@ Resource Data Pack Loader(RDPL)は `rdploader` という1つのフォルダー�
 | `<namespace>/brewing/*.json`                 | 醸造台のレシピ。[ポーション、ポーションの種類、醸造](#ポーションポーションの種類醸造)                                                                       |
 | `<namespace>/potions/*.json`                 | ポーションの効果。[ポーション、ポーションの種類、醸造](#ポーションポーションの種類醸造)                                                                     |
 | `<namespace>/potion_types/*.json`            | それらの効果から作る瓶入りのポーション。[ポーション、ポーションの種類、醸造](#ポーションポーションの種類醸造)                                               |
+| `<namespace>/enchantments/*.json`            | 独自のエンチャント。[エンチャント](#エンチャント)                                                                                                           |
 | `<namespace>/villagers/*.json`               | 村人の職業。[村人と取引](#村人と取引)                                                                                                                       |
 | `<namespace>/trades/*.json`                  | 職業が買うものと売るもの。[村人と取引](#村人と取引)                                                                                                         |
 | `<namespace>/loot_tables/*.json`             | 置き換えるルートテーブル。[オーバーライドできるもの](#オーバーライドできるもの)                                                                             |
@@ -511,7 +513,7 @@ RDPLは1つか2つのレシピを置き換えるのに向いています。自�
 | サーバーだけで足りるもの                                                                                                                                  | クライアントにもパックが必要なもの                                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                       |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                                     |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                                      |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（クライアント用のフォルダーです。クライアントがない場合は入れません） |
 | 制御レイヤー全体、設定、事前生成                                                                                                                          |                                                                                                                                              |
@@ -2460,6 +2462,61 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 ```
 
 各エントリは、あるアイテムを別のアイテムに醸造する `input`、`ingredient`、`output` か、あるポーションの種類を別の種類に変える `from`、`ingredient`、`to` のどちらかです。どちらの場合も `ingredient` は必須で、エントリには `requires` も指定できるため、ファイル全体ではなく1つのレシピだけをスキップできます。
+
+## エンチャント
+
+*クラフト、ルート、取引*
+
+`<namespace>/enchantments/*.json`
+
+ファイルのパスがそのままエンチャントのレジストリ名になるため、`mypack/enchantments/venom_edge.json` は `mypack:venom_edge` を登録します。`category` に当てはまるアイテムと `items` に挙げた各アイテムに付けられ、ほかのエンチャントと同じくエンチャントテーブルが提示し、ルートに含まれ、村人が取引します。
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| キー       | 必須   | 値                                                                                                                                  | デフォルト                                           | 説明                                                                           |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `name`     | いいえ | 翻訳キー                                                                                                                            | `enchantment.<namespace>.<name>`                     | プレイヤーに表示される名前                                                     |
+| `maxLevel` | いいえ | 1から255の整数                                                                                                                      | `1`                                                  | 最高レベル。範囲外の値は範囲内に丸められ、エラー行が出力されます               |
+| `rarity`   | いいえ | `common`、`uncommon`、`rare`、`very_rare`                                                                                           | `common`                                             | エンチャントテーブルとルートが選ぶ頻度。重みは10、5、2、1です                  |
+| `slots`    | いいえ | `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet` のリスト                                                                     | `["mainhand"]`                                       | エンチャントが働くために、アイテムを持つか身に着ける場所                       |
+| `category` | いいえ | `armor`、`armor_head`、`armor_chest`、`armor_legs`、`armor_feet`、`weapon`、`digger`、`fishing_rod`、`breakable`、`bow`、`wearable` | なし                                                 | 付けられるアイテムの種類。`weapon` は剣、`digger` は斧、ツルハシ、シャベルです |
+| `items`    | いいえ | アイテムIDのリスト                                                                                                                  | なし                                                 | 追加で付けられるアイテム。`category` がなければ、これだけが対象です            |
+| `treasure` | いいえ | 真偽値                                                                                                                              | `false`                                              | ルートや取引でのみ見つかり、エンチャントテーブルには出ません                   |
+| `minCost`  | いいえ | `base` と `perLevel` を持つオブジェクト                                                                                             | `11` と `10`                                         | そのレベルに必要なエンチャントの強さ                                           |
+| `maxCost`  | いいえ | `base` と `perLevel` を持つオブジェクト                                                                                             | `minCost` の `base` に5を足した値と、その `perLevel` | そのレベルが現れる最大のエンチャントの強さ                                     |
+| `effects`  | いいえ | オブジェクトのリスト                                                                                                                | なし                                                 | エンチャントの効果。下を参照                                                   |
+| `requires` | いいえ | Modのリスト                                                                                                                         | なし                                                 | 挙げたModのどれかが欠けているとファイルを読み飛ばします                        |
+
+`category` も `items` もないファイルは、ログにエラー行を出して読み飛ばされます。使えるスロットがないファイルも同じです。`items` のIDをどのModも提供していなくても問題はありません。コストは `base + perLevel * (level - 1)` で計算されます。
+
+`effects` の各項目には `type` があります。
+
+| タイプ         | キー                                    | 説明                                                                                                                                                                                                                                |
+| -------------- | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`、`amount`                        | バニラの防護系エンチャントと同様に、身に着けた防具の防護ポイントとして数えられます。`from` には `all`、`fire`、`fall`、`explosion`、`projectile` を挙げます（省略すると `all` で、防護を無視するダメージは含みません）              |
+| `damage`       | `mob`、`amount`                         | 武器による追加ダメージ。対象のモブは `any`（デフォルト）、`undead`、`arthropod`、`illager`                                                                                                                                          |
+| `apply_effect` | `on`、`potion`、`duration`、`amplifier` | ポーション効果を与えます。`on` は `attack`（攻撃を受けたモブに付与、デフォルト）または `hurt`（装備者が攻撃されたとき、攻撃した側に付与）。`potion` は必須、`duration` の単位はティック（`100`）、`amplifier` は0から255（`0`）です |
+
+`amount` と `duration` はコストと同じ `base` と `perLevel` の組を使い、`protection` では両方を切り捨てて整数のポイントにします。防具以外のスロットにある `protection` 効果と、未知のポーションを指す `apply_effect` は、エラー行を出して読み飛ばされます。
+
+エンチャントのレジストリはワールドとともに保存されます。カスタムポーションと同じです。パックを外すと、サーバーはForgeの欠落エントリの確認を通ります。確認を求められ、先にワールドのバックアップが作られます。専用サーバーは `-Dfml.queryResult=confirm` で起動しない限り、その応答を待ちます。IDは予約されたまま残るため、ほかのエンチャントに割り当てられることはなく、アイテムはタグにそれを文字列IDとして保持し、パックがない間バニラはそれを無視し、パックを戻せば元に戻ります。
 
 ## 金床の作業
 

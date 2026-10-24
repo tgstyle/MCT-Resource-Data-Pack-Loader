@@ -60,6 +60,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Tooltips](#tooltips)
 - [Bedingte Sprachdateien](#bedingte-sprachdateien)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
+- [Verzauberungen](#verzauberungen)
 - [Ambosswerk](#ambosswerk)
 - [Affixe und Fassungen](#affixe-und-fassungen)
 - [Zaubertisch](#zaubertisch)
@@ -196,6 +197,7 @@ Unter `data/`:
 | `<namespace>/brewing/*.json`                 | Rezepte für den Braustand. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                                     |
 | `<namespace>/potions/*.json`                 | Trankeffekte. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                                                  |
 | `<namespace>/potion_types/*.json`            | Abgefüllte Tränke aus diesen Effekten. [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)                                                                                                         |
+| `<namespace>/enchantments/*.json`            | Eigene Verzauberungen. [Verzauberungen](#verzauberungen)                                                                                                                                                      |
 | `<namespace>/villagers/*.json`               | Berufe der Dorfbewohner. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                                  |
 | `<namespace>/trades/*.json`                  | Was Berufe kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                          |
 | `<namespace>/loot_tables/*.json`             | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                           |
@@ -511,7 +513,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | Server allein genügt                                                                                                                                      | Pack muss auch auf den Client                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                        |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                      |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                       |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                               |                                                                                                               |
@@ -2460,6 +2462,61 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 ```
 
 Jeder Eintrag ist entweder `input`, `ingredient` und `output`, was ein Item zu einem anderen braut, oder `from`, `ingredient` und `to`, was einen Tranktyp in einen anderen verwandelt. `ingredient` ist in beiden Fällen Pflicht, und ein Eintrag nimmt auch `requires`, sodass ein einzelnes Rezept übersprungen werden kann, ohne dass es die Datei wird.
+
+## Verzauberungen
+
+*herstellung, beute und handel*
+
+`<namespace>/enchantments/*.json`
+
+Der Pfad der Datei ist der Registrierungsname der Verzauberung, also registriert `mypack/enchantments/venom_edge.json` den Namen `mypack:venom_edge`. Sie sitzt auf den Gegenständen ihrer `category` und auf jedem Gegenstand, der in `items` steht; der Zaubertisch bietet sie an, Beute trägt sie und Dorfbewohner handeln damit wie mit jeder anderen.
+
+```json
+{
+  "name": "enchantment.mypack.venom_edge",
+  "maxLevel": 3,
+  "rarity": "uncommon",
+  "slots": ["mainhand"],
+  "category": "weapon",
+  "items": ["mypack:ruby_blade"],
+  "treasure": false,
+  "minCost": { "base": 10, "perLevel": 10 },
+  "maxCost": { "base": 60, "perLevel": 10 },
+  "effects": [
+    { "type": "apply_effect", "on": "attack", "potion": "minecraft:wither", "duration": { "base": 100, "perLevel": 60 }, "amplifier": 0 },
+    { "type": "damage", "mob": "undead", "amount": { "base": 1.0, "perLevel": 0.5 } }
+  ],
+  "requires": ["mypack"]
+}
+```
+
+| Schlüssel  | Pflicht | Wert                                                                                                                                | Standard                                          | Was er macht                                                                                                    |
+| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `name`     | nein    | Übersetzungsschlüssel                                                                                                               | `enchantment.<namespace>.<name>`                  | Was der Spieler sieht                                                                                           |
+| `maxLevel` | nein    | ganze Zahl von 1 bis 255                                                                                                            | `1`                                               | Die höchste Stufe. Ein Wert außerhalb des Bereichs wird begrenzt, mit einer Fehlerzeile                         |
+| `rarity`   | nein    | `common`, `uncommon`, `rare`, `very_rare`                                                                                           | `common`                                          | Wie oft Zaubertisch und Beute sie wählen: Gewicht 10, 5, 2 oder 1                                               |
+| `slots`    | nein    | Liste aus `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`                                                                    | `["mainhand"]`                                    | Wo der Gegenstand gehalten oder getragen werden muss, damit die Verzauberung zählt                              |
+| `category` | nein    | `armor`, `armor_head`, `armor_chest`, `armor_legs`, `armor_feet`, `weapon`, `digger`, `fishing_rod`, `breakable`, `bow`, `wearable` | keine                                             | Die Gegenstandsarten, die sie aufnehmen. `weapon` sind Schwerter, `digger` sind Äxte, Spitzhacken und Schaufeln |
+| `items`    | nein    | Liste von Gegenstands-IDs                                                                                                           | keine                                             | Weitere Gegenstände, die sie aufnehmen, oder die einzigen, wenn es keine `category` gibt                        |
+| `treasure` | nein    | boolean                                                                                                                             | `false`                                           | Nur als Beute oder im Handel zu finden, der Zaubertisch bietet sie nie an                                       |
+| `minCost`  | nein    | Objekt mit `base` und `perLevel`                                                                                                    | `11` und `10`                                     | Die Verzauberungskraft, die die Stufe braucht                                                                   |
+| `maxCost`  | nein    | Objekt mit `base` und `perLevel`                                                                                                    | `base` von `minCost` plus 5 und dessen `perLevel` | Die höchste Verzauberungskraft, bei der die Stufe noch erscheint                                                |
+| `effects`  | nein    | Liste von Objekten                                                                                                                  | keine                                             | Was die Verzauberung tut, siehe unten                                                                           |
+| `requires` | nein    | Liste von Mod-IDs                                                                                                                   | keine                                             | Überspringt die Datei, wenn einer dieser Mods fehlt                                                             |
+
+Eine Datei ohne `category` und ohne `items` wird mit einer Fehlerzeile im Log übersprungen, ebenso eine ohne brauchbaren Slot. Eine ID in `items`, die kein installierter Mod liefert, schadet nicht. Die Kosten folgen `base + perLevel * (level - 1)`.
+
+Jeder Eintrag in `effects` hat einen `type`:
+
+| Typ            | Schlüssel                               | Was er macht                                                                                                                                                                                                                                                     |
+| -------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `protection`   | `from`, `amount`                        | Zählt als Schutzpunkte auf getragener Rüstung, so wie die Schutzverzauberungen von Vanilla. `from` listet `all`, `fire`, `fall`, `explosion` und `projectile` auf (ohne Angabe gilt `all`, das Schaden ausnimmt, der Schutz ignoriert)                           |
+| `damage`       | `mob`, `amount`                         | Zusätzlicher Schaden mit der Waffe, gegen Mobs vom Typ `any` (Standard), `undead`, `arthropod` oder `illager`                                                                                                                                                    |
+| `apply_effect` | `on`, `potion`, `duration`, `amplifier` | Gibt einen Trankeffekt. `on` ist `attack` (der getroffene Mob bekommt ihn, Standard) oder `hurt` (der Angreifer bekommt ihn, wenn der Träger getroffen wird). `potion` ist Pflicht, `duration` zählt in Ticks (`100`) und `amplifier` reicht von 0 bis 255 (`0`) |
+
+`amount` und `duration` nutzen dasselbe Paar `base` und `perLevel` wie die Kosten, und `protection` rundet beide auf ganze Punkte ab. Ein `protection`-Effekt auf einem Slot, der keine Rüstung ist, und ein `apply_effect` mit unbekanntem Trank werden mit einer Fehlerzeile übersprungen.
+
+Das Verzauberungsregister wird mit der Welt gespeichert, wie bei eigenen Tränken. Wird das Pack entfernt, schickt der Server die Welt durch die Abfrage von Forge zu fehlenden Einträgen, die eine Bestätigung verlangt und zuerst ein Backup der Welt anlegt; ein dedizierter Server wartet darauf, wenn er nicht mit `-Dfml.queryResult=confirm` gestartet wird. Die ID bleibt reserviert, damit keine andere Verzauberung sie übernimmt, Gegenstände behalten sie in ihrem Tag als Zeichenketten-ID, Vanilla ignoriert sie, solange das Pack fehlt, und mit dem Pack ist sie wieder da.
 
 ## Ambosswerk
 
