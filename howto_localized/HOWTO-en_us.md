@@ -297,6 +297,8 @@ rdploader/RDPL9 ModFixes.zip
 
 Case-insensitive; a space, dash or underscore after the number is optional; the prefix is hidden from the display name. An unprefixed pack loads first and loses to any numbered pack. Priority also orders worldgen entries, which matters when one pack lays down blocks another replaces.
 
+**Inside one pack.** Namespaces load in alphabetical order; within a namespace, the version folder's files load first, then the rest of the pack's, then the files RDPL converts from a pack made for another game version, each by path. Two files never share a path, so most content cannot clash inside one pack. What is named inside the file can: teams, scoring objectives and dice keep the first definition and log an error, while game rules, harvest rules, Blast Plaster settings and registry remaps keep the last. A game is named by its path alone, so the same path in two namespaces keeps the first.
+
 **Disable a pack** by appending `.disabled` to its name.
 
 **One zip for every version.** A zip may carry a `versions/<version>/` folder for each Minecraft version it serves: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/`, and on 26.x the exact version it runs, `versions/26.1.2/`, `versions/26.2/` or `versions/26.3/`. Each is laid out like the root of a pack for that version, `pack.mcmeta` included. A file under the running version's folder is read in place of the same path at the root; the root is shared by every version, and another version's folder is never read. Put what every version reads alike at the root and only what differs into a version folder, and one zip loads on all four.

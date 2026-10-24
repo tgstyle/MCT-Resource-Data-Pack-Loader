@@ -19,12 +19,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -99,8 +100,8 @@ public final class RDPLPack {
         if (ported == null) { return; }
         for (Map.Entry<PackType, Map<String, Set<String>>> type : ported.exposed().entrySet()) {
             for (Map.Entry<String, Set<String>> namespace : type.getValue().entrySet()) {
-                Set<String> paths = index.computeIfAbsent(type.getKey(), k -> new HashMap<>()).computeIfAbsent(namespace.getKey(), k -> new LinkedHashSet<>());
-                for (String path : namespace.getValue()) {
+                Set<String> paths = index.computeIfAbsent(type.getKey(), k -> new TreeMap<>()).computeIfAbsent(namespace.getKey(), k -> new LinkedHashSet<>());
+                for (String path : new TreeSet<>(namespace.getValue())) {
                     if (paths.add(path)) { fileCount++; }
                 }
             }
@@ -146,7 +147,7 @@ public final class RDPLPack {
             ported.index(type, namespace, new ArrayList<>(paths));
             return;
         }
-        Set<String> held = index.computeIfAbsent(type, k -> new HashMap<>()).computeIfAbsent(namespace, k -> new LinkedHashSet<>());
+        Set<String> held = index.computeIfAbsent(type, k -> new TreeMap<>()).computeIfAbsent(namespace, k -> new LinkedHashSet<>());
         for (String path : paths) {
             if (!held.add(path)) { continue; }
             fileCount++;
