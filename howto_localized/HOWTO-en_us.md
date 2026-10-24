@@ -65,6 +65,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 - [Enchanting table](#enchanting-table)
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
+- [Vein mining](#vein-mining)
 - [Player loot](#player-loot)
 - [Villagers and trades](#villagers-and-trades)
 
@@ -199,6 +200,7 @@ Under `data/`:
 | `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                     |
 | `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                           |
 | `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                     |
+| `<namespace>/veins/*.json`                   | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                             |
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                              |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                    |
 | `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                  |
@@ -506,7 +508,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                 |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                 |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
 
@@ -2751,6 +2753,36 @@ Right-clicking a ripe crop normally does nothing. A file here makes the named cr
 | `requires` | no       | list of strings   | none                               | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                                    |
 
 Any block with an integer `age` property can be named. A crop that is not ripe, a sneaking player and a spectator are left to the usual right click. The drops are the ones breaking the crop would give, with the Fortune of the held tool and every rule under Block drops applying, and replanting takes one of the crop's seed item out of them when they hold one. A villager's `harvestFarmland` task is separate and unchanged.
+
+## Vein mining
+
+*crafting, loot and trade*
+
+`<namespace>/veins/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+Breaking an ore with a pickaxe normally breaks that one block. A file here names a group of blocks and the tools that mine it in one go: when a player in survival breaks a block of the group with one of the tools in the main hand, the blocks of the same kind that touch it are broken too, nearest first, up to a limit. Without a file nothing changes, and a pack that wants the choice to be the player's puts a `config:` entry in `requires`, as described under Pack options.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Key        | Required | Value                                                                                             | Default | What it does                                                                                              |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
+| `blocks`   | yes      | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group |         | The group. Only blocks of one kind join a vein, never two different blocks of the group                   |
+| `tools`    | yes      | list of item ids, `modid:item:meta` in 1.12.2                                                     |         | Held in the main hand when the first block breaks. An item that does not exist is skipped with a log line |
+| `limit`    | no       | int, 1 to 256                                                                                     | `16`    | Most blocks broken besides the first                                                                      |
+| `hunger`   | no       | float, 0 or more                                                                                  | `0.1`   | Hunger points per extra block. 1 point is 4 exhaustion. The first block costs vanilla's usual amount      |
+| `requires` | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                  |
+
+Connected means touching by face, edge or corner, so a block has 26 neighbors. Survival only: creative and spectator players break one block as usual. It stops when the tool breaks or the player's food level reaches 0. Every extra block gives its usual drops, with the Fortune of the held tool and every rule under Block drops, and wears the tool one use. It does not run on a block a hardness group keeps. This is server pack data and needs nothing on the client. A file with no valid blocks or tools is ignored with an error line.
 
 ## Player loot
 

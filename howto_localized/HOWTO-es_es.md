@@ -65,6 +65,7 @@ Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres le
 - [Mesa de encantamientos](#mesa-de-encantamientos)
 - [Drops de bloques](#drops-de-bloques)
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
+- [Minería de vetas](#minería-de-vetas)
 - [Botín de jugadores](#botín-de-jugadores)
 - [Aldeanos y comercio](#aldeanos-y-comercio)
 
@@ -199,6 +200,7 @@ Bajo `data/`:
 | `<namespace>/loot_injections/*.json`         | Una reserva añadida a una tabla que ya existe. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                         |
 | `<namespace>/block_drops/*.json`             | Drops adicionales o sustitutivos para bloques que un pack no posee. [Drops de bloques](#drops-de-bloques)                                                                                                  |
 | `<namespace>/harvests/*.json`                | Cultivos que se cosechan y se replantan con clic derecho. [Cosecha con clic derecho](#cosecha-con-clic-derecho)                                                                                            |
+| `<namespace>/veins/*.json`                   | Grupos de bloques que una herramienta extrae de una vez, con un límite y un coste de hambre. [Minería de vetas](#minería-de-vetas)                                                                         |
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                                                                        |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                |
 | `<namespace>/functions/*.mcfunction`         | Archivos de función. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                   |
@@ -506,7 +508,7 @@ Un pack puede vivir solo en el servidor, con jugadores en clientes de vanilla pu
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                 |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                  |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                  |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (carpetas de cliente: sin cliente, déjalas fuera) |
 | toda la capa de control, los ajustes y la pregeneración                                                                                                   |                                                                                                                          |
 
@@ -2751,6 +2753,36 @@ Un clic derecho sobre un cultivo maduro normalmente no hace nada. Un archivo aqu
 | `requires` | no          | lista de cadenas       | ninguno                             | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición                                |
 
 Se puede nombrar cualquier bloque con una propiedad entera `age`. Un cultivo sin madurar, un jugador agachado y un espectador se quedan con el clic derecho de siempre. Los drops son los que daría romper el cultivo, con la Fortuna de la herramienta en mano y todas las reglas de Drops de bloques, y al replantar se les quita una semilla del cultivo si la contienen. La tarea `harvestFarmland` de un aldeano es aparte y no cambia.
+
+## Minería de vetas
+
+*fabricación, botín y comercio*
+
+`<namespace>/veins/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan.
+
+Romper un mineral con un pico normalmente rompe solo ese bloque. Un archivo aquí nombra un grupo de bloques y las herramientas que lo extraen de una vez: cuando un jugador en supervivencia rompe un bloque del grupo con una de esas herramientas en la mano principal, también se rompen los bloques del mismo tipo que lo tocan, los más cercanos primero, hasta un límite. Sin archivo no cambia nada, y un pack que quiera dejar la elección al jugador pone una entrada `config:` en `requires`, como se describe en Opciones de pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Clave      | Obligatorio | Valor                                                                                                        | Por defecto | Qué hace                                                                                                                       |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `blocks`   | sí          | lista de ids de bloque, con `meta` (1.12.2) o `properties` (1.20.1 y posteriores) como en un grupo de dureza |             | El grupo. Solo los bloques de un mismo tipo forman una veta, nunca dos bloques distintos del grupo                             |
+| `tools`    | sí          | lista de ids de ítem, `modid:item:meta` en 1.12.2                                                            |             | Se sostiene en la mano principal cuando se rompe el primer bloque. Un ítem que no existe se omite con una línea en el registro |
+| `limit`    | no          | int, de 1 a 256                                                                                              | `16`        | Máximo de bloques rotos además del primero                                                                                     |
+| `hunger`   | no          | float, 0 o más                                                                                               | `0.1`       | Puntos de hambre por cada bloque extra. 1 punto son 4 de agotamiento. El primer bloque cuesta lo habitual de vanilla           |
+| `requires` | no          | lista de cadenas                                                                                             | ninguno     | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición           |
+
+Tocar significa compartir cara, arista o esquina, así que un bloque tiene 26 vecinos. Solo en supervivencia: los jugadores en creativo y los espectadores rompen un solo bloque como siempre. Se detiene cuando la herramienta se rompe o la barra de comida del jugador llega a 0. Cada bloque extra suelta sus drops habituales, con la Fortuna de la herramienta en mano y todas las reglas de Drops de bloques, y desgasta la herramienta un uso. No actúa sobre un bloque que conserva un grupo de dureza. Son datos de pack solo de servidor y no necesitan nada en el cliente. Un archivo sin bloques ni herramientas válidos se ignora con una línea de error.
 
 ## Botín de jugadores
 

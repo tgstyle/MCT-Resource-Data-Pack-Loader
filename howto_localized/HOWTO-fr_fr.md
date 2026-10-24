@@ -65,6 +65,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 - [Table d'enchantement](#table-denchantement)
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
+- [Minage de filons](#minage-de-filons)
 - [Butin des joueurs](#butin-des-joueurs)
 - [Villageois et échanges](#villageois-et-échanges)
 
@@ -199,6 +200,7 @@ Sous `data/` :
 | `<namespace>/loot_injections/*.json`         | Un groupe ajouté à une table qui existe déjà. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                   |
 | `<namespace>/block_drops/*.json`             | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                                      |
 | `<namespace>/harvests/*.json`                | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                                              |
+| `<namespace>/veins/*.json`                   | Groupes de blocs qu'un outil mine d'un seul coup, avec une limite et un coût en faim. [Minage de filons](#minage-de-filons)                                                                     |
 | `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                         |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                        |
 | `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                          |
@@ -506,7 +508,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                      |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                                   | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`                                                                    |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`                                                                              | `entities`, `villagers`, `portalframes`                                                                                     |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                     |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                             |                                                                                                                             |
 
@@ -2751,6 +2753,36 @@ Un clic droit sur une culture mûre ne fait normalement rien. Un fichier ici fai
 | `requires` | non    | liste de chaînes    | aucun                                 | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                             |
 
 Tout bloc avec une propriété entière `age` peut être nommé. Une culture pas mûre, un joueur accroupi et un spectateur en restent au clic droit habituel. Les drops sont ceux que donnerait la casse de la culture, avec la Fortune de l'outil tenu et toutes les règles de Butins des blocs, et la replantation y retire une graine de la culture s'ils en contiennent une. La tâche `harvestFarmland` du villageois est distincte et inchangée.
+
+## Minage de filons
+
+*artisanat, butin et commerce*
+
+`<namespace>/veins/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+Casser un minerai à la pioche ne casse normalement que ce seul bloc. Un fichier ici nomme un groupe de blocs et les outils qui le minent d'un seul coup : quand un joueur en survie casse un bloc du groupe avec l'un de ces outils en main principale, les blocs de même nature qui le touchent sont cassés aussi, les plus proches d'abord, jusqu'à une limite. Sans fichier, rien ne change, et un pack qui veut laisser le choix au joueur met une entrée `config:` dans `requires`, comme décrit dans Options de pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| Clé        | Requis | Valeur                                                                                                         | Défaut | Rôle                                                                                                                        |
+| ---------- | ------ | -------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | oui    | liste d'id de blocs, avec `meta` (1.12.2) ou `properties` (1.20.1 et suivantes) comme dans un groupe de dureté |        | Le groupe. Seuls des blocs de même nature forment un filon, jamais deux blocs différents du groupe                          |
+| `tools`    | oui    | liste d'id d'objets, `modid:item:meta` en 1.12.2                                                               |        | Tenu en main principale quand le premier bloc se casse. Un objet qui n'existe pas est ignoré avec une ligne dans le journal |
+| `limit`    | non    | int, de 1 à 256                                                                                                | `16`   | Nombre maximal de blocs cassés en plus du premier                                                                           |
+| `hunger`   | non    | float, 0 ou plus                                                                                               | `0.1`  | Points de faim par bloc supplémentaire. 1 point vaut 4 d'épuisement. Le premier bloc coûte le montant habituel de vanilla   |
+| `requires` | non    | liste de chaînes                                                                                               | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition             |
+
+Se toucher veut dire partager une face, une arête ou un coin, si bien qu'un bloc a 26 voisins. En survie seulement : les joueurs en créatif et les spectateurs cassent un seul bloc comme d'habitude. Cela s'arrête quand l'outil se brise ou que la barre de faim du joueur tombe à 0. Chaque bloc supplémentaire donne ses drops habituels, avec la Fortune de l'outil tenu et toutes les règles de Butins des blocs, et use l'outil d'une utilisation. Cela ne s'applique pas à un bloc qu'un groupe de dureté conserve. Ce sont des données de pack côté serveur seulement, sans rien à prévoir côté client. Un fichier sans blocs ni outils valides est ignoré avec une ligne d'erreur.
 
 ## Butin des joueurs
 

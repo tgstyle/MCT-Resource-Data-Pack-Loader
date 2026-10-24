@@ -65,6 +65,7 @@
 - [附魔台](#附魔台)
 - [方塊掉落物](#方塊掉落物)
 - [右鍵收穫](#右鍵收穫)
+- [礦脈連鎖挖掘](#礦脈連鎖挖掘)
 - [玩家戰利品](#玩家戰利品)
 - [村民與交易](#村民與交易)
 
@@ -199,6 +200,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/loot_injections/*.json`         | 加入既有戰利品表的一個池。[可以覆寫的內容](#可以覆寫的內容)                                                         |
 | `<namespace>/block_drops/*.json`             | 為資源包並不擁有的方塊新增或取代的掉落物。[方塊掉落物](#方塊掉落物)                                                 |
 | `<namespace>/harvests/*.json`                | 右鍵即可收穫並補種的作物。[右鍵收穫](#右鍵收穫)                                                                     |
+| `<namespace>/veins/*.json`                   | 工具一次挖完的方塊組，可設上限和飢餓消耗。[礦脈連鎖挖掘](#礦脈連鎖挖掘)                                             |
 | `<namespace>/player_loot/*.json`             | 玩家死亡時抽取的戰利品表。[玩家戰利品](#玩家戰利品)                                                                 |
 | `<namespace>/advancements/*.json`            | 進度。[可以覆寫的內容](#可以覆寫的內容)                                                                             |
 | `<namespace>/functions/*.mcfunction`         | 函數檔案。[可以覆寫的內容](#可以覆寫的內容)                                                                         |
@@ -506,7 +508,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions` | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`tags`、`disabled`                                                   | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`                                                     |
-| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`                                                                              | `entities`、`villagers`、`portalframes`                                                                      |
+| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`、`veins`                                                                      | `entities`、`villagers`、`portalframes`                                                                      |
 | `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                            | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
 | 整個控制層、設定與預先生成                                                                                                                                |                                                                                                              |
 
@@ -2751,6 +2753,36 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `requires` | 否   | 字串清單     | 無                     | 必須存在的模組 ID、資源包命名空間或 `config:` 選項，與所有定義相同                   |
 
 任何帶有整數屬性 `age` 的方塊都可以列入。未成熟的作物、潛行的玩家和旁觀者仍依一般右鍵處理。掉落與破壞該作物時相同，會計入手持工具的幸運以及「方塊掉落」一節的所有規則；重新種下時，若掉落物中有一顆該作物的種子，就會從中扣除一顆。村民的 `harvestFarmland` 任務是獨立的，不受影響。
+
+## 礦脈連鎖挖掘
+
+*合成、戰利品與交易*
+
+`<namespace>/veins/*.json`
+
+檔案名稱由你自行決定，只會讀取這個資料夾，多個檔案會疊加。
+
+用鎬子挖礦石，通常只會破壞那一個方塊。這裡的檔案會指定一組方塊和能一次挖完它們的工具：生存模式下的玩家用主手中的某個工具破壞組內方塊時，與它相鄰的同類方塊也會由近到遠一併破壞，直到達到上限。沒有檔案時一切照舊；想把選擇權交給玩家的資源包，可以在 `requires` 中加入 `config:` 項目，做法與「資源包選項」一節相同。
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:coal_ore", { "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "tools": ["minecraft:iron_pickaxe", "minecraft:diamond_pickaxe"],
+  "limit": 16,
+  "hunger": 0.5
+}
+```
+
+| 鍵         | 必填 | 值                                                                               | 預設  | 作用                                                                              |
+| ---------- | ---- | -------------------------------------------------------------------------------- | ----- | --------------------------------------------------------------------------------- |
+| `blocks`   | 是   | 方塊 ID 清單，寫法與硬度群組相同：1.12.2 用 `meta`，1.20.1 及以後用 `properties` |       | 方塊組。同一條礦脈只含同一種方塊，組內兩種不同的方塊不會連在一起                  |
+| `tools`    | 是   | 物品 ID 清單，1.12.2 中為 `modid:item:meta`                                      |       | 第一個方塊被破壞時持在主手中的工具。不存在的物品會被略過並寫入日誌                |
+| `limit`    | 否   | int，1 到 256                                                                    | `16`  | 除第一個方塊外最多破壞的方塊數                                                    |
+| `hunger`   | 否   | float，0 或更大                                                                  | `0.1` | 每多破壞一個方塊消耗的飢餓點數。1 點相當於 4 點消耗度。第一個方塊照常消耗原版的量 |
+| `requires` | 否   | 字串清單                                                                         | 無    | 必須存在的模組 ID、資源包命名空間或 `config:` 選項，與所有定義相同                |
+
+相鄰指面、稜或角相接，所以一個方塊有 26 個鄰居。只在生存模式下生效：創造和旁觀模式的玩家仍只破壞一個方塊。工具損壞或玩家飽食度降到 0 時停止。每個額外方塊都會掉落平常的戰利品，會計入手持工具的幸運以及「方塊掉落」一節的所有規則，並讓工具磨損一次。對硬度群組保留的方塊不會生效。這只是伺服器端的資源包資料，客戶端無需任何東西。沒有任何有效方塊或工具的檔案會被忽略並寫入一行錯誤日誌。
 
 ## 玩家戰利品
 
