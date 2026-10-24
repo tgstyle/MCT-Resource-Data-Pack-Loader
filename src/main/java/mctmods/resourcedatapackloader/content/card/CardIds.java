@@ -11,6 +11,8 @@ public final class CardIds {
     public static final String TEAM_LEAD = "rdpl:team_lead";
     public static final String TEAM_PICKED = "rdpl:team_picked";
     public static final String TEAM_ROUND_ENDED = "rdpl:team_round_ended";
+    public static final String DOWNED = "rdpl:downed";
+    public static final String REVIVED = "rdpl:revived";
     public static final String LOBBY_JOINS = "rdpl:lobby_joins";
     public static final String LOBBY_NOTE = "rdpl:lobby_note";
     public static final String SCORING_RESULTS = "rdpl:scoring_results";
@@ -29,7 +31,7 @@ public final class CardIds {
     public static final String PORTWAY_ACTIVATED = "rdpl:portway_activated";
     public static final String PORTWAY_REFUSED = "rdpl:portway_refused";
     public static final String PORTWAY_FORGOT = "rdpl:portway_forgot";
-    public static final List<String> ALL = Collections.unmodifiableList(Arrays.asList(GATE_UNLOCKED, GATE_BLOCKED, TEAM_JOINED, TEAM_LEAD, TEAM_PICKED, TEAM_ROUND_ENDED,
+    public static final List<String> ALL = Collections.unmodifiableList(Arrays.asList(GATE_UNLOCKED, GATE_BLOCKED, TEAM_JOINED, TEAM_LEAD, TEAM_PICKED, TEAM_ROUND_ENDED, DOWNED, REVIVED,
             LOBBY_JOINS, LOBBY_NOTE, SCORING_RESULTS, SCORING_OUT, RESET_LEAD, RESET_VOTE, RESET_PASS, RESET_FAIL, ANVIL_WAITS, THREAT, PROSPECT, PROSPECT_NONE, PREGEN_ENDED, PREGEN_RUNNING,
             BOARD_RESULT, PORTWAY_ACTIVATED, PORTWAY_REFUSED, PORTWAY_FORGOT));
 

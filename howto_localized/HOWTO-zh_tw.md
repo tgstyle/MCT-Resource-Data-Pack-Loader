@@ -7158,7 +7158,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "picksFrom": ["players"],
   "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
   "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" },
-  "leadRuns": "mypack:lead_chosen"
+  "leadRuns": "mypack:lead_chosen",
+  "down": { "seconds": 30, "reviveSeconds": 5 }
 }
 ```
 
@@ -7225,6 +7226,19 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `leadIs`   | 文字 | 空                                 | 搭配 `appointed`，擔任主導者的玩家                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `leadSays` | 文字 | `You are the current round leader` | 主導權交到玩家手上時告知他：在他們抵達自己所主導的陣營時、在他們認領時，或在 `first` 主導者傳給他們時（此時訊息會帶有離開的人是誰）。`{side}` 是陣營的顯示名稱；留空則不告知                                                                                                                                                                                                                                                               |
 | `leadRuns` | 文字 | 空                                 | 一個函式，`namespace:path`，每次主導權交給某位玩家時執行一次：第一位主導者，以及之後的每一次交接。它以主導者的身分、在其位置執行，權限等同進度獎勵的函式，所以 `@s` 就是主導者。每秒檢查一次；離線的主導者會在下次上線時補執行。重新啟動會重新決定主導者                                                                                                                                                                                   |
+
+### 倒地
+
+*隊伍*
+
+| 設定            | 類型 | 預設                                                                            | 作用                                                                                                                                                                                       |
+| --------------- | ---- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `seconds`       | 數字 | `0`                                                                             | 該陣營的玩家倒地後多少秒會失血而死。`0` 或沒有 `down` 物件則關閉此功能：陣營的玩家照常死亡，也不監聽任何事件。失血而死是真正的死亡，因此得分、淘汰和戰利品都在那時結算，而不是在玩家倒地時 |
+| `reviveSeconds` | 數字 | `5`                                                                             | 未倒地的隊友需要潛行站在倒地玩家 2 格以內多少秒才能將其救起。一旦停止潛行或走遠，進度會重新開始                                                                                            |
+| `says`          | 文字 | `You are down and bleed out in {seconds} seconds unless a teammate revives you` | 玩家倒地時對其說的話。`{seconds}` 是距離失血而死的時間。留空則不說任何話                                                                                                                   |
+| `revivedSays`   | 文字 | `You were revived`                                                              | 隊友將玩家救起時對其說的話。留空則不說任何話                                                                                                                                               |
+
+帶有 `down` 的陣營成員不會死亡，而是倒地：生命值維持在 1，既不能移動也不能跳躍（會被從坐騎上拉下，一旦移動就被放回倒地的位置，緩速效果拉滿作為提示），會發光，除虛空、`/kill` 和失血而死外不受任何傷害，也不能攻擊、使用物品或點擊方塊與實體。虛空和 `/kill` 會直接殺死未倒地的玩家，失血而死則算作把他擊倒的敵人的擊殺。被救起的玩家以最大生命值的一半回來。沒有陣營的玩家照常死亡，生物不受影響。該狀態只保存在記憶體中：倒地時登出的玩家會死亡，伺服器在有人倒地時停止，則此人會以 1 點生命值且沒有效果的狀態回來。這些訊息以 `rdpl:downed` 和 `rdpl:revived` 卡片的形式顯示
 
 ## 計分
 
@@ -7775,6 +7789,8 @@ RDPL 隨附這些字型和字元。卡片、提示或介紹的 `font` 可以用�
 | `rdpl:team_lead`         | 陣營的主導者交到某位玩家手上           | [隊伍](#隊伍)中的 `leadSays`                                                                                                |
 | `rdpl:team_picked`       | 玩家被選入一個陣營                     | 該陣營的 `displayName`                                                                                                      |
 | `rdpl:team_round_ended`  | 回合結束，因此玩家被移到一個陣營       | 該陣營的 `displayName`                                                                                                      |
+| `rdpl:downed`            | 玩家倒地而不是死亡                     | [隊伍](#隊伍)中的 `down.says`                                                                                               |
+| `rdpl:revived`           | 隊友將倒地的玩家救起                   | [隊伍](#隊伍)中的 `down.revivedSays`                                                                                        |
 | `rdpl:lobby_joins`       | 在回合中途登入的玩家被送往大廳         | [大廳](#大廳)中的 `opens.joinsSays`                                                                                         |
 | `rdpl:lobby_note`        | 畫面中央的大廳提示行                   | [大廳](#大廳)中的 `opens.says`、`opens.leaderSays`                                                                          |
 | `rdpl:scoring_results`   | 一回合結束時給每位玩家的排名           | [結果](#結果)中的 `results.card`、`results.title`、`results.icon`、`results.image`、`results.background`、`results.seconds` |

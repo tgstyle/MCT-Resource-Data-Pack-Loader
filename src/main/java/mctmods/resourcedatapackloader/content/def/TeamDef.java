@@ -40,12 +40,13 @@ public final class TeamDef {
     public final String standIn;
     @Nullable public final int[] standInAt;
     @Nullable public final int[] spawnAt;
+    @Nullable public final DownDef down;
 
     public TeamDef(String name, String displayName, TextFormatting color, String prefix, String suffix,
                    boolean friendlyFire, boolean mobFriendlyFire, boolean seeFriendlyInvisibles, Team.EnumVisible nameTags,
                    Team.EnumVisible deathMessages, Team.CollisionRule collision,
                    List<String> entities, List<String> players, int[] spawnBox, boolean joinable,
-                   String lead, String leadOn, String leadIs, String leadSays, String leadRuns, boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt, @Nullable int[] spawnAt) {
+                   String lead, String leadOn, String leadIs, String leadSays, String leadRuns, boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt, @Nullable int[] spawnAt, @Nullable DownDef down) {
         this.name = name;
         this.displayName = displayName;
         this.color = color;
@@ -74,6 +75,7 @@ public final class TeamDef {
         this.standIn = standIn;
         this.standInAt = standInAt;
         this.spawnAt = spawnAt;
+        this.down = down;
     }
 
     public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }

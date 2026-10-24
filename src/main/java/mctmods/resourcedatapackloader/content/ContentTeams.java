@@ -72,6 +72,7 @@ public final class ContentTeams {
             BY_NAME.put(def.name, def);
         });
         if (!BY_NAME.isEmpty()) { Summary.info("teams", "Fielding " + BY_NAME.size() + " team(s): " + BY_NAME.keySet()); }
+        ContentDowned.load();
         if (!BY_NAME.isEmpty() && !armed) {
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.register(ContentTeams.class);
             armed = true;

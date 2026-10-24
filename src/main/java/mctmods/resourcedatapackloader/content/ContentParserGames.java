@@ -233,7 +233,17 @@ public final class ContentParserGames {
                 Math.max(0, Json.getInt(json, "picks", 0)),
                 Json.names(json, "picksFrom"),
                 gives(key, json),
-                standIn(json), standInAt(key, json), spawnAt(key, json));
+                standIn(json), standInAt(key, json), spawnAt(key, json), down(json));
+    }
+
+    @Nullable private static DownDef down(JsonObject json) {
+        if (!json.has("down") || !json.get("down").isJsonObject()) { return null; }
+        JsonObject asked = Json.getJsonObject(json, "down");
+        int seconds = Math.max(0, Json.getInt(asked, "seconds", 0));
+        if (seconds == 0) { return null; }
+        return new DownDef(seconds, Math.max(1, Json.getInt(asked, "reviveSeconds", 5)),
+                Json.getString(asked, "says", "You are down and bleed out in {seconds} seconds unless a teammate revives you"),
+                Json.getString(asked, "revivedSays", "You were revived"));
     }
 
     @Nullable private static int[] lobbyAt(ResourceLocation key, JsonObject opens) {
