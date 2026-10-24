@@ -67,6 +67,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Colheita com o botão direito](#colheita-com-o-botão-direito)
 - [Mineração de filões](#mineração-de-filões)
 - [Saque de jogadores](#saque-de-jogadores)
+- [Variedade alimentar](#variedade-alimentar)
 - [Aldeões e trocas](#aldeões-e-trocas)
 
 **Criaturas e perigos**
@@ -202,6 +203,7 @@ Em `data/`:
 | `<namespace>/harvests/*.json`                | Culturas colhidas e replantadas com o botão direito. [Colheita com o botão direito](#colheita-com-o-botão-direito)                                                                          |
 | `<namespace>/veins/*.json`                   | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de filões](#mineração-de-filões)                                                              |
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                              |
+| `<namespace>/diets/*.json`                   | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                       |
 | `<namespace>/advancements/*.json`            | Progressos. [O que podes substituir](#o-que-podes-substituir)                                                                                                                               |
 | `<namespace>/functions/*.mcfunction`         | Ficheiros de funções. [O que podes substituir](#o-que-podes-substituir)                                                                                                                     |
 | `<namespace>/tags/<kind>/*.json`             | Tags, no formato do próprio jogo. [Materiais, separadores, sons, tags](#materiais-separadores-sons-tags)                                                                                    |
@@ -2830,6 +2832,38 @@ Uma função de saque é própria do RDPL, utilizável em qualquer tabela com um
 `dropLoose` contorna por completo a lista de itens largados: os itens são colocados diretamente no mundo, pelo que os mods de sepulturas nunca os veem; o inventário vai para a sepultura, os itens da tabela ficam no chão para o assassino. Usa-o para espólios que pertencem ao assassino e não à sepultura da vítima. Sem um mod de sepulturas muda pouco. Ressalva: os itens existem antes de algo a jusante poder cancelar os itens largados, pelo que as entradas que não devem sobreviver a uma morte cancelada devem deixá-lo desligado.
 
 Define `playerLoot` na categoria `data` da config como `false` para desativar a pasta por completo.
+
+## Variedade alimentar
+
+*fabrico, saque e comércio*
+
+`<namespace>/diets/*.json`
+
+O nome do ficheiro é livre, só a pasta é lida e só um ficheiro vale. Se houver vários, o primeiro carregado é usado e os restantes são registados no log e ignorados.
+
+Normalmente um alimento sacia o mesmo, por muitas vezes que seja comido. Com um ficheiro aqui, um alimento que já está entre as refeições recentes do jogador sacia menos, e uma dieta variada sacia mais. Sem o ficheiro nada muda e nada é registado.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Chave     | Obrigatório | Valor              | Predefinição | O que faz                                                                                                                                                                               |
+| --------- | ----------- | ------------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`  | não         | int ≥ 1            | `10`         | Quantas refeições cada jogador recorda; a mais antiga é esquecida primeiro                                                                                                              |
+| `repeat`  | não         | lista de float ≥ 0 | `[1.0]`      | O multiplicador para a 1.ª, 2.ª, 3.ª vez que o mesmo alimento aparece entre as refeições recordadas; a última entrada repete-se                                                         |
+| `variety` | não         | lista de objetos   | nenhum       | Cada objeto tem `distinct` (int ≥ 1) e `multiplier` (float ≥ 0): quando as refeições recordadas reúnem essa quantidade de alimentos diferentes, o ganho é multiplicado por `multiplier` |
+| `groups`  | não         | lista de textos    | nenhum       | IDs de itens ou tags `#tag`; um alimento que corresponde conta como essa entrada, por isso uma tag é um só alimento; vale a primeira correspondência                                    |
+| `messages` | não         | objeto             | —            | Linha na barra de ação depois de comer: `repeat` se o multiplicador de repetição for inferior a 1, `variety` se superior; texto, chave de idioma ou `""`; predefinição `rdpl.diet.*`    |
+
+Um valor inválido regista um erro no log com o nome do ficheiro e esse ficheiro é ignorado.
+
+Quando um jogador acaba de comer, o que o alimento realmente restaurou de fome e saturação (depois dos limites do próprio jogo) é multiplicado por um único fator. O fator é a entrada de `repeat` correspondente ao número de vezes que esse alimento já está entre as refeições recordadas (a 1.ª entrada se não está nenhuma vez), vezes o escalão de `variety` com o maior `distinct` atingido, qualquer que seja a posição dele no ficheiro. `distinct` é o número de alimentos diferentes entre as refeições recordadas, contando a atual, depois de cortar a lista em `memory`. O ganho de fome é arredondado a um ponto inteiro de fome e a nova fome fica entre 0 e 20. A saturação muda pelo mesmo fator, sem passar da nova fome. No exemplo acima, a segunda maçã seguida restaura metade, e o quarto alimento diferente recordado restaura 1,25 vez.
+
+Vale para todos os alimentos do jogo base, de mods e de packs, incluindo os definidos em `overrides`. Um alimento que não restaurou nada não é recordado. O que não se come com um item, como um bolo, fica de fora. O histórico é guardado por jogador e mantém-se depois da morte e de reiniciar.
 
 ## Aldeões e trocas
 

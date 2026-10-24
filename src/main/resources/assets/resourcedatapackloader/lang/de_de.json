@@ -80,6 +80,8 @@
   "rdpl.gui.packList.normal": "RDPL-Pack",
   "rdpl.gui.packList.override": "Überschreibendes RDPL-Pack",
   "rdpl.portal.owned": "Dieses Portal gehört jemand anderem",
+  "rdpl.diet.repeat": "Dieses Essen wird langsam langweilig",
+  "rdpl.diet.variety": "Abwechslungsreiches Essen tut gut",
   "rdpl.portway.activated": "%s aktiviert (%s bekannt)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "Seite %s von %s",

@@ -67,6 +67,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Minería de vetas](#minería-de-vetas)
 - [Botín de jugadores](#botín-de-jugadores)
+- [Variedad de comida](#variedad-de-comida)
 - [Aldeanos y comercio](#aldeanos-y-comercio)
 
 **Criaturas y peligros**
@@ -202,6 +203,7 @@ Bajo `data/`:
 | `<namespace>/harvests/*.json`                | Cultivos que se cosechan y se replantan con clic derecho. [Cosecha con clic derecho](#cosecha-con-clic-derecho)                                                                                            |
 | `<namespace>/veins/*.json`                   | Grupos de bloques que una herramienta extrae de una vez, con un límite y un coste de hambre. [Minería de vetas](#minería-de-vetas)                                                                         |
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                                                                        |
+| `<namespace>/diets/*.json`                   | Reglas que hacen que una comida repetida alimente menos y una dieta variada alimente más. [Variedad de comida](#variedad-de-comida)                                                                        |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                |
 | `<namespace>/functions/*.mcfunction`         | Archivos de función. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                   |
 | `<namespace>/tags/<kind>/*.json`             | Etiquetas, en el formato propio del juego. [Materiales, pestañas, sonidos, etiquetas](#materiales-pestañas-sonidos-etiquetas)                                                                              |
@@ -2830,6 +2832,38 @@ Una función de botín es propia de RDPL y se puede usar en cualquier tabla con 
 `dropLoose` se salta por completo la lista de drops: los ítems se colocan directamente en el mundo, así que los mods de tumbas nunca los ven; el inventario va a la tumba, y los ítems de la tabla quedan en el suelo para el asesino. Úsalo para botines que pertenecen al asesino y no a la tumba de la víctima. Sin un mod de tumbas cambia poco. Advertencia: los ítems existen antes de que nada posterior pudiera cancelar los drops, así que las entradas que no deban sobrevivir a una muerte cancelada deberían dejarlo desactivado.
 
 Pon `playerLoot` en la categoría de configuración `data` a `false` para desactivar la carpeta por completo.
+
+## Variedad de comida
+
+*fabricación, botín y comercio*
+
+`<namespace>/diets/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta y solo cuenta un archivo: si hay varios, se usa el primero que se carga y los demás se anotan en el registro y se ignoran.
+
+Normalmente una comida alimenta igual por muchas veces que la comas. Un archivo aquí hace que una comida que ya está entre las últimas comidas de un jugador alimente menos, y que una dieta variada alimente más. Sin archivo no cambia nada y no se lleva ninguna cuenta.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Clave     | Obligatorio | Valor              | Por defecto | Qué hace                                                                                                                                                                                |
+| --------- | ----------- | ------------------ | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`  | no          | int ≥ 1            | `10`        | Cuántas comidas recuerda cada jugador; la más antigua se olvida primero                                                                                                                 |
+| `repeat`  | no          | lista de float ≥ 0 | `[1.0]`     | El multiplicador para la 1.ª, 2.ª, 3.ª vez que la misma comida está entre las comidas recordadas; la última entrada se repite                                                           |
+| `variety` | no          | lista de objetos   | ninguno     | Cada objeto tiene `distinct` (int ≥ 1) y `multiplier` (float ≥ 0): cuando las comidas recordadas reúnen esa cantidad de alimentos distintos, la ganancia se multiplica por `multiplier` |
+| `groups`  | no          | lista de texto     | ninguno     | ID de objetos o etiquetas `#tag`; una comida que coincide cuenta como esa entrada, así que una etiqueta es una sola comida; gana la primera coincidencia                                |
+| `messages` | no          | objeto             | —           | Línea en la barra de acción tras comer: `repeat` si el multiplicador de repetición es menor que 1, `variety` si es mayor; texto, clave de idioma o `""`; por defecto `rdpl.diet.*`      |
+
+Un valor erróneo registra un error con el nombre del archivo y se omite ese archivo.
+
+Cuando un jugador termina de comer, el hambre y la saciedad que la comida restauró de verdad (tras el tope propio de vanilla) se multiplican por un único número: la entrada de `repeat` según las veces que la comida ya está entre las comidas recordadas (ninguna es la 1.ª entrada), por el escalón de `variety` con el mayor `distinct` alcanzado, esté donde esté en el archivo. `distinct` cuenta los alimentos distintos entre las comidas recordadas, incluida esta, tras recortar la lista a `memory`. La ganancia de hambre se redondea a medios muslos enteros y el nuevo nivel de hambre se queda entre 0 y 20; la saciedad se escala igual y nunca sube por encima del nuevo nivel de hambre. Con el ejemplo de arriba, una segunda manzana seguida restaura la mitad, y el cuarto alimento distinto en la memoria restaura 1,25 veces lo normal.
+
+Cuenta cualquier comida, de vanilla, de un mod o de un pack, también una puesta mediante `overrides`. Una comida que no restaura nada no se recuerda. La tarta y todo lo que no se come usando un objeto quedan fuera. Las comidas se guardan por jugador y sobreviven a la muerte y a los reinicios.
 
 ## Aldeanos y comercio
 

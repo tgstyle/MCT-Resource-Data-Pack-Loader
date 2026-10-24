@@ -80,6 +80,8 @@
   "rdpl.gui.packList.normal": "RDPL 資料包",
   "rdpl.gui.packList.override": "RDPL 覆寫資料包",
   "rdpl.portal.owned": "這個傳送門屬於其他玩家",
+  "rdpl.diet.repeat": "這種食物吃膩了",
+  "rdpl.diet.variety": "飲食多樣，渾身舒暢",
   "rdpl.portway.activated": "%s 已啟動（已記錄 %s）",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "第 %s 頁，共 %s 頁",
