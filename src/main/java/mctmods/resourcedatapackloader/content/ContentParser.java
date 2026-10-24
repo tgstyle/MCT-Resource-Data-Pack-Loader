@@ -52,7 +52,7 @@ public final class ContentParser {
         int expMax = Json.getInt(exp, "max", 0);
         String type = Json.getString(json, "type", ContentBlockTypes.DEFAULT);
         int maxVariants = ContentBlockTypes.get(type, key).maxVariants();
-        boolean opaque = Json.getBoolean(json, "opaque", !ContentParserContainers.chested(json));
+        boolean opaque = Json.getBoolean(json, "opaque", !ContentParserContainers.chested(json) && !ContentBlockTypes.plant(type));
         JsonObject variants = Json.getJsonObject(json, "variants", new JsonObject());
         BlockVariant[] byMeta = new BlockVariant[maxVariants];
         List<BlockVariant> visible = new ArrayList<>();
@@ -87,7 +87,7 @@ public final class ContentParser {
                 expMin, expMax,
                 Math.max(0.01F, Json.getFloat(json, "explosionResistanceDivisor", 1.0F)),
                 byMeta, Collections.unmodifiableList(visible), strings(json, "requires"),
-                renderLayer(Json.getString(json, "renderLayer", ""), key.toString()),
+                renderLayer(Json.getString(json, "renderLayer", ""), type, opaque, key.toString()),
                 opaque,
                 Json.getBoolean(json, "fullCube", opaque),
                 Json.getInt(json, "lightOpacity", opaque ? 255 : 0),
@@ -531,12 +531,13 @@ public final class ContentParser {
         }
     }
 
-    private static BlockRenderLayer renderLayer(String value, String context) {
-        if (value.isEmpty()) { return BlockRenderLayer.SOLID; }
+    private static BlockRenderLayer renderLayer(String value, String type, boolean opaque, String context) {
+        if (value.isEmpty()) { return ContentBlockTypes.defaultLayer(type, opaque); }
         try { return BlockRenderLayer.valueOf(value.toUpperCase(Locale.ROOT)); }
         catch (IllegalArgumentException ex) {
-            ContentLog.LOGGER.error("Unknown renderLayer '{}' in {}, using solid", value, context);
-            return BlockRenderLayer.SOLID;
+            BlockRenderLayer layer = ContentBlockTypes.defaultLayer(type, opaque);
+            ContentLog.LOGGER.error("Unknown renderLayer '{}' in {}, using {}", value, context, layer.name().toLowerCase(Locale.ROOT));
+            return layer;
         }
     }
 

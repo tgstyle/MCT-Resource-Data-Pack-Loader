@@ -32,6 +32,7 @@ import mctmods.resourcedatapackloader.content.util.NamedRegistry;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
+import net.minecraft.util.BlockRenderLayer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -159,6 +160,22 @@ public final class ContentBlockTypes {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockStairs.create(def)); }
             @Override public int maxVariants() { return ContentBlockStairs.MAX_VARIANTS; }
         });
+    }
+
+    public static boolean plant(String type) {
+        switch (type) {
+            case "sapling": case "flower": case "crop": case "cane": case "vine": return true;
+            default: return false;
+        }
+    }
+
+    public static BlockRenderLayer defaultLayer(String type, boolean opaque) {
+        switch (type) {
+            case "leaves": case "pane": return BlockRenderLayer.CUTOUT_MIPPED;
+            case "sapling": case "flower": case "cane": case "vine": case "ladder": case "torch": case "door": case "trapdoor": case "bell": return BlockRenderLayer.CUTOUT;
+            case "portal": return BlockRenderLayer.TRANSLUCENT;
+            default: return opaque ? BlockRenderLayer.SOLID : BlockRenderLayer.CUTOUT;
+        }
     }
 
     public static void register(String name, IBlockType type) { TYPES.register(name, type); }
