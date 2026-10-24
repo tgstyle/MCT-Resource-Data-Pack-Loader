@@ -143,6 +143,7 @@ rdpl.carry.mob=%sを持ち上げました（スニーク中にブロックを右
 rdpl.carry.down=%sを置きました
 rdpl.carry.denied=ここではできません
 rdpl.carry.full=すでに何かを持ち上げています
+rdpl.hearts.gained=体が丈夫になった気がする。
 rdpl.portway.activated=%sを有効にしました（登録済み %s）
 rdpl.portway.known=このポートウェイはすでに登録済みです
 rdpl.portway.stop=%s: %s, %s, %s

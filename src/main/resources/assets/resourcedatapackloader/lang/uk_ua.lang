@@ -143,6 +143,7 @@ rdpl.carry.mob=Ви несете: %s (присядьте й клацніть п�
 rdpl.carry.down=Ви поставили: %s
 rdpl.carry.denied=Тут цього зробити не можна
 rdpl.carry.full=Ви вже щось несете
+rdpl.hearts.gained=Ви відчуваєте себе витривалішим.
 rdpl.portway.activated=%s: активовано (відомо: %s)
 rdpl.portway.known=Ви вже знаєте цей перехід
 rdpl.portway.stop=%s: %s, %s, %s

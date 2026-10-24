@@ -143,6 +143,7 @@ rdpl.carry.mob=Carregando %s (agache e clique com o botão direito em um bloco p
 rdpl.carry.down=Você soltou %s
 rdpl.carry.denied=Você não pode fazer isso aqui
 rdpl.carry.full=Você já está carregando algo
+rdpl.hearts.gained=Você se sente mais resistente.
 rdpl.portway.activated=%s ativada (%s conhecidas)
 rdpl.portway.known=Você já conhece esta rota
 rdpl.portway.stop=%s: %s, %s, %s

@@ -143,6 +143,7 @@ rdpl.carry.mob=%s을(를) 들고 있습니다 (웅크린 채 블록을 우클릭
 rdpl.carry.down=%s을(를) 내려놓았습니다
 rdpl.carry.denied=여기서는 할 수 없습니다
 rdpl.carry.full=이미 무언가를 들고 있습니다
+rdpl.hearts.gained=몸이 더 튼튼해진 것 같다.
 rdpl.portway.activated=%s을(를) 활성화했습니다 (%s개 등록됨)
 rdpl.portway.known=이미 알고 있는 포트웨이입니다
 rdpl.portway.stop=%s: %s, %s, %s

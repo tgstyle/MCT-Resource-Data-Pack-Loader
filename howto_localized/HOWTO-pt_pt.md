@@ -72,6 +72,7 @@ Catorze exemplos funcionais. Coloca qualquer um deles diretamente em `rdploader`
 **Criaturas e perigos**
 - [Variantes de entidades](#variantes-de-entidades)
 - [Níveis de mobs](#níveis-de-mobs)
+- [Recompensas de vida máxima](#recompensas-de-vida-máxima)
 - [Ordens de trabalho](#ordens-de-trabalho)
 - [Exposições](#exposições)
 
@@ -172,6 +173,7 @@ Todos os caminhos deste guia estão escritos a partir de `assets/`, pelo que `<n
 | `<namespace>/entities/*.json`                                                                   | Variantes de entidades criadas a partir de entidades que já existem. [Variantes de entidades](#variantes-de-entidades)                                                                      |
 | `<namespace>/hardness/*.json`                                                                   | Tempo de mineração e multiplicadores de explosão para grupos de blocos. [Grupos de dureza](#grupos-de-dureza)                                                                               |
 | `<namespace>/ranks/*.json`                                                                      | Faixas aleatórias que um mob pode sortear ao surgir: vida extra, dano, efeitos, itens largados e uma etiqueta de nome. [Níveis de mobs](#níveis-de-mobs)                                    |
+| `<namespace>/hearts/*.json`                                                                     | Corações extra que um jogador ganha com progressos, uma dieta variada ou a pontuação de uma equipa, guardados com o jogador. [Recompensas de vida máxima](#recompensas-de-vida-máxima)      |
 | `<namespace>/orders/*.json`                                                                     | Tarefas que as variantes de entidades fazem para um jogador junto a um baú. [Ordens de trabalho](#ordens-de-trabalho)                                                                       |
 | `<namespace>/exposures/*.json`                                                                  | Perigos que expõem jogadores perto de blocos com nome, a transportar itens com nome ou em dimensões, biomas, estruturas, regiões de cavernas ou alturas com nome. [Exposições](#exposições) |
 | `<namespace>/enchanting/*.json`                                                                 | O que a mesa de encantamentos oferece, pede e tira: por encantamento, por item e no total. [Mesa de encantamentos](#mesa-de-encantamentos)                                                  |
@@ -194,24 +196,24 @@ Todos os caminhos deste guia estão escritos a partir de `assets/`, pelo que `<n
 | `<namespace>/brewing/*.json`                                                                    | Receitas da bancada de poções. [Poções, tipos de poção e preparação](#poções-tipos-de-poção-e-preparação)                                                                                   |
 | `<namespace>/potions/*.json`                                                                    | Efeitos de poções. [Poções, tipos de poção e preparação](#poções-tipos-de-poção-e-preparação)                                                                                               |
 | `<namespace>/potion_types/*.json`                                                               | Poções engarrafadas criadas a partir desses efeitos. [Poções, tipos de poção e preparação](#poções-tipos-de-poção-e-preparação)                                                             |
-| `<namespace>/enchantments/*.json`                                                               | Encantamentos personalizados. [Encantamentos](#encantamentos) |
+| `<namespace>/enchantments/*.json`                                                               | Encantamentos personalizados. [Encantamentos](#encantamentos)                                                                                                                               |
 | `<namespace>/villagers/*.json`                                                                  | Profissões de aldeões. [Aldeões e trocas](#aldeões-e-trocas)                                                                                                                                |
 | `<namespace>/trades/*.json`                                                                     | O que as carreiras compram e vendem. [Aldeões e trocas](#aldeões-e-trocas)                                                                                                                  |
 | `<namespace>/loot_tables/*.json`                                                                | Tabelas de saque, substituídas. [O que podes substituir](#o-que-podes-substituir)                                                                                                           |
 | `<namespace>/loot_injections/*.json`                                                            | Um grupo adicionado a uma tabela que já existe. [O que podes substituir](#o-que-podes-substituir)                                                                                           |
 | `<namespace>/block_drops/*.json`                                                                | Itens largados adicionais ou de substituição para blocos que um pacote não possui. [Itens largados por blocos](#itens-largados-por-blocos)                                                  |
 | `<namespace>/anvils/*.json`                                                                     | Encantamentos que uma bigorna aplica a um item com nome, um progresso que ele desbloqueia e um bloqueio até lá. [Trabalho na bigorna](#trabalho-na-bigorna)                                 |
-| `<namespace>/affixes/*.json` | Bónus de atributo aleatórios e engastes que um item sorteia na primeira vez que um jogador o segura. [Afixos e engastes](#afixos-e-engastes) |
-| `<namespace>/gems/*.json` | Itens que uma bigorna encaixa num engaste por um bónus de atributo. [Afixos e engastes](#afixos-e-engastes) |
+| `<namespace>/affixes/*.json`                                                                    | Bónus de atributo aleatórios e engastes que um item sorteia na primeira vez que um jogador o segura. [Afixos e engastes](#afixos-e-engastes)                                                |
+| `<namespace>/gems/*.json`                                                                       | Itens que uma bigorna encaixa num engaste por um bónus de atributo. [Afixos e engastes](#afixos-e-engastes)                                                                                 |
 | `<namespace>/cards/*.json`                                                                      | Cartas no ecrã mostradas por um acionador e as mensagens que este mod diz por si próprio. [Cartas](#cartas)                                                                                 |
 | `<namespace>/dialogs/*.json`                                                                    | Conversa ramificada com uma variante de entidade: nós de texto e respostas que seguem, executam uma função ou mostram uma carta. [Diálogos](#diálogos)                                      |
 | `<namespace>/dice/*.json`                                                                       | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve um lançamento e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos)                                           |
 | `<namespace>/games/*.json`                                                                      | Jogos de tabuleiro jogados com mobs como peças: o tabuleiro, as peças e como se movem, e o que paga um resultado. [Jogos de tabuleiro](#jogos-de-tabuleiro)                                 |
-| `<namespace>/veins/*.json`                                                                      | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de filões](#mineração-de-filões) |
+| `<namespace>/veins/*.json`                                                                      | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de filões](#mineração-de-filões)                                                              |
 | `<namespace>/harvests/*.json`                                                                   | Culturas colhidas e replantadas com o botão direito. [Colheita com o botão direito](#colheita-com-o-botão-direito)                                                                          |
-| `<namespace>/carries/*.json`                                                                    | Blocos e mobs que um jogador agachado apanha e volta a pousar. [Transportar](#transportar)                                                                  |
+| `<namespace>/carries/*.json`                                                                    | Blocos e mobs que um jogador agachado apanha e volta a pousar. [Transportar](#transportar)                                                                                                  |
 | `<namespace>/player_loot/*.json`                                                                | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                              |
-| `<namespace>/diets/*.json`                                                                      | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                       |
+| `<namespace>/diets/*.json`                                                                      | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                       |
 | `<namespace>/advancements/*.json`                                                               | Progressos. [O que podes substituir](#o-que-podes-substituir)                                                                                                                               |
 | `<namespace>/functions/*.mcfunction`                                                            | Ficheiros de funções. [O que podes substituir](#o-que-podes-substituir)                                                                                                                     |
 | `<namespace>/registry_remap/*.json`                                                             | Nomes antigos mapeados para novos. [Renomeações de registo](#renomeações-de-registo)                                                                                                        |
@@ -498,7 +500,7 @@ Cada uma destas pastas tem também um interruptor na config, para que um modpack
 | `disableOverrides` | `recipes`  | desligado    | Impede este mod de substituir ou adicionar receitas. Só é preciso se outro coremod entrar em conflito no carregamento de receitas                 |
 | `lootInjections`   | `data`     | ligado       | Aplica `loot_injections/*.json`                                                                                                                   |
 | `enchanting`       | `data`     | ligado       | Aplica `enchanting/*.json`                                                                                                                        |
-| `affixes` | `data` | ligado | Aplica `affixes/*.json` e `gems/*.json` |
+| `affixes`          | `data`     | ligado       | Aplica `affixes/*.json` e `gems/*.json`                                                                                                           |
 | `blockDrops`       | `data`     | ligado       | Aplica `block_drops/*.json`                                                                                                                       |
 | `registryRemaps`   | `data`     | ligado       | Aplica os ficheiros `registry_remap`, para que os mundos guardados antes de uma renomeação mantenham os seus blocos e itens                       |
 | `load`             | `worldgen` | ligado       | Gera os filões de minério de `worldgen/*.json` em chunks novos. Os chunks existentes não são alterados                                            |
@@ -516,7 +518,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                       |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                | `biomes`, `dimensions`, `portalframes`                                                         |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                                   | `villagers`                                                                                    |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profissões que o cliente conhece: as do vanilla ou as de um mod presente nos dois lados) | `entities`, `worldintro`, `texts` (a introdução nunca é mostrada a um cliente vanilla)         |
 | `teams`, `scoring`, `ranks`                                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (pastas do cliente; sem cliente, deixa-as de fora) |
 | toda a camada de controlo, as definições e a pré-geração                                                                                                                          |                                                                                                |
@@ -1831,7 +1833,7 @@ Um item simples com `sleepingBag` é um saco-cama. Com um clique direito na face
 | `wornAttributes` | não           | lista de alterações de atributos                             | nenhum                           | Alterações de atributos mantidas em quem usa o item enquanto ele estiver na sua ranhura do Baubles, como `attribute`, `amount` e `operation`                                                                                                                                     |
 | `locates`        | não           | `Village`, `minecraft:river`                                 | nenhum                           | Num item simples, o clique direito procura o local mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registado com `locateAs`. O item empilha só até 1. Vê o parágrafo da bússola localizadora acima |
 | `passesTurn`     | não           | booleano                                                     | `false`                          | Para um item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Ver [Por turnos](#por-turnos)                                                                                                                                            |
-| `sleepingBag`    | não           | booleano | `false` | Para um item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e salta a noite como uma cama. Nunca altera o ponto de reaparecimento e não se gasta. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn` |
+| `sleepingBag`    | não           | booleano                                                     | `false`                          | Para um item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e salta a noite como uma cama. Nunca altera o ponto de reaparecimento e não se gasta. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn`       |
 | `requires`       | não           | lista de ids de mods ou namespaces de pacotes                | nenhum                           | O ficheiro é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                        |
 
 ### Chaves de variantes de itens
@@ -2751,24 +2753,24 @@ Com um item já sorteado que tem um engaste vazio na ranhura esquerda de uma big
 }
 ```
 
-| Chave     | Obrigatório | Valor                        | Predefinição | O que faz                                                                                          |
-| --------- | ----------- | ---------------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
-| `item`    | sim         | nome do item, ou `id:meta`   |              | O item que sorteia. Não pode empilhar: um item empilhável é um erro e o ficheiro é ignorado        |
-| `rolls`   | não         | `{ "min", "max" }`           | `1`          | Quantos afixos diferentes ele sorteia                                                              |
-| `sockets` | não         | `{ "min", "max" }`           | `0`          | Quantos engastes de gema ele sorteia                                                               |
-| `affixes` | sim         | lista de objetos             |              | O que ele pode sortear, cada entrada como abaixo. Uma entrada com atributo desconhecido é ignorada |
+| Chave     | Obrigatório | Valor                      | Predefinição | O que faz                                                                                          |
+| --------- | ----------- | -------------------------- | ------------ | -------------------------------------------------------------------------------------------------- |
+| `item`    | sim         | nome do item, ou `id:meta` |              | O item que sorteia. Não pode empilhar: um item empilhável é um erro e o ficheiro é ignorado        |
+| `rolls`   | não         | `{ "min", "max" }`         | `1`          | Quantos afixos diferentes ele sorteia                                                              |
+| `sockets` | não         | `{ "min", "max" }`         | `0`          | Quantos engastes de gema ele sorteia                                                               |
+| `affixes` | sim         | lista de objetos           |              | O que ele pode sortear, cada entrada como abaixo. Uma entrada com atributo desconhecido é ignorada |
 
 Cada entrada de `affixes` aceita:
 
-| Chave       | Obrigatório | Valor                                                            | Predefinição | O que faz                                                                                                  |
-| ----------- | ----------- | ---------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
-| `name`      | não         | texto, ou uma chave de idioma                                    | nenhum       | A linha que a dica do item mostra para ele                                                                 |
-| `attribute` | sim         | nome do atributo                                                 |              | O que ele muda, como `generic.attackDamage` ou `generic.maxHealth`                                         |
-| `min`       | não         | número                                                           | `0`          | O mínimo que ele soma                                                                                      |
-| `max`       | não         | número                                                           | `min`        | O máximo que ele soma. Valores iguais dão um bónus exato, senão sorteia-se entre os dois                   |
-| `operation` | não         | `0`, `1` ou `2`                                                  | `0`          | `0` soma ao atributo, `1` multiplica a base, `2` multiplica o total                                        |
-| `slot`      | não         | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`        | A ranhura em que o item tem de estar para o bónus valer                                                    |
-| `weight`    | não         | número inteiro                                                   | `1`          | Quão provável ele é ao lado dos outros. Os afixos de um item são diferentes entre si, escolhidos pelo peso |
+| Chave       | Obrigatório | Valor                                                           | Predefinição | O que faz                                                                                                  |
+| ----------- | ----------- | --------------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------- |
+| `name`      | não         | texto, ou uma chave de idioma                                   | nenhum       | A linha que a dica do item mostra para ele                                                                 |
+| `attribute` | sim         | nome do atributo                                                |              | O que ele muda, como `generic.attackDamage` ou `generic.maxHealth`                                         |
+| `min`       | não         | número                                                          | `0`          | O mínimo que ele soma                                                                                      |
+| `max`       | não         | número                                                          | `min`        | O máximo que ele soma. Valores iguais dão um bónus exato, senão sorteia-se entre os dois                   |
+| `operation` | não         | `0`, `1` ou `2`                                                 | `0`          | `0` soma ao atributo, `1` multiplica a base, `2` multiplica o total                                        |
+| `slot`      | não         | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any` | `any`        | A ranhura em que o item tem de estar para o bónus valer                                                    |
+| `weight`    | não         | número inteiro                                                  | `1`          | Quão provável ele é ao lado dos outros. Os afixos de um item são diferentes entre si, escolhidos pelo peso |
 
 ```json
 {
@@ -2782,15 +2784,15 @@ Cada entrada de `affixes` aceita:
 }
 ```
 
-| Chave       | Obrigatório | Valor                                                            | Predefinição | O que faz                                                                                       |
-| ----------- | ----------- | ---------------------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------- |
-| `item`      | sim         | nome do item, ou `id:meta`                                       |              | A gema, que vai na ranhura direita da bigorna                                                   |
-| `name`      | não         | texto, ou uma chave de idioma                                    | o item       | O que a dica mostra quando a gema está num engaste                                              |
-| `attribute` | sim         | nome do atributo                                                 |              | O que a gema muda                                                                               |
-| `amount`    | não         | número                                                           | `0`          | O que ela soma                                                                                  |
-| `operation` | não         | `0`, `1` ou `2`                                                  | `0`          | Como num afixo                                                                                  |
-| `slot`      | não         | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`        | Como num afixo                                                                                  |
-| `levels`    | não         | número inteiro                                                   | `1`          | Os níveis de experiência que encaixar a gema custa, no mínimo 1 e sempre abaixo do ponto de caro demais da bigorna |
+| Chave       | Obrigatório | Valor                                                           | Predefinição | O que faz                                                                                                          |
+| ----------- | ----------- | --------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `item`      | sim         | nome do item, ou `id:meta`                                      |              | A gema, que vai na ranhura direita da bigorna                                                                      |
+| `name`      | não         | texto, ou uma chave de idioma                                   | o item       | O que a dica mostra quando a gema está num engaste                                                                 |
+| `attribute` | sim         | nome do atributo                                                |              | O que a gema muda                                                                                                  |
+| `amount`    | não         | número                                                          | `0`          | O que ela soma                                                                                                     |
+| `operation` | não         | `0`, `1` ou `2`                                                 | `0`          | Como num afixo                                                                                                     |
+| `slot`      | não         | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any` | `any`        | Como num afixo                                                                                                     |
+| `levels`    | não         | número inteiro                                                  | `1`          | Os níveis de experiência que encaixar a gema custa, no mínimo 1 e sempre abaixo do ponto de caro demais da bigorna |
 
 ## Mesa de encantamentos
 
@@ -3081,19 +3083,26 @@ Normalmente um alimento sacia o mesmo, por muitas vezes que seja comido. Com um 
 {
   "memory": 8,
   "repeat": [1.0, 0.5, 0.25],
-  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+  "exempt": ["minecraft:rotten_flesh", "minecraft:spider_eye", "#listAllmeatraw"],
+  "variety": [ { "distinct": 4, "multiplier": 1.25, "effects": [ { "potion": "minecraft:regeneration", "duration": 200 } ] },
+               { "distinct": 7, "multiplier": 1.5, "effects": [ { "potion": "minecraft:resistance" } ], "runs": "mypack:diet/well_fed" } ]
 }
 ```
 
-| Chave      | Obrigatório | Valor              | Predefinição | O que faz                                                                                                                                                                               |
-| ---------- | ----------- | ------------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `memory`   | não         | int ≥ 1            | `10`         | Quantas refeições cada jogador recorda; a mais antiga é esquecida primeiro                                                                                                              |
-| `repeat`   | não         | lista de float ≥ 0 | `[1.0]`      | O multiplicador para a 1.ª, 2.ª, 3.ª vez que o mesmo alimento aparece entre as refeições recordadas; a última entrada repete-se                                                         |
-| `variety`  | não         | lista de objetos   | nenhum       | Cada objeto tem `distinct` (int ≥ 1) e `multiplier` (float ≥ 0): quando as refeições recordadas reúnem essa quantidade de alimentos diferentes, o ganho é multiplicado por `multiplier` |
-| `groups`   | não         | lista de textos    | nenhum       | IDs de itens ou nomes `#ore`; um alimento que corresponde conta como essa entrada, por isso um nome de minério é um só alimento; vale a primeira correspondência                        |
-| `messages` | não         | objeto             | —            | Linha na barra de ação depois de comer: `repeat` se o multiplicador de repetição for inferior a 1, `variety` se superior; texto, chave de idioma ou `""`; predefinição `rdpl.diet.*`    |
+| Chave      | Obrigatório | Valor              | Predefinição | O que faz                                                                                                                                                                                                                                                                    |
+| ---------- | ----------- | ------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | não         | int ≥ 1            | `10`         | Quantas refeições cada jogador recorda; a mais antiga é esquecida primeiro                                                                                                                                                                                                   |
+| `repeat`   | não         | lista de float ≥ 0 | `[1.0]`      | O multiplicador para a 1.ª, 2.ª, 3.ª vez que o mesmo alimento aparece entre as refeições recordadas; a última entrada repete-se                                                                                                                                              |
+| `variety`  | não         | lista de objetos   | nenhum       | Cada objeto tem `distinct` (int ≥ 1) e `multiplier` (float ≥ 0): quando as refeições recordadas reúnem essa quantidade de alimentos diferentes, o ganho é multiplicado por `multiplier`                                                                                      |
+| `groups`   | não         | lista de textos    | nenhum       | IDs de itens ou nomes `#ore`; um alimento que corresponde conta como essa entrada, por isso um nome de minério é um só alimento; vale a primeira correspondência                                                                                                             |
+| `exempt`   | não         | lista de texto     | nenhum       | Ids de item ou nomes `#ore`; uma comida que corresponde a uma entrada é deixada em paz: não é lembrada nem contada, e o seu ganho nunca muda. Tem prioridade sobre `groups`                                                                                                  |
+| `effects`  | não         | lista de objetos   | nenhum       | Dentro de um objeto `variety`: efeitos de poção dados depois de cada refeição enquanto esse escalão for o mais alto que o jogador alcançou. Cada um tem `potion`, `duration` em ticks (predefinição `1200`), `amplifier`, `ambient` e `showParticles` (predefinição `false`) |
+| `runs`     | não         | id de função       | nenhum       | Dentro de um objeto `variety`: uma função executada como o jogador na refeição que o leva a esse escalão vindo de baixo, uma vez por travessia                                                                                                                               |
+| `messages` | não         | objeto             | —            | Linha na barra de ação depois de comer: `repeat` se o multiplicador de repetição for inferior a 1, `variety` se superior; texto, chave de idioma ou `""`; predefinição `rdpl.diet.*`                                                                                         |
 
-Um valor inválido regista um erro no log com o nome do ficheiro e esse ficheiro é ignorado.
+Um valor inválido regista um erro no log com o nome do ficheiro e esse ficheiro é ignorado. Uma poção que não existe é ignorada ao dar o efeito. `runs` dispara outra vez se refeições saírem da memória, o jogador descer abaixo do escalão e voltar a subir até ele. Uma entrada de `exempt` que não corresponde a nada regista um aviso no log com o nome do ficheiro e da entrada, e só ela é ignorada; o resto do ficheiro é carregado.
+
+Onde quer que uma condição de equipa ou de pontuação seja lida, como o `when` de uma carta, uma passagem ou uma recompensa de corações ganhos, `dietAtLeast` (int ≥ 1) funciona ao lado dela: vale enquanto as refeições lembradas do jogador tiverem pelo menos esse número de comidas diferentes, com `groups` aplicados. Sem um ficheiro de Variedade alimentar, nunca é cumprida e o log regista um erro.
 
 Quando um jogador acaba de comer, o que o alimento realmente restaurou de fome e saturação (depois dos limites do próprio jogo) é multiplicado por um único fator. O fator é a entrada de `repeat` correspondente ao número de vezes que esse alimento já está entre as refeições recordadas (a 1.ª entrada se não está nenhuma vez), vezes o escalão de `variety` com o maior `distinct` atingido, qualquer que seja a posição dele no ficheiro. `distinct` é o número de alimentos diferentes entre as refeições recordadas, contando a atual, depois de cortar a lista em `memory`. O ganho de fome é arredondado a um ponto inteiro de fome e a nova fome fica entre 0 e 20. A saturação muda pelo mesmo fator, sem passar da nova fome. No exemplo acima, a segunda maçã seguida restaura metade, e o quarto alimento diferente recordado restaura 1,25 vez.
 
@@ -3180,11 +3189,11 @@ Uma troca também pode depender do jogador que abre a janela. Quem não cumpre u
 }
 ```
 
-| Chave                       | Obrigatório | Valor            | Predefinição | O que faz                                                                                                                                                                                                                                                                      |
-| --------------------------- | ----------- | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `advancement`               | não         | `namespace:path` | nenhuma      | Só um jogador com este progresso vê a troca                                                                                                                                                                                                                                    |
-| `team`                      | não         | nome da equipa   | nenhuma      | Só um membro desta equipa do marcador vê a troca                                                                                                                                                                                                                               |
-| `objective`, `scoreAtLeast` | não         | texto, inteiro   | nenhuma      | Só um jogador cuja pontuação no objetivo seja pelo menos este valor vê a troca. São precisos os dois, e um jogador sem pontuação não passa                                                                                                                                     |
+| Chave                       | Obrigatório | Valor            | Predefinição | O que faz                                                                                                                                                                                                                                                                |
+| --------------------------- | ----------- | ---------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `advancement`               | não         | `namespace:path` | nenhuma      | Só um jogador com este progresso vê a troca                                                                                                                                                                                                                              |
+| `team`                      | não         | nome da equipa   | nenhuma      | Só um membro desta equipa do marcador vê a troca                                                                                                                                                                                                                         |
+| `objective`, `scoreAtLeast` | não         | texto, inteiro   | nenhuma      | Só um jogador cuja pontuação no objetivo seja pelo menos este valor vê a troca. São precisos os dois, e um jogador sem pontuação não passa                                                                                                                               |
 | `priceScale`                | não         | objeto           | nenhuma      | Multiplica a quantidade de `buy` por `clamp(1 + score * perPoint, min, max)`, arredondada, no mínimo 1 e no máximo o tamanho da pilha. `objective` e `perPoint` são obrigatórios, `min` é `0.0` por predefinição e `max` `10.0`, e um jogador sem pontuação conta como 0 |
 
 `priceScale` altera só `buy`, nunca `buySecondary`. O jogo distingue uma troca condicional das outras trocas do aldeão pela profissão e pelos itens (`buy`, `buySecondary` e `sell`, com os seus metadados), por isso dê-lhe itens que nenhuma outra troca dessa profissão use. Duas trocas do pack com os mesmos itens: a segunda é ignorada e registada no log. Os aldeões cujas trocas já foram geradas mantêm-nas.
@@ -3968,6 +3977,75 @@ O caminho do ficheiro é o nome do nível, e vários ficheiros combinam-se. Um n
 | `loot`     | não         | número, 1 ou mais                 | `1`            | Multiplica cada item empilhável que o mob larga. A parte fracionária é a probabilidade de mais um item por pilha                                                              |
 
 Ferramentas, armaduras e o equipamento que o mob trazia não são multiplicados, e os mobs que transportam um inventário, como animais de carga, são ignorados. Um erro num ficheiro de nível, como uma chave desconhecida, um ID de entidade que não existe ou um valor fora do intervalo, é registado e o ficheiro inteiro é ignorado. Apagar um ficheiro de nível deixa como estão os mobs que já sortearam esse nível, e um mob que nenhum nível indica fica intacto. Só o servidor lê os níveis, por isso os clientes vanilla podem entrar.
+
+## Recompensas de vida máxima
+
+*criaturas e perigos*
+
+`<namespace>/hearts/*.json`
+
+Um ficheiro aqui permite que os jogadores ganhem vida máxima extra a partir de fontes que indicares: um progresso, uma dieta variada de [Variedade alimentar](#variedade-alimentar), uma lista de alimentos comidos ou a pontuação de uma equipa. O que o jogador ganhou fica guardado com o jogador. Sem ficheiro nada muda.
+
+O nome do ficheiro é livre, só a pasta é lida. As `rewards` de todos os ficheiros são usadas em conjunto. Para cada chave do nível superior vale o primeiro ficheiro que a define, e os restantes são registados no log e ignorados.
+
+```json
+{
+  "startHearts": 10,
+  "cap": 20,
+  "keepOnDeath": true,
+  "style": "bar",
+  "sound": "minecraft:entity.player.levelup",
+  "particle": "heart",
+  "heartColors": ["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"],
+  "rewards": [
+    { "id": "nether", "advancement": "minecraft:nether/root", "hearts": 1 },
+    { "id": "varied", "diet": 4, "hearts": 1, "repeat": "always", "times": 3 },
+    { "id": "fish", "foods": ["minecraft:fish", "minecraft:cooked_fish", "#listAllfishraw", "minecraft:bread"], "count": 3, "hearts": 1 },
+    { "id": "champ", "team": "red", "objective": "wins", "scoreAtLeast": 5, "hearts": 2, "requires": ["somepack"], "message": "mypack.hearts.champ" }
+  ]
+}
+```
+
+| Chave         | Obrigatório | Valor                                 | Predefinição                                   | O que faz                                                                                         |
+| ------------- | ----------- | ------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `startHearts` | não         | número, 0,5 ou mais, em passos de 0,5 | `10`                                           | Os corações que o jogador tem antes de ganhar algum; `10` é o vanilla                             |
+| `cap`         | não         | número, `startHearts` ou mais         | nenhum                                         | O máximo de corações no total, contando os iniciais                                               |
+| `keepOnDeath` | não         | true ou false                         | `true`                                         | `false`: a morte repõe cada contagem ganha a 0                                                    |
+| `style`       | não         | `bar` ou `chat`                       | `bar`                                          | Onde aparece a mensagem de uma recompensa: a barra de ação ou o chat                              |
+| `sound`       | não         | ID de som ou `""`                     | `""`                                           | Tocado no jogador a cada recompensa                                                               |
+| `particle`    | não         | nome de partícula ou `""`             | `""`                                           | Criada no jogador a cada recompensa; só partículas simples                                        |
+| `heartColors` | não         | lista de `"#RRGGBB"`                  | `["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"]` | A cor da 2.ª, da 3.ª e das restantes camadas de corações, repetindo-se a última cor (ver No ecrã) |
+| `rewards`     | não         | lista de objetos                      | nenhum                                         | As recompensas, com as chaves abaixo                                                              |
+
+Cada entrada de `rewards`:
+
+| Chave                       | Obrigatório | Valor                                       | Predefinição                | O que faz                                                                                                                                                                                                       |
+| --------------------------- | ----------- | ------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                        | sim         | texto, único no ficheiro                    | nenhum                      | Dá nome à recompensa na gravação, por isso mantém-no ao editar a recompensa                                                                                                                                     |
+| `advancement`               | não         | ID de progresso                             | nenhum                      | Gatilho: o progresso é obtido                                                                                                                                                                                   |
+| `diet`                      | não         | int                                         | nenhum                      | Gatilho: uma refeição leva o jogador a este valor `distinct` de um escalão `variety` de [Variedade alimentar](#variedade-alimentar)                                                                             |
+| `foods`                     | não         | lista de IDs de itens ou nomes `#ore`       | nenhum                      | Gatilho: alimentos a comer. Cada entrada conta uma vez, na primeira vez que se come qualquer alimento que lhe corresponda; uma entrada `#ore` é um tipo de alimento                                             |
+| `count`                     | não         | int, de 1 até ao tamanho de `foods`         | o tamanho de `foods`        | Com `foods`: quantas entradas têm de ter sido comidas                                                                                                                                                           |
+| `team`                      | não         | nome da equipa                              | nenhum                      | Gatilho: o jogador está nesta equipa                                                                                                                                                                            |
+| `objective`, `scoreAtLeast` | não         | texto, int                                  | nenhum                      | Gatilho: a pontuação do jogador no objetivo é pelo menos esta. São precisos os dois; com `team`, as duas condições têm de valer                                                                                 |
+| `dietAtLeast`               | não         | int                                         | nenhum                      | Gatilho: as refeições lembradas do jogador têm pelo menos esse número de comidas diferentes (ver Variedade alimentar). É preciso um ficheiro de Variedade alimentar; com `team`, as duas condições têm de valer |
+| `hearts`                    | sim         | número acima de 0, em passos de 0,5         | nenhum                      | Os corações que uma recompensa dá                                                                                                                                                                               |
+| `repeat`                    | não         | `once_per_player` ou `always`               | `once_per_player`           | `always`: cada novo gatilho volta a conceder a recompensa                                                                                                                                                       |
+| `times`                     | não         | int, 1 ou mais                              | `1`, ilimitado com `always` | O máximo de concessões que um jogador pode receber dela                                                                                                                                                         |
+| `requires`                  | não         | lista de IDs de mods ou namespaces de packs | nenhum                      | A recompensa é ignorada se não estiverem todos presentes                                                                                                                                                        |
+| `message`                   | não         | chave de idioma ou `""`                     | `rdpl.hearts.gained`        | Mostrada a cada recompensa; `""` não mostra nada                                                                                                                                                                |
+
+**Um gatilho por recompensa.** Define exatamente um entre `advancement`, `diet`, `foods` ou as chaves de condição `team`, `objective`, `scoreAtLeast` e `dietAtLeast`. Caso contrário, o log indica o ficheiro e o `id`, e a recompensa é ignorada. `advancement` concede quando o progresso é obtido. `diet` concede quando uma refeição leva o jogador de abaixo desse valor `distinct` até ele ou além; precisa de um ficheiro de Variedade alimentar com um escalão `variety` desse `distinct` e, sem ele, nunca concede. `foods` concede uma única vez, quando as entradas comidas chegam a `count`; `repeat` e `times` não se aplicam. Uma condição de equipa, de pontuação ou de dieta concede quando passa de falsa a verdadeira, verificada a cada 5 segundos enquanto existir uma recompensa assim.
+
+**Guardado com o jogador.** As concessões são contadas por recompensa nos dados guardados do próprio jogador, por isso os corações ganhos sobrevivem à morte, a sair do jogo e a mudar de dimensão. A vida máxima extra também é guardada com o jogador: quem tem 24 de vida máxima e sai com 23 volta com 23. O máximo é `startHearts` mais os corações de cada concessão, nunca acima de `cap`; os dez corações do vanilla são `startHearts: 10`.
+
+**Vida.** Quando o máximo sobe, a vida atual sobe na mesma proporção. Quando desce, a vida é reduzida ao novo máximo. Renascer depois de morrer enche a vida.
+
+**Morte.** Com `keepOnDeath` em `true`, os corações ganhos ficam. Com `false`, a morte repõe cada contagem a 0 e esquece os alimentos comidos, e uma recompensa só volta a ser ganha com um novo gatilho.
+
+**Recuperação.** Ao entrar e depois de `/rdpl reload`, os corações de cada jogador online são calculados de novo a partir das contagens guardadas e das regras atuais. Uma recompensa de que o jogador ainda não tem contagem e cuja condição já se verifica (o progresso está feito, o escalão de dieta foi atingido, os alimentos comidos chegam a `count`, a condição de equipa ou de pontuação verifica-se) é concedida então, sem mensagem. Uma recompensa reposta a 0 por uma morte não é recuperada de novo. Uma recompensa removida dos ficheiros mantém a contagem na gravação, mas não dá nada enquanto estiver fora, e volta a contar se regressar.
+
+**No ecrã.** Vida acima de 20 não cria novas filas de corações. A cada 10 corações a mais há uma camada desenhada sobre a mesma primeira fila: a segunda camada com a primeira cor de `heartColors`, a terceira com a segunda, e assim sucessivamente. Uma camada com aspeto de estado (veneno, wither, congelação) mostra esse aspeto do vanilla sem cor, e a absorção fica acima da fila como no vanilla. As cores vêm do servidor, enviadas ao entrar e depois de uma recarga; um cliente que não as recebeu usa a lista predefinida.
 
 ## Ordens de trabalho
 
@@ -7728,16 +7806,17 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 
 `when` contém condições que têm de ser todas verdadeiras no momento em que o acionador dispara.
 
-| Definição                   | Tipo           | O que verifica                                                                                                                  |
-| --------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `biomes`                    | lista          | O jogador está num destes biomas, escritos como para o acionador                                                                |
-| `timeFrom`, `timeTo`        | número inteiro | O relógio do dia está dentro desta janela, que pode passar da meia-noite, como `13000` a `1000`                                 |
-| `dayAtLeast`                | número inteiro | O número do dia é pelo menos este                                                                                               |
-| `advancement`               | texto          | O jogador tem este progresso                                                                                                    |
-| `portway`, `network`        | texto          | O jogador tem uma rota com esse id de bloco, ou dessa rede, na lista ou entre as globais. Qualquer um dos dois pode ser omitido |
-| `gameMode`                  | texto          | O jogador está neste modo de jogo: `survival`, `creative`, `adventure` ou `spectator`                                           |
-| `team`                      | texto          | O jogador está nesta equipa do quadro de pontuação                                                                              |
-| `objective`, `scoreAtLeast` | texto, inteiro | A pontuação do jogador no objetivo é pelo menos esta                                                                            |
+| Definição                   | Tipo           | O que verifica                                                                                                                     |
+| --------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | lista          | O jogador está num destes biomas, escritos como para o acionador                                                                   |
+| `timeFrom`, `timeTo`        | número inteiro | O relógio do dia está dentro desta janela, que pode passar da meia-noite, como `13000` a `1000`                                    |
+| `dayAtLeast`                | número inteiro | O número do dia é pelo menos este                                                                                                  |
+| `advancement`               | texto          | O jogador tem este progresso                                                                                                       |
+| `portway`, `network`        | texto          | O jogador tem uma rota com esse id de bloco, ou dessa rede, na lista ou entre as globais. Qualquer um dos dois pode ser omitido    |
+| `gameMode`                  | texto          | O jogador está neste modo de jogo: `survival`, `creative`, `adventure` ou `spectator`                                              |
+| `team`                      | texto          | O jogador está nesta equipa do quadro de pontuação                                                                                 |
+| `dietAtLeast`               | inteiro        | As refeições lembradas do jogador têm pelo menos esse número de comidas diferentes (precisa de um ficheiro de Variedade alimentar) |
+| `objective`, `scoreAtLeast` | texto, inteiro | A pontuação do jogador no objetivo é pelo menos esta                                                                               |
 
 ### A carta
 

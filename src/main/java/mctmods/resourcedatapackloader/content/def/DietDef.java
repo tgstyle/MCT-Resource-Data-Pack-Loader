@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.util.ItemMatch;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -9,6 +11,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class DietDef {
     public static final int DEFAULT_MEMORY = 10;
@@ -18,14 +21,16 @@ public final class DietDef {
     public final float[] repeat;
     public final List<Tier> variety;
     public final List<Group> groups;
+    public final List<ItemMatch> exempt;
     public final String repeatMessage;
     public final String varietyMessage;
 
-    private DietDef(int memory, float[] repeat, List<Tier> variety, List<Group> groups, String repeatMessage, String varietyMessage) {
+    private DietDef(int memory, float[] repeat, List<Tier> variety, List<Group> groups, List<ItemMatch> exempt, String repeatMessage, String varietyMessage) {
         this.memory = memory;
         this.repeat = repeat;
         this.variety = variety;
         this.groups = groups;
+        this.exempt = exempt;
         this.repeatMessage = repeatMessage;
         this.varietyMessage = varietyMessage;
     }
@@ -43,10 +48,14 @@ public final class DietDef {
     public static final class Tier {
         public final int distinct;
         public final float multiplier;
+        public final List<PotionEffectDef> effects;
+        public final String runs;
 
-        Tier(int distinct, float multiplier) {
+        Tier(int distinct, float multiplier, List<PotionEffectDef> effects, String runs) {
             this.distinct = distinct;
             this.multiplier = multiplier;
+            this.effects = effects;
+            this.runs = runs;
         }
     }
 
@@ -64,7 +73,18 @@ public final class DietDef {
             for (JsonElement element : array(json.get("variety"), "variety")) {
                 if (!element.isJsonObject()) { throw new IllegalArgumentException("variety entries must be objects"); }
                 JsonObject tier = element.getAsJsonObject();
-                variety.add(new Tier(whole(tier.get("distinct"), "distinct"), (float) number(tier.get("multiplier"), "multiplier", 0.0D)));
+                List<PotionEffectDef> effects = tier.has("effects") ? ContentParser.effects(file, array(tier.get("effects"), "effects"), 1200, false) : new ArrayList<>();
+                String runs = tier.has("runs") ? text(tier.get("runs"), "runs") : "";
+                variety.add(new Tier(whole(tier.get("distinct"), "distinct"), (float) number(tier.get("multiplier"), "multiplier", 0.0D), effects, runs));
+            }
+        }
+        List<ItemMatch> exempt = new ArrayList<>();
+        if (json.has("exempt")) {
+            for (JsonElement element : array(json.get("exempt"), "exempt")) {
+                String text = text(element, "exempt entry");
+                ItemMatch match = ItemMatch.parse(file, text);
+                if (match == null) { ContentLog.LOGGER.warn("Diet file {} has an exempt entry '{}' that matches nothing, so that entry is skipped", file, text); }
+                else { exempt.add(match); }
             }
         }
         List<Group> groups = new ArrayList<>();
@@ -85,7 +105,17 @@ public final class DietDef {
             repeatMessage = message(messages, "repeat", DEFAULT_REPEAT);
             varietyMessage = message(messages, "variety", DEFAULT_VARIETY);
         }
-        return new DietDef(memory, repeat, variety, groups, repeatMessage, varietyMessage);
+        return new DietDef(memory, repeat, variety, groups, exempt, repeatMessage, varietyMessage);
+    }
+
+    public boolean exempts(ItemStack stack) {
+        for (ItemMatch match : exempt) { if (match.matches(stack)) { return true; } }
+        return false;
+    }
+
+    private static String text(JsonElement element, String name) {
+        if (element == null || !element.isJsonPrimitive() || !element.getAsJsonPrimitive().isString()) { throw new IllegalArgumentException(name + " must be text"); }
+        return element.getAsString().trim();
     }
 
     public String kind(ItemStack stack, String registryKey) {
@@ -100,14 +130,24 @@ public final class DietDef {
         return element.getAsString().trim();
     }
 
+    public boolean hasTier(int distinct) {
+        for (Tier tier : variety) { if (tier.distinct == distinct) { return true; } }
+        return false;
+    }
+
     public float repeatMultiplier(int count) { return repeat[Math.min(count, repeat.length - 1)]; }
 
     public float varietyMultiplier(int distinct) {
+        Tier best = bestTier(distinct);
+        return best == null ? 1.0F : best.multiplier;
+    }
+
+    @Nullable public Tier bestTier(int distinct) {
         Tier best = null;
         for (Tier tier : variety) {
             if (tier.distinct <= distinct && (best == null || tier.distinct > best.distinct)) { best = tier; }
         }
-        return best == null ? 1.0F : best.multiplier;
+        return best;
     }
 
     private static JsonArray array(JsonElement element, String name) {

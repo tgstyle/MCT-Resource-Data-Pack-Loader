@@ -2,9 +2,11 @@ package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.IntroLandMadeHandler;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
@@ -56,6 +58,7 @@ public final class RDPLNetwork {
         registerMessage(MessagePortwayFilter.Handler.class, MessagePortwayFilter.class);
         registerClient(() -> TalkScreen.Handler.class, MessageTalk.class);
         registerMessage(MessageTalkPick.Handler.class, MessageTalkPick.class);
+        registerClient(() -> HeartsHud.Handler.class, MessageHeartColors.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -110,6 +113,8 @@ public final class RDPLNetwork {
     public static void sendToasts(EntityPlayerMP player, int kinds) { sendTo(new MessageToasts(kinds), player); }
 
     public static void sendAnvilCosts(EntityPlayerMP player) { sendTo(new MessageAnvilCosts(AnvilCosts.servedCap(), AnvilCosts.servedPaid(), AnvilCosts.servedLapis(), AnvilCosts.servedOpening()), player); }
+
+    public static void sendHeartColors(EntityPlayerMP player) { sendTo(new MessageHeartColors(ContentHearts.colors()), player); }
 
     public static void introDone() {
         if (channel == null) { return; }

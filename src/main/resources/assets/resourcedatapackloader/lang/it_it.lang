@@ -143,6 +143,7 @@ rdpl.carry.mob=Stai trasportando %s (accovacciati e fai clic destro su un blocco
 rdpl.carry.down=Hai posato %s
 rdpl.carry.denied=Non puoi farlo qui
 rdpl.carry.full=Stai già trasportando qualcosa
+rdpl.hearts.gained=Ti senti più robusto.
 rdpl.portway.activated=%s attivato (%s noti)
 rdpl.portway.known=Conosci già questo passaggio
 rdpl.portway.stop=%s: %s, %s, %s

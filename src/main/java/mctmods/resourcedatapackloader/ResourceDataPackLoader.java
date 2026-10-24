@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.CenterCard;
+import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.PackListEntries;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
@@ -20,6 +21,7 @@ import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentDiet;
 import mctmods.resourcedatapackloader.content.ContentCarry;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.ContentHarvests;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
@@ -259,6 +261,8 @@ public class ResourceDataPackLoader {
             if (ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(ContentOrders.class); }
         }
         if (ContentRanks.load()) { MinecraftForge.EVENT_BUS.register(ContentRanks.class); }
+        ContentHearts.load();
+        MinecraftForge.EVENT_BUS.register(ContentHearts.class);
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
         ContentGates.load();
@@ -320,6 +324,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(new PackOptionsButton.Handler());
             MinecraftForge.EVENT_BUS.register(BossBackgrounds.class);
             MinecraftForge.EVENT_BUS.register(CardOverlay.class);
+            MinecraftForge.EVENT_BUS.register(HeartsHud.class);
             MinecraftForge.EVENT_BUS.register(CenterCard.class);
             MinecraftForge.EVENT_BUS.register(HoldView.class);
             MinecraftForge.EVENT_BUS.register(ContentFogSampler.class);
@@ -374,6 +379,7 @@ public class ResourceDataPackLoader {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ContentSkyRenderers.reload(); }
         CardRules.load();
         ContentDialogs.load();
+        ContentHearts.load();
         if (ContentVillages.load()) { ContentVillages.register(); }
     }
 

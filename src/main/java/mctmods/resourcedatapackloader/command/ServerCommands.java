@@ -15,6 +15,7 @@ import static mctmods.resourcedatapackloader.command.CommandShared.findBiome;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentRoundReset;
 import mctmods.resourcedatapackloader.content.ContentScoring;
@@ -458,6 +459,8 @@ public class ServerCommands extends CommandBase {
         ContentBoards.rebuild(server);
         CardRules.load();
         ContentDialogs.load();
+        ContentHearts.load();
+        ContentHearts.refresh(server);
         for (WorldServer world : server.worlds) {
             ContentTeams.field(world);
             ContentScoring.keep(world);

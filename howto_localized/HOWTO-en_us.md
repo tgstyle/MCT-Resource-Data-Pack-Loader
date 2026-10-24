@@ -72,6 +72,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 **Creatures and hazards**
 - [Entity variants](#entity-variants)
 - [Mob ranks](#mob-ranks)
+- [Max health rewards](#max-health-rewards)
 - [Work orders](#work-orders)
 - [Exposures](#exposures)
 
@@ -172,6 +173,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/entities/*.json`                                                                   | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                                                                        |
 | `<namespace>/hardness/*.json`                                                                   | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                                                                      |
 | `<namespace>/ranks/*.json`                                                                      | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                                            |
+| `<namespace>/hearts/*.json`                                                                     | Extra hearts a player earns from advancements, a varied diet or a team score, kept with the player. [Max health rewards](#max-health-rewards)                    |
 | `<namespace>/orders/*.json`                                                                     | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                                                     |
 | `<namespace>/exposures/*.json`                                                                  | Hazards that expose players near named blocks, carrying named items or in named dimensions, biomes, structures, cave regions or heights. [Exposures](#exposures) |
 | `<namespace>/enchanting/*.json`                                                                 | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                    |
@@ -201,17 +203,17 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/loot_injections/*.json`                                                            | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                     |
 | `<namespace>/block_drops/*.json`                                                                | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                           |
 | `<namespace>/anvils/*.json`                                                                     | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                            |
-| `<namespace>/affixes/*.json` | Random attribute bonuses and sockets an item rolls the first time a player holds it. [Affixes and sockets](#affixes-and-sockets) |
-| `<namespace>/gems/*.json` | Items an anvil fits into a socket for an attribute bonus. [Affixes and sockets](#affixes-and-sockets) |
+| `<namespace>/affixes/*.json`                                                                    | Random attribute bonuses and sockets an item rolls the first time a player holds it. [Affixes and sockets](#affixes-and-sockets)                                 |
+| `<namespace>/gems/*.json`                                                                       | Items an anvil fits into a socket for an attribute bonus. [Affixes and sockets](#affixes-and-sockets)                                                            |
 | `<namespace>/cards/*.json`                                                                      | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                       |
 | `<namespace>/dialogs/*.json`                                                                    | Branching talk with an entity variant: text nodes and replies that go on, run a function or show a card. [Dialogs](#dialogs)                                     |
 | `<namespace>/dice/*.json`                                                                       | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                               |
 | `<namespace>/games/*.json`                                                                      | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
 | `<namespace>/veins/*.json`                                                                      | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                             |
 | `<namespace>/harvests/*.json`                                                                   | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                     |
-| `<namespace>/carries/*.json`                                                                    | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                |
+| `<namespace>/carries/*.json`                                                                    | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                                            |
 | `<namespace>/player_loot/*.json`                                                                | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                              |
-| `<namespace>/diets/*.json`                                                                      | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                 |
+| `<namespace>/diets/*.json`                                                                      | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                             |
 | `<namespace>/advancements/*.json`                                                               | Advancements. [What you can override](#what-you-can-override)                                                                                                    |
 | `<namespace>/functions/*.mcfunction`                                                            | Function files. [What you can override](#what-you-can-override)                                                                                                  |
 | `<namespace>/registry_remap/*.json`                                                             | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                                              |
@@ -498,7 +500,7 @@ Each of these folders also has a switch in the config, so a modpack can turn one
 | `disableOverrides` | `recipes`  | off     | Stops this mod from replacing or adding recipes. Only needed if another coremod conflicts over recipe loading                                           |
 | `lootInjections`   | `data`     | on      | Applies `loot_injections/*.json`                                                                                                                        |
 | `enchanting`       | `data`     | on      | Applies `enchanting/*.json`                                                                                                                             |
-| `affixes` | `data` | on | Applies `affixes/*.json` and `gems/*.json` |
+| `affixes`          | `data`     | on      | Applies `affixes/*.json` and `gems/*.json`                                                                                                              |
 | `blockDrops`       | `data`     | on      | Applies `block_drops/*.json`                                                                                                                            |
 | `registryRemaps`   | `data`     | on      | Applies the `registry_remap` files, so worlds saved before a rename keep their blocks and items                                                         |
 | `load`             | `worldgen` | on      | Generates the ore veins from `worldgen/*.json` in new chunks. Existing chunks are not changed                                                           |
@@ -516,7 +518,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                               | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                      | `biomes`, `dimensions`, `portalframes`                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins` | `villagers` |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`         | `villagers`                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client)              |
 | `teams`, `scoring`, `ranks`                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                    |                                                                                               |
@@ -1831,7 +1833,7 @@ A plain item with `sleepingBag` is a sleeping bag. Right-click the top of a soli
 | `bauble`         | no            | `amulet`, `ring`, `belt`, `trinket`, `head`, `body`, `charm` | none                   | The Baubles slot the item can be worn in, for any type of item. Ignored when Baubles is not installed                                                                                                                                                         |
 | `wornEffects`    | no            | list of effects                                              | none                   | Potion effects held on the wearer while the item is in its Baubles slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                              |
 | `wornAttributes` | no            | list of attribute changes                                    | none                   | Attribute changes held on the wearer while the item is in its Baubles slot, as `attribute`, `amount` and `operation`                                                                                                                                          |
-| `sleepingBag`    | no            | boolean | `false` | For a plain item, a right-click on top of a block lays the holder down to sleep, skipping the night as a bed does. It never sets the spawn point and is not used up. Works only where sleeping is allowed. Ignored with `locates`, `rolls` or `passesTurn` |
+| `sleepingBag`    | no            | boolean                                                      | `false`                | For a plain item, a right-click on top of a block lays the holder down to sleep, skipping the night as a bed does. It never sets the spawn point and is not used up. Works only where sleeping is allowed. Ignored with `locates`, `rolls` or `passesTurn`    |
 | `requires`       | no            | list of mod ids or pack namespaces                           | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
 
 ### Item variant keys
@@ -2751,24 +2753,24 @@ With a rolled item that has an empty socket in an anvil's left slot and a gem in
 }
 ```
 
-| Key       | Required | Value                      | Default | What it does                                                                                          |
-| --------- | -------- | -------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| `item`    | yes      | item name, or `id:meta`    |         | The item that rolls. It must not stack: a stackable item is an error and the file is skipped        |
-| `rolls`   | no       | `{ "min", "max" }`         | `1`     | How many different affixes it rolls                                                                   |
-| `sockets` | no       | `{ "min", "max" }`         | `0`     | How many gem sockets it rolls                                                                         |
-| `affixes` | yes      | list of objects            |         | What it can roll, each entry as below. An entry with an unknown attribute is skipped                  |
+| Key       | Required | Value                   | Default | What it does                                                                                 |
+| --------- | -------- | ----------------------- | ------- | -------------------------------------------------------------------------------------------- |
+| `item`    | yes      | item name, or `id:meta` |         | The item that rolls. It must not stack: a stackable item is an error and the file is skipped |
+| `rolls`   | no       | `{ "min", "max" }`      | `1`     | How many different affixes it rolls                                                          |
+| `sockets` | no       | `{ "min", "max" }`      | `0`     | How many gem sockets it rolls                                                                |
+| `affixes` | yes      | list of objects         |         | What it can roll, each entry as below. An entry with an unknown attribute is skipped         |
 
 Each entry of `affixes` takes:
 
-| Key         | Required | Value                                                           | Default | What it does                                                                                                   |
-| ----------- | -------- | --------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| `name`      | no       | text, or a language key                                         | none    | The line the item's tooltip shows for it                                                                       |
-| `attribute` | yes      | attribute name                                                  |         | What it changes, such as `generic.attackDamage` or `generic.maxHealth`                                         |
-| `min`       | no       | number                                                          | `0`     | The least it adds                                                                                              |
-| `max`       | no       | number                                                          | `min`   | The most it adds. Equal values give an exact bonus, anything else is rolled between the two                    |
-| `operation` | no       | `0`, `1` or `2`                                                 | `0`     | `0` adds to the attribute, `1` multiplies its base, `2` multiplies the total                                   |
-| `slot`      | no       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` or `any` | `any`   | The slot the item must be in for the bonus to count                                                            |
-| `weight`    | no       | int                                                             | `1`     | How likely it is next to the others. The affixes of one item are different from each other, picked by weight   |
+| Key         | Required | Value                                                           | Default | What it does                                                                                                 |
+| ----------- | -------- | --------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `name`      | no       | text, or a language key                                         | none    | The line the item's tooltip shows for it                                                                     |
+| `attribute` | yes      | attribute name                                                  |         | What it changes, such as `generic.attackDamage` or `generic.maxHealth`                                       |
+| `min`       | no       | number                                                          | `0`     | The least it adds                                                                                            |
+| `max`       | no       | number                                                          | `min`   | The most it adds. Equal values give an exact bonus, anything else is rolled between the two                  |
+| `operation` | no       | `0`, `1` or `2`                                                 | `0`     | `0` adds to the attribute, `1` multiplies its base, `2` multiplies the total                                 |
+| `slot`      | no       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` or `any` | `any`   | The slot the item must be in for the bonus to count                                                          |
+| `weight`    | no       | int                                                             | `1`     | How likely it is next to the others. The affixes of one item are different from each other, picked by weight |
 
 ```json
 {
@@ -2782,15 +2784,15 @@ Each entry of `affixes` takes:
 }
 ```
 
-| Key         | Required | Value                                                           | Default   | What it does                                                                                              |
-| ----------- | -------- | --------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------- |
-| `item`      | yes      | item name, or `id:meta`                                         |           | The gem, which goes in the anvil's right slot                                                             |
-| `name`      | no       | text, or a language key                                         | the item  | What the tooltip shows once the gem sits in a socket                                                      |
-| `attribute` | yes      | attribute name                                                  |           | What the gem changes                                                                                      |
-| `amount`    | no       | number                                                          | `0`       | What it adds                                                                                              |
-| `operation` | no       | `0`, `1` or `2`                                                 | `0`       | As for an affix                                                                                           |
-| `slot`      | no       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` or `any` | `any`     | As for an affix                                                                                           |
-| `levels`    | no       | int                                                             | `1`       | The experience levels fitting the gem costs, 1 at the least and always below the anvil's too expensive point |
+| Key         | Required | Value                                                           | Default  | What it does                                                                                                 |
+| ----------- | -------- | --------------------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `item`      | yes      | item name, or `id:meta`                                         |          | The gem, which goes in the anvil's right slot                                                                |
+| `name`      | no       | text, or a language key                                         | the item | What the tooltip shows once the gem sits in a socket                                                         |
+| `attribute` | yes      | attribute name                                                  |          | What the gem changes                                                                                         |
+| `amount`    | no       | number                                                          | `0`      | What it adds                                                                                                 |
+| `operation` | no       | `0`, `1` or `2`                                                 | `0`      | As for an affix                                                                                              |
+| `slot`      | no       | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` or `any` | `any`    | As for an affix                                                                                              |
+| `levels`    | no       | int                                                             | `1`      | The experience levels fitting the gem costs, 1 at the least and always below the anvil's too expensive point |
 
 ## Enchanting table
 
@@ -3081,19 +3083,26 @@ Normally a food feeds the same however often you eat it. A file here makes a foo
 {
   "memory": 8,
   "repeat": [1.0, 0.5, 0.25],
-  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+  "exempt": ["minecraft:rotten_flesh", "minecraft:spider_eye", "#listAllmeatraw"],
+  "variety": [ { "distinct": 4, "multiplier": 1.25, "effects": [ { "potion": "minecraft:regeneration", "duration": 200 } ] },
+               { "distinct": 7, "multiplier": 1.5, "effects": [ { "potion": "minecraft:resistance" } ], "runs": "mypack:diet/well_fed" } ]
 }
 ```
 
-| Key        | Required | Value             | Default | What it does                                                                                                                                                        |
-| ---------- | -------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `memory`   | no       | int ≥ 1           | `10`    | How many meals each player remembers, the oldest forgotten first                                                                                                    |
-| `repeat`   | no       | list of float ≥ 0 | `[1.0]` | The multiplier for the 1st, 2nd, 3rd time the same food is among the remembered meals; the last entry repeats                                                       |
-| `variety`  | no       | list of objects   | none    | Each object has `distinct` (int ≥ 1) and `multiplier` (float ≥ 0): once the remembered meals hold that many different foods, the gain is multiplied by `multiplier` |
-| `groups`   | no       | list of text      | none    | Item ids or `#ore` names; a food matching an entry is counted as that entry, so one ore name is one food; the first match wins                                      |
-| `messages` | no       | object            | —       | Action-bar line after a meal: `repeat` when the repeat multiplier is below 1, `variety` when above 1; text, lang key or `""`; defaults `rdpl.diet.*`                |
+| Key        | Required | Value             | Default | What it does                                                                                                                                                                                                                                 |
+| ---------- | -------- | ----------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | no       | int ≥ 1           | `10`    | How many meals each player remembers, the oldest forgotten first                                                                                                                                                                             |
+| `repeat`   | no       | list of float ≥ 0 | `[1.0]` | The multiplier for the 1st, 2nd, 3rd time the same food is among the remembered meals; the last entry repeats                                                                                                                                |
+| `variety`  | no       | list of objects   | none    | Each object has `distinct` (int ≥ 1) and `multiplier` (float ≥ 0): once the remembered meals hold that many different foods, the gain is multiplied by `multiplier`                                                                          |
+| `groups`   | no       | list of text      | none    | Item ids or `#ore` names; a food matching an entry is counted as that entry, so one ore name is one food; the first match wins                                                                                                               |
+| `exempt`   | no       | list of text      | none    | Item ids or `#ore` names; a food matching an entry is left alone: not remembered, not counted, and its gain is never changed. Wins over `groups`                                                                                             |
+| `effects`  | no       | list of objects   | none    | Inside a `variety` object: potion effects given after each meal while that tier is the highest the player has reached. Each has `potion`, `duration` in ticks (default `1200`), `amplifier`, `ambient` and `showParticles` (default `false`) |
+| `runs`     | no       | function id       | none    | Inside a `variety` object: a function run as the player on the meal that lifts them into that tier from below, once per crossing                                                                                                             |
+| `messages` | no       | object            | —       | Action-bar line after a meal: `repeat` when the repeat multiplier is below 1, `variety` when above 1; text, lang key or `""`; defaults `rdpl.diet.*`                                                                                         |
 
-A bad value logs one error naming the file and skips that file.
+A bad value logs one error naming the file and skips that file. A potion that does not exist is skipped when the effect is given. `runs` fires again if meals drop out of the memory, the player falls below the tier and climbs back to it. An `exempt` entry that matches nothing logs one warning naming the file and the entry and is skipped alone; the rest of the file loads.
+
+Wherever a team or score condition is read, such as a card's `when`, a gate or an earned-hearts reward, `dietAtLeast` (int ≥ 1) works beside it: it holds while the remembered meals of the player hold at least that many different foods, with `groups` applied. Without a Food variety file it is never met and the log gives one error.
 
 When a player finishes eating, the hunger and saturation the food actually restored, after vanilla's own cap, are multiplied by one number: the `repeat` entry for how often the food is already among the remembered meals (not at all is the 1st entry), times the `variety` tier with the largest `distinct` the meals reach, wherever it stands in the file. `distinct` counts the different foods among the remembered meals including this one, after the list is trimmed to `memory`. The hunger gain is rounded to whole half drumsticks and the new hunger level stays between 0 and 20; saturation is scaled the same way and never rises above the new hunger level. With the example above, a second apple in a row restores half as much, and the fourth different food in the memory restores 1.25 times as much.
 
@@ -3968,6 +3977,75 @@ The file's path is the rank's name, and several files stack. A rank is one possi
 | `loot`     | no       | number, 1 or more           | `1`            | Multiplies each stackable item the mob drops. The fraction is the chance of one more item per stack                                                                |
 
 Tools, armor and the gear a mob carried are not multiplied, and mobs that carry an inventory, such as pack animals, are skipped. A mistake in a rank file, such as an unknown key, an entity id that does not exist or a value out of range, is logged and the whole file is skipped. Deleting a rank file leaves the mobs that already rolled it as they are, and a mob that no rank names is left alone. Only the server reads ranks, so vanilla clients can join.
+
+## Max health rewards
+
+*creatures and hazards*
+
+`<namespace>/hearts/*.json`
+
+A file here lets players earn extra maximum health from sources you name: an advancement, a varied diet from [Food variety](#food-variety), a list of foods eaten, or a team score. What a player has earned is kept with the player. Without a file nothing changes.
+
+The file name is yours to choose, only the folder is read. The `rewards` of all files are used together. For each top-level key the first file that sets it wins, and the others are logged and ignored.
+
+```json
+{
+  "startHearts": 10,
+  "cap": 20,
+  "keepOnDeath": true,
+  "style": "bar",
+  "sound": "minecraft:entity.player.levelup",
+  "particle": "heart",
+  "heartColors": ["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"],
+  "rewards": [
+    { "id": "nether", "advancement": "minecraft:nether/root", "hearts": 1 },
+    { "id": "varied", "diet": 4, "hearts": 1, "repeat": "always", "times": 3 },
+    { "id": "fish", "foods": ["minecraft:fish", "minecraft:cooked_fish", "#listAllfishraw", "minecraft:bread"], "count": 3, "hearts": 1 },
+    { "id": "champ", "team": "red", "objective": "wins", "scoreAtLeast": 5, "hearts": 2, "requires": ["somepack"], "message": "mypack.hearts.champ" }
+  ]
+}
+```
+
+| Key           | Required | Value                                | Default                                        | What it does                                                                                     |
+| ------------- | -------- | ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `startHearts` | no       | number, 0.5 or more, in steps of 0.5 | `10`                                           | The hearts a player has before earning any; `10` is vanilla                                      |
+| `cap`         | no       | number, `startHearts` or more        | none                                           | The most hearts in total, the start hearts included                                              |
+| `keepOnDeath` | no       | true or false                        | `true`                                         | `false`: death sets every earned count back to 0                                                 |
+| `style`       | no       | `bar` or `chat`                      | `bar`                                          | Where the grant message shows: the action bar or the chat                                        |
+| `sound`       | no       | sound id or `""`                     | `""`                                           | Played at the player on a grant                                                                  |
+| `particle`    | no       | particle name or `""`                | `""`                                           | Spawned at the player on a grant; simple particles only                                          |
+| `heartColors` | no       | list of `"#RRGGBB"`                  | `["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"]` | The tint of the 2nd, 3rd, and further layers of hearts, the last color repeating (see On screen) |
+| `rewards`     | no       | list of objects                      | none                                           | The rewards, with the keys below                                                                 |
+
+Each entry of `rewards`:
+
+| Key                         | Required | Value                              | Default                      | What it does                                                                                                                                                  |
+| --------------------------- | -------- | ---------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                        | yes      | text, unique in the file           | none                         | Names the reward in the save, so keep it when you edit the reward                                                                                             |
+| `advancement`               | no       | advancement id                     | none                         | Trigger: the advancement is earned                                                                                                                            |
+| `diet`                      | no       | int                                | none                         | Trigger: a meal lifts the player to this `distinct` count of a `variety` tier in [Food variety](#food-variety)                                                |
+| `foods`                     | no       | list of item ids or `#ore` names   | none                         | Trigger: foods to eat. Each entry counts once, the first time any food it matches is eaten; an `#ore` entry is one kind of food                               |
+| `count`                     | no       | int, 1 up to the length of `foods` | the length of `foods`        | With `foods`: how many entries must have been eaten                                                                                                           |
+| `team`                      | no       | team name                          | none                         | Trigger: the player is on this team                                                                                                                           |
+| `objective`, `scoreAtLeast` | no       | text, int                          | none                         | Trigger: the player's score in the objective is at least this. Both are needed; with `team` both must hold                                                    |
+| `dietAtLeast`               | no       | int                                | none                         | Trigger: the remembered meals of the player hold at least this many different foods (see Food variety). Needs a Food variety file; with `team` both must hold |
+| `hearts`                    | yes      | number above 0, in steps of 0.5    | none                         | The hearts one grant gives                                                                                                                                    |
+| `repeat`                    | no       | `once_per_player` or `always`      | `once_per_player`            | `always`: each new trigger grants again                                                                                                                       |
+| `times`                     | no       | int, 1 or more                     | `1`, unlimited with `always` | The most grants one player can get from the reward                                                                                                            |
+| `requires`                  | no       | list of mod ids or pack namespaces | none                         | The reward is skipped unless all are present                                                                                                                  |
+| `message`                   | no       | lang key or `""`                   | `rdpl.hearts.gained`         | Shown on a grant; `""` shows nothing                                                                                                                          |
+
+**One trigger per reward.** Set exactly one of `advancement`, `diet`, `foods`, or the condition keys `team`, `objective`, `scoreAtLeast` and `dietAtLeast`. Otherwise the log names the file and the `id`, and the reward is skipped. `advancement` grants when the advancement is earned. `diet` grants when a meal lifts the player from below that `distinct` count to it or above; it needs a Food variety file with a `variety` tier of that `distinct` and never grants without one. `foods` grants once, when the entries eaten reach `count`; `repeat` and `times` do not apply to it. A team, score or diet condition grants when it turns from false to true, checked every 5 seconds while such a reward exists.
+
+**Saved with the player.** The grants are counted per reward in the player's own saved data, so earned hearts survive death, logging out and changing dimension. The extra maximum health is saved with the player too, so a player with 24 maximum health who logs out at 23 returns with 23. The maximum is `startHearts` plus the hearts of every grant, never above `cap`; vanilla's ten hearts are `startHearts: 10`.
+
+**Health.** When the maximum rises, current health rises in the same proportion. When it falls, health is cut down to the new maximum. Respawning after a death fills the health bar.
+
+**Death.** With `keepOnDeath` `true` the earned hearts stay. With `false` death sets every count to 0 and forgets the foods eaten, and only a new trigger earns a reward again.
+
+**Catch-up.** On login and after `/rdpl reload` every online player's hearts are worked out again from the saved counts and the current rules. A reward the player has no count for yet, whose condition already holds (the advancement is done, the diet tier is reached, the foods eaten reach `count`, the team or score condition holds), is granted then, without a message. A reward set to 0 by a death is not caught up again. A reward removed from the files keeps its count in the save but gives nothing while it is gone, and counts again if it comes back.
+
+**On screen.** Health above 20 does not make new rows of hearts. Each further 10 hearts is a layer drawn over the same first row: the second layer in the first color of `heartColors`, the third in the second, and so on. A layer in a status look (poison, wither, freezing) shows that vanilla look untinted, and absorption sits above the row as in vanilla. The colors come from the server, sent on login and after a reload; a client that has not received them uses the default list.
 
 ## Work orders
 
@@ -7737,6 +7815,7 @@ A card that fires while a player still has the world intro open waits and shows 
 | `portway`, `network`        | text      | The player has a portway of that block id, or of that network, on their list or among the global ones. Either may be left out |
 | `gameMode`                  | text      | The player is in this game mode: `survival`, `creative`, `adventure` or `spectator`                                           |
 | `team`                      | text      | The player is on this scoreboard team                                                                                         |
+| `dietAtLeast`               | int       | The remembered meals of the player hold at least this many different foods (needs a Food variety file)                        |
 | `objective`, `scoreAtLeast` | text, int | The player's score in the objective is at least this                                                                          |
 
 ### The card

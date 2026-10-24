@@ -143,6 +143,7 @@ rdpl.carry.mob=Carrying %s (sneak and right-click a block to set it down)
 rdpl.carry.down=Set down %s
 rdpl.carry.denied=You cannot do that here
 rdpl.carry.full=You are already carrying something
+rdpl.hearts.gained=You feel hardier.
 rdpl.portway.activated=%s activated (%s known)
 rdpl.portway.known=You already know this portway
 rdpl.portway.stop=%s: %s, %s, %s

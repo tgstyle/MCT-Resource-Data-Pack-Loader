@@ -95,6 +95,7 @@ public final class PackManager {
     public static final String ORDERS = "orders";
     public static final String RANKS = "ranks";
     public static final String DIETS = "diets";
+    public static final String HEARTS = "hearts";
     public static final String PLAYER_LOOT = "player_loot";
     public static final String TABS = "tabs";
     public static final String FUNCTIONS = "functions";
@@ -113,7 +114,7 @@ public final class PackManager {
     public static final String JSON = "json";
     public static final String JSON_SUFFIX = "." + JSON;
     public static final String MCFUNCTION = "mcfunction";
-    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_LOCKS, SPAWN_LOCKS, LOOT_INJECTIONS, CARDS, DIALOGS, CELESTIAL, DISABLED)));
+    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, HEARTS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_LOCKS, SPAWN_LOCKS, LOOT_INJECTIONS, CARDS, DIALOGS, CELESTIAL, DISABLED)));
     private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();

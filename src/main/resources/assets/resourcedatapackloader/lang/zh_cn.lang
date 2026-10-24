@@ -143,6 +143,7 @@ rdpl.carry.mob=正在搬运：%s（潜行并右键点击方块即可放下）
 rdpl.carry.down=已放下：%s
 rdpl.carry.denied=这里无法这样做
 rdpl.carry.full=你已经在搬运东西了
+rdpl.hearts.gained=你感觉更强健了。
 rdpl.portway.activated=%s 已激活（已记录 %s）
 rdpl.portway.known=你已记录过这条传送通道
 rdpl.portway.stop=%s: %s, %s, %s

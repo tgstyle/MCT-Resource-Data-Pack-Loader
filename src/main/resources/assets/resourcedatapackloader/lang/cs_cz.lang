@@ -143,6 +143,7 @@ rdpl.carry.mob=Neseš: %s (plížením a pravým kliknutím na blok to položí�
 rdpl.carry.down=Položeno: %s
 rdpl.carry.denied=Tady to nejde
 rdpl.carry.full=Už něco neseš
+rdpl.hearts.gained=Cítíš se odolnější.
 rdpl.portway.activated=%s aktivován (známo %s)
 rdpl.portway.known=Tento průchod už znáš
 rdpl.portway.stop=%s: %s, %s, %s
