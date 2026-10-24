@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -59,7 +60,7 @@ public final class ContentLootSwitch extends LootModifier {
         return swaps;
     }
 
-    @Nullable private static ResourceLocation id(String text) {
+    @Nullable static ResourceLocation id(String text) {
         String lowered = Settings.lower(text);
         return lowered.isEmpty() ? null : ResourceLocation.tryParse(lowered.indexOf(':') < 0 ? "minecraft:" + lowered : lowered);
     }
@@ -74,8 +75,19 @@ public final class ContentLootSwitch extends LootModifier {
         }
     }
 
+    static void startMaps(MinecraftServer server, Collection<StructureMapDef> maps) {
+        Set<ResourceLocation> missing = new HashSet<>();
+        for (StructureMapDef def : maps) {
+            if (def.loot() != null && absent(server, def.loot(), missing)) { ContentLog.LOGGER.error("Structure map {} gives loot {}, which names no loot table, so the chests it fills drop nothing", def.key(), def.loot()); }
+        }
+    }
+
+    private static boolean absent(MinecraftServer server, ResourceLocation id, Set<ResourceLocation> missing) {
+        return !EMPTY.equals(id) && server.getLootData().getLootTable(id) == LootTable.EMPTY && missing.add(id);
+    }
+
     private static void check(MinecraftServer server, ResourceLocation id, Set<ResourceLocation> missing) {
-        if (!EMPTY.equals(id) && server.getLootData().getLootTable(id) == LootTable.EMPTY && missing.add(id)) { ContentLog.LOGGER.error("Environment loot {} names no loot table, so swapping it does nothing", id); }
+        if (absent(server, id, missing)) { ContentLog.LOGGER.error("Environment loot {} names no loot table, so swapping it does nothing", id); }
     }
 
     @SuppressWarnings("deprecation") @Override @Nonnull protected ObjectArrayList<ItemStack> doApply(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {

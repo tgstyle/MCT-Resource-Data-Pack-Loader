@@ -24,6 +24,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -178,13 +179,54 @@ public final class ContentStructureMaps {
             else { ContentLog.LOGGER.error("Structure map {} pins 'at' with {} number(s) instead of x and z, so the pin is ignored", key, spot.size()); }
         }
         StructureMapDef def = new StructureMapDef(key, cell, Mth.clamp(Json.getInt(json, "ground", 0), 0, layers.size() - 1), spacing, Mth.clamp(Json.getInt(json, "chance", 100), 1, 100), pinned,
-                Json.strings(json, "dimensions"), List.copyOf(layers), wide, deep);
+                Json.strings(json, "dimensions"), List.copyOf(layers), wide, deep, depth(key, json), spawners(key, json), loot(key, json));
         if (spacing > 0 && spacing * 16 < def.widest()) {
             ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest());
             return null;
         }
         return def;
     }
+
+    @Nullable private static int[] depth(ResourceLocation key, JsonObject json) {
+        JsonElement held = json.get("depth");
+        if (held == null) { return null; }
+        List<Integer> numbers = new ArrayList<>();
+        if (held.isJsonArray()) {
+            for (JsonElement number : held.getAsJsonArray()) { numbers.add(Json.asInt(number, "depth", -1)); }
+        }
+        else { numbers.add(Json.asInt(held, "depth", -1)); }
+        boolean fine = numbers.size() == 1 || numbers.size() == 2;
+        for (int number : numbers) { fine &= number >= 0; }
+        if (!fine) {
+            ContentLog.LOGGER.error("Structure map {} gives a depth that is not one or two numbers of 0 or more, so the depth is ignored", key);
+            return null;
+        }
+        int least = numbers.get(0);
+        int most = numbers.get(numbers.size() - 1);
+        return new int[] { Math.min(least, most), Math.max(least, most) };
+    }
+
+    private static List<PickDef> spawners(ResourceLocation key, JsonObject json) {
+        List<PickDef> picks = new ArrayList<>();
+        JsonElement held = json.get("spawners");
+        if (held == null) { return picks; }
+        if (held.isJsonArray()) {
+            for (String choice : Json.texts(held.getAsJsonArray(), "spawners")) { picks.add(weighted(choice)); }
+        }
+        else if (held.isJsonPrimitive()) { picks.add(weighted(held.getAsString())); }
+        else { ContentLog.LOGGER.error("Structure map {} gives spawners that are not a mob id or a list of them, so they are ignored", key); }
+        return List.copyOf(picks);
+    }
+
+    @Nullable private static ResourceLocation loot(ResourceLocation key, JsonObject json) {
+        if (!json.has("loot")) { return null; }
+        String text = Json.getString(json, "loot", "");
+        ResourceLocation loot = ContentLootSwitch.id(text);
+        if (loot == null) { ContentLog.LOGGER.error("Structure map {} gives loot '{}', which is not a loot table id, so the loot is ignored", key, text); }
+        return loot;
+    }
+
+    static Collection<StructureMapDef> defs() { return DEFS.values(); }
 
     static PickDef weighted(String written) {
         String text = Settings.lower(written);

@@ -5224,15 +5224,38 @@ Un mapa de estructuras compone plantillas en un único edificio con nombre sobre
 }
 ```
 
-| Ajuste       | Tipo                      | Por defecto | Qué hace                                                                                                                                                                                           |
-| ------------ | ------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cell`       | número                    | `32`        | El paso de la cuadrícula en bloques, hasta 48. Una plantilla menor que la celda se sitúa en la esquina de la celda, de modo que las piezas de tamaño completo encajan sin costuras                 |
-| `ground`     | número                    | `0`         | Qué capa apoya en la superficie del terreno. Las capas anteriores excavan hacia abajo, que es como un edificio obtiene sótanos                                                                     |
-| `at`         | dos números               | ninguno     | Fija una copia en coordenadas de bloque exactas, igual que `structureAt` fija una aldea                                                                                                            |
-| `spacing`    | número                    | `0`         | Dispersa copias en una cuadrícula con esta separación en chunks, con variación según la semilla del mundo. `0` no dispersa ninguna, así que un mapa con solo `at` se construye exactamente una vez |
-| `chance`     | número                    | `100`       | El porcentaje de puntos de la cuadrícula que construyen una copia                                                                                                                                  |
-| `dimensions` | lista de ids de dimensión | todas       | Dónde puede construirse el mapa, incluidas las dimensiones propias de un pack                                                                                                                      |
-| `layers`     | lista                     | ninguno     | Las capas, de abajo arriba, cada una con una `palette` y un `map`                                                                                                                                  |
+Un mapa también puede hundirse bajo el terreno y rellenar los spawners y los cofres que contienen sus plantillas:
+
+```json
+{
+  "cell": 24,
+  "depth": [8, 20],
+  "spacing": 48,
+  "chance": 30,
+  "spawners": ["minecraft:zombie=3", "minecraft:skeleton=2", "mypack:angry_cow"],
+  "loot": "minecraft:chests/simple_dungeon",
+  "layers": [
+    {
+      "palette": { "a": "mypack:dungeon_rooms" },
+      "map": ["aa",
+              "aa"]
+    }
+  ]
+}
+```
+
+| Ajuste       | Tipo                      | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------ | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cell`       | número                    | `32`        | El paso de la cuadrícula en bloques, hasta 48. Una plantilla menor que la celda se sitúa en la esquina de la celda, de modo que las piezas de tamaño completo encajan sin costuras                                                                                                                                                                                                                               |
+| `ground`     | número                    | `0`         | Qué capa apoya en la superficie del terreno. Las capas anteriores excavan hacia abajo, que es como un edificio obtiene sótanos                                                                                                                                                                                                                                                                                   |
+| `at`         | dos números               | ninguno     | Fija una copia en coordenadas de bloque exactas, igual que `structureAt` fija una aldea                                                                                                                                                                                                                                                                                                                          |
+| `spacing`    | número                    | `0`         | Dispersa copias en una cuadrícula con esta separación en chunks, con variación según la semilla del mundo. `0` no dispersa ninguna, así que un mapa con solo `at` se construye exactamente una vez                                                                                                                                                                                                               |
+| `chance`     | número                    | `100`       | El porcentaje de puntos de la cuadrícula que construyen una copia                                                                                                                                                                                                                                                                                                                                                |
+| `depth`      | número o dos números      | ninguno     | Hunde el edificio bajo el terreno: el suelo de la capa de suelo queda tantos bloques por debajo de la superficie muestreada en lugar de sobre ella. Dos números son un mínimo y un máximo, y cada copia sortea el suyo a partir de la semilla del mundo. Se aplica a las copias que el mapa reparte o fija con `at`; un mapa que coloca una aldea o una ciudad sigue asentando su capa `ground` en la superficie |
+| `spawners`   | lista de ids de entidad   | ninguno     | El mob de cada spawner de las plantillas del mapa que se guardó sin ninguno o solo con un cerdo. Una entrada puede llevar un peso, como `id=2`; un spawner guardado con un mob que no sea un cerdo lo conserva. Un id que nada registra (la variante de entidad de un paquete mientras `vanillaClients` está activado) queda fuera del sorteo                                                                    |
+| `loot`       | id de tabla de botín      | ninguno     | La tabla de botín de cada cofre y cofre trampa de las plantillas del mapa que se guardó sin tabla de botín y sin objetos; un cofre guardado con alguno de los dos lo conserva                                                                                                                                                                                                                                    |
+| `dimensions` | lista de ids de dimensión | todas       | Dónde puede construirse el mapa, incluidas las dimensiones propias de un pack                                                                                                                                                                                                                                                                                                                                    |
+| `layers`     | lista                     | ninguno     | Las capas, de abajo arriba, cada una con una `palette` y un `map`                                                                                                                                                                                                                                                                                                                                                |
 
 Una paleta nombra plantillas por su clave de registro, tomadas de `<namespace>/structures/` de un pack.
 
@@ -5243,6 +5266,8 @@ Una paleta nombra plantillas por su clave de registro, tomadas de `<namespace>/s
 | `.`                                         | Una celda vacía, no se coloca nada                                                                                                                                                                    |
 
 Cada copia sortea una de las cuatro orientaciones a partir de la semilla del mundo y todo el edificio gira a la vez, plantillas incluidas, así que los muros que se encuentran entre celdas siguen encontrándose; un mapa gira, pero nunca se refleja. La capa del suelo apoya en la superficie del terreno muestreada bajo el centro del edificio, y todo el mapa comparte esa única altura. Un mapa disperso es una estructura propia para el juego, colocada mediante un conjunto de estructuras escrito por ti, de modo que cada chunk construye solo su porción de la cuadrícula y un edificio que abarca muchos chunks llega sin generación en cascada, sea cual sea el orden en que se carguen los chunks. Una [parcela de aldea](#parcelas-de-aldea) de tipo `template` también puede nombrar un mapa como su `structure`, lo que convierte el compuesto en un edificio de ciudad.
+
+Un mapa se abre paso en el terreno: cada bloque que contiene una plantilla, aire incluido, sustituye lo que había, mientras que una celda vacía o el espacio alrededor de una plantilla más pequeña sigue sólido, así que da a cada sala su aire en la plantilla y a un pozo sus celdas hasta la superficie.
 
 ## Parcelas de aldea
 
