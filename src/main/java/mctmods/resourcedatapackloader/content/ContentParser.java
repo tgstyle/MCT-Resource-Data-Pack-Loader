@@ -418,11 +418,12 @@ public final class ContentParser {
         Map<ResourceLocation, Integer> carriers = leveledNames(key, json, "carriers");
         Map<String, Integer> weather = weather(key, json);
         Map<String, Integer> biomes = leveled(key, json, "biomes", named -> named);
+        Map<String, Integer> environments = leveled(key, json, "environments", named -> named);
         Map<String, Integer> structures = leveled(key, json, "structures", named -> named);
         Map<ResourceLocation, Integer> caveRegions = leveled(key, json, "caveRegions", named -> location(named.contains(":") ? named : key.getNamespace() + ":" + named));
         List<ExposureBandDef> heights = bands(key, json);
-        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty() && biomes.isEmpty() && structures.isEmpty() && caveRegions.isEmpty() && heights.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers, weather, biomes, structures, caveRegions or heights, ignoring it", key);
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty() && biomes.isEmpty() && environments.isEmpty() && structures.isEmpty() && caveRegions.isEmpty() && heights.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers, weather, biomes, environments, structures, caveRegions or heights, ignoring it", key);
             return null;
         }
         Set<String> immuneTeams = new LinkedHashSet<>();
@@ -434,7 +435,7 @@ public final class ContentParser {
                 Math.max(0, Json.getInt(json, "sourcesForNextLevel", 0)), Json.getString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels),
                 carriers, Json.getBoolean(json, "contagious", false), catchers, Math.max(0, Json.getInt(json, "contagionRange", 4)),
                 Mth.clamp(Json.getFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F), Math.max(1, Json.getInt(json, "contagionDuration", 1200)),
-                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"), biomes, structures, caveRegions, Collections.unmodifiableList(heights),
+                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"), biomes, environments, structures, caveRegions, Collections.unmodifiableList(heights),
                 names(key, Json.strings(json, "immuneItems"), "immuneItems"), immuneTeams, Json.getString(json, "onClear", "").trim());
     }
 

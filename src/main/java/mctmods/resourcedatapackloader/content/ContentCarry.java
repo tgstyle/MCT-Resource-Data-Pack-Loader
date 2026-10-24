@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -58,9 +59,9 @@ public final class ContentCarry {
     private static final String ID = "id";
     private static final int EVERY = 10;
     private static final UUID CARRIED = UUID.fromString("6d1f3a52-94c7-4e08-b3a1-7f2c5e9d0b46");
-    private static final Set<Block> BLOCK_RULES = new HashSet<>();
     private static final Set<EntityType<?>> MOB_RULES = new HashSet<>();
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static BlockGroup blockRules = new BlockGroup();
     private static boolean breaking;
 
     private ContentCarry() {}
@@ -77,10 +78,10 @@ public final class ContentCarry {
     }
 
     private static void reload() {
-        BLOCK_RULES.clear();
+        blockRules = new BlockGroup();
         MOB_RULES.clear();
         Json.eachObject(PackManager.CARRIES, "carries", ContentCarry::read);
-        if (!BLOCK_RULES.isEmpty() || !MOB_RULES.isEmpty()) { ContentLog.LOGGER.info("Loaded carrying for {} block(s) and {} mob(s)", BLOCK_RULES.size(), MOB_RULES.size()); }
+        if (!blockRules.isEmpty() || !MOB_RULES.isEmpty()) { ContentLog.LOGGER.info("Loaded carrying: {} mob(s), blocks {}", MOB_RULES.size(), blockRules.isEmpty() ? "none" : "listed"); }
     }
 
     private static EntityType<?> mob(String name) { return Registered.find(ForgeRegistries.ENTITY_TYPES, ResourceLocation.tryParse(Settings.lower(name))); }
@@ -92,15 +93,7 @@ public final class ContentCarry {
             return;
         }
         if (json.has(BLOCKS)) {
-            for (JsonElement element : Json.getJsonArray(json, BLOCKS)) {
-                String name = Json.asString(element, BLOCKS, "");
-                Block block = Registered.block(name);
-                if (block == null) {
-                    ContentLog.LOGGER.error("Carry {} names the block {}, which nothing registers, skipping it", key, name);
-                    continue;
-                }
-                BLOCK_RULES.add(block);
-            }
+            for (BlockMatchDef match : ContentParser.matches(key, json, BLOCKS)) { blockRules.add(match, "Carry " + key, BLOCKS); }
         }
         if (json.has(MOBS)) {
             for (JsonElement element : Json.getJsonArray(json, MOBS)) {
@@ -140,7 +133,7 @@ public final class ContentCarry {
         Level level = event.getLevel();
         BlockPos pos = event.getPos();
         if (level.isClientSide()) {
-            if (carrying(player) || BLOCK_RULES.contains(level.getBlockState(pos).getBlock())) { consume(event); }
+            if (carrying(player) || blockRules.contains(level.getBlockState(pos))) { consume(event); }
             return;
         }
         ServerPlayer mover = (ServerPlayer) player;
@@ -151,7 +144,7 @@ public final class ContentCarry {
             return;
         }
         BlockState state = level.getBlockState(pos);
-        if (!BLOCK_RULES.contains(state.getBlock())) { return; }
+        if (!blockRules.contains(state)) { return; }
         consume(event);
         pickUp(mover, pos, state);
     }

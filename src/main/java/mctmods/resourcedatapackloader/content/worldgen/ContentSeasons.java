@@ -112,19 +112,22 @@ public final class ContentSeasons {
         List<String> seasonal = seasons.seasonal();
         List<String> before = ContentEnvironments.active(key);
         for (String name : before.subList(1, before.size())) {
-            if (seasonal.contains(name) && !target.contains(name)) { ContentEnvironments.set(server, key, name, false); }
+            if (seasonal.contains(name) && !target.contains(name)) { ContentEnvironments.change(server, key, name, false); }
         }
         String whole = null;
         for (String name : target) {
             if (!ContentEnvironments.local(key, name)) { whole = name; }
         }
         String current = before.get(0);
-        if (whole != null && !whole.equals(current)) { ContentEnvironments.set(server, key, whole, true); }
-        else if (whole == null && seasonal.contains(current)) { ContentEnvironments.set(server, key, ContentEnvironments.DEFAULT, true); }
+        if (whole != null && !whole.equals(current)) { ContentEnvironments.change(server, key, whole, true); }
+        else if (whole == null && seasonal.contains(current)) { ContentEnvironments.change(server, key, ContentEnvironments.DEFAULT, true); }
         for (String name : target) {
-            if (ContentEnvironments.local(key, name) && !ContentEnvironments.active(key).contains(name)) { ContentEnvironments.set(server, key, name, true); }
+            if (ContentEnvironments.local(key, name) && !ContentEnvironments.active(key).contains(name)) { ContentEnvironments.change(server, key, name, true); }
         }
-        if (!before.equals(ContentEnvironments.active(key))) { ContentLog.LOGGER.info("Dimension {} enters the season '{}' on day {}", key, target.get(0), day); }
+        if (!before.equals(ContentEnvironments.active(key))) {
+            ContentEnvironments.announce(server, key, before);
+            ContentLog.LOGGER.info("Dimension {} enters the season '{}' on day {}", key, target.get(0), day);
+        }
     }
 
     static void forget() {

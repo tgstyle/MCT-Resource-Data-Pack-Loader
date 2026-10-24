@@ -212,9 +212,10 @@ assets, так само, як будь-який інший файл у цій т
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
-    tooltips
-    harvests
-    carries
+    tooltips         harvests         carries          dialogs
+    veins            diets            enchantments     dice
+    games            orders           ranks            recipe_locks
+    spawn_locks
 
 Блоки бувають таких форм, їх задає поле "type":
 

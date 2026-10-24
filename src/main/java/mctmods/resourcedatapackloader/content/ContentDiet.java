@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Standing;
@@ -42,6 +43,7 @@ public final class ContentDiet {
     private static final String MEALS = "meals";
     private static final Map<UUID, float[]> BEFORE = new HashMap<>();
     private static final Map<PotionEffectDef, MobEffect> EFFECTS = new IdentityHashMap<>();
+    private static final PackGeneration GENERATION = new PackGeneration();
     @Nullable private static DietDef diet;
     @Nullable private static ResourceLocation source;
     private static boolean ran;
@@ -50,10 +52,15 @@ public final class ContentDiet {
 
     public static void load() {
         ran = true;
+        BEFORE.clear();
+        reload();
+    }
+
+    private static void reload() {
         diet = null;
         source = null;
-        BEFORE.clear();
         EFFECTS.clear();
+        GENERATION.stale();
         Json.eachObject(PackManager.DIETS, "diet file", ContentDiet::read);
         DietDef loaded = diet;
         if (loaded != null) { Summary.info("diet", "Food variety from " + source + ": remembers " + loaded.memory() + " meal(s)"); }
@@ -61,6 +68,7 @@ public final class ContentDiet {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
+        if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         if (diet != null) {
             ContentLog.LOGGER.error("Diet file {} found, but {} already set the diet, so the first one is kept", key, source);
             return;
@@ -73,7 +81,9 @@ public final class ContentDiet {
     }
 
     public static void onTick(LivingEntityUseItemEvent.Tick event) {
-        if (diet == null || !(event.getEntity() instanceof ServerPlayer player)) { return; }
+        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
+        if (GENERATION.stale()) { reload(); }
+        if (diet == null) { return; }
         FoodData food = player.getFoodData();
         float[] seen = BEFORE.computeIfAbsent(player.getUUID(), id -> new float[2]);
         seen[0] = food.getFoodLevel();
@@ -83,8 +93,10 @@ public final class ContentDiet {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { BEFORE.remove(event.getEntity().getUUID()); }
 
     public static void onFinish(LivingEntityUseItemEvent.Finish event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
+        if (GENERATION.stale()) { reload(); }
         DietDef rules = diet;
-        if (rules == null || !(event.getEntity() instanceof ServerPlayer player)) { return; }
+        if (rules == null) { return; }
         float[] seen = BEFORE.remove(player.getUUID());
         if (seen == null || rules.exempts(event.getItem())) { return; }
         FoodData food = player.getFoodData();

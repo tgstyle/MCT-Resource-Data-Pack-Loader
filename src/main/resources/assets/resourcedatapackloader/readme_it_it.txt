@@ -221,9 +221,10 @@ Ognuna di queste è una cartella sotto data/<yourpack>:
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
     tags             registry_remap   cards            disabled
-    tooltips
-    harvests
-    carries
+    tooltips         harvests         carries          dialogs
+    veins            diets            enchantments     dice
+    games            orders           ranks            recipe_locks
+    spawn_locks
 
 I blocchi hanno queste forme, impostate dal campo "type":
 

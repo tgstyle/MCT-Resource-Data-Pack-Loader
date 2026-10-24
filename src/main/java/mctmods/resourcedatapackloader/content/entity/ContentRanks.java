@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.content.card.CardPlace;
 import mctmods.resourcedatapackloader.content.def.RankDef;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -36,7 +37,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentRanks {
-    private static final List<String> KEYS = List.of("entities", "weight", "name", "health", "damage", "effects", "loot");
+    private static final List<String> KEYS = List.of("entities", "weight", "name", "health", "damage", "effects", "loot", "dimensions");
     private static final String RANK = "rdplRank";
     private static final String NAME = "RDPL rank";
     private static final UUID HEALTH = UUID.fromString("6f1a3c52-9b0e-4d7a-8a41-2e5c0d9b7a21");
@@ -53,6 +54,15 @@ public final class ContentRanks {
         if (!DEFS.isEmpty()) { Summary.info("ranks", "Loaded " + DEFS.size() + " mob rank(s)"); }
         return !DEFS.isEmpty();
     }
+
+    public static String rankOf(Entity entity) { return entity.getPersistentData().getString(RANK); }
+
+    public static String killKey(String namespace, String entry) {
+        int at = entry.indexOf('@');
+        return at < 0 ? entry : entry.substring(0, at) + "@" + key(namespace, entry.substring(at + 1).trim());
+    }
+
+    public static String key(String namespace, String rank) { return rank.isEmpty() || rank.indexOf(':') >= 0 ? rank : namespace + ":" + rank; }
 
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "rank definition");
@@ -97,7 +107,9 @@ public final class ContentRanks {
             ContentLog.LOGGER.error("{} gives effects that are not all objects with a different potion each, ignoring the rank", owner);
             return null;
         }
-        return new RankDef(key, entities, weight.intValue(), label, health, damage, effects, loot);
+        List<String> dimensions = new ArrayList<>();
+        for (String named : Json.strings(json, "dimensions")) { dimensions.add(CardPlace.dimensionId(named)); }
+        return new RankDef(key, entities, weight.intValue(), label, health, damage, effects, loot, dimensions);
     }
 
     @Nullable private static Float number(String owner, JsonObject json, String key, float low, boolean whole, String need) {
@@ -136,7 +148,7 @@ public final class ContentRanks {
         if (data.contains(RANK)) { return; }
         List<RankDef> matches = new ArrayList<>();
         for (RankDef each : DEFS.values()) {
-            if (MobStats.targets(each.entities(), mob)) { matches.add(each); }
+            if (MobStats.targets(each.entities(), mob) && (each.dimensions().isEmpty() || CardPlace.inAny(each.dimensions(), mob.level()))) { matches.add(each); }
         }
         RankDef def = WeightedPicks.pick(matches, RankDef::weight, mob.getRandom());
         if (def == null) { return; }
