@@ -212,6 +212,7 @@ Each of these is a folder under data/<yourpack>:
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Blocks come in these shapes, set by the "type" field:
 

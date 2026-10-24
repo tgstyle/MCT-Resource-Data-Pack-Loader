@@ -66,6 +66,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Itens largados por blocos](#itens-largados-por-blocos)
 - [Colheita com o botão direito](#colheita-com-o-botão-direito)
 - [Mineração de filões](#mineração-de-filões)
+- [Transportar](#transportar)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Variedade alimentar](#variedade-alimentar)
 - [Aldeões e trocas](#aldeões-e-trocas)
@@ -202,6 +203,7 @@ Em `data/`:
 | `<namespace>/block_drops/*.json`             | Itens largados extra ou de substituição para blocos que um pacote não possui. [Itens largados por blocos](#itens-largados-por-blocos)                                                       |
 | `<namespace>/harvests/*.json`                | Culturas colhidas e replantadas com o botão direito. [Colheita com o botão direito](#colheita-com-o-botão-direito)                                                                          |
 | `<namespace>/veins/*.json`                   | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de filões](#mineração-de-filões)                                                              |
+| `<namespace>/carries/*.json`                 | Blocos e mobs que um jogador agachado apanha e volta a pousar. [Transportar](#transportar)                                                                                                  |
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                              |
 | `<namespace>/diets/*.json`                   | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                       |
 | `<namespace>/advancements/*.json`            | Progressos. [O que podes substituir](#o-que-podes-substituir)                                                                                                                               |
@@ -2785,6 +2787,32 @@ Partir um minério com uma picareta normalmente parte só esse bloco. Um ficheir
 | `requires` | não         | lista de strings                                                                                           | nenhum       | Ids de mod, espaços de nomes de pack ou opções `config:` que têm de estar presentes, como em qualquer definição      |
 
 Tocar significa partilhar uma face, uma aresta ou um canto, por isso cada bloco tem 26 vizinhos. Só em sobrevivência: jogadores em criativo e espectadores partem um bloco só, como sempre. Para quando a ferramenta parte ou a barra de comida do jogador chega a 0. Cada bloco extra larga os seus drops habituais, com a Fortuna da ferramenta na mão e todas as regras de Itens largados por blocos, e gasta um uso da ferramenta. Não atua sobre um bloco que um grupo de dureza mantém. São dados de pack só de servidor e não precisam de nada no cliente. Um ficheiro sem blocos ou ferramentas válidos é ignorado com uma linha de erro.
+
+## Transportar
+
+*fabrico, saque e comércio*
+
+`<namespace>/carries/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se.
+
+Um jogador que se agacha e clica com o botão direito com a mão principal vazia apanha um bloco ou mob da lista, e agachado com o botão direito num bloco volta a pousá-lo na face clicada. Um bloco transportado mantém os dados da sua entidade de bloco e um mob transportado todos os dados da sua entidade. Quem transporta move-se a metade da velocidade, uma linha da barra de ação diz o que leva, e a carga fica nos dados do jogador depois da morte e ao voltar a ligar.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Chave      | Obrigatório | Valor                    | Predefinição | O que faz                                                                                                                                     |
+| ---------- | ----------- | ------------------------ | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | não         | lista de ids de bloco    | nenhum       | Os blocos que podem ser transportados, do vanilla ou de um pack. Um bloco que nada regista é ignorado com uma linha de registo                |
+| `mobs`     | não         | lista de ids de entidade | nenhum       | Os mobs que podem ser transportados, por id de entidade, do vanilla ou de um pack. Um id que nada regista é ignorado com uma linha de registo |
+| `requires` | não         | lista de strings         | nenhum       | Ids de mod, espaços de nomes de pack ou opções `config:` que têm de estar presentes, como em qualquer definição                               |
+
+Só ids, sem etiquetas. As estruturas de dois blocos, como portas, plantas altas e camas, não podem ser transportadas, nem os blocos protegidos ou com dureza abaixo de 0. Os passageiros de um mob são largados quando ele é apanhado, a trela não tem tratamento especial e nada é desenhado em quem transporta. Os dados transportados não passam pelo data fixer ao atualizar o jogo, e uma carga cujo bloco ou mob já não se resolve é apagada com uma linha de erro no registo. Um mob de pack agachado com interface de armazenamento é apanhado em vez de a abrir.
 
 ## Saque de jogadores
 

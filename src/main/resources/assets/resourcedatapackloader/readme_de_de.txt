@@ -222,6 +222,7 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     tags             registry_remap   cards            disabled
     tooltips
     harvests
+    carries
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 
