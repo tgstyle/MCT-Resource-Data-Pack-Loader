@@ -75,6 +75,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 **Tvorové a nebezpečí**
 - [Varianty entit](#varianty-entit)
 - [Hodnosti mobů](#hodnosti-mobů)
+- [Odměny za maximální zdraví](#odměny-za-maximální-zdraví)
 - [Zakázky](#zakázky)
 - [Expozice](#expozice)
 
@@ -167,8 +168,8 @@ V `data/`:
 | `<namespace>/raids/*.json`                   | Vlny, které přijdou na vesnici, když do ní hráč přinese znamení. [Nájezdy](#nájezdy)                                                                                                                 |
 | `<namespace>/entities/*.json`                | Varianty entit postavené na již existujících entitách. [Varianty entit](#varianty-entit)                                                                                                             |
 | `<namespace>/hardness/*.json`                | Doba těžby a násobitele výbuchu pro skupiny bloků. [Skupiny tvrdosti](#skupiny-tvrdosti)                                                                                                             |
-| `<namespace>/affixes/*.json` | Náhodné bonusy atributů a patice, které předmět vylosuje, když ho hráč poprvé drží. [Afixy a patice](#afixy-a-patice) |
-| `<namespace>/gems/*.json` | Předměty, které kovadlina vloží do patice za bonus atributu. [Afixy a patice](#afixy-a-patice) |
+| `<namespace>/affixes/*.json`                 | Náhodné bonusy atributů a patice, které předmět vylosuje, když ho hráč poprvé drží. [Afixy a patice](#afixy-a-patice)                                                                                |
+| `<namespace>/gems/*.json`                    | Předměty, které kovadlina vloží do patice za bonus atributu. [Afixy a patice](#afixy-a-patice)                                                                                                       |
 | `<namespace>/anvils/*.json`                  | Kouzla, která kovadlina dá pojmenovanému předmětu, pokrok, který tím hráč získá, a zámek do té doby. [Práce s kovadlinou](#práce-s-kovadlinou)                                                       |
 | `<namespace>/enchanting/*.json`              | Co čarovací stůl nabízí, žádá a bere: podle očarování, podle předmětu a celkově. [Čarovací stůl](#čarovací-stůl)                                                                                     |
 | `<namespace>/cards/*.json`                   | Karty na obrazovce zobrazené při spouštěči a zprávy, které říká sám tento mód. [Karty](#karty)                                                                                                       |
@@ -176,6 +177,7 @@ V `data/`:
 | `<namespace>/dice/*.json`                    | Kostky balíčku s váženými stěnami, balíčky karet, kdo uslyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                 |
 | `<namespace>/games/*.json`                   | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry)                                                                        |
 | `<namespace>/ranks/*.json`                   | Náhodné úrovně, které mob získá při objevení: zdraví navíc, poškození, efekty, kořist a jmenovka. [Hodnosti mobů](#hodnosti-mobů)                                                                    |
+| `<namespace>/hearts/*.json`                  | Srdce navíc, která hráč získá za pokroky, pestrou stravu nebo skóre týmu a která se ukládají u hráče. [Odměny za maximální zdraví](#odměny-za-maximální-zdraví)                                      |
 | `<namespace>/orders/*.json`                  | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                                                                       |
 | `<namespace>/exposures/*.json`               | Nebezpečí, která ohrožují hráče poblíž pojmenovaných bloků, nesoucí pojmenované předměty nebo v pojmenovaných dimenzích, biomech, strukturách, oblastech jeskyní nebo výškách. [Expozice](#expozice) |
 | `<namespace>/overrides/<target>/<name>.json` | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností)                                                                               |
@@ -513,7 +515,7 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | Stačí jen server                                                                                                                                          | Potřebuje balíček i na klientovi                                                                                 |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                         |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                          |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                  |
@@ -2610,24 +2612,24 @@ Když je vylosovaný předmět s prázdnou paticí v levém slotu kovadliny a dr
 }
 ```
 
-| Klíč      | Povinný | Hodnota                    | Výchozí | Co dělá                                                                                              |
-| --------- | ------- | -------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
-| `item`    | ano     | název předmětu |         | Předmět, který losuje. Nesmí se stohovat: stohovatelný předmět je chyba a soubor se přeskočí        |
-| `rolls`   | ne      | `{ "min", "max" }`         | `1`     | Kolik různých afixů vylosuje                                                                         |
-| `sockets` | ne      | `{ "min", "max" }`         | `0`     | Kolik patic pro drahokamy vylosuje                                                                   |
-| `affixes` | ano     | seznam objektů             |         | Co může vylosovat, každý záznam podle níže. Záznam s neznámým atributem se přeskočí                  |
+| Klíč      | Povinný | Hodnota            | Výchozí | Co dělá                                                                                      |
+| --------- | ------- | ------------------ | ------- | -------------------------------------------------------------------------------------------- |
+| `item`    | ano     | název předmětu     |         | Předmět, který losuje. Nesmí se stohovat: stohovatelný předmět je chyba a soubor se přeskočí |
+| `rolls`   | ne      | `{ "min", "max" }` | `1`     | Kolik různých afixů vylosuje                                                                 |
+| `sockets` | ne      | `{ "min", "max" }` | `0`     | Kolik patic pro drahokamy vylosuje                                                           |
+| `affixes` | ano     | seznam objektů     |         | Co může vylosovat, každý záznam podle níže. Záznam s neznámým atributem se přeskočí          |
 
 Každý záznam v `affixes` bere:
 
-| Klíč        | Povinný | Hodnota                                                         | Výchozí | Co dělá                                                                                                   |
-| ----------- | ------- | --------------------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------- |
-| `name`      | ne      | text, nebo klíč jazyka                                          | žádný   | Řádek, který o něm ukáže popisek předmětu                                                                 |
-| `attribute` | ano     | název atributu                                                  |         | Co mění, například `generic.attackDamage` nebo `generic.maxHealth`                                        |
-| `min`       | ne      | číslo                                                           | `0`     | Nejmíň, kolik přidá                                                                                       |
-| `max`       | ne      | číslo                                                           | `min`   | Nejvíc, kolik přidá. Stejné hodnoty dají přesný bonus, jinak se losuje mezi nimi                          |
-| `operation` | ne      | `0`, `1` nebo `2`                                               | `0`     | `0` přičte k atributu, `1` násobí jeho základ, `2` násobí součet                                          |
-| `slot`      | ne      | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` nebo `any` | `any`   | V jakém slotu musí předmět být, aby se bonus započítal                                                    |
-| `weight`    | ne      | celé číslo                                                      | `1`     | Jak je pravděpodobný vedle ostatních. Afixy jednoho předmětu jsou navzájem různé, vybírané podle váhy     |
+| Klíč        | Povinný | Hodnota                                                           | Výchozí | Co dělá                                                                                               |
+| ----------- | ------- | ----------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| `name`      | ne      | text, nebo klíč jazyka                                            | žádný   | Řádek, který o něm ukáže popisek předmětu                                                             |
+| `attribute` | ano     | název atributu                                                    |         | Co mění, například `generic.attackDamage` nebo `generic.maxHealth`                                    |
+| `min`       | ne      | číslo                                                             | `0`     | Nejmíň, kolik přidá                                                                                   |
+| `max`       | ne      | číslo                                                             | `min`   | Nejvíc, kolik přidá. Stejné hodnoty dají přesný bonus, jinak se losuje mezi nimi                      |
+| `operation` | ne      | `0`, `1` nebo `2`                                                 | `0`     | `0` přičte k atributu, `1` násobí jeho základ, `2` násobí součet                                      |
+| `slot`      | ne      | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` nebo `any` | `any`   | V jakém slotu musí předmět být, aby se bonus započítal                                                |
+| `weight`    | ne      | celé číslo                                                        | `1`     | Jak je pravděpodobný vedle ostatních. Afixy jednoho předmětu jsou navzájem různé, vybírané podle váhy |
 
 ```json
 {
@@ -2641,15 +2643,15 @@ Každý záznam v `affixes` bere:
 }
 ```
 
-| Klíč        | Povinný | Hodnota                                                         | Výchozí    | Co dělá                                                                                          |
-| ----------- | ------- | --------------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------------ |
-| `item`      | ano     | název předmětu                                  |            | Drahokam, který patří do pravého slotu kovadliny                                                 |
-| `name`      | ne      | text, nebo klíč jazyka                                          | ten předmět | Co popisek ukáže, když drahokam sedí v patici                                                   |
-| `attribute` | ano     | název atributu                                                  |            | Co drahokam mění                                                                                 |
-| `amount`    | ne      | číslo                                                           | `0`        | Co přidá                                                                                         |
-| `operation` | ne      | `0`, `1` nebo `2`                                               | `0`        | Jako u afixu                                                                                     |
-| `slot`      | ne      | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` nebo `any` | `any`      | Jako u afixu                                                                                     |
-| `levels`    | ne      | celé číslo                                                      | `1`        | Úrovně zkušeností, které vložení drahokamu stojí, nejméně 1 a vždy pod hranicí příliš drahé práce kovadliny |
+| Klíč        | Povinný | Hodnota                                                           | Výchozí     | Co dělá                                                                                                     |
+| ----------- | ------- | ----------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
+| `item`      | ano     | název předmětu                                                    |             | Drahokam, který patří do pravého slotu kovadliny                                                            |
+| `name`      | ne      | text, nebo klíč jazyka                                            | ten předmět | Co popisek ukáže, když drahokam sedí v patici                                                               |
+| `attribute` | ano     | název atributu                                                    |             | Co drahokam mění                                                                                            |
+| `amount`    | ne      | číslo                                                             | `0`         | Co přidá                                                                                                    |
+| `operation` | ne      | `0`, `1` nebo `2`                                                 | `0`         | Jako u afixu                                                                                                |
+| `slot`      | ne      | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` nebo `any` | `any`       | Jako u afixu                                                                                                |
+| `levels`    | ne      | celé číslo                                                        | `1`         | Úrovně zkušeností, které vložení drahokamu stojí, nejméně 1 a vždy pod hranicí příliš drahé práce kovadliny |
 
 ## Čarovací stůl
 
@@ -2932,19 +2934,26 @@ Běžně jídlo sytí stejně, ať ho jíš kolikrát chceš. Soubor tady způso
 {
   "memory": 8,
   "repeat": [1.0, 0.5, 0.25],
-  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+  "exempt": ["minecraft:rotten_flesh", "minecraft:spider_eye", "#c:foods/raw_meat"],
+  "variety": [ { "distinct": 4, "multiplier": 1.25, "effects": [ { "potion": "minecraft:regeneration", "duration": 200 } ] },
+               { "distinct": 7, "multiplier": 1.5, "effects": [ { "potion": "minecraft:resistance" } ], "runs": "mypack:diet/well_fed" } ]
 }
 ```
 
-| Klíč      | Povinný | Hodnota          | Výchozí | Co dělá                                                                                                                                                             |
-| --------- | ------- | ---------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `memory`  | ne      | int ≥ 1          | `10`    | Kolik jídel si každý hráč pamatuje; nejstarší se zapomene první                                                                                                     |
-| `repeat`  | ne      | seznam float ≥ 0 | `[1.0]` | Násobitel pro 1., 2., 3. případ, kdy je totéž jídlo mezi zapamatovanými jídly; poslední položka se opakuje                                                          |
-| `variety` | ne      | seznam objektů   | žádné   | Každý objekt má `distinct` (int ≥ 1) a `multiplier` (float ≥ 0): jakmile zapamatovaná jídla obsahují tolik různých druhů, přírůstek se vynásobí číslem `multiplier` |
-| `groups`  | ne      | seznam textů     | žádné   | ID předmětů nebo značky `#tag`; jídlo odpovídající položce se počítá jako ta položka, takže jedna značka je jedno jídlo; platí první shoda                          |
-| `messages` | ne      | objekt           | —       | Řádek na akčním panelu po jídle: `repeat` při násobiteli opakování pod 1, `variety` nad 1; text, klíč jazyka nebo `""`; výchozí `rdpl.diet.*`                       |
+| Klíč       | Povinný | Hodnota          | Výchozí | Co dělá                                                                                                                                                                                                                                      |
+| ---------- | ------- | ---------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | ne      | int ≥ 1          | `10`    | Kolik jídel si každý hráč pamatuje; nejstarší se zapomene první                                                                                                                                                                              |
+| `repeat`   | ne      | seznam float ≥ 0 | `[1.0]` | Násobitel pro 1., 2., 3. případ, kdy je totéž jídlo mezi zapamatovanými jídly; poslední položka se opakuje                                                                                                                                   |
+| `variety`  | ne      | seznam objektů   | žádné   | Každý objekt má `distinct` (int ≥ 1) a `multiplier` (float ≥ 0): jakmile zapamatovaná jídla obsahují tolik různých druhů, přírůstek se vynásobí číslem `multiplier`                                                                          |
+| `groups`   | ne      | seznam textů     | žádné   | ID předmětů nebo značky `#tag`; jídlo odpovídající položce se počítá jako ta položka, takže jedna značka je jedno jídlo; platí první shoda                                                                                                   |
+| `messages` | ne      | objekt           | —       | Řádek na akčním panelu po jídle: `repeat` při násobiteli opakování pod 1, `variety` nad 1; text, klíč jazyka nebo `""`; výchozí `rdpl.diet.*`                                                                                                |
+| `exempt`   | ne      | seznam textů     | žádné   | ID předmětů nebo značky `#tag`; jídlo odpovídající položce se nechá být: nepamatuje se, nepočítá se a jeho zisk se nikdy nezmění. Má přednost před `groups`                                                                                  |
+| `effects`  | ne      | seznam objektů   | žádné   | Uvnitř objektu v `variety`: efekty lektvarů udělené po každém jídle, dokud je tento stupeň nejvyšší, jakého hráč dosáhl. Každý má `potion`, `duration` v tikách (výchozí `1200`), `amplifier`, `ambient` a `showParticles` (výchozí `false`) |
+| `runs`     | ne      | ID funkce        | žádné   | Uvnitř objektu v `variety`: funkce spuštěná jako hráč při jídle, které ho zdola zvedne do tohoto stupně, jednou za každý přechod                                                                                                             |
 
-Chybná hodnota zapíše jednu chybu s názvem souboru a celý soubor se přeskočí.
+Chybná hodnota zapíše jednu chybu s názvem souboru a celý soubor se přeskočí. Lektvar, který neexistuje, se při udělení efektu přeskočí. `runs` se spustí znovu, pokud jídla vypadnou z paměti, hráč klesne pod stupeň a znovu na něj vystoupí. Položka `exempt`, která nic neodpovídá, zapíše jedno varování s názvem souboru a položkou a přeskočí se sama; zbytek souboru se načte.
+
+Všude, kde se čte podmínka týmu nebo skóre, třeba v `when` karty, u brány nebo u odměny za srdce, funguje vedle ní `dietAtLeast` (int ≥ 1): platí, dokud zapamatovaná jídla hráče obsahují alespoň tolik různých jídel, s použitím `groups`. Bez souboru Pestrosti jídla není nikdy splněna a log zapíše jednu chybu.
 
 Když hráč dojí, hlad a sytost, které jídlo skutečně doplnilo (po vanilkovém stropu), se vynásobí jedním číslem: položkou `repeat` podle toho, kolikrát už jídlo mezi zapamatovanými jídly je (žádné je 1. položka), krát stupeň `variety` s největším dosaženým `distinct`, ať stojí v souboru kdekoli. `distinct` počítá různá jídla mezi zapamatovanými včetně právě snězeného, po oříznutí seznamu na `memory`. Přírůstek hladu se zaokrouhlí na celé půlikony hladu a nová úroveň hladu zůstane mezi 0 a 20; sytost se škáluje stejně a nikdy nevystoupí nad novou úroveň hladu. U příkladu výše druhé jablko v řadě doplní polovinu a čtvrté různé jídlo v paměti 1,25krát tolik.
 
@@ -3759,6 +3768,75 @@ Cesta souboru je název hodnosti a více souborů se kombinuje. Hodnost je jedna
 | `loot`     | ne      | číslo, 1 nebo více         | `1`            | Násobí každý stohovatelný předmět, který mob upustí. Zlomek je šance na jeden další předmět na stoh                                                                  |
 
 Nástroje, brnění a výbava, kterou mob nesl, se neznásobují a moby s inventářem, například soumaři, se přeskočí. Chyba v souboru hodnosti, například neznámý klíč, neexistující id entity nebo hodnota mimo rozsah, se zapíše do logu a celý soubor se přeskočí. Smazání souboru hodnosti nechá moby, kteří ji už získali, jak jsou, a mob, kterého žádná hodnost neuvádí, zůstane beze změny. Hodnosti čte jen server, takže se mohou připojit i vanilla klienti.
+
+## Odměny za maximální zdraví
+
+*tvorové a nebezpečí*
+
+`<namespace>/hearts/*.json`
+
+Soubor zde umožní hráčům získat navíc maximální zdraví ze zdrojů, které pojmenujete: pokroku, pestré stravy z [Pestrosti jídla](#pestrost-jídla), seznamu snědených jídel nebo skóre týmu. Co hráč získal, se ukládá u hráče. Bez souboru se nic nemění.
+
+Název souboru si zvolíte sami, čte se jen složka. `rewards` ze všech souborů se používají společně. U každého klíče nejvyšší úrovně platí první soubor, který ho nastaví, ostatní se zapíší do logu a ignorují.
+
+```json
+{
+  "startHearts": 10,
+  "cap": 20,
+  "keepOnDeath": true,
+  "style": "bar",
+  "sound": "minecraft:entity.player.levelup",
+  "particle": "minecraft:heart",
+  "heartColors": ["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"],
+  "rewards": [
+    { "id": "nether", "advancement": "minecraft:nether/root", "hearts": 1 },
+    { "id": "varied", "diet": 4, "hearts": 1, "repeat": "always", "times": 3 },
+    { "id": "fish", "foods": ["minecraft:cod", "minecraft:cooked_cod", "#c:foods/raw_fish", "minecraft:bread"], "count": 3, "hearts": 1 },
+    { "id": "champ", "team": "red", "objective": "wins", "scoreAtLeast": 5, "hearts": 2, "requires": ["somepack"], "message": "mypack.hearts.champ" }
+  ]
+}
+```
+
+| Klíč          | Povinný | Hodnota                              | Výchozí                                        | Co dělá                                                                                    |
+| ------------- | ------- | ------------------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `startHearts` | ne      | číslo, 0,5 nebo více, po krocích 0,5 | `10`                                           | Srdce, která hráč má, než nějaká získá; `10` je vanilla                                    |
+| `cap`         | ne      | číslo, `startHearts` nebo více       | žádný                                          | Nejvyšší celkový počet srdcí včetně počátečních                                            |
+| `keepOnDeath` | ne      | true nebo false                      | `true`                                         | `false`: smrt vrátí každý získaný počet na 0                                               |
+| `style`       | ne      | `bar` nebo `chat`                    | `bar`                                          | Kde se zobrazí zpráva o udělení: na action baru, nebo v chatu                              |
+| `sound`       | ne      | ID zvuku nebo `""`                   | `""`                                           | Přehraje se u hráče při udělení                                                            |
+| `particle`    | ne      | ID částice nebo `""`                 | `""`                                           | Vytvoří se u hráče při udělení; jen jednoduché částice                                     |
+| `heartColors` | ne      | seznam `"#RRGGBB"`                   | `["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"]` | Odstín 2., 3. a dalších vrstev srdcí, přičemž se poslední barva opakuje (viz Na obrazovce) |
+| `rewards`     | ne      | seznam objektů                       | žádné                                          | Odměny s klíči níže                                                                        |
+
+Každá položka `rewards`:
+
+| Klíč                        | Povinný | Hodnota                                     | Výchozí                   | Co dělá                                                                                                                                                 |
+| --------------------------- | ------- | ------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                        | ano     | text, v souboru jedinečný                   | žádné                     | Pojmenuje odměnu v uložené hře, takže ho při úpravě odměny zachovejte                                                                                   |
+| `advancement`               | ne      | ID pokroku                                  | žádné                     | Spouštěč: pokrok je získán                                                                                                                              |
+| `diet`                      | ne      | int                                         | žádné                     | Spouštěč: jídlo zvedne hráče na tento počet `distinct` stupně `variety` v [Pestrosti jídla](#pestrost-jídla)                                            |
+| `foods`                     | ne      | seznam ID předmětů nebo názvů `#tag`        | žádné                     | Spouštěč: jídla k snědení. Každá položka se počítá jednou, při prvním snědení jídla, které jí odpovídá; položka `#tag` je jeden druh jídla              |
+| `count`                     | ne      | int, od 1 do délky `foods`                  | délka `foods`             | S `foods`: kolik položek musí být snědeno                                                                                                               |
+| `team`                      | ne      | název týmu                                  | žádné                     | Spouštěč: hráč je v tomto týmu                                                                                                                          |
+| `objective`, `scoreAtLeast` | ne      | text, int                                   | žádné                     | Spouštěč: skóre hráče v cíli je alespoň toto. Potřeba jsou obě; s `team` musí platit obě                                                                |
+| `dietAtLeast`               | ne      | int                                         | žádné                     | Spouštěč: zapamatovaná jídla hráče obsahují alespoň tolik různých jídel (viz Pestrost jídla). Vyžaduje soubor Pestrosti jídla; s `team` musí platit obě |
+| `hearts`                    | ano     | číslo větší než 0, po krocích 0,5           | žádné                     | Srdce, která dá jedno udělení                                                                                                                           |
+| `repeat`                    | ne      | `once_per_player` nebo `always`             | `once_per_player`         | `always`: každý nový spouštěč uděluje znovu                                                                                                             |
+| `times`                     | ne      | int, 1 nebo více                            | `1`, s `always` neomezeně | Nejvyšší počet udělení, která může jeden hráč z odměny získat                                                                                           |
+| `requires`                  | ne      | seznam ID módů nebo jmenných prostorů packu | žádné                     | Odměna se přeskočí, pokud nejsou přítomny všechny                                                                                                       |
+| `message`                   | ne      | klíč jazyka nebo `""`                       | `rdpl.hearts.gained`      | Zobrazí se při udělení; `""` nezobrazí nic                                                                                                              |
+
+**Jeden spouštěč na odměnu.** Nastavte přesně jeden z klíčů `advancement`, `diet`, `foods` nebo klíčů podmínky `team`, `objective`, `scoreAtLeast` a `dietAtLeast`. Jinak log uvede soubor a `id` a odměna se přeskočí. `advancement` uděluje, když je pokrok získán. `diet` uděluje, když jídlo zvedne hráče z hodnoty pod tímto počtem `distinct` na něj nebo výš; vyžaduje soubor Pestrosti jídla se stupněm `variety` s tímto `distinct` a bez něj neuděluje nikdy. `foods` uděluje jednou, když snědené položky dosáhnou `count`; `repeat` a `times` se na ně nevztahují. Podmínka týmu, skóre nebo stravy uděluje, když se změní z nepravdy na pravdu, a kontroluje se každých 5 sekund, dokud taková odměna existuje.
+
+**Ukládá se u hráče.** Udělení se počítají po odměnách ve vlastních uložených datech hráče, takže získaná srdce přežijí smrt, odhlášení i změnu dimenze. Maximální zdraví navíc se ukládá u hráče také, takže hráč s maximálním zdravím 24, který se odhlásí na 23, se vrátí s 23. Maximum je `startHearts` plus srdce z každého udělení, nikdy nad `cap`; deset srdcí vanilly odpovídá `startHearts: 10`.
+
+**Zdraví.** Když maximum vzroste, aktuální zdraví vzroste ve stejném poměru. Když klesne, zdraví se sníží na nové maximum. Znovuzrození po smrti zdraví zcela doplní.
+
+**Smrt.** S `keepOnDeath` nastaveným na `true` získaná srdce zůstanou. S `false` smrt vrátí každý počet na 0 a zapomene snědená jídla a odměnu znovu získá až nový spouštěč.
+
+**Dohnání.** Při přihlášení a po `/rdpl reload` se srdce každého přihlášeného hráče přepočítají z uložených počtů a aktuálních pravidel. Odměna, pro kterou hráč ještě nemá počet a jejíž podmínka už platí (pokrok je splněn, stupeň stravy dosažen, snědená jídla dosahují `count`, podmínka týmu nebo skóre platí), se tehdy udělí, bez zprávy. Odměna nastavená smrtí na 0 se znovu nedožene. Odměna odebraná ze souborů si ponechá svůj počet v uložené hře, ale dokud chybí, nic nedává, a počítá se znovu, když se vrátí.
+
+**Na obrazovce.** Zdraví nad 20 nevytváří nové řady srdcí. Každých dalších 10 srdcí je vrstva nakreslená přes stejnou první řadu: druhá vrstva v první barvě z `heartColors`, třetí ve druhé a tak dále. Vrstva ve stavovém vzhledu (jed, wither, mrazení) ukazuje tento vanillový vzhled bez odstínu a absorpce leží nad řadou jako ve vanille. Barvy přicházejí ze serveru, posílají se při přihlášení a po opětovném načtení; klient, který je nedostal, použije výchozí seznam.
 
 ## Zakázky
 
@@ -6952,6 +7030,7 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `portway`, `network`        | text             | Hráč má ve svém seznamu nebo mezi globálními průchody s tímto id bloku nebo z této sítě. Kterékoli z obou lze vynechat |
 | `gameMode`                  | text             | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`                                    |
 | `team`                      | text             | Hráč je v tomto týmu tabulky skóre                                                                                     |
+| `dietAtLeast`               | celé číslo       | Zapamatovaná jídla hráče obsahují alespoň tolik různých jídel (vyžaduje soubor Pestrosti jídla)                        |
 | `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto                                                                                     |
 
 ### Karta
@@ -8720,7 +8799,7 @@ functions = true
 | `lootInjections` | boolean | `true`  | Použít soubory loot_injections/*.json, které přidávají fondy do už existujících tabulek kořisti místo nahrazení celé tabulky                                                                 |
 | `playerLoot`     | boolean | `true`  | Použít soubory player_loot/*.json, které losují tabulku kořisti, když hráč zemře, a odhodí, co vytvoří, navíc k inventáři nebo místo něj                                                     |
 | `registryRemaps` | boolean | `true`  | Použít soubory registry_remap, které přejmenují položku registru, aby světy uložené před přejmenováním udržely své bloky a předměty místo jejich ztráty                                      |
-| `affixes`        | boolean | `true`  | Použít soubory affixes/*.json a gems/*.json, které dají předmětu náhodné bonusy atributů a patice při prvním podržení hráčem a nechají kovadlinu vložit drahokam do patice |
+| `affixes`        | boolean | `true`  | Použít soubory affixes/*.json a gems/*.json, které dají předmětu náhodné bonusy atributů a patice při prvním podržení hráčem a nechají kovadlinu vložit drahokam do patice                   |
 | `anvils`         | boolean | `true`  | Použít soubory anvils/*.json, které nechají kovadlinu dát předmětu pojmenovaná zakletí za cenu úrovní, získat úspěch při jeho vzetí a držet předmět zpět před použitím, dokud se tak nestane |
 | `enchanting`     | boolean | `true`  | Použít soubory enchanting/*.json, které mění, co čarovací stůl nabízí, žádá a bere: podle očarování, podle předmětu a pro celý stůl                                                          |
 | `blockDrops`     | boolean | `true`  | Použít soubory block_drops/*.json, které přidávají k tomu, co blok odhodí při rozbití, nebo to nahrazují, včetně zkušeností, pro bloky, které balíček nevlastní                              |

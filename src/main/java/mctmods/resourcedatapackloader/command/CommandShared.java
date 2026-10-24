@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.dialog.ContentDialogs;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentHearts;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
@@ -317,6 +318,8 @@ public final class CommandShared {
         ContentBoards.rebuild(server);
         CardRules.load();
         ContentDialogs.load();
+        ContentHearts.load();
+        ContentHearts.refresh(server);
         for (ServerLevel level : server.getAllLevels()) {
             ContentTeams.field(level);
             ContentScoring.keep(level);

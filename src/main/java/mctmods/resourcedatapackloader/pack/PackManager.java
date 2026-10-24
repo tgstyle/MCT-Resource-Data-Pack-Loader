@@ -96,6 +96,7 @@ public final class PackManager {
     public static final String SCORING = "scoring";
     public static final String RAIDS = "raids";
     public static final String DIETS = "diets";
+    public static final String HEARTS = "hearts";
     public static final String DICE = "dice";
     public static final String GAMES = "games";
     public static final String OVERRIDES = "overrides";

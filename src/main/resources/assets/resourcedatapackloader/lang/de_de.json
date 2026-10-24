@@ -82,6 +82,7 @@
   "rdpl.portal.owned": "Dieses Portal gehört jemand anderem",
   "rdpl.diet.repeat": "Dieses Essen wird langsam langweilig",
   "rdpl.diet.variety": "Abwechslungsreiches Essen tut gut",
+  "rdpl.hearts.gained": "Du fühlst dich widerstandsfähiger.",
   "rdpl.carry.block": "Du trägst %s (Schleichen und Rechtsklick zum Absetzen)",
   "rdpl.carry.mob": "Du trägst %s (Schleichen und Rechtsklick auf einen Block zum Absetzen)",
   "rdpl.carry.down": "%s abgesetzt",

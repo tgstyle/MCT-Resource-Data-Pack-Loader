@@ -75,6 +75,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 **Créatures et dangers**
 - [Variantes d'entités](#variantes-dentités)
 - [Rangs de mobs](#rangs-de-mobs)
+- [Récompenses de santé maximale](#récompenses-de-santé-maximale)
 - [Ordres de travail](#ordres-de-travail)
 - [Expositions](#expositions)
 
@@ -145,73 +146,74 @@ Un pack a deux racines, les mêmes que celles d'un pack vanilla. `assets/` conti
 
 Sous `data/` :
 
-| Chemin                                       | Ce qu'il contient                                                                                                                                                                               |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<namespace>/blocks/*.json`                  | Définitions de blocs. [Blocs](#blocs)                                                                                                                                                           |
-| `<namespace>/curioslots/*.json`              | Types d'emplacement Curios dans lesquels un objet peut être porté. [Emplacements Curios](#emplacements-curios)                                                                                  |
-| `<namespace>/items/*.json`                   | Définitions d'objets. [Objets](#objets)                                                                                                                                                         |
-| `<namespace>/fluids/*.json`                  | Fluides, avec un bloc et un seau. [Fluides](#fluides)                                                                                                                                           |
-| `<namespace>/materials/*.json`               | Matériaux d'outils et d'armures. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                 |
-| `<namespace>/tabs/*.json`                    | Onglets créatifs. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                                |
-| `<namespace>/sounds/*.json`                  | Événements sonores. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                              |
-| `<namespace>/biomes/*.json`                  | Définitions de biomes. [Biomes](#biomes)                                                                                                                                                        |
-| `<namespace>/worldgen/*.json`                | Ce qui se génère, et où. [Entrées de worldgen](#entrées-de-worldgen)                                                                                                                            |
-| `<namespace>/caveregions/*.json`             | Régions nommées peintes sur le sous-sol. [Régions de grottes](#régions-de-grottes)                                                                                                              |
-| `<namespace>/dimensions/*.json`              | Définitions de dimensions. [Dimensions](#dimensions)                                                                                                                                            |
-| `<namespace>/worldtemplates/*.json`          | Tous les réglages d'un monde dans un seul fichier. [Modèles de monde](#modèles-de-monde)                                                                                                        |
-| `<namespace>/worldintro/*.json`              | Pages affichées quand un joueur entre dans le monde. [Introduction au monde](#introduction-au-monde)                                                                                            |
-| `<namespace>/gates/*.json`                   | Conditions des portails et des dimensions. [Portails et passages](#portails-et-passages)                                                                                                        |
-| `<namespace>/gamerules/*.json`               | Règles de jeu des nouveaux mondes. [Règles de jeu](#règles-de-jeu)                                                                                                                              |
-| `<namespace>/teams/*.json`                   | Camps du tableau des scores vanilla, et ce qui les rejoint. [Équipes](#équipes)                                                                                                                 |
-| `<namespace>/scoring/*.json`                 | Objectifs, points et fin d'une partie. [Score](#score)                                                                                                                                          |
-| `<namespace>/raids/*.json`                   | Vagues qui s'abattent sur un village quand un joueur y apporte un présage. [Raids](#raids)                                                                                                      |
-| `<namespace>/entities/*.json`                | Variantes d'entités construites sur des entités existantes. [Variantes d'entités](#variantes-dentités)                                                                                          |
-| `<namespace>/hardness/*.json`                | Temps de minage et multiplicateurs d'explosion pour des groupes de blocs. [Groupes de dureté](#groupes-de-dureté)                                                                               |
-| `<namespace>/affixes/*.json` | Bonus d'attribut aléatoires et châsses qu'un objet tire la première fois qu'un joueur le tient. [Affixes et châsses](#affixes-et-châsses) |
-| `<namespace>/gems/*.json` | Objets qu'une enclume enchâsse pour un bonus d'attribut. [Affixes et châsses](#affixes-et-châsses) |
-| `<namespace>/anvils/*.json`                  | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle octroie, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume)                                          |
-| `<namespace>/enchanting/*.json`              | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                 |
-| `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                                                                       |
-| `<namespace>/dialogs/*.json`                 | Conversation ramifiée avec une variante d'entité : nœuds de texte et réponses qui continuent, exécutent une fonction ou montrent une carte. [Dialogues](#dialogues)                             |
-| `<namespace>/dice/*.json`                    | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets)                                                    |
-| `<namespace>/games/*.json`                   | Jeux de plateau avec des créatures comme pièces : le plateau, les pièces et leur façon de se déplacer, et ce que rapporte un résultat. [Jeux de plateau](#jeux-de-plateau)                      |
-| `<namespace>/ranks/*.json`                   | Paliers aléatoires qu'un mob peut tirer en apparaissant : santé en plus, dégâts, effets, butin et une étiquette de nom. [Rangs de mobs](#rangs-de-mobs)                                         |
-| `<namespace>/orders/*.json`                  | Travaux que des variantes d'entité font pour un joueur à un coffre. [Ordres de travail](#ordres-de-travail)                                                                                     |
-| `<namespace>/exposures/*.json`               | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions, biomes, structures, régions de grottes ou hauteurs nommés. [Expositions](#expositions) |
-| `<namespace>/overrides/<target>/<name>.json` | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés)                                                      |
-| `<namespace>/villages/*.json`                | Parcelles qu'une ville ou un village peut construire. [Parcelles de village](#parcelles-de-village)                                                                                             |
-| `<namespace>/pathintersects/*.json`          | Motifs peints là où les routes de village se croisent. [Routes de village](#routes-de-village)                                                                                                  |
-| `<namespace>/structuremaps/*.json`           | Modèles assemblés en un grand bâtiment sur une grille. [Cartes de structures](#cartes-de-structures)                                                                                            |
-| `<namespace>/citymaps/*.json`                | Un plan de rues dessiné à partir duquel une ville est aménagée au lieu d'être tirée au hasard. [Cartes de plan des villes](#cartes-de-plan-des-villes)                                          |
-| `<namespace>/portalframes/*.json`            | Cadres qu'un joueur peut construire et allumer. [Cadres de portail](#cadres-de-portail)                                                                                                         |
-| `<namespace>/blastplaster/*.json`            | Ce que fait Blast Plaster après une explosion, par dimension. [Intégration de Blast Plaster](#intégration-de-blast-plaster)                                                                     |
-| `<namespace>/structures/*.nbt`               | Modèles, pour les pousses, `imprint` et les surcharges de mods. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                 |
-| `<namespace>/recipes/*.json`                 | Recettes d'artisanat, ajoutées ou remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                   |
-| `<namespace>/recipe_removals/*.json`         | Recettes supprimées par nom, namespace ou résultat. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                             |
-| `<namespace>/recipe_locks/*.json`            | Recettes qui restent fermées tant qu'un joueur n'a pas obtenu un progrès. [Verrous de recettes](#verrous-de-recettes)                                                                           |
-| `<namespace>/spawn_locks/*.json`             | Créatures qui n'apparaissent pas tant que les conditions ne sont pas remplies. [Verrous d'apparition](#verrous-dapparition)                                                                     |
-| `<namespace>/disabled/*.json`                | Blocs et objets retirés du jeu. [Blocs et objets désactivés](#blocs-et-objets-désactivés)                                                                                                       |
-| `<namespace>/furnace/*.json`                 | Recettes de fourneau ajoutées et retirées. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                                        |
-| `<namespace>/tooltips/*.json`                | Lignes d'infobulle supplémentaires. [Infobulles](#infobulles)                                                                                                                                   |
-| `<namespace>/fuels/*.json`                   | Durées de combustion. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                                                             |
-| `<namespace>/brewing/*.json`                 | Recettes de l'alambic. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                                           |
-| `<namespace>/potions/*.json`                 | Effets de potions. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                                               |
-| `<namespace>/potion_types/*.json`            | Potions en bouteille construites à partir de ces effets. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                         |
-| `<namespace>/enchantments/*.json`            | Enchantements personnalisés. [Enchantements](#enchantements)                                                                                                                                    |
-| `<namespace>/villagers/*.json`               | Métiers de villageois. [Villageois et échanges](#villageois-et-échanges)                                                                                                                        |
-| `<namespace>/trades/*.json`                  | Ce que les métiers achètent et vendent. [Villageois et échanges](#villageois-et-échanges)                                                                                                       |
-| `<namespace>/loot_tables/*.json`             | Tables de butin, remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                    |
-| `<namespace>/loot_injections/*.json`         | Un groupe ajouté à une table qui existe déjà. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                   |
-| `<namespace>/block_drops/*.json`             | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                                      |
-| `<namespace>/harvests/*.json`                | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                                              |
-| `<namespace>/veins/*.json`                   | Groupes de blocs qu'un outil mine d'un seul coup, avec une limite et un coût en faim. [Minage de filons](#minage-de-filons)                                                                     |
-| `<namespace>/carries/*.json`                 | Blocs et mobs qu'un joueur accroupi ramasse et repose. [Portage](#portage)                                                                                                                      |
-| `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                         |
-| `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                          |
-| `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                        |
-| `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                          |
-| `<namespace>/tags/<kind>/*.json`             | Tags, au format propre au jeu. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                   |
-| `<namespace>/registry_remap/*.json`          | Anciens noms associés aux nouveaux. [Renommages du registre](#renommages-du-registre)                                                                                                           |
+| Chemin                                       | Ce qu'il contient                                                                                                                                                                                         |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json`                  | Définitions de blocs. [Blocs](#blocs)                                                                                                                                                                     |
+| `<namespace>/curioslots/*.json`              | Types d'emplacement Curios dans lesquels un objet peut être porté. [Emplacements Curios](#emplacements-curios)                                                                                            |
+| `<namespace>/items/*.json`                   | Définitions d'objets. [Objets](#objets)                                                                                                                                                                   |
+| `<namespace>/fluids/*.json`                  | Fluides, avec un bloc et un seau. [Fluides](#fluides)                                                                                                                                                     |
+| `<namespace>/materials/*.json`               | Matériaux d'outils et d'armures. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                           |
+| `<namespace>/tabs/*.json`                    | Onglets créatifs. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                                          |
+| `<namespace>/sounds/*.json`                  | Événements sonores. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                                        |
+| `<namespace>/biomes/*.json`                  | Définitions de biomes. [Biomes](#biomes)                                                                                                                                                                  |
+| `<namespace>/worldgen/*.json`                | Ce qui se génère, et où. [Entrées de worldgen](#entrées-de-worldgen)                                                                                                                                      |
+| `<namespace>/caveregions/*.json`             | Régions nommées peintes sur le sous-sol. [Régions de grottes](#régions-de-grottes)                                                                                                                        |
+| `<namespace>/dimensions/*.json`              | Définitions de dimensions. [Dimensions](#dimensions)                                                                                                                                                      |
+| `<namespace>/worldtemplates/*.json`          | Tous les réglages d'un monde dans un seul fichier. [Modèles de monde](#modèles-de-monde)                                                                                                                  |
+| `<namespace>/worldintro/*.json`              | Pages affichées quand un joueur entre dans le monde. [Introduction au monde](#introduction-au-monde)                                                                                                      |
+| `<namespace>/gates/*.json`                   | Conditions des portails et des dimensions. [Portails et passages](#portails-et-passages)                                                                                                                  |
+| `<namespace>/gamerules/*.json`               | Règles de jeu des nouveaux mondes. [Règles de jeu](#règles-de-jeu)                                                                                                                                        |
+| `<namespace>/teams/*.json`                   | Camps du tableau des scores vanilla, et ce qui les rejoint. [Équipes](#équipes)                                                                                                                           |
+| `<namespace>/scoring/*.json`                 | Objectifs, points et fin d'une partie. [Score](#score)                                                                                                                                                    |
+| `<namespace>/raids/*.json`                   | Vagues qui s'abattent sur un village quand un joueur y apporte un présage. [Raids](#raids)                                                                                                                |
+| `<namespace>/entities/*.json`                | Variantes d'entités construites sur des entités existantes. [Variantes d'entités](#variantes-dentités)                                                                                                    |
+| `<namespace>/hardness/*.json`                | Temps de minage et multiplicateurs d'explosion pour des groupes de blocs. [Groupes de dureté](#groupes-de-dureté)                                                                                         |
+| `<namespace>/affixes/*.json`                 | Bonus d'attribut aléatoires et châsses qu'un objet tire la première fois qu'un joueur le tient. [Affixes et châsses](#affixes-et-châsses)                                                                 |
+| `<namespace>/gems/*.json`                    | Objets qu'une enclume enchâsse pour un bonus d'attribut. [Affixes et châsses](#affixes-et-châsses)                                                                                                        |
+| `<namespace>/anvils/*.json`                  | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle octroie, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume)                                                    |
+| `<namespace>/enchanting/*.json`              | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                           |
+| `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                                                                                 |
+| `<namespace>/dialogs/*.json`                 | Conversation ramifiée avec une variante d'entité : nœuds de texte et réponses qui continuent, exécutent une fonction ou montrent une carte. [Dialogues](#dialogues)                                       |
+| `<namespace>/dice/*.json`                    | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets)                                                              |
+| `<namespace>/games/*.json`                   | Jeux de plateau avec des créatures comme pièces : le plateau, les pièces et leur façon de se déplacer, et ce que rapporte un résultat. [Jeux de plateau](#jeux-de-plateau)                                |
+| `<namespace>/ranks/*.json`                   | Paliers aléatoires qu'un mob peut tirer en apparaissant : santé en plus, dégâts, effets, butin et une étiquette de nom. [Rangs de mobs](#rangs-de-mobs)                                                   |
+| `<namespace>/hearts/*.json`                  | Cœurs supplémentaires qu'un joueur gagne grâce à des progrès, à une alimentation variée ou à un score d'équipe, conservés avec le joueur. [Récompenses de santé maximale](#récompenses-de-santé-maximale) |
+| `<namespace>/orders/*.json`                  | Travaux que des variantes d'entité font pour un joueur à un coffre. [Ordres de travail](#ordres-de-travail)                                                                                               |
+| `<namespace>/exposures/*.json`               | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions, biomes, structures, régions de grottes ou hauteurs nommés. [Expositions](#expositions)           |
+| `<namespace>/overrides/<target>/<name>.json` | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés)                                                                |
+| `<namespace>/villages/*.json`                | Parcelles qu'une ville ou un village peut construire. [Parcelles de village](#parcelles-de-village)                                                                                                       |
+| `<namespace>/pathintersects/*.json`          | Motifs peints là où les routes de village se croisent. [Routes de village](#routes-de-village)                                                                                                            |
+| `<namespace>/structuremaps/*.json`           | Modèles assemblés en un grand bâtiment sur une grille. [Cartes de structures](#cartes-de-structures)                                                                                                      |
+| `<namespace>/citymaps/*.json`                | Un plan de rues dessiné à partir duquel une ville est aménagée au lieu d'être tirée au hasard. [Cartes de plan des villes](#cartes-de-plan-des-villes)                                                    |
+| `<namespace>/portalframes/*.json`            | Cadres qu'un joueur peut construire et allumer. [Cadres de portail](#cadres-de-portail)                                                                                                                   |
+| `<namespace>/blastplaster/*.json`            | Ce que fait Blast Plaster après une explosion, par dimension. [Intégration de Blast Plaster](#intégration-de-blast-plaster)                                                                               |
+| `<namespace>/structures/*.nbt`               | Modèles, pour les pousses, `imprint` et les surcharges de mods. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                           |
+| `<namespace>/recipes/*.json`                 | Recettes d'artisanat, ajoutées ou remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                             |
+| `<namespace>/recipe_removals/*.json`         | Recettes supprimées par nom, namespace ou résultat. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                       |
+| `<namespace>/recipe_locks/*.json`            | Recettes qui restent fermées tant qu'un joueur n'a pas obtenu un progrès. [Verrous de recettes](#verrous-de-recettes)                                                                                     |
+| `<namespace>/spawn_locks/*.json`             | Créatures qui n'apparaissent pas tant que les conditions ne sont pas remplies. [Verrous d'apparition](#verrous-dapparition)                                                                               |
+| `<namespace>/disabled/*.json`                | Blocs et objets retirés du jeu. [Blocs et objets désactivés](#blocs-et-objets-désactivés)                                                                                                                 |
+| `<namespace>/furnace/*.json`                 | Recettes de fourneau ajoutées et retirées. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                                                  |
+| `<namespace>/tooltips/*.json`                | Lignes d'infobulle supplémentaires. [Infobulles](#infobulles)                                                                                                                                             |
+| `<namespace>/fuels/*.json`                   | Durées de combustion. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                                                                       |
+| `<namespace>/brewing/*.json`                 | Recettes de l'alambic. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                                                     |
+| `<namespace>/potions/*.json`                 | Effets de potions. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                                                         |
+| `<namespace>/potion_types/*.json`            | Potions en bouteille construites à partir de ces effets. [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)                                                                   |
+| `<namespace>/enchantments/*.json`            | Enchantements personnalisés. [Enchantements](#enchantements)                                                                                                                                              |
+| `<namespace>/villagers/*.json`               | Métiers de villageois. [Villageois et échanges](#villageois-et-échanges)                                                                                                                                  |
+| `<namespace>/trades/*.json`                  | Ce que les métiers achètent et vendent. [Villageois et échanges](#villageois-et-échanges)                                                                                                                 |
+| `<namespace>/loot_tables/*.json`             | Tables de butin, remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                              |
+| `<namespace>/loot_injections/*.json`         | Un groupe ajouté à une table qui existe déjà. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                             |
+| `<namespace>/block_drops/*.json`             | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                                                |
+| `<namespace>/harvests/*.json`                | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                                                        |
+| `<namespace>/veins/*.json`                   | Groupes de blocs qu'un outil mine d'un seul coup, avec une limite et un coût en faim. [Minage de filons](#minage-de-filons)                                                                               |
+| `<namespace>/carries/*.json`                 | Blocs et mobs qu'un joueur accroupi ramasse et repose. [Portage](#portage)                                                                                                                                |
+| `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                                   |
+| `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                                    |
+| `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                  |
+| `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                    |
+| `<namespace>/tags/<kind>/*.json`             | Tags, au format propre au jeu. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                             |
+| `<namespace>/registry_remap/*.json`          | Anciens noms associés aux nouveaux. [Renommages du registre](#renommages-du-registre)                                                                                                                     |
 
 Sous `assets/` :
 
@@ -513,7 +515,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | Le serveur seul suffit                                                                                                                                    | Nécessite le pack aussi sur le client                                                                                       |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                      |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled` | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`                                                    |
 | `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`                                                                                     |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                             |                                                                                                                             |
@@ -2610,24 +2612,24 @@ Avec un objet déjà tiré qui a une châsse vide dans la case gauche d'une encl
 }
 ```
 
-| Clé       | Requis | Valeur                       | Défaut | Ce que ça fait                                                                                        |
-| --------- | ------ | ---------------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
-| `item`    | oui    | nom d'objet    |        | L'objet qui tire. Il ne doit pas s'empiler : un objet empilable est une erreur et le fichier est ignoré |
-| `rolls`   | non    | `{ "min", "max" }`           | `1`    | Combien d'affixes différents il tire                                                                  |
-| `sockets` | non    | `{ "min", "max" }`           | `0`    | Combien de châsses à gemme il tire                                                                    |
-| `affixes` | oui    | liste d'objets               |        | Ce qu'il peut tirer, chaque entrée comme ci-dessous. Une entrée à l'attribut inconnu est ignorée      |
+| Clé       | Requis | Valeur             | Défaut | Ce que ça fait                                                                                          |
+| --------- | ------ | ------------------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| `item`    | oui    | nom d'objet        |        | L'objet qui tire. Il ne doit pas s'empiler : un objet empilable est une erreur et le fichier est ignoré |
+| `rolls`   | non    | `{ "min", "max" }` | `1`    | Combien d'affixes différents il tire                                                                    |
+| `sockets` | non    | `{ "min", "max" }` | `0`    | Combien de châsses à gemme il tire                                                                      |
+| `affixes` | oui    | liste d'objets     |        | Ce qu'il peut tirer, chaque entrée comme ci-dessous. Une entrée à l'attribut inconnu est ignorée        |
 
 Chaque entrée de `affixes` accepte :
 
-| Clé         | Requis | Valeur                                                           | Défaut  | Ce que ça fait                                                                                              |
-| ----------- | ------ | ---------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------- |
-| `name`      | non    | texte, ou une clé de langue                                      | aucun   | La ligne que l'infobulle de l'objet montre pour lui                                                         |
-| `attribute` | oui    | nom d'attribut                                                   |         | Ce qu'il change, comme `generic.attackDamage` ou `generic.maxHealth`                                        |
-| `min`       | non    | nombre                                                           | `0`     | Le minimum qu'il ajoute                                                                                     |
-| `max`       | non    | nombre                                                           | `min`   | Le maximum qu'il ajoute. Des valeurs égales donnent un bonus exact, sinon on tire entre les deux           |
-| `operation` | non    | `0`, `1` ou `2`                                                  | `0`     | `0` ajoute à l'attribut, `1` multiplie sa base, `2` multiplie le total                                      |
-| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`   | L'emplacement où l'objet doit se trouver pour que le bonus compte                                           |
-| `weight`    | non    | entier                                                           | `1`     | Sa probabilité face aux autres. Les affixes d'un objet sont différents les uns des autres, tirés selon le poids |
+| Clé         | Requis | Valeur                                                          | Défaut | Ce que ça fait                                                                                                  |
+| ----------- | ------ | --------------------------------------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------- |
+| `name`      | non    | texte, ou une clé de langue                                     | aucun  | La ligne que l'infobulle de l'objet montre pour lui                                                             |
+| `attribute` | oui    | nom d'attribut                                                  |        | Ce qu'il change, comme `generic.attackDamage` ou `generic.maxHealth`                                            |
+| `min`       | non    | nombre                                                          | `0`    | Le minimum qu'il ajoute                                                                                         |
+| `max`       | non    | nombre                                                          | `min`  | Le maximum qu'il ajoute. Des valeurs égales donnent un bonus exact, sinon on tire entre les deux                |
+| `operation` | non    | `0`, `1` ou `2`                                                 | `0`    | `0` ajoute à l'attribut, `1` multiplie sa base, `2` multiplie le total                                          |
+| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any` | `any`  | L'emplacement où l'objet doit se trouver pour que le bonus compte                                               |
+| `weight`    | non    | entier                                                          | `1`    | Sa probabilité face aux autres. Les affixes d'un objet sont différents les uns des autres, tirés selon le poids |
 
 ```json
 {
@@ -2641,15 +2643,15 @@ Chaque entrée de `affixes` accepte :
 }
 ```
 
-| Clé         | Requis | Valeur                                                           | Défaut    | Ce que ça fait                                                                                      |
-| ----------- | ------ | ---------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------- |
-| `item`      | oui    | nom d'objet                                        |           | La gemme, qui va dans la case droite de l'enclume                                                   |
-| `name`      | non    | texte, ou une clé de langue                                      | l'objet   | Ce que l'infobulle montre une fois la gemme dans une châsse                                         |
-| `attribute` | oui    | nom d'attribut                                                   |           | Ce que la gemme change                                                                              |
-| `amount`    | non    | nombre                                                           | `0`       | Ce qu'elle ajoute                                                                                   |
-| `operation` | non    | `0`, `1` ou `2`                                                  | `0`       | Comme pour un affixe                                                                                |
-| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any`  | `any`     | Comme pour un affixe                                                                                |
-| `levels`    | non    | entier                                                           | `1`       | Les niveaux d'expérience que coûte la pose de la gemme, 1 au minimum et toujours sous le seuil de trop cher de l'enclume |
+| Clé         | Requis | Valeur                                                          | Défaut  | Ce que ça fait                                                                                                           |
+| ----------- | ------ | --------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `item`      | oui    | nom d'objet                                                     |         | La gemme, qui va dans la case droite de l'enclume                                                                        |
+| `name`      | non    | texte, ou une clé de langue                                     | l'objet | Ce que l'infobulle montre une fois la gemme dans une châsse                                                              |
+| `attribute` | oui    | nom d'attribut                                                  |         | Ce que la gemme change                                                                                                   |
+| `amount`    | non    | nombre                                                          | `0`     | Ce qu'elle ajoute                                                                                                        |
+| `operation` | non    | `0`, `1` ou `2`                                                 | `0`     | Comme pour un affixe                                                                                                     |
+| `slot`      | non    | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet` ou `any` | `any`   | Comme pour un affixe                                                                                                     |
+| `levels`    | non    | entier                                                          | `1`     | Les niveaux d'expérience que coûte la pose de la gemme, 1 au minimum et toujours sous le seuil de trop cher de l'enclume |
 
 ## Table d'enchantement
 
@@ -2932,19 +2934,26 @@ Normalement, un aliment nourrit pareil, quel que soit le nombre de fois où on l
 {
   "memory": 8,
   "repeat": [1.0, 0.5, 0.25],
-  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+  "exempt": ["minecraft:rotten_flesh", "minecraft:spider_eye", "#c:foods/raw_meat"],
+  "variety": [ { "distinct": 4, "multiplier": 1.25, "effects": [ { "potion": "minecraft:regeneration", "duration": 200 } ] },
+               { "distinct": 7, "multiplier": 1.5, "effects": [ { "potion": "minecraft:resistance" } ], "runs": "mypack:diet/well_fed" } ]
 }
 ```
 
-| Clé       | Requis | Valeur             | Défaut  | Rôle                                                                                                                                                                      |
-| --------- | ------ | ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `memory`  | non    | int ≥ 1            | `10`    | Le nombre de repas que chaque joueur retient ; le plus ancien est oublié en premier                                                                                       |
-| `repeat`  | non    | liste de float ≥ 0 | `[1.0]` | Le multiplicateur de la 1re, 2e, 3e fois où le même aliment figure parmi les repas retenus ; la dernière entrée se répète                                                 |
-| `variety` | non    | liste d'objets     | aucun   | Chaque objet a `distinct` (int ≥ 1) et `multiplier` (float ≥ 0) : dès que les repas retenus comptent autant d'aliments différents, le gain est multiplié par `multiplier` |
-| `groups`  | non    | liste de textes    | aucun   | Identifiants d'objets ou étiquettes `#tag` ; un aliment correspondant compte comme cette entrée, donc une étiquette vaut un aliment ; la première l'emporte               |
-| `messages` | non    | objet              | —       | Barre d'action après un repas : `repeat` si le multiplicateur de répétition est sous 1, `variety` s'il est au-dessus ; texte, clé ou `""` ; défaut `rdpl.diet.*`          |
+| Clé        | Requis | Valeur                  | Défaut  | Rôle                                                                                                                                                                                                                                                              |
+| ---------- | ------ | ----------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | non    | int ≥ 1                 | `10`    | Le nombre de repas que chaque joueur retient ; le plus ancien est oublié en premier                                                                                                                                                                               |
+| `repeat`   | non    | liste de float ≥ 0      | `[1.0]` | Le multiplicateur de la 1re, 2e, 3e fois où le même aliment figure parmi les repas retenus ; la dernière entrée se répète                                                                                                                                         |
+| `variety`  | non    | liste d'objets          | aucun   | Chaque objet a `distinct` (int ≥ 1) et `multiplier` (float ≥ 0) : dès que les repas retenus comptent autant d'aliments différents, le gain est multiplié par `multiplier`                                                                                         |
+| `groups`   | non    | liste de textes         | aucun   | Identifiants d'objets ou étiquettes `#tag` ; un aliment correspondant compte comme cette entrée, donc une étiquette vaut un aliment ; la première l'emporte                                                                                                       |
+| `messages` | non    | objet                   | —       | Barre d'action après un repas : `repeat` si le multiplicateur de répétition est sous 1, `variety` s'il est au-dessus ; texte, clé ou `""` ; défaut `rdpl.diet.*`                                                                                                  |
+| `exempt`   | non    | liste de textes         | aucun   | Identifiants d'objets ou entrées `#tag` ; un aliment correspondant à une entrée est laissé tranquille : il n'est pas retenu, pas compté, et son gain n'est jamais modifié. Prime sur `groups`                                                                     |
+| `effects`  | non    | liste d'objets          | aucun   | Dans un objet de `variety` : des effets de potion donnés après chaque repas tant que ce palier est le plus haut atteint par le joueur. Chacun a `potion`, `duration` en ticks (`1200` par défaut), `amplifier`, `ambient` et `showParticles` (`false` par défaut) |
+| `runs`     | non    | identifiant de fonction | aucun   | Dans un objet de `variety` : une fonction exécutée en tant que le joueur au repas qui le fait monter dans ce palier par le bas, une fois par franchissement                                                                                                       |
 
-Une valeur incorrecte consigne une erreur avec le nom du fichier, et ce fichier est ignoré.
+Une valeur incorrecte consigne une erreur avec le nom du fichier, et ce fichier est ignoré. Une potion qui n'existe pas est ignorée au moment où l'effet est donné. `runs` se déclenche de nouveau si des repas sortent de la mémoire, que le joueur retombe sous le palier puis le regagne. Une entrée `exempt` qui ne correspond à rien consigne un avertissement avec le nom du fichier et l'entrée, et est ignorée seule ; le reste du fichier se charge.
+
+Partout où une condition d'équipe ou de score est lue, comme le `when` d'une carte, une porte ou une récompense de cœurs, `dietAtLeast` (int ≥ 1) fonctionne à côté : elle est vraie tant que les repas retenus du joueur comptent au moins ce nombre d'aliments différents, `groups` appliqué. Sans fichier de variété alimentaire, elle n'est jamais remplie et le journal donne une erreur.
 
 Quand un joueur finit de manger, la faim et la saturation que l'aliment a réellement rendues (après le plafond propre à vanilla) sont multipliées par un seul nombre : l'entrée de `repeat` selon le nombre de fois où l'aliment figure déjà parmi les repas retenus (aucune fois, c'est la 1re entrée), multipliée par le palier de `variety` ayant le plus grand `distinct` atteint, où qu'il se trouve dans le fichier. `distinct` compte les aliments différents parmi les repas retenus, celui-ci compris, une fois la liste ramenée à `memory`. Le gain de faim est arrondi à des demi-cuisses entières et le nouveau niveau de faim reste entre 0 et 20 ; la saturation est mise à l'échelle de la même façon et ne dépasse jamais le nouveau niveau de faim. Avec l'exemple ci-dessus, une deuxième pomme d'affilée rend moitié moins, et le quatrième aliment différent en mémoire rend 1,25 fois plus.
 
@@ -3759,6 +3768,75 @@ Le chemin du fichier est le nom du rang, et plusieurs fichiers se combinent. Un 
 | `loot`     | non    | nombre, 1 ou plus                | `1`            | Multiplie chaque objet empilable que le mob lâche. La fraction est la chance d'un objet de plus par pile                                                                                  |
 
 Les outils, l'armure et l'équipement que portait le mob ne sont pas multipliés, et les mobs qui portent un inventaire, comme les bêtes de somme, sont ignorés. Une erreur dans un fichier de rang, comme une clé inconnue, un id d'entité inexistant ou une valeur hors limites, est consignée et tout le fichier est ignoré. Supprimer un fichier de rang laisse tels quels les mobs qui ont déjà tiré ce rang, et un mob qu'aucun rang ne nomme reste intact. Seul le serveur lit les rangs, donc les clients vanilla peuvent se connecter.
+
+## Récompenses de santé maximale
+
+*créatures et dangers*
+
+`<namespace>/hearts/*.json`
+
+Un fichier placé ici permet aux joueurs de gagner de la santé maximale supplémentaire grâce aux sources que vous nommez : un progrès, une alimentation variée issue de la [Variété alimentaire](#variété-alimentaire), une liste d'aliments mangés ou un score d'équipe. Ce qu'un joueur a gagné est conservé avec le joueur. Sans fichier, rien ne change.
+
+Le nom du fichier est libre, seul le dossier est lu. Les `rewards` de tous les fichiers sont utilisées ensemble. Pour chaque clé de premier niveau, le premier fichier qui la définit l'emporte, et les autres sont consignés puis ignorés.
+
+```json
+{
+  "startHearts": 10,
+  "cap": 20,
+  "keepOnDeath": true,
+  "style": "bar",
+  "sound": "minecraft:entity.player.levelup",
+  "particle": "minecraft:heart",
+  "heartColors": ["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"],
+  "rewards": [
+    { "id": "nether", "advancement": "minecraft:nether/root", "hearts": 1 },
+    { "id": "varied", "diet": 4, "hearts": 1, "repeat": "always", "times": 3 },
+    { "id": "fish", "foods": ["minecraft:cod", "minecraft:cooked_cod", "#c:foods/raw_fish", "minecraft:bread"], "count": 3, "hearts": 1 },
+    { "id": "champ", "team": "red", "objective": "wins", "scoreAtLeast": 5, "hearts": 2, "requires": ["somepack"], "message": "mypack.hearts.champ" }
+  ]
+}
+```
+
+| Clé           | Requis | Valeur                              | Défaut                                         | Rôle                                                                                                          |
+| ------------- | ------ | ----------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `startHearts` | non    | nombre, 0,5 ou plus, par pas de 0,5 | `10`                                           | Les cœurs qu'un joueur a avant d'en gagner ; `10` correspond à vanilla                                        |
+| `cap`         | non    | nombre, `startHearts` ou plus       | aucun                                          | Le maximum de cœurs au total, cœurs de départ compris                                                         |
+| `keepOnDeath` | non    | true ou false                       | `true`                                         | `false` : la mort remet à 0 chaque compteur gagné                                                             |
+| `style`       | non    | `bar` ou `chat`                     | `bar`                                          | Où s'affiche le message d'attribution : la barre d'action ou le chat                                          |
+| `sound`       | non    | identifiant de son ou `""`          | `""`                                           | Joué sur le joueur lors d'une attribution                                                                     |
+| `particle`    | non    | identifiant de particule ou `""`    | `""`                                           | Produite sur le joueur lors d'une attribution ; particules simples uniquement                                 |
+| `heartColors` | non    | liste de `"#RRGGBB"`                | `["#E8C33A", "#3AA8E8", "#5FD35F", "#B05FE8"]` | La teinte de la 2e, de la 3e et des autres couches de cœurs, la dernière couleur se répétant (voir À l'écran) |
+| `rewards`     | non    | liste d'objets                      | aucune                                         | Les récompenses, avec les clés ci-dessous                                                                     |
+
+Chaque entrée de `rewards` :
+
+| Clé                         | Requis | Valeur                                                    | Défaut                      | Rôle                                                                                                                                                                                                           |
+| --------------------------- | ------ | --------------------------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                        | oui    | texte, unique dans le fichier                             | aucun                       | Nomme la récompense dans la sauvegarde ; gardez-le donc quand vous modifiez la récompense                                                                                                                      |
+| `advancement`               | non    | identifiant de progrès                                    | aucun                       | Déclencheur : le progrès est obtenu                                                                                                                                                                            |
+| `diet`                      | non    | int                                                       | aucun                       | Déclencheur : un repas fait monter le joueur à ce nombre `distinct` d'un palier de `variety` dans la [Variété alimentaire](#variété-alimentaire)                                                               |
+| `foods`                     | non    | liste d'identifiants d'objets ou de noms `#tag`           | aucun                       | Déclencheur : les aliments à manger. Chaque entrée compte une fois, la première fois qu'un aliment qui lui correspond est mangé ; une entrée `#tag` représente une sorte d'aliment                             |
+| `count`                     | non    | int, de 1 jusqu'à la longueur de `foods`                  | la longueur de `foods`      | Avec `foods` : combien d'entrées doivent avoir été mangées                                                                                                                                                     |
+| `team`                      | non    | nom d'équipe                                              | aucun                       | Déclencheur : le joueur est dans cette équipe                                                                                                                                                                  |
+| `objective`, `scoreAtLeast` | non    | texte, int                                                | aucun                       | Déclencheur : le score du joueur dans l'objectif est au moins celui-ci. Les deux sont nécessaires ; avec `team`, les deux doivent être remplis                                                                 |
+| `dietAtLeast`               | non    | int                                                       | aucun                       | Déclencheur : les repas retenus du joueur comptent au moins ce nombre d'aliments différents (voir Variété alimentaire). Demande un fichier de variété alimentaire ; avec `team`, les deux doivent être remplis |
+| `hearts`                    | oui    | nombre supérieur à 0, par pas de 0,5                      | aucun                       | Les cœurs qu'une attribution donne                                                                                                                                                                             |
+| `repeat`                    | non    | `once_per_player` ou `always`                             | `once_per_player`           | `always` : chaque nouveau déclenchement attribue de nouveau                                                                                                                                                    |
+| `times`                     | non    | int, 1 ou plus                                            | `1`, illimité avec `always` | Le nombre maximal d'attributions qu'un joueur peut obtenir de la récompense                                                                                                                                    |
+| `requires`                  | non    | liste d'identifiants de mods ou d'espaces de noms de pack | aucun                       | La récompense est ignorée à moins que tous soient présents                                                                                                                                                     |
+| `message`                   | non    | clé de langue ou `""`                                     | `rdpl.hearts.gained`        | Affiché lors d'une attribution ; `""` n'affiche rien                                                                                                                                                           |
+
+**Un seul déclencheur par récompense.** Définissez exactement l'un de `advancement`, `diet`, `foods`, ou les clés de condition `team`, `objective`, `scoreAtLeast` et `dietAtLeast`. Sinon le journal nomme le fichier et l'`id`, et la récompense est ignorée. `advancement` attribue quand le progrès est obtenu. `diet` attribue quand un repas fait passer le joueur de sous ce nombre `distinct` à ce nombre ou au-dessus ; il demande un fichier de variété alimentaire avec un palier `variety` de ce `distinct` et n'attribue jamais sans lui. `foods` attribue une fois, quand les entrées mangées atteignent `count` ; `repeat` et `times` ne s'y appliquent pas. Une condition d'équipe, de score ou d'alimentation attribue quand elle passe de faux à vrai, vérifiée toutes les 5 secondes tant qu'une telle récompense existe.
+
+**Conservé avec le joueur.** Les attributions sont comptées par récompense dans les données enregistrées du joueur lui-même, si bien que les cœurs gagnés survivent à la mort, à la déconnexion et au changement de dimension. La santé maximale supplémentaire est elle aussi conservée avec le joueur : un joueur à 24 de santé maximale qui se déconnecte à 23 revient avec 23. Le maximum est `startHearts` plus les cœurs de chaque attribution, jamais au-delà de `cap` ; les dix cœurs de vanilla correspondent à `startHearts: 10`.
+
+**Santé.** Quand le maximum monte, la santé actuelle monte dans la même proportion. Quand il baisse, la santé est ramenée au nouveau maximum. Réapparaître après une mort remplit la barre de santé.
+
+**Mort.** Avec `keepOnDeath` à `true`, les cœurs gagnés restent. Avec `false`, la mort remet chaque compteur à 0 et fait oublier les aliments mangés, et seul un nouveau déclencheur fait regagner une récompense.
+
+**Rattrapage.** À la connexion et après `/rdpl reload`, les cœurs de chaque joueur en ligne sont recalculés à partir des compteurs enregistrés et des règles actuelles. Une récompense pour laquelle le joueur n'a pas encore de compteur et dont la condition est déjà remplie (le progrès est accompli, le palier d'alimentation est atteint, les aliments mangés atteignent `count`, la condition d'équipe ou de score est remplie) est alors attribuée, sans message. Une récompense remise à 0 par une mort n'est pas rattrapée de nouveau. Une récompense retirée des fichiers garde son compteur dans la sauvegarde mais ne donne rien tant qu'elle est absente, et recompte si elle revient.
+
+**À l'écran.** Une santé supérieure à 20 ne crée pas de nouvelles rangées de cœurs. Chaque tranche de 10 cœurs supplémentaires est une couche dessinée sur la même première rangée : la deuxième couche dans la première couleur de `heartColors`, la troisième dans la deuxième, et ainsi de suite. Une couche dans un aspect d'état (poison, wither, congélation) montre cet aspect vanilla sans teinte, et l'absorption se place au-dessus de la rangée comme dans vanilla. Les couleurs viennent du serveur, envoyées à la connexion et après un rechargement ; un client qui ne les a pas reçues utilise la liste par défaut.
 
 ## Ordres de travail
 
@@ -6952,6 +7030,7 @@ Une carte qui se déclenche alors qu'un joueur a encore l'introduction du monde 
 | `portway`, `network`        | texte         | Le joueur a dans sa liste, ou parmi les relais globaux, un relais de cet id de bloc ou de ce réseau. L'un ou l'autre peut manquer |
 | `gameMode`                  | texte         | Le joueur est dans ce mode de jeu : `survival`, `creative`, `adventure` ou `spectator`                                            |
 | `team`                      | texte         | Le joueur est dans cette équipe du tableau des scores                                                                             |
+| `dietAtLeast`               | entier        | Les repas retenus du joueur comptent au moins ce nombre d'aliments différents (demande un fichier de variété alimentaire)         |
 | `objective`, `scoreAtLeast` | texte, entier | Le score du joueur dans l'objectif est au moins celui-ci                                                                          |
 
 ### La carte
@@ -8720,7 +8799,7 @@ functions = true
 | `lootInjections` | booléen | `true` | Applique les fichiers loot_injections/*.json, qui ajoutent des pools à des tables de butin déjà existantes au lieu de remplacer la table entière                                                                           |
 | `playerLoot`     | booléen | `true` | Applique les fichiers player_loot/*.json, qui tirent une table de butin à la mort d'un joueur et font tomber ce qu'elle produit, en plus de l'inventaire ou à sa place                                                     |
 | `registryRemaps` | booléen | `true` | Applique les fichiers registry_remap, qui renomment une entrée de registre pour que les mondes sauvegardés avant le renommage conservent leurs blocs et objets au lieu de les perdre                                       |
-| `affixes`        | booléen | `true` | Applique les fichiers affixes/*.json et gems/*.json, qui donnent à un objet des bonus d'attribut aléatoires et des châsses la première fois qu'un joueur le tient, et permettent à une enclume d'enchâsser une gemme |
+| `affixes`        | booléen | `true` | Applique les fichiers affixes/*.json et gems/*.json, qui donnent à un objet des bonus d'attribut aléatoires et des châsses la première fois qu'un joueur le tient, et permettent à une enclume d'enchâsser une gemme       |
 | `anvils`         | booléen | `true` | Applique les fichiers anvils/*.json, qui permettent à une enclume de poser des enchantements nommés sur un objet contre un coût en niveaux, d'accorder un progrès quand il est retiré, et d'en interdire l'usage jusque-là |
 | `enchanting`     | booléen | `true` | Applique les fichiers enchanting/*.json, qui changent ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et pour la table entière                                                      |
 | `blockDrops`     | booléen | `true` | Applique les fichiers block_drops/*.json, qui ajoutent à ce qu'un bloc fait tomber quand il se brise, ou le remplacent, expérience comprise, pour les blocs dont le pack n'est pas propriétaire                            |

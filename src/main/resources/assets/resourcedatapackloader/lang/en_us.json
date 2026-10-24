@@ -82,6 +82,7 @@
   "rdpl.portal.owned": "This portal belongs to someone else",
   "rdpl.diet.repeat": "This food is getting dull",
   "rdpl.diet.variety": "A varied diet feels good",
+  "rdpl.hearts.gained": "You feel hardier.",
   "rdpl.carry.block": "Carrying %s (sneak and right-click to set it down)",
   "rdpl.carry.mob": "Carrying %s (sneak and right-click a block to set it down)",
   "rdpl.carry.down": "Set down %s",
