@@ -168,6 +168,7 @@
         "client.MixinCloudRendererLook",
         "client.MixinLavaFogEnvironment",
         "client.MixinLightningBoltRenderer",
+        "client.MixinModelBlockRendererLeaves",
         "client.MixinModelBlockRendererSnow",
         "client.ICloudRenderer",
         "client.IGameRenderer",
