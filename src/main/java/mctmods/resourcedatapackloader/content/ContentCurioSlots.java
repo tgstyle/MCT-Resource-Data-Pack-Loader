@@ -29,7 +29,7 @@ public final class ContentCurioSlots {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
-        if (Config.definitionsOff()) { return; }
+        if (Config.definitionsOff() || Config.content.vanillaClients()) { return; }
         Json.eachObject(PackManager.CURIOSLOTS, "curio slot", (key, json) -> SLOTS.put(key.getPath(), parse(key, json)));
         if (!SLOTS.isEmpty()) { Summary.info("curioslots", "Loaded " + SLOTS.size() + " curio slot type(s) from packs"); }
     }

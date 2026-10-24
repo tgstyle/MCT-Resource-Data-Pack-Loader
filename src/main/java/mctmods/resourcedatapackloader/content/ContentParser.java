@@ -157,7 +157,7 @@ public final class ContentParser {
     }
 
     @Nullable private static Identifier variantId(Identifier key, String name, String kind) {
-        Identifier id = Identifier.tryBuild(key.getNamespace(), name.toLowerCase(Locale.ROOT));
+        Identifier id = ContentInherits.variantId(key.getNamespace(), name);
         if (id == null) { ContentLog.LOGGER.error("{} variant '{}' in {} is not a usable registry name (lowercase letters, digits, '_', '-', '.' and '/'), skipping it", kind, name, key); }
         return id;
     }
@@ -338,10 +338,12 @@ public final class ContentParser {
                 Json.getBoolean(json, "sleepingBag", false));
     }
 
+    public static String fluidName(Identifier key, JsonObject json) { return Json.getString(json, "name", key.getPath()).trim(); }
+
     @Nullable public static FluidDef fluid(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "fluid definition");
         if (json == null) { return null; }
-        String name = Json.getString(json, "name", key.getPath()).trim();
+        String name = fluidName(key, json);
         if (Identifier.tryBuild(key.getNamespace(), name) == null) {
             ContentLog.LOGGER.error("Fluid definition {} names itself '{}', which is not a usable registry name, ignoring it", key, name);
             return null;

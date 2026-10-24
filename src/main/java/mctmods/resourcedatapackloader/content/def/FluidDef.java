@@ -13,6 +13,10 @@ public record FluidDef(Identifier key, String name, int color, Identifier still,
 
     public Identifier id() { return Identifier.fromNamespaceAndPath(key.getNamespace(), name); }
 
+    public static Identifier flowingOf(Identifier id) { return Identifier.fromNamespaceAndPath(id.getNamespace(), "flowing_" + id.getPath()); }
+
+    public static Identifier bucketOf(Identifier id) { return Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_bucket"); }
+
     public boolean waterMaterial() { return "water".equals(material); }
 
     public boolean lavaMaterial() { return "lava".equals(material); }

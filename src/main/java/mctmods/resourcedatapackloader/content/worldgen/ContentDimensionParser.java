@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.def.WindDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -38,6 +39,8 @@ public final class ContentDimensionParser {
     private static final String WHITE = "#FFFFFF";
     private static final float MAX_ANGLE = 180.0F;
     private static final String CYCLE = "a weather cycle";
+    private static final List<String> WEATHER_DRAWN = List.of("rain", "wind");
+    private static final Set<String> TYPE_SKY = Set.of("skyColor", "fogColor", "cloudHeight", "showFog", "lightSkyColor", "lightBlockColor", "skyFactor", "waterFogColor");
     private static final String AMBIENCE = "an ambience";
     private static final String WIND = "a wind";
     private static final float GUST = 15.0F;
@@ -57,6 +60,18 @@ public final class ContentDimensionParser {
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
 
     private ContentDimensionParser() {}
+
+    static void drawn(Identifier key, JsonObject json) {
+        String owner = "Dimension " + key;
+        for (String member : Json.getJsonObject(json, "sky", new JsonObject()).keySet()) {
+            if (!ContentEnvironments.FIXED.contains(member) && !TYPE_SKY.contains(member)) { VanillaClients.clientDrawn(owner, "sky." + member); }
+        }
+        if (json.has("ambience")) { VanillaClients.clientDrawn(owner, "ambience"); }
+        JsonObject weather = Json.getJsonObject(json, "weather", new JsonObject());
+        for (String member : WEATHER_DRAWN) {
+            if (weather.has(member)) { VanillaClients.clientDrawn(owner, "weather." + member); }
+        }
+    }
 
     static DimensionDef parse(Identifier key, JsonObject json) {
         JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());

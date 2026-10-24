@@ -79,6 +79,7 @@ public final class ContentDimensions {
             if (json == null) { return; }
             DimensionDef def = ContentDimensionParser.parse(key, json);
             DEFS.put(key, def);
+            ContentDimensionParser.drawn(key, json);
             ContentEnvironments.parse(key, contents);
             if (VANILLA.contains(key) || GameData.has(Identifier.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + PackManager.JSON_SUFFIX))) { EXISTING.add(key); }
         });

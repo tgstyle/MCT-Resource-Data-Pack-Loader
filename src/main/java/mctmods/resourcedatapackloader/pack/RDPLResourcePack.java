@@ -57,11 +57,11 @@ public final class RDPLResourcePack extends RDPLPackResources {
 
     @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull Identifier location) {
         trace(location);
-        if (withheld(asked, location.getPath()) || !PackManager.get().existsRaw(asked, location.getNamespace(), location.getPath(), overriding)) { return null; }
+        if (withheld(asked, location.getNamespace(), location.getPath()) || !PackManager.get().existsRaw(asked, location.getNamespace(), location.getPath(), overriding)) { return null; }
         return supplier(asked, location.getNamespace(), location.getPath());
     }
 
-    private static boolean withheld(PackType asked, String path) { return asked == PackType.SERVER_DATA && path.startsWith(PackManager.FUNCTIONS + "/") && Config.data.functionsOff(); }
+    private boolean withheld(PackType asked, String namespace, String path) { return asked == PackType.SERVER_DATA && path.startsWith(PackManager.FUNCTIONS + "/") && Config.data.functionsOff() || SkippedContent.withheld(asked, namespace, path, overriding); }
 
     private IoSupplier<InputStream> supplier(PackType asked, String namespace, String path) {
         return () -> {
@@ -82,7 +82,7 @@ public final class RDPLResourcePack extends RDPLPackResources {
     @Override public void listResources(@Nonnull PackType asked, @Nonnull String namespace, @Nonnull String prefix, @Nonnull ResourceOutput out) {
         PackManager.get().list(asked, namespace, overriding, prefix, path -> {
             Identifier location = Identifier.tryBuild(namespace, path);
-            if (location != null && !withheld(asked, path)) { out.accept(location, supplier(asked, namespace, path)); }
+            if (location != null && !withheld(asked, namespace, path)) { out.accept(location, supplier(asked, namespace, path)); }
         });
     }
 

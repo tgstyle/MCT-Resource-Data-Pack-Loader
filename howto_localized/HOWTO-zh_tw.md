@@ -515,12 +515,14 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 | 只放伺服器即可                                                                                                                                            | 用戶端也需要資源包                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions` | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`tags`、`disabled`                                | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`exposures`                                     |
-| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`、`veins`                                                                     | `entities`、`villagers`、`portalframes`                                                                      |
+| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`enchantments`、`tags`、`disabled`                | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`、`tooltips`                                         |
+| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`、`veins`                                                                     | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
 | `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                            | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
 | 整個控制層、設定與預先生成                                                                                                                                |                                                                                                              |
 
-右側欄是硬性限制：原版用戶端沒有的方塊、物品、實體類型、音效與藥水效果，無法向它描述，而維度自己的傳送門是資源包的方塊之一；曝露設定只會與那些內容一起載入。左側欄之所以可行，是因為其中的一切要嘛完全在伺服端執行，要嘛以原版本來就會讀取的資料包項目傳到用戶端（生態域、洞穴區域、維度類型），要嘛透過原版本來就能溝通的封包傳達（由伺服器填入的合成結果格、一般的進度封包、閘門拒絕時的狀態訊息，以及由原版遊戲模式、標題與傳送封包構成的預先生成停留）。
+右側欄是硬性限制：原版用戶端沒有的方塊、物品、實體類型、音效與藥水效果，無法向它描述，而維度自己的傳送門是資源包的方塊之一；曝露設定只會與那些內容一起載入。左側欄之所以可行，是因為其中的一切要嘛完全在伺服端執行，要嘛以原版本來就會讀取的資料包項目傳到用戶端（生態域、洞穴區域、維度類型、附魔），要嘛透過原版本來就能溝通的封包傳達（由伺服器填入的合成結果格、一般的進度封包、閘門拒絕時的狀態訊息，以及由原版遊戲模式、標題與傳送封包構成的預先生成停留）。
+
+只留在伺服端，只由模組自己的用戶端繪製：Boss 血條的 `background`、心形檔案中的 `heartColors`、鐵砧檔案中的 `tooExpensive`、附魔檔案中的 `enchantCosts` 與 `lapisCosts`、詞綴與寶石插槽的名稱，以及維度中除了世界載入時一次設定的之外的 `sky` 鍵，還有原版用戶端從維度類型讀取的那些鍵（`skyColor`、`fogColor`、`cloudHeight`、`showFog`、`lightSkyColor`、`lightBlockColor`、`skyFactor`、`waterFogColor`）、其 `ambience`，以及天氣的 `rain` 與 `wind`，還有環境所做的每一次 `sky` 與 `ambience` 變更（包括季節色調）。開啟 `vanillaClients` 時，資源包設定的每一項都會在日誌中列出，該檔案的其餘部分仍然生效。
 
 設定步驟：
 
@@ -529,7 +531,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 3. 在此版本中，實體變體本身就是獨立的實體類型，所以屬於右側欄：開啟 `vanillaClients` 時它們會被跳過，其生成也一併跳過，日誌會指出它們。
 4. 照常安裝在伺服器上，連同 Blast Plaster，這是本模組所需要的，它同樣不登錄任何東西。玩家的機器上什麼都不用放；`/rdpl` 對他們並不存在。
 5. 用同一版本的乾淨原版用戶端加入一次來測試。失敗會很明顯：連線在門口就被拒絕，而不是之後悄悄壞掉。
-6. 兩個可接受的外觀缺口：伺服器新增的配方可以合成，但不會出現在配方書中；造陸期間的停留只是普通的旁觀者停留，進度顯示在動作列上，沒有本模組自己的用戶端所繪製的霧與標誌。
+6. 三個可接受的外觀缺口：伺服器新增的配方可以合成，但不會出現在配方書中；造陸期間的停留只是普通的旁觀者停留，進度顯示在動作列上，沒有本模組自己的用戶端所繪製的霧與標誌；村民的對話會以聊天訊息的形式出現，每則回應都是一行可點擊的編號文字，點擊後執行 `/rdplserver talk <number>`。
 
 ## 登錄表重新命名
 

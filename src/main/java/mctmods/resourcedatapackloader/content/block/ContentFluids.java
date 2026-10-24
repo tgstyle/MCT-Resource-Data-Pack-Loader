@@ -120,9 +120,9 @@ public final class ContentFluids {
 
         @Nullable public BucketItem getBucket() { return bucket; }
 
-        public Identifier flowingId() { return Identifier.fromNamespaceAndPath(def.id().getNamespace(), "flowing_" + def.name()); }
+        public Identifier flowingId() { return FluidDef.flowingOf(def.id()); }
 
-        public Identifier bucketId() { return Identifier.fromNamespaceAndPath(def.id().getNamespace(), def.name() + "_bucket"); }
+        public Identifier bucketId() { return FluidDef.bucketOf(def.id()); }
 
         private static BlockBehaviour.Properties blockProperties(FluidDef def) {
             ContentTypes.Preset preset = ContentTypes.material(def.material(), def.key());

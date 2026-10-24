@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -46,7 +47,7 @@ public final class ContentEnvironments {
     public static final String DEFAULT = "default";
     private static final String ENVIRONMENTS = "environments";
     private static final List<String> BLOCKS = List.of("sky", "ambience");
-    private static final List<String> FIXED = List.of("hasSkyLight", "surfaceWorld", "respawn", "respawnDimension", "spawning", "nether", "beds", "waterVaporizes", "groundLevel", "movementFactor", "fixedTime", "ambientLight");
+    static final List<String> FIXED = List.of("hasSkyLight", "surfaceWorld", "respawn", "respawnDimension", "spawning", "nether", "beds", "waterVaporizes", "groundLevel", "movementFactor", "fixedTime", "ambientLight");
     private static final String BIOMES = "biomes";
     private static final String SPAWNING = "spawning";
     private static final String GROWTH = "growth";
@@ -139,7 +140,10 @@ public final class ContentEnvironments {
             JsonObject held = into.getAsJsonObject(block.getKey());
             for (Map.Entry<String, JsonElement> entry : block.getValue().getAsJsonObject().entrySet()) {
                 if ("sky".equals(block.getKey()) && FIXED.contains(entry.getKey())) { ContentLog.LOGGER.error("{} gives sky.{}, which is set once when the world loads, ignoring it", owner, entry.getKey()); }
-                else { put(held, entry.getKey(), entry.getValue()); }
+                else {
+                    put(held, entry.getKey(), entry.getValue());
+                    VanillaClients.clientDrawn(owner, block.getKey() + "." + entry.getKey());
+                }
             }
         }
     }

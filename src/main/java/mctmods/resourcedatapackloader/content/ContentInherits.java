@@ -9,8 +9,10 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -30,13 +32,7 @@ public final class ContentInherits {
             try {
                 JsonObject held = Json.within(folder, entry.getKey(), () -> JsonParser.parseString(entry.getValue()).getAsJsonObject());
                 parsed.put(entry.getKey(), held);
-                JsonObject heldVariants = variantsOf(held);
-                if (heldVariants != null) {
-                    for (Map.Entry<String, JsonElement> variant : heldVariants.entrySet()) {
-                        Identifier id = Identifier.tryBuild(entry.getKey().getNamespace(), variant.getKey().toLowerCase(Locale.ROOT));
-                        if (id != null) { owners.put(id, entry.getKey()); }
-                    }
-                }
+                for (Identifier id : variantIds(entry.getKey(), held)) { owners.put(id, entry.getKey()); }
             }
             catch (RuntimeException unreadable) { ContentLog.LOGGER.error("Parsing error in {} {}, it inherits and lends nothing", folder, entry.getKey(), unreadable); }
         }
@@ -115,6 +111,19 @@ public final class ContentInherits {
         made.add(ContentParser.VARIANTS, variants);
         resolved.put(key, made);
         return made;
+    }
+
+    @Nullable public static Identifier variantId(String namespace, String name) { return Identifier.tryBuild(namespace, name.toLowerCase(Locale.ROOT)); }
+
+    public static List<Identifier> variantIds(Identifier file, JsonObject held) {
+        List<Identifier> ids = new ArrayList<>();
+        JsonObject variants = variantsOf(held);
+        if (variants == null) { return ids; }
+        for (String name : variants.keySet()) {
+            Identifier id = variantId(file.getNamespace(), name);
+            if (id != null) { ids.add(id); }
+        }
+        return ids;
     }
 
     @Nullable private static JsonObject variantsOf(JsonObject file) { return GsonHelper.isObjectNode(file, ContentParser.VARIANTS) ? file.getAsJsonObject(ContentParser.VARIANTS) : null; }

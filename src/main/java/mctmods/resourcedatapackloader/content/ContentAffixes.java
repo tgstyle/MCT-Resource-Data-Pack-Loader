@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.VanillaClients;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -56,7 +57,10 @@ public final class ContentAffixes {
         if (Config.data.affixesOff()) { return; }
         Json.eachObject(PackManager.AFFIXES, "affix file", ContentAffixes::readAffix);
         Json.eachObject(PackManager.GEMS, "gem file", ContentAffixes::readGem);
-        if (!DEFS.isEmpty() || !GEMS.isEmpty()) { Summary.info("affixes", "Loaded " + DEFS.size() + " affix file(s) and " + GEMS.size() + " gem(s)"); }
+        if (!DEFS.isEmpty() || !GEMS.isEmpty()) {
+            Summary.info("affixes", "Loaded " + DEFS.size() + " affix file(s) and " + GEMS.size() + " gem(s)");
+            VanillaClients.clientDrawn("The affix and gem content", "affix and socket names");
+        }
     }
 
     private static void readAffix(Identifier key, JsonObject json) {
