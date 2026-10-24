@@ -37,8 +37,9 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
     private final RainDef rain;
     private final ContentWeatherShape shape;
     @Nullable private GpuBuffer vertexBuffer;
+    @Nullable private AbstractTexture rainTexture;
+    @Nullable private AbstractTexture snowTexture;
     private boolean ready;
-    private Identifier rainTexture = RAIN;
 
     public ContentWeatherRenderer(RainDef rain) {
         this.rain = rain;
@@ -50,7 +51,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
         int columnCount = weather.rainColumns.size() + weather.snowColumns.size();
         ready = columnCount != 0 && mc.level != null && !ContentDimensionEffects.cameraAboveCeiling();
         if (!ready) { return; }
-        rainTexture = rain.solid() ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN;
+        Identifier rainSource = rain.solid() ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN;
         int indexCount;
         try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(columnCount * DefaultVertexFormat.PARTICLE.getVertexSize() * 4)) {
             BufferBuilder builder = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.PARTICLE);
@@ -62,6 +63,8 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
             }
         }
         RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS).requestIndexCount(indexCount);
+        rainTexture = mc.getTextureManager().getTexture(rainSource);
+        snowTexture = mc.getTextureManager().getTexture(SNOW);
     }
 
     @Override public boolean renderSnowAndRain(@Nonnull LevelRenderState level, @Nonnull WeatherRenderState weather, @Nonnull Vec3 camera, @Nonnull RenderPass pass) {
@@ -80,7 +83,7 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
     }
 
     private void render(WeatherRenderState weather, RenderPass pass, RenderPipeline pipeline) {
-        if (!ready || vertexBuffer == null) { return; }
+        if (!ready || vertexBuffer == null || rainTexture == null || snowTexture == null) { return; }
         Minecraft mc = Minecraft.getInstance();
         int rainCount = weather.rainColumns.size();
         pass.pushDebugGroup(() -> "RDPL Weather");
@@ -92,8 +95,8 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
         pass.setUniform("Sampler2", mc.gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
         pass.setIndexBuffer(indices.getBuffer(), indices.type());
         pass.setVertexBuffer(0, vertexBuffer.slice());
-        draw(pass, mc.getTextureManager().getTexture(rainTexture), 0, rainCount);
-        draw(pass, mc.getTextureManager().getTexture(SNOW), rainCount, weather.snowColumns.size());
+        draw(pass, rainTexture, 0, rainCount);
+        draw(pass, snowTexture, rainCount, weather.snowColumns.size());
         pass.popDebugGroup();
     }
 

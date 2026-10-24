@@ -71,6 +71,8 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
         }
         Identifier rainTexture = rain.solid() ? WhitenedTexture.bound(mc.getTextureManager(), RAIN) : RAIN;
         GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrix(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), new Vector3f(), new Matrix4f());
+        AbstractTexture rainSurface = mc.getTextureManager().getTexture(rainTexture);
+        AbstractTexture snowTexture = mc.getTextureManager().getTexture(SNOW);
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL Weather", color, OptionalInt.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
             pass.setPipeline(pipeline);
             RenderSystem.bindDefaultUniforms(pass);
@@ -78,8 +80,8 @@ public final class ContentWeatherRenderer implements CustomWeatherEffectRenderer
             pass.bindTexture("Sampler2", mc.gameRenderer.lightmap(), RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR));
             pass.setIndexBuffer(indexBuffer, indexType);
             pass.setVertexBuffer(0, vertexBuffer);
-            draw(pass, mc.getTextureManager().getTexture(rainTexture), 0, rainCount);
-            draw(pass, mc.getTextureManager().getTexture(SNOW), rainCount, weather.snowColumns.size());
+            draw(pass, rainSurface, 0, rainCount);
+            draw(pass, snowTexture, rainCount, weather.snowColumns.size());
         }
         return true;
     }
