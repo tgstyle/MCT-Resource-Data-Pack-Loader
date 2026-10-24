@@ -6394,7 +6394,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "leadOn": "kaboom",
   "leadIs": "Steve",
   "leadSays": "You are the current round leader",
-  "leadRuns": "mypack:lead_chosen"
+  "leadRuns": "mypack:lead_chosen",
+  "down": { "seconds": 30, "reviveSeconds": 5 }
 }
 ```
 
@@ -6464,6 +6465,19 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `leadIs`   | 文本 | 空                                 | 与 `appointed` 一起使用，担任主导者的玩家                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `leadSays` | 文本 | `You are the current round leader` | 在主导者落到某位玩家身上时告知他：抵达他们所主导的阵营时、认领时，或 `first` 主导者传给他们时（此时会附带离开的是谁）。`{side}` 是该阵营的显示名称；留空则不告知任何内容                                                                                                                                                                                                                                                                   |
 | `leadRuns` | 文本 | 空                                 | 一个函数，`namespace:path`，每当主导者传给一位玩家时运行一次：第一位主导者，以及此后的每一次交接。它以主导者的身份、在其位置运行，权限与进度奖励的函数相同，因此 `@s` 就是主导者。每秒检查一次；离线的主导者会在其下次在线时补运行。重启会重新决定主导者                                                                                                                                                                                   |
+
+### 倒地
+
+*队伍*
+
+| 设置            | 类型 | 默认值                                                                          | 作用                                                                                                                                                                                       |
+| --------------- | ---- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `seconds`       | 数字 | `0`                                                                             | 该阵营的玩家倒地后多少秒会失血而死。`0` 或没有 `down` 对象则关闭此功能：阵营的玩家照常死亡，也不监听任何事件。失血而死是真正的死亡，因此得分、淘汰和战利品都在那时结算，而不是在玩家倒地时 |
+| `reviveSeconds` | 数字 | `5`                                                                             | 未倒地的队友需要潜行站在倒地玩家 2 格以内多少秒才能将其救起。一旦停止潜行或走远，进度会重新开始                                                                                            |
+| `says`          | 文本 | `You are down and bleed out in {seconds} seconds unless a teammate revives you` | 玩家倒地时对其说的话。`{seconds}` 是距离失血而死的时间。留空则不说任何话                                                                                                                   |
+| `revivedSays`   | 文本 | `You were revived`                                                              | 队友将玩家救起时对其说的话。留空则不说任何话                                                                                                                                               |
+
+带有 `down` 的阵营成员不会死亡，而是倒地：生命值保持在 1，既不能移动也不能跳跃（会被从坐骑上拉下，一旦移动就被放回倒地的位置，缓慢效果拉满作为提示），会发光，除虚空、`/kill` 和失血而死外不受任何伤害，也不能攻击、使用物品或点击方块与实体。虚空和 `/kill` 会直接杀死未倒地的玩家，失血而死则算作把他击倒的敌人的击杀。被救起的玩家以最大生命值的一半回来。没有阵营的玩家照常死亡，生物不受影响。该状态只保存在内存中：倒地时下线的玩家会死亡，服务器在有人倒地时停止，则此人会以 1 点生命值且没有效果的状态回来。这些消息以 `rdpl:downed` 和 `rdpl:revived` 卡片的形式显示
 
 ## 计分
 
@@ -7000,6 +7014,8 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `rdpl:team_lead`         | 某个阵营的主导权落到一名玩家手中               | [队伍](#队伍) 中的 `leadSays`                                                                                                |
 | `rdpl:team_picked`       | 玩家被选入一个阵营                             | 该阵营的 `displayName`                                                                                                       |
 | `rdpl:team_round_ended`  | 回合结束，玩家被移入一个阵营                   | 该阵营的 `displayName`                                                                                                       |
+| `rdpl:downed`            | 玩家倒地而不是死亡                             | [队伍](#队伍) 中的 `down.says`                                                                                               |
+| `rdpl:revived`           | 队友将倒地的玩家救起                           | [队伍](#队伍) 中的 `down.revivedSays`                                                                                        |
 | `rdpl:lobby_joins`       | 回合中途登录的玩家被送往大厅                   | [大厅](#大厅) 中的 `opens.joinsSays`                                                                                         |
 | `rdpl:lobby_note`        | 屏幕中央的大厅提示行                           | [大厅](#大厅) 中的 `opens.says`、`opens.leaderSays`                                                                          |
 | `rdpl:scoring_results`   | 回合结束时发给每位玩家的排名                   | [结果](#结果) 中的 `results.card`、`results.title`、`results.icon`、`results.image`、`results.background`、`results.seconds` |
