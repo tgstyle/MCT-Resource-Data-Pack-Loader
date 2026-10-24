@@ -58,6 +58,7 @@
 - [语言闸门](#语言闸门)
 - [药水、药水类型与酿造](#药水药水类型与酿造)
 - [铁砧操作](#铁砧操作)
+- [附魔台](#附魔台)
 - [方块掉落物](#方块掉落物)
 - [右键收获](#右键收获)
 - [玩家战利品](#玩家战利品)
@@ -167,6 +168,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/ranks/*.json`                                                                      | 生物生成时可以抽取的随机层级：额外生命值、伤害、效果、掉落物和名称标签。[生物等级](#生物等级)                         |
 | `<namespace>/orders/*.json`                                                                     | 实体变种在箱子处为玩家完成的工作。[工作订单](#工作订单)                                                               |
 | `<namespace>/exposures/*.json`                                                                  | 对靠近指定方块、携带指定物品或处于指定维度、生物群系、结构、洞穴区域或高度的玩家造成暴露的危险。[暴露设置](#暴露设置) |
+| `<namespace>/enchanting/*.json`                                                                 | 附魔台提供什么、要求什么、拿走什么：按附魔、按物品以及整体。 [附魔台](#附魔台)                                        |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | 就地修改现有方块、物品和药水类型的属性。[属性覆盖](#属性覆盖)                                                         |
 | `<namespace>/villages/*.json`                                                                   | 村庄可以建造的地块。[村庄地块](#村庄地块)                                                                             |
 | `<namespace>/pathintersects/*.json`                                                             | 绘制在村庄道路交汇处的图案。[村庄道路](#村庄道路)                                                                     |
@@ -482,6 +484,7 @@ rdploader/RDPL1O Seasonal       priority and override combined
 | `removals`         | `recipes`  | 开     | 应用 `recipe_removals/*.json`                                                                           |
 | `disableOverrides` | `recipes`  | 关     | 阻止本模组替换或添加配方。仅当另一个核心模组在配方加载上冲突时才需要                                    |
 | `lootInjections`   | `data`     | 开     | 应用 `loot_injections/*.json`                                                                           |
+| `enchanting`       | `data`     | 开     | 应用 `enchanting/*.json`                                                                                |
 | `blockDrops`       | `data`     | 开     | 应用 `block_drops/*.json`                                                                               |
 | `registryRemaps`   | `data`     | 开     | 应用 `registry_remap` 文件，使在重命名之前保存的世界保留其方块和物品                                    |
 | `load`             | `worldgen` | 开     | 在新区块中生成 `worldgen/*.json` 里的矿脉。已存在的区块不会改变                                         |
@@ -499,7 +502,7 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当添加在随
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                 | `blocks`、`items`、`fluids`、`materials`                                          |
 | `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                              | `potions`、`potion_types`、`sounds`、`tabs`                                       |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                     | `biomes`、`dimensions`、`portalframes`                                            |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`player_loot`、`advancements`、`functions`                                  | `villagers`                                                                       |
+| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`enchanting`、`player_loot`、`advancements`、`functions`                    | `villagers`                                                                       |
 | `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的） | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                 |
 | `teams`、`scoring`、`ranks`                                                                                                            | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放） |
 | 整个控制层、设置和预生成                                                                                                               |                                                                                   |
@@ -2416,6 +2419,116 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 铁砧自身的修复与合并不受影响：只有当左侧是指定物品、右侧是其 `with` 时，这项规则才会响应。
 
 带有 `collectsExperience` 的生物也会在此消耗自己的等级。当它主手持有 `item`、副手持有 `with`，且有足够的 `levels` 可付时，它会走向 16 格内的铁砧，并在 3 格内进行操作：等级从它自身扣除，就像从玩家身上扣除一样，`with` 被用掉，铁砧像在玩家手下一样磨损，成品最终出现在它的主手中。当它走过某项铁砧操作在 `with` 中指定的掉落物时，会把它捡起放入副手。`grants` 和 `locks` 只与玩家有关，因此生物不会从 `grants` 获得任何东西，也不受任何锁定限制。
+
+### 过于昂贵
+
+含有 `tooExpensive` 的文件会挪动铁砧放弃的那个点。花费达到这么多等级或更多的操作会显示“过于昂贵！”，除创造模式外无法取出；单纯改名的花费仍最多比它少一级。它可以单独放在一个文件里，也可以和某项操作放在一起，最后加载的文件生效。
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| 键             | 必需 | 值               | 默认值 | 作用                             |
+| -------------- | ---- | ---------------- | ------ | -------------------------------- |
+| `tooExpensive` | 是   | 整数，1 到 32767 | `40`   | 铁砧操作变得过于昂贵时的等级花费 |
+
+### 铁砧规则
+
+含有 `match` 的文件会改变铁砧修复和合并所指物品的方式。省略的键保持原版做法，所以只含 `match` 的文件与原版完全一样。改名从不受影响：它的一级花费以及物品携带的累积惩罚，仍会加在这里设定的任何花费之上。
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| 键              | 必需 | 值                                          | 默认值             | 作用                                                                                             |
+| --------------- | ---- | ------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------ |
+| `match`         | 是   | 物品名称、`#` 加矿物词典名，或 `*`          |                    | 规则针对的左槽物品。物品名称优先于矿物词典名，矿物词典名优先于 `*`；同类之间以最后加载的文件为准 |
+| `repairWith`    | 否   | 物品名称、`#` 加矿物词典名，或 `*`          | 物品自身的修复材料 | 从右槽修复它的东西                                                                               |
+| `repairPerUnit` | 否   | 大于 0 且不超过 1 的数                      | `0.25`             | 每个修复物品恢复的满耐久比例                                                                     |
+| `repairCost`    | 否   | 1 到 32767 的整数，或 `{ "multiplier": n }` | 原版               | 修复花费的等级。数字取代原版价格，大于 0 且不超过 100 的倍率按比例缩放它，四舍五入且至少为 1     |
+| `combineCost`   | 否   | 同 `repairCost`                             | 原版               | 合并两件该物品时的同类设定                                                                       |
+| `bookCost`      | 否   | 同 `repairCost`                             | 原版               | 右槽为附魔书时的同类设定                                                                         |
+| `penalty`       | 否   | `"vanilla"`、`"none"` 或 `{ "factor": n }`  | `"vanilla"`        | 累积惩罚每次使用后如何增长。原版将其翻倍再加一，`none` 保持不变，0 到 16 的系数将其相乘再加一    |
+| `repair`        | 否   | 布尔值                                      | `true`             | 为 `false` 时铁砧不修复它                                                                        |
+| `combine`       | 否   | 布尔值                                      | `true`             | 为 `false` 时铁砧不合并两件它；附魔书仍可使用                                                    |
+
+## 附魔台
+
+*合成、战利品与交易*
+
+`<namespace>/enchanting/*.json`
+
+文件名随你定，只读取文件夹，多个文件会叠加。含有 `enchantment` 的文件塑造一个附魔，含有 `match` 的文件塑造一种物品，其他文件则设置整张附魔台。省略的键保持原版做法，所以只含 `enchantment` 或 `match` 的文件什么也不改变。配置中 `data` 类别的 `enchanting` 设置会关闭整个文件夹。
+
+### 每个附魔
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| 键            | 必需 | 值             | 默认值   | 作用                                                       |
+| ------------- | ---- | -------------- | -------- | ---------------------------------------------------------- |
+| `enchantment` | 是   | 附魔名称       |          | 文件针对哪个附魔                                           |
+| `off`         | 否   | 布尔值         | `false`  | 为 `true` 时附魔台永远不提供它；战利品、交易和铁砧仍然可以 |
+| `weight`      | 否   | 整数，1 或以上 | 自身的值 | 相对其他附魔被选中的频率；原版的从最稀有的 1 到 10         |
+| `minLevel`    | 否   | 整数，1 或以上 | 自身的值 | 附魔台提供的最低等级                                       |
+| `maxLevel`    | 否   | 整数，1 或以上 | 自身的值 | 附魔台提供的最高等级，可以超过该附魔自身的最高等级         |
+
+### 每种物品
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| 键               | 必需 | 值                                 | 默认值           | 作用                                                                                             |
+| ---------------- | ---- | ---------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------ |
+| `match`          | 是   | 物品名称、`#` 加矿物词典名，或 `*` |                  | 放在附魔台上的物品。物品名称优先于矿物词典名，矿物词典名优先于 `*`；同类之间以最后加载的文件为准 |
+| `enchantable`    | 否   | 布尔值                             | 原版             | `true` 让附魔台接受原版拒绝的物品，`false` 则拒绝原版会接受的物品                                |
+| `enchantability` | 否   | 整数，1 或以上                     | 物品自身的值     | 它接受附魔的能力：越高，抽到的附魔越强越多。原版的范围是 1 到 25；钻石工具为 10，金工具为 22     |
+| `enchantments`   | 否   | 附魔名称列表                       | 适合该物品的附魔 | 附魔台可以为它抽取的仅有附魔，不论它们原本是否适合该物品                                         |
+
+被设为可附魔却没有自身附魔能力的物品，还需要 `enchantability`，否则永远抽不到任何附魔。
+
+### 整张附魔台
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| 键              | 必需 | 值                       | 默认值      | 作用                                                                   |
+| --------------- | ---- | ------------------------ | ----------- | ---------------------------------------------------------------------- |
+| `enchantLevels` | 否   | 3 个整数的列表，1 或以上 | 随机值      | 每个槽位从上到下所要求的等级，取代随机得出的等级；其附魔也按该等级抽取 |
+| `enchantCosts`  | 否   | 3 个整数的列表，0 或以上 | `[1, 2, 3]` | 每个槽位被选中后拿走的等级                                             |
+| `lapisCosts`    | 否   | 3 个整数的列表，1 或以上 | `[1, 2, 3]` | 每个槽位被选中后拿走的青金石，必须放在附魔台中                         |
+| `shelfCap`      | 否   | 整数，0 或以上           | `15`        | 最多计入多少个书架                                                     |
+| `shelfPower`    | 否   | 0 到 16 的数             | `1`         | 每个书架算作多少，对总数四舍五入                                       |
+
+界面仍在槽位旁及其提示中绘制原版的一、二、三；附魔台检查和拿走的数量以文件为准。
 
 ## 方块掉落物
 

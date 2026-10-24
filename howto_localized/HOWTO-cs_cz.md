@@ -58,6 +58,7 @@
 - [Jazykové brány](#jazykové-brány)
 - [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
 - [Práce s kovadlinou](#práce-s-kovadlinou)
+- [Čarovací stůl](#čarovací-stůl)
 - [Dropy z bloků](#dropy-z-bloků)
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Kořist hráčů](#kořist-hráčů)
@@ -167,6 +168,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/ranks/*.json`                                                                      | Náhodné úrovně, které mob získá při objevení: zdraví navíc, poškození, efekty, kořist a jmenovka. [Hodnosti mobů](#hodnosti-mobů)                                                                                 |
 | `<namespace>/orders/*.json`                                                                     | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                                                                                    |
 | `<namespace>/exposures/*.json`                                                                  | Nebezpečí, která vystavují hráče účinku poblíž pojmenovaných bloků, při nošení pojmenovaných předmětů nebo v pojmenovaných dimenzích, biomech, strukturách, oblastech jeskyní nebo výškách. [Expozice](#expozice) |
+| `<namespace>/enchanting/*.json`                                                                 | Co čarovací stůl nabízí, žádá a bere: podle očarování, podle předmětu a celkově. [Čarovací stůl](#čarovací-stůl)                                                                                                  |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností)                                                                                            |
 | `<namespace>/villages/*.json`                                                                   | Pozemky, které mohou vesnice stavět. [Pozemky vesnic](#pozemky-vesnic)                                                                                                                                            |
 | `<namespace>/pathintersects/*.json`                                                             | Vzory malované tam, kde se vesnické cesty protínají. [Cesty vesnic](#cesty-vesnic)                                                                                                                                |
@@ -482,6 +484,7 @@ Každá z těchto složek má také přepínač v konfiguraci, takže modpack m�
 | `removals`         | `recipes`  | zapnuto | Použije `recipe_removals/*.json`                                                                                                                         |
 | `disableOverrides` | `recipes`  | vypnuto | Zabrání tomuto módu nahrazovat nebo přidávat recepty. Potřeba jen tehdy, když se jiný coremod hádá o načítání receptů                                    |
 | `lootInjections`   | `data`     | zapnuto | Použije `loot_injections/*.json`                                                                                                                         |
+| `enchanting`       | `data`     | zapnuto | Použije `enchanting/*.json`                                                                                                                              |
 | `blockDrops`       | `data`     | zapnuto | Použije `block_drops/*.json`                                                                                                                             |
 | `registryRemaps`   | `data`     | zapnuto | Použije soubory `registry_remap`, takže světy uložené před přejmenováním si své bloky a předměty ponechají                                               |
 | `load`             | `worldgen` | zapnuto | Generuje rudné žíly z `worldgen/*.json` v nových chuncích. Existující chunky se nemění                                                                   |
@@ -499,7 +502,7 @@ Balíček může žít jen na serveru, zatímco hráči hrají na čistých vani
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                 | `blocks`, `items`, `fluids`, `materials`                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                     | `biomes`, `dimensions`, `portalframes`                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                  | `villagers`                                                                         |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                    | `villagers`                                                                         |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách) | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)       |
 | `teams`, `scoring`, `ranks`                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (složky klienta, bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                       |                                                                                     |
@@ -2416,6 +2419,116 @@ Vlož pojmenovaný předmět do levého pole kovadliny a jeho předmět `with` d
 Vlastní opravy a kombinace kovadliny zůstávají nedotčeny: toto reaguje jen tehdy, když levé pole obsahuje pojmenovaný předmět a pravé jeho `with`.
 
 Mob s `collectsExperience` tu utrácí své úrovně také. Dokud drží `item` v hlavní ruce a `with` ve vedlejší ruce a má na zaplacení `levels`, dojde ke kovadlině do 16 bloků a pracuje na ní, jakmile je do 3 bloků: úrovně se mu odečtou stejně jako hráči, `with` se spotřebuje, kovadlina se opotřebuje stejně jako u hráče a výsledek práce skončí v jeho hlavní ruce. Když přejde přes odhozený předmět, který nějaká práce s kovadlinou uvádí pod `with`, zvedne ho do vedlejší ruky. `grants` a `locks` se týkají jen hráčů, takže mob nezíská nic z `grants` a žádný zámek ho nezadrží.
+
+### Příliš drahé
+
+Soubor s `tooExpensive` posouvá hranici, u které kovadlina to vzdá. Práce, která stojí tolik úrovní nebo víc, ukáže „Příliš drahé!“ a nedá se vyjmout, kromě tvořivého režimu, a samotné přejmenování stojí dál nejvýš o úroveň méně. Klíč může stát ve vlastním souboru nebo vedle zakázky a platí soubor načtený jako poslední.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Klíč           | Povinné | Hodnota                | Výchozí | Co dělá                                                      |
+| -------------- | ------- | ---------------------- | ------- | ------------------------------------------------------------ |
+| `tooExpensive` | ano     | celé číslo, 1 až 32767 | `40`    | Cena v úrovních, od které je práce na kovadlině příliš drahá |
+
+### Pravidla kovadliny
+
+Soubor s `match` mění, jak kovadlina opravuje a spojuje předmět, který jmenuje. Vynechaný klíč zachová způsob vanilly, takže soubor jen s `match` funguje přesně jako vanilla. Přejmenování se nikdy nemění: jeho jedna úroveň a cena předchozí práce, kterou předměty nesou, se dál přičítají ke každé ceně nastavené zde.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Klíč            | Povinné | Hodnota                                               | Výchozí                           | Co dělá                                                                                                                                                                             |
+| --------------- | ------- | ----------------------------------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | ano     | název předmětu, `#` a název ze slovníku rud, nebo `*` |                                   | Předmět v levém poli, pro který pravidlo platí. Název předmětu má přednost před názvem ze slovníku rud a ten před `*`; mezi dvěma stejného druhu platí soubor načtený jako poslední |
+| `repairWith`    | ne      | název předmětu, `#` a název ze slovníku rud, nebo `*` | vlastní opravný materiál předmětu | Co ho opravuje z pravého pole                                                                                                                                                       |
+| `repairPerUnit` | ne      | číslo nad 0 až 1                                      | `0.25`                            | Podíl plné výdrže, který vrátí každý opravný předmět                                                                                                                                |
+| `repairCost`    | ne      | celé číslo od 1 do 32767, nebo `{ "multiplier": n }`  | vanilla                           | Úrovně, které stojí oprava. Číslo nahradí cenu vanilly a násobitel nad 0 až 100 ji škáluje, zaokrouhleně a nejméně na 1                                                             |
+| `combineCost`   | ne      | jako `repairCost`                                     | vanilla                           | Totéž pro spojení dvou takových předmětů                                                                                                                                            |
+| `bookCost`      | ne      | jako `repairCost`                                     | vanilla                           | Totéž pro očarovanou knihu v pravém poli                                                                                                                                            |
+| `penalty`       | ne      | `"vanilla"`, `"none"` nebo `{ "factor": n }`          | `"vanilla"`                       | Jak cena předchozí práce roste s každým použitím. Vanilla ji zdvojnásobí a přičte jedna, `none` ji nechá, kde je, a faktor od 0 do 16 ji vynásobí a přičte jedna                    |
+| `repair`        | ne      | boolean                                               | `true`                            | Při `false` ho kovadlina neopraví                                                                                                                                                   |
+| `combine`       | ne      | boolean                                               | `true`                            | Při `false` kovadlina nespojí dva takové předměty; očarované knihy se dál použijí                                                                                                   |
+
+## Čarovací stůl
+
+*výroba, kořist a obchod*
+
+`<namespace>/enchanting/*.json`
+
+Název souboru je na vás, čte se jen složka a víc souborů se sčítá. Soubor s `enchantment` upravuje jedno očarování, soubor s `match` jeden předmět a každý jiný soubor nastavuje stůl jako celek. Vynechaný klíč zachová způsob vanilly, takže soubor jen s `enchantment` nebo `match` nic nemění. Nastavení `enchanting` v kategorii konfigurace `data` vypne celou složku.
+
+### Každé očarování
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Klíč          | Povinné | Hodnota                | Výchozí | Co dělá                                                                        |
+| ------------- | ------- | ---------------------- | ------- | ------------------------------------------------------------------------------ |
+| `enchantment` | ano     | název očarování        |         | Pro které očarování soubor je                                                  |
+| `off`         | ne      | boolean                | `false` | Při `true` ho stůl nikdy nenabídne; kořist, obchod a kovadliny ještě mohou     |
+| `weight`      | ne      | celé číslo, 1 nebo víc | vlastní | Jak často padne oproti ostatním; ve vanille od 1 u nejvzácnějších po 10        |
+| `minLevel`    | ne      | celé číslo, 1 nebo víc | vlastní | Nejnižší úroveň, kterou stůl nabídne                                           |
+| `maxLevel`    | ne      | celé číslo, 1 nebo víc | vlastní | Nejvyšší úroveň, kterou stůl nabídne; smí přesáhnout vlastní maximum očarování |
+
+### Každý předmět
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Klíč             | Povinné | Hodnota                                               | Výchozí                  | Co dělá                                                                                                                                               |
+| ---------------- | ------- | ----------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | ano     | název předmětu, `#` a název ze slovníku rud, nebo `*` |                          | Předmět ve stole. Název předmětu má přednost před názvem ze slovníku rud a ten před `*`; mezi dvěma stejného druhu platí soubor načtený jako poslední |
+| `enchantable`    | ne      | boolean                                               | vanilla                  | `true` nechá stůl přijmout předmět, který vanilla odmítá, a `false` odmítne předmět, který by přijal                                                  |
+| `enchantability` | ne      | celé číslo, 1 nebo víc                                | vlastní hodnota předmětu | Jak dobře přijímá očarování: vyšší hodnota losuje silnější a víc očarování. Ve vanille od 1 do 25; diamantové nástroje mají 10 a zlaté 22             |
+| `enchantments`   | ne      | seznam názvů očarování                                | co k předmětu sedí       | Jediná očarování, která pro něj stůl smí vylosovat, ať by k němu jinak seděla, nebo ne                                                                |
+
+Předmět, který se stal očarovatelným a nemá vlastní očarovatelnost, potřebuje také `enchantability`, jinak se pro něj nikdy nic nevylosuje.
+
+### Celý stůl
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Klíč            | Povinné | Hodnota                                 | Výchozí     | Co dělá                                                                                                  |
+| --------------- | ------- | --------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | ne      | seznam 3 celých čísel, každé 1 nebo víc | losováno    | Úroveň, kterou každé pole shora dolů žádá místo vylosované; jeho očarování se losují také na této úrovni |
+| `enchantCosts`  | ne      | seznam 3 celých čísel, každé 0 nebo víc | `[1, 2, 3]` | Úrovně, které každé pole po výběru vezme                                                                 |
+| `lapisCosts`    | ne      | seznam 3 celých čísel, každé 1 nebo víc | `[1, 2, 3]` | Lapis lazuli, který každé pole po výběru vezme a který musí být ve stole                                 |
+| `shelfCap`      | ne      | celé číslo, 0 nebo víc                  | `15`        | Kolik knihoven se nejvýš počítá                                                                          |
+| `shelfPower`    | ne      | číslo od 0 do 16                        | `1`         | Kolik se počítá za každou knihovnu, zaokrouhleno za všechny dohromady                                    |
+
+Obrazovka dál kreslí vanilla jedničku, dvojku a trojku vedle polí a v jejich popiscích; co stůl kontroluje a bere, se řídí souborem.
 
 ## Dropy z bloků
 

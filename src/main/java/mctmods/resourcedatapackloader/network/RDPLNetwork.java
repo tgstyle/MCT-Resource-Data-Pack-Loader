@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
+import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
@@ -50,6 +51,7 @@ public final class RDPLNetwork {
         registerMessage(MessageEnvironments.Handler.class, MessageEnvironments.class);
         registerClient(() -> BossBackgrounds.Handler.class, MessageBossBackground.class);
         registerMessage(MessageMultipartDesc.Handler.class, MessageMultipartDesc.class);
+        registerMessage(MessageAnvilCosts.Handler.class, MessageAnvilCosts.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -102,6 +104,8 @@ public final class RDPLNetwork {
     }
 
     public static void sendToasts(EntityPlayerMP player, int kinds) { sendTo(new MessageToasts(kinds), player); }
+
+    public static void sendAnvilCosts(EntityPlayerMP player) { sendTo(new MessageAnvilCosts(AnvilCosts.servedCap(), AnvilCosts.servedPaid(), AnvilCosts.servedLapis(), AnvilCosts.servedOpening()), player); }
 
     public static void introDone() {
         if (channel == null) { return; }

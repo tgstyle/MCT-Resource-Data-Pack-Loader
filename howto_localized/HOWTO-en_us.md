@@ -58,6 +58,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Language gates](#language-gates)
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
+- [Enchanting table](#enchanting-table)
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
 - [Player loot](#player-loot)
@@ -167,6 +168,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/ranks/*.json`                                                                      | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                                            |
 | `<namespace>/orders/*.json`                                                                     | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                                                     |
 | `<namespace>/exposures/*.json`                                                                  | Hazards that expose players near named blocks, carrying named items or in named dimensions, biomes, structures, cave regions or heights. [Exposures](#exposures) |
+| `<namespace>/enchanting/*.json`                                                                 | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                    |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                                               |
 | `<namespace>/villages/*.json`                                                                   | Plots villages can build. [Village plots](#village-plots)                                                                                                        |
 | `<namespace>/pathintersects/*.json`                                                             | Designs painted where village roads meet. [Village roads](#village-roads)                                                                                        |
@@ -482,6 +484,7 @@ Each of these folders also has a switch in the config, so a modpack can turn one
 | `removals`         | `recipes`  | on      | Applies `recipe_removals/*.json`                                                                                                                        |
 | `disableOverrides` | `recipes`  | off     | Stops this mod from replacing or adding recipes. Only needed if another coremod conflicts over recipe loading                                           |
 | `lootInjections`   | `data`     | on      | Applies `loot_injections/*.json`                                                                                                                        |
+| `enchanting`       | `data`     | on      | Applies `enchanting/*.json`                                                                                                                             |
 | `blockDrops`       | `data`     | on      | Applies `block_drops/*.json`                                                                                                                            |
 | `registryRemaps`   | `data`     | on      | Applies the `registry_remap` files, so worlds saved before a rename keep their blocks and items                                                         |
 | `load`             | `worldgen` | on      | Generates the ore veins from `worldgen/*.json` in new chunks. Existing chunks are not changed                                                           |
@@ -499,7 +502,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                               | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                      | `biomes`, `dimensions`, `portalframes`                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                   | `villagers`                                                                                   |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                     | `villagers`                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's) | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client)              |
 | `teams`, `scoring`, `ranks`                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                    |                                                                                               |
@@ -2416,6 +2419,116 @@ Put the named item in an anvil's left slot and its `with` item in the right, and
 The anvil's own repairs and combinations are untouched: this only answers when the left holds a named item and the right holds its `with`.
 
 A mob with `collectsExperience` spends its levels here as well. While it holds `item` in its main hand and `with` in its off hand and has `levels` to pay, it walks to an anvil within 16 blocks and works it once it is within 3 blocks: the levels come off its own as they come off a player's, `with` is used up, the anvil wears as it does under a player, and the work ends up in its main hand. As it walks over a dropped item that some anvil work names under `with`, it picks it up into its off hand. `grants` and `locks` only concern players, so a mob earns nothing from `grants` and no lock holds it back.
+
+### Too expensive
+
+A file holding `tooExpensive` moves the point where the anvil gives up. Work that costs that many levels or more shows Too Expensive! and cannot be taken out, except in creative, and a rename alone still costs at most one level less. It can sit in its own file or beside a piece of work, and the file loaded last wins.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Key            | Required | Value           | Default | What it does                                             |
+| -------------- | -------- | --------------- | ------- | -------------------------------------------------------- |
+| `tooExpensive` | yes      | int, 1 to 32767 | `40`    | The level cost at which anvil work becomes too expensive |
+
+### Anvil rules
+
+A file holding `match` changes how the anvil repairs and combines the item it names. A key left out keeps vanilla's way, so a file with `match` alone works exactly as vanilla does. Renaming is never touched: its one level and the prior-work cost the items carry still come on top of any cost set here.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Key             | Required | Value                                         | Default                        | What it does                                                                                                                                                     |
+| --------------- | -------- | --------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | yes      | item name, `#` and an ore name, or `*`        |                                | The left-slot item the rule is for. An item name wins over an ore name and an ore name over `*`; between two of the same kind the file loaded last wins          |
+| `repairWith`    | no       | item name, `#` and an ore name, or `*`        | the item's own repair material | What repairs it from the right slot                                                                                                                              |
+| `repairPerUnit` | no       | number above 0 up to 1                        | `0.25`                         | The share of full durability each repair item gives back                                                                                                         |
+| `repairCost`    | no       | int from 1 to 32767, or `{ "multiplier": n }` | vanilla                        | The levels a repair costs. A number replaces vanilla's price, and a multiplier above 0 up to 100 scales it, rounded and at least 1                               |
+| `combineCost`   | no       | as `repairCost`                               | vanilla                        | The same for joining two of the item                                                                                                                             |
+| `bookCost`      | no       | as `repairCost`                               | vanilla                        | The same for an enchanted book in the right slot                                                                                                                 |
+| `penalty`       | no       | `"vanilla"`, `"none"` or `{ "factor": n }`    | `"vanilla"`                    | How the prior-work cost grows with each use. Vanilla doubles it and adds one, `none` leaves it where it is, and a factor from 0 to 16 multiplies it and adds one |
+| `repair`        | no       | boolean                                       | `true`                         | `false` and the anvil will not repair it                                                                                                                         |
+| `combine`       | no       | boolean                                       | `true`                         | `false` and the anvil will not join two of it; enchanted books still apply                                                                                       |
+
+## Enchanting table
+
+*crafting, loot and trade*
+
+`<namespace>/enchanting/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. A file holding `enchantment` shapes one enchantment, a file holding `match` shapes one item, and any other file sets the table as a whole. A key left out keeps vanilla's way, so a file with only `enchantment` or `match` changes nothing. The `enchanting` setting in the `data` config category turns the whole folder off.
+
+### Each enchantment
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Key           | Required | Value            | Default | What it does                                                                          |
+| ------------- | -------- | ---------------- | ------- | ------------------------------------------------------------------------------------- |
+| `enchantment` | yes      | enchantment name |         | Which enchantment the file is for                                                     |
+| `off`         | no       | boolean          | `false` | `true` and the table never offers it; loot, trades and anvils still can               |
+| `weight`      | no       | int, 1 or more   | its own | How often it is picked against the others; vanilla's run from 1 for the rarest to 10  |
+| `minLevel`    | no       | int, 1 or more   | its own | The lowest level the table offers                                                     |
+| `maxLevel`    | no       | int, 1 or more   | its own | The highest level the table offers, which may go past the enchantment's own top level |
+
+### Each item
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Key              | Required | Value                                  | Default            | What it does                                                                                                                                   |
+| ---------------- | -------- | -------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | yes      | item name, `#` and an ore name, or `*` |                    | The item in the table. An item name wins over an ore name and an ore name over `*`; between two of the same kind the file loaded last wins     |
+| `enchantable`    | no       | boolean                                | vanilla            | `true` lets the table take an item vanilla turns away, and `false` turns away one it would take                                                |
+| `enchantability` | no       | int, 1 or more                         | the item's own     | How well it takes enchantments: higher rolls stronger ones and more of them. Vanilla's run from 1 to 25; diamond tools are 10 and gold ones 22 |
+| `enchantments`   | no       | list of enchantment names              | what fits the item | The only enchantments the table may roll for it, whether or not they would fit it otherwise                                                    |
+
+An item made enchantable that has no enchantability of its own needs `enchantability` as well, or nothing is ever rolled for it.
+
+### The whole table
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Key             | Required | Value                     | Default     | What it does                                                                                                           |
+| --------------- | -------- | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | no       | list of 3 ints, 1 or more | rolled      | The level each slot, top to bottom, asks for in place of the rolled one; its enchantments are rolled at that level too |
+| `enchantCosts`  | no       | list of 3 ints, 0 or more | `[1, 2, 3]` | The levels each slot takes once picked                                                                                 |
+| `lapisCosts`    | no       | list of 3 ints, 1 or more | `[1, 2, 3]` | The lapis lazuli each slot takes once picked, which must be in the table                                               |
+| `shelfCap`      | no       | int, 0 or more            | `15`        | How many bookshelves count at most                                                                                     |
+| `shelfPower`    | no       | number from 0 to 16       | `1`         | What each bookshelf counts as, rounded over the lot                                                                    |
+
+The screen still draws vanilla's one, two and three beside the slots and in their tooltips; what the table checks and takes follows the file.
 
 ## Block drops
 

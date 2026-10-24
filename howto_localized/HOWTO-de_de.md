@@ -58,6 +58,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Sprachtore](#sprachtore)
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
+- [Zaubertisch](#zaubertisch)
 - [Blockdrops](#blockdrops)
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Spielerbeute](#spielerbeute)
@@ -167,6 +168,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/ranks/*.json`                                                                      | Zufällige Stufen, die ein Mob beim Erscheinen würfelt: zusätzliche Gesundheit, Schaden, Effekte, Beute und ein Namensschild. [Mob-Ränge](#mob-ränge)                                                          |
 | `<namespace>/orders/*.json`                                                                     | Arbeiten, die Entity-Varianten für einen Spieler an einer Truhe erledigen. [Arbeitsaufträge](#arbeitsaufträge)                                                                                                |
 | `<namespace>/exposures/*.json`                                                                  | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen, Biomen, Strukturen, Höhlenregionen oder Höhen ausgesetzt sind. [Expositionen](#expositionen) |
+| `<namespace>/enchanting/*.json`                                                                 | Was der Zaubertisch anbietet, verlangt und nimmt: je Verzauberung, je Item und insgesamt. [Zaubertisch](#zaubertisch)                                                                                         |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                                                                          |
 | `<namespace>/villages/*.json`                                                                   | Grundstücke, die Dörfer bauen können. [Dorfgrundstücke](#dorfgrundstücke)                                                                                                                                     |
 | `<namespace>/pathintersects/*.json`                                                             | Muster, die an Kreuzungen von Dorfstraßen gemalt werden. [Dorfwege](#dorfwege)                                                                                                                                |
@@ -482,6 +484,7 @@ Jeder dieser Ordner hat in der Config außerdem einen Schalter, sodass ein Modpa
 | `removals`         | `recipes`  | an       | Wendet `recipe_removals/*.json` an                                                                                                                                |
 | `disableOverrides` | `recipes`  | aus      | Hindert diesen Mod daran, Rezepte zu ersetzen oder hinzuzufügen. Nur nötig, wenn ein anderer Coremod beim Laden von Rezepten in Konflikt gerät                    |
 | `lootInjections`   | `data`     | an       | Wendet `loot_injections/*.json` an                                                                                                                                |
+| `enchanting`       | `data`     | an       | Wendet `enchanting/*.json` an                                                                                                                                     |
 | `blockDrops`       | `data`     | an       | Wendet `block_drops/*.json` an                                                                                                                                    |
 | `registryRemaps`   | `data`     | an       | Wendet die `registry_remap`-Dateien an, damit vor einer Umbenennung gespeicherte Welten ihre Blöcke und Items behalten                                            |
 | `load`             | `worldgen` | an       | Erzeugt die Erzadern aus `worldgen/*.json` in neuen Chunks. Vorhandene Chunks bleiben unverändert                                                                 |
@@ -499,7 +502,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                              | `blocks`, `items`, `fluids`, `materials`                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                           | `potions`, `potion_types`, `sounds`, `tabs`                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                  | `biomes`, `dimensions`, `portalframes`                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                               | `villagers`                                                                         |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                 | `villagers`                                                                         |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt) |
 | `teams`, `scoring`, `ranks`                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                                         |                                                                                     |
@@ -2416,6 +2419,116 @@ Lege den genannten Gegenstand in den linken Platz eines Ambosses und seinen `wit
 Die eigenen Reparaturen und Kombinationen des Ambosses bleiben unberührt: Das hier antwortet nur, wenn links ein genannter Gegenstand liegt und rechts sein `with`.
 
 Ein Mob mit `collectsExperience` gibt hier ebenfalls seine Stufen aus. Solange er `item` in der Haupthand und `with` in der Nebenhand hält und `levels` bezahlen kann, geht er zu einem Amboss im Umkreis von 16 Blöcken und benutzt ihn, sobald er höchstens 3 Blöcke entfernt ist: Die Stufen gehen von seinen eigenen ab wie bei einem Spieler, `with` wird verbraucht, der Amboss nutzt sich ab wie unter einem Spieler, und das Ergebnis landet in seiner Haupthand. Läuft er über einen fallengelassenen Gegenstand, den ein Ambosswerk unter `with` nennt, hebt er ihn in die Nebenhand auf. `grants` und `locks` betreffen nur Spieler, also bringt `grants` einem Mob nichts ein, und keine Sperre hält ihn auf.
+
+### Zu teuer
+
+Eine Datei mit `tooExpensive` verschiebt die Grenze, an der der Amboss aufgibt. Arbeit, die so viele Stufen oder mehr kostet, zeigt „Zu teuer!“ und lässt sich außer im Kreativmodus nicht herausnehmen, und ein reines Umbenennen kostet weiterhin höchstens eine Stufe weniger. Der Schlüssel kann in einer eigenen Datei oder neben einer Arbeit stehen, und die zuletzt geladene Datei gewinnt.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Schlüssel      | Pflicht | Wert             | Standard | Was er macht                                         |
+| -------------- | ------- | ---------------- | -------- | ---------------------------------------------------- |
+| `tooExpensive` | ja      | int, 1 bis 32767 | `40`     | Die Stufenkosten, ab denen Ambossarbeit zu teuer ist |
+
+### Ambossregeln
+
+Eine Datei mit `match` ändert, wie der Amboss das genannte Item repariert und kombiniert. Ein fehlender Schlüssel behält den Vanilla-Weg bei, eine Datei nur mit `match` arbeitet also genau wie Vanilla. Das Umbenennen bleibt unberührt: seine eine Stufe und die Kosten früherer Arbeit, die die Items tragen, kommen weiterhin auf jeden hier gesetzten Preis.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Schlüssel       | Pflicht | Wert                                                | Standard                               | Was er macht                                                                                                                                                                                           |
+| --------------- | ------- | --------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `match`         | ja      | Itemname, `#` und ein Ore-Dictionary-Name, oder `*` |                                        | Das Item im linken Platz, für das die Regel gilt. Ein Itemname geht vor einem Ore-Dictionary-Namen und dieser vor `*`; bei zwei Gleichrangigen gewinnt die zuletzt geladene Datei                      |
+| `repairWith`    | nein    | Itemname, `#` und ein Ore-Dictionary-Name, oder `*` | das eigene Reparaturmaterial des Items | Was es vom rechten Platz aus repariert                                                                                                                                                                 |
+| `repairPerUnit` | nein    | Zahl über 0 bis 1                                   | `0.25`                                 | Der Anteil der vollen Haltbarkeit, den jedes Reparaturitem zurückgibt                                                                                                                                  |
+| `repairCost`    | nein    | int von 1 bis 32767 oder `{ "multiplier": n }`      | Vanilla                                | Die Stufen, die eine Reparatur kostet. Eine Zahl ersetzt den Vanilla-Preis, ein Multiplikator über 0 bis 100 skaliert ihn, gerundet und mindestens 1                                                   |
+| `combineCost`   | nein    | wie `repairCost`                                    | Vanilla                                | Dasselbe für das Vereinen zweier dieser Items                                                                                                                                                          |
+| `bookCost`      | nein    | wie `repairCost`                                    | Vanilla                                | Dasselbe für ein verzaubertes Buch im rechten Platz                                                                                                                                                    |
+| `penalty`       | nein    | `"vanilla"`, `"none"` oder `{ "factor": n }`        | `"vanilla"`                            | Wie die Kosten früherer Arbeit mit jeder Nutzung wachsen. Vanilla verdoppelt sie und zählt eins dazu, `none` lässt sie, wo sie sind, und ein Faktor von 0 bis 16 multipliziert sie und zählt eins dazu |
+| `repair`        | nein    | boolean                                             | `true`                                 | Bei `false` repariert der Amboss es nicht                                                                                                                                                              |
+| `combine`       | nein    | boolean                                             | `true`                                 | Bei `false` vereint der Amboss keine zwei davon; verzauberte Bücher wirken weiterhin                                                                                                                   |
+
+## Zaubertisch
+
+*herstellung, beute und handel*
+
+`<namespace>/enchanting/*.json`
+
+Der Dateiname ist frei wählbar, nur der Ordner wird gelesen, und mehrere Dateien ergänzen sich. Eine Datei mit `enchantment` formt eine Verzauberung, eine Datei mit `match` ein Item, und jede andere Datei stellt den Tisch als Ganzes ein. Ein fehlender Schlüssel behält den Vanilla-Weg bei, eine Datei nur mit `enchantment` oder `match` ändert also nichts. Die Einstellung `enchanting` in der Konfigurationskategorie `data` schaltet den ganzen Ordner ab.
+
+### Jede Verzauberung
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Schlüssel     | Pflicht | Wert              | Standard    | Was er macht                                                                                                 |
+| ------------- | ------- | ----------------- | ----------- | ------------------------------------------------------------------------------------------------------------ |
+| `enchantment` | ja      | Verzauberungsname |             | Für welche Verzauberung die Datei gilt                                                                       |
+| `off`         | nein    | boolean           | `false`     | Bei `true` bietet der Tisch sie nie an; Beute, Handel und Ambosse können es weiterhin                        |
+| `weight`      | nein    | int, 1 oder mehr  | ihr eigenes | Wie oft sie gegenüber den anderen gewählt wird; in Vanilla reicht das von 1 für die seltensten bis 10        |
+| `minLevel`    | nein    | int, 1 oder mehr  | ihre eigene | Die niedrigste Stufe, die der Tisch anbietet                                                                 |
+| `maxLevel`    | nein    | int, 1 oder mehr  | ihre eigene | Die höchste Stufe, die der Tisch anbietet; sie darf über die eigene Höchststufe der Verzauberung hinausgehen |
+
+### Jedes Item
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Schlüssel        | Pflicht | Wert                                                | Standard                  | Was er macht                                                                                                                                                   |
+| ---------------- | ------- | --------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | ja      | Itemname, `#` und ein Ore-Dictionary-Name, oder `*` |                           | Das Item im Tisch. Ein Itemname geht vor einem Ore-Dictionary-Namen und dieser vor `*`; bei zwei Gleichrangigen gewinnt die zuletzt geladene Datei             |
+| `enchantable`    | nein    | boolean                                             | Vanilla                   | `true` lässt den Tisch ein Item annehmen, das Vanilla abweist, und `false` weist eines ab, das er annehmen würde                                               |
+| `enchantability` | nein    | int, 1 oder mehr                                    | der eigene Wert des Items | Wie gut es Verzauberungen annimmt: ein höherer Wert würfelt stärkere und mehr davon. In Vanilla reicht das von 1 bis 25; Diamantwerkzeuge haben 10, goldene 22 |
+| `enchantments`   | nein    | Liste von Verzauberungsnamen                        | was zum Item passt        | Die einzigen Verzauberungen, die der Tisch dafür würfeln darf, ob sie sonst passen würden oder nicht                                                           |
+
+Ein verzauberbar gemachtes Item ohne eigene Verzauberbarkeit braucht auch `enchantability`, sonst wird nie etwas dafür gewürfelt.
+
+### Der ganze Tisch
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Schlüssel       | Pflicht | Wert                             | Standard    | Was er macht                                                                                                                               |
+| --------------- | ------- | -------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enchantLevels` | nein    | Liste von 3 ints, je 1 oder mehr | gewürfelt   | Die Stufe, die jeder Platz von oben nach unten statt der gewürfelten verlangt; auch seine Verzauberungen werden auf dieser Stufe gewürfelt |
+| `enchantCosts`  | nein    | Liste von 3 ints, je 0 oder mehr | `[1, 2, 3]` | Die Stufen, die jeder Platz bei der Wahl abzieht                                                                                           |
+| `lapisCosts`    | nein    | Liste von 3 ints, je 1 oder mehr | `[1, 2, 3]` | Der Lapislazuli, den jeder Platz bei der Wahl nimmt und der im Tisch liegen muss                                                           |
+| `shelfCap`      | nein    | int, 0 oder mehr                 | `15`        | Wie viele Bücherregale höchstens zählen                                                                                                    |
+| `shelfPower`    | nein    | Zahl von 0 bis 16                | `1`         | Wie viel jedes Bücherregal zählt, über alle zusammen gerundet                                                                              |
+
+Der Bildschirm zeigt neben den Plätzen und in ihren Tooltips weiter die Vanilla-Werte eins, zwei und drei; was der Tisch prüft und nimmt, folgt der Datei.
 
 ## Blockdrops
 

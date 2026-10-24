@@ -58,6 +58,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Passages de langue](#passages-de-langue)
 - [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)
 - [Travail à l'enclume](#travail-à-lenclume)
+- [Table d'enchantement](#table-denchantement)
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Butin des joueurs](#butin-des-joueurs)
@@ -167,6 +168,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/ranks/*.json`                                                                      | Paliers aléatoires qu'un mob peut tirer en apparaissant : santé en plus, dégâts, effets, butin et une étiquette de nom. [Rangs de mobs](#rangs-de-mobs)                                         |
 | `<namespace>/orders/*.json`                                                                     | Travaux que des variantes d'entité font pour un joueur à un coffre. [Ordres de travail](#ordres-de-travail)                                                                                     |
 | `<namespace>/exposures/*.json`                                                                  | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions, biomes, structures, régions de grottes ou hauteurs nommés. [Expositions](#expositions) |
+| `<namespace>/enchanting/*.json`                                                                 | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                 |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés)                                                      |
 | `<namespace>/villages/*.json`                                                                   | Parcelles que les villages peuvent bâtir. [Parcelles de village](#parcelles-de-village)                                                                                                         |
 | `<namespace>/pathintersects/*.json`                                                             | Motifs peints là où les routes de village se croisent. [Routes de village](#routes-de-village)                                                                                                  |
@@ -482,6 +484,7 @@ Chacun de ces dossiers a aussi un interrupteur dans la configuration, afin qu'un
 | `removals`         | `recipes`  | activé    | Applique `recipe_removals/*.json`                                                                                                                                                      |
 | `disableOverrides` | `recipes`  | désactivé | Empêche ce mod de remplacer ou d'ajouter des recettes. Utile seulement si un autre coremod entre en conflit sur le chargement des recettes                                             |
 | `lootInjections`   | `data`     | activé    | Applique `loot_injections/*.json`                                                                                                                                                      |
+| `enchanting`       | `data`     | activé    | Applique `enchanting/*.json`                                                                                                                                                           |
 | `blockDrops`       | `data`     | activé    | Applique `block_drops/*.json`                                                                                                                                                          |
 | `registryRemaps`   | `data`     | activé    | Applique les fichiers `registry_remap`, pour que les mondes sauvegardés avant un renommage gardent leurs blocs et objets                                                               |
 | `load`             | `worldgen` | activé    | Génère les filons de `worldgen/*.json` dans les nouveaux chunks. Les chunks existants ne changent pas                                                                                  |
@@ -499,7 +502,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                        |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                               | `potions`, `potion_types`, `sounds`, `tabs`                                                     |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                      | `biomes`, `dimensions`, `portalframes`                                                          |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                                                   | `villagers`                                                                                     |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                     | `villagers`                                                                                     |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pour les professions que le client connaît : celles de vanilla, ou d'un mod présent des deux côtés) | `entities`, `worldintro`, `texts` (l'introduction n'est jamais montrée à un client vanilla)     |
 | `teams`, `scoring`, `ranks`                                                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (dossiers client — sans client, ne les incluez pas) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                                                           |                                                                                                 |
@@ -2416,6 +2419,116 @@ Placez l'objet indiqué dans l'emplacement gauche d'une enclume et son objet `wi
 Les réparations et combinaisons propres à l'enclume restent intactes : elle ne répond ici que lorsque la gauche contient un objet nommé et la droite son `with`.
 
 Un mob avec `collectsExperience` dépense lui aussi ses niveaux ici. Tant qu'il tient `item` dans sa main principale et `with` dans sa main secondaire et qu'il a de quoi payer `levels`, il se rend à une enclume située à moins de 16 blocs et l'utilise une fois à moins de 3 blocs : les niveaux sont retirés des siens comme de ceux d'un joueur, `with` est consommé, l'enclume s'use comme sous un joueur, et le résultat finit dans sa main principale. En passant sur un objet au sol que certaines opérations nomment sous `with`, il le ramasse dans sa main secondaire. `grants` et `locks` ne concernent que les joueurs : un mob n'obtient rien avec `grants` et aucun verrou ne le retient.
+
+### Trop cher
+
+Un fichier qui contient `tooExpensive` déplace le point où l'enclume abandonne. Un travail qui coûte ce nombre de niveaux ou plus affiche « Trop cher ! » et ne peut pas être retiré, sauf en mode Créatif, et un simple renommage coûte toujours au plus un niveau de moins. La clé peut tenir dans son propre fichier ou à côté d'un travail, et le dernier fichier chargé l'emporte.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Clé            | Requis | Valeur               | Défaut | Rôle                                                                        |
+| -------------- | ------ | -------------------- | ------ | --------------------------------------------------------------------------- |
+| `tooExpensive` | oui    | entier, de 1 à 32767 | `40`   | Le coût en niveaux à partir duquel un travail à l'enclume devient trop cher |
+
+### Règles de l'enclume
+
+Un fichier qui contient `match` change la façon dont l'enclume répare et combine l'objet qu'il nomme. Une clé absente garde la façon vanilla, si bien qu'un fichier avec `match` seul se comporte exactement comme vanilla. Le renommage n'est jamais touché : son niveau et le coût des travaux antérieurs que portent les objets s'ajoutent toujours à tout coût fixé ici.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Clé             | Requis | Valeur                                                          | Défaut                                     | Rôle                                                                                                                                                                                       |
+| --------------- | ------ | --------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `match`         | oui    | nom d'objet, `#` et un nom du dictionnaire des minerais, ou `*` |                                            | L'objet de l'emplacement gauche visé par la règle. Un nom d'objet l'emporte sur un nom du dictionnaire et celui-ci sur `*` ; entre deux du même genre, le dernier fichier chargé l'emporte |
+| `repairWith`    | non    | nom d'objet, `#` et un nom du dictionnaire des minerais, ou `*` | le matériau de réparation propre à l'objet | Ce qui le répare depuis l'emplacement droit                                                                                                                                                |
+| `repairPerUnit` | non    | nombre au-dessus de 0 jusqu'à 1                                 | `0.25`                                     | La part de la durabilité totale que rend chaque objet de réparation                                                                                                                        |
+| `repairCost`    | non    | entier de 1 à 32767, ou `{ "multiplier": n }`                   | vanilla                                    | Les niveaux que coûte une réparation. Un nombre remplace le prix vanilla, et un multiplicateur au-dessus de 0 jusqu'à 100 le met à l'échelle, arrondi et au moins 1                        |
+| `combineCost`   | non    | comme `repairCost`                                              | vanilla                                    | La même chose pour réunir deux de ces objets                                                                                                                                               |
+| `bookCost`      | non    | comme `repairCost`                                              | vanilla                                    | La même chose pour un livre enchanté dans l'emplacement droit                                                                                                                              |
+| `penalty`       | non    | `"vanilla"`, `"none"` ou `{ "factor": n }`                      | `"vanilla"`                                | Comment le coût des travaux antérieurs grandit à chaque usage. Vanilla le double et ajoute un, `none` le laisse où il est, et un facteur de 0 à 16 le multiplie et ajoute un               |
+| `repair`        | non    | booléen                                                         | `true`                                     | Avec `false`, l'enclume ne le répare pas                                                                                                                                                   |
+| `combine`       | non    | booléen                                                         | `true`                                     | Avec `false`, l'enclume ne réunit pas deux de ces objets ; les livres enchantés s'appliquent toujours                                                                                      |
+
+## Table d'enchantement
+
+*artisanat, butin et commerce*
+
+`<namespace>/enchanting/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers s'additionnent. Un fichier qui contient `enchantment` façonne un enchantement, un fichier qui contient `match` un objet, et tout autre fichier règle la table dans son ensemble. Une clé absente garde la façon vanilla, si bien qu'un fichier avec seulement `enchantment` ou `match` ne change rien. Le réglage `enchanting` de la catégorie `data` de la configuration désactive tout le dossier.
+
+### Chaque enchantement
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Clé           | Requis | Valeur             | Défaut  | Rôle                                                                                                   |
+| ------------- | ------ | ------------------ | ------- | ------------------------------------------------------------------------------------------------------ |
+| `enchantment` | oui    | nom d'enchantement |         | L'enchantement visé par le fichier                                                                     |
+| `off`         | non    | booléen            | `false` | Avec `true`, la table ne le propose jamais ; le butin, le commerce et les enclumes le peuvent toujours |
+| `weight`      | non    | entier, 1 ou plus  | le sien | La fréquence à laquelle il sort face aux autres ; en vanilla, cela va de 1 pour les plus rares à 10    |
+| `minLevel`    | non    | entier, 1 ou plus  | le sien | Le niveau le plus bas que propose la table                                                             |
+| `maxLevel`    | non    | entier, 1 ou plus  | le sien | Le niveau le plus haut que propose la table, qui peut dépasser le maximum propre à l'enchantement      |
+
+### Chaque objet
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Clé              | Requis | Valeur                                                          | Défaut                    | Rôle                                                                                                                                                                                   |
+| ---------------- | ------ | --------------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | oui    | nom d'objet, `#` et un nom du dictionnaire des minerais, ou `*` |                           | L'objet posé sur la table. Un nom d'objet l'emporte sur un nom du dictionnaire et celui-ci sur `*` ; entre deux du même genre, le dernier fichier chargé l'emporte                     |
+| `enchantable`    | non    | booléen                                                         | vanilla                   | `true` laisse la table accepter un objet que vanilla refuse, et `false` refuse un objet qu'elle accepterait                                                                            |
+| `enchantability` | non    | entier, 1 ou plus                                               | celle de l'objet          | À quel point il prend bien les enchantements : plus c'est haut, plus les tirages sont forts et nombreux. En vanilla, cela va de 1 à 25 ; les outils en diamant ont 10 et ceux en or 22 |
+| `enchantments`   | non    | liste de noms d'enchantement                                    | ce qui convient à l'objet | Les seuls enchantements que la table peut tirer pour lui, qu'ils lui conviennent autrement ou non                                                                                      |
+
+Un objet rendu enchantable qui n'a pas d'enchantabilité propre a aussi besoin de `enchantability`, sinon rien n'est jamais tiré pour lui.
+
+### La table entière
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Clé             | Requis | Valeur                               | Défaut       | Rôle                                                                                                                                        |
+| --------------- | ------ | ------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | non    | liste de 3 entiers, chacun 1 ou plus | tiré au sort | Le niveau que demande chaque emplacement, de haut en bas, à la place de celui tiré au sort ; ses enchantements sont aussi tirés à ce niveau |
+| `enchantCosts`  | non    | liste de 3 entiers, chacun 0 ou plus | `[1, 2, 3]`  | Les niveaux que prend chaque emplacement une fois choisi                                                                                    |
+| `lapisCosts`    | non    | liste de 3 entiers, chacun 1 ou plus | `[1, 2, 3]`  | Le lapis-lazuli que prend chaque emplacement une fois choisi, qui doit se trouver dans la table                                             |
+| `shelfCap`      | non    | entier, 0 ou plus                    | `15`         | Combien de bibliothèques comptent au plus                                                                                                   |
+| `shelfPower`    | non    | nombre de 0 à 16                     | `1`          | Ce que compte chaque bibliothèque, arrondi sur l'ensemble                                                                                   |
+
+L'écran affiche toujours le un, deux et trois de vanilla à côté des emplacements et dans leurs infobulles ; ce que la table vérifie et prend suit le fichier.
 
 ## Butins des blocs
 

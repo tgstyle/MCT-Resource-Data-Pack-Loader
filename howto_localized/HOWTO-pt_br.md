@@ -58,6 +58,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Passagens de idioma](#passagens-de-idioma)
 - [Poções, tipos de poção e fermentação](#poções-tipos-de-poção-e-fermentação)
 - [Trabalho na bigorna](#trabalho-na-bigorna)
+- [Mesa de encantamento](#mesa-de-encantamento)
 - [Drops de blocos](#drops-de-blocos)
 - [Colheita com clique direito](#colheita-com-clique-direito)
 - [Saque de jogadores](#saque-de-jogadores)
@@ -167,6 +168,7 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/ranks/*.json`                                                                      | Faixas aleatórias que um mob pode sortear ao surgir: vida extra, dano, efeitos, itens soltos e uma etiqueta de nome. [Níveis de mobs](#níveis-de-mobs)                                   |
 | `<namespace>/orders/*.json`                                                                     | Trabalhos que variantes de entidade fazem para um jogador em um baú. [Ordens de trabalho](#ordens-de-trabalho)                                                                           |
 | `<namespace>/exposures/*.json`                                                                  | Perigos que expõem jogadores perto de blocos nomeados, carregando itens nomeados ou em dimensões, biomas, estruturas, regiões de cavernas ou alturas nomeados. [Exposições](#exposições) |
+| `<namespace>/enchanting/*.json`                                                                 | O que a mesa de encantamento oferece, pede e tira: por encantamento, por item e no geral. [Mesa de encantamento](#mesa-de-encantamento)                                                  |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Propriedades de blocos, itens e tipos de poção existentes, alteradas no lugar. [Substituições de propriedades](#substituições-de-propriedades)                                           |
 | `<namespace>/villages/*.json`                                                                   | Terrenos que as vilas podem construir. [Terrenos de vilas](#terrenos-de-vilas)                                                                                                           |
 | `<namespace>/pathintersects/*.json`                                                             | Desenhos pintados onde as estradas da vila se cruzam. [Estradas de vilas](#estradas-de-vilas)                                                                                            |
@@ -482,6 +484,7 @@ Cada uma dessas pastas também tem um interruptor na config, para que um modpack
 | `removals`         | `recipes`  | ligado    | Aplica `recipe_removals/*.json`                                                                                                                |
 | `disableOverrides` | `recipes`  | desligado | Impede que este mod substitua ou acrescente receitas. Só é necessário se outro coremod entrar em conflito no carregamento de receitas          |
 | `lootInjections`   | `data`     | ligado    | Aplica `loot_injections/*.json`                                                                                                                |
+| `enchanting`       | `data`     | ligado    | Aplica `enchanting/*.json`                                                                                                                     |
 | `blockDrops`       | `data`     | ligado    | Aplica `block_drops/*.json`                                                                                                                    |
 | `registryRemaps`   | `data`     | ligado    | Aplica os arquivos de `registry_remap`, para que mundos salvos antes de uma renomeação mantenham seus blocos e itens                           |
 | `load`             | `worldgen` | ligado    | Gera os veios de minério de `worldgen/*.json` em chunks novos. Chunks existentes não mudam                                                     |
@@ -499,7 +502,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                        |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                         | `potions`, `potion_types`, `sounds`, `tabs`                                                     |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                | `biomes`, `dimensions`, `portalframes`                                                          |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                                             | `villagers`                                                                                     |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                               | `villagers`                                                                                     |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profissões que o cliente conhece: as do vanilla ou as de um mod presente nos dois lados) | `entities`, `worldintro`, `texts` (a introdução nunca é exibida a um cliente vanilla)           |
 | `teams`, `scoring`, `ranks`                                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (pastas de cliente — sem cliente, deixe-as de fora) |
 | toda a camada de controle, as configurações e a pré-geração                                                                                                                       |                                                                                                 |
@@ -2416,6 +2419,116 @@ Coloque o item indicado no slot esquerdo de uma bigorna e o item `with` no direi
 Os reparos e combinações próprios da bigorna permanecem intactos: isto só responde quando a esquerda contém um item indicado e a direita contém o seu `with`.
 
 Um mob com `collectsExperience` também gasta seus níveis aqui. Enquanto segura `item` na mão principal e `with` na mão secundária e tem `levels` para pagar, ele caminha até uma bigorna a até 16 blocos e a opera quando está a até 3 blocos: os níveis saem dos dele como saem dos de um jogador, `with` é consumido, a bigorna se desgasta como sob um jogador, e o trabalho termina na mão principal dele. Ao passar por um item largado que algum trabalho de bigorna cita em `with`, ele o pega para a mão secundária. `grants` e `locks` só dizem respeito a jogadores, então um mob não obtém nada de `grants` e nenhum bloqueio o impede.
+
+### Caro demais
+
+Um arquivo com `tooExpensive` move o ponto em que a bigorna desiste. Um trabalho que custa esse tanto de níveis ou mais mostra "Caro demais!" e não pode ser retirado, exceto no modo criativo, e uma simples renomeação continua custando no máximo um nível a menos. A chave pode ficar no próprio arquivo ou ao lado de um trabalho, e vale o arquivo carregado por último.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Chave          | Obrigatória | Valor             | Padrão | O que faz                                                                  |
+| -------------- | ----------- | ----------------- | ------ | -------------------------------------------------------------------------- |
+| `tooExpensive` | sim         | int, de 1 a 32767 | `40`   | O custo em níveis a partir do qual um trabalho na bigorna fica caro demais |
+
+### Regras da bigorna
+
+Um arquivo com `match` muda como a bigorna conserta e combina o item que ele nomeia. Uma chave omitida mantém o jeito vanilla, então um arquivo só com `match` funciona exatamente como o vanilla. A renomeação nunca é tocada: o nível dela e o custo de trabalho anterior que os itens carregam continuam somando a qualquer custo definido aqui.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Chave           | Obrigatória | Valor                                                         | Padrão                                 | O que faz                                                                                                                                                                   |
+| --------------- | ----------- | ------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | sim         | nome de item, `#` e um nome do dicionário de minérios, ou `*` |                                        | O item do slot esquerdo a que a regra se aplica. Um nome de item vence um nome do dicionário e este vence `*`; entre dois do mesmo tipo vale o arquivo carregado por último |
+| `repairWith`    | não         | nome de item, `#` e um nome do dicionário de minérios, ou `*` | o material de conserto do próprio item | O que o conserta a partir do slot direito                                                                                                                                   |
+| `repairPerUnit` | não         | número acima de 0 até 1                                       | `0.25`                                 | A fração da durabilidade total que cada item de conserto devolve                                                                                                            |
+| `repairCost`    | não         | int de 1 a 32767, ou `{ "multiplier": n }`                    | vanilla                                | Os níveis que um conserto custa. Um número substitui o preço vanilla, e um multiplicador acima de 0 até 100 o ajusta, arredondado e no mínimo 1                             |
+| `combineCost`   | não         | como `repairCost`                                             | vanilla                                | O mesmo para juntar dois desse item                                                                                                                                         |
+| `bookCost`      | não         | como `repairCost`                                             | vanilla                                | O mesmo para um livro encantado no slot direito                                                                                                                             |
+| `penalty`       | não         | `"vanilla"`, `"none"` ou `{ "factor": n }`                    | `"vanilla"`                            | Como o custo de trabalho anterior cresce a cada uso. O vanilla o dobra e soma um, `none` o deixa onde está, e um fator de 0 a 16 o multiplica e soma um                     |
+| `repair`        | não         | booleano                                                      | `true`                                 | Com `false` a bigorna não o conserta                                                                                                                                        |
+| `combine`       | não         | booleano                                                      | `true`                                 | Com `false` a bigorna não junta dois dele; livros encantados continuam valendo                                                                                              |
+
+## Mesa de encantamento
+
+*criação, saque e comércio*
+
+`<namespace>/enchanting/*.json`
+
+O nome do arquivo é você quem escolhe, só a pasta é lida, e vários arquivos se somam. Um arquivo com `enchantment` molda um encantamento, um com `match` molda um item, e qualquer outro ajusta a mesa como um todo. Uma chave omitida mantém o jeito vanilla, então um arquivo só com `enchantment` ou `match` não muda nada. A opção `enchanting` na categoria `data` da configuração desliga a pasta inteira.
+
+### Cada encantamento
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Chave         | Obrigatória | Valor                | Padrão  | O que faz                                                                                     |
+| ------------- | ----------- | -------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| `enchantment` | sim         | nome de encantamento |         | A qual encantamento o arquivo se refere                                                       |
+| `off`         | não         | booleano             | `false` | Com `true` a mesa nunca o oferece; saque, comércio e bigornas ainda podem                     |
+| `weight`      | não         | int, 1 ou mais       | o dele  | Com que frequência ele sai em relação aos outros; no vanilla vai de 1 para os mais raros a 10 |
+| `minLevel`    | não         | int, 1 ou mais       | o dele  | O nível mais baixo que a mesa oferece                                                         |
+| `maxLevel`    | não         | int, 1 ou mais       | o dele  | O nível mais alto que a mesa oferece, que pode passar do máximo do próprio encantamento       |
+
+### Cada item
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Chave            | Obrigatória | Valor                                                         | Padrão                   | O que faz                                                                                                                                                      |
+| ---------------- | ----------- | ------------------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | sim         | nome de item, `#` e um nome do dicionário de minérios, ou `*` |                          | O item na mesa. Um nome de item vence um nome do dicionário e este vence `*`; entre dois do mesmo tipo vale o arquivo carregado por último                     |
+| `enchantable`    | não         | booleano                                                      | vanilla                  | `true` deixa a mesa aceitar um item que o vanilla recusa, e `false` recusa um que ela aceitaria                                                                |
+| `enchantability` | não         | int, 1 ou mais                                                | o do próprio item        | O quanto ele aceita encantamentos: quanto maior, mais fortes e numerosos os sorteios. No vanilla vai de 1 a 25; ferramentas de diamante têm 10 e as de ouro 22 |
+| `enchantments`   | não         | lista de nomes de encantamento                                | o que combina com o item | Os únicos encantamentos que a mesa pode sortear para ele, combinem ou não com ele de outro modo                                                                |
+
+Um item que se tornou encantável sem ter encantabilidade própria também precisa de `enchantability`, senão nada é sorteado para ele.
+
+### A mesa inteira
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Chave           | Obrigatória | Valor                              | Padrão      | O que faz                                                                                                                    |
+| --------------- | ----------- | ---------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | não         | lista de 3 ints, cada um 1 ou mais | sorteado    | O nível que cada slot, de cima para baixo, pede no lugar do sorteado; os encantamentos dele também são sorteados nesse nível |
+| `enchantCosts`  | não         | lista de 3 ints, cada um 0 ou mais | `[1, 2, 3]` | Os níveis que cada slot tira ao ser escolhido                                                                                |
+| `lapisCosts`    | não         | lista de 3 ints, cada um 1 ou mais | `[1, 2, 3]` | O lápis-lazúli que cada slot tira ao ser escolhido, que precisa estar na mesa                                                |
+| `shelfCap`      | não         | int, 0 ou mais                     | `15`        | Quantas estantes de livros contam no máximo                                                                                  |
+| `shelfPower`    | não         | número de 0 a 16                   | `1`         | Quanto cada estante de livros conta, arredondado sobre o total                                                               |
+
+A tela continua mostrando o um, dois e três do vanilla ao lado dos slots e nas dicas deles; o que a mesa confere e tira segue o arquivo.
 
 ## Drops de blocos
 

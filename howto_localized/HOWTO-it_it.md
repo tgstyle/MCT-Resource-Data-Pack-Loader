@@ -58,6 +58,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Varchi di lingua](#varchi-di-lingua)
 - [Pozioni, tipi di pozione e preparazione](#pozioni-tipi-di-pozione-e-preparazione)
 - [Lavori all'incudine](#lavori-allincudine)
+- [Tavolo per incantesimi](#tavolo-per-incantesimi)
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
@@ -167,6 +168,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/ranks/*.json`                                                                      | Livelli casuali che un mob può estrarre quando compare: salute extra, danno, effetti, bottino e un'etichetta di nome. [Ranghi dei mob](#ranghi-dei-mob)                                            |
 | `<namespace>/orders/*.json`                                                                     | Lavori che le varianti di entità svolgono per un giocatore presso un baule. [Ordini di lavoro](#ordini-di-lavoro)                                                                                  |
 | `<namespace>/exposures/*.json`                                                                  | Pericoli che espongono i giocatori vicino a blocchi con nome, mentre portano oggetti con nome o in dimensioni, biomi, strutture, regioni di grotte o altezze con nome. [Esposizioni](#esposizioni) |
+| `<namespace>/enchanting/*.json`                                                                 | Ciò che il tavolo per incantesimi offre, chiede e toglie: per incantesimo, per oggetto e in tutto. [Tavolo per incantesimi](#tavolo-per-incantesimi)                                               |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Proprietà di blocchi, oggetti e tipi di pozione esistenti, modificate sul posto. [Override delle proprietà](#override-delle-proprietà)                                                             |
 | `<namespace>/villages/*.json`                                                                   | Lotti che i villaggi possono costruire. [Lotti dei villaggi](#lotti-dei-villaggi)                                                                                                                  |
 | `<namespace>/pathintersects/*.json`                                                             | Disegni dipinti dove si incontrano le strade dei villaggi. [Strade dei villaggi](#strade-dei-villaggi)                                                                                             |
@@ -482,6 +484,7 @@ Ognuna di queste cartelle ha anche un interruttore nella configurazione, così u
 | `removals`         | `recipes`  | attivo      | Applica `recipe_removals/*.json`                                                                                                                        |
 | `disableOverrides` | `recipes`  | disattivo   | Impedisce a questa mod di sostituire o aggiungere ricette. Serve solo se un altro coremod è in conflitto sul caricamento delle ricette                  |
 | `lootInjections`   | `data`     | attivo      | Applica `loot_injections/*.json`                                                                                                                        |
+| `enchanting`       | `data`     | attivo      | Applica `enchanting/*.json`                                                                                                                             |
 | `blockDrops`       | `data`     | attivo      | Applica `block_drops/*.json`                                                                                                                            |
 | `registryRemaps`   | `data`     | attivo      | Applica i file `registry_remap`, così i mondi salvati prima di una rinomina conservano i propri blocchi e oggetti                                       |
 | `load`             | `worldgen` | attivo      | Genera i filoni di minerale da `worldgen/*.json` nei nuovi chunk. I chunk esistenti non vengono modificati                                              |
@@ -499,7 +502,7 @@ Un pack può stare solo sul server, con giocatori su normali client vanilla, a u
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                 | `blocks`, `items`, `fluids`, `materials`                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                              | `potions`, `potion_types`, `sounds`, `tabs`                                                   |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                     | `biomes`, `dimensions`, `portalframes`                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                                                  | `villagers`                                                                                   |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                    | `villagers`                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (per le professioni che il client conosce: quelle vanilla o di una mod presente su entrambi i lati) | `entities`, `worldintro`, `texts` (l'introduzione non viene mai mostrata a un client vanilla) |
 | `teams`, `scoring`, `ranks`                                                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (cartelle del client: senza client, escludile)    |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                                                     |                                                                                               |
@@ -2416,6 +2419,116 @@ Metti l'oggetto indicato nello slot sinistro di un'incudine e il suo oggetto `wi
 Le riparazioni e le combinazioni proprie dell'incudine restano intatte: questo risponde solo quando a sinistra c'è un oggetto indicato e a destra il suo `with`.
 
 Anche un mob con `collectsExperience` spende qui i suoi livelli. Finché tiene `item` nella mano principale e `with` nella mano secondaria e ha `levels` da pagare, cammina verso un'incudine entro 16 blocchi e la usa una volta arrivato entro 3 blocchi: i livelli vengono sottratti ai suoi come a un giocatore, `with` viene consumato, l'incudine si usura come sotto un giocatore, e il lavoro finisce nella sua mano principale. Quando passa sopra un oggetto lasciato a terra che un lavoro all'incudine indica sotto `with`, lo raccoglie nella mano secondaria. `grants` e `locks` riguardano solo i giocatori, quindi un mob non ottiene nulla da `grants` e nessun blocco lo trattiene.
+
+### Troppo costoso
+
+Un file che contiene `tooExpensive` sposta il punto in cui l'incudine si arrende. Un lavoro che costa quei livelli o più mostra «Troppo costoso!» e non si può estrarre, tranne in modalità creativa, e una semplice rinomina costa comunque al massimo un livello in meno. Può stare in un file tutto suo o accanto a un lavoro, e vince il file caricato per ultimo.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Chiave         | Obbligatorio | Valore               | Predefinito | Cosa fa                                                                  |
+| -------------- | ------------ | -------------------- | ----------- | ------------------------------------------------------------------------ |
+| `tooExpensive` | sì           | intero, da 1 a 32767 | `40`        | Il costo in livelli da cui un lavoro all'incudine diventa troppo costoso |
+
+### Regole dell'incudine
+
+Un file che contiene `match` cambia il modo in cui l'incudine ripara e combina l'oggetto che nomina. Una chiave assente mantiene il modo vanilla, quindi un file con solo `match` funziona esattamente come vanilla. La rinomina non viene mai toccata: il suo livello e il costo dei lavori precedenti che gli oggetti si portano dietro si sommano sempre a qualunque costo fissato qui.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Chiave          | Obbligatorio | Valore                                                                   | Predefinito                                      | Cosa fa                                                                                                                                                                                   |
+| --------------- | ------------ | ------------------------------------------------------------------------ | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | sì           | nome dell'oggetto, `#` e un nome del dizionario dei minerali, oppure `*` |                                                  | L'oggetto nello slot sinistro a cui si applica la regola. Un nome di oggetto vince su un nome del dizionario e questo su `*`; tra due dello stesso tipo vince il file caricato per ultimo |
+| `repairWith`    | no           | nome dell'oggetto, `#` e un nome del dizionario dei minerali, oppure `*` | il materiale di riparazione proprio dell'oggetto | Cosa lo ripara dallo slot destro                                                                                                                                                          |
+| `repairPerUnit` | no           | numero sopra 0 fino a 1                                                  | `0.25`                                           | La quota della durabilità piena che ogni oggetto di riparazione restituisce                                                                                                               |
+| `repairCost`    | no           | intero da 1 a 32767, oppure `{ "multiplier": n }`                        | vanilla                                          | I livelli che costa una riparazione. Un numero sostituisce il prezzo vanilla, e un moltiplicatore sopra 0 fino a 100 lo scala, arrotondato e almeno 1                                     |
+| `combineCost`   | no           | come `repairCost`                                                        | vanilla                                          | Lo stesso per unire due di quegli oggetti                                                                                                                                                 |
+| `bookCost`      | no           | come `repairCost`                                                        | vanilla                                          | Lo stesso per un libro incantato nello slot destro                                                                                                                                        |
+| `penalty`       | no           | `"vanilla"`, `"none"` oppure `{ "factor": n }`                           | `"vanilla"`                                      | Come cresce il costo dei lavori precedenti a ogni uso. Vanilla lo raddoppia e aggiunge uno, `none` lo lascia dov'è, e un fattore da 0 a 16 lo moltiplica e aggiunge uno                   |
+| `repair`        | no           | booleano                                                                 | `true`                                           | Con `false` l'incudine non lo ripara                                                                                                                                                      |
+| `combine`       | no           | booleano                                                                 | `true`                                           | Con `false` l'incudine non unisce due di quegli oggetti; i libri incantati si applicano comunque                                                                                          |
+
+## Tavolo per incantesimi
+
+*crafting, bottino e scambi*
+
+`<namespace>/enchanting/*.json`
+
+Il nome del file è a tua scelta, viene letta solo la cartella, e più file si sommano. Un file che contiene `enchantment` modella un incantesimo, uno che contiene `match` un oggetto, e qualunque altro file regola il tavolo nel suo insieme. Una chiave assente mantiene il modo vanilla, quindi un file con solo `enchantment` o `match` non cambia nulla. L'impostazione `enchanting` nella categoria `data` della configurazione disattiva l'intera cartella.
+
+### Ogni incantesimo
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Chiave        | Obbligatorio | Valore                | Predefinito | Cosa fa                                                                                       |
+| ------------- | ------------ | --------------------- | ----------- | --------------------------------------------------------------------------------------------- |
+| `enchantment` | sì           | nome dell'incantesimo |             | L'incantesimo a cui si riferisce il file                                                      |
+| `off`         | no           | booleano              | `false`     | Con `true` il tavolo non lo offre mai; bottino, scambi e incudini possono ancora farlo        |
+| `weight`      | no           | intero, 1 o più       | il suo      | Quanto spesso esce rispetto agli altri; in vanilla va da 1 per i più rari a 10                |
+| `minLevel`    | no           | intero, 1 o più       | il suo      | Il livello più basso che il tavolo offre                                                      |
+| `maxLevel`    | no           | intero, 1 o più       | il suo      | Il livello più alto che il tavolo offre, che può superare il massimo proprio dell'incantesimo |
+
+### Ogni oggetto
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Chiave           | Obbligatorio | Valore                                                                   | Predefinito                   | Cosa fa                                                                                                                                                                 |
+| ---------------- | ------------ | ------------------------------------------------------------------------ | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | sì           | nome dell'oggetto, `#` e un nome del dizionario dei minerali, oppure `*` |                               | L'oggetto sul tavolo. Un nome di oggetto vince su un nome del dizionario e questo su `*`; tra due dello stesso tipo vince il file caricato per ultimo                   |
+| `enchantable`    | no           | booleano                                                                 | vanilla                       | `true` fa accettare al tavolo un oggetto che vanilla rifiuta, e `false` ne rifiuta uno che accetterebbe                                                                 |
+| `enchantability` | no           | intero, 1 o più                                                          | quella dell'oggetto           | Quanto bene accetta gli incantesimi: più è alta, più le estrazioni sono forti e numerose. In vanilla va da 1 a 25; gli strumenti di diamante hanno 10 e quelli d'oro 22 |
+| `enchantments`   | no           | elenco di nomi di incantesimi                                            | ciò che si adatta all'oggetto | Gli unici incantesimi che il tavolo può estrarre per lui, che altrimenti gli si adattino o no                                                                           |
+
+Un oggetto reso incantabile che non ha un'incantabilità propria ha bisogno anche di `enchantability`, altrimenti per lui non esce mai nulla.
+
+### L'intero tavolo
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Chiave          | Obbligatorio | Valore                               | Predefinito | Cosa fa                                                                                                                                    |
+| --------------- | ------------ | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enchantLevels` | no           | elenco di 3 interi, ciascuno 1 o più | estratto    | Il livello che ogni slot, dall'alto in basso, chiede al posto di quello estratto; anche i suoi incantesimi vengono estratti a quel livello |
+| `enchantCosts`  | no           | elenco di 3 interi, ciascuno 0 o più | `[1, 2, 3]` | I livelli che ogni slot toglie una volta scelto                                                                                            |
+| `lapisCosts`    | no           | elenco di 3 interi, ciascuno 1 o più | `[1, 2, 3]` | I lapislazzuli che ogni slot toglie una volta scelto, che devono trovarsi nel tavolo                                                       |
+| `shelfCap`      | no           | intero, 0 o più                      | `15`        | Quante librerie contano al massimo                                                                                                         |
+| `shelfPower`    | no           | numero da 0 a 16                     | `1`         | Quanto conta ogni libreria, arrotondato sul totale                                                                                         |
+
+Lo schermo mostra ancora l'uno, due e tre di vanilla accanto agli slot e nei loro suggerimenti; ciò che il tavolo controlla e toglie segue il file.
 
 ## Drop dei blocchi
 

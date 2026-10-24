@@ -11,8 +11,10 @@ import mctmods.resourcedatapackloader.client.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
+import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.ContentExposures;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
+import mctmods.resourcedatapackloader.content.ContentEnchanting;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentHarvests;
@@ -206,6 +208,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(ContentRuleSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentMobSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentTradeSwitch.class);
+        MinecraftForge.EVENT_BUS.register(AnvilCosts.class);
         if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
         ContentBiomeControl.apply();
         ContentSetup.applyFire();
@@ -270,6 +273,7 @@ public class ResourceDataPackLoader {
             ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above");
         }
         if (ContentAnvils.load()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
+        ContentEnchanting.load();
         if (ContentHardness.load()) {
             ContentHardness.resolve();
             MinecraftForge.EVENT_BUS.register(ContentHardness.class);

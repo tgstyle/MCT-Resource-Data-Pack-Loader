@@ -58,6 +58,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 - [Puertas de idioma](#puertas-de-idioma)
 - [Pociones, tipos de poción y elaboración](#pociones-tipos-de-poción-y-elaboración)
 - [Trabajo en el yunque](#trabajo-en-el-yunque)
+- [Mesa de encantamientos](#mesa-de-encantamientos)
 - [Drops de bloques](#drops-de-bloques)
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Botín de jugadores](#botín-de-jugadores)
@@ -167,6 +168,7 @@ Todas las rutas de esta guía se escriben desde `assets/` en adelante, así que 
 | `<namespace>/ranks/*.json`                                                                      | Niveles aleatorios que un mob puede sortear al aparecer: salud extra, daño, efectos, botín y una etiqueta de nombre. [Rangos de mobs](#rangos-de-mobs)                                                     |
 | `<namespace>/orders/*.json`                                                                     | Trabajos que las variantes de entidad hacen para un jugador en un cofre. [Órdenes de trabajo](#órdenes-de-trabajo)                                                                                         |
 | `<namespace>/exposures/*.json`                                                                  | Peligros que exponen a los jugadores cerca de bloques con nombre, al llevar ítems con nombre o en dimensiones, biomas, estructuras, regiones de cuevas o alturas con nombre. [Exposiciones](#exposiciones) |
+| `<namespace>/enchanting/*.json`                                                                 | Lo que la mesa de encantamientos ofrece, pide y quita: por encantamiento, por ítem y en conjunto. [Mesa de encantamientos](#mesa-de-encantamientos)                                                        |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Propiedades de bloques, ítems y tipos de poción existentes, modificadas en el sitio. [Sobrescritura de propiedades](#sobrescritura-de-propiedades)                                                         |
 | `<namespace>/villages/*.json`                                                                   | Parcelas que pueden construir las aldeas. [Parcelas de aldea](#parcelas-de-aldea)                                                                                                                          |
 | `<namespace>/pathintersects/*.json`                                                             | Diseños pintados donde se cruzan los caminos de las aldeas. [Caminos de aldea](#caminos-de-aldea)                                                                                                          |
@@ -482,6 +484,7 @@ Cada una de estas carpetas tiene además un interruptor en la configuración, de
 | `removals`         | `recipes`  | activado    | Aplica `recipe_removals/*.json`                                                                                                                                 |
 | `disableOverrides` | `recipes`  | desactivado | Impide que este mod sustituya o añada recetas. Solo hace falta si otro coremod entra en conflicto con la carga de recetas                                       |
 | `lootInjections`   | `data`     | activado    | Aplica `loot_injections/*.json`                                                                                                                                 |
+| `enchanting`       | `data`     | activado    | Aplica `enchanting/*.json`                                                                                                                                      |
 | `blockDrops`       | `data`     | activado    | Aplica `block_drops/*.json`                                                                                                                                     |
 | `registryRemaps`   | `data`     | activado    | Aplica los archivos de `registry_remap`, para que los mundos guardados antes de un renombrado conserven sus bloques e ítems                                     |
 | `load`             | `worldgen` | activado    | Genera las vetas de mineral de `worldgen/*.json` en chunks nuevos. Los chunks existentes no cambian                                                             |
@@ -499,7 +502,7 @@ Un pack puede vivir solo en el servidor, con jugadores en clientes vanilla puros
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                              | `blocks`, `items`, `fluids`, `materials`                                                       |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                           | `potions`, `potion_types`, `sounds`, `tabs`                                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                  | `biomes`, `dimensions`, `portalframes`                                                         |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `player_loot`, `advancements`, `functions`                                                                               | `villagers`                                                                                    |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `enchanting`, `player_loot`, `advancements`, `functions`                                                                 | `villagers`                                                                                    |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profesiones que el cliente conoce: las de vanilla o las de un mod presente en ambos lados) | `entities`, `worldintro`, `texts` (la introducción nunca se muestra a un cliente vanilla)      |
 | `teams`, `scoring`, `ranks`                                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (carpetas del cliente: sin cliente, déjalas fuera) |
 | toda la capa de control, los ajustes y la pregeneración                                                                                                                             |                                                                                                |
@@ -2416,6 +2419,116 @@ Pon el ítem indicado en la ranura izquierda de un yunque y su ítem `with` en l
 Las reparaciones y combinaciones propias del yunque no se tocan: esto solo responde cuando la izquierda tiene un ítem indicado y la derecha tiene su `with`.
 
 Un mob con `collectsExperience` también gasta aquí sus niveles. Mientras tenga `item` en la mano principal y `with` en la secundaria y tenga `levels` que pagar, camina hasta un yunque a menos de 16 bloques y lo trabaja una vez que está a menos de 3 bloques: los niveles se le descuentan como a un jugador, `with` se consume, el yunque se desgasta como con un jugador, y el resultado acaba en su mano principal. Al pasar sobre un ítem caído que algún trabajo de yunque nombra en `with`, lo recoge en la mano secundaria. `grants` y `locks` solo afectan a los jugadores, así que un mob no obtiene nada de `grants` y ningún bloqueo lo frena.
+
+### Demasiado caro
+
+Un archivo con `tooExpensive` mueve el punto en el que el yunque se rinde. Un trabajo que cuesta esos niveles o más muestra «¡Demasiado caro!» y no se puede sacar, salvo en modo creativo, y un simple cambio de nombre sigue costando como mucho un nivel menos. Puede ir en su propio archivo o junto a un trabajo, y gana el archivo cargado el último.
+
+```json
+{
+  "tooExpensive": 60
+}
+```
+
+| Clave          | Obligatorio | Valor                | Por defecto | Qué hace                                                                        |
+| -------------- | ----------- | -------------------- | ----------- | ------------------------------------------------------------------------------- |
+| `tooExpensive` | sí          | entero, de 1 a 32767 | `40`        | El coste en niveles a partir del cual el trabajo en el yunque es demasiado caro |
+
+### Reglas del yunque
+
+Un archivo con `match` cambia cómo el yunque repara y combina el ítem que nombra. Una clave omitida mantiene la forma vanilla, así que un archivo con solo `match` funciona exactamente como vanilla. El cambio de nombre nunca se toca: su nivel y el coste de trabajo previo que llevan los ítems se siguen sumando a cualquier coste fijado aquí.
+
+```json
+{
+  "match": "minecraft:iron_sword",
+  "repairWith": "minecraft:iron_ingot",
+  "repairPerUnit": 0.5,
+  "repairCost": 2,
+  "combineCost": { "multiplier": 0.5 },
+  "penalty": "none"
+}
+```
+
+| Clave           | Obligatorio | Valor                                                               | Por defecto                               | Qué hace                                                                                                                                                                              |
+| --------------- | ----------- | ------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`         | sí          | nombre de ítem, `#` y un nombre del diccionario de minerales, o `*` |                                           | El ítem de la ranura izquierda al que se aplica la regla. Un nombre de ítem gana a un nombre del diccionario y este a `*`; entre dos del mismo tipo gana el archivo cargado el último |
+| `repairWith`    | no          | nombre de ítem, `#` y un nombre del diccionario de minerales, o `*` | el material de reparación propio del ítem | Lo que lo repara desde la ranura derecha                                                                                                                                              |
+| `repairPerUnit` | no          | número mayor que 0 hasta 1                                          | `0.25`                                    | La parte de la durabilidad total que devuelve cada ítem de reparación                                                                                                                 |
+| `repairCost`    | no          | entero de 1 a 32767, o `{ "multiplier": n }`                        | vanilla                                   | Los niveles que cuesta una reparación. Un número sustituye el precio vanilla, y un multiplicador mayor que 0 hasta 100 lo escala, redondeado y como mínimo 1                          |
+| `combineCost`   | no          | como `repairCost`                                                   | vanilla                                   | Lo mismo al unir dos de ese ítem                                                                                                                                                      |
+| `bookCost`      | no          | como `repairCost`                                                   | vanilla                                   | Lo mismo con un libro encantado en la ranura derecha                                                                                                                                  |
+| `penalty`       | no          | `"vanilla"`, `"none"` o `{ "factor": n }`                           | `"vanilla"`                               | Cómo crece el coste de trabajo previo con cada uso. Vanilla lo duplica y suma uno, `none` lo deja donde está, y un factor de 0 a 16 lo multiplica y suma uno                          |
+| `repair`        | no          | booleano                                                            | `true`                                    | Con `false` el yunque no lo repara                                                                                                                                                    |
+| `combine`       | no          | booleano                                                            | `true`                                    | Con `false` el yunque no une dos de ellos; los libros encantados siguen aplicándose                                                                                                   |
+
+## Mesa de encantamientos
+
+*fabricación, botín y comercio*
+
+`<namespace>/enchanting/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se suman. Un archivo con `enchantment` da forma a un encantamiento, uno con `match` a un ítem, y cualquier otro ajusta la mesa entera. Una clave omitida mantiene la forma vanilla, así que un archivo con solo `enchantment` o `match` no cambia nada. El ajuste `enchanting` de la categoría `data` de la configuración desactiva toda la carpeta.
+
+### Cada encantamiento
+
+```json
+{
+  "enchantment": "minecraft:sharpness",
+  "weight": 30,
+  "minLevel": 2,
+  "maxLevel": 4
+}
+```
+
+| Clave         | Obligatorio | Valor                   | Por defecto | Qué hace                                                                                  |
+| ------------- | ----------- | ----------------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| `enchantment` | sí          | nombre de encantamiento |             | El encantamiento al que se refiere el archivo                                             |
+| `off`         | no          | booleano                | `false`     | Con `true` la mesa nunca lo ofrece; el botín, el comercio y los yunques todavía pueden    |
+| `weight`      | no          | entero, 1 o más         | el suyo     | Con qué frecuencia sale frente a los demás; en vanilla va de 1 para los más raros a 10    |
+| `minLevel`    | no          | entero, 1 o más         | el suyo     | El nivel más bajo que ofrece la mesa                                                      |
+| `maxLevel`    | no          | entero, 1 o más         | el suyo     | El nivel más alto que ofrece la mesa, que puede pasar del máximo propio del encantamiento |
+
+### Cada ítem
+
+```json
+{
+  "match": "minecraft:shears",
+  "enchantable": true,
+  "enchantability": 10,
+  "enchantments": ["minecraft:efficiency", "minecraft:unbreaking"]
+}
+```
+
+| Clave            | Obligatorio | Valor                                                               | Por defecto               | Qué hace                                                                                                                                                                              |
+| ---------------- | ----------- | ------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `match`          | sí          | nombre de ítem, `#` y un nombre del diccionario de minerales, o `*` |                           | El ítem en la mesa. Un nombre de ítem gana a un nombre del diccionario y este a `*`; entre dos del mismo tipo gana el archivo cargado el último                                       |
+| `enchantable`    | no          | booleano                                                            | vanilla                   | `true` deja que la mesa acepte un ítem que vanilla rechaza, y `false` rechaza uno que aceptaría                                                                                       |
+| `enchantability` | no          | entero, 1 o más                                                     | el propio del ítem        | Lo bien que acepta encantamientos: un valor más alto saca encantamientos más fuertes y más numerosos. En vanilla va de 1 a 25; las herramientas de diamante tienen 10 y las de oro 22 |
+| `enchantments`   | no          | lista de nombres de encantamiento                                   | lo que encaja con el ítem | Los únicos encantamientos que la mesa puede sacar para él, encajen o no de otro modo                                                                                                  |
+
+Un ítem que se vuelve encantable sin tener encantabilidad propia necesita también `enchantability`, o nunca saldrá nada para él.
+
+### La mesa entera
+
+```json
+{
+  "enchantLevels": [5, 15, 30],
+  "enchantCosts": [1, 2, 3],
+  "lapisCosts": [1, 2, 3],
+  "shelfCap": 20,
+  "shelfPower": 1.5
+}
+```
+
+| Clave           | Obligatorio | Valor                                | Por defecto | Qué hace                                                                                                                 |
+| --------------- | ----------- | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `enchantLevels` | no          | lista de 3 enteros, cada uno 1 o más | al azar     | El nivel que pide cada ranura, de arriba abajo, en lugar del sorteado; sus encantamientos se sortean también a ese nivel |
+| `enchantCosts`  | no          | lista de 3 enteros, cada uno 0 o más | `[1, 2, 3]` | Los niveles que quita cada ranura al elegirla                                                                            |
+| `lapisCosts`    | no          | lista de 3 enteros, cada uno 1 o más | `[1, 2, 3]` | El lapislázuli que quita cada ranura al elegirla, que debe estar en la mesa                                              |
+| `shelfCap`      | no          | entero, 0 o más                      | `15`        | Cuántas librerías cuentan como máximo                                                                                    |
+| `shelfPower`    | no          | número de 0 a 16                     | `1`         | Cuánto cuenta cada librería, redondeado sobre el total                                                                   |
+
+La pantalla sigue dibujando el uno, dos y tres de vanilla junto a las ranuras y en sus descripciones emergentes; lo que la mesa comprueba y quita sigue al archivo.
 
 ## Drops de bloques
 
