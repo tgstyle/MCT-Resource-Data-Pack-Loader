@@ -191,6 +191,7 @@
   "rdpl.command.gateclosed": "%s을(를) %s 대상으로 닫았습니다 (%s 범위)",
   "rdpl.command.nogate": "%s(이)라는 게이트가 없습니다",
   "rdpl.command.nocard": "%s(이)라는 카드 규칙이 없습니다",
+  "rdpl.command.notalking": "열려 있는 대화가 없습니다",
   "rdpl.command.cardshown": "카드 %s을(를) 플레이어 %s명에게 보여 줬습니다",
   "rdpl.command.noraid": "%s(이)라는 습격이 없습니다",
   "rdpl.command.raidbusy": "습격 %s을(를) 그곳에서 시작할 수 없습니다. 근처에서 다른 습격이 이미 진행 중입니다",

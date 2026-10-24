@@ -191,6 +191,7 @@
   "rdpl.command.gateclosed": "Zavřeno %s pro %s (rozsah %s)",
   "rdpl.command.nogate": "Žádná brána nemá název %s",
   "rdpl.command.nocard": "Žádné pravidlo karty nemá název %s",
+  "rdpl.command.notalking": "Není otevřen žádný dialog",
   "rdpl.command.cardshown": "Karta %s ukázána %s hráčům",
   "rdpl.command.noraid": "Žádný nájezd nemá název %s",
   "rdpl.command.raidbusy": "Nájezd %s tam nemůže začít, v okolí už jeden probíhá",

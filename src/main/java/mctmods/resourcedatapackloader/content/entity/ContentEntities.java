@@ -50,6 +50,7 @@ import net.neoforged.neoforge.event.entity.living.MobSpawnEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -121,6 +122,8 @@ public final class ContentEntities {
     }
 
     public static boolean undefined(ResourceLocation id) { return !DEFS.containsKey(id); }
+
+    public static Collection<EntityVariantDef> variants() { return DEFS.values(); }
 
     public static Map<ResourceLocation, EntityType<?>> types() { return Collections.unmodifiableMap(TYPES); }
 

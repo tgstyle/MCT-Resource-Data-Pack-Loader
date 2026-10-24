@@ -4,9 +4,11 @@ import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.TalkScreen;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.AnvilCosts;
 import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
+import mctmods.resourcedatapackloader.content.dialog.DialogTalk;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
@@ -49,6 +51,8 @@ public final class RDPLNetwork {
         });
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); } });
         registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); } });
+        registrar.playToClient(MessageTalk.TYPE, MessageTalk.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { TalkScreen.receive(message); } });
+        registrar.playToServer(MessageTalkPick.TYPE, MessageTalkPick.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { DialogTalk.pick(player, message.index()); } });
         registrar.playToServer(MessagePortwayFilter.TYPE, MessagePortwayFilter.CODEC, (message, context) -> { if (context.player().containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
     }
 
@@ -88,6 +92,10 @@ public final class RDPLNetwork {
     public static boolean reaches(ServerPlayer player) { return player.connection.hasChannel(MessageCard.TYPE); }
 
     public static void sendCard(ServerPlayer player, MessageCard card) { send(player, card); }
+
+    public static void sendTalk(ServerPlayer player, MessageTalk talk) { send(player, talk); }
+
+    public static void sendTalkPick(int index) { PacketDistributor.sendToServer(new MessageTalkPick(index)); }
 
     public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { send(player, environments); }
 }

@@ -186,6 +186,7 @@
   "rdpl.command.gateclosed": "Ворота %s закрыты для %s (область: %s)",
   "rdpl.command.nogate": "Ворот с именем %s нет",
   "rdpl.command.nocard": "Правила карточки с именем %s нет",
+  "rdpl.command.notalking": "Нет открытого диалога",
   "rdpl.command.cardshown": "Карточка %s показана, игроков: %s",
   "rdpl.command.noraid": "Набега с названием %s нет",
   "rdpl.command.raidbusy": "Набег %s не может начаться там: поблизости уже идёт другой",

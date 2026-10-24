@@ -191,6 +191,7 @@
   "rdpl.command.gateclosed": "%s を %s に対して閉じました（%s の範囲）",
   "rdpl.command.nogate": "%s という名前のゲートはありません",
   "rdpl.command.nocard": "%s という名前のカードルールはありません",
+  "rdpl.command.notalking": "開いている会話はありません",
   "rdpl.command.cardshown": "カード %s を %s 人のプレイヤーに表示しました",
   "rdpl.command.noraid": "%s という名前の襲撃はありません",
   "rdpl.command.raidbusy": "襲撃 %s はそこで始められません。近くで別の襲撃がすでに進行中です",

@@ -100,6 +100,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Scoring](#scoring)
 - [Raids](#raids)
 - [Cards](#cards)
+- [Dialogs](#dialogs)
 - [Dice and decks](#dice-and-decks)
 
 **Control**
@@ -167,6 +168,7 @@ Under `data/`:
 | `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                            |
 | `<namespace>/enchanting/*.json`              | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                    |
 | `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                       |
+| `<namespace>/dialogs/*.json`                 | Branching talk with an entity variant: text nodes and replies that go on, run a function or show a card. [Dialogs](#dialogs)                                     |
 | `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                               |
 | `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
 | `<namespace>/ranks/*.json`                   | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                                            |
@@ -2999,6 +3001,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `name`            | no       | string                             | none                      | The name it carries in the world, in death messages and on its egg                                                                                                              |
 | `showName`        | no       | boolean                            | `false`                   | Show the name without looking at it                                                                                                                                             |
 | `profession`      | no       | `namespace:name`                   | random                    | For a villager, the trade it practices                                                                                                                                          |
+| `dialog`          | no       | string                             | none                      | A dialog, as `namespace:name`, that a right-click on the entity opens. [Dialogs](#dialogs)                                                                                      |
 | `baby`            | no       | boolean or 0.0 to 1.0              | `false`                   | How often one spawns young, and it stays that way. `true` is always, a number is that share of them                                                                             |
 | `becomes`         | no       | list                               | none                      | Other variants this one may turn into as it spawns, by weight. See below                                                                                                        |
 | `egg`             | no       | boolean or object                  | `true`                    | A spawn egg, colored like the egg of the entity it copies. `{ "primary": "AABBCC", "secondary": "112233" }` picks your own colors, `false` leaves the egg out                   |
@@ -6824,6 +6827,81 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 
 `welcomeSays` is not a rule and keeps its logo; a `first_join` or `dimension_enter` rule adds to it. The action-bar countdowns and tallies of a round stay as their settings make them.
 
+## Dialogs
+
+*game modes*
+
+`<namespace>/dialogs/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Each file is one dialog, and its id is `<namespace>:<file name>`. An entity variant opens a dialog through its `dialog` key: a right-click on that entity then shows the dialog's `start` node, in place of whatever the entity does on a right-click, such as a villager's trade screen.
+
+```json
+{
+  "start": "hello",
+  "title": "{npc}",
+  "icon": "minecraft:emerald",
+  "color": "3A2A10",
+  "font": "mypack:runes",
+  "nodes": {
+    "hello": {
+      "lines": ["Welcome, {player}.", "What brings you to {biome}?"],
+      "replies": [
+        { "text": "Who are you?", "goto": "who" },
+        { "text": "I want work.", "runs": "mypack:give_work", "card": "mypack:work_card" },
+        { "text": "Adventure only.", "when": { "gameMode": "adventure" } },
+        { "text": "Goodbye." }
+      ]
+    },
+    "who": { "title": "The Guide", "lines": ["I keep the road."], "replies": [{ "text": "Back.", "goto": "hello" }] }
+  }
+}
+```
+
+The first reply goes to the `who` node, which has a `title` of its own and a reply back. The second runs a function and shows a card. The third is hidden unless the player is in adventure mode, and the last has no `goto`, so it ends the talk.
+
+### Dialog keys
+
+*dialogs*
+
+| Setting      | Type                               | Default            | What it does                                                                                    |
+| ------------ | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
+| `start`      | text                               | none, required     | The name of the node a talk opens at. A dialog whose `start` is not one of its nodes is dropped |
+| `nodes`      | object                             | none, required     | The nodes, each under its own name. Up to 64                                                    |
+| `title`      | text                               | the variant's name | The first line of the panel. `{npc}` is the entity's name                                       |
+| `icon`       | text                               | `saysIcon`         | As on a card, see [The card](#the-card)                                                         |
+| `color`      | text                               | `saysColor`        | As on a card, see [The card](#the-card)                                                         |
+| `image`      | text                               | `saysImage`        | As on a card, see [The card](#the-card)                                                         |
+| `background` | boolean                            | `saysBackground`   | As on a card, see [The card](#the-card)                                                         |
+| `font`       | text                               | `saysFont`         | As on a card, see [The card](#the-card)                                                         |
+| `requires`   | list of mod ids or pack namespaces | none               | The file is skipped unless all are present                                                      |
+
+### Node keys
+
+*dialogs*
+
+| Setting   | Type | Default            | What it does                                                                                                  |
+| --------- | ---- | ------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `title`   | text | the dialog's title | Replaces the dialog's `title` while this node is shown                                                        |
+| `lines`   | list | none               | Up to sixteen lines. `{player}`, `{npc}`, `{dim}`, `{biome}` and `{day}` are filled in                        |
+| `replies` | list | none               | Up to eight replies, shown as a numbered list. A node with none only shows its lines, and the talk ends there |
+
+### Reply keys
+
+*dialogs*
+
+| Setting | Type    | Default               | What it does                                                                                                                                     |
+| ------- | ------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `text`  | text    | none, required        | The reply as the player reads it. A reply without `text` is dropped                                                                              |
+| `goto`  | text    | none                  | The node to go to next, by name. A reply whose `goto` names no node is dropped                                                                   |
+| `card`  | text    | none                  | The id of a rule from [Cards](#cards), shown when the reply is picked. Its `when`, `repeat` and `cooldown` are skipped, and its `runs` still run |
+| `runs`  | text    | none                  | A function run as the player when the reply is picked. This is how a reply runs commands                                                         |
+| `when`  | object  | none                  | The conditions of [When](#when). A reply that fails them is hidden                                                                               |
+| `close` | boolean | `true` without `goto` | Ends the talk after the pick. It does nothing when `goto` is set                                                                                 |
+
+A pick runs `runs`, then shows `card`, then goes to `goto` or ends the talk. A dialog holds no state of its own: it is not saved, and a talk that was closed, or cut off when the player logged out, cannot be resumed. A branch that must remember something sets a score or a tag in its function.
+
+A client with the mod shows a dialog as a panel near the bottom of the screen, with one row for each reply. Click a row or press its number, 1 to 8; Esc or the inventory key closes the talk. A vanilla client gets the same text as chat lines, where each reply is a clickable `[n]` that runs `/rdplserver talk n`. The server accepts a pick only while the entity is alive and within 8 blocks of the player, and ignores a number the current node does not have; the screen closes itself when the player moves more than 8 blocks away. A missing `start`, a reply with no `text` and an unknown `goto` are logged and drop the dialog or the reply, and an entity variant whose `dialog` no pack provides is logged and has none.
+
 ## Dice and decks
 
 *game modes*
@@ -8717,6 +8795,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0     | The sides a pack has fielded and the ways onto and off them, offered only while a pack fields sides, see [Teams](#teams)                                                                                                                                                                                                |
 | `/rdplserver round start`, `round reset`, `round vote yes`, `round vote no`              | 0     | Start a round the pack holds in a lobby, reset a running round or call a vote to, and vote in one, as the pack's scoring allows, and only a player starts one; offered to players only while a pack keeps score, see [Scoring](#scoring)                                                                                |
 | `/rdplserver card <rule> [players]`                                                      | 2     | Show a [card rule](#cards) to the players named, or to yourself, by its id or file name. `when`, `repeat` and `cooldown` are skipped                                                                                                                                                                                    |
+| `/rdplserver talk <number>`                                                              | 0     | Pick a reply by its number in the dialog that is open. A vanilla client's clickable replies run it. [Dialogs](#dialogs)                                                                                                                                                                                                 |
 | `/rdplserver raid <raid> [player or x y z]`                                              | 3     | Start the named [raid](#raids) at a player, at a position or, with neither, at yourself, with no village needed. Refused while another raid is underway within `reach`                                                                                                                                                  |
 | `/rdplserver environment [<dimension> <name>]`                                           | 2     | Switch a dimension to one of its [environments](#environments), or back to its own look with `default`. On its own, it lists every dimension that has environments and the one each is using                                                                                                                            |
 | `/rdplserver reset`                                                                      | 3     | Put the map back the way a round's end does: everybody is held, the entities swept, the scores wiped, `resetRuns` run, the players put at `resetSendsTo` and released, and a round opens with the starting count, as the reset settings under [Pregeneration](#pregeneration) describe. Not passed through from `/rdpl` |

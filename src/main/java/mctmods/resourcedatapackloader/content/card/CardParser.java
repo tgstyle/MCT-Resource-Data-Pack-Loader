@@ -16,7 +16,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-final class CardParser {
+public final class CardParser {
     private static final int MOST_LINES = 16;
 
     private CardParser() {}
@@ -75,7 +75,7 @@ final class CardParser {
         return missing(rule) ? null : rule;
     }
 
-    private static CardWhen when(JsonObject json) {
+    public static CardWhen when(JsonObject json) {
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
         when.timeFrom = CardPlace.tickOf(json, "timeFrom");
