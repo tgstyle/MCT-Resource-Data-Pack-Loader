@@ -296,7 +296,7 @@ Ognuna di queste è una cartella sotto assets/<yourpack>:
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
-    celestial        raids            harvests
+    celestial        raids            harvests         carries
 
 I blocchi hanno queste forme, definite dal campo "type":
 

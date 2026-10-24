@@ -329,7 +329,7 @@ public final class ContentHardness {
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true) public static void onBreak(BlockEvent.BreakEvent event) {
-        if (idle() || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP)) { return; }
+        if (ContentCarry.breaking() || idle() || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP)) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getPlayer();
         IBlockState state = event.getState();
         ItemStack held = player.getHeldItemMainhand();

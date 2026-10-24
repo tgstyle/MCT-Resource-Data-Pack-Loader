@@ -63,6 +63,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
+- [Trasporto](#trasporto)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
 - [Varietà del cibo](#varietà-del-cibo)
 - [Villici e scambi](#villici-e-scambi)
@@ -206,6 +207,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/games/*.json`                                                                      | Giochi da tavolo giocati con i mob come pezzi: la scacchiera, i pezzi e come si muovono, e cosa paga un risultato. [Giochi da tavolo](#giochi-da-tavolo)                                           |
 | `<namespace>/veins/*.json`                                                                      | Gruppi di blocchi che uno strumento estrae in un colpo solo, con un limite e un costo in fame. [Estrazione di filoni](#estrazione-di-filoni) |
 | `<namespace>/harvests/*.json`                                                                   | Colture che si raccolgono e si ripiantano con il clic destro. [Raccolta con clic destro](#raccolta-con-clic-destro)                                                                                |
+| `<namespace>/carries/*.json`                                                                    | Blocchi e mob che un giocatore accovacciato raccoglie e rimette giù. [Trasporto](#trasporto)                                                                             |
 | `<namespace>/player_loot/*.json`                                                                | Una loot table tirata quando un giocatore muore. [Bottino dei giocatori](#bottino-dei-giocatori)                                                                                                   |
 | `<namespace>/diets/*.json`                                                                      | Regole per cui un cibo ripetuto sazia meno e una dieta varia sazia di più. [Varietà del cibo](#varietà-del-cibo)                                                         |
 | `<namespace>/advancements/*.json`                                                               | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                     |
@@ -2904,6 +2906,32 @@ Rompere un minerale con un piccone normalmente rompe solo quel blocco. Un file q
 | `requires` | no           | elenco di stringhe                                                                                             | nessuno     | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                     |
 
 Toccarsi significa condividere una faccia, uno spigolo o un angolo, quindi un blocco ha 26 vicini. Solo in sopravvivenza: i giocatori in creativa e gli spettatori rompono un solo blocco come sempre. Si ferma quando lo strumento si rompe o la barra del cibo del giocatore arriva a 0. Ogni blocco in più lascia i suoi drop abituali, con la Fortuna dello strumento in mano e tutte le regole di Drop dei blocchi, e consuma lo strumento di un uso. Non agisce su un blocco che un gruppo di durezza mantiene. Sono dati di pack solo lato server e non serve nulla sul client. Un file senza blocchi o strumenti validi viene ignorato con una riga di errore.
+
+## Trasporto
+
+*crafting, bottino e scambi*
+
+`<namespace>/carries/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e più file si sommano.
+
+Un giocatore che si accovaccia e fa clic destro con la mano principale vuota raccoglie un blocco o un mob dell'elenco, e accovacciato un clic destro su un blocco lo rimette sulla faccia cliccata. Un blocco trasportato mantiene i dati della sua entità blocco e un mob trasportato tutti i dati della sua entità. Chi trasporta si muove a metà velocità, una riga della barra delle azioni dice cosa porta, e ciò che porta resta nei dati del giocatore dopo la morte e la riconnessione.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Chiave     | Obbligatorio | Valore                  | Predefinito | Cosa fa                                                                                                                              |
+| ---------- | ------------ | ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `blocks`   | no           | elenco di id di blocchi | nessuno     | I blocchi che si possono trasportare, vanilla o da un pack. Un blocco che nulla registra viene saltato con una riga di log           |
+| `mobs`     | no           | elenco di id di entità  | nessuno     | I mob che si possono trasportare, per id di entità, vanilla o da un pack. Un id che nulla registra viene saltato con una riga di log |
+| `requires` | no           | elenco di stringhe      | nessuno     | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                               |
+
+Solo id, niente tag. Le strutture da due blocchi, come porte, piante alte e letti, non si possono trasportare, né i blocchi protetti o con durezza inferiore a 0. I passeggeri di un mob scendono quando viene raccolto, il guinzaglio non ha un trattamento a parte e sul portatore non viene disegnato nulla. I dati trasportati non passano dal data fixer negli aggiornamenti del gioco, e un carico il cui blocco o mob non si risolve più viene cancellato con una riga di errore nel log. Un mob di un pack accovacciato con interfaccia di deposito viene raccolto invece di aprirla.
 
 ## Bottino dei giocatori
 

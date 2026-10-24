@@ -278,7 +278,7 @@ mypack:copper_ore로 등록됩니다. 채우거나 잘못 쓸 이름 필드는 �
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
-    celestial        raids            harvests
+    celestial        raids            harvests         carries
 
 블록은 "type" 필드로 정하는 다음 모양으로 나뉩니다:
 

@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.content.ContentEnchanting;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentDiet;
+import mctmods.resourcedatapackloader.content.ContentCarry;
 import mctmods.resourcedatapackloader.content.ContentHarvests;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
@@ -188,6 +189,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(BlockDrops.class);
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
+        MinecraftForge.EVENT_BUS.register(ContentCarry.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
         LootTableList.register(ContentPierCargo.LOOT_TABLE);

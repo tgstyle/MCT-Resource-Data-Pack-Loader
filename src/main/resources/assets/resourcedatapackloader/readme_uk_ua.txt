@@ -282,7 +282,7 @@ RDPL добре підходить, щоб замінити один-два ре
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
-    celestial        raids            harvests
+    celestial        raids            harvests         carries
 
 Блоки бувають таких видів, вид задає поле "type":
 

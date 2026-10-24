@@ -294,7 +294,7 @@ mypack:copper_oreとして登録されます。記入したり間違えたりす
     structuremaps    citymaps         portalframes     block_drops
     texts            anvils           cards            disabled
     celestial        raids            tooltips
-    celestial        raids            harvests
+    celestial        raids            harvests         carries
 
 ブロックには、「type」フィールドで決まる次の形があります。
 

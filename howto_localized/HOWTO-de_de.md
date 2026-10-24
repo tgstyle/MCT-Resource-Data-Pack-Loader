@@ -63,6 +63,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Blockdrops](#blockdrops)
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
+- [Tragen](#tragen)
 - [Spielerbeute](#spielerbeute)
 - [Nahrungsvielfalt](#nahrungsvielfalt)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
@@ -206,6 +207,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/games/*.json`                                                                      | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele)                                                                       |
 | `<namespace>/veins/*.json`                                                                      | Gruppen von Blöcken, die ein Werkzeug in einem Zug abbaut, mit Limit und Hungerkosten. [Adernabbau](#adernabbau) |
 | `<namespace>/harvests/*.json`                                                                   | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                            |
+| `<namespace>/carries/*.json`                                                                    | Blöcke und Mobs, die ein Spieler schleichend aufhebt und wieder absetzt. [Tragen](#tragen)                                                                     |
 | `<namespace>/player_loot/*.json`                                                                | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                               |
 | `<namespace>/diets/*.json`                                                                      | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                    |
 | `<namespace>/advancements/*.json`                                                               | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                     |
@@ -2904,6 +2906,32 @@ Wer ein Erz mit einer Spitzhacke abbaut, bricht normalerweise nur diesen einen B
 | `requires` | nein    | Liste von Strings                                                                                       | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                    |
 
 Angrenzend heißt, sich an einer Fläche, Kante oder Ecke zu berühren, ein Block hat also 26 Nachbarn. Nur im Überlebensmodus: Spieler im Kreativ- oder Zuschauermodus brechen wie gewohnt einen Block. Es endet, wenn das Werkzeug kaputtgeht oder der Nahrungswert des Spielers 0 erreicht. Jeder zusätzliche Block gibt seine üblichen Drops, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und nutzt das Werkzeug um eine Verwendung ab. Auf einem Block, den eine Härtegruppe behält, läuft es nicht. Es sind reine Server-Packdaten, auf dem Client wird nichts gebraucht. Eine Datei ohne gültige Blöcke oder Werkzeuge wird mit einer Fehlerzeile ignoriert.
+
+## Tragen
+
+*herstellung, beute und handel*
+
+`<namespace>/carries/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Wer schleicht und mit leerer Haupthand rechtsklickt, hebt einen aufgeführten Block oder ein aufgeführtes Mob auf; schleichend auf einen Block rechtszuklicken setzt es an der angeklickten Seite wieder ab. Ein getragener Block behält seine Blockentitätsdaten, ein getragenes Mob alle seine Entitätsdaten. Der Träger bewegt sich mit halber Geschwindigkeit, eine Zeile über der Schnellleiste nennt das Getragene, und das Getragene bleibt in den Spielerdaten über Tod und erneutes Verbinden erhalten.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Schlüssel  | Pflicht | Wert                   | Standard | Was er macht                                                                                                                                               |
+| ---------- | ------- | ---------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | nein    | Liste von Block-IDs    | keine    | Die Blöcke, die getragen werden können, vanilla oder aus einem Pack. Ein Block, den nichts registriert, wird mit einer Logzeile übersprungen               |
+| `mobs`     | nein    | Liste von Entitäts-IDs | keine    | Die Mobs, die getragen werden können, nach Entitäts-ID, vanilla oder aus einem Pack. Eine ID, die nichts registriert, wird mit einer Logzeile übersprungen |
+| `requires` | nein    | Liste von Strings      | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                     |
+
+Nur IDs, keine Tags. Zweiteilige Strukturen wie Türen, hohe Pflanzen und Betten lassen sich nicht tragen, ebenso wenig geschützte Blöcke oder Blöcke mit einer Härte unter 0. Passagiere eines Mobs werden beim Aufheben abgesetzt, eine Leine wird nicht gesondert behandelt, und am Träger wird nichts gezeichnet. Getragene Daten werden bei Spiel-Upgrades nicht per Data Fixer angepasst, und ein Getragenes, dessen Block oder Mob sich nicht mehr auflösen lässt, wird mit einer Fehlerzeile im Log gelöscht. Ein schleichendes Pack-Mob mit Lager-GUI wird aufgehoben, statt dass die GUI öffnet.
 
 ## Spielerbeute
 

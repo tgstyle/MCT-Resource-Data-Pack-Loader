@@ -63,6 +63,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
+- [Carrying](#carrying)
 - [Player loot](#player-loot)
 - [Food variety](#food-variety)
 - [Villagers and trades](#villagers-and-trades)
@@ -206,6 +207,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/games/*.json`                                                                      | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
 | `<namespace>/veins/*.json`                                                                      | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                             |
 | `<namespace>/harvests/*.json`                                                                   | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                     |
+| `<namespace>/carries/*.json`                                                                    | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                |
 | `<namespace>/player_loot/*.json`                                                                | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                              |
 | `<namespace>/diets/*.json`                                                                      | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                 |
 | `<namespace>/advancements/*.json`                                                               | Advancements. [What you can override](#what-you-can-override)                                                                                                    |
@@ -2904,6 +2906,32 @@ Breaking an ore with a pickaxe normally breaks that one block. A file here names
 | `requires` | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                  |
 
 Connected means touching by face, edge or corner, so a block has 26 neighbors. Survival only: creative and spectator players break one block as usual. It stops when the tool breaks or the player's food level reaches 0. Every extra block gives its usual drops, with the Fortune of the held tool and every rule under Block drops, and wears the tool one use. It does not run on a block a hardness group keeps. This is server pack data and needs nothing on the client. A file with no valid blocks or tools is ignored with an error line.
+
+## Carrying
+
+*crafting, loot and trade*
+
+`<namespace>/carries/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+A player who sneaks and right-clicks with an empty main hand picks up a listed block or mob, and sneaking and right-clicking a block sets it down again on the clicked face. A carried block keeps its block entity data and a carried mob keeps its full entity data. The carrier moves at half speed, an action-bar line names what is carried, and the carry is kept in the player's data across death and relog.
+
+```json
+{
+  "requires": ["config:enableCarrying"],
+  "blocks": ["minecraft:chest", "minecraft:furnace", "mypack:crate"],
+  "mobs": ["minecraft:cow", "minecraft:sheep"]
+}
+```
+
+| Key        | Required | Value              | Default | What it does                                                                                                           |
+| ---------- | -------- | ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `blocks`   | no       | list of block ids  | none    | The blocks that can be carried, vanilla or from a pack. A block nothing registers is skipped with a log line           |
+| `mobs`     | no       | list of entity ids | none    | The mobs that can be carried, by entity id, vanilla or from a pack. An id nothing registers is skipped with a log line |
+| `requires` | no       | list of strings    | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                               |
+
+Ids only, no tags. Two-block structures such as doors, tall plants and beds cannot be carried, nor can protected blocks or blocks with a hardness below 0. A mob's riders are set off when it is picked up, a leash is not special-cased, and nothing is drawn on the carrier. Carried data is not data-fixed across game upgrades, and a carry whose block or mob no longer resolves is cleared with an error line in the log. A sneaking pack mob that has a storage GUI is picked up instead of opening it.
 
 ## Player loot
 

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentCarry;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.FilterDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
@@ -177,6 +178,7 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
 
     @SubscribeEvent public static void onInteract(PlayerInteractEvent.EntityInteract event) {
         if (event.getHand() != EnumHand.MAIN_HAND || def(event.getTarget()) == null) { return; }
+        if (event.getEntityPlayer().isSneaking() && event.getEntityPlayer().getHeldItemMainhand().isEmpty() && ContentCarry.listsMob(event.getTarget())) { return; }
         if (!event.getEntityPlayer().isSneaking()) {
             if (poured(event)) {
                 event.setCanceled(true);
