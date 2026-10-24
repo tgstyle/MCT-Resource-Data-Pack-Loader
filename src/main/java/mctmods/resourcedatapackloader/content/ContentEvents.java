@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
+import mctmods.resourcedatapackloader.content.extra.ContentEnchantments;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
@@ -231,6 +232,7 @@ public final class ContentEvents {
         ContentExposures.generate();
         ContentBiomes.generate();
         ContentCaveRegions.generate();
+        ContentEnchantments.generate();
         ContentOreControl.generate();
         ContentGeneratorControl.load();
         ContentStructureControl.generate();

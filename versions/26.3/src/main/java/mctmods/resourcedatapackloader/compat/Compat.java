@@ -40,6 +40,12 @@ import javax.annotation.Nullable;
 public final class Compat {
     private Compat() {}
 
+    public static String conditionKey() { return "type"; }
+
+    public static String entityTypeKey() { return "minecraft:entity_type"; }
+
+    public static String damageTagId(String id) { return "#" + id; }
+
     @Nullable public static EntityType<?> entityType(@Nullable Identifier id) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, id); }
 
     @Nullable public static EntityType<?> entityType(String name) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, Identifier.tryParse(name)); }
