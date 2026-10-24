@@ -297,6 +297,8 @@ rdploader/RDPL9 ModFixes.zip
 
 Não diferencia maiúsculas de minúsculas; um espaço, hífen ou sublinhado a seguir ao número é opcional; o prefixo fica oculto no nome apresentado. Um pacote sem prefixo carrega primeiro e perde para qualquer pacote numerado. A prioridade também ordena as entradas de worldgen, o que importa quando um pacote coloca blocos que outro substitui.
 
+**Dentro de um mesmo pacote.** Os namespaces carregam por ordem alfabética; dentro de cada um, primeiro os ficheiros da pasta da versão, depois os do resto do pacote e por fim os trazidos da linha 1.12.2, ordenados por caminho. Dois ficheiros nunca partilham o mesmo caminho, por isso a maior parte do conteúdo não pode colidir dentro de um pacote. O que é nomeado dentro do ficheiro pode: equipas, objetivos de pontuação e dados mantêm a primeira definição e registam um erro, enquanto regras do jogo, regras de colheita, definições do Blast Plaster e renomeações de registo mantêm a última. Um jogo é nomeado apenas pelo seu caminho, por isso o mesmo caminho em dois namespaces mantém o primeiro.
+
 **Desativar um pacote** acrescentando `.disabled` ao nome.
 
 **Um zip para todas as versões.** Um zip pode conter uma pasta `versions/<version>/` para cada versão do Minecraft que serve: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` e, na 26.x, a versão exata em que corre, `versions/26.1.2/`. Cada uma está organizada como a raiz de um pacote para essa versão, `pack.mcmeta` incluído. Um ficheiro na pasta da versão em execução é lido no lugar do mesmo caminho na raiz; a raiz é partilhada por todas as versões, e a pasta de outra versão nunca é lida. Coloca na raiz o que todas as versões leem da mesma forma e numa pasta de versão apenas o que difere, e um só zip carrega nas quatro.

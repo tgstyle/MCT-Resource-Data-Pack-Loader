@@ -297,6 +297,8 @@ rdploader/RDPL9 ModFixes.zip
 
 Na velikosti písmen nezáleží; mezera, pomlčka nebo podtržítko za číslem je volitelné; předpona se v zobrazovaném názvu skrývá. Balíček bez předpony se načte první a prohraje s kterýmkoli číslovaným balíčkem. Priorita také řadí položky worldgenu, což je důležité, když jeden balíček pokládá bloky, které jiný nahrazuje.
 
+**Uvnitř jednoho balíčku.** Namespacy se načítají v abecedním pořadí; uvnitř namespace nejdřív soubory ze složky verze, potom ze zbytku balíčku a nakonec soubory převzaté z řady 1.12.2, vždy podle cesty. Dva soubory nikdy nesdílejí stejnou cestu, takže většina obsahu se uvnitř jednoho balíčku střetnout nemůže. Střetnout se může jen to, co je pojmenováno uvnitř souboru: týmy, bodovací cíle a kostky si ponechají první definici a zapíšou chybu, zatímco herní pravidla, pravidla sklizně, nastavení Blast Plaster a přejmenování v registru si ponechají poslední. Hra je pojmenována jen svou cestou, takže stejná cesta ve dvou namespace si ponechá první.
+
 **Vypnutí balíčku** provedeš připojením `.disabled` k jeho názvu.
 
 **Jeden zip pro každou verzi.** Zip může nést složku `versions/<version>/` pro každou verzi Minecraftu, kterou obsluhuje: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` a na 26.x přesnou verzi, na které běží, `versions/26.1.2/`. Každá je uspořádána jako kořen balíčku pro danou verzi, včetně `pack.mcmeta`. Soubor ve složce běžící verze se čte místo téže cesty v kořeni; kořen sdílí všechny verze a složka jiné verze se nikdy nečte. Dej do kořene to, co všechny verze čtou stejně, a do složky verze jen to, co se liší, a jeden zip se načte na všech čtyřech.
