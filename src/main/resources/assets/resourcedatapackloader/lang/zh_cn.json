@@ -80,6 +80,8 @@
   "rdpl.gui.packList.normal": "RDPL 资源包",
   "rdpl.gui.packList.override": "RDPL 覆盖资源包",
   "rdpl.portal.owned": "这个传送门属于其他人",
+  "rdpl.diet.repeat": "这种食物吃腻了",
+  "rdpl.diet.variety": "饮食多样，浑身舒畅",
   "rdpl.portway.activated": "%s 已激活（已记录 %s）",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "第 %s 页，共 %s 页",

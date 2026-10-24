@@ -67,6 +67,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
 - [Spielerbeute](#spielerbeute)
+- [Nahrungsvielfalt](#nahrungsvielfalt)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
 
 **Kreaturen und Gefahren**
@@ -202,6 +203,7 @@ Unter `data/`:
 | `<namespace>/harvests/*.json`                | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                            |
 | `<namespace>/veins/*.json`                   | Gruppen von Blöcken, die ein Werkzeug in einem Zug abbaut, mit Limit und Hungerkosten. [Adernabbau](#adernabbau)                                                                                              |
 | `<namespace>/player_loot/*.json`             | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                               |
+| `<namespace>/diets/*.json`                   | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                                                                   |
 | `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                     |
 | `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                 |
 | `<namespace>/tags/<kind>/*.json`             | Tags, im Format des Spiels selbst. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                           |
@@ -2834,6 +2836,40 @@ Eine Beutefunktion bringt RDPL selbst mit, nutzbar in jeder Tabelle mit einem ge
 `dropLoose` umgeht die Dropliste vollständig: Die Items werden direkt in die Welt gesetzt, Grab-Mods sehen sie nie; das Inventar wandert ins Grab, die Items der Tabelle liegen für den Täter auf dem Boden. Die Einstellung für Beute, die dem Täter gehört statt dem Grab des Opfers. Ohne Grab-Mod ändert sie wenig. Vorbehalt: Die Items existieren, bevor irgendetwas nachgelagert die Drops noch abbrechen könnte, ein Eintrag, der einen abgebrochenen Tod nicht überleben darf, lässt sie besser aus.
 
 Setz `playerLoot` in der Config-Kategorie `data` auf `false`, um den Ordner ganz abzuschalten.
+
+## Nahrungsvielfalt
+
+*herstellung, beute und handel*
+
+`<namespace>/diets/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und es zählt nur eine Datei: Gibt es mehrere, wird die zuerst geladene verwendet, die übrigen werden geloggt und ignoriert.
+
+Normalerweise sättigt ein Essen immer gleich, egal wie oft du es isst. Eine Datei hier sorgt dafür, dass ein Essen, das schon zu den letzten Mahlzeiten eines Spielers gehört, weniger sättigt und eine abwechslungsreiche Ernährung mehr. Ohne Datei ändert sich nichts und nichts wird mitgezählt.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Schlüssel  | Pflicht | Wert                | Standard | Was er macht                                                                                                                                                                                  |
+| ---------- | ------- | ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | nein    | int ≥ 1             | `10`     | Wie viele Mahlzeiten sich jeder Spieler merkt; die älteste wird zuerst vergessen                                                                                                              |
+| `repeat`   | nein    | Liste von float ≥ 0 | `[1.0]`  | Der Multiplikator für das 1., 2., 3. Mal, dass dasselbe Essen unter den gemerkten Mahlzeiten ist; der letzte Eintrag wiederholt sich                                                          |
+| `variety`  | nein    | Liste von Objekten  | keine    | Jedes Objekt hat `distinct` (int ≥ 1) und `multiplier` (float ≥ 0): Sobald die gemerkten Mahlzeiten so viele verschiedene Speisen enthalten, wird der Zugewinn mit `multiplier` multipliziert |
+| `groups`   | nein    | Liste von Text      | keine    | Item-IDs oder `#ore`-Namen; ein passendes Essen zählt als dieser Eintrag, ein Erznamen ist also ein Essen; der erste Treffer gilt                                                             |
+| `messages` | nein    | Objekt              | —        | Zeile in der Aktionsleiste nach einer Mahlzeit: `repeat` bei Wiederholungs-Multiplikator unter 1, `variety` darüber; Text, Sprachschlüssel oder `""`; Standard `rdpl.diet.*`                  |
+
+Ein fehlerhafter Wert loggt einen Fehler mit dem Dateinamen, und die Datei wird übersprungen.
+
+Wenn ein Spieler aufgegessen hat, werden Hunger und Sättigung, die das Essen tatsächlich wiederhergestellt hat (nach Vanillas eigener Obergrenze), mit einer einzigen Zahl multipliziert: dem `repeat`-Eintrag dafür, wie oft das Essen schon unter den gemerkten Mahlzeiten ist (noch nie ist der 1. Eintrag), mal der `variety`-Stufe mit dem größten erreichten `distinct`, egal wo sie in der Datei steht. `distinct` zählt die verschiedenen Speisen unter den gemerkten Mahlzeiten einschließlich dieser, nachdem die Liste auf `memory` gekürzt wurde. Der Hungerzuwachs wird auf ganze halbe Keulen gerundet, und der neue Hungerwert bleibt zwischen 0 und 20; die Sättigung wird genauso skaliert und steigt nie über den neuen Hungerwert. Beim Beispiel oben sättigt ein zweiter Apfel in Folge nur halb so viel, und die vierte verschiedene Speise im Gedächtnis sättigt 1,25-mal so viel.
+
+Jedes Essen zählt, aus Vanilla, aus einem Mod oder aus einem Pack, auch eines, das über `overrides` gesetzt wurde. Ein Essen, das nichts wiederherstellt, wird nicht gemerkt. Kuchen und alles, was nicht durch Benutzen eines Items gegessen wird, ist nicht abgedeckt. Die Mahlzeiten werden pro Spieler gespeichert und überstehen Tod und Neustart.
+
+Ein Essen mit `consume_seconds` auf 0 wird ohne Benutzungsereignis gegessen, auf das man hören könnte, und zählt deshalb nicht.
 
 ## Dorfbewohner und Handel
 

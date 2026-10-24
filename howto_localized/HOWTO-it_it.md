@@ -67,6 +67,7 @@ Questa guida è per la build 26.x, che copre 26.1.2, 26.2 e 26.3; tutte e tre le
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
+- [Varietà del cibo](#varietà-del-cibo)
 - [Villici e scambi](#villici-e-scambi)
 
 **Creature e pericoli**
@@ -202,6 +203,7 @@ Sotto `data/`:
 | `<namespace>/harvests/*.json`                | Colture che si raccolgono e si ripiantano con il clic destro. [Raccolta con clic destro](#raccolta-con-clic-destro)                                                                                |
 | `<namespace>/veins/*.json`                   | Gruppi di blocchi che uno strumento estrae in un colpo solo, con un limite e un costo in fame. [Estrazione di filoni](#estrazione-di-filoni)                                                       |
 | `<namespace>/player_loot/*.json`             | Una loot table tirata quando un giocatore muore. [Bottino dei giocatori](#bottino-dei-giocatori)                                                                                                   |
+| `<namespace>/diets/*.json`                   | Regole per cui un cibo ripetuto sazia meno e una dieta varia sazia di più. [Varietà del cibo](#varietà-del-cibo)                                                                                   |
 | `<namespace>/advancements/*.json`            | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                     |
 | `<namespace>/functions/*.mcfunction`         | File di funzione. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                              |
 | `<namespace>/tags/<kind>/*.json`             | Tag, nel formato del gioco. [Materiali, schede, suoni, tag](#materiali-schede-suoni-tag)                                                                                                           |
@@ -2834,6 +2836,40 @@ Una funzione di bottino è propria di RDPL, utilizzabile in qualsiasi tabella co
 `dropLoose` salta del tutto l'elenco dei drop: gli oggetti vengono piazzati direttamente nel mondo, quindi le mod delle tombe non li vedono mai; l'inventario va nella tomba, gli oggetti della tabella restano a terra per l'uccisore. Usalo per il bottino che spetta all'uccisore e non alla tomba della vittima. Senza una mod delle tombe cambia poco. Avvertenza: gli oggetti esistono prima che qualcosa più a valle possa annullare i drop, quindi le voci che non devono sopravvivere a una morte annullata dovrebbero lasciarlo disattivato.
 
 Imposta `playerLoot` nella categoria di configurazione `data` su `false` per disattivare del tutto la cartella.
+
+## Varietà del cibo
+
+*crafting, bottino e scambi*
+
+`<namespace>/diets/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e conta un solo file: se ce n'è più di uno, si usa il primo caricato e gli altri vengono registrati nel log e ignorati.
+
+Di norma un cibo sazia sempre allo stesso modo, quante volte lo mangi. Un file qui fa sì che un cibo già presente tra gli ultimi pasti di un giocatore sazi meno e che una dieta varia sazi di più. Senza file non cambia nulla e non si tiene traccia di niente.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Chiave     | Obbligatorio | Valore              | Predefinito | Cosa fa                                                                                                                                                                  |
+| ---------- | ------------ | ------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `memory`   | no           | int ≥ 1             | `10`        | Quanti pasti ricorda ogni giocatore; il più vecchio viene dimenticato per primo                                                                                          |
+| `repeat`   | no           | elenco di float ≥ 0 | `[1.0]`     | Il moltiplicatore per la 1ª, 2ª, 3ª volta che lo stesso cibo compare tra i pasti ricordati; l'ultima voce si ripete                                                      |
+| `variety`  | no           | elenco di oggetti   | nessuno     | Ogni oggetto ha `distinct` (int ≥ 1) e `multiplier` (float ≥ 0): quando i pasti ricordati contengono tanti cibi diversi, il guadagno viene moltiplicato per `multiplier` |
+| `groups`   | no           | elenco di testi     | nessuno     | ID di oggetti o nomi `#ore`; un cibo che corrisponde conta come quella voce, quindi un nome di minerale è un solo cibo; vale la prima corrispondenza                     |
+| `messages` | no           | oggetto             | —           | Barra delle azioni dopo un pasto: `repeat` se il moltiplicatore di ripetizione è sotto 1, `variety` se sopra; testo, chiave o `""`; predefiniti `rdpl.diet.*`            |
+
+Un valore errato scrive nel log un errore con il nome del file, e quel file viene saltato.
+
+Quando un giocatore finisce di mangiare, la fame e la saturazione che il cibo ha davvero ripristinato (dopo il limite proprio di vanilla) vengono moltiplicate per un unico numero: la voce di `repeat` per quante volte il cibo è già tra i pasti ricordati (nessuna è la 1ª voce), per il livello di `variety` con il `distinct` più grande raggiunto, in qualunque posizione stia nel file. `distinct` conta i cibi diversi tra i pasti ricordati, compreso questo, dopo aver ridotto l'elenco a `memory`. Il guadagno di fame è arrotondato a mezze cosce intere e il nuovo livello di fame resta tra 0 e 20; la saturazione è scalata allo stesso modo e non supera mai il nuovo livello di fame. Con l'esempio qui sopra, una seconda mela di fila ripristina la metà, e il quarto cibo diverso in memoria ripristina 1,25 volte tanto.
+
+Conta ogni cibo, di vanilla, di una mod o di un pack, anche uno impostato tramite `overrides`. Un cibo che non ripristina nulla non viene ricordato. La torta e tutto ciò che non si mangia usando un oggetto non sono coperti. I pasti sono salvati per giocatore e sopravvivono a morte e riavvii.
+
+Un cibo con `consume_seconds` a 0 viene mangiato senza alcun evento d'uso a cui agganciarsi, quindi non viene contato.
 
 ## Villici e scambi
 

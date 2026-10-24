@@ -80,6 +80,8 @@
   "rdpl.gui.packList.normal": "Пак RDPL",
   "rdpl.gui.packList.override": "Переопределяющий пак RDPL",
   "rdpl.portal.owned": "Этот портал принадлежит кому-то другому",
+  "rdpl.diet.repeat": "Эта еда уже приедается",
+  "rdpl.diet.variety": "Разнообразное питание бодрит",
   "rdpl.portway.activated": "%s: активирован (известно: %s)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "Страница %s из %s",

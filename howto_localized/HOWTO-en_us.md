@@ -67,6 +67,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
 - [Player loot](#player-loot)
+- [Food variety](#food-variety)
 - [Villagers and trades](#villagers-and-trades)
 
 **Creatures and hazards**
@@ -202,6 +203,7 @@ Under `data/`:
 | `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                     |
 | `<namespace>/veins/*.json`                   | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                             |
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                              |
+| `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                             |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                    |
 | `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                  |
 | `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                        |
@@ -2834,6 +2836,40 @@ One loot function is RDPL's own, usable in any table with a looted entity: `rdpl
 `dropLoose` bypasses the drop list entirely: the items are placed in the world directly, so grave mods never see them; the inventory goes in the grave, the table's items lie on the ground for the killer. Use it for spoils that belong to the killer rather than the victim's grave. Without a grave mod it changes little. Caveat: the items exist before anything downstream could cancel the drops, so entries that must not survive a canceled death should leave it off.
 
 Set `playerLoot` in the `data` config category to `false` to turn the folder off entirely.
+
+## Food variety
+
+*crafting, loot and trade*
+
+`<namespace>/diets/*.json`
+
+The file name is yours to choose, only the folder is read, and only one file counts: when several exist, the first one loaded is used and the others are logged and ignored.
+
+Normally a food feeds the same however often you eat it. A file here makes a food that is already among a player's recent meals feed less, and a varied diet feed more. Without a file nothing changes and nothing is tracked.
+
+```json
+{
+  "memory": 8,
+  "repeat": [1.0, 0.5, 0.25],
+  "variety": [ { "distinct": 4, "multiplier": 1.25 }, { "distinct": 7, "multiplier": 1.5 } ]
+}
+```
+
+| Key        | Required | Value             | Default | What it does                                                                                                                                                        |
+| ---------- | -------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `memory`   | no       | int ≥ 1           | `10`    | How many meals each player remembers, the oldest forgotten first                                                                                                    |
+| `repeat`   | no       | list of float ≥ 0 | `[1.0]` | The multiplier for the 1st, 2nd, 3rd time the same food is among the remembered meals; the last entry repeats                                                       |
+| `variety`  | no       | list of objects   | none    | Each object has `distinct` (int ≥ 1) and `multiplier` (float ≥ 0): once the remembered meals hold that many different foods, the gain is multiplied by `multiplier` |
+| `groups`   | no       | list of text      | none    | Item ids or `#ore` names; a food matching an entry is counted as that entry, so one ore name is one food; the first match wins                                      |
+| `messages` | no       | object            | —       | Action-bar line after a meal: `repeat` when the repeat multiplier is below 1, `variety` when above 1; text, lang key or `""`; defaults `rdpl.diet.*`                |
+
+A bad value logs one error naming the file and skips that file.
+
+When a player finishes eating, the hunger and saturation the food actually restored, after vanilla's own cap, are multiplied by one number: the `repeat` entry for how often the food is already among the remembered meals (not at all is the 1st entry), times the `variety` tier with the largest `distinct` the meals reach, wherever it stands in the file. `distinct` counts the different foods among the remembered meals including this one, after the list is trimmed to `memory`. The hunger gain is rounded to whole half drumsticks and the new hunger level stays between 0 and 20; saturation is scaled the same way and never rises above the new hunger level. With the example above, a second apple in a row restores half as much, and the fourth different food in the memory restores 1.25 times as much.
+
+Every food counts, vanilla, from a mod or from a pack, including one set through `overrides`. A food that restores nothing is not remembered. Cake and anything else that is not eaten by using an item are not covered. The meals are kept per player and survive death and restarts.
+
+A food with `consume_seconds` set to 0 is eaten with no use event to listen to, so it is not counted.
 
 ## Villagers and trades
 

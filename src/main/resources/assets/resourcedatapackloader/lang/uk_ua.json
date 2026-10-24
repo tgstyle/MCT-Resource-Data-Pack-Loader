@@ -80,6 +80,8 @@
   "rdpl.gui.packList.normal": "Набір RDPL",
   "rdpl.gui.packList.override": "Набір RDPL, що перевизначає",
   "rdpl.portal.owned": "Цей портал належить іншому гравцю",
+  "rdpl.diet.repeat": "Ця їжа вже приїдається",
+  "rdpl.diet.variety": "Різноманітне харчування додає сил",
   "rdpl.portway.activated": "%s: активовано (відомо: %s)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "Сторінка %s з %s",
