@@ -6,6 +6,7 @@ import net.minecraft.util.ResourceLocation;
 import java.util.List;
 
 public final class GateDef {
+    public static final int NO_DIMENSION = Integer.MIN_VALUE;
     public static final String GLOBAL = "global";
     public static final String PLAYER = "player";
     public static final String TEAM = "team";
@@ -61,6 +62,8 @@ public final class GateDef {
     }
 
     public String getKey() { return registryName.toString(); }
+
+    public boolean guardsDimension() { return dimension != NO_DIMENSION; }
 
     public boolean global() { return GLOBAL.equals(scope); }
 

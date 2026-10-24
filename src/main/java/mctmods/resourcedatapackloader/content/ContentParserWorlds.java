@@ -37,7 +37,7 @@ public final class ContentParserWorlds {
     private static final List<String> RETURNS = Collections.unmodifiableList(Arrays.asList(DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE));
     private static final List<String> DIRECTIONS = Collections.unmodifiableList(Arrays.asList(IntroPageDef.UP, IntroPageDef.DOWN));
     private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.LIST));
-    private static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM));
+    static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM));
     private static final List<String> TEAMLESS = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.REFUSE));
     private static final List<String> TALLIES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.TEAM));
     private static final List<String> STANDINGS = Collections.unmodifiableList(Arrays.asList(GateDef.ALONE, GateDef.WITH));
@@ -517,7 +517,7 @@ public final class ContentParserWorlds {
         String scope = Json.choice(json, "scope", GateDef.PLAYER, owner, SCOPES);
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
         return new GateDef(key,
-                Json.getInt(json, "dimension"),
+                Json.getInt(json, "dimension", GateDef.NO_DIMENSION),
                 Json.getString(json, "name", key.getPath()),
                 scope,
                 Json.choice(json, "teamless", GateDef.PLAYER, owner, TEAMLESS),

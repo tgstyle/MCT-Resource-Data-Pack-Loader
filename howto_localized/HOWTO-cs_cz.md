@@ -727,6 +727,7 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `banner`     | Praporec na tyči nebo na zdi, šestnáct stojících natočení, nesoucí tvůj vlastní vzor. Registruje druhý blok jménem `<name>_wall` pro ten zavěšený                                                                                            |
 | `ladder`     | Dá se po něm šplhat, klade se na zeď                                                                                                                                                                                                         |
 | `torch`      | Pokládání na zeď i na zem, s částicí                                                                                                                                                                                                         |
+| `portway`    | Zapíše se do vlastního seznamu zastávek každého hráče, který ho použije, a otevře nabídku cesty na kteroukoli z nich, i do jiné dimenze. Jeho blokový objekt uchovává jen jméno                                                              |
 | `bell`       | Zvon jako ten, který mají vesnice od verze 1.14: zvoní při použití na boku, redstonem nebo když do něj narazí projektil, houpe se ve svém rámu a způsobí, že nájezdníci poblíž zazáří. Jedna varianta, metadata nesou směr a způsob zavěšení |
 | `log`        | Otáčí se ke straně, ke které ho pokládáš, a ve slovníku rud je registrován jako `logWood`, takže kácení stromů a Blast Plaster s ním zacházejí jako s kmenem                                                                                 |
 | `leaves`     | Opadává, stříhá se, barví a dropuje sazenici, a ve slovníku rud je registrován jako `treeLeaves`                                                                                                                                             |
@@ -785,6 +786,7 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `needsOxygen`                | plodina, květina, sazenice, listí | boolean                                           | `true`                                                                                            | S GalaxySpace určuje, zda `crop`, `flower`, `sapling` nebo `leaves` usychá tam, kde není kyslík. Viz [Kyslík](#kyslík)                                                                                                                                                                                                              |
 | `portal`                     | jen portál                        | objekt                                            | žádný                                                                                             | Viz [Portály a brány](#portály-a-brány)                                                                                                                                                                                                                                                                                             |
 | `container`                  | jen kontejner                     | objekt                                            | žádný                                                                                             | Viz [Kontejnery](#kontejnery)                                                                                                                                                                                                                                                                                                       |
+| `portway`                    | jen průchod                       | objekt                                            | žádný                                                                                             | Viz [Průchody](#průchody)                                                                                                                                                                                                                                                                                                           |
 | `bell`                       | jen zvon                          | objekt                                            | žádný                                                                                             | Viz [Zvony](#zvony)                                                                                                                                                                                                                                                                                                                 |
 
 ### Klíče variant
@@ -1089,6 +1091,196 @@ A jeho blockstate, `assets/mypack/blockstates/village_bell.json`:
 **Modely.** Zvon nemá vlastnost `blocks`, takže jeho blockstate je klíčován podle `facing` a `attachment`. Se zapnutým `swing` tyto modely kreslí jen rám a houpající se část je jedna další položka s názvem `body`, modelovaná v prostoru bloku tam, kde klidně visí; naklání se kolem bodu půl bloku dovnitř a tři čtvrtě bloku nahoru, stejně jako ten vanilla. Položka `inventory` je předmět, rám i tělo dohromady. Při vypnutém `swing` položka `body` neexistuje a čtyři modely rámu kreslí i zvon.
 
 **Houpání kreslí klient.** Zazvonění se k hráčům dostane jako událost bloku, takže dedikovaný server rozhoupe zvon všem, kdo mají tento mód, a hráč bez něj zvon jen slyší. Zvuky, rezonance i záře se dějí na serveru.
+
+## Průchody
+
+*bloky*
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "portway",
+  "material": "rock",
+  "soundType": "stone",
+  "creativeTab": "decorations",
+  "portway": {
+    "activateSound": "minecraft:block.beacon.activate",
+    "travelSound": "minecraft:block.portal.travel",
+    "names": ["Severní brána", "Starý mlýn", "Kapradinová kotlina"],
+    "allow": [],
+    "deny": [-1],
+    "crossDimension": true,
+    "gate": "",
+    "network": "",
+    "global": false,
+    "tall": false,
+    "facing": false,
+    "activateParticle": "minecraft:portal",
+    "travelParticle": "minecraft:portal",
+    "carry": { "mount": false, "leashed": false, "pets": false, "crossDimension": true },
+    "cost": {
+      "xp": { "amount": 0, "perBlocks": 500, "dimension": 3, "max": 3, "points": false },
+      "item": { "id": "minecraft:emerald", "amount": 1, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "health": { "amount": 0, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "hunger": { "amount": 0, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "cooldown": 30
+    },
+    "menu": { "order": "nearest", "previous": "minecraft:arrow", "next": "minecraft:arrow", "page": "minecraft:paper", "sort": "minecraft:compass", "locked": "minecraft:barrier" }
+  },
+  "variants": { "portway": { "meta": 0, "hardness": 5.0, "resistance": 30 } }
+}
+```
+
+| Nastavení          | Typ                  | Výchozí                           | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------ | -------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activateSound`    | název zvuku          | `minecraft:block.beacon.activate` | Přehraje se u průchodu, když si ho hráč přidá do seznamu. Prázdné nepřehraje nic                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `travelSound`      | název zvuku          | `minecraft:block.portal.travel`   | Přehraje se na obou koncích cesty. Prázdné nepřehraje nic                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `names`            | seznam textů         | prázdný                           | Jména pro umístěné průchody. Každý si podle své pozice vezme ze seznamu jedno jméno, vždy stejné, pokud nedostal jméno jinak. Se seznamem o jednom jménu se jmenují všechny                                                                                                                                                                                                                                                                                                         |
+| `allow`            | seznam ID dimenzí    | prázdný                           | Jediné dimenze, kde tento průchod funguje a jejichž průchody vypisuje. Prázdné povoluje každou dimenzi                                                                                                                                                                                                                                                                                                                                                                              |
+| `deny`             | seznam ID dimenzí    | prázdný                           | Dimenze, kde tento průchod nefunguje a jejichž průchody nevypisuje. Má přednost před `allow`                                                                                                                                                                                                                                                                                                                                                                                        |
+| `crossDimension`   | pravda nebo nepravda | `true`                            | S `false` nabídka vypisuje jen průchody ve stejné dimenzi                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `gate`             | název brány          | prázdné                           | [Brána](#brány), kterou musí hráč otevřít, aby tento průchod aktivoval, otevřel jeho nabídku a cestoval k němu. Bez ní se zastávka ukáže jako zamčená. Uveď stejnou bránu u všech průchodů jedné sítě, aby se zamkla celá síť. Prázdné nežádá žádnou                                                                                                                                                                                                                                |
+| `network`          | text                 | prázdné                           | Skupina, do které tento průchod patří. Průchod vypisuje a cestuje jen k průchodům vlastní sítě a nabídka ostatní vynechá. Prázdné je sdílená výchozí síť                                                                                                                                                                                                                                                                                                                            |
+| `global`           | pravda nebo nepravda | `false`                           | S `true` vidí tento průchod v nabídce každý hráč, aniž by ho aktivoval. Jinak hráč vidí jen ty, které aktivoval                                                                                                                                                                                                                                                                                                                                                                     |
+| `scope`            | text                 | `player`                          | Kdo sdílí zastávky: `player` vede seznam pro každého hráče, `team` sdílí, co aktivuje kterýkoli člen, s celým týmem (tým je strana ze složky `<namespace>/teams` balíčku; hráči se k ní připojí tím, že jsou uvedeni v jejím `players`, příkazem `/rdpl team join <název>`, pokud strana nenastaví `joinable` na false, samotným `/rdpl team join` k nejmenší straně s `balance` nebo losem `picks`, viz [Týmy](#kdo-se-připojí)), `global` jako výše. Bez týmu platí osobní seznam |
+| `tall`             | pravda nebo nepravda | `false`                           | Dva bloky vysoký jako dveře. Viz [Výška a natočení](#výška-a-natočení)                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `facing`           | pravda nebo nepravda | `false`                           | Otočí se k hráči, který ho staví, a cestující přicházejí z této strany. Viz [Výška a natočení](#výška-a-natočení)                                                                                                                                                                                                                                                                                                                                                                   |
+| `activateParticle` | název částice        | prázdné                           | Částice zobrazené u průchodu, když si ho hráč přidá do seznamu, například `minecraft:portal`. Prázdné nezobrazí žádné                                                                                                                                                                                                                                                                                                                                                               |
+| `travelParticle`   | název částice        | prázdné                           | Částice zobrazené tam, kde hráč odchází, a tam, kde přichází. Prázdné nezobrazí žádné                                                                                                                                                                                                                                                                                                                                                                                               |
+| `carry`            | objekt               | žádný                             | Co hráče doprovází. Viz [Přenášení](#přenášení)                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `cost`             | objekt               | zdarma                            | Kolik cesta stojí, viz tabulky níže                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `menu`             | objekt               | viz [Nabídka](#nabídka)           | Výchozí řazení nabídky a ikony jejích tlačítek, viz tabulka nabídky níže                                                                                                                                                                                                                                                                                                                                                                                                            |
+
+### Náklady
+
+```json
+{
+  "cost": {
+    "xp": { "amount": 1, "perBlocks": 250, "dimension": 3, "max": 5 },
+    "cooldown": 30
+  }
+}
+```
+
+Objekt `cost` obsahuje jednu položku pro každý druh ceny, všechny nepovinné. Když chybí všechny, cesta je zdarma.
+
+| Část       | Bere                                                         | Když hráči něco chybí                |
+| ---------- | ------------------------------------------------------------ | ------------------------------------ |
+| `xp`       | Úrovně zkušeností, s `points` body                           | Cesta se odmítne                     |
+| `item`     | Předměty určené `id`, z hlavního inventáře                   | Cesta se odmítne                     |
+| `health`   | Půlsrdce, hráče nikdy nesníží pod jedno                      | Vezme, co zbývá, nikdy neodmítne     |
+| `hunger`   | Body jídla                                                   | Vezme, co zbývá, nikdy neodmítne     |
+| `cooldown` | Prosté číslo, sekundy mezi cestami, pro každého hráče zvlášť | Cesta se odmítne, dokud čas neuplyne |
+
+| Klíč        | Typ                  | Výchozí | Co dělá                                                                                                                                      |
+| ----------- | -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `amount`    | celé číslo           | `0`     | Pevná cena každé cesty                                                                                                                       |
+| `perBlocks` | celé číslo           | `0`     | Přičte jedničku za každých započatých `perBlocks` bloků vzdálenosti. `0` nepřičítá nic. U cesty mezi dimenzemi se vzdálenost počítá jako `0` |
+| `dimension` | celé číslo           | `0`     | Přičte se, když cesta překračuje dimenze                                                                                                     |
+| `max`       | celé číslo           | `0`     | Nejvyšší cena této části. `0` znamená bez omezení                                                                                            |
+| `points`    | pravda nebo nepravda | `false` | Jen u `xp`. Cena je v bodech zkušeností místo v úrovních                                                                                     |
+| `id`        | název předmětu       | prázdné | Jen u `item`. Registrační název předmětu, kterým se platí                                                                                    |
+
+**Čekání.** Čekání začíná příchodem hráče. Ukládá se na hráči jako herní čas, od kterého je další cesta povolena, takže přežije restart, a popisek každé zastávky ukazuje zbývající sekundy. `/rdplserver portway cooldown` ho nastaví nebo smaže.
+
+### Použití průchodu
+
+**Použití.** Pravý klik na průchod přidá zastávku (dimenzi a pozici) do vlastního seznamu hráče, který se ukládá na hráči. Už známá zastávka to oznámí. Pak se otevře nabídka cesty. Hráč, který neotevřel bránu `gate` průchodu nebo který stojí v dimenzi, již průchod vylučuje, se to dozví a nabídka zůstane zavřená.
+
+### Názvy zastávek
+
+**Jména.** Průchod ukazuje první z těchto věcí, kterou má: vlastní jméno, jméno z `names`, nebo svou dimenzi a pozici. Vlastní jméno má, když byl předmět před umístěním pojmenován na kovadlině, nebo když šablona struktury či `/setblock` dá jeho blokovému objektu řetězec `Name`. Jméno z `names` se nikdy neukládá, takže úprava seznamu přejmenuje už umístěné průchody. Obrazovka pro přejmenování neexistuje.
+
+**Zástupné znaky a dvojníci.** Jméno z `names` může obsahovat `{biome}`, které se změní na název biomu, ve kterém průchod stojí, například `Dark Forest`. Když mají dvě zastávky v nabídce hráče stejné jméno, každá za ním ukáže svou pozici, například `Severní brána (12, 64, -30)`, a také dimenzi, pokud jsou v různých dimenzích.
+
+### Nabídka
+
+**Nabídka.** Vypíše zastávky hráče, vlastní, globální a týmové zastávky jako jeden seznam, v pořadí, které hráč zvolil tlačítkem řazení: nejbližší (nejdřív aktuální dimenze, od nejbližší, pak ostatní dimenze podle ID), podle názvu A až Z (nepojmenované zastávky až na konci, podle pozice), nebo nejnověji nalezené (zastávky nalezené před touto verzí až na konci). Zastávky, které vylučuje `allow`, `deny` nebo `crossDimension`, se vynechají, stejně jako zastávky jiné `network`. Zastávka, jejíž `gate` nebo jejíž dimenzi zavírá [brána](#brány), kterou hráč neotevřel, se ukáže jako bariéra označená jako zamčená a její výběr zobrazí odmítnutí. Popisek každé zastávky uvádí, kolik by cesta tomuto hráči stála, a zbývající sekundy čekání.
+
+**Stránky a zapomínání.** Každá stránka ukazuje 45 zastávek. Dolní řádek obsahuje šipku na předchozí stránku vlevo, tlačítko řazení, číslo stránky uprostřed a šipku na další stránku vpravo. Kliknutí na tlačítko řazení přepne na další pořadí; jeho popisek ukazuje aktuální pořadí a to, které kliknutí vybere. Volba hráče se ukládá u hráče a zůstane zachována i po novém přihlášení, smrti a změně dimenze; dokud si žádnou nevybere, rozhoduje `order` z nabídky. Klik se Shiftem na zastávku z vlastního seznamu hráče ji nechá hráče zapomenout. Globální zastávky a průchod, u kterého hráč stojí, ho ignorují. Počet zastávek není omezen; nabídka přidává stránky podle potřeby.
+
+**Hledání.** Pole vpravo nahoře v nabídce filtruje seznam, jak hráč píše, podle názvu zastávky, u zastávky bez jména podle dimenze a pozice, bez ohledu na velikost písmen. Prázdné pole ukáže všechny zastávky. Nové hledání se vrátí na první stránku a zachová zvolené řazení. Pravý klik na pole ho vymaže. Hledání se neukládá.
+
+```json
+{ "menu": { "order": "name", "previous": "minecraft:spectral_arrow", "next": "minecraft:spectral_arrow", "page": "minecraft:book", "sort": "minecraft:clock", "locked": "mypack:sealed_rune" } }
+```
+
+| Klíč     | Typ            | Výchozí             | Co dělá                                                                            |
+| -------- | -------------- | ------------------- | ---------------------------------------------------------------------------------- |
+| order    | text           | `nearest`           | Řazení, které hráč vidí, dokud si nějaké nevybere: `nearest`, `name` nebo `newest` |
+| previous | název předmětu | `minecraft:arrow`   | Ikona tlačítka předchozí stránky                                                   |
+| next     | název předmětu | `minecraft:arrow`   | Ikona tlačítka další stránky                                                       |
+| page     | název předmětu | `minecraft:paper`   | Ikona čísla stránky                                                                |
+| sort     | název předmětu | `minecraft:compass` | Ikona tlačítka řazení                                                              |
+| locked   | název předmětu | `minecraft:barrier` | Ikona zastávky, kterou hráč neodemkl                                               |
+
+Funguje libovolný předmět, včetně předmětů balíčku. ID, které není předmět, se jednou zapíše do logu a zobrazí se výchozí hodnota. Nabídka tyto hodnoty převezme z průchodu nebo cestovního předmětu, který ji otevřel.
+
+**Cesta.** Výběr zastávky přenese hráče na volné místo o výšce dvou bloků vedle cílového průchodu: nejdřív ze strany, na kterou je natočený, má-li `facing`, pak z ostatních stran, pak nahoře (u `tall` o dva bloky výš), nakonec na nejbližším volném místě. Jezdec se sesedne a hráč přichází bez pádové vzdálenosti a bez hybnosti. Zvuk cesty a `travelParticle` zazní a zobrazí se na obou koncích. Cena se zkontroluje před cestou a strhne se až po příchodu hráče. Hráči v kreativním nebo diváckém režimu nic neplatí a na nic nečekají. Pokud cílový blok zmizel, už není průchod, nebo jeho dimenze už neexistuje, zastávka se ze seznamu odebere a hráč se to dozví.
+
+**Ve strukturách.** Průchod má blokový objekt, který uchovává jen jeho jméno, takže průchod uložený v šabloně struktury `.nbt` (mapy struktur, části vesnic, umístěné struktury) funguje stejně jako ten, který postaví hráč. Globální průchod se připojí ke sdílenému seznamu, když se načte nebo aktivuje, a opustí ho, když se rozbije.
+
+### Přenášení
+
+```json
+{ "carry": { "mount": true, "leashed": true, "pets": true, "crossDimension": false } }
+```
+
+| Klíč             | Typ                  | Výchozí | Co dělá                                                                        |
+| ---------------- | -------------------- | ------- | ------------------------------------------------------------------------------ |
+| `mount`          | pravda nebo nepravda | `false` | Zvíře, které hráč řídí, cestuje s ním a hráč je na něj znovu posazen           |
+| `leashed`        | pravda nebo nepravda | `false` | Moby do 10 bloků uvázaní na vodítku k hráči cestují s ním a jsou znovu uvázáni |
+| `pets`           | pravda nebo nepravda | `false` | Ochočená zvířata hráče, která nesedí a nejsou uvázaná, cestují s ním           |
+| `crossDimension` | pravda nebo nepravda | `true`  | S `false` se mezi dimenzemi nic nepřenáší                                      |
+
+Každá cesta hráče sesadí a cokoli dalšího, co na něm jede, zůstane pozadu.
+
+### Výška a natočení
+
+```json
+{
+  "type": "portway",
+  "portway": { "tall": true, "facing": true },
+  "variants": { "portway": { "meta": 0 } }
+}
+```
+
+`tall` dá průchodu výšku dvou bloků jako u dveří. K umístění je potřeba místo nad ním, umístí se obě poloviny a rozbití kterékoli odebere obě a upustí jediný průchod. Zastávkou je spodní polovina a použití horní je totéž jako použití spodní. `facing` ho otočí k hráči, který ho staví, otáčí a zrcadlí ho spolu se šablonou struktury a cestující nechá přicházet z té strany, na kterou se dívá, s pohledem tím směrem.
+
+Blok drží natočení a polovinu v metadatech, takže s kteroukoli z voleb zabere jedinou variantu a další ve `variants` se ignorují. Jeho blockstate je jako obvykle klíčovaný podle `blocks`, k tomu `facing` (`north`, `east`, `south`, `west`), kde se natáčí, a `half` (`lower`, `upper`), kde je vysoký. Šablona struktury obsahuje obě poloviny vysokého průchodu, stejně jako u dveří. Pokud balíček přináší vlastní blockstate pro vysoký průchod, potřebuje v něm pro předmět i variantu `inventory`, protože předmět používá právě ji a RDPL z blockstatu balíčku žádný model předmětu neodvozuje.
+
+### Cestovní předměty
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "portway",
+  "creativeTab": "tools",
+  "portway": {
+    "network": "",
+    "allow": [],
+    "deny": [],
+    "crossDimension": true,
+    "cost": { "cooldown": 60 },
+    "carry": { "pets": true },
+    "travelSound": "minecraft:block.portal.travel",
+    "travelParticle": "minecraft:portal",
+    "consume": true,
+    "bind": true
+  }
+}
+```
+
+| Klíč      | Typ                  | Výchozí | Co dělá                                                                   |
+| --------- | -------------------- | ------- | ------------------------------------------------------------------------- |
+| `consume` | pravda nebo nepravda | `false` | Po příchodu hráče se jeden předmět spotřebuje. Kreativní režim ho ponechá |
+| `bind`    | pravda nebo nepravda | `false` | Předmět se naváže na jeden průchod místo otevření nabídky                 |
+
+Objekt `portway` přebírá i klíče průchodu jako bloku, které platí pro cestu: `network`, `crossDimension`, `allow`, `deny`, `gate`, `cost`, `menu`, `carry`, `travelSound` a `travelParticle`. Bez `bind` použití předmětu otevře nabídku se všemi zastávkami jeho sítě. Není žádný průchod, u kterého by se stálo, takže nic není označeno jako tady a vzdálenosti se počítají od hráče. Nabídka se zavře, jakmile předmět opustí tu ruku. S `bind` ho hráč ve skrčení použije na průchod své sítě, který zná, nebo na globální, a jehož `gate` otevřel, a tím ho naváže; popisek ukáže jeho jméno. Použití ve vzduchu pak cestuje k navázanému průchodu se všemi kontrolami nabídky. Nenavázaný předmět to řekne. Pokud navázaný průchod zmizel, vazba se smaže a zastávka se zapomene.
 
 ## Modely, stavy bloků a textury
 
@@ -1538,17 +1730,18 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 
 *předměty*
 
-| Typ             | Co dostaneš                                                           |
-| --------------- | --------------------------------------------------------------------- |
-| `basic`         | Obyčejný předmět. Používá se, když `type` chybí                       |
-| `food`          | Jí se, se hladem a nasycením                                          |
-| `drink`         | Pije se místo jedení a vrací prázdný kontejner                        |
-| `tool`          | Krumpáč, sekera, lopata nebo meč z materiálu                          |
-| `armor`         | Helma, náprsník, kalhoty nebo boty z materiálu                        |
-| `seed`          | Zasadí jednu z tvých plodin                                           |
-| `potion`        | Při použití aplikuje tvé efekty lektvaru                              |
-| `potion_bottle` | Drží tvé typy lektvarů a zobrazuje je na kartě kreativního režimu     |
-| `rocket`        | Umístí jednu z tvých variant rakety Galacticraftu na startovací rampu |
+| Typ             | Co dostaneš                                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `basic`         | Obyčejný předmět. Používá se, když `type` chybí                                                                     |
+| `food`          | Jí se, se hladem a nasycením                                                                                        |
+| `drink`         | Pije se místo jedení a vrací prázdný kontejner                                                                      |
+| `tool`          | Krumpáč, sekera, lopata nebo meč z materiálu                                                                        |
+| `armor`         | Helma, náprsník, kalhoty nebo boty z materiálu                                                                      |
+| `seed`          | Zasadí jednu z tvých plodin                                                                                         |
+| `potion`        | Při použití aplikuje tvé efekty lektvaru                                                                            |
+| `portway`       | Cestuje k průchodu: otevře nabídku všech zastávek, nebo jde k tomu, na který je navázaný. Viz [Průchody](#průchody) |
+| `potion_bottle` | Drží tvé typy lektvarů a zobrazuje je na kartě kreativního režimu                                                   |
+| `rocket`        | Umístí jednu z tvých variant rakety Galacticraftu na startovací rampu                                               |
 
 `potion_bottle` uvádí, co může obsahovat, pomocí `potionTypes`, pole názvů typů lektvarů, například `["mypack:ruby_tonic"]`. Ten s prázdným seznamem nic nezaregistruje a log to oznámí.
 
@@ -1612,6 +1805,7 @@ Cíl je uložen přímo v předmětu, takže předmět na něj ukazuje až do da
 | `container`      | drink         | název předmětu                                               | žádný                | Co zbude, například láhev                                                                                                                                                                                                                                      |
 | `crop`           | seed          | název bloku                                                  | žádný                | Plodina, kterou zasadí                                                                                                                                                                                                                                         |
 | `soil`           | seed          | název bloku                                                  | `minecraft:farmland` | Na co lze zasadit                                                                                                                                                                                                                                              |
+| `portway`        | portway       | objekt                                                       | žádný                | Nastavení cestovního předmětu: [klíče průchodu](#průchody), které platí pro cestu, plus `consume` a `bind`. Viz [Cestovní předměty](#cestovní-předměty)                                                                                                        |
 | `rocket`         | rocket        | `namespace:name`                                             | žádný                | Varianta entity, kterou umístí                                                                                                                                                                                                                                 |
 | `rolls`          | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček karet             | žádný                | U obyčejného předmětu pravé kliknutí hodí, jako by to udělal `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet)                                                                                  |
 | `rollStore`      | ne            | název cíle skóre                                             | žádný                | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu                                                                                                          |
@@ -5205,21 +5399,34 @@ Každý klíč najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 }
 ```
 
-| Klíč              | Povinné | Hodnota                               | Výchozí                          | Co dělá                                                                                  |
-| ----------------- | ------- | ------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
-| `dimension`       | ano     | celé číslo                            |                                  | Dimenze, kterou hlídá                                                                    |
-| `name`            | ne      | řetězec                               | název souboru                    | Zobrazuje se hráči                                                                       |
-| `scope`           | ne      | `player`, `global`, `team`            | `player`                         | Pro každého hráče zvlášť, pro celý svět najednou, nebo pro celý tým toho, kdo ji otevřel |
-| `teamless`        | ne      | `player`, `refuse`                    | `player`                         | S rozsahem `team`: co dostane hráč bez týmu – vlastní odemčení, nebo odmítnutí           |
-| `open`            | ne      | boolean                               | `false`                          | Zda začíná otevřená                                                                      |
-| `unlock`          | ne      | objekt                                |                                  | Co ji otevře. Viz níže                                                                   |
-| `unlockedMessage` | ne      | řetězec                               | `%dim% is now open`              | Zobrazí se při otevření                                                                  |
-| `blockedMessage`  | ne      | řetězec                               | `You need %item% to enter %dim%` | Zobrazí se při odmítnutí                                                                 |
-| `safeReturn`      | ne      | boolean                               | `false`                          | Zablokovaný návrat přesto přistane na bezpečném místě, místo aby byl odmítnut            |
-| `requires`        | ne      | seznam id módů nebo namespace balíčků | žádný                            | Brána se přeskočí, pokud nejsou přítomny všechny                                         |
-| `portalBlocks`    | ne      | seznam názvů bloků                    | každý portál                     | Omezí bránu na tyto bloky portálu, takže jedna dimenze může mít hlídané dveře i otevřené |
+| Klíč              | Povinné | Hodnota                               | Výchozí                          | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                |
+| ----------------- | ------- | ------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dimension`       | ne      | celé číslo                            | žádná                            | Dimenze, kterou hlídá. Brána bez ní nehlídá žádnou dimenzi a zamyká jen [průchody](#průchody), které ji uvádějí                                                                                                                                                                                                                                                                                        |
+| `name`            | ne      | řetězec                               | název souboru                    | Zobrazuje se hráči                                                                                                                                                                                                                                                                                                                                                                                     |
+| `scope`           | ne      | `player`, `global`, `team`            | `player`                         | Pro každého hráče zvlášť, pro celý svět najednou, nebo pro celý tým toho, kdo ji otevřel (tým je strana ze složky `<namespace>/teams` balíčku; hráči se k ní připojí tím, že jsou uvedeni v jejím `players`, příkazem `/rdpl team join <název>`, pokud strana nenastaví `joinable` na false, samotným `/rdpl team join` k nejmenší straně s `balance` nebo losem `picks`, viz [Týmy](#kdo-se-připojí)) |
+| `teamless`        | ne      | `player`, `refuse`                    | `player`                         | S rozsahem `team`: co dostane hráč bez týmu – vlastní odemčení, nebo odmítnutí                                                                                                                                                                                                                                                                                                                         |
+| `open`            | ne      | boolean                               | `false`                          | Zda začíná otevřená                                                                                                                                                                                                                                                                                                                                                                                    |
+| `unlock`          | ne      | objekt                                |                                  | Co ji otevře. Viz níže                                                                                                                                                                                                                                                                                                                                                                                 |
+| `unlockedMessage` | ne      | řetězec                               | `%dim% is now open`              | Zobrazí se při otevření                                                                                                                                                                                                                                                                                                                                                                                |
+| `blockedMessage`  | ne      | řetězec                               | `You need %item% to enter %dim%` | Zobrazí se při odmítnutí                                                                                                                                                                                                                                                                                                                                                                               |
+| `safeReturn`      | ne      | boolean                               | `false`                          | Zablokovaný návrat přesto přistane na bezpečném místě, místo aby byl odmítnut                                                                                                                                                                                                                                                                                                                          |
+| `requires`        | ne      | seznam id módů nebo namespace balíčků | žádný                            | Brána se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                                       |
+| `portalBlocks`    | ne      | seznam názvů bloků                    | každý portál                     | Omezí bránu na tyto bloky portálu, takže jedna dimenze může mít hlídané dveře i otevřené                                                                                                                                                                                                                                                                                                               |
 
 `unlock` přijímá `hold` (předmět, který je třeba držet), `consume` s `consumeCount` (`1`), `craft` (předmět, který musel být vyroben), `advancement` a `killed` (název entity; brána se otevře tomu, kdo jednu zabije, takže boss může držet klíč ke světu) s `killedCount` (`1`), když jedna nestačí, počítáno za každého hráče zvlášť nebo za celý svět podle `scope`. Přidání `killedDrops` (název předmětu) způsobí, že započtená zabití položí tento předmět zabijákovi k nohám místo otevření brány a počítání začne znovu, takže klíč lze získat opakovaně a předat někomu, kdo o něj nebojoval; podmiň bránu předmětem `hold` nebo `consume` téhož předmětu, aby se z něj stal klíč. `%item%`, `%mob%` a `%dim%` se doplní za tebe. Klíč, který padá z moba, nepotřebuje nic zvláštního: dej mobovi drop a podmiň bránu pomocí `hold` nebo `consume`. `team` a `objective` se `scoreAtLeast` ji otevřou hráči v tomto týmu na scoreboardu, jehož skóre v daném cíli je alespoň tolik – stejné podmínky, jaké bere `when` u karty; každá z nich platí i samostatně. Kontrolují se ve chvíli, kdy hráč prochází, a brána se pak otevře v rámci svého rozsahu jako při každém jiném odemčení. S rozsahem `team` patří odemčení týmu toho, kdo ji otevřel: projde každý v týmu, i ten, kdo se přidá později, a hráč bez týmu si ji odemkne jen pro sebe. `teamAndScore` určuje, jak se ty dvě počítají: `alone` (výchozí) jim dovolí otevřít bránu samy, kdežto `with` z nich udělá další podmínku, takže se brána otevře až po splnění jiného klíče odemčení, a to jen hráči, který je zároveň v tom týmu s tím skóre. `killedTally` nastavené na `team` počítá do `killedCount` všechna zabití týmu toho, kdo zabíjí, dohromady, místo aby počítalo každého hráče zvlášť (`player`, výchozí); kdo není v žádném týmu, počítá dál sám. `teamless` nastavené na `refuse` u brány s rozsahem `team` odmítne hráče bez týmu, místo aby si ji odemkl jen pro sebe (`player`, výchozí).
+
+**Brány pro průchody.** [Průchod](#průchody) uvádí bránu v `gate` a zůstává pro hráče zamčený, dokud pro něj brána není otevřená, se stejnými rozsahy, pravidly odemčení a zprávami jako u portálu. Uveď stejnou bránu u všech průchodů jedné sítě, aby se síť zamkla jako celek. Chceš-li bránu otevřít spotřebováním předmětu u průchodu, uveď blok průchodu v `portalBlocks` a dej bráně předmět `consume`. Tato brána nemá `dimension` a blok průchodu ji uvádí takto: `"gate": "mypack:northgate_network"`:
+
+```json
+{
+  "name": "Northgate Network",
+  "scope": "player",
+  "unlock": { "consume": "minecraft:emerald", "consumeCount": 3 },
+  "portalBlocks": ["mypack:northgate"]
+}
+```
+
+`/rdplserver gate list` ukáže u brány bez dimenze `-`.
 
 ## Světy Rubic
 
@@ -7118,28 +7325,35 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 
 *karty*
 
-| Spouštěč          | Vyžaduje             | Spustí se, když                                                                                                                                                                                                                                          |
-| ----------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `command`         | nic                  | Spustí se `/rdplserver card <rule> [players]`. Příkaz přeskočí `when`, `repeat` a `cooldown` a stále spouští `runs`. Takto lze ukázat jakékoli pravidlo, ať má jakýkoli spouštěč                                                                         |
-| `first_join`      | nic                  | Hráč se poprvé připojí do světa                                                                                                                                                                                                                          |
-| `dimension_enter` | `dimension`          | Hráč dorazí do této dimenze                                                                                                                                                                                                                              |
-| `biome_enter`     | `biomes`             | Hráč vejde do jednoho z těchto biomů odjinud                                                                                                                                                                                                             |
-| `structure_enter` | `structures`         | Hráč vejde do jedné z těchto struktur zvenčí                                                                                                                                                                                                             |
-| `advancement`     | `advancement`        | Hráč získá tento pokrok                                                                                                                                                                                                                                  |
-| `time_of_day`     | `time`               | Denní hodiny projdou tímto tickem, `0` až `23999` ve stejném měřítku jako `time.windows`, přepočtené na `dayLength` dimenze, zatímco jsou hráči v dimenzi. Dimenze s `fixedTime` ho nikdy nespustí. Hodiny nastavené příkazem nebo postelí se nepočítají |
-| `day`             | nic, nebo `day`      | V dimenzi začne nový den; s `day` jen tento den                                                                                                                                                                                                          |
-| `craft`           | `item`               | Hráč vyrobí tento předmět                                                                                                                                                                                                                                |
-| `pickup`          | `item`               | Hráč zvedne tento předmět                                                                                                                                                                                                                                |
-| `kill`            | `entity`             | Hráč zabije tuto entitu, nebo `count`-tou z nich                                                                                                                                                                                                         |
-| `respawn`         | nic                  | Hráč se po smrti znovu zrodí                                                                                                                                                                                                                             |
-| `death`           | nic                  | Hráč zemře                                                                                                                                                                                                                                               |
-| `y_level`         | `below` nebo `above` | Hráč klesne pod tuto výšku nebo vystoupí nad ni                                                                                                                                                                                                          |
-| `play_time`       | `minutes`            | Čas hráče ve světě dosáhne tolika minut, počítáno od zavření úvodu do světa, nebo od připojení, když se mu žádný úvod nezobrazuje                                                                                                                        |
-| `roll`            | nic, nebo `roll`     | Hráč hodí příkazem `/rdplserver game` nebo předmětem s `rolls`. S `roll` pravidlo spustí jen tento hod a `atLeast` a `atMost` omezují součet                                                                                                             |
-| `order_done`      | nic, nebo `order`    | Zakázka je splněna, a to jednou pro každého hráče, kterého odměňuje. S `order` ji spustí jen zakázka s tímto slovem `sign`                                                                                                                               |
-| `score`           | `objective`          | Skóre hráče v tomto cíli dosáhne `score`                                                                                                                                                                                                                 |
-| `exposure_level`  | nic, nebo `exposure` | Úroveň hráče v některém nebezpečí se změní, nahoru i dolů. S `exposure` jen u tohoto nebezpečí, s `level` jen při změně, která dosáhne této úrovně. První kontrola po připojení ji nikdy nespustí                                                        |
-| `round_start`     | nic                  | Kolo se otevře po odpočtu: jednou pro každého hráče, nebo jednou pro `audience`. Spustí se po resetu stejně jako po `/rdplserver round start`                                                                                                            |
+| Spouštěč           | Vyžaduje             | Spustí se, když                                                                                                                                                                                                                                          |
+| ------------------ | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command`          | nic                  | Spustí se `/rdplserver card <rule> [players]`. Příkaz přeskočí `when`, `repeat` a `cooldown` a stále spouští `runs`. Takto lze ukázat jakékoli pravidlo, ať má jakýkoli spouštěč                                                                         |
+| `first_join`       | nic                  | Hráč se poprvé připojí do světa                                                                                                                                                                                                                          |
+| `dimension_enter`  | `dimension`          | Hráč dorazí do této dimenze                                                                                                                                                                                                                              |
+| `biome_enter`      | `biomes`             | Hráč vejde do jednoho z těchto biomů odjinud                                                                                                                                                                                                             |
+| `structure_enter`  | `structures`         | Hráč vejde do jedné z těchto struktur zvenčí                                                                                                                                                                                                             |
+| `advancement`      | `advancement`        | Hráč získá tento pokrok                                                                                                                                                                                                                                  |
+| `time_of_day`      | `time`               | Denní hodiny projdou tímto tickem, `0` až `23999` ve stejném měřítku jako `time.windows`, přepočtené na `dayLength` dimenze, zatímco jsou hráči v dimenzi. Dimenze s `fixedTime` ho nikdy nespustí. Hodiny nastavené příkazem nebo postelí se nepočítají |
+| `day`              | nic, nebo `day`      | V dimenzi začne nový den; s `day` jen tento den                                                                                                                                                                                                          |
+| `craft`            | `item`               | Hráč vyrobí tento předmět                                                                                                                                                                                                                                |
+| `pickup`           | `item`               | Hráč zvedne tento předmět                                                                                                                                                                                                                                |
+| `kill`             | `entity`             | Hráč zabije tuto entitu, nebo `count`-tou z nich                                                                                                                                                                                                         |
+| `respawn`          | nic                  | Hráč se po smrti znovu zrodí                                                                                                                                                                                                                             |
+| `death`            | nic                  | Hráč zemře                                                                                                                                                                                                                                               |
+| `y_level`          | `below` nebo `above` | Hráč klesne pod tuto výšku nebo vystoupí nad ni                                                                                                                                                                                                          |
+| `play_time`        | `minutes`            | Čas hráče ve světě dosáhne tolika minut, počítáno od zavření úvodu do světa, nebo od připojení, když se mu žádný úvod nezobrazuje                                                                                                                        |
+| `roll`             | nic, nebo `roll`     | Hráč hodí příkazem `/rdplserver game` nebo předmětem s `rolls`. S `roll` pravidlo spustí jen tento hod a `atLeast` a `atMost` omezují součet                                                                                                             |
+| `order_done`       | nic, nebo `order`    | Zakázka je splněna, a to jednou pro každého hráče, kterého odměňuje. S `order` ji spustí jen zakázka s tímto slovem `sign`                                                                                                                               |
+| `score`            | `objective`          | Skóre hráče v tomto cíli dosáhne `score`                                                                                                                                                                                                                 |
+| `portway_activate` | nic                  | Hráč aktivuje průchod pravým klikem. `portway` nebo `network` ji omezí na jeden                                                                                                                                                                          |
+| `portway_travel`   | nic                  | Cesta prošla všemi kontrolami a chystá se, ještě než se hráč pohne                                                                                                                                                                                       |
+| `portway_arrive`   | nic                  | Hráč přišel průchodem                                                                                                                                                                                                                                    |
+| `portway_refused`  | nic                  | Průchod nebo cestovní předmět hráče odmítne. `reason` říká proč                                                                                                                                                                                          |
+| `portway_paid`     | nic                  | Cesta si vzala nenulovou cenu                                                                                                                                                                                                                            |
+| `portway_forget`   | nic                  | Zastávka opustí seznam hráče, protože ji zapomněl, odebral ji příkaz nebo průchod zmizel                                                                                                                                                                 |
+| `portway_bind`     | nic                  | Hráč naváže cestovní předmět na průchod                                                                                                                                                                                                                  |
+| `exposure_level`   | nic, nebo `exposure` | Úroveň hráče v některém nebezpečí se změní, nahoru i dolů. S `exposure` jen u tohoto nebezpečí, s `level` jen při změně, která dosáhne této úrovně. První kontrola po připojení ji nikdy nespustí                                                        |
+| `round_start`      | nic                  | Kolo se otevře po odpočtu: jednou pro každého hráče, nebo jednou pro `audience`. Spustí se po resetu stejně jako po `/rdplserver round start`                                                                                                            |
 
 Úrovně nebezpečí se čtou při každé kontrole, takže karta s `exposure_level` se spustí do `scanInterval` nebezpečí od změny.
 
@@ -7201,6 +7415,9 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `level`              | celé číslo                            | žádný          | Pro `exposure_level`: spustí se, až se úroveň hráče stane touto; `0` znamená, že už není vystaven. Bez něj spustí pravidlo každá změna                                                                                           |
 | `atLeast`, `atMost`  | celé číslo                            | žádný          | Pro `roll`: nejnižší a nejvyšší součet, který pravidlo spustí. Mince se počítá jako 1 za líc a 0 za rub, kostka či balíček z datového balíčku jako pořadí výsledku v jeho souboru od 1                                           |
 | `objective`, `score` | text, celé číslo                      | žádný, `1`     | Pro `score`: cíl a hodnota, které je třeba dosáhnout                                                                                                                                                                             |
+| `portway`            | text                                  | žádný          | Pro triggery `portway_*`: id bloku průchodu, například `mypack:northgate`. Bez něj platí jakýkoli průchod                                                                                                                        |
+| `network`            | text                                  | žádný          | Pro triggery `portway_*`: síť průchodu. Bez ní platí jakákoli síť                                                                                                                                                                |
+| `reason`             | text                                  | žádný          | Pro `portway_refused`: `gate`, `dimension`, `cost`, `cooldown`, `nowhere`, `network`, `travel` nebo `item`. Pro `portway_forget`: `gone`, `player` nebo `command`. Bez něj platí jakýkoli důvod                                  |
 | `requires`           | seznam id módů nebo namespace balíčků | žádný          | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                |
 
 ### Kdy
@@ -7209,15 +7426,16 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 
 `when` obsahuje podmínky, které musí všechny platit ve chvíli, kdy se spouštěč spustí.
 
-| Nastavení                   | Typ              | Co kontroluje                                                                                   |
-| --------------------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
-| `biomes`                    | seznam           | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče                                  |
-| `timeFrom`, `timeTo`        | celé číslo       | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000` |
-| `dayAtLeast`                | celé číslo       | Číslo dne je alespoň toto                                                                       |
-| `advancement`               | text             | Hráč má tento pokrok                                                                            |
-| `gameMode`                  | text             | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`             |
-| `team`                      | text             | Hráč je v tomto týmu tabulky skóre                                                              |
-| `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto                                                              |
+| Nastavení                   | Typ              | Co kontroluje                                                                                                          |
+| --------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | seznam           | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče                                                         |
+| `timeFrom`, `timeTo`        | celé číslo       | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000`                        |
+| `dayAtLeast`                | celé číslo       | Číslo dne je alespoň toto                                                                                              |
+| `advancement`               | text             | Hráč má tento pokrok                                                                                                   |
+| `portway`, `network`        | text             | Hráč má ve svém seznamu nebo mezi globálními průchody s tímto id bloku nebo z této sítě. Kterékoli z obou lze vynechat |
+| `gameMode`                  | text             | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`                                    |
+| `team`                      | text             | Hráč je v tomto týmu tabulky skóre                                                                                     |
+| `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto                                                                                     |
 
 ### Karta
 
@@ -7261,29 +7479,32 @@ Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou
 
 *karty*
 
-| Id                      | Zpráva                                                            | Odkud pochází její text                                                                                                           |
-| ----------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `rdpl:gate_unlocked`    | Brána se otevře                                                   | `unlockedMessage` v [Brány](#brány)                                                                                               |
-| `rdpl:gate_blocked`     | Zavřená brána hráče vrátí, na action baru                         | `blockedMessage` v [Brány](#brány)                                                                                                |
-| `rdpl:team_joined`      | Hráč se připojí ke straně                                         | `displayName` strany                                                                                                              |
-| `rdpl:team_lead`        | Vedení strany přejde na hráče                                     | `leadSays` v [Týmy](#týmy)                                                                                                        |
-| `rdpl:team_picked`      | Hráč je vybrán pro stranu                                         | `displayName` strany                                                                                                              |
-| `rdpl:team_round_ended` | Kolo skončilo, takže se hráč přesune na stranu                    | `displayName` strany                                                                                                              |
-| `rdpl:lobby_joins`      | Hráč, který se přihlásí uprostřed kola, je poslán do lobby        | `opens.joinsSays` v [Lobby](#lobby)                                                                                               |
-| `rdpl:lobby_note`       | Řádek lobby uprostřed obrazovky                                   | `opens.says`, `opens.leaderSays` v [Lobby](#lobby)                                                                                |
-| `rdpl:scoring_results`  | Pořadí na konci kola, každému hráči                               | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` v [Výsledky](#výsledky) |
-| `rdpl:scoring_out`      | Vyřazený hráč                                                     | `ends.outSays` v [Jak kolo končí](#jak-kolo-končí)                                                                                |
-| `rdpl:reset_lead`       | Vedoucí resetuje kolo                                             | `reset.leadSays` v [Resetování kola](#resetování-kola)                                                                            |
-| `rdpl:reset_vote`       | Je svoláno hlasování o resetu                                     | `reset.voteSays`                                                                                                                  |
-| `rdpl:reset_pass`       | Hlasování projde                                                  | `reset.passSays`                                                                                                                  |
-| `rdpl:reset_fail`       | Hlasování neprojde                                                | `reset.failSays`                                                                                                                  |
-| `rdpl:anvil_waits`      | Práce kovadliny čeká na pokrok                                    | [Práce s kovadlinou](#práce-s-kovadlinou)                                                                                         |
-| `rdpl:threat`           | Změní se pásmo hrozby hráče                                       | `threatSays`                                                                                                                      |
-| `rdpl:prospect`         | Každý řádek, který hlásí nález při průzkumu                       | nález                                                                                                                             |
-| `rdpl:prospect_none`    | Průzkum nic nenašel                                               | jazykový soubor                                                                                                                   |
-| `rdpl:board_result`     | Skončí desková hra                                                | jazykový soubor                                                                                                                   |
-| `rdpl:pregen_ended`     | Předgenerování skončí nebo se zastaví                             | `pregenFinishedSays`, `pregenStoppedSays` v [Předgenerování](#předgenerování)                                                     |
-| `rdpl:pregen_running`   | Řádek průběhu, který hráč vidí při připojení během předgenerování | `pregenRunningSays`                                                                                                               |
+| Id                       | Zpráva                                                            | Odkud pochází její text                                                                                                           |
+| ------------------------ | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:gate_unlocked`     | Brána se otevře                                                   | `unlockedMessage` v [Brány](#brány)                                                                                               |
+| `rdpl:gate_blocked`      | Zavřená brána hráče vrátí, na action baru                         | `blockedMessage` v [Brány](#brány)                                                                                                |
+| `rdpl:team_joined`       | Hráč se připojí ke straně                                         | `displayName` strany                                                                                                              |
+| `rdpl:team_lead`         | Vedení strany přejde na hráče                                     | `leadSays` v [Týmy](#týmy)                                                                                                        |
+| `rdpl:team_picked`       | Hráč je vybrán pro stranu                                         | `displayName` strany                                                                                                              |
+| `rdpl:team_round_ended`  | Kolo skončilo, takže se hráč přesune na stranu                    | `displayName` strany                                                                                                              |
+| `rdpl:lobby_joins`       | Hráč, který se přihlásí uprostřed kola, je poslán do lobby        | `opens.joinsSays` v [Lobby](#lobby)                                                                                               |
+| `rdpl:lobby_note`        | Řádek lobby uprostřed obrazovky                                   | `opens.says`, `opens.leaderSays` v [Lobby](#lobby)                                                                                |
+| `rdpl:scoring_results`   | Pořadí na konci kola, každému hráči                               | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` v [Výsledky](#výsledky) |
+| `rdpl:scoring_out`       | Vyřazený hráč                                                     | `ends.outSays` v [Jak kolo končí](#jak-kolo-končí)                                                                                |
+| `rdpl:reset_lead`        | Vedoucí resetuje kolo                                             | `reset.leadSays` v [Resetování kola](#resetování-kola)                                                                            |
+| `rdpl:reset_vote`        | Je svoláno hlasování o resetu                                     | `reset.voteSays`                                                                                                                  |
+| `rdpl:reset_pass`        | Hlasování projde                                                  | `reset.passSays`                                                                                                                  |
+| `rdpl:reset_fail`        | Hlasování neprojde                                                | `reset.failSays`                                                                                                                  |
+| `rdpl:portway_activated` | Hráč přidá průchod do svého seznamu, na liště akcí                | jazykový soubor                                                                                                                   |
+| `rdpl:portway_refused`   | Průchod hráče odmítne, na liště akcí                              | jazykový soubor                                                                                                                   |
+| `rdpl:portway_forgot`    | Zastávka opustí seznam hráče, na liště akcí                       | jazykový soubor                                                                                                                   |
+| `rdpl:anvil_waits`       | Práce kovadliny čeká na pokrok                                    | [Práce s kovadlinou](#práce-s-kovadlinou)                                                                                         |
+| `rdpl:threat`            | Změní se pásmo hrozby hráče                                       | `threatSays`                                                                                                                      |
+| `rdpl:prospect`          | Každý řádek, který hlásí nález při průzkumu                       | nález                                                                                                                             |
+| `rdpl:prospect_none`     | Průzkum nic nenašel                                               | jazykový soubor                                                                                                                   |
+| `rdpl:board_result`      | Skončí desková hra                                                | jazykový soubor                                                                                                                   |
+| `rdpl:pregen_ended`      | Předgenerování skončí nebo se zastaví                             | `pregenFinishedSays`, `pregenStoppedSays` v [Předgenerování](#předgenerování)                                                     |
+| `rdpl:pregen_running`    | Řádek průběhu, který hráč vidí při připojení během předgenerování | `pregenRunningSays`                                                                                                               |
 
 `welcomeSays` není pravidlo a drží si své logo; pravidlo `first_join` nebo `dimension_enter` se k němu přidá. Odpočty a součty kola na action baru zůstávají takové, jak je určují jejich nastavení.
 
@@ -9491,6 +9712,20 @@ Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky 
 | `/rdplserver gate grant <player> <gate>`  | 3      | Otevře bránu hráči            |
 | `/rdplserver gate revoke <player> <gate>` | 3      | Znovu ji zavře                |
 
+#### Příkazy průchodů
+
+*příkazy serveru*
+
+| Příkaz                                                    | Úroveň | Co dělá                                                                                                           |
+| --------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver portway list <hráč>`                         | 2      | Zastávky v seznamu hráče                                                                                          |
+| `/rdplserver portway grant <hráč> <x> <y> <z> [dimenze]`  | 2      | Přidá do seznamu hráče průchod na dané pozici. Bez dimenze se vezme dimenze odesílatele                           |
+| `/rdplserver portway forget <hráč> <x> <y> <z> [dimenze]` | 2      | Odebere jednu zastávku ze seznamu hráče                                                                           |
+| `/rdplserver portway forget <hráč> all`                   | 2      | Vyprázdní seznam hráče                                                                                            |
+| `/rdplserver portway forget <hráč> network <název>`       | 2      | Odebere zastávky jedné sítě                                                                                       |
+| `/rdplserver portway send <hráč> <x> <y> <z> [dimenze]`   | 2      | Pošle hráče k průchodu na dané pozici, s přenášením, zvuky, částicemi a kartou příchodu, bez brány, ceny a čekání |
+| `/rdplserver portway cooldown <hráč> <sekundy>`           | 2      | Nastaví, jak dlouho musí hráč čekat na další cestu. `0` ho smaže                                                  |
+
 #### Příkazy předgenerování
 
 *příkazy serveru*
@@ -9576,7 +9811,7 @@ Každý hod může končit na `store <objective>`, které zapíše jeho číslo 
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "gotoPlaceLevels": ["Crypt=2", "Stronghold=0", "Mansion=4"],
     "locateLevel": 3
   }
 }
@@ -9596,7 +9831,7 @@ Hodnota je úroveň oprávnění, kterou odesílatel potřebuje. Výchozí je `3
 
 Protože `intro` je otevřené všem, dostane se každý hráč k samotnému `/rdplserver`, a proto každý další podpříkaz sám kontroluje operátora a odmítne to se zprávou. Doplňování tabulátorem odpovídá: ne-operátorovi se nabídne `intro`, `team` tam, kde balíček zavádí strany, a také `goto`, jakmile mu to nějaká úroveň povolí.
 
-`gotoPlaceLevels` přepisuje ta tři nastavení pro jednotlivá místa, jako položky `name=level`, jak ukazuje příklad výše. Název je to, co bys napsal za `goto`: vanilla název, například `Village` nebo `Mansion`, nebo název zaregistrovaný pomocí `locateAs` u položky imprint. Velikost písmen se nerozlišuje. Úroveň `4` je nad operátorem a toto místo uzavře všem, což je způsob, jak skrýt jedno místo, zatímco zbytek `goto` je otevřený.
+`gotoPlaceLevels` přepisuje ta tři nastavení pro jednotlivá místa, jako položky `name=level`, jak ukazuje příklad výše. Název je to, co bys napsal za `goto`: vanilla název, například `Village` nebo `Mansion`, nebo název zaregistrovaný pomocí `locateAs` u položky imprint. Velikost písmen se nerozlišuje. Úroveň `4` je nad operátorem a toto místo uzavře všem, což je způsob, jak skrýt jedno místo, zatímco zbytek `goto` je otevřený. Průchody nejsou místa pro `goto`: cestování mezi průchody se řídí vlastními klíči průchodu a `gotoPlaceLevels` se na něj nevztahuje.
 
 Položka nastaví jednu úroveň pro všechny tři tvary daného místa. Místo, které není uvedeno, se vrátí k těm třem nastavením výše a nezaregistrovaný název nikdy nesedí.
 

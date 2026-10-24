@@ -35,9 +35,10 @@ public final class ItemDef {
     public final List<PotionEffectDef> wornEffects;
     public final List<AttributeDef> wornAttributes;
     @Nullable public final WeaponDef weapon;
+    @Nullable public final PortwayItemDef portway;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes, @Nullable WeaponDef weapon) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes, @Nullable WeaponDef weapon, @Nullable PortwayItemDef portway) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -66,6 +67,7 @@ public final class ItemDef {
         this.wornEffects = wornEffects;
         this.wornAttributes = wornAttributes;
         this.weapon = weapon;
+        this.portway = portway;
     }
 
     public boolean worn() { return !bauble.isEmpty() && (!wornEffects.isEmpty() || !wornAttributes.isEmpty()); }

@@ -50,7 +50,7 @@ public final class ContentScoringLobby {
         WorldServer world = server.getWorld(lobby.opensLobby[0]);
         double x = lobby.opensLobby[1] + 0.5D;
         double z = lobby.opensLobby[3] + 0.5D;
-        Travel.to(player, lobby.opensLobby[0], x, standing(world, x, lobby.opensLobby[2], z), z, player.rotationYaw, 0.0F);
+        if (!Travel.to(player, lobby.opensLobby[0], x, standing(world, x, lobby.opensLobby[2], z), z, player.rotationYaw, 0.0F)) { return; }
         ContentScoring.OUT.put(player.getName(), player.interactionManager.getGameType());
         player.setGameType(GameType.SPECTATOR);
         if (!lobby.opensJoinsSays.isEmpty()) { Says.tell(player, CardIds.LOBBY_JOINS, TextFormatting.GRAY, lobby.opensJoinsSays); }
@@ -123,8 +123,7 @@ public final class ContentScoringLobby {
             double y = standing(world, x, lobby.opensLobby[2], z);
             float yaw = (float) (Math.toDegrees(Math.atan2(cz - z, cx - x)) - 90.0D);
             if (!(one instanceof EntityPlayerMP)) { ORIGINS.putIfAbsent(one.getUniqueID(), new double[] { one.dimension, one.posX, one.posY, one.posZ, one.rotationYaw }); }
-            Travel.to(one, dimension, x, y, z, yaw, 0.0F);
-            if (one instanceof EntityPlayerMP) { STILL.put(one.getName(), new double[] { dimension, x, y, z }); }
+            if (Travel.to(one, dimension, x, y, z, yaw, 0.0F) && one instanceof EntityPlayerMP) { STILL.put(one.getName(), new double[] { dimension, x, y, z }); }
         }
         ContentLog.LOGGER.info("{} stand around the lobby at {}, {}, {} in dimension {}, {} block(s) out", waiting.size(), lobby.opensLobby[1], lobby.opensLobby[2], lobby.opensLobby[3], dimension, Math.round(radius * 10.0D) / 10.0D);
     }

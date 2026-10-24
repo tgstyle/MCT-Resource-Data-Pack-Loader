@@ -24,6 +24,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockTorch;
 import mctmods.resourcedatapackloader.content.block.ContentBlockTrapDoor;
 import mctmods.resourcedatapackloader.content.block.ContentBlockVine;
 import mctmods.resourcedatapackloader.content.block.ContentBlockWall;
+import mctmods.resourcedatapackloader.content.block.ContentBlockPortway;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.interfaces.IBlockType;
@@ -149,6 +150,10 @@ public final class ContentBlockTypes {
         register("bell", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBlockBell(def)); }
             @Override public int maxVariants() { return ContentBlockBell.MAX_VARIANTS; }
+        });
+        register("portway", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockPortway.create(def)); }
+            @Override public int maxVariants() { return ContentBlockPortway.MAX_VARIANTS; }
         });
         register("stairs", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentBlockStairs.create(def)); }

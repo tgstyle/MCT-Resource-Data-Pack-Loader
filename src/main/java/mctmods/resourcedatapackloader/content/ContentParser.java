@@ -117,7 +117,8 @@ public final class ContentParser {
                 ContentParserContainers.container(key, json),
                 bell(json),
                 Collections.unmodifiableList(strings(json, "spreadsOnto")),
-                Json.getBoolean(json, "needsOxygen", true));
+                Json.getBoolean(json, "needsOxygen", true),
+                ContentParserPortways.portway(json));
     }
 
     @Nullable private static BellDef bell(JsonObject json) {
@@ -331,7 +332,8 @@ public final class ContentParser {
                 ContentParserContainers.bauble(json),
                 Collections.unmodifiableList(effects(key, Json.getJsonArray(json, "wornEffects", new JsonArray()), 0, false)),
                 Collections.unmodifiableList(ContentParserContainers.wornAttributes(key, json)),
-                ContentParserWeapons.weapon(key, json));
+                ContentParserWeapons.weapon(key, json),
+                ContentParserPortways.item(json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

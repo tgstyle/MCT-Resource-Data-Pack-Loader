@@ -58,7 +58,7 @@ public final class CardFire {
         return false;
     }
 
-    private static long clock(World world) {
+    public static long clock(World world) {
         World overworld = DimensionManager.getWorld(0);
         return (overworld == null ? world : overworld).getTotalWorldTime();
     }

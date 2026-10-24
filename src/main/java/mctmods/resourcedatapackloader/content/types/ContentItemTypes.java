@@ -31,6 +31,7 @@ public final class ContentItemTypes {
     static {
         register(DEFAULT, def -> Collections.singletonList(new ContentItem(def)));
         register("container", def -> Collections.singletonList(new mctmods.resourcedatapackloader.content.item.ContentItemContainer(def)));
+        register("portway", def -> Collections.singletonList(new mctmods.resourcedatapackloader.content.item.ContentItemPortway(def)));
         register("food", def -> Collections.singletonList(new ContentItemFood(def)));
         IItemType drink = def -> Collections.singletonList(new ContentItemDrink(def));
         register("drink", drink);

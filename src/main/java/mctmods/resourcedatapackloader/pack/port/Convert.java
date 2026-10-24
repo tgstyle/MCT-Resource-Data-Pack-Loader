@@ -308,7 +308,7 @@ final class Convert {
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(json.entrySet())) {
             String key = entry.getKey();
             JsonElement value = entry.getValue();
-            Context context = contextOf(key, inherited);
+            Context context = "portway".equals(parentKey) && ("allow".equals(key) || "deny".equals(key)) ? Context.DIMENSION : contextOf(key, inherited);
             if ("exposures".equals(folder) && ("blocks".equals(key) || "items".equals(key)) && parentKey.isEmpty()) { continue; }
             if (value.isJsonObject()) {
                 if ("blocks".equals(key) && "worldgen".equals(folder)) { continue; }

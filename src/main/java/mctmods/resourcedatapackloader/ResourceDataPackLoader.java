@@ -37,6 +37,7 @@ import mctmods.resourcedatapackloader.content.item.ContentItemContainer;
 import mctmods.resourcedatapackloader.content.item.ContentWeapons;
 import mctmods.resourcedatapackloader.content.item.ContentWorn;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
+import mctmods.resourcedatapackloader.content.tile.TilePortway;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
@@ -189,6 +190,7 @@ public class ResourceDataPackLoader {
         VillagePieces.rails();
         GameRegistry.registerTileEntity(TileEntityPackContainer.class, id("container"));
         GameRegistry.registerTileEntity(TileEntityPackBell.class, id("bell"));
+        GameRegistry.registerTileEntity(TilePortway.class, id("portway"));
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new PackGuiHandler());
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();

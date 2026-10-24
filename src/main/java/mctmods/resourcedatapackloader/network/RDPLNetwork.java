@@ -52,6 +52,7 @@ public final class RDPLNetwork {
         registerClient(() -> BossBackgrounds.Handler.class, MessageBossBackground.class);
         registerMessage(MessageMultipartDesc.Handler.class, MessageMultipartDesc.class);
         registerMessage(MessageAnvilCosts.Handler.class, MessageAnvilCosts.class);
+        registerMessage(MessagePortwayFilter.Handler.class, MessagePortwayFilter.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -113,4 +114,6 @@ public final class RDPLNetwork {
     }
 
     public static void openWornPouch() { channel.sendToServer(new MessagePouchKey()); }
+
+    public static void portwayFilter(String text) { channel.sendToServer(new MessagePortwayFilter(text)); }
 }

@@ -22,11 +22,9 @@ import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.RoundSay;
 import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
-import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
-import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -75,9 +73,8 @@ import javax.annotation.Nullable;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
-    private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
     private static final List<String> TEAM_ACTIONS = Arrays.asList("list", "join", "leave", "vote", "claim");
@@ -174,12 +171,12 @@ public class ServerCommands extends CommandBase {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
         if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
         if (args.length >= 2 && "environment".equals(args[0])) { return EnvironmentCommand.complete(args); }
-        if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
+        if (args.length >= 2 && "gate".equals(args[0])) { return GateCommand.complete(server, args); }
+        if (args.length >= 2 && "portway".equals(args[0])) { return PortwayCommand.complete(server, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
         if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
         if (args.length == 3 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
-        if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
         if (args.length == 2 && "vein".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentWorldgen.veinNames()); }
         if (args.length == 2 && "config".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CONFIG_ACTIONS); }
@@ -193,7 +190,6 @@ public class ServerCommands extends CommandBase {
         if (args.length == 3 && "biome".equals(args[0]) && "find".equals(args[1])) { return getListOfStringsMatchingLastWord(args, biomeNames()); }
         if (args.length == 3 && "biome".equals(args[0]) && "here".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, Collections.singletonList("relight")); }
-        if (args.length == 4 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, names()); }
         if (args.length == 2 && "goto".equals(args[0])) {
             List<String> known = new ArrayList<>(STRUCTURE_NAMES);
             known.addAll(ContentLocate.names(sender.getEntityWorld()));
@@ -217,6 +213,7 @@ public class ServerCommands extends CommandBase {
             else { allowGoto(sender, neededFor(place, "gotoLevel", Config.commands.gotoLevel)); }
         }
         else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
+        else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
         else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
@@ -225,7 +222,8 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender, "rdpl.command.serverunusednote"); }
         else if (args.length == 1 && "oregen".equals(args[0])) { oregen(sender); }
         else if (args.length == 1 && "generators".equals(args[0])) { generators(sender); }
-        else if ("gate".equals(args[0])) { gate(server, sender, args); }
+        else if ("gate".equals(args[0])) { GateCommand.run(server, sender, args, getUsage(sender)); }
+        else if ("portway".equals(args[0])) { PortwayCommand.run(server, sender, args, getUsage(sender)); }
         else if (args.length == 1 && "dimensions".equals(args[0])) { dimensions(sender); }
         else if (args.length == 1 && "biome".equals(args[0])) { biome(sender); }
         else if (args.length >= 2 && "biome".equals(args[0]) && "list".equals(args[1])) { biomeList(sender, args.length > 2 && "all".equals(args[2])); }
@@ -503,36 +501,6 @@ public class ServerCommands extends CommandBase {
         }
     }
 
-    private void gate(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        if (!ContentGates.enabled()) {
-            send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.nogates"));
-            return;
-        }
-        String action = args.length < 2 ? "list" : args[1];
-        if ("list".equals(action)) {
-            gateList(sender);
-            return;
-        }
-        if (args.length < 3) { throw new WrongUsageException(getUsage(sender)); }
-        EntityPlayerMP player = getPlayer(server, sender, args[2]);
-        if ("check".equals(action)) {
-            gateCheck(sender, player);
-            return;
-        }
-        if (args.length < 4) { throw new WrongUsageException(getUsage(sender)); }
-        GateDef def = ContentGates.find(args[3]);
-        if (def == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.nogate", args[3])); }
-        if ("grant".equals(action)) {
-            ContentGates.unlock(player, def, false);
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateopened", def.getKey(), player.getName(), def.scope));
-        }
-        else if ("revoke".equals(action)) {
-            ContentGates.lock(player, def);
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateclosed", def.getKey(), player.getName(), def.scope));
-        }
-        else { throw new WrongUsageException(getUsage(sender)); }
-    }
-
     private void biome(ICommandSender sender) { for (String line : ContentBiomeControl.inspect(sender.getEntityWorld(), sender.getPosition())) { send(sender, TextFormatting.WHITE, line); } }
 
     private void dimensions(ICommandSender sender) {
@@ -549,27 +517,6 @@ public class ServerCommands extends CommandBase {
                     + "  id=" + def.id + " terrain=" + def.terrain + " biomes=" + def.biomeSource
                     + Lang.tr(sender, live ? "rdpl.command.registered" : "rdpl.command.unregistered"));
         }
-    }
-
-    private void gateList(ICommandSender sender) {
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gates", ContentGates.all().size()));
-        for (GateDef def : ContentGates.all().values()) {
-            send(sender, TextFormatting.WHITE, "  " + def.getKey() + TextFormatting.GRAY + "  dimension=" + def.dimension + " scope=" + def.scope +(def.open ? Lang.tr(sender, "rdpl.command.open") : ""));
-        }
-    }
-
-    private void gateCheck(ICommandSender sender, EntityPlayerMP player) {
-        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gatesfor", player.getName()));
-        for (GateDef def : ContentGates.all().values()) {
-            boolean unlocked = ContentGates.unlocked(player, def);
-            send(sender, unlocked ? TextFormatting.WHITE : TextFormatting.GRAY, "  " + def.getKey() + Lang.tr(sender, unlocked ? "rdpl.command.open" : "rdpl.command.closed"));
-        }
-    }
-
-    private static List<String> names() {
-        List<String> names = new ArrayList<>();
-        for (GateDef def : ContentGates.all().values()) { names.add(def.registryName.getPath()); }
-        return names;
     }
 
     private void here(ICommandSender sender) throws CommandException {

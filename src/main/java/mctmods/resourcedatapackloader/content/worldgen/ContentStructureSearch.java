@@ -335,7 +335,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return null;
     }
 
-    private static boolean open(World world, BlockPos at) {
+    public static boolean open(World world, BlockPos at) {
         Material material = world.getBlockState(at).getMaterial();
         return !material.blocksMovement() && !material.isLiquid();
     }

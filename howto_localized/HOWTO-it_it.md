@@ -727,6 +727,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `banner`     | Uno stendardo su un palo o contro un muro, sedici rotazioni in piedi, con un disegno tuo. Registra un secondo blocco di nome `<name>_wall` per quello appeso                                                                                                                    |
 | `ladder`     | Scalabile, piazzata contro un muro                                                                                                                                                                                                                                              |
 | `torch`      | Posizionamento a muro e a terra, con una particella                                                                                                                                                                                                                             |
+| `portway`    | Si aggiunge all'elenco delle tappe di chiunque lo usi e apre un menu per raggiungerne una qualsiasi, anche tra dimensioni diverse. La sua entità blocco conserva solo un nome                                                                                                   |
 | `bell`       | Una campana come quella dei villaggi dalla 1.14 in poi: suona quando la si usa sul lato, con la redstone o quando un proiettile la colpisce, oscilla nel proprio telaio e fa brillare i predoni vicini. Una sola variante: i metadati contengono l'orientamento e come è appesa |
 | `log`        | Ruota verso la faccia contro cui la piazzi ed è registrato come `logWood` nel dizionario dei minerali, così l'abbattimento degli alberi e Blast Plaster lo trattano come un tronco                                                                                              |
 | `leaves`     | Marcisce, si cesoia, si colora e rilascia un arboscello, ed è registrato come `treeLeaves` nel dizionario dei minerali                                                                                                                                                          |
@@ -785,6 +786,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `needsOxygen`                | crop, flower, sapling, leaves | booleano                                            | `true`                                                                                                           | Con GalaxySpace, se un `crop`, `flower`, `sapling` o `leaves` appassisce dove non c'è ossigeno. Vedi [Ossigeno](#ossigeno)                                                                                                                                                                                                                               |
 | `portal`                     | solo portal                   | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Portali e varchi](#portali-e-varchi)                                                                                                                                                                                                                                                                                                               |
 | `container`                  | solo container                | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Contenitori](#contenitori)                                                                                                                                                                                                                                                                                                                         |
+| `portway`                    | solo portway                  | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Passaggi](#passaggi)                                                                                                                                                                                                                                                                                                                               |
 | `bell`                       | solo bell                     | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Campane](#campane)                                                                                                                                                                                                                                                                                                                                 |
 
 ### Chiavi delle varianti
@@ -1089,6 +1091,196 @@ E il suo blockstate, `assets/mypack/blockstates/village_bell.json`:
 **I modelli.** Una campana non ha una proprietà `blocks`, quindi il suo blockstate è indicizzato da `facing` e `attachment`. Con `swing` attivo, quei modelli disegnano solo il telaio, e la parte oscillante è un'altra voce chiamata `body`, modellata nello spazio del blocco dove riposa; si inclina attorno al punto a mezzo blocco all'interno e tre quarti di blocco in alto, come quella vanilla. La voce `inventory` è l'oggetto, telaio e corpo insieme. Con `swing` disattivato non c'è alcuna voce `body`, e anche i quattro modelli del telaio disegnano la campana.
 
 **L'oscillazione è disegnata dal client.** Un suono arriva ai giocatori come evento del blocco, quindi un server dedicato fa oscillare la campana per tutti quelli che hanno questa mod, mentre un giocatore che non ce l'ha sente soltanto la campana. Suoni, risonanza e bagliore avvengono tutti sul server.
+
+## Passaggi
+
+*blocchi*
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "portway",
+  "material": "rock",
+  "soundType": "stone",
+  "creativeTab": "decorations",
+  "portway": {
+    "activateSound": "minecraft:block.beacon.activate",
+    "travelSound": "minecraft:block.portal.travel",
+    "names": ["Porta Nord", "Vecchio Mulino", "Valle delle Felci"],
+    "allow": [],
+    "deny": [-1],
+    "crossDimension": true,
+    "gate": "",
+    "network": "",
+    "global": false,
+    "tall": false,
+    "facing": false,
+    "activateParticle": "minecraft:portal",
+    "travelParticle": "minecraft:portal",
+    "carry": { "mount": false, "leashed": false, "pets": false, "crossDimension": true },
+    "cost": {
+      "xp": { "amount": 0, "perBlocks": 500, "dimension": 3, "max": 3, "points": false },
+      "item": { "id": "minecraft:emerald", "amount": 1, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "health": { "amount": 0, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "hunger": { "amount": 0, "perBlocks": 0, "dimension": 0, "max": 0 },
+      "cooldown": 30
+    },
+    "menu": { "order": "nearest", "previous": "minecraft:arrow", "next": "minecraft:arrow", "page": "minecraft:paper", "sort": "minecraft:compass", "locked": "minecraft:barrier" }
+  },
+  "variants": { "portway": { "meta": 0, "hardness": 5.0, "resistance": 30 } }
+}
+```
+
+| Impostazione       | Tipo                       | Predefinito                       | Cosa fa                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------ | -------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `activateSound`    | nome di suono              | `minecraft:block.beacon.activate` | Riprodotto presso il passaggio quando un giocatore lo aggiunge al suo elenco. Vuoto non riproduce nulla                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `travelSound`      | nome di suono              | `minecraft:block.portal.travel`   | Riprodotto a entrambe le estremità quando un giocatore viaggia. Vuoto non riproduce nulla                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `names`            | elenco di testi            | vuoto                             | Nomi per i passaggi piazzati. Ognuno prende un nome dall'elenco in base alla sua posizione, sempre lo stesso, a meno che non sia stato nominato in altro modo. Con un solo nome, tutti lo hanno                                                                                                                                                                                                                                                                                                                                                                       |
+| `allow`            | elenco di id di dimensione | vuoto                             | Le sole dimensioni in cui questo passaggio funziona e di cui elenca i passaggi. Vuoto consente ogni dimensione                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `deny`             | elenco di id di dimensione | vuoto                             | Dimensioni in cui questo passaggio non funziona e di cui non elenca i passaggi. Ha la precedenza su `allow`                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `crossDimension`   | vero o falso               | `true`                            | Con `false` il menu elenca solo i passaggi della stessa dimensione                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `gate`             | nome di varco              | vuoto                             | Un [varco](#varchi) che il giocatore deve aver aperto per attivare questo passaggio, aprirne il menu e raggiungerlo. Senza, la tappa appare bloccata. Indica lo stesso varco su tutti i passaggi di una rete per bloccare l'intera rete. Vuoto non ne richiede nessuno                                                                                                                                                                                                                                                                                                |
+| `network`          | testo                      | vuoto                             | Il gruppo a cui appartiene questo passaggio. Un passaggio elenca e raggiunge solo i passaggi della propria rete, e il menu omette gli altri. Vuoto è la rete predefinita condivisa                                                                                                                                                                                                                                                                                                                                                                                    |
+| `global`           | vero o falso               | `false`                           | Con `true` ogni giocatore vede questo passaggio nel menu senza averlo attivato. Altrimenti un giocatore vede solo quelli che ha attivato                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `scope`            | testo                      | `player`                          | Chi condivide le tappe: `player` tiene un elenco per giocatore, `team` condivide ciò che attiva un membro con tutta la squadra (una squadra è uno schieramento della cartella `<namespace>/teams` del pacchetto; i giocatori vi entrano se sono elencati nei suoi `players`, con `/rdpl team join <nome>` a meno che lo schieramento imposti `joinable` su false, con `/rdpl team join` da solo nello schieramento più piccolo con `balance`, o con l'estrazione di `picks`, vedi [Squadre](#chi-entra)), `global` come sopra. Senza squadra vale un elenco personale |
+| `tall`             | vero o falso               | `false`                           | Alto due blocchi, come una porta. Vedi [Alto e orientato](#alto-e-orientato)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `facing`           | vero o falso               | `false`                           | Si volta verso il giocatore che lo piazza, e i viaggiatori arrivano da quel lato. Vedi [Alto e orientato](#alto-e-orientato)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `activateParticle` | nome di particella         | vuoto                             | Particelle mostrate al passaggio quando un giocatore lo aggiunge al proprio elenco, come `minecraft:portal`. Vuoto non ne mostra                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `travelParticle`   | nome di particella         | vuoto                             | Particelle mostrate dove il giocatore parte e dove arriva. Vuoto non ne mostra                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `carry`            | oggetto                    | nessuno                           | Ciò che accompagna il giocatore. Vedi [Portare con sé](#portare-con-sé)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `cost`             | oggetto                    | gratis                            | Quanto costa un viaggio, vedi le tabelle sotto                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `menu`             | oggetto                    | vedi [Menu](#menu)                | L'ordine iniziale del menu di viaggio e le icone dei suoi pulsanti, vedi la tabella del menu più sotto                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+
+### Costi
+
+```json
+{
+  "cost": {
+    "xp": { "amount": 1, "perBlocks": 250, "dimension": 3, "max": 5 },
+    "cooldown": 30
+  }
+}
+```
+
+L'oggetto `cost` contiene una voce per ogni tipo di prezzo, tutte facoltative. Se mancano tutte, il viaggio è gratuito.
+
+| Parte      | Prende                                                                | Se al giocatore manca qualcosa                           |
+| ---------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| `xp`       | Livelli di esperienza, o punti con `points`                           | Il viaggio viene rifiutato                               |
+| `item`     | Oggetti indicati da `id`, dall'inventario principale                  | Il viaggio viene rifiutato                               |
+| `health`   | Mezzi cuori, senza mai portare il giocatore sotto uno                 | Prende quel che resta, non rifiuta mai                   |
+| `hunger`   | Punti fame                                                            | Prende quel che resta, non rifiuta mai                   |
+| `cooldown` | Un semplice numero di secondi tra un viaggio e l'altro, per giocatore | Il viaggio viene rifiutato finché il tempo non è passato |
+
+| Chiave      | Tipo            | Predefinito | Cosa fa                                                                                                                                         |
+| ----------- | --------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `amount`    | numero intero   | `0`         | Prezzo fisso di ogni viaggio                                                                                                                    |
+| `perBlocks` | numero intero   | `0`         | Aggiunge uno per ogni `perBlocks` blocchi di distanza iniziati. `0` non aggiunge nulla. In un viaggio tra dimensioni la distanza conta come `0` |
+| `dimension` | numero intero   | `0`         | Aggiunto quando il viaggio attraversa le dimensioni                                                                                             |
+| `max`       | numero intero   | `0`         | Prezzo massimo di questa parte. `0` significa nessun limite                                                                                     |
+| `points`    | vero o falso    | `false`     | Solo per `xp`. Il prezzo è in punti esperienza invece che in livelli                                                                            |
+| `id`        | nome di oggetto | vuoto       | Solo per `item`. Nome di registro dell'oggetto con cui si paga                                                                                  |
+
+**Attesa.** L'attesa comincia quando il giocatore arriva. Viene salvata sul giocatore come il momento di gioco in cui il viaggio successivo è consentito, quindi sopravvive a un riavvio, e la descrizione comando di ogni tappa mostra i secondi rimasti. `/rdplserver portway cooldown` la imposta o la cancella.
+
+### Usare un passaggio
+
+**Uso.** Cliccando con il tasto destro su un passaggio, la tappa (dimensione e posizione) viene aggiunta all'elenco personale di quel giocatore, salvato sul giocatore. Una tappa già nota lo segnala. Poi si apre il menu di viaggio. Un giocatore che non ha aperto il `gate` del passaggio, o che si trova in una dimensione esclusa dal passaggio, viene avvisato e il menu resta chiuso.
+
+### Nomi delle tappe
+
+**Nomi.** Un passaggio mostra il primo di questi che possiede: un nome proprio, un nome da `names`, oppure la sua dimensione e posizione. Ha un nome proprio quando l'oggetto è stato rinominato su un'incudine prima di essere piazzato, oppure quando un template di struttura o `/setblock` assegna alla sua entità blocco la stringa `Name`. Un nome preso da `names` non viene mai salvato, quindi modificare l'elenco rinomina i passaggi già piazzati. Non esiste una schermata per rinominare.
+
+**Segnaposto e gemelle.** Un nome da `names` può contenere `{biome}`, che diventa il nome del bioma in cui si trova il passaggio, come `Dark Forest`. Quando due tappe nel menu di un giocatore hanno lo stesso nome, ognuna mostra dopo di esso la propria posizione, come in `Porta Nord (12, 64, -30)`, e anche la dimensione se sono in dimensioni diverse.
+
+### Menu
+
+**Il menu.** Elenca le tappe del giocatore, le sue, quelle globali e quelle di squadra come un'unica lista, nell'ordine scelto dal giocatore con il pulsante di ordinamento: per vicinanza (prima quelle della dimensione attuale, dalla più vicina, poi le altre dimensioni per id), per nome dalla A alla Z (tappe senza nome in fondo, per posizione) o per le più recenti trovate (tappe trovate prima di questa versione in fondo). Le tappe escluse da `allow`, `deny` o `crossDimension` non compaiono, e nemmeno quelle di un'altra `network`. Una tappa il cui `gate`, o la cui dimensione, è chiuso da un [varco](#varchi) che il giocatore non ha aperto, appare come una barriera contrassegnata come bloccata, e sceglierla mostra il rifiuto. La descrizione comando di ogni tappa indica quanto costerebbe il viaggio a quel giocatore e i secondi di attesa rimasti.
+
+**Pagine e oblio.** Ogni pagina mostra 45 tappe. La riga in basso ha la freccia della pagina precedente a sinistra, il pulsante di ordinamento, il numero di pagina al centro e la freccia della pagina successiva a destra. Cliccando il pulsante di ordinamento si passa all'ordine successivo; la sua descrizione comando mostra l'ordine attuale e quello che sceglierebbe un clic. La scelta del giocatore viene salvata sul giocatore e resta anche dopo una riconnessione, una morte o un cambio di dimensione; finché non ne sceglie una, decide il `order` del menu. Cliccando con Maiusc su una tappa propria del giocatore, questi la dimentica. Le tappe globali e il passaggio su cui si trova il giocatore lo ignorano. Il numero di tappe non ha limite; il menu aggiunge pagine quando servono.
+
+**Ricerca.** La casella in alto a destra del menu filtra l'elenco mentre il giocatore scrive, per nome della tappa o, per una tappa senza nome, per dimensione e posizione, senza distinguere maiuscole e minuscole. Una casella vuota mostra tutte le tappe. Una nuova ricerca torna alla prima pagina e mantiene l'ordine scelto. Cliccando con il tasto destro sulla casella la si svuota. La ricerca non viene salvata.
+
+```json
+{ "menu": { "order": "name", "previous": "minecraft:spectral_arrow", "next": "minecraft:spectral_arrow", "page": "minecraft:book", "sort": "minecraft:clock", "locked": "mypack:sealed_rune" } }
+```
+
+| Chiave   | Tipo            | Predefinito         | Cosa fa                                                                              |
+| -------- | --------------- | ------------------- | ------------------------------------------------------------------------------------ |
+| order    | testo           | `nearest`           | Ordine che vede il giocatore finché non ne sceglie uno: `nearest`, `name` o `newest` |
+| previous | nome di oggetto | `minecraft:arrow`   | Icona del pulsante della pagina precedente                                           |
+| next     | nome di oggetto | `minecraft:arrow`   | Icona del pulsante della pagina successiva                                           |
+| page     | nome di oggetto | `minecraft:paper`   | Icona del numero di pagina                                                           |
+| sort     | nome di oggetto | `minecraft:compass` | Icona del pulsante di ordinamento                                                    |
+| locked   | nome di oggetto | `minecraft:barrier` | Icona di una tappa che il giocatore non ha sbloccato                                 |
+
+Funziona qualsiasi oggetto, compresi quelli del pacchetto. Un id che non è un oggetto viene registrato una volta e si mostra il predefinito. Il menu li prende dal passaggio o dall'oggetto da viaggio che lo ha aperto.
+
+**Il viaggio.** Scegliendo una tappa, il giocatore viene teletrasportato in uno spazio libero alto due blocchi accanto al passaggio di destinazione: prima sul lato verso cui guarda, se ha `facing`, poi sugli altri lati, poi sopra (due blocchi più su per uno `tall`), infine nel punto libero più vicino. Chi cavalca viene fatto smontare, e il giocatore arriva senza distanza di caduta né slancio. Il suono di viaggio e `travelParticle` si sentono e si vedono a entrambe le estremità. Il prezzo viene controllato prima del viaggio e prelevato solo quando il giocatore è arrivato. I giocatori in modalità creativa o spettatore non pagano nulla e non aspettano nulla. Se il blocco di destinazione non c'è più, non è più un passaggio o la sua dimensione non esiste più, la tappa viene rimossa dall'elenco e il giocatore ne viene informato.
+
+**Nelle strutture.** Un passaggio ha un'entità blocco che conserva solo il suo nome, quindi uno salvato in un template di struttura `.nbt` (mappe di strutture, pezzi di villaggio, strutture piazzate) funziona come quello piazzato da un giocatore. Un passaggio globale entra nell'elenco condiviso quando viene caricato o attivato e ne esce quando viene rotto.
+
+### Portare con sé
+
+```json
+{ "carry": { "mount": true, "leashed": true, "pets": true, "crossDimension": false } }
+```
+
+| Chiave           | Tipo         | Predefinito | Cosa fa                                                                                      |
+| ---------------- | ------------ | ----------- | -------------------------------------------------------------------------------------------- |
+| `mount`          | vero o falso | `false`     | La cavalcatura che il giocatore guida viaggia con lui, e il giocatore viene rimesso in sella |
+| `leashed`        | vero o falso | `false`     | I mob entro 10 blocchi legati al giocatore viaggiano con lui e vengono legati di nuovo       |
+| `pets`           | vero o falso | `false`     | Gli animali domestici addomesticati del giocatore, non seduti né legati, viaggiano con lui   |
+| `crossDimension` | vero o falso | `true`      | Con `false` non si porta nulla da una dimensione all'altra                                   |
+
+Ogni viaggio fa scendere il giocatore dalla cavalcatura, e tutto ciò che altro lo cavalca resta indietro.
+
+### Alto e orientato
+
+```json
+{
+  "type": "portway",
+  "portway": { "tall": true, "facing": true },
+  "variants": { "portway": { "meta": 0 } }
+}
+```
+
+`tall` rende il passaggio alto due blocchi, come una porta. Per piazzarlo serve spazio sopra, vengono piazzate entrambe le metà, e rompere una delle due le toglie entrambe e fa cadere un solo passaggio. La tappa è la metà inferiore, e usare quella superiore equivale a usare quella inferiore. `facing` lo volta verso il giocatore che lo piazza, lo ruota e lo specchia con un template di struttura, e fa arrivare i viaggiatori dal lato verso cui guarda, con lo sguardo in quella direzione.
+
+Il blocco conserva orientamento e metà nei metadati, quindi con una delle due opzioni occupa una sola variante e le altre in `variants` vengono ignorate. Il suo blockstate è indicizzato da `blocks` come sempre, più `facing` (`north`, `east`, `south`, `west`) dove è orientato e `half` (`lower`, `upper`) dove è alto. Un template di struttura contiene entrambe le metà di un passaggio alto, proprio come per una porta. Un pack che include un proprio blockstate per un passaggio alto deve aggiungervi anche una variante `inventory` per l'oggetto, perché l'oggetto usa quella variante e RDPL non ricava alcun modello oggetto dal blockstate di un pack.
+
+### Oggetti da viaggio
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "portway",
+  "creativeTab": "tools",
+  "portway": {
+    "network": "",
+    "allow": [],
+    "deny": [],
+    "crossDimension": true,
+    "cost": { "cooldown": 60 },
+    "carry": { "pets": true },
+    "travelSound": "minecraft:block.portal.travel",
+    "travelParticle": "minecraft:portal",
+    "consume": true,
+    "bind": true
+  }
+}
+```
+
+| Chiave    | Tipo         | Predefinito | Cosa fa                                                                            |
+| --------- | ------------ | ----------- | ---------------------------------------------------------------------------------- |
+| `consume` | vero o falso | `false`     | Un oggetto viene consumato quando il giocatore è arrivato. La creativa lo conserva |
+| `bind`    | vero o falso | `false`     | L'oggetto viene legato a un passaggio invece di aprire il menu                     |
+
+L'oggetto `portway` accetta anche le chiavi di un blocco passaggio che valgono per un viaggio: `network`, `crossDimension`, `allow`, `deny`, `gate`, `cost`, `menu`, `carry`, `travelSound` e `travelParticle`. Senza `bind`, usare l'oggetto apre il menu con tutte le tappe della sua rete. Non c'è alcun passaggio su cui stare, quindi nulla risulta come qui, e le distanze si contano dal giocatore. Il menu si chiude se l'oggetto lascia quella mano. Con `bind`, usare l'oggetto da accovacciati su un passaggio della sua rete che il giocatore conosce, o su uno globale, e di cui ha aperto il `gate`, lo lega, e la descrizione comando ne mostra il nome. Usarlo poi in aria porta al passaggio legato con tutti i controlli del menu. Un oggetto non legato lo dice. Se il passaggio legato non c'è più, il legame viene cancellato e la tappa dimenticata.
 
 ## Modelli, blockstate e texture
 
@@ -1538,17 +1730,18 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 
 *oggetti*
 
-| Tipo            | Cosa ottieni                                                                  |
-| --------------- | ----------------------------------------------------------------------------- |
-| `basic`         | Un oggetto semplice. Usato quando `type` manca                                |
-| `food`          | Si mangia, con fame e saturazione                                             |
-| `drink`         | Si beve invece di mangiare, restituendo un contenitore vuoto                  |
-| `tool`          | Piccone, ascia, pala o spada da un materiale                                  |
-| `armor`         | Elmo, corazza, gambali o stivali da un materiale                              |
-| `seed`          | Pianta una delle tue colture                                                  |
-| `potion`        | Applica i tuoi effetti di pozione quando viene usato                          |
-| `potion_bottle` | Contiene i tuoi tipi di pozione e li mostra in una scheda creativa            |
-| `rocket`        | Piazza una delle tue varianti di razzo di Galacticraft su una rampa di lancio |
+| Tipo            | Cosa ottieni                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `basic`         | Un oggetto semplice. Usato quando `type` manca                                                                      |
+| `food`          | Si mangia, con fame e saturazione                                                                                   |
+| `drink`         | Si beve invece di mangiare, restituendo un contenitore vuoto                                                        |
+| `tool`          | Piccone, ascia, pala o spada da un materiale                                                                        |
+| `armor`         | Elmo, corazza, gambali o stivali da un materiale                                                                    |
+| `seed`          | Pianta una delle tue colture                                                                                        |
+| `potion`        | Applica i tuoi effetti di pozione quando viene usato                                                                |
+| `portway`       | Viaggia verso un passaggio: apre il menu di tutte le tappe o va a quello a cui è legato. Vedi [Passaggi](#passaggi) |
+| `potion_bottle` | Contiene i tuoi tipi di pozione e li mostra in una scheda creativa                                                  |
+| `rocket`        | Piazza una delle tue varianti di razzo di Galacticraft su una rampa di lancio                                       |
 
 Un `potion_bottle` elenca ciò che può contenere con `potionTypes`, un array di nomi di tipi di pozione come `["mypack:ruby_tonic"]`. Uno con un elenco vuoto non registra nulla, e il log lo segnala.
 
@@ -1612,6 +1805,7 @@ La destinazione è conservata nella pila, quindi l'oggetto continua a indicarla 
 | `container`      | drink         | nome di oggetto                                              | nessuno                            | Ciò che resta, come una bottiglia                                                                                                                                                                                                                                                                     |
 | `crop`           | seed          | nome di blocco                                               | nessuno                            | La coltura che pianta                                                                                                                                                                                                                                                                                 |
 | `soil`           | seed          | nome di blocco                                               | `minecraft:farmland`               | Su cosa può essere piantato                                                                                                                                                                                                                                                                           |
+| `portway`        | portway       | oggetto JSON                                                 | nessuno                            | Le impostazioni di un oggetto da viaggio: le [chiavi del passaggio](#passaggi) che valgono per un viaggio, più `consume` e `bind`. Vedi [Oggetti da viaggio](#oggetti-da-viaggio)                                                                                                                     |
 | `rocket`         | rocket        | `namespace:name`                                             | nessuno                            | La variante di entità che piazza                                                                                                                                                                                                                                                                      |
 | `rolls`          | no            | `coin`, `d6`, `2d6+1`, un dado o un mazzo                    | nessuno                            | Per un oggetto semplice, un clic destro lo tira come farebbe `/rdplserver game` e lo comunica al pubblico predefinito del pack. Vedi [Dadi e mazzi](#dadi-e-mazzi)                                                                                                                                    |
 | `rollStore`      | no            | nome di un obiettivo                                         | nessuno                            | Per un oggetto con `rolls`, l'obiettivo del tabellone che riceve il totale del lancio come punteggio di chi lo impugna a ogni utilizzo. Un obiettivo che non esiste fa rifiutare il lancio con una riga in chat                                                                                       |
@@ -5205,21 +5399,34 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 }
 ```
 
-| Chiave            | Obbligatorio | Valore                                  | Predefinito                      | Cosa fa                                                                                                    |
-| ----------------- | ------------ | --------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `dimension`       | sì           | intero                                  |                                  | La dimensione che protegge                                                                                 |
-| `name`            | no           | stringa                                 | il nome del file                 | Mostrato al giocatore                                                                                      |
-| `scope`           | no           | `player`, `global`, `team`              | `player`                         | Un giocatore alla volta, l'intero mondo in una volta, o l'intera squadra di chi lo apre                    |
-| `teamless`        | no           | `player`, `refuse`                      | `player`                         | Con l'ambito `team`, cosa ottiene un giocatore senza squadra: uno sblocco tutto suo o il rifiuto           |
-| `open`            | no           | booleano                                | `false`                          | Se parte aperto                                                                                            |
-| `unlock`          | no           | oggetto                                 |                                  | Cosa lo apre. Vedi sotto                                                                                   |
-| `unlockedMessage` | no           | stringa                                 | `%dim% is now open`              | Mostrato quando si apre                                                                                    |
-| `blockedMessage`  | no           | stringa                                 | `You need %item% to enter %dim%` | Mostrato quando rifiuta                                                                                    |
-| `safeReturn`      | no           | booleano                                | `false`                          | Un ritorno bloccato atterra comunque in un punto sicuro invece di essere rifiutato                         |
-| `requires`        | no           | elenco di id di mod o namespace di pack | nessuno                          | Il varco viene saltato a meno che tutti siano presenti                                                     |
-| `portalBlocks`    | no           | elenco di nomi di blocchi               | ogni portale                     | Limita il varco a questi blocchi portale, così una dimensione può avere una porta sorvegliata e una aperta |
+| Chiave            | Obbligatorio | Valore                                  | Predefinito                      | Cosa fa                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| ----------------- | ------------ | --------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension`       | no           | intero                                  | nessuna                          | La dimensione che protegge. Un varco senza dimensione non ne protegge nessuna e blocca solo i [passaggi](#passaggi) che lo nominano                                                                                                                                                                                                                                                                                                                               |
+| `name`            | no           | stringa                                 | il nome del file                 | Mostrato al giocatore                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `scope`           | no           | `player`, `global`, `team`              | `player`                         | Un giocatore alla volta, l'intero mondo in una volta, o l'intera squadra di chi lo apre (una squadra è uno schieramento della cartella `<namespace>/teams` del pacchetto; i giocatori vi entrano se sono elencati nei suoi `players`, con `/rdpl team join <nome>` a meno che lo schieramento imposti `joinable` su false, con `/rdpl team join` da solo nello schieramento più piccolo con `balance`, o con l'estrazione di `picks`, vedi [Squadre](#chi-entra)) |
+| `teamless`        | no           | `player`, `refuse`                      | `player`                         | Con l'ambito `team`, cosa ottiene un giocatore senza squadra: uno sblocco tutto suo o il rifiuto                                                                                                                                                                                                                                                                                                                                                                  |
+| `open`            | no           | booleano                                | `false`                          | Se parte aperto                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `unlock`          | no           | oggetto                                 |                                  | Cosa lo apre. Vedi sotto                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `unlockedMessage` | no           | stringa                                 | `%dim% is now open`              | Mostrato quando si apre                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `blockedMessage`  | no           | stringa                                 | `You need %item% to enter %dim%` | Mostrato quando rifiuta                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `safeReturn`      | no           | booleano                                | `false`                          | Un ritorno bloccato atterra comunque in un punto sicuro invece di essere rifiutato                                                                                                                                                                                                                                                                                                                                                                                |
+| `requires`        | no           | elenco di id di mod o namespace di pack | nessuno                          | Il varco viene saltato a meno che tutti siano presenti                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `portalBlocks`    | no           | elenco di nomi di blocchi               | ogni portale                     | Limita il varco a questi blocchi portale, così una dimensione può avere una porta sorvegliata e una aperta                                                                                                                                                                                                                                                                                                                                                        |
 
 `unlock` accetta `hold` (un oggetto che deve essere tenuto in mano), `consume` con `consumeCount` (`1`), `craft` (un oggetto che deve essere stato fabbricato), `advancement` e `killed` (il nome di un'entità: il varco si apre per chiunque ne uccida una, così un boss può custodire la chiave di un mondo) con `killedCount` (`1`) quando una non basta, conteggiate per giocatore o per l'intero mondo a seconda dello scope. Aggiungendo `killedDrops` (il nome di un oggetto) le uccisioni contate fanno cadere quell'oggetto ai piedi di chi le ha compiute invece di aprire il varco, e il conteggio ricomincia da capo, così una chiave si può guadagnare di nuovo e consegnare a qualcuno che non ha mai combattuto per averla; per farne la chiave, usa `hold` o `consume` dello stesso oggetto sul varco. `%item%`, `%mob%` e `%dim%` vengono compilati al posto tuo. Una chiave lasciata da un mob non richiede nulla di speciale qui: dai al mob il drop e proteggi il varco con `hold` o `consume`. `team`, e `objective` con `scoreAtLeast`, lo aprono per un giocatore di quella squadra del tabellone il cui punteggio in quell'obiettivo arriva almeno a quel valore, le stesse condizioni che accetta `when` in una carta; ciascuna funziona anche da sola. Vengono controllate quando il giocatore lo attraversa, e il varco si apre poi nel suo ambito come per qualsiasi altro sblocco. Con l'ambito `team` lo sblocco appartiene alla squadra di chi l'ha aperto: passano tutti i suoi membri, compresi quelli che si uniscono dopo, e un giocatore senza squadra lo sblocca solo per sé. `teamAndScore` stabilisce come contano queste due: `alone` (predefinito) permette loro di aprire il varco da sole, mentre `with` le rende una condizione in più, così il varco si apre solo quando è soddisfatta un'altra chiave di sblocco e il giocatore è anche in quella squadra con quel punteggio. `killedTally` impostato a `team` somma per `killedCount` tutte le uccisioni della squadra di chi uccide, invece di quelle di ciascun giocatore (`player`, predefinito); chi non ha squadra continua a contare da solo. `teamless` impostato a `refuse` respinge a un varco con ambito `team` un giocatore senza squadra, invece di lasciarglielo sbloccare per sé (`player`, predefinito).
+
+**Varchi per i passaggi.** Un [passaggio](#passaggi) nomina un varco in `gate` e resta bloccato per un giocatore finché il varco non è aperto per lui, con gli stessi ambiti, le stesse regole di sblocco e gli stessi messaggi di un portale. Indica lo stesso varco su tutti i passaggi di una rete per bloccare la rete come un tutto. Per aprire un varco spendendo un oggetto a un passaggio, inserisci il blocco del passaggio in `portalBlocks` e dai al varco un oggetto `consume`. Questo varco non ha `dimension`, e un blocco passaggio lo nomina con `"gate": "mypack:northgate_network"`:
+
+```json
+{
+  "name": "Northgate Network",
+  "scope": "player",
+  "unlock": { "consume": "minecraft:emerald", "consumeCount": 3 },
+  "portalBlocks": ["mypack:northgate"]
+}
+```
+
+`/rdplserver gate list` mostra `-` per un varco senza dimensione.
 
 ## Mondi Rubic
 
@@ -7118,28 +7325,35 @@ Il terzo saluta un giocatore al primo accesso con una carta centrale senza panne
 
 *carte*
 
-| Attivatore        | Richiede                 | Scatta quando                                                                                                                                                                                                                                                                                      |
-| ----------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `command`         | nulla                    | Viene eseguito `/rdplserver card <rule> [players]`. Il comando salta `when`, `repeat` e `cooldown`, ed esegue comunque `runs`. Qualsiasi regola può essere mostrata così, qualunque sia il suo attivatore                                                                                          |
-| `first_join`      | nulla                    | Un giocatore entra nel mondo per la prima volta                                                                                                                                                                                                                                                    |
-| `dimension_enter` | `dimension`              | Un giocatore arriva in quella dimensione                                                                                                                                                                                                                                                           |
-| `biome_enter`     | `biomes`                 | Un giocatore entra in uno di quei biomi da un altro punto                                                                                                                                                                                                                                          |
-| `structure_enter` | `structures`             | Un giocatore entra in una di quelle strutture dall'esterno                                                                                                                                                                                                                                         |
-| `advancement`     | `advancement`            | Un giocatore ottiene quel progresso                                                                                                                                                                                                                                                                |
-| `time_of_day`     | `time`                   | L'orologio del giorno passa quel tick, da `0` a `23999` sulla stessa scala di `time.windows`, riportata alla `dayLength` della dimensione, mentre i giocatori sono nella dimensione. Una dimensione con `fixedTime` non lo attiva mai. Un orologio impostato da un comando o da un letto non conta |
-| `day`             | nulla, oppure `day`      | Inizia un nuovo giorno nella dimensione; con `day`, solo quel giorno                                                                                                                                                                                                                               |
-| `craft`           | `item`                   | Un giocatore fabbrica quell'oggetto                                                                                                                                                                                                                                                                |
-| `pickup`          | `item`                   | Un giocatore raccoglie quell'oggetto                                                                                                                                                                                                                                                               |
-| `kill`            | `entity`                 | Un giocatore uccide quell'entità, oppure la `count`-esima di essa                                                                                                                                                                                                                                  |
-| `respawn`         | nulla                    | Un giocatore rinasce dopo essere morto                                                                                                                                                                                                                                                             |
-| `death`           | nulla                    | Un giocatore muore                                                                                                                                                                                                                                                                                 |
-| `y_level`         | `below` o `above`        | Un giocatore scende sotto o sale sopra quell'altezza                                                                                                                                                                                                                                               |
-| `play_time`       | `minutes`                | Il tempo di un giocatore nel mondo raggiunge quel numero di minuti, contati da quando si chiude l'introduzione al mondo, o dall'accesso quando non gli viene mostrata alcuna introduzione                                                                                                          |
-| `roll`            | nulla, oppure `roll`     | Un giocatore tira con `/rdplserver game` o con un oggetto con `rolls`. Con `roll`, solo quel lancio la fa scattare, e `atLeast` e `atMost` limitano il totale                                                                                                                                      |
-| `order_done`      | nulla, oppure `order`    | Un ordine di lavoro viene completato, una volta per ogni giocatore che premia. Con `order`, la attiva solo un ordine con quella parola di `sign`                                                                                                                                                   |
-| `score`           | `objective`              | Il punteggio di un giocatore in quell'obiettivo raggiunge `score`                                                                                                                                                                                                                                  |
-| `exposure_level`  | nulla, oppure `exposure` | Il livello di un giocatore in un pericolo cambia, in salita o in discesa. Con `exposure`, solo quel pericolo; con `level`, solo un cambio che raggiunge quel livello. Il primo controllo dopo l'accesso non la attiva mai                                                                          |
-| `round_start`     | nulla                    | Si apre un round, dopo il conto alla rovescia: una volta per ogni giocatore, oppure una volta per l'`audience`. Segue un reset come `/rdplserver round start`                                                                                                                                      |
+| Attivatore         | Richiede                 | Scatta quando                                                                                                                                                                                                                                                                                      |
+| ------------------ | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command`          | nulla                    | Viene eseguito `/rdplserver card <rule> [players]`. Il comando salta `when`, `repeat` e `cooldown`, ed esegue comunque `runs`. Qualsiasi regola può essere mostrata così, qualunque sia il suo attivatore                                                                                          |
+| `first_join`       | nulla                    | Un giocatore entra nel mondo per la prima volta                                                                                                                                                                                                                                                    |
+| `dimension_enter`  | `dimension`              | Un giocatore arriva in quella dimensione                                                                                                                                                                                                                                                           |
+| `biome_enter`      | `biomes`                 | Un giocatore entra in uno di quei biomi da un altro punto                                                                                                                                                                                                                                          |
+| `structure_enter`  | `structures`             | Un giocatore entra in una di quelle strutture dall'esterno                                                                                                                                                                                                                                         |
+| `advancement`      | `advancement`            | Un giocatore ottiene quel progresso                                                                                                                                                                                                                                                                |
+| `time_of_day`      | `time`                   | L'orologio del giorno passa quel tick, da `0` a `23999` sulla stessa scala di `time.windows`, riportata alla `dayLength` della dimensione, mentre i giocatori sono nella dimensione. Una dimensione con `fixedTime` non lo attiva mai. Un orologio impostato da un comando o da un letto non conta |
+| `day`              | nulla, oppure `day`      | Inizia un nuovo giorno nella dimensione; con `day`, solo quel giorno                                                                                                                                                                                                                               |
+| `craft`            | `item`                   | Un giocatore fabbrica quell'oggetto                                                                                                                                                                                                                                                                |
+| `pickup`           | `item`                   | Un giocatore raccoglie quell'oggetto                                                                                                                                                                                                                                                               |
+| `kill`             | `entity`                 | Un giocatore uccide quell'entità, oppure la `count`-esima di essa                                                                                                                                                                                                                                  |
+| `respawn`          | nulla                    | Un giocatore rinasce dopo essere morto                                                                                                                                                                                                                                                             |
+| `death`            | nulla                    | Un giocatore muore                                                                                                                                                                                                                                                                                 |
+| `y_level`          | `below` o `above`        | Un giocatore scende sotto o sale sopra quell'altezza                                                                                                                                                                                                                                               |
+| `play_time`        | `minutes`                | Il tempo di un giocatore nel mondo raggiunge quel numero di minuti, contati da quando si chiude l'introduzione al mondo, o dall'accesso quando non gli viene mostrata alcuna introduzione                                                                                                          |
+| `roll`             | nulla, oppure `roll`     | Un giocatore tira con `/rdplserver game` o con un oggetto con `rolls`. Con `roll`, solo quel lancio la fa scattare, e `atLeast` e `atMost` limitano il totale                                                                                                                                      |
+| `order_done`       | nulla, oppure `order`    | Un ordine di lavoro viene completato, una volta per ogni giocatore che premia. Con `order`, la attiva solo un ordine con quella parola di `sign`                                                                                                                                                   |
+| `score`            | `objective`              | Il punteggio di un giocatore in quell'obiettivo raggiunge `score`                                                                                                                                                                                                                                  |
+| `portway_activate` | nulla                    | Un giocatore attiva un passaggio con il tasto destro. `portway` o `network` la limita a uno                                                                                                                                                                                                        |
+| `portway_travel`   | nulla                    | Un viaggio ha superato tutti i controlli ed è sul punto di avvenire, prima che il giocatore si muova                                                                                                                                                                                               |
+| `portway_arrive`   | nulla                    | Un giocatore è arrivato tramite un passaggio                                                                                                                                                                                                                                                       |
+| `portway_refused`  | nulla                    | Un passaggio o un oggetto da viaggio respinge un giocatore. `reason` dice perché                                                                                                                                                                                                                   |
+| `portway_paid`     | nulla                    | Un viaggio ha prelevato un prezzo diverso da zero                                                                                                                                                                                                                                                  |
+| `portway_forget`   | nulla                    | Una tappa esce dall'elenco di un giocatore, perché l'ha dimenticata, un comando l'ha tolta o il passaggio non c'era più                                                                                                                                                                            |
+| `portway_bind`     | nulla                    | Un giocatore lega un oggetto da viaggio a un passaggio                                                                                                                                                                                                                                             |
+| `exposure_level`   | nulla, oppure `exposure` | Il livello di un giocatore in un pericolo cambia, in salita o in discesa. Con `exposure`, solo quel pericolo; con `level`, solo un cambio che raggiunge quel livello. Il primo controllo dopo l'accesso non la attiva mai                                                                          |
+| `round_start`      | nulla                    | Si apre un round, dopo il conto alla rovescia: una volta per ogni giocatore, oppure una volta per l'`audience`. Segue un reset come `/rdplserver round start`                                                                                                                                      |
 
 I livelli dei pericoli vengono letti a ogni scansione, quindi una carta si attiva entro lo `scanInterval` del pericolo dalla variazione.
 
@@ -7201,6 +7415,9 @@ Una carta che scatta mentre un giocatore ha ancora aperta l'introduzione al mond
 | `level`              | intero                                  | nessuno               | Per `exposure_level`: si attiva solo quando il livello del giocatore diventa questo; `0` significa che non è più esposto. Senza, ogni cambio la attiva                                                                    |
 | `atLeast`, `atMost`  | intero                                  | nessuno               | Per `roll`: il totale più basso e quello più alto che fanno scattare la regola. Una moneta vale 1 per testa e 0 per croce, un dado o un mazzo di un pack la posizione del risultato nel suo file, da 1                    |
 | `objective`, `score` | testo, intero                           | nessuno, `1`          | Per `score`: l'obiettivo e il valore da raggiungere                                                                                                                                                                       |
+| `portway`            | testo                                   | nessuno               | Per i trigger `portway_*`: l'id di blocco del passaggio, come `mypack:northgate`. Senza, vale qualsiasi passaggio                                                                                                         |
+| `network`            | testo                                   | nessuno               | Per i trigger `portway_*`: la rete del passaggio. Senza, vale qualsiasi rete                                                                                                                                              |
+| `reason`             | testo                                   | nessuno               | Per `portway_refused`: `gate`, `dimension`, `cost`, `cooldown`, `nowhere`, `network`, `travel` o `item`. Per `portway_forget`: `gone`, `player` o `command`. Senza, vale qualsiasi motivo                                 |
 | `requires`           | elenco di id di mod o namespace di pack | nessuno               | Il file viene saltato a meno che siano presenti tutti                                                                                                                                                                     |
 
 ### Quando
@@ -7209,15 +7426,16 @@ Una carta che scatta mentre un giocatore ha ancora aperta l'introduzione al mond
 
 `when` contiene condizioni che devono essere tutte vere nel momento in cui scatta l'attivatore.
 
-| Impostazione                | Tipo          | Cosa controlla                                                                                                 |
-| --------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------- |
-| `biomes`                    | elenco        | Il giocatore si trova in uno di questi biomi, scritti come per l'attivatore                                    |
-| `timeFrom`, `timeTo`        | intero        | L'orologio del giorno è dentro questa finestra, che può superare la mezzanotte, ad esempio da `13000` a `1000` |
-| `dayAtLeast`                | intero        | Il numero del giorno è almeno questo                                                                           |
-| `advancement`               | testo         | Il giocatore ha questo progresso                                                                               |
-| `gameMode`                  | testo         | Il giocatore è in questa modalità di gioco: `survival`, `creative`, `adventure` o `spectator`                  |
-| `team`                      | testo         | Il giocatore è in questa squadra dello scoreboard                                                              |
-| `objective`, `scoreAtLeast` | testo, intero | Il punteggio del giocatore nell'obiettivo è almeno questo                                                      |
+| Impostazione                | Tipo          | Cosa controlla                                                                                                                                 |
+| --------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomes`                    | elenco        | Il giocatore si trova in uno di questi biomi, scritti come per l'attivatore                                                                    |
+| `timeFrom`, `timeTo`        | intero        | L'orologio del giorno è dentro questa finestra, che può superare la mezzanotte, ad esempio da `13000` a `1000`                                 |
+| `dayAtLeast`                | intero        | Il numero del giorno è almeno questo                                                                                                           |
+| `advancement`               | testo         | Il giocatore ha questo progresso                                                                                                               |
+| `portway`, `network`        | testo         | Il giocatore ha nel proprio elenco, o tra quelli globali, un passaggio di quell'id di blocco o di quella rete. Si può omettere l'uno o l'altro |
+| `gameMode`                  | testo         | Il giocatore è in questa modalità di gioco: `survival`, `creative`, `adventure` o `spectator`                                                  |
+| `team`                      | testo         | Il giocatore è in questa squadra dello scoreboard                                                                                              |
+| `objective`, `scoreAtLeast` | testo, intero | Il punteggio del giocatore nell'obiettivo è almeno questo                                                                                      |
 
 ### La carta
 
@@ -7261,29 +7479,32 @@ Titoli e righe delle carte, messaggi Says e note di benvenuto e di attesa accett
 
 *carte*
 
-| Id                      | Il messaggio                                                                    | Il testo viene da                                                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `rdpl:gate_unlocked`    | Un varco si apre                                                                | `unlockedMessage` in [Varchi](#varchi)                                                                                               |
-| `rdpl:gate_blocked`     | Un varco chiuso respinge un giocatore, sulla barra delle azioni                 | `blockedMessage` in [Varchi](#varchi)                                                                                                |
-| `rdpl:team_joined`      | Un giocatore entra in un lato                                                   | il `displayName` del lato                                                                                                            |
-| `rdpl:team_lead`        | Il capo di un lato passa a un giocatore                                         | `leadSays` in [Squadre](#squadre)                                                                                                    |
-| `rdpl:team_picked`      | Un giocatore viene estratto per un lato                                         | il `displayName` del lato                                                                                                            |
-| `rdpl:team_round_ended` | Il round è finito, quindi un giocatore viene spostato in un lato                | il `displayName` del lato                                                                                                            |
-| `rdpl:lobby_joins`      | Un giocatore che accede a round in corso viene mandato nella lobby              | `opens.joinsSays` in [La lobby](#la-lobby)                                                                                           |
-| `rdpl:lobby_note`       | La riga della lobby a metà schermo                                              | `opens.says`, `opens.leaderSays` in [La lobby](#la-lobby)                                                                            |
-| `rdpl:scoring_results`  | La classifica alla fine di un round, a ogni giocatore                           | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Risultati](#risultati) |
-| `rdpl:scoring_out`      | Un giocatore eliminato                                                          | `ends.outSays` in [Come finisce un round](#come-finisce-un-round)                                                                    |
-| `rdpl:reset_lead`       | Il capo reimposta il round                                                      | `reset.leadSays` in [Reimpostare un round](#reimpostare-un-round)                                                                    |
-| `rdpl:reset_vote`       | Viene indetta una votazione di reset                                            | `reset.voteSays`                                                                                                                     |
-| `rdpl:reset_pass`       | La votazione passa                                                              | `reset.passSays`                                                                                                                     |
-| `rdpl:reset_fail`       | La votazione fallisce                                                           | `reset.failSays`                                                                                                                     |
-| `rdpl:anvil_waits`      | Il lavoro di un'incudine attende un progresso                                   | [Lavori all'incudine](#lavori-allincudine)                                                                                           |
-| `rdpl:threat`           | Cambia la fascia di minaccia di un giocatore                                    | `threatSays`                                                                                                                         |
-| `rdpl:prospect`         | Ogni riga riportata da un ritrovamento di prospezione                           | il ritrovamento                                                                                                                      |
-| `rdpl:prospect_none`    | La prospezione non ha trovato nulla                                             | il file di lingua                                                                                                                    |
-| `rdpl:board_result`     | Finisce un gioco da tavolo                                                      | il file di lingua                                                                                                                    |
-| `rdpl:pregen_ended`     | La pregenerazione finisce o si ferma                                            | `pregenFinishedSays`, `pregenStoppedSays` in [Pregenerazione](#pregenerazione)                                                       |
-| `rdpl:pregen_running`   | La riga di avanzamento che un giocatore vede entrando durante la pregenerazione | `pregenRunningSays`                                                                                                                  |
+| Id                       | Il messaggio                                                                    | Il testo viene da                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `rdpl:gate_unlocked`     | Un varco si apre                                                                | `unlockedMessage` in [Varchi](#varchi)                                                                                               |
+| `rdpl:gate_blocked`      | Un varco chiuso respinge un giocatore, sulla barra delle azioni                 | `blockedMessage` in [Varchi](#varchi)                                                                                                |
+| `rdpl:team_joined`       | Un giocatore entra in un lato                                                   | il `displayName` del lato                                                                                                            |
+| `rdpl:team_lead`         | Il capo di un lato passa a un giocatore                                         | `leadSays` in [Squadre](#squadre)                                                                                                    |
+| `rdpl:team_picked`       | Un giocatore viene estratto per un lato                                         | il `displayName` del lato                                                                                                            |
+| `rdpl:team_round_ended`  | Il round è finito, quindi un giocatore viene spostato in un lato                | il `displayName` del lato                                                                                                            |
+| `rdpl:lobby_joins`       | Un giocatore che accede a round in corso viene mandato nella lobby              | `opens.joinsSays` in [La lobby](#la-lobby)                                                                                           |
+| `rdpl:lobby_note`        | La riga della lobby a metà schermo                                              | `opens.says`, `opens.leaderSays` in [La lobby](#la-lobby)                                                                            |
+| `rdpl:scoring_results`   | La classifica alla fine di un round, a ogni giocatore                           | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` in [Risultati](#risultati) |
+| `rdpl:scoring_out`       | Un giocatore eliminato                                                          | `ends.outSays` in [Come finisce un round](#come-finisce-un-round)                                                                    |
+| `rdpl:reset_lead`        | Il capo reimposta il round                                                      | `reset.leadSays` in [Reimpostare un round](#reimpostare-un-round)                                                                    |
+| `rdpl:reset_vote`        | Viene indetta una votazione di reset                                            | `reset.voteSays`                                                                                                                     |
+| `rdpl:reset_pass`        | La votazione passa                                                              | `reset.passSays`                                                                                                                     |
+| `rdpl:reset_fail`        | La votazione fallisce                                                           | `reset.failSays`                                                                                                                     |
+| `rdpl:portway_activated` | Un giocatore aggiunge un passaggio al proprio elenco, sulla barra delle azioni  | il file di lingua                                                                                                                    |
+| `rdpl:portway_refused`   | Un passaggio respinge un giocatore, sulla barra delle azioni                    | il file di lingua                                                                                                                    |
+| `rdpl:portway_forgot`    | Una tappa esce dall'elenco di un giocatore, sulla barra delle azioni            | il file di lingua                                                                                                                    |
+| `rdpl:anvil_waits`       | Il lavoro di un'incudine attende un progresso                                   | [Lavori all'incudine](#lavori-allincudine)                                                                                           |
+| `rdpl:threat`            | Cambia la fascia di minaccia di un giocatore                                    | `threatSays`                                                                                                                         |
+| `rdpl:prospect`          | Ogni riga riportata da un ritrovamento di prospezione                           | il ritrovamento                                                                                                                      |
+| `rdpl:prospect_none`     | La prospezione non ha trovato nulla                                             | il file di lingua                                                                                                                    |
+| `rdpl:board_result`      | Finisce un gioco da tavolo                                                      | il file di lingua                                                                                                                    |
+| `rdpl:pregen_ended`      | La pregenerazione finisce o si ferma                                            | `pregenFinishedSays`, `pregenStoppedSays` in [Pregenerazione](#pregenerazione)                                                       |
+| `rdpl:pregen_running`    | La riga di avanzamento che un giocatore vede entrando durante la pregenerazione | `pregenRunningSays`                                                                                                                  |
 
 `welcomeSays` non è una regola e conserva il suo logo; una regola `first_join` o `dimension_enter` vi si aggiunge. I conti alla rovescia e i conteggi della barra delle azioni di un round restano come stabilito dalle loro impostazioni.
 
@@ -9491,6 +9712,20 @@ Su un server dedicato, `/rdplserver` fa lo stesso per la copia della cartella de
 | `/rdplserver gate grant <player> <gate>`  | 3       | Apre un varco per un giocatore        |
 | `/rdplserver gate revoke <player> <gate>` | 3       | Lo richiude                           |
 
+#### Comandi dei passaggi
+
+*comandi del server*
+
+| Comando                                                           | Livello | Cosa fa                                                                                                                                              |
+| ----------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver portway list <giocatore>`                            | 2       | Le tappe nell'elenco di un giocatore                                                                                                                 |
+| `/rdplserver portway grant <giocatore> <x> <y> <z> [dimensione]`  | 2       | Aggiunge all'elenco di un giocatore il passaggio in quella posizione. Senza dimensione si usa quella di chi invia                                    |
+| `/rdplserver portway forget <giocatore> <x> <y> <z> [dimensione]` | 2       | Toglie una tappa dall'elenco di un giocatore                                                                                                         |
+| `/rdplserver portway forget <giocatore> all`                      | 2       | Svuota l'elenco di un giocatore                                                                                                                      |
+| `/rdplserver portway forget <giocatore> network <nome>`           | 2       | Toglie le tappe di una rete                                                                                                                          |
+| `/rdplserver portway send <giocatore> <x> <y> <z> [dimensione]`   | 2       | Manda un giocatore al passaggio in quella posizione, con ciò che porta con sé, suoni, particelle e la carta di arrivo, senza varco, prezzo né attesa |
+| `/rdplserver portway cooldown <giocatore> <secondi>`              | 2       | Imposta quanto deve aspettare un giocatore prima del viaggio successivo. `0` la cancella                                                             |
+
 #### Comandi di pregenerazione
 
 *comandi del server*
@@ -9576,7 +9811,7 @@ Qualsiasi tiro può terminare con `store <objective>`, che scrive il suo numero 
     "gotoLevel": 3,
     "gotoNextLevel": 2,
     "gotoBackLevel": 3,
-    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"],
+    "gotoPlaceLevels": ["Crypt=2", "Stronghold=0", "Mansion=4"],
     "locateLevel": 3
   }
 }
@@ -9596,7 +9831,7 @@ Il valore è il livello di permesso di cui chi esegue ha bisogno. `3` (operatore
 
 Poiché `intro` è aperto a tutti, qualsiasi giocatore raggiunge `/rdplserver` stesso, perciò ogni altro sottocomando controlla da sé che chi esegue sia operatore e rifiuta con un messaggio. Il completamento con Tab è coerente: a chi non è operatore vengono proposti `intro`, `team` dove un pack prevede un lato, e anche `goto` una volta che un livello glielo consente.
 
-`gotoPlaceLevels` sostituisce le tre impostazioni per singoli luoghi, come voci `name=level`, come nell'esempio sopra. Il nome è ciò che scriveresti dopo `goto`: uno vanilla come `Village` o `Mansion`, oppure un nome registrato con `locateAs` in una voce imprint. Il confronto ignora maiuscole e minuscole. Un livello `4` è sopra l'operatore e chiude quel luogo a tutti: il modo per nascondere un solo luogo mentre il resto di `goto` è aperto.
+`gotoPlaceLevels` sostituisce le tre impostazioni per singoli luoghi, come voci `name=level`, come nell'esempio sopra. Il nome è ciò che scriveresti dopo `goto`: uno vanilla come `Village` o `Mansion`, oppure un nome registrato con `locateAs` in una voce imprint. Il confronto ignora maiuscole e minuscole. Un livello `4` è sopra l'operatore e chiude quel luogo a tutti: il modo per nascondere un solo luogo mentre il resto di `goto` è aperto. I passaggi non sono luoghi per `goto`: il viaggio tra passaggi segue le chiavi proprie del passaggio, e `gotoPlaceLevels` non vi si applica.
 
 Una voce imposta un solo livello per tutte e tre le forme di quel luogo. Un luogo non elencato ricade sulle tre impostazioni sopra, e un nome non registrato non corrisponde mai.
 

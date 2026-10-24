@@ -32,6 +32,7 @@ import javax.annotation.Nullable;
 public final class ContentGates {
     private static final Map<ResourceLocation, GateDef> DEFS = new LinkedHashMap<>();
     private static final Map<Integer, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
+    private static final List<GateDef> USABLE = new ArrayList<>();
     private static final Map<ResourceLocation, GateDef> ALL = Collections.unmodifiableMap(DEFS);
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     private static final ResourceLocation GATE = ResourceDataPackLoader.id("gate");
@@ -43,6 +44,7 @@ public final class ContentGates {
         if (!GENERATION.stale()) { return; }
         DEFS.clear();
         BY_DIMENSION.clear();
+        USABLE.clear();
         STACKS.clear();
         if (!Config.content.load) { return; }
         Json.eachFile(PackManager.GATES, "gate definition", (key, contents) -> {
@@ -52,12 +54,13 @@ public final class ContentGates {
         for (Map.Entry<ResourceLocation, GateDef> entry : DEFS.entrySet()) {
             GateDef def = entry.getValue();
             if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }
-            BY_DIMENSION.computeIfAbsent(def.dimension, k -> new ArrayList<>()).add(def);
+            USABLE.add(def);
+            if (def.guardsDimension()) { BY_DIMENSION.computeIfAbsent(def.dimension, k -> new ArrayList<>()).add(def); }
         }
-        if (!BY_DIMENSION.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + count() + " gate(s)"); }
+        if (!USABLE.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + USABLE.size() + " gate(s)"); }
     }
 
-    public static boolean enabled() { return !BY_DIMENSION.isEmpty(); }
+    public static boolean enabled() { return !USABLE.isEmpty(); }
 
     public static List<GateDef> forDimension(int dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
 
@@ -75,12 +78,15 @@ public final class ContentGates {
         return openFor(player, def) || def.standsAlone() && def.standing.earnedBy(player);
     }
 
+    public static boolean bars(EntityPlayer player, GateDef def) {
+        if (turnedAway(player, def)) { return true; }
+        if (def.standsAlone()) { return !(openFor(player, def) || def.standing.earnedBy(player)); }
+        return !(openFor(player, def) && def.standing.met(player));
+    }
+
     public static boolean admits(EntityPlayer player, GateDef def) {
-        if (turnedAway(player, def)) { return false; }
-        if (!def.standsAlone()) { return openFor(player, def) && def.standing.met(player); }
-        if (openFor(player, def)) { return true; }
-        if (!def.standing.earnedBy(player)) { return false; }
-        unlock(player, def, true);
+        if (bars(player, def)) { return false; }
+        if (def.standsAlone() && !openFor(player, def)) { unlock(player, def, true); }
         return true;
     }
 
@@ -139,10 +145,4 @@ public final class ContentGates {
     }
 
     public static ItemStack stack(String item) { return STACKS.computeIfAbsent(item, held -> ContentStacks.parse(GATE, held, 1)); }
-
-    private static int count() {
-        int total = 0;
-        for (List<GateDef> defs : BY_DIMENSION.values()) { total += defs.size(); }
-        return total;
-    }
 }

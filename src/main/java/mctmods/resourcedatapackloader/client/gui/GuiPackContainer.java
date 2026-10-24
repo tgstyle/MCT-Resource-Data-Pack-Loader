@@ -66,9 +66,11 @@ public class GuiPackContainer extends GuiContainer {
 
     @Override protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         String title = held.getDisplayName().getUnformattedText();
-        fontRenderer.drawString(title, 8, 6, 0x404040);
+        fontRenderer.drawString(fontRenderer.trimStringToWidth(title, titleWidth()), 8, 6, 0x404040);
         fontRenderer.drawString(I18n.format("container.inventory"), 8, ySize - 94, 0x404040);
     }
+
+    protected int titleWidth() { return xSize - 16; }
 
     @Override protected void drawGuiContainerBackgroundLayer(float partial, int mouseX, int mouseY) {
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
