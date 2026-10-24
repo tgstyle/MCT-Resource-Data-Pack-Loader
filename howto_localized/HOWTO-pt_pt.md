@@ -1590,6 +1590,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1664,6 +1665,8 @@ O destino fica guardado na pilha como componente `minecraft:lodestone_tracker`, 
 }
 ```
 
+Um item simples com `sleepingBag` é um saco-cama. Com um clique direito na face de cima de um bloco sólido, à noite, quem o segura deita-se no bloco acima. Aplicam-se as mesmas condições de uma cama: noite, uma dimensão que permita dormir e nenhuma criatura hostil a menos de oito blocos. A noite é saltada quando todos os jogadores dormem, como com as camas. Acordar não altera o ponto de reaparecimento, e o saco fica no inventário. `cooldown` impede que seja usado outra vez de imediato.
+
 ### Chaves de ficheiro de itens
 
 *itens*
@@ -1695,6 +1698,7 @@ O destino fica guardado na pilha como componente `minecraft:lodestone_tracker`, 
 | `locates`        | não           | `Village`, `minecraft:river`                  | nenhum                          | Num item simples, o clique direito procura o local mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registado com `locateAs`. O item empilha só até 1. Vê o parágrafo da bússola localizadora acima |
 | `passesTurn`     | não           | booleano                                      | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como o `/rdplserver game pass` faz. Ver [Por turnos](#por-turnos)                                                                                                                                              |
 | `portway`        | portway       | objeto                                        | nenhum                          | As definições de um item de viagem: as [chaves de rota](#rotas) que valem para uma viagem, mais `consume` e `bind`. Ver [Itens de viagem](#itens-de-viagem)                                                                                                                      |
+| `sleepingBag`    | não           | booleano                                      | `false`                         | Para um item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e salta a noite como uma cama. Nunca altera o ponto de reaparecimento e não se gasta. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn`       |
 | `requires`       | não           | lista de ids de mods ou namespaces de pacotes | nenhum                          | O ficheiro é ignorado, a menos que todos estejam presentes                                                                                                                                                                                                                       |
 
 ### Chaves de variantes de itens

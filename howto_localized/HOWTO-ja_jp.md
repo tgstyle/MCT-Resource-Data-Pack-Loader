@@ -1590,6 +1590,7 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1664,6 +1665,8 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
 }
 ```
 
+`sleepingBag` を持つ通常のアイテムは寝袋になります。夜に頑丈なブロックの上面を右クリックすると、持ち主はその上のブロックに横になります。使える条件はベッドと同じで、夜であること、睡眠が許可されたディメンションであること、8ブロック以内に敵対的なモブがいないことです。すべてのプレイヤーが眠ると、ベッドの場合と同様に夜が明けます。起きてもリスポーン地点は変わらず、寝袋はインベントリに残ります。`cooldown` で、続けて使えないようにできます。
+
 ### アイテムファイルのキー
 
 *アイテム*
@@ -1695,6 +1698,7 @@ PNG が常に優先されます。`panel.png` と `panel.png.json` の両方が�
 | `locates`        | いいえ        | `Village`, `minecraft:river`                | なし                   | 通常のアイテムでは、右クリックでその名前に該当する最も近い場所を探し、コンパスのようにアイテムをそこへ向けます。名前はバニラのストラクチャーまたはバイオーム、あるいは `locateAs` で登録した名前です。スタックは1個までです。上のロケーターコンパスの段落を参照してください |
 | `passesTurn`     | いいえ        | 真偽値                                      | `false`                | 通常のアイテムで、右クリックすると `/rdplserver game pass` と同じように持ち主の順番をパスします。[順番の交代](#順番の交代)を参照                                                                                                                                            |
 | `portway`        | portway用     | オブジェクト                                | なし                   | 移動アイテムの設定: 移動に関係する[ポートウェイのキー](#ポートウェイ)と、`consume`、`bind`。[移動アイテム](#移動アイテム)を参照                                                                                                                                             |
+| `sleepingBag`    | いいえ        | 真偽値                                      | `false`                | 通常のアイテムで、ブロックの上面を右クリックすると持ち主が横になり、ベッドと同様に夜を飛ばします。リスポーン地点は変えず、消費もされません。睡眠できる場所でのみ有効で、`locates`、`rolls`、`passesTurn` があれば無視されます                                               |
 | `requires`       | いいえ        | Mod IDまたはパックの名前空間のリスト        | なし                   | すべてが揃っていない場合、ファイルはスキップされます                                                                                                                                                                                                                        |
 
 ### アイテムバリアントのキー

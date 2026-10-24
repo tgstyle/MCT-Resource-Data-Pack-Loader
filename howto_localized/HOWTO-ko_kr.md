@@ -1590,6 +1590,7 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1664,6 +1665,8 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 }
 ```
 
+`sleepingBag`이 있는 일반 아이템은 침낭입니다. 밤에 단단한 블록의 윗면을 우클릭하면 소지자가 그 위 블록에 눕습니다. 침대와 같은 조건이 필요합니다. 밤이어야 하고, 잠을 잘 수 있는 차원이어야 하며, 8블록 이내에 적대적인 생물이 없어야 합니다. 모든 플레이어가 잠들면 침대와 마찬가지로 밤이 넘어갑니다. 일어나도 스폰 지점은 바뀌지 않고, 침낭은 인벤토리에 남습니다. `cooldown`은 바로 다시 쓰지 못하게 합니다.
+
 ### 아이템 파일 키
 
 *아이템*
@@ -1695,6 +1698,7 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `locates`        | 아니요        | `Village`, `minecraft:river`          | 없음                 | 일반 아이템에서 오른쪽 클릭하면 그 이름의 가장 가까운 장소를 찾아 나침반처럼 아이템이 그쪽을 가리킵니다. 이름은 바닐라 구조물이나 바이옴, 또는 `locateAs`로 등록한 이름입니다. 아이템은 1개까지만 겹쳐집니다. 위의 위치 탐색 나침반 문단을 참고하세요 |
 | `passesTurn`     | 아니요        | 불리언                                | `false`              | 일반 아이템에서 우클릭하면 `/rdplserver game pass`처럼 든 사람의 턴을 넘깁니다. [번갈아 진행하기](#번갈아-진행하기)를 참고하세요                                                                                                                      |
 | `portway`        | portway       | 객체                                  | 없음                 | 이동 아이템의 설정: 이동에 쓰이는 [포트웨이 키](#포트웨이)와 `consume`, `bind`. [이동 아이템](#이동-아이템) 참고                                                                                                                                      |
+| `sleepingBag`    | 아니요        | 불리언                                | `false`              | 일반 아이템에서 블록 윗면을 우클릭하면 소지자가 그 위에 누워 자고, 침대처럼 밤을 넘깁니다. 스폰 지점은 바꾸지 않고 소모되지 않습니다. 잠을 잘 수 있는 곳에서만 작동하며, `locates`, `rolls`, `passesTurn`이 있으면 무시됩니다                         |
 | `requires`       | 아니요        | 모드 id 또는 팩 네임스페이스 목록     | 없음                 | 모두 있지 않으면 파일을 건너뜁니다                                                                                                                                                                                                                    |
 
 ### 아이템 변형 키

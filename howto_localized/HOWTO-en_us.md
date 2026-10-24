@@ -1590,6 +1590,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
+  "sleepingBag": true,
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1664,6 +1665,8 @@ The target is kept in the stack as a `minecraft:lodestone_tracker` component, so
 }
 ```
 
+A plain item with `sleepingBag` is a sleeping bag. Right-click the top of a solid block at night and the holder lies down on the block above. It needs the same conditions as a bed: night, a dimension that allows sleeping, and no hostile creature within eight blocks. The night is skipped when every player is asleep, as with beds. Waking up does not change the spawn point, and the bag stays in the inventory. `cooldown` keeps it from being used again straight away.
+
 ### Item file keys
 
 *items*
@@ -1692,6 +1695,7 @@ The target is kept in the stack as a `minecraft:lodestone_tracker` component, so
 | `locates`        | no            | `Village`, `minecraft:river`         | none                   | For a plain item, a right-click finds the nearest place of that name and points the item at it, as a compass does. The name is a vanilla structure or biome, or one registered with `locateAs`. The item stacks to 1. See the locator compass paragraph above |
 | `passesTurn`     | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                                                                                                                   |
 | `portway`        | portway       | object                               | none                   | The settings of a travel item: the [portway keys](#portways) that apply to a trip, plus `consume` and `bind`. See [Travel items](#travel-items)                                                                                                               |
+| `sleepingBag`    | no            | boolean                              | `false`                | For a plain item, a right-click on top of a block lays the holder down to sleep, skipping the night as a bed does. It never sets the spawn point and is not used up. Works only where sleeping is allowed. Ignored with `locates`, `rolls` or `passesTurn`    |
 | `curioSlot`      | no            | a Curios slot name                   | none                   | The Curios slot the item can be worn in, for any type of item. Ignored when Curios is not installed                                                                                                                                                           |
 | `wornEffects`    | no            | list of effects                      | none                   | Potion effects held on the wearer while the item is in its Curios slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                               |
 | `wornAttributes` | no            | list of attribute changes            | none                   | Attribute changes held on the wearer while the item is in its Curios slot, as `attribute`, `amount` and `operation`                                                                                                                                           |
