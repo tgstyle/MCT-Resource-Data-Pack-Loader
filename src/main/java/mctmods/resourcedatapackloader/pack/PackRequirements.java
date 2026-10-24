@@ -22,7 +22,7 @@ public final class PackRequirements {
     public static final String FILE_GATE = "file:";
     private static final List<String> FOLDERS = List.of(
             PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.BIOMES, PackManager.WORLDGEN,
-            PackManager.DIMENSIONS, PackManager.WORLDTEMPLATES, PackManager.PATHINTERSECTS, PackManager.STRUCTUREMAPS, PackManager.PORTALFRAMES, PackManager.GATES, PackManager.CARDS, PackManager.POTIONS,
+            PackManager.DIMENSIONS, PackManager.WORLDTEMPLATES, PackManager.PATHINTERSECTS, PackManager.STRUCTUREMAPS, PackManager.PORTALFRAMES, PackManager.GATES, PackManager.CARDS, PackManager.DIALOGS, PackManager.POTIONS,
             PackManager.POTION_TYPES, PackManager.BREWING, PackManager.VILLAGERS, PackManager.TRADES, PackManager.VILLAGES, PackManager.ENTITIES);
     private static final Set<String> WANTED = new LinkedHashSet<>();
     private static boolean scanned;

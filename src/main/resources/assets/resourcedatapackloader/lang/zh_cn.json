@@ -191,6 +191,7 @@
   "rdpl.command.gateclosed": "已为 %2$s 关闭 %1$s（%3$s范围）",
   "rdpl.command.nogate": "没有名为 %s 的闸门",
   "rdpl.command.nocard": "没有名为 %s 的卡片规则",
+  "rdpl.command.notalking": "当前没有打开的对话",
   "rdpl.command.cardshown": "已向 %2$s 名玩家展示卡片 %1$s",
   "rdpl.command.noraid": "没有名为 %s 的袭击",
   "rdpl.command.raidbusy": "袭击 %s 无法在此开始，附近已有另一场袭击",

@@ -191,6 +191,7 @@
   "rdpl.command.gateclosed": "已關閉 %s，對象 %s（%s 範圍）",
   "rdpl.command.nogate": "沒有名為 %s 的閘門",
   "rdpl.command.nocard": "沒有名為 %s 的卡片規則",
+  "rdpl.command.notalking": "目前沒有開啟的對話",
   "rdpl.command.cardshown": "已將卡片 %s 展示給 %s 位玩家",
   "rdpl.command.noraid": "沒有名為 %s 的突襲",
   "rdpl.command.raidbusy": "突襲 %s 無法在此開始，附近已有另一場突襲正在進行",

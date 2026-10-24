@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.util.Standing;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.List;
 
-final class CardWhen {
+public final class CardWhen {
     List<String> biomes = List.of();
     int timeFrom = -1;
     int timeTo = -1;
@@ -19,7 +19,7 @@ final class CardWhen {
     String network = "";
     Standing standing = Standing.NONE;
 
-    boolean fails(ServerPlayer player) {
+    public boolean fails(ServerPlayer player) {
         if (!biomes.isEmpty() && !BiomeNames.matches(biomes, player.level().getBiome(player.blockPosition()))) { return true; }
         if (timeFrom >= 0 && timeTo >= 0 && !CardPlace.within(CardPlace.timeOfDay(player.level()), timeFrom, timeTo)) { return true; }
         if (dayAtLeast >= 0L && CardPlace.day(player.level()) < dayAtLeast) { return true; }

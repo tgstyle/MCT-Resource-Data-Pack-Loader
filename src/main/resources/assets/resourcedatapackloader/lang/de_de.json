@@ -186,6 +186,7 @@
   "rdpl.command.gateclosed": "%s für %s geschlossen (Bereich %s)",
   "rdpl.command.nogate": "Kein Tor heißt %s",
   "rdpl.command.nocard": "Keine Kartenregel heißt %s",
+  "rdpl.command.notalking": "Es ist kein Dialog geöffnet",
   "rdpl.command.cardshown": "Karte %s an %s Spieler gezeigt",
   "rdpl.command.noraid": "Kein Überfall heißt %s",
   "rdpl.command.raidbusy": "Der Überfall %s kann dort nicht beginnen, in der Nähe läuft bereits einer",

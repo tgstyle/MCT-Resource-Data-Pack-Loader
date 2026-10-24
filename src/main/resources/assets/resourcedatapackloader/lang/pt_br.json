@@ -191,6 +191,7 @@
   "rdpl.command.gateclosed": "%s fechado para %s (escopo %s)",
   "rdpl.command.nogate": "Nenhum portão se chama %s",
   "rdpl.command.nocard": "Nenhuma regra de carta se chama %s",
+  "rdpl.command.notalking": "Nenhum diálogo está aberto",
   "rdpl.command.cardshown": "A carta %s foi mostrada a %s jogador(es)",
   "rdpl.command.noraid": "Nenhuma invasão se chama %s",
   "rdpl.command.raidbusy": "A invasão %s não pode começar ali, já há outra em andamento por perto",
