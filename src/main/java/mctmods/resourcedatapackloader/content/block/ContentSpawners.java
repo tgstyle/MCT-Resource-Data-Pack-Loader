@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.block;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -14,9 +13,8 @@ public final class ContentSpawners {
 
     public static void apply() {
         if (!Config.tweaks.unbreakableSpawners) { return; }
-        IBlock spawner = (IBlock) Blocks.MOB_SPAWNER;
-        spawner.rdpl$setHardness(UNBREAKABLE);
-        spawner.rdpl$setResistance(BEDROCK_RESISTANCE);
+        Blocks.MOB_SPAWNER.blockHardness = UNBREAKABLE;
+        Blocks.MOB_SPAWNER.blockResistance = BEDROCK_RESISTANCE;
         Summary.info("spawners.unbreakable", "Mob spawners cannot be mined or blown up, which is what the config asks for");
     }
 }

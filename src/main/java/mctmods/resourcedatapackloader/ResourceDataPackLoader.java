@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.CenterCard;
+import mctmods.resourcedatapackloader.client.CreateWorldPack;
 import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.PackListEntries;
@@ -29,6 +30,7 @@ import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.ContentSleepingBags;
 import mctmods.resourcedatapackloader.content.ContentTeams;
@@ -76,6 +78,7 @@ import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
 import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.rubic.server.chunkio.CubicChunksWorld;
 import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
@@ -323,6 +326,7 @@ public class ResourceDataPackLoader {
             }
             MinecraftForge.EVENT_BUS.register(new PackOptionsButton.Handler());
             MinecraftForge.EVENT_BUS.register(BossBackgrounds.class);
+            MinecraftForge.EVENT_BUS.register(CreateWorldPack.class);
             MinecraftForge.EVENT_BUS.register(CardOverlay.class);
             MinecraftForge.EVENT_BUS.register(HeartsHud.class);
             MinecraftForge.EVENT_BUS.register(CenterCard.class);
@@ -358,6 +362,12 @@ public class ResourceDataPackLoader {
 
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {
         ContentPristine.beforeWorldsLoad(event.getServer());
+        loadPackContent();
+        ContentServer.dedicatedStarting(event.getServer());
+        CubicChunksWorld.offer(event.getServer());
+    }
+
+    private static void loadPackContent() {
         Path root = PackManager.get().getRoot();
         if (root == null) { return; }
         PackManager.get().scan(root);

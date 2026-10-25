@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.entity.ai.PathNodeMemo;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.pathfinding.NodeProcessor;
 import net.minecraft.pathfinding.PathNodeType;
 import net.minecraft.pathfinding.PathPoint;
 import net.minecraft.pathfinding.SwimNodeProcessor;
@@ -25,12 +26,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private BlockPos.MutableBlockPos rdpl$looking;
 
     @Inject(method = "getStart", at = @At("HEAD")) private void rdpl$readyToRemember(CallbackInfoReturnable<PathPoint> cir) {
-        INodeProcessor inside = (INodeProcessor) this;
-        EntityLiving mob = inside.rdpl$getEntity();
+        NodeProcessor inside = (NodeProcessor) (Object) this;
+        EntityLiving mob = inside.entity;
         rdpl$located = mob != null;
         if (!rdpl$located) { return; }
         rdpl$world = mob.world.provider.getDimension();
-        rdpl$owner = System.identityHashCode(getClass()) * 31 + inside.rdpl$getSizeX() * 961 + inside.rdpl$getSizeY() * 31 + inside.rdpl$getSizeZ();
+        rdpl$owner = System.identityHashCode(getClass()) * 31 + inside.entitySizeX * 961 + inside.entitySizeY * 31 + inside.entitySizeZ;
         rdpl$memo = PathNodeMemo.held();
     }
 

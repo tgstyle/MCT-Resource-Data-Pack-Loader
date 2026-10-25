@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.loot;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILootTable;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILootTableManager;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -14,6 +12,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootPool;
 import net.minecraft.world.storage.loot.LootTable;
+import net.minecraft.world.storage.loot.LootTableManager;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.event.LootTableLoadEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -63,13 +62,13 @@ public final class LootInjections {
         List<String> pools = BY_TABLE.get(event.getName());
         LootTable table = event.getTable();
         if (pools == null || table == null) { return; }
-        Gson gson = ILootTableManager.rdpl$gson();
+        Gson gson = LootTableManager.GSON_INSTANCE;
         ResourceLocation synthetic = new ResourceLocation(event.getName().getNamespace(), event.getName().getPath() + "_rdpl_injection");
         for (String pool : pools) {
             try {
                 LootTable parsed = ForgeHooks.loadLootTable(gson, synthetic, "{\"pools\":[" + pool + "]}", true, event.getLootTableManager());
                 if (parsed == null) { continue; }
-                for (LootPool each : ((ILootTable) parsed).rdpl$getPools()) { table.addPool(each); }
+                for (LootPool each : parsed.pools) { table.addPool(each); }
             }
             catch (RuntimeException ex) {
                 ContentLog.LOGGER.error("Could not add an injected pool to loot table {}. A pool with the same name may already be there, give each injected pool its own name", event.getName(), ex);

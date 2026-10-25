@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IRenderGlobalClouds;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.entity.Entity;
 import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
@@ -29,8 +29,8 @@ import javax.annotation.Nullable;
         double x = view.lastTickPosX + (view.posX - view.lastTickPosX) * partialTicks;
         double y = view.lastTickPosY + (view.posY - view.lastTickPosY) * partialTicks;
         double z = view.lastTickPosZ + (view.posZ - view.lastTickPosZ) * partialTicks;
-        IRenderGlobalClouds clouds = (IRenderGlobalClouds) mc.renderGlobal;
-        int counter = clouds.getCloudTickCounter();
+        RenderGlobal clouds = mc.renderGlobal;
+        int counter = clouds.cloudTickCounter;
         double ticks = counter + partialTicks;
         rendering = true;
         try {
@@ -41,14 +41,14 @@ import javax.annotation.Nullable;
             }
         }
         finally {
-            clouds.setCloudTickCounter(counter);
+            clouds.cloudTickCounter = counter;
             drawing = null;
             rendering = false;
         }
     }
 
-    private static void draw(Minecraft mc, IRenderGlobalClouds clouds, double ticks, double speed, float partialTicks, double x, double y, double z) {
-        clouds.setCloudTickCounter((int) Math.round(ticks * speed - partialTicks));
+    private static void draw(Minecraft mc, RenderGlobal clouds, double ticks, double speed, float partialTicks, double x, double y, double z) {
+        clouds.cloudTickCounter = (int) Math.round(ticks * speed - partialTicks);
         mc.renderGlobal.renderClouds(partialTicks, PASS, x, y, z);
     }
 }

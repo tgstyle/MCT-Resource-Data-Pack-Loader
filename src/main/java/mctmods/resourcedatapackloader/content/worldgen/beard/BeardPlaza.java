@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
@@ -17,6 +16,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.List;
 
 public final class BeardPlaza {
@@ -106,7 +106,7 @@ public final class BeardPlaza {
         int walk = BeardRoads.pathSidewalkWidth();
         int lines = BeardRoads.pathLineColumns();
         boolean chosen = BeardRoads.pathChosen();
-        IBlockState surface = BeardRoads.surfaceBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+        IBlockState surface = BeardRoads.surfaceBlock(((StructureVillagePieces.Village) piece).getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState()));
         IBlockState line = BeardRoads.lineBlock(surface);
         IBlockState sidewalk = BeardRoads.sidewalkBlock(surface);
         int paved = 0;
@@ -118,7 +118,7 @@ public final class BeardPlaza {
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
                 if (BeardBiome.moved(world, x, z)) {
-                    surface = BeardRoads.surfaceBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+                    surface = BeardRoads.surfaceBlock(((StructureVillagePieces.Village) piece).getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState()));
                     line = BeardRoads.lineBlock(surface);
                     sidewalk = BeardRoads.sidewalkBlock(surface);
                 }
@@ -135,7 +135,7 @@ public final class BeardPlaza {
                 BeardBlocks.clearAbove(world, at, x, z, ground + 1, Math.max(ground + 4, top.getY() + 2));
                 BeardBlocks.fillUnder(world, at, x, z, ground - 1, Math.max(ground - 8, roof + 1));
                 at.setPos(x, ground, z);
-                IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()), true);
+                IBlockState natural = chosen ? surface : BeardRoads.pathForGround(world, x, z, surface, ((StructureVillagePieces.Village) piece).getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState()), true);
                 IBlockState held = band > reach - walk ? sidewalk : lines > 0 && band == reach - walk ? line : natural;
                 if (held != natural && BeardPlots.roadCore(start, piece, x, z)) { held = natural; }
                 else if (held != natural && lines > 0 && BeardPlots.roadLine(start, piece, x, z)) { held = line; }

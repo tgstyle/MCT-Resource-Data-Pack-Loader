@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
 import mctmods.resourcedatapackloader.content.entity.MobStats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLiving;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -194,8 +193,7 @@ public final class ContentMobSwitch {
     }
 
     private static float[] chances(EntityLiving mob, EntityEquipmentSlot slot) {
-        IEntityLiving access = (IEntityLiving) mob;
-        return slot.getSlotType() == EntityEquipmentSlot.Type.HAND ? access.rdpl$handDropChances() : access.rdpl$armorDropChances();
+        return slot.getSlotType() == EntityEquipmentSlot.Type.HAND ? mob.inventoryHandsDropChances : mob.inventoryArmorDropChances;
     }
 
     static void settleAll(World world) {

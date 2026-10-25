@@ -2,8 +2,6 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.HardnessDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IWeightedBakedModel;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IWeightedModel;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -67,13 +65,12 @@ public final class ContentHardnessCheck {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model is a {}, which holds one model, so every step will look the same. List {} variants of equal weight, hardest first, and check no other mod is replacing the model after it is baked", def.registryName, def.buckets, state, model.getClass().getName(), def.buckets);
             return;
         }
-        IWeightedBakedModel weighted = (IWeightedBakedModel) model;
-        int held = weighted.rdpl$getModels().size();
-        for (Object entry : weighted.rdpl$getModels()) {
-            IBakedModel baked = ((IWeightedModel) entry).rdpl$getModel();
-            ContentLog.LOGGER.debug("  a variant that survived baking uses the texture {}", baked.getParticleTexture().getIconName());
+        WeightedBakedModel weighted = (WeightedBakedModel) model;
+        int held = weighted.models.size();
+        for (WeightedBakedModel.WeightedModel entry : weighted.models) {
+            ContentLog.LOGGER.debug("  a variant that survived baking uses the texture {}", entry.model.getParticleTexture().getIconName());
         }
-        int weight = weighted.rdpl$getTotalWeight();
+        int weight = weighted.totalWeight;
         if (held != def.buckets) {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model, a {}, holds {} variant(s), so the texture will not match how hard the block is. Make the two counts the same, and check no other mod is replacing the model after it is baked", def.registryName, def.buckets, state, model.getClass().getName(), held);
             return;
@@ -95,7 +92,7 @@ public final class ContentHardnessCheck {
         for (IBlockState one : state.getBlock().getBlockState().getValidStates()) {
             if (one == state || empty(one)) { continue; }
             IBakedModel model = Minecraft.getMinecraft().getBlockRendererDispatcher().getModelForState(one);
-            int held = model instanceof WeightedBakedModel ? ((IWeightedBakedModel) model).rdpl$getModels().size() : 1;
+            int held = model instanceof WeightedBakedModel ? ((WeightedBakedModel) model).models.size() : 1;
             if (held <= 1) { continue; }
             ContentLog.LOGGER.warn("Hardness group {} does not name {}, but that state now draws from {} variant(s) too, so overriding the blockstate has changed a block the group was not meant to touch", def.registryName, one, held);
         }

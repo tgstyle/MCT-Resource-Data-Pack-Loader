@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.content.ContentStacks;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IFurnaceRecipes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -63,7 +62,7 @@ public final class FurnaceRecipes {
     public static int removeWhere(BiPredicate<ItemStack, ItemStack> doomed) {
         int removed = 0;
         Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
-        Map<ItemStack, Float> experience = ((IFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
+        Map<ItemStack, Float> experience = net.minecraft.item.crafting.FurnaceRecipes.instance().experienceList;
         Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<ItemStack, ItemStack> recipe = iterator.next();

@@ -1,12 +1,15 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.rubic.server.interfaces.IRubicPlayerList;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.DimensionValues;
 import mctmods.resourcedatapackloader.util.Enums;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameType;
@@ -52,6 +55,25 @@ public final class ContentServer {
             if (type != GameType.NOT_SET && written.equalsIgnoreCase(type.getName())) { return type; }
         }
         return GameType.NOT_SET;
+    }
+
+    public static void dedicatedStarting(MinecraftServer server) {
+        if (!server.isDedicatedServer()) { return; }
+        DedicatedServer dedicated = (DedicatedServer) server;
+        if (!RDPLMixinPlugin.cubicChunksPresent()) {
+            int vertical = dedicated.getIntProperty("vertical-view-distance", -1);
+            if (vertical >= 0) { ((IRubicPlayerList) dedicated.getPlayerList()).setVerticalViewDistance(vertical); }
+        }
+        GameType asked = gameModeFrom(worldGameMode());
+        if (asked == GameType.NOT_SET) { return; }
+        boolean hardcore = hardcoreAsked();
+        GameType held = dedicated.getGameType();
+        if (held == asked && dedicated.isHardcore() == hardcore) { return; }
+        ContentLog.LOGGER.info("server.properties plays {} and a pack asks for {}, so the pack's mode is written to server.properties and every world plays it", dedicated.isHardcore() ? "hardcore" : held.getName(), hardcore ? "hardcore" : asked.getName());
+        dedicated.setGameType(asked);
+        dedicated.setProperty("gamemode", asked.getID());
+        dedicated.setProperty("hardcore", hardcore);
+        dedicated.saveProperties();
     }
 
     public static boolean lanCommands() { return ContentControl.off(ContentControl.SERVER) || ContentControl.flag(ContentControl.SERVER, "worldLanCommands", Config.worldgen.worldLanCommands); }

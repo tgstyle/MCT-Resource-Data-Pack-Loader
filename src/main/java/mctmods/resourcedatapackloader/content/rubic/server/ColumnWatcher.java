@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server;
 
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQueue;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IPlayerChunkMapEntry;
 import mctmods.resourcedatapackloader.network.MessageColumn;
 import mctmods.resourcedatapackloader.network.MessageHeightMapUpdate;
 import mctmods.resourcedatapackloader.network.MessageUnloadColumn;
@@ -31,29 +30,27 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         this.playerCubeMap = playerCubeMap;
     }
 
-    private IPlayerChunkMapEntry self() { return (IPlayerChunkMapEntry) this; }
-
     @Override public boolean providePlayerChunk(boolean canGenerate) {
-        if (self().isLoading()) { return false; }
-        if (self().getChunk() != null) { return true; }
+        if (this.loading) { return false; }
+        if (this.chunk != null) { return true; }
         if (canGenerate) {
-            Chunk chunk = this.playerCubeMap.getWorldServer().getChunkProvider().provideChunk(self().getPos().x, self().getPos().z);
-            if (chunk.isEmpty()) { return false; }
-            self().setChunk(chunk);
+            Chunk provided = this.playerCubeMap.getWorldServer().getChunkProvider().provideChunk(this.pos.x, this.pos.z);
+            if (provided.isEmpty()) { return false; }
+            this.chunk = provided;
         }
-        else { self().setChunk(this.playerCubeMap.getWorldServer().getChunkProvider().loadChunk(self().getPos().x, self().getPos().z)); }
-        return self().getChunk() != null;
+        else { this.chunk = this.playerCubeMap.getWorldServer().getChunkProvider().loadChunk(this.pos.x, this.pos.z); }
+        return this.chunk != null;
     }
 
     @Override public void addPlayer(@Nonnull EntityPlayerMP player) {
-        if (self().getPlayerList().contains(player)) {
+        if (this.players.contains(player)) {
             ContentLog.LOGGER.debug("Failed to expand player. {} already is in chunk {}, {}", player,
                     this.getPos().x,
                     this.getPos().z);
             return;
         }
-        if (self().getPlayerList().isEmpty()) { self().setLastUpdateInhabitedTime(playerCubeMap.getWorldServer().getTotalWorldTime()); }
-        self().getPlayerList().add(player);
+        if (this.players.isEmpty()) { this.lastUpdateInhabitedTime = playerCubeMap.getWorldServer().getTotalWorldTime(); }
+        this.players.add(player);
         if (this.isSentToPlayers()) {
             Chunk chunk = Objects.requireNonNull(this.getChunk());
             RDPLNetwork.sendTo(new MessageColumn(chunk), player);
@@ -62,22 +59,22 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
     }
 
     @Override public void removePlayer(@Nonnull EntityPlayerMP player) {
-        if (!self().getPlayerList().contains(player)) { return; }
+        if (!this.players.contains(player)) { return; }
         if (this.getChunk() == null) {
-            self().getPlayerList().remove(player);
-            if (self().getPlayerList().isEmpty()) {
-                if (self().isLoading()) {
+            this.players.remove(player);
+            if (this.players.isEmpty()) {
+                if (this.loading) {
                     CubeIoQueue.dropQueuedColumnLoad(
-                            playerCubeMap.getWorldServer(), getPos().x, getPos().z, (c) -> self().getLoadedRunnable().run());
+                            playerCubeMap.getWorldServer(), getPos().x, getPos().z, (c) -> this.loadedRunnable.run());
                 }
                 this.playerCubeMap.removeEntry(this);
             }
             return;
         }
         if (this.isSentToPlayers()) { RDPLNetwork.sendTo(new MessageUnloadColumn(getPos()), player); }
-        self().getPlayerList().remove(player);
+        this.players.remove(player);
         MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.UnWatch(this.getChunk(), player));
-        if (self().getPlayerList().isEmpty()) { playerCubeMap.removeEntry(this); }
+        if (this.players.isEmpty()) { playerCubeMap.removeEntry(this); }
     }
 
     @Override public boolean sendToPlayers() {
@@ -85,11 +82,11 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         if (getChunk() == null) { return false; }
         try {
             MessageColumn message = new MessageColumn(this.getChunk());
-            for (EntityPlayerMP player : self().getPlayerList()) {
+            for (EntityPlayerMP player : this.players) {
                 RDPLNetwork.sendTo(message, player);
                 MinecraftForge.EVENT_BUS.post(new ChunkWatchEvent.Watch(this.getChunk(), player));
             }
-            self().setSentToPlayers(true);
+            this.sentToPlayers = true;
         } catch (Throwable throwable) {
             throw new RuntimeException(throwable);
         }
@@ -108,7 +105,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         if (this.dirtyColumns.isEmpty()) { return; }
         assert getChunk() != null;
         MessageHeightMapUpdate update = new MessageHeightMapUpdate(dirtyColumns, getChunk());
-        for (EntityPlayerMP player : self().getPlayerList()) { RDPLNetwork.sendTo(update, player); }
+        for (EntityPlayerMP player : this.players) { RDPLNetwork.sendTo(update, player); }
         this.dirtyColumns.clear();
     }
 

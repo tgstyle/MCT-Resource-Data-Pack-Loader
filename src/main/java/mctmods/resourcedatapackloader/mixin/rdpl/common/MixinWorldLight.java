@@ -86,7 +86,7 @@ import java.util.List;
             if (world.isBlockLoaded(pos)) { world.getChunk(pos).setLightPopulated(false); }
             cir.setReturnValue(true);
         }
-        else if (IChunk.rdpl$getPopulating() != null && ContentDressLight.quenches(world)) {
+        else if (Chunk.populating != null && ContentDressLight.quenches(world)) {
             if (world.isBlockLoaded(pos)) { ContentDressLight.darken(world.getChunk(pos)); }
             cir.setReturnValue(true);
         }

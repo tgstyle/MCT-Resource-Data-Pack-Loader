@@ -25,6 +25,7 @@ import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityTNTPrimed;
+import net.minecraft.entity.monster.EntityEnderman;
 import net.minecraft.entity.projectile.EntityArrow;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.EntityLivingBase;
@@ -39,6 +40,7 @@ import net.minecraft.util.SoundEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.minecraftforge.event.entity.living.EnderTeleportEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
@@ -336,6 +338,8 @@ public final class ContentEntities {
     }
 
     public static void fromSpawner(boolean adding) { SPAWNER.set(adding); }
+
+    @SubscribeEvent public static void onEnderTeleport(EnderTeleportEvent event) { if (event.getEntityLiving() instanceof EntityEnderman && !teleports(event.getEntityLiving())) { event.setCanceled(true); } }
 
     private static List<PickDef> kin(EntityVariantDef def) {
         List<PickDef> kept = new ArrayList<>();

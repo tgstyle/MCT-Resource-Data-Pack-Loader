@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.WindDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IParticle;
 
 import net.minecraft.client.particle.Particle;
 
@@ -34,8 +33,8 @@ public final class WindGust {
         double speed = slope(angle(rain, time)) * DRIFT;
         if (speed <= 0.0D) { return; }
         double heading = Math.toRadians(heading(rain, time));
-        ((IParticle) particle).rdpl$setMotionX(-Math.sin(heading) * speed);
-        ((IParticle) particle).rdpl$setMotionZ(Math.cos(heading) * speed);
+        particle.motionX = -Math.sin(heading) * speed;
+        particle.motionZ = Math.cos(heading) * speed;
     }
 
     private static long segment(WindDef wind, double time) { return (long) Math.floor(time / mean(wind)); }

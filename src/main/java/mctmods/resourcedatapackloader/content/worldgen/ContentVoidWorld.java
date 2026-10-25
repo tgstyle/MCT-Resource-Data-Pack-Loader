@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IDragonFightManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Listing;
@@ -102,7 +101,7 @@ public final class ContentVoidWorld {
         if (ContentEndDragon.wanted(world) || !(world.provider instanceof WorldProviderEnd)) { return; }
         DragonFightManager fight = ((WorldProviderEnd) world.provider).getDragonFightManager();
         if (fight == null) { return; }
-        ((IDragonFightManager) fight).rdpl$getBossInfo().setVisible(false);
+        fight.bossInfo.setVisible(false);
     }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { standOn(event.player); }

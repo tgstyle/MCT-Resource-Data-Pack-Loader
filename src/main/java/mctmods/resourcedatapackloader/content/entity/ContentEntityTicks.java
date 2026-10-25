@@ -2,8 +2,6 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.worldgen.beard.PredictedChunk;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityAITasks;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityItem;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -127,8 +125,8 @@ public final class ContentEntityTicks {
     }
 
     private static void think(EntityLiving mob, int rate) {
-        ((IEntityAITasks) mob.tasks).rdpl$setTickRate(rate);
-        ((IEntityAITasks) mob.targetTasks).rdpl$setTickRate(rate);
+        mob.tasks.tickRate = rate;
+        mob.targetTasks.tickRate = rate;
     }
 
     private static boolean far(World world, int chunkX, int chunkZ) {
@@ -163,8 +161,8 @@ public final class ContentEntityTicks {
 
     public static void age(Entity entity) {
         if (entity instanceof EntityItem) {
-            IEntityItem item = (IEntityItem) entity;
-            if (item.rdpl$getAge() != Short.MIN_VALUE) { item.rdpl$setAge(item.rdpl$getAge() + 1); }
+            EntityItem item = (EntityItem) entity;
+            if (item.age != Short.MIN_VALUE) { item.age++; }
             return;
         }
         if (entity instanceof EntityXPOrb) { ((EntityXPOrb) entity).xpOrbAge++; }

@@ -2,12 +2,6 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntity;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityCreeper;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityGhast;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLiving;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingNavigator;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityVillager;
 import mctmods.resourcedatapackloader.util.AiTasks;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
@@ -68,7 +62,7 @@ final class ContentEntityApply {
         if (def.silent) { entity.setSilent(true); }
         if (def.glowing) { entity.setGlowing(true); }
         if (def.invisible) { entity.setInvisible(true); }
-        if (def.fireproof) { ((IEntity) entity).rdpl$setImmuneToFire(true); }
+        if (def.fireproof) { entity.isImmuneToFire = true; }
         if (def.invulnerable) { entity.setEntityInvulnerable(true); }
         resize(entity, def.scale);
         if (!(entity instanceof EntityLivingBase)) { return; }
@@ -88,7 +82,7 @@ final class ContentEntityApply {
             AiTasks.remove(living.tasks, EntityAISwimming.class::isInstance);
         }
         ResourceLocation table = ContentEntities.lootTable(living);
-        if (table != null) { ((IEntityLiving) living).rdpl$setDeathLootTable(table); }
+        if (table != null) { living.deathLootTable = table; }
         if (def.baby > 0.0F && rolledYoung(living, def)) { child(living); }
         if (living instanceof EntityVillager && !def.profession.isEmpty()) { profession((EntityVillager) living, def); }
         if (def.persistent) { living.enablePersistence(); }
@@ -125,15 +119,15 @@ final class ContentEntityApply {
         }
         if (!def.ownBlast) { return; }
         if (alive instanceof EntityCreeper) {
-            ((IEntityCreeper) alive).rdpl$setFuseTime(def.explosionFuse);
-            ((IEntityCreeper) alive).rdpl$setExplosionRadius((int) def.explosionPower);
+            ((EntityCreeper) alive).fuseTime = def.explosionFuse;
+            ((EntityCreeper) alive).explosionRadius = (int) def.explosionPower;
         }
-        else if (alive instanceof EntityGhast) { ((IEntityGhast) alive).rdpl$setExplosionStrength((int) def.explosionPower); }
+        else if (alive instanceof EntityGhast) { ((EntityGhast) alive).explosionStrength = (int) def.explosionPower; }
     }
 
     private static void climber(EntityLiving living, boolean climbs) {
-        if (climbs && !(living.getNavigator() instanceof PathNavigateClimber)) { ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateClimber(living, living.world)); }
-        else if (!climbs && living.getNavigator() instanceof PathNavigateClimber) { ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateGround(living, living.world)); }
+        if (climbs && !(living.getNavigator() instanceof PathNavigateClimber)) { living.navigator = new PathNavigateClimber(living, living.world); }
+        else if (!climbs && living.getNavigator() instanceof PathNavigateClimber) { living.navigator = new PathNavigateGround(living, living.world); }
     }
 
     private static boolean rolledYoung(EntityLiving living, EntityVariantDef def) {
@@ -158,7 +152,7 @@ final class ContentEntityApply {
             return;
         }
         villager.setProfession(found);
-        if (def.career > 0) { ((IEntityVillager) villager).rdpl$setCareer(def.career); }
+        if (def.career > 0) { villager.careerId = def.career; }
     }
 
     static void remember(Entity entity, EntityVariantDef def) {
@@ -193,8 +187,8 @@ final class ContentEntityApply {
     private static void flyer(EntityLiving living) {
         AbstractAttributeMap map = living.getAttributeMap();
         if (map.getAttributeInstanceByName(SharedMonsterAttributes.FLYING_SPEED.getName()) == null) { map.registerAttribute(SharedMonsterAttributes.FLYING_SPEED); }
-        ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateFlying(living, living.world));
-        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityFlyHelper(living));
+        living.navigator = new PathNavigateFlying(living, living.world);
+        living.moveHelper = new EntityFlyHelper(living);
     }
 
     private static void walker(EntityLiving living, EntityVariantDef def) {
@@ -202,12 +196,12 @@ final class ContentEntityApply {
             ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.registryName, def.base);
             return;
         }
-        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
+        living.moveHelper = new EntityMoveHelper(living);
     }
 
     private static void swimmer(EntityLiving living) {
-        ((IEntityLivingNavigator) living).rdpl$setNavigator(new PathNavigateSwimmer(living, living.world));
-        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new SwimmingMoveHelper(living));
+        living.navigator = new PathNavigateSwimmer(living, living.world);
+        living.moveHelper = new SwimmingMoveHelper(living);
     }
 
     static void amphibious(EntityLiving living) {
@@ -220,8 +214,8 @@ final class ContentEntityApply {
         }
         PathNavigateGround ground = new PathNavigateGround(living, living.world);
         ground.setCanSwim(true);
-        ((IEntityLivingNavigator) living).rdpl$setNavigator(ground);
-        ((IEntityLivingNavigator) living).rdpl$setMoveHelper(new EntityMoveHelper(living));
+        living.navigator = ground;
+        living.moveHelper = new EntityMoveHelper(living);
     }
 
     static void effects(EntityLivingBase living, Map<String, Integer> effects, ResourceLocation owner) {

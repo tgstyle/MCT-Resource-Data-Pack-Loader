@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
@@ -238,7 +237,7 @@ public final class BeardOpen {
                 bridged += BeardRoadsDecks.deckToPlot(world, start, piece, box, other, clip, at);
                 continue;
             }
-            bridged += BeardRoadsDecks.bridge(world, start, piece, box, ((IStructureComponentBox) other).rdpl$box(), clip, at);
+            bridged += BeardRoadsDecks.bridge(world, start, piece, box, other.getBoundingBox(), clip, at);
         }
         return bridged;
     }

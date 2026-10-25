@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Longs;
 import mctmods.resourcedatapackloader.util.world.Facings;
@@ -117,7 +116,7 @@ public final class CitySeams {
         int wz = well.minZ + 2;
         int tied = 0;
         for (int[] site : neighbors(world, wx, wz)) { if (tieTo(start, startPiece, world, rand, wx, wz, site[0], site[1])) { tied++; } }
-        if (tied > 0) { ((IStructureStartGrow) start).rdpl$updateBoundingBox(); }
+        if (tied > 0) { start.updateBoundingBox(); }
     }
 
     private static List<int[]> neighbors(World world, int wx, int wz) {
@@ -370,7 +369,7 @@ public final class CitySeams {
         if (ties.isEmpty()) { ContentLog.LOGGER.debug("The street at {}, {} of the village at {}, {} reaches the seam at {} {} toward the site at {}, {} and ends on the tie road already standing there", m.box.minX, m.box.minZ, wx, wz, axis, seam, bx, bz); }
         if (t != null) {
             arrive(world, t, alongX, "the tie road");
-            ((IStructureStartGrow) t.start).rdpl$updateBoundingBox();
+            t.start.updateBoundingBox();
             ContentStructureSearch.store(world, t.start);
             ContentLog.LOGGER.debug("The street at {}, {} of the neighboring village at {}, {} is brought to the tie road as well, so the two villages join at {} {}", t.box.minX, t.box.minZ, bx, bz, axis, seam);
         }
@@ -421,7 +420,7 @@ public final class CitySeams {
         if (own.remove(plot)) { return true; }
         for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
             if (other.getComponents().remove(plot)) {
-                ((IStructureStartGrow) other).rdpl$updateBoundingBox();
+                other.updateBoundingBox();
                 ContentStructureSearch.store(world, other);
                 return true;
             }
@@ -520,7 +519,7 @@ public final class CitySeams {
             }
             theirs.remove(piece);
             theirs.removeAll(fronting);
-            ((IStructureStartGrow) neighbor).rdpl$updateBoundingBox();
+            neighbor.updateBoundingBox();
             ContentStructureSearch.store(world, neighbor);
             ContentLog.LOGGER.debug("The cul-de-sac at {}, {} of the village at {}, {} faces this village and nothing of it is built yet, so it and the {} plot(s) on it are unrolled and its street's end is open again", bulb.minX, bulb.minZ, neighbor.getBoundingBox().minX, neighbor.getBoundingBox().minZ, fronting.size());
         }

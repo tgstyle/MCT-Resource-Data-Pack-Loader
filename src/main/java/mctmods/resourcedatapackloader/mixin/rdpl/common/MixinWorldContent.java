@@ -13,6 +13,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -89,7 +90,7 @@ import java.util.List;
     }
 
     @ModifyVariable(method = "markAndNotifyBlock", at = @At("HEAD"), argsOnly = true, index = 5, remap = false) private int rdpl$suppressObserverScan(int flags) {
-        if (isRemote || IChunk.rdpl$getPopulating() == null) { return flags; }
+        if (isRemote || Chunk.populating == null) { return flags; }
         return (flags | rdpl$SUPPRESS_OBSERVERS) & ~rdpl$NOTIFY_NEIGHBORS;
     }
 }

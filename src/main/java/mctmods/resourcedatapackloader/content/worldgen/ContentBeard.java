@@ -22,8 +22,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSeams;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.content.worldgen.beard.RecurrentPlots;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillage;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
@@ -118,7 +116,7 @@ public final class ContentBeard {
     public static int villageSpacing(World world) {
         IChunkGenerator maker = ContentStructureSearch.makerOf(world);
         if (!(maker instanceof ChunkGeneratorOverworld)) { return 32; }
-        return ((IMapGenVillage) ((IChunkGeneratorBeardFields) maker).rdpl$villages()).rdpl$distance();
+        return ((ChunkGeneratorOverworld) maker).villageGenerator.distance;
     }
 
     public static long siteIn(World world, ContentSites known, int cellX, int cellZ, int spacing) { return BeardSite.siteFor(world, known, cellX, cellZ, spacing); }

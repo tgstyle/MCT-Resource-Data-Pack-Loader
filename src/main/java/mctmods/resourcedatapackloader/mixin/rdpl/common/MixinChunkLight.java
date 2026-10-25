@@ -54,12 +54,12 @@ import net.minecraft.util.math.ChunkPos;
     }
 
     @Inject(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("RETURN")) private void rdpl$relightDressed(IChunkGenerator generator, CallbackInfo ci) {
-        if (IChunk.rdpl$getPopulating() == null) { ContentDressLight.relight(); }
+        if (Chunk.populating == null) { ContentDressLight.relight(); }
     }
 
     @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;recheckGaps(Z)V")) private void rdpl$gapsAfterwards(Chunk chunk, boolean onlyOne) {
         if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }
-        ((IChunkGaps) chunk).rdpl$recheckGaps(onlyOne);
+        chunk.recheckGaps(onlyOne);
     }
 
     @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V")) private void rdpl$countRetry(Chunk chunk) {
@@ -91,11 +91,11 @@ import net.minecraft.util.math.ChunkPos;
 
     @Shadow protected abstract void updateSkylightNeighborHeight(int x, int z, int startY, int endY);
 
-    @SuppressWarnings("ConstantValue") @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V")) private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
+    @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V")) private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
         if (rdpl$dressingThis(x, z)) { return; }
         World world = chunk.getWorld();
         boolean pregen = ContentPregen.quenches(world, chunk.x, chunk.z);
-        if (!pregen && IChunk.rdpl$getPopulating() != null && ContentDressLight.quenches(world)) {
+        if (!pregen && Chunk.populating != null && ContentDressLight.quenches(world)) {
             ContentDressLight.darken(chunk);
             return;
         }
@@ -108,7 +108,7 @@ import net.minecraft.util.math.ChunkPos;
 
     @Unique private boolean rdpl$dressingThis(int x, int z) {
         if (isLightPopulated || world.isRemote) { return false; }
-        ChunkPos dressing = IChunk.rdpl$getPopulating();
+        ChunkPos dressing = Chunk.populating;
         return dressing != null && (x >> 4) == dressing.x && (z >> 4) == dressing.z;
     }
 }

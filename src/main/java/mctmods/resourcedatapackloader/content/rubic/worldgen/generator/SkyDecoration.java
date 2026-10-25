@@ -2,10 +2,6 @@ package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeForest;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomePlains;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeSnow;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeTaiga;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.BlockDoublePlant;
@@ -145,23 +141,23 @@ public final class SkyDecoration {
         if (biome instanceof BiomeDesert && random.nextInt(1000) == 0) { patches(world, random, cubeX, cubeY, cubeZ, 1, true, DESERT_WELL); }
         if (biome instanceof BiomeJungle && random.nextInt(10) == 0) { patches(world, random, cubeX, cubeY, cubeZ, 1, true, MELON); }
         if (biome instanceof BiomeForest) {
-            BiomeForest.Type kind = ((IBiomeForest) biome).rdpl$type();
+            BiomeForest.Type kind = ((BiomeForest) biome).type;
             if (kind == BiomeForest.Type.ROOFED) { canopy(world, random, cubeX, cubeY, cubeZ, biome); }
             forestPlants(world, random, cubeX, cubeY, cubeZ, random.nextInt(5) - 3 + (kind == BiomeForest.Type.FLOWER ? 2 : 0));
         }
         if (biome instanceof BiomePlains) {
             if (!sparsePlains(cubeX, cubeZ)) { doublePlants(world, random, cubeX, cubeY, cubeZ, BlockDoublePlant.EnumPlantType.GRASS, 7); }
-            if (((IBiomePlains) biome).rdpl$sunflowers()) { doublePlants(world, random, cubeX, cubeY, cubeZ, BlockDoublePlant.EnumPlantType.SUNFLOWER, 10); }
+            if (((BiomePlains) biome).sunflowers) { doublePlants(world, random, cubeX, cubeY, cubeZ, BlockDoublePlant.EnumPlantType.SUNFLOWER, 10); }
         }
         if (biome instanceof BiomeSavanna) { doublePlants(world, random, cubeX, cubeY, cubeZ, BlockDoublePlant.EnumPlantType.GRASS, 7); }
         if (biome instanceof BiomeTaiga) {
-            BiomeTaiga.Type kind = ((IBiomeTaiga) biome).rdpl$type();
+            BiomeTaiga.Type kind = ((BiomeTaiga) biome).type;
             if (kind == BiomeTaiga.Type.MEGA || kind == BiomeTaiga.Type.MEGA_SPRUCE) {
                 patches(world, random, cubeX, cubeY, cubeZ, random.nextInt(3), false, FOREST_ROCK);
             }
             doublePlants(world, random, cubeX, cubeY, cubeZ, BlockDoublePlant.EnumPlantType.FERN, 7);
         }
-        if (biome instanceof BiomeSnow && ((IBiomeSnow) biome).rdpl$superIcy()) {
+        if (biome instanceof BiomeSnow && ((BiomeSnow) biome).superIcy) {
             patches(world, random, cubeX, cubeY, cubeZ, 3, false, ICE_SPIKE);
             patches(world, random, cubeX, cubeY, cubeZ, 2, false, ICE_PATH);
         }

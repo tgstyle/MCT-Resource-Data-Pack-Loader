@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 
+import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.MapGenMineshaft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true) private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }
-        if (ContentStructurePlacement.allows(ContentStructurePlacement.MINESHAFTS, ((IMapGenBase) this).rdpl$getWorld(), chunkX, chunkZ)) { return; }
+        if (ContentStructurePlacement.allows(ContentStructurePlacement.MINESHAFTS, ((MapGenBase) (Object) this).world, chunkX, chunkZ)) { return; }
         cir.setReturnValue(false);
     }
 }

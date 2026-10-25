@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IWorldProviderEnd;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.compat.CubicChunksWorlds;
@@ -213,7 +212,7 @@ public final class ContentPregenDimensions {
         NBTTagCompound data = world.getWorldInfo().getDimensionData(world.provider.getDimension());
         data.removeTag("DragonFight");
         world.getWorldInfo().setDimensionData(world.provider.getDimension(), data);
-        ((IWorldProviderEnd) world.provider).rdpl$setDragonFightManager(new DragonFightManager(world, new NBTTagCompound()));
+        ((WorldProviderEnd) world.provider).dragonFightManager = new DragonFightManager(world, new NBTTagCompound());
         ContentLog.LOGGER.info("The end's land is gone, so the dragon and its fight start over with it");
     }
 

@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IParticleManager;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -32,7 +31,7 @@ public final class RainSplash {
 
     public static Particle particle(WorldClient world, @Nullable RainDef rain, double x, double y, double z) {
         EnumParticleTypes type = rain == null ? null : EnumParticleTypes.getByName(rain.particle);
-        IParticleFactory factory = type == null ? null : ((IParticleManager) Minecraft.getMinecraft().effectRenderer).getParticleTypes().get(type.getParticleID());
+        IParticleFactory factory = type == null ? null : Minecraft.getMinecraft().effectRenderer.particleTypes.get(type.getParticleID());
         Particle particle = factory == null ? null : factory.createParticle(type.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D);
         Particle made = particle == null ? new ParticleRain.Factory().createParticle(EnumParticleTypes.WATER_DROP.getParticleID(), world, x, y, z, 0.0D, 0.0D, 0.0D) : particle;
         if (rain != null && rain.splashColor >= 0) { made.setRBGColorF(Colors.red(rain.splashColor) / 255.0F, Colors.green(rain.splashColor) / 255.0F, Colors.blue(rain.splashColor) / 255.0F); }

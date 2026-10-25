@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeMesa;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiome;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes3D;
@@ -184,15 +183,13 @@ final class DeepSky {
     @Nullable private static BiomeDef defOf(Biome biome) { return biome instanceof ContentBiome ? ((ContentBiome) biome).getDef() : null; }
 
     @Nullable private BiomeMesa bandedMesa(BiomeMesa biome) {
-        IBiomeMesa access = (IBiomeMesa) biome;
-        if (access.rdpl$clayBands() == null || access.rdpl$worldSeed() != world.getSeed()) { access.rdpl$generateBands(world.getSeed()); }
-        return access.rdpl$clayBands() == null ? null : biome;
+        if (biome.clayBands == null || biome.worldSeed != world.getSeed()) { biome.generateBands(world.getSeed()); }
+        return biome.clayBands == null ? null : biome;
     }
 
     private IBlockState mesaState(BiomeMesa mesa, IBlockState top, IBlockState stone, int under, int depth, int worldX, int worldY, int worldZ, int genY) {
-        IBiomeMesa access = (IBiomeMesa) mesa;
-        if (under == 0) { return access.rdpl$hasForest() ? top : Blocks.HARDENED_CLAY.getDefaultState(); }
-        if (under <= depth) { return access.rdpl$getBand(worldX, worldY, worldZ); }
+        if (under == 0) { return mesa.hasForest ? top : Blocks.HARDENED_CLAY.getDefaultState(); }
+        if (under <= depth) { return mesa.getBand(worldX, worldY, worldZ); }
         return deep.veinState(worldX, genY, worldZ, stone);
     }
 

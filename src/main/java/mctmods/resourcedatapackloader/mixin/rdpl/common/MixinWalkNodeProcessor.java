@@ -57,7 +57,7 @@ import net.minecraft.pathfinding.NodeProcessor;
 
     @Unique @Nullable private static World rdpl$worldOf(IBlockAccess reading) {
         if (reading instanceof World) { return (World) reading; }
-        if (reading instanceof ChunkCache) { return ((IChunkCache) reading).rdpl$getWorld(); }
+        if (reading instanceof ChunkCache) { return ((ChunkCache) reading).world; }
         return null;
     }
 }

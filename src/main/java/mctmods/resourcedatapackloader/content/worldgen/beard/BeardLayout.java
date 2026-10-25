@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.ContentVillagePiece;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePieces;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.Facings;
 
@@ -208,7 +207,7 @@ public final class BeardLayout {
                 int x = alongX ? at : (outward ? box.maxX + 1 : box.minX - 1);
                 int z = alongX ? (outward ? box.maxZ + 1 : box.minZ - 1) : at;
                 EnumFacing facing = Facings.across(alongX, outward);
-                if (IVillagePieces.rdpl$roadPiece(start, listIn, rand, x, box.minY, z, facing, road.getComponentType()) != null) { branched++; }
+                if (StructureVillagePieces.generateAndAddRoadPiece(start, listIn, rand, x, box.minY, z, facing, road.getComponentType()) != null) { branched++; }
             }
         }
         if (branched > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} branches {} street(s) along its length at every {} blocks, the depth of two of its {} deep blocks and a road", box.minX, box.minZ, branched, interval, block); }

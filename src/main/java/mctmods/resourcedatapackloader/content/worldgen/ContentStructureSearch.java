@@ -5,14 +5,6 @@ import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.VanillaCo
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
 import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorFlatFields;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorEnd;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorHell;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorStructures;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
 import mctmods.resourcedatapackloader.util.compat.CubicChunksWorlds;
 import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -127,7 +119,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             return;
         }
         generator = theRealOne(generator);
-        if (((IMapGenBase) generator).rdpl$getWorld() == null) { ((IMapGenBase) generator).rdpl$setWorld(world); }
+        if (generator.world == null) { generator.world = world; }
         boolean cells = generator instanceof MapGenVillage && ContentBeard.wanted() && ContentBeard.adapts(world);
         int spacing = cells ? ContentSites.of(world, ContentBeard.villageSpacing(world)).spacing() : 0;
         ContentStructureSearch worker = new ContentStructureSearch(player, name, generator, cells, spacing, findUnexplored, skipHere, delivery);
@@ -180,11 +172,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 if (skipHere && Math.abs(atX - middleX) <= 8 && Math.abs(atZ - middleZ) <= 8) { continue; }
                 if (beenNear(atX * 16 + 8, atZ * 16 + 8)) { continue; }
                 if (findUnexplored && world.isChunkGeneratedAt(atX, atZ)) { continue; }
-                MapGenBase.setupChunkSeed(world.getSeed(), ((IMapGenBase) generator).rdpl$rand(), atX, atZ);
-                ((IMapGenBase) generator).rdpl$rand().nextInt();
-                if (!((IMapGenStructureSpawn) generator).rdpl$canSpawnStructureAtCoords(atX, atZ)) { continue; }
+                MapGenBase.setupChunkSeed(world.getSeed(), generator.rand, atX, atZ);
+                generator.rand.nextInt();
+                if (!generator.canSpawnStructureAtCoords(atX, atZ)) { continue; }
                 if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Chunk {}, {} says a {} may stand there. The game was asked as {}, pinned {}, ground managed {}", atX, atZ, name, generator.getClass().getName(), ContentStructurePlacement.pinned(ContentStructurePlacement.VILLAGES, atX, atZ), ContentBeard.wanted()); }
-                StructureStart would = ((IMapGenStructureSpawn) generator).rdpl$getStructureStart(atX, atZ);
+                StructureStart would = generator.getStructureStart(atX, atZ);
                 if (!would.isSizeableStructure()) { continue; }
                 if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A {} would stand on chunk {}, {} with {} piece(s) in it, {} of them not road, and the game counts that as worth keeping", name, atX, atZ, would.getComponents().size(), pieces(would)); }
                 best = new BlockPos(atX * 16 + 8, 64, atZ * 16 + 8);
@@ -396,19 +388,19 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     public static Collection<StructureStart> villageStarts(World world) {
         MapGenStructure found = villages(world);
         if (found == null || CityGrid.alone()) { return Collections.emptyList(); }
-        return ((IMapGenStructure) found).rdpl$getStructureMap().values();
+        return found.structureMap.values();
     }
 
     public static void store(World world, StructureStart village) {
         MapGenStructure found = villages(world);
-        if (found == null || ((IMapGenStructure) found).rdpl$getStructureData() == null) { return; }
-        ((IMapGenStructure) found).rdpl$setStructureStart(village.getChunkPosX(), village.getChunkPosZ(), village);
+        if (found == null || found.structureData == null) { return; }
+        found.setStructureStart(village.getChunkPosX(), village.getChunkPosZ(), village);
     }
 
     public static boolean villageFoundedAt(World world, int chunkX, int chunkZ) {
         MapGenStructure found = villages(world);
         if (found == null) { return false; }
-        MapGenStructureData data = ((IMapGenStructure) found).rdpl$getStructureData();
+        MapGenStructureData data = found.structureData;
         return data != null && ((IPackingStructureData) data).rdpl$startWithin(chunkX, chunkZ, 1);
     }
 
@@ -421,11 +413,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     @Nullable static MapGenVillage villageShell(@Nullable IChunkGenerator maker) {
         if (maker instanceof ChunkGeneratorOverworld) {
-            IChunkGeneratorBeardFields fields = (IChunkGeneratorBeardFields) maker;
-            return fields.rdpl$features() ? fields.rdpl$villages() : null;
+            ChunkGeneratorOverworld fields = (ChunkGeneratorOverworld) maker;
+            return fields.mapFeaturesEnabled ? fields.villageGenerator : null;
         }
         if (!(maker instanceof ChunkGeneratorFlat)) { return null; }
-        MapGenStructure flat = ((IChunkGeneratorFlatFields) maker).rdpl$structures().get("Village");
+        MapGenStructure flat = ((ChunkGeneratorFlat) maker).structureGenerators.get("Village");
         return flat instanceof MapGenVillage ? (MapGenVillage) flat : null;
     }
 
@@ -459,16 +451,17 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         IChunkGenerator maker = makerOf(world);
         if (maker == null) { return null; }
         if (maker instanceof ChunkGeneratorOverworld) {
-            if ("Village".equals(name)) { return ((IChunkGeneratorBeardFields) maker).rdpl$villages(); }
-            if ("Mansion".equals(name)) { return ((IChunkGeneratorBeardFields) maker).rdpl$mansions(); }
-            if ("Temple".equals(name)) { return ((IChunkGeneratorStructures) maker).rdpl$temples(); }
-            if ("Mineshaft".equals(name)) { return ((IChunkGeneratorStructures) maker).rdpl$mineshafts(); }
-            if ("Stronghold".equals(name)) { return ((IChunkGeneratorStructures) maker).rdpl$strongholds(); }
-            if ("Monument".equals(name)) { return ((IChunkGeneratorStructures) maker).rdpl$monuments(); }
+            ChunkGeneratorOverworld overworld = (ChunkGeneratorOverworld) maker;
+            if ("Village".equals(name)) { return overworld.villageGenerator; }
+            if ("Mansion".equals(name)) { return overworld.woodlandMansionGenerator; }
+            if ("Temple".equals(name)) { return overworld.scatteredFeatureGenerator; }
+            if ("Mineshaft".equals(name)) { return overworld.mineshaftGenerator; }
+            if ("Stronghold".equals(name)) { return overworld.strongholdGenerator; }
+            if ("Monument".equals(name)) { return overworld.oceanMonumentGenerator; }
             return null;
         }
-        if (maker instanceof ChunkGeneratorHell && "Fortress".equals(name)) { return ((IChunkGeneratorHell) maker).rdpl$fortresses(); }
-        if (maker instanceof ChunkGeneratorEnd && "EndCity".equals(name)) { return ((IChunkGeneratorEnd) maker).rdpl$endCities(); }
+        if (maker instanceof ChunkGeneratorHell && "Fortress".equals(name)) { return ((ChunkGeneratorHell) maker).genNetherBridge; }
+        if (maker instanceof ChunkGeneratorEnd && "EndCity".equals(name)) { return ((ChunkGeneratorEnd) maker).endCityGen; }
         return null;
     }
 

@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
     @ModifyVariable(method = "addComponentParts", at = @At("STORE"), name = "iblockstate") private IBlockState rdpl$churchWalls(IBlockState iblockstate) {
         if (iblockstate == null || iblockstate.getBlock() != Blocks.COBBLESTONE) { return iblockstate; }
 
-        return ((IVillagePiece) this).rdpl$biomeBlock(iblockstate);
+        return ((StructureVillagePieces.Village) (Object) this).getBiomeSpecificBlockState(iblockstate);
     }
 }

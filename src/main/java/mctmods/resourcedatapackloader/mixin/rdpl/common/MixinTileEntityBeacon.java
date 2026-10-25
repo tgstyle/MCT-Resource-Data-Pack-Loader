@@ -41,8 +41,8 @@ import java.util.List;
         if (!rubic.rdpl$isRubicWorld() || !isComplete || beamSegments.isEmpty()) { return; }
         int extend = rubic.rdpl$getMaxHeight() - rdpl$scanTop;
         if (extend <= 0) { return; }
-        IBeamSegment last = (IBeamSegment) beamSegments.get(beamSegments.size() - 1);
-        last.rdpl$setHeight(last.rdpl$getHeight() + extend);
+        TileEntityBeacon.BeamSegment last = beamSegments.get(beamSegments.size() - 1);
+        last.height += extend;
     }
 
     @Unique private int rdpl$topStorageBlockY() {

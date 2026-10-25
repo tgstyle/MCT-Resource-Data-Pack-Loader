@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IPlayerLanguage;
-
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -79,7 +77,7 @@ public final class Lang {
 
     public static String tr(@Nullable EntityPlayer player, String key, Object... args) {
         if (!(player instanceof EntityPlayerMP)) { return tr(key, args); }
-        String locale = ((IPlayerLanguage) player).rdpl$language();
+        String locale = ((EntityPlayerMP) player).language;
         Map<String, String> table = locale == null ? null : TABLES.get(locale.toLowerCase(Locale.ROOT));
         if (table == null || !table.containsKey(key)) { table = TABLES.get("en_us"); }
         return line(table, key, args);

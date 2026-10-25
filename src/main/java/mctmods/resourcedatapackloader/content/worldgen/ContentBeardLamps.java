@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsEnds;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardStations;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -208,7 +207,7 @@ public final class ContentBeardLamps {
         int reach = (BeardRoads.pathFullWidth() - 3) / 2;
         for (StructureComponent other : start.getComponents()) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox held = ((IStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox held = other.boundingBox;
             if (held == null) { continue; }
             if (other == piece) {
                 if (CityGrowth.bulbWide(other)) { continue; }

@@ -9,8 +9,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IDrawnRoad;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenVillageStart;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
@@ -196,8 +194,8 @@ public final class CityLayout {
                 plots++;
             }
         }
-        if (held instanceof MapGenVillage.Start && streets + alleys + plazas + plots > 0) { ((IMapGenVillageStart) held).rdpl$setSizeable(true); }
-        ((IStructureStartGrow) held).rdpl$updateBoundingBox();
+        if (held instanceof MapGenVillage.Start && streets + alleys + plazas + plots > 0) { ((MapGenVillage.Start) held).hasMoreThanTwoComponents = true; }
+        held.updateBoundingBox();
         ContentLog.LOGGER.debug("City map {} laid the village at {}, {} turned {}: {} street(s), {} alley(s), {} plaza(s) besides the start, {} plot(s), {} raised stretch(es){}", def.key, well.minX, well.minZ, turn, streets, alleys, plazas, plots, lifts.boxes.length, grows ? ", with cells left to grow" : "");
         drawn = !grows;
         return drawn;

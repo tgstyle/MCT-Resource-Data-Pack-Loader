@@ -8,8 +8,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.Facings;
 
@@ -40,7 +38,7 @@ public final class ContentBeardEnds {
         try {
             for (StructureComponent piece : pieces.toArray(new StructureComponent[0])) {
                 if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
-                StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
+                StructureBoundingBox box = piece.boundingBox;
                 if (box == null) { continue; }
                 boolean alongX = BeardPlots.roadAlongX(piece);
                 if (BeardRoads.roadNarrow(box, alongX) || CityGrowth.bulbWide(piece)) { continue; }
@@ -54,7 +52,7 @@ public final class ContentBeardEnds {
             }
         }
         finally { vetoed = null; }
-        ((IStructureStartGrow) start).rdpl$updateBoundingBox();
+        start.updateBoundingBox();
     }
 
     public static void attachAll(StructureStart start, World world, Random rand) {
@@ -68,7 +66,7 @@ public final class ContentBeardEnds {
 
     private static void elbows(StructureStart start, StructureComponent piece, List<StructureComponent> everyone, Random rand) {
         if (!(piece instanceof StructureVillagePieces.Path)) { return; }
-        StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
+        StructureBoundingBox box = piece.boundingBox;
         if (box == null) { return; }
         boolean alongX = BeardPlots.roadAlongX(piece);
         if (BeardRoads.roadNarrow(box, alongX) || CityGrowth.bulbWide(piece)) { return; }
@@ -93,7 +91,7 @@ public final class ContentBeardEnds {
         int bestScore = Integer.MAX_VALUE;
         for (StructureComponent other : everyone) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = other.boundingBox;
             if (met == null) { continue; }
             boolean otherAlongX = BeardPlots.roadAlongX(other);
             if (BeardRoads.roadNarrow(met, otherAlongX) || CityGrowth.bulbWide(other)) { continue; }

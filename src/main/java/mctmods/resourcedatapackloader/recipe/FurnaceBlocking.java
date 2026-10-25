@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.recipe;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IFurnaceRecipes;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Stacks;
@@ -43,7 +42,7 @@ public final class FurnaceBlocking {
     public static void apply() {
         if (BLOCKING.disabled()) { return; }
         Map<ItemStack, ItemStack> smelting = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingList();
-        Map<ItemStack, Float> experience = ((IFurnaceRecipes) net.minecraft.item.crafting.FurnaceRecipes.instance()).rdpl$getExperienceList();
+        Map<ItemStack, Float> experience = net.minecraft.item.crafting.FurnaceRecipes.instance().experienceList;
         Iterator<Map.Entry<ItemStack, ItemStack>> iterator = smelting.entrySet().iterator();
         int removed = 0;
         while (iterator.hasNext()) {

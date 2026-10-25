@@ -31,15 +31,14 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final String CUBIC_CHUNKS_MARKER = "io/github/opencubicchunks/cubicchunks/core/CubicChunks.class";
     private static final String RUBIC_PACKAGE = "mctmods.resourcedatapackloader.mixin.rdpl.";
     private static final Set<String> RUBIC = new HashSet<>(Arrays.asList(
-            "client.IChunkProviderClient", "client.IContainerLocalRenderInformation", "client.IGuiOptionsRowList", "client.IGuiScreen",
-            "client.IGuiVideoSettings", "client.IViewFrustum", "client.MixinChunk", "client.MixinChunkCache",
+            "client.MixinChunk", "client.MixinChunkCache",
             "client.MixinChunkVisibility", "client.MixinDebugRenderChunkBorder", "client.MixinEmptyChunk", "client.MixinEntityPlayerSP",
             "client.MixinEntityRendererRubic", "client.MixinEntityRubic", "client.MixinExtendedBlockStorage", "client.MixinGuiOverlayDebug",
             "client.MixinRenderChunk", "client.MixinRenderChunkOptifine", "client.MixinRenderChunkUtils", "client.MixinRenderGlobal",
             "client.MixinRenderGlobalNoOptifine", "client.MixinRenderGlobalOptifineE", "client.MixinRenderGlobalVertViewDistance", "client.MixinRenderList",
             "client.MixinRenderWorker", "client.MixinViewFrustum", "client.MixinViewFrustumOptifine", "client.MixinViewFrustumVertViewDistance",
             "client.MixinWorldClient", "client.MixinWorldProvider", "common.IASMEventHandler", "common.IBlockAccessMinMaxHeight",
-            "common.IEventBus", "common.IGameRegistry", "common.IPlayerChunkMapEntry", "common.MixinAnvilSaveHandler",
+            "common.IEventBus", "common.IGameRegistry", "common.MixinAnvilSaveHandler",
             "common.MixinBiomeDecorator", "common.MixinBiomeTemperatureConfig", "common.MixinBlockBeaconAsyncUpdate", "common.MixinBlockChorusFlower",
             "common.MixinBlockFallingHeightLimits", "common.MixinBlockGrass", "common.MixinBlockLilyPadHeightLimits", "common.MixinBlockMushroom",
             "common.MixinBlockPistonBaseHeightFix", "common.MixinBlockPortalSizeHeightLimits", "common.MixinBlockSkullWitherSpawnLimits", "common.MixinBlockStaticLiquid",
@@ -50,7 +49,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "common.MixinForgeChunkManager", "common.MixinForgeEventFactory", "common.MixinItemChorusFruit", "common.MixinItemMap", "common.MixinMinecraftServer",
             "common.MixinNetHandlerPlayServer", "common.MixinNetHandlerPlayServerBuild", "common.MixinPacketBufferBlockPosWrite", "common.MixinPathNavigateGround",
             "common.MixinPlayerList", "common.MixinRandomPositionGenerator", "common.MixinRegionFileCacheRubic", "common.MixinRubicEndWorkaround",
-            "common.MixinSaveHandler", "common.MixinStructureStartRubic", "common.MixinTeleporter", "common.MixinTerrainGen",
+            "common.MixinStructureStartRubic", "common.MixinTeleporter", "common.MixinTerrainGen",
             "common.MixinTicket", "common.MixinTileEntityBeacon", "common.MixinTileEntityBeaconBetterFps", "common.MixinTileEntityEndGateway",
             "common.MixinTileEntityStructure", "common.MixinWalkNodeProcessorRubic", "common.MixinWorld", "common.MixinWorldEntitySpawner", "common.MixinWorldGenBigMushroom",
             "common.MixinWorldGenBlockBlobRubic", "common.MixinWorldGenBonusChest", "common.MixinWorldGenCanopyTree", "common.MixinWorldGenDeadBush",
@@ -59,7 +58,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "common.MixinWorldGenShrub", "common.MixinWorldGenSpikes", "common.MixinWorldGenSwamp", "common.MixinWorldGenTaiga1",
             "common.MixinWorldGenTaiga2", "common.MixinWorldGenTallGrass", "common.MixinWorldGenTreeBirchSavanna", "common.MixinWorldGenTrees",
             "common.MixinWorldProvider", "common.MixinWorldServer", "common.MixinWorldSettings",
-            "server.MixinDedicatedPlayerList", "server.MixinDedicatedServerHeightLimits"));
+            "server.MixinDedicatedServerHeightLimits"));
     private static final String RUBIC_LIGHT_PACKAGE = "mctmods.resourcedatapackloader.mixin.rubiclight.";
     private static final String RUBIC_GC_PACKAGE = "mctmods.resourcedatapackloader.mixin.galacticraft.";
     private static final Set<String> RUBIC_GC = new HashSet<>(Arrays.asList("MixinBlockVec3", "MixinThreadFindSeal", "MixinTransformerHooksCamera"));
@@ -134,7 +133,6 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         RUBIC_CONDITIONS.put(selectable + "client.MixinRenderList", optifine);
         RUBIC_CONDITIONS.put(selectable + "client.MixinViewFrustumOptifine", optifine);
         RUBIC_CONDITIONS.put(selectable + "client.MixinChunkVisibility", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.IGuiVideoSettings", !optifine);
         boolean betterFpsBeacon = false;
         try {
             Class betterFpsConditions = Class.forName("guichaguri.betterfps.transformers.Conditions");

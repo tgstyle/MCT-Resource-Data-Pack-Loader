@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentOceanFluid;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorOverworld;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Longs;
 
@@ -137,19 +136,18 @@ public final class BeardSurface {
     }
     private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ) { return surface(generator, biomes, blockX, blockZ, SCRATCH.get()); }
     private static int surface(ChunkGeneratorOverworld generator, Biome[] biomes, int blockX, int blockZ, Scratch scratch) {
-        IChunkGeneratorOverworld inside = (IChunkGeneratorOverworld) generator;
-        ChunkGeneratorSettings settings = inside.rdpl$settings();
+        ChunkGeneratorSettings settings = generator.settings;
         int nx = blockX >> 2;
         int nz = blockZ >> 2;
-        double[] depth = inside.rdpl$depthNoise().generateNoiseOctaves(scratch.depth, nx, nz, 1, 1, settings.depthNoiseScaleX, settings.depthNoiseScaleZ, settings.depthNoiseScaleExponent);
+        double[] depth = generator.depthNoise.generateNoiseOctaves(scratch.depth, nx, nz, 1, 1, settings.depthNoiseScaleX, settings.depthNoiseScaleZ, settings.depthNoiseScaleExponent);
         float coordinate = settings.coordinateScale;
         float height = settings.heightScale;
-        double[] main = inside.rdpl$mainNoise().generateNoiseOctaves(scratch.main, nx, 0, nz, 1, 33, 1, coordinate / settings.mainNoiseScaleX, height / settings.mainNoiseScaleY, coordinate / settings.mainNoiseScaleZ);
-        double[] lower = inside.rdpl$minLimit().generateNoiseOctaves(scratch.lower, nx, 0, nz, 1, 33, 1, coordinate, height, coordinate);
-        double[] upper = inside.rdpl$maxLimit().generateNoiseOctaves(scratch.upper, nx, 0, nz, 1, 33, 1, coordinate, height, coordinate);
-        float[] weights = inside.rdpl$biomeWeights();
+        double[] main = generator.mainPerlinNoise.generateNoiseOctaves(scratch.main, nx, 0, nz, 1, 33, 1, coordinate / settings.mainNoiseScaleX, height / settings.mainNoiseScaleY, coordinate / settings.mainNoiseScaleZ);
+        double[] lower = generator.minLimitPerlinNoise.generateNoiseOctaves(scratch.lower, nx, 0, nz, 1, 33, 1, coordinate, height, coordinate);
+        double[] upper = generator.maxLimitPerlinNoise.generateNoiseOctaves(scratch.upper, nx, 0, nz, 1, 33, 1, coordinate, height, coordinate);
+        float[] weights = generator.biomeWeights;
         Biome middle = biomes[12];
-        boolean amplified = inside.rdpl$terrainType() == WorldType.AMPLIFIED;
+        boolean amplified = generator.terrainType == WorldType.AMPLIFIED;
         float variation = 0.0F;
         float base = 0.0F;
         float weight = 0.0F;

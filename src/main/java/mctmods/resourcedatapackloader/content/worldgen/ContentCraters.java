@@ -3,8 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.CraterDef;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLinks;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.block.state.IBlockState;
@@ -164,9 +162,9 @@ public final class ContentCraters {
 
     private static boolean settled(World world, MapGenVillage shell, Crater crater, int chunkX, int chunkZ, int keep, int around) {
         MapGenStructure real = ContentStructureSearch.theRealOne(shell);
-        int reachable = ((IMapGenBase) real).rdpl$getRange() + around;
+        int reachable = real.range + around;
         boolean linked = BeardLinks.on();
-        for (StructureStart start : ((IMapGenStructure) real).rdpl$getStructureMap().values()) {
+        for (StructureStart start : real.structureMap.values()) {
             if (start == null || !start.isSizeableStructure()) { continue; }
             if (crater.near(start.getBoundingBox(), keep)) {
                 for (StructureComponent piece : start.getComponents()) {

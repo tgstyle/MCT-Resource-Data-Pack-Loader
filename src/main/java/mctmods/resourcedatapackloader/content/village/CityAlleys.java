@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.Facings;
 
@@ -85,7 +84,7 @@ public final class CityAlleys {
                 }
             }
         }
-        if (laid > 0) { ((IStructureStartGrow) held).rdpl$updateBoundingBox(); }
+        if (laid > 0) { held.updateBoundingBox(); }
     }
 
     private static int alleyRun(List<StructureComponent> components, boolean alongX, int row, int edge, int dir, int longest) {

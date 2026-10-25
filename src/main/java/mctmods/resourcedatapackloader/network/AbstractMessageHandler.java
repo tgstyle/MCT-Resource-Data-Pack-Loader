@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.INetHandlerPlayClient;
 import mctmods.resourcedatapackloader.util.SideUtils;
 
 import net.minecraft.client.Minecraft;
@@ -59,7 +58,7 @@ public abstract class AbstractMessageHandler<T extends IMessage> implements IMes
 
         @Nullable static World getWorld() {
             return Minecraft.getMinecraft().getConnection() == null ? null :
-                    ((INetHandlerPlayClient) Minecraft.getMinecraft().getConnection()).rdpl$world();
+                    Minecraft.getMinecraft().getConnection().world;
         }
     }
 }

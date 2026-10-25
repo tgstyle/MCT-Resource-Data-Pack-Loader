@@ -13,6 +13,8 @@ import mctmods.resourcedatapackloader.util.Longs;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.MapGenBase;
+import net.minecraft.world.gen.structure.MapGenStructure;
+import net.minecraft.world.gen.structure.MapGenVillage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -23,9 +25,9 @@ import java.util.List;
 import java.util.Random;
 
 @Mixin(MapGenBase.class) public abstract class MixinMapGenBase {
-    @Shadow protected int range;
-    @Shadow protected Random rand;
-    @Shadow protected World world;
+    @Shadow public int range;
+    @Shadow public Random rand;
+    @Shadow public World world;
 
     @Inject(method = "generate", at = @At("HEAD"), cancellable = true) private void rdpl$skipCarving(World worldIn, int x, int z, ChunkPrimer primer, CallbackInfo ci) {
         if (ContentStructures.blocks(worldIn, (MapGenBase) (Object) this)) { ci.cancel(); }
@@ -57,7 +59,7 @@ import java.util.Random;
             }
             return;
         }
-        ContentSites known = ContentSites.of(worldIn, ((IMapGenVillage) this).rdpl$distance());
+        ContentSites known = ContentSites.of(worldIn, MapGenVillage.class.cast(this).distance);
         int grid = known.spacing();
         for (int cellX = Math.floorDiv(x - range, grid); cellX <= Math.floorDiv(x + range, grid); cellX++) {
             for (int cellZ = Math.floorDiv(z - range, grid); cellZ <= Math.floorDiv(z + range, grid); cellZ++) {
@@ -71,6 +73,6 @@ import java.util.Random;
     @Unique private void rdpl$visit(World worldIn, int chunkX, int chunkZ, int x, int z, ChunkPrimer primer, long saltX, long saltZ) {
         if (Math.abs(chunkX - x) > range || Math.abs(chunkZ - z) > range) { return; }
         rand.setSeed((long) chunkX * saltX ^ (long) chunkZ * saltZ ^ worldIn.getSeed());
-        ((IMapGenStructureSpawn) this).rdpl$recursiveGenerate(worldIn, chunkX, chunkZ, x, z, primer);
+        MapGenStructure.class.cast(this).recursiveGenerate(worldIn, chunkX, chunkZ, x, z, primer);
     }
 }

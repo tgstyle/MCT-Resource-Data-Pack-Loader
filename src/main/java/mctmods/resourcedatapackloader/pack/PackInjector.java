@@ -17,6 +17,8 @@ import javax.annotation.Nullable;
     private static RDPLResourcePack normal;
     private static RDPLResourcePack override;
 
+    static { VintageFixAdapter.register(); }
+
     private PackInjector() {}
 
     public static List<IResourcePack> insert(List<IResourcePack> list) {

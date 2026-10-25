@@ -4,8 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunk;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -374,7 +372,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (provider.getLoadedChunk(x + 1, z) == null || provider.getLoadedChunk(x, z + 1) == null || provider.getLoadedChunk(x + 1, z + 1) == null) { return; }
         try {
             WorldgenHangWatchdog.startWorldGen();
-            ((IChunk) chunk).rdpl$dress(provider.chunkGenerator);
+            chunk.populate(provider.chunkGenerator);
         }
         finally { WorldgenHangWatchdog.endWorldGen(); }
         dressedLate++;
@@ -419,10 +417,9 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if (server == null) { return; }
         long total = order.total();
         int percent = total <= 0L ? 0 : (int) Math.min(100L, done * 100L / total);
-        IMinecraftServerMessage progress = (IMinecraftServerMessage) server;
-        progress.rdpl$setCurrentTask("Preparing spawn area");
-        progress.rdpl$setPercentDone(percent);
-        progress.rdpl$setUserMessage("menu.generatingTerrain");
+        server.currentTask = "Preparing spawn area";
+        server.percentDone = percent;
+        server.setUserMessage("menu.generatingTerrain");
     }
 
     private void checkpoint(WorldServer world) {

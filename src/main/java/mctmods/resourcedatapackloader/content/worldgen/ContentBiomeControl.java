@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeName;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -208,7 +207,7 @@ public final class ContentBiomeControl {
     }
 
     public static String shownName(Biome biome) {
-        String held = ((IBiomeName) biome).rdpl$biomeName();
+        String held = biome.biomeName;
         if (held != null) { return held; }
         ResourceLocation name = biome.getRegistryName();
         return name == null ? "unknown" : name.getPath();

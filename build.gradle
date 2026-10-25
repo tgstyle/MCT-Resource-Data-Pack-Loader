@@ -76,6 +76,10 @@ minecraft {
     )
 }
 
+tasks.matching { it.name in ['deobfuscateMergedJarToSrg', 'srgifyBinpatchedJar', 'applyJST'] }.configureEach {
+    accessTransformerFiles.from("src/main/resources/META-INF/${mod_id}_at.cfg")
+}
+
 repositories {
     maven {
         url = "https://cursemaven.com"
@@ -107,6 +111,8 @@ def bpJar = devSyncScript == null ? null : devSyncStaged(devSyncPin('MCT-Blast-P
 if (bpJar == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp in version.properties to a snapshot in the devsync cache; falling back to the CurseForge version') }
 
 String deobf(String notation) { return project.modUtils.deobfuscate(notation) as String }
+
+boolean companion(String key) { return (findProperty('companions') ?: '').toString().split(',').contains(key) }
 
 dependencies {
     if (bpJar != null) {
@@ -164,6 +170,7 @@ dependencies {
     compileOnly deobf("curse.maven:${common.opcm_version}")
 
     clientRuntime deobf("curse.maven:${common.bf3r_version}")
+    if (companion('vintagefix')) { runtimeOnly deobf("curse.maven:${common.vfix_version}") }
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'
@@ -238,7 +245,8 @@ jar {
     manifest {
         attributes(
                 'FMLCorePlugin': 'mctmods.resourcedatapackloader.core.MCTMixin',
-                'FMLCorePluginContainsFMLMod': 'true'
+                'FMLCorePluginContainsFMLMod': 'true',
+                'FMLAT': "${mod_id}_at.cfg"
         )
     }
     onlyIf { needsJar() }

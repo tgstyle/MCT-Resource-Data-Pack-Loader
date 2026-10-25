@@ -2,10 +2,6 @@ package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStateContainer;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStatePaletteHashMap;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStatePaletteLinear;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ITileEntityLockableLoot;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
@@ -23,6 +19,8 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.BlockStateContainer;
+import net.minecraft.world.chunk.BlockStatePaletteHashMap;
+import net.minecraft.world.chunk.BlockStatePaletteLinear;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IBlockStatePalette;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
@@ -126,17 +124,17 @@ import java.util.stream.IntStream;
     }
 
     private static boolean holds(BlockStateContainer states) {
-        IBlockStatePalette palette = ((IBlockStateContainer) states).rdpl$palette();
-        if (palette instanceof IBlockStatePaletteLinear) {
-            IBlockStatePaletteLinear linear = (IBlockStatePaletteLinear) palette;
-            IBlockState[] held = linear.rdpl$states();
-            for (int index = 0; index < linear.rdpl$arraySize(); index++) {
+        IBlockStatePalette palette = states.palette;
+        if (palette instanceof BlockStatePaletteLinear) {
+            BlockStatePaletteLinear linear = (BlockStatePaletteLinear) palette;
+            IBlockState[] held = linear.states;
+            for (int index = 0; index < linear.arraySize; index++) {
                 if (held[index] != null && ContentDisabled.disabled(held[index].getBlock())) { return true; }
             }
             return false;
         }
-        if (palette instanceof IBlockStatePaletteHashMap) {
-            for (IBlockState state : ((IBlockStatePaletteHashMap) palette).rdpl$statePaletteMap()) {
+        if (palette instanceof BlockStatePaletteHashMap) {
+            for (IBlockState state : ((BlockStatePaletteHashMap) palette).statePaletteMap) {
                 if (state != null && ContentDisabled.disabled(state.getBlock())) { return true; }
             }
             return false;
@@ -178,7 +176,7 @@ import java.util.stream.IntStream;
     private static void sweep(IInventory inventory) { sweep(new InvWrapper(inventory)); }
 
     private static void sweep(TileEntity tile) {
-        if (tile instanceof TileEntityLockableLoot && ((ITileEntityLockableLoot) tile).rdpl$lootTable() != null) { return; }
+        if (tile instanceof TileEntityLockableLoot && ((TileEntityLockableLoot) tile).lootTable != null) { return; }
         if (tile instanceof IInventory) {
             sweep((IInventory) tile);
             return;

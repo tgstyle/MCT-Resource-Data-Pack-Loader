@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAINearestAttackableTarget;
+import net.minecraft.entity.ai.EntityAITarget;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow protected EntityLivingBase targetEntity;
 
     @Inject(method = "shouldExecute", at = @At("RETURN"), cancellable = true) private void rdpl$docile(CallbackInfoReturnable<Boolean> cir) {
-        if (ContentThreat.docile(cir.getReturnValueZ(), targetEntity, ((IEntityAITarget) this).rdpl$getTaskOwner())) {
+        if (ContentThreat.docile(cir.getReturnValueZ(), targetEntity, ((EntityAITarget) (Object) this).taskOwner)) {
             targetEntity = null;
             cir.setReturnValue(Boolean.FALSE);
         }

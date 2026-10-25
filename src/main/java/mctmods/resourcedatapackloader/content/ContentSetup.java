@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.util.ContentCreativeTab;
 import mctmods.resourcedatapackloader.content.util.ContentTabs;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registries;
 
@@ -57,9 +56,8 @@ public final class ContentSetup {
 
     public static void material(Block block, BlockDef def) {
         if (def.material == null) { return; }
-        IBlock inside = (IBlock) block;
-        inside.rdpl$setMaterial(def.material);
-        inside.rdpl$setMapColor(def.material.getMaterialMapColor());
+        block.material = def.material;
+        block.blockMapColor = def.material.getMaterialMapColor();
     }
 
     public static void apply(Block block, BlockDef def) {

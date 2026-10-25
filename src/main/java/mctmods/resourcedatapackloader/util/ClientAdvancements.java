@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IClientAdvancementManager;
-
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
@@ -19,7 +17,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         ClientAdvancementManager manager = mc.player.connection.getAdvancementManager();
         Advancement advancement = manager.getAdvancementList().getAdvancement(new ResourceLocation(name));
         if (advancement == null) { return false; }
-        AdvancementProgress progress = ((IClientAdvancementManager) manager).getAdvancementToProgress().get(advancement);
+        AdvancementProgress progress = manager.advancementToProgress.get(advancement);
         return progress != null && progress.isDone();
     }
 }

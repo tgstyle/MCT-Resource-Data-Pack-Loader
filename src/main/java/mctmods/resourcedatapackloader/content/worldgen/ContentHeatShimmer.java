@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IShaderGroup;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonSyntaxException;
@@ -110,7 +109,7 @@ import javax.annotation.Nullable;
         set(own, "EndDistance", Math.max(mc.gameSettings.renderDistanceChunks * 16.0F, look.startDistance + 1.0F));
         set(own, "DepthBias", PROJECTION.get(10) - 1.0F);
         set(own, "DepthLinear", PROJECTION.get(14));
-        for (Shader shader : ((IShaderGroup) own).getListShaders()) { shader.getShaderManager().addSamplerTexture(DEPTH, depthTexture); }
+        for (Shader shader : own.listShaders) { shader.getShaderManager().addSamplerTexture(DEPTH, depthTexture); }
     }
 
     private static void copyDepth(int w, int h) {
@@ -130,7 +129,7 @@ import javax.annotation.Nullable;
     }
 
     private static void set(ShaderGroup own, String name, float value) {
-        for (Shader shader : ((IShaderGroup) own).getListShaders()) {
+        for (Shader shader : own.listShaders) {
             ShaderUniform uniform = shader.getShaderManager().getShaderUniform(name);
             if (uniform != null) { uniform.set(value); }
         }

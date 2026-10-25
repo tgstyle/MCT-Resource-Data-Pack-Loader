@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.def.TradeSwitchDef;
 import mctmods.resourcedatapackloader.content.extra.ContentTrade;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.interfaces.ITradeSwitchHolder;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityVillager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -124,8 +123,7 @@ public final class ContentTradeSwitch {
     @Nullable private static MerchantRecipeList offers(EntityVillager villager) {
         TradeSwitchDef def = ContentEnvironments.trades(villager.world, new BlockPos(villager));
         List<Listed> all = LISTED.get(def);
-        IEntityVillager access = (IEntityVillager) villager;
-        int career = access.rdpl$career();
+        int career = villager.careerId;
         if (all == null || career == 0) { return null; }
         ResourceLocation profession = villager.getProfessionForge().getRegistryName();
         String name = villager.getProfessionForge().getCareer(career - 1).getName();
@@ -140,7 +138,7 @@ public final class ContentTradeSwitch {
             now = new Held(def.stamp, profession.toString(), name, 0, new MerchantRecipeList());
             held.put(def.set, now);
         }
-        int level = access.rdpl$careerLevel();
+        int level = villager.careerLevel;
         if (now.level < level) {
             for (Listed listed : mine) {
                 if (listed.level > now.level && listed.level <= level) { listed.trade.addMerchantRecipe(villager, now.offers, villager.getRNG()); }

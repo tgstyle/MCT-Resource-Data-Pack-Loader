@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.StructureOceanMonument;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,7 +42,7 @@ import java.util.List;
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true) private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }
-        if (ContentStructurePlacement.allows(ContentStructurePlacement.MONUMENTS, ((IMapGenBase) this).rdpl$getWorld(), chunkX, chunkZ)) { return; }
+        if (ContentStructurePlacement.allows(ContentStructurePlacement.MONUMENTS, ((MapGenBase) (Object) this).world, chunkX, chunkZ)) { return; }
         cir.setReturnValue(false);
     }
 }

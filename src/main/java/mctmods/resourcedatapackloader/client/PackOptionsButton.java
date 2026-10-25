@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 public final class PackOptionsButton {
     private static final int ID = 74125;
     private static final int SELECTION_ID = 74126;
-    private static final int FALLBACK_Y = 163;
+    private static final int FALLBACK_MORE_OPTIONS_Y = 187;
     private static final int MORE_OPTIONS_ID = 3;
     private static final int CREATE_ID = 0;
     private static final int PLAY_ID = 1;
@@ -25,7 +25,7 @@ public final class PackOptionsButton {
     private static GuiButton create;
     private static GuiButton play;
     private static GuiButton corner;
-    private static int moreOptionsY = FALLBACK_Y + 24;
+    private static int moreOptionsY = FALLBACK_MORE_OPTIONS_Y;
 
     private PackOptionsButton() {}
 
@@ -40,18 +40,15 @@ public final class PackOptionsButton {
         @SubscribeEvent public void onInit(GuiScreenEvent.InitGuiEvent.Post event) {
             if (PackOptions.files().isEmpty()) { return; }
             if (event.getGui() instanceof GuiCreateWorld) {
-                int x = event.getGui().width / 2 - 75;
-                int y = FALLBACK_Y;
+                int x = event.getGui().width - CORNER_WIDTH - CORNER_INSET;
+                int y = CORNER_INSET - 2;
                 create = null;
+                moreOptionsY = FALLBACK_MORE_OPTIONS_Y;
                 for (GuiButton held : event.getButtonList()) {
-                    if (held.id == MORE_OPTIONS_ID) {
-                        x = held.x;
-                        y = held.y - 24;
-                    }
+                    if (held.id == MORE_OPTIONS_ID) { moreOptionsY = held.y; }
                     else if (held.id == CREATE_ID) { create = held; }
                 }
-                moreOptionsY = y + 24;
-                event.getButtonList().add(new GuiButton(ID, x, y, 150, 20, I18n.format("rdpl.gui.packOptions")));
+                event.getButtonList().add(new GuiButton(ID, x, y, CORNER_WIDTH, 20, I18n.format("rdpl.gui.packOptions")));
                 return;
             }
             if (!(event.getGui() instanceof GuiWorldSelection)) { return; }

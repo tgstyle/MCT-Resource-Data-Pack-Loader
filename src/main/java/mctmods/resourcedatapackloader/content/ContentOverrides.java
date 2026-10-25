@@ -3,11 +3,6 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.OverrideDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlock;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockFire;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IItem;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IItemFood;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IPotionType;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -126,14 +121,13 @@ public final class ContentOverrides {
         if (!ForgeRegistries.BLOCKS.containsKey(def.target)) { return false; }
         Block block = ForgeRegistries.BLOCKS.getValue(def.target);
         if (block == null) { return false; }
-        IBlock inside = (IBlock) block;
         if (!BLOCKS.containsKey(block)) { BLOCKS.put(block, BlockSnapshot.of(block)); }
         if (def.hardness != null) { block.setHardness(def.hardness); }
         if (def.resistance != null) { block.setResistance(def.resistance); }
         if (def.slipperiness != null) { block.setDefaultSlipperiness(def.slipperiness); }
         if (def.light != null) { block.setLightLevel(MathHelper.clamp(def.light, 0, 15) / 15.0F); }
         if (def.lightOpacity != null) { block.setLightOpacity(MathHelper.clamp(def.lightOpacity, 0, 255)); }
-        if (def.soundType != null) { inside.rdpl$setSoundType(ContentTypes.soundType(def.soundType, inside.rdpl$getSoundType(), def.source.toString())); }
+        if (def.soundType != null) { block.blockSoundType = ContentTypes.soundType(def.soundType, block.blockSoundType, def.source.toString()); }
         if (def.harvestTool != null) { block.setHarvestLevel(def.harvestTool, def.harvestToolLevel); }
         if (def.flammability != null) {
             if (!FIRE.containsKey(block)) { FIRE.put(block, FireSnapshot.of(block)); }
@@ -163,10 +157,10 @@ public final class ContentOverrides {
     private static void applyFood(OverrideDef def, OverrideDef.FoodDef food, Item item) {
         if (item instanceof ItemFood) {
             if (!FOODS.containsKey(item)) { FOODS.put(item, FoodSnapshot.of((ItemFood) item)); }
-            IItemFood inside = (IItemFood) item;
-            inside.rdpl$setHealAmount(food.heal);
-            inside.rdpl$setSaturationModifier(food.saturation);
-            inside.rdpl$setAlwaysEdible(food.alwaysEdible);
+            ItemFood eaten = (ItemFood) item;
+            eaten.healAmount = food.heal;
+            eaten.saturationModifier = food.saturation;
+            eaten.alwaysEdible = food.alwaysEdible;
             if (!food.effects.isEmpty()) { ContentLog.LOGGER.error("Override {} puts effects on {}, which is already food. Effects on existing food are not supported, only heal, saturation and alwaysEdible were applied", def.source, def.target); }
             return;
         }
@@ -187,9 +181,8 @@ public final class ContentOverrides {
             }
             resolved.add(new PotionEffect(potion, effect.duration, effect.amplifier, effect.ambient, effect.showParticles));
         }
-        IPotionType inside = (IPotionType) type;
-        if (!TYPES.containsKey(type)) { TYPES.put(type, ImmutableList.copyOf(inside.rdpl$getEffects())); }
-        inside.rdpl$setEffects(ImmutableList.copyOf(resolved));
+        if (!TYPES.containsKey(type)) { TYPES.put(type, ImmutableList.copyOf(type.effects)); }
+        type.effects = ImmutableList.copyOf(resolved);
         return true;
     }
 
@@ -198,7 +191,7 @@ public final class ContentOverrides {
         for (Map.Entry<Block, FireSnapshot> entry : FIRE.entrySet()) { entry.getValue().restore(entry.getKey()); }
         for (Map.Entry<Item, ItemSnapshot> entry : ITEMS.entrySet()) { entry.getValue().restore(entry.getKey()); }
         for (Map.Entry<Item, FoodSnapshot> entry : FOODS.entrySet()) { entry.getValue().restore((ItemFood) entry.getKey()); }
-        for (Map.Entry<PotionType, ImmutableList<PotionEffect>> entry : TYPES.entrySet()) { ((IPotionType) entry.getKey()).rdpl$setEffects(entry.getValue()); }
+        for (Map.Entry<PotionType, ImmutableList<PotionEffect>> entry : TYPES.entrySet()) { entry.getKey().effects = entry.getValue(); }
         BLOCKS.clear();
         FIRE.clear();
         ITEMS.clear();
@@ -258,7 +251,6 @@ public final class ContentOverrides {
         }
 
         static BlockSnapshot of(Block block) {
-            IBlock inside = (IBlock) block;
             List<IBlockState> states = new ArrayList<>(block.getBlockState().getValidStates());
             String[] tools = new String[states.size()];
             int[] levels = new int[states.size()];
@@ -266,17 +258,16 @@ public final class ContentOverrides {
                 tools[i] = block.getHarvestTool(states.get(i));
                 levels[i] = block.getHarvestLevel(states.get(i));
             }
-            return new BlockSnapshot(inside.rdpl$getHardness(), inside.rdpl$getResistance(), inside.rdpl$getSlipperiness(), inside.rdpl$getLightValue(), inside.rdpl$getLightOpacity(), inside.rdpl$getSoundType(), tools, levels, states);
+            return new BlockSnapshot(block.blockHardness, block.blockResistance, block.slipperiness, block.lightValue, block.lightOpacity, block.blockSoundType, tools, levels, states);
         }
 
         void restore(Block block) {
-            IBlock inside = (IBlock) block;
-            inside.rdpl$setHardness(hardness);
-            inside.rdpl$setResistance(resistance);
-            inside.rdpl$setSlipperiness(slipperiness);
-            inside.rdpl$setLightValue(light);
+            block.blockHardness = hardness;
+            block.blockResistance = resistance;
+            block.setDefaultSlipperiness(slipperiness);
+            block.lightValue = light;
             block.setLightOpacity(lightOpacity);
-            inside.rdpl$setSoundType(soundType);
+            block.blockSoundType = soundType;
             for (int i = 0; i < states.size(); i++) { block.setHarvestLevel(harvestTools[i], harvestLevels[i], states.get(i)); }
         }
     }
@@ -291,15 +282,15 @@ public final class ContentOverrides {
         }
 
         static FireSnapshot of(Block block) {
-            IBlockFire fire = (IBlockFire) fire();
-            return new FireSnapshot(fire.rdpl$getEncouragements().get(block), fire.rdpl$getFlammabilities().get(block));
+            BlockFire fire = fire();
+            return new FireSnapshot(fire.encouragements.get(block), fire.flammabilities.get(block));
         }
 
         void restore(Block block) {
-            IBlockFire fire = (IBlockFire) fire();
+            BlockFire fire = fire();
             if (encouragement == null || flammability == null) {
-                fire.rdpl$getEncouragements().remove(block);
-                fire.rdpl$getFlammabilities().remove(block);
+                fire.encouragements.remove(block);
+                fire.flammabilities.remove(block);
                 return;
             }
             fire().setFireInfo(block, encouragement, flammability);
@@ -318,14 +309,13 @@ public final class ContentOverrides {
         }
 
         static ItemSnapshot of(Item item) {
-            IItem inside = (IItem) item;
-            return new ItemSnapshot(inside.rdpl$getMaxStackSize(), inside.rdpl$getMaxDamage(), item.getContainerItem());
+            return new ItemSnapshot(item.maxStackSize, item.maxDamage, item.getContainerItem());
         }
 
         void restore(Item item) {
             item.setMaxStackSize(maxStackSize);
             item.setMaxDamage(maxDamage);
-            ((IItem) item).rdpl$setContainerItem(containerItem);
+            item.containerItem = containerItem;
         }
     }
 
@@ -341,15 +331,13 @@ public final class ContentOverrides {
         }
 
         static FoodSnapshot of(ItemFood item) {
-            IItemFood inside = (IItemFood) item;
-            return new FoodSnapshot(inside.rdpl$getHealAmount(), inside.rdpl$getSaturationModifier(), inside.rdpl$getAlwaysEdible());
+            return new FoodSnapshot(item.healAmount, item.saturationModifier, item.alwaysEdible);
         }
 
         void restore(ItemFood item) {
-            IItemFood inside = (IItemFood) item;
-            inside.rdpl$setHealAmount(heal);
-            inside.rdpl$setSaturationModifier(saturation);
-            inside.rdpl$setAlwaysEdible(alwaysEdible);
+            item.healAmount = heal;
+            item.saturationModifier = saturation;
+            item.alwaysEdible = alwaysEdible;
         }
     }
 }

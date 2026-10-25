@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.Facings;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
@@ -111,7 +110,7 @@ public final class CityCulDeSacs {
                 ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, {} across at {}, {}", endX, endZ, wide, bulb.minX, bulb.minZ);
             }
         }
-        if (bulbs > 0) { ((IStructureStartGrow) held).rdpl$updateBoundingBox(); }
+        if (bulbs > 0) { held.updateBoundingBox(); }
     }
 
     private static boolean metAtEnd(World world, StructureStart held, StructureComponent piece, boolean alongX, int end, int acrossLeast, int acrossMost) { return ContentStructureSearch.anyVillage(world, held, village -> metIn(village, piece, alongX, end, acrossLeast, acrossMost)); }

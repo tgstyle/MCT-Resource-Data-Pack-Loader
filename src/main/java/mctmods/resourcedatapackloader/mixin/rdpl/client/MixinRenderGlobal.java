@@ -65,7 +65,7 @@ import javax.annotation.Nullable;
     }
 
     @Unique private void rdpl$noteRenderChunk(Object info) {
-        RenderChunk renderChunk = ((IContainerLocalRenderInformation) info).getRenderChunk();
+        RenderChunk renderChunk = ((RenderGlobal.ContainerLocalRenderInformation) info).renderChunk;
         if (GenHeights.rubic(renderChunk.getWorld())) { this.rdpl$position = renderChunk.getPosition(); }
         else { this.rdpl$position = null; }
     }

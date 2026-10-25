@@ -8,6 +8,7 @@ import net.minecraft.init.Biomes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.MapGenBase;
 import net.minecraft.world.gen.structure.MapGenScatteredFeature;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -39,7 +40,7 @@ import java.util.List;
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("RETURN"), cancellable = true) private void rdpl$placement(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValueZ()) { return; }
-        World world = ((IMapGenBase) this).rdpl$getWorld();
+        World world = ((MapGenBase) (Object) this).world;
         if (!ContentStructurePlacement.allows(ContentStructurePlacement.TEMPLES, world, chunkX, chunkZ)) {
             cir.setReturnValue(false);
             return;

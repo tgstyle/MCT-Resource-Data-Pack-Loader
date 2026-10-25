@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.content.rubic.world.storage.StorageFormatProviderBase;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.VanillaCompatibilityGeneratorProviderBase;
+import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.nbt.CompressedStreamTools;
@@ -15,7 +17,6 @@ import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.StartupQuery;
 import net.minecraftforge.fml.common.ZipperUtil;
-import net.minecraftforge.fml.relauncher.Side;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
@@ -40,12 +41,9 @@ public final class CubicChunksWorld {
 
     private CubicChunksWorld() {}
 
-    public static void offer(File folder) {
-        FMLCommonHandler fml = FMLCommonHandler.instance();
-        if (fml.getEffectiveSide() != Side.SERVER) { return; }
-        MinecraftServer server = fml.getMinecraftServerInstance();
-        if (server == null || !folder.equals(new File(fml.getSavesDirectory(), server.getFolderName()))) { return; }
-        Path world = folder.toPath();
+    public static void offer(MinecraftServer server) {
+        if (RDPLMixinPlugin.cubicChunksPresent()) { return; }
+        Path world = new File(FMLCommonHandler.instance().getSavesDirectory(), server.getFolderName()).toPath();
         if (!OldRegionNames.cubicChunksWorld(world) || !RubicWorldControl.wanted()) { return; }
         if (!StartupQuery.confirm(QUERY)) { StartupQuery.abort(); }
         try { ZipperUtil.backupWorld(); }
@@ -116,7 +114,21 @@ public final class CubicChunksWorld {
         }
         rename(world, file, data, WorldSavedRubicData.STORAGE_FORMAT, "cubicchunks:anvil3d", StorageFormatProviderBase.DEFAULT.toString());
         rename(world, file, data, WorldSavedRubicData.GENERATOR_TYPE, "cubicchunks:default", VanillaCompatibilityGeneratorProviderBase.DEFAULT.toString());
+        limitHeights(world, file, data);
         return root;
+    }
+
+    private static void limitHeights(Path world, Path file, NBTTagCompound data) {
+        int limit = Config.worldgen.rubicHeightLimit;
+        boolean present = data.hasKey(WorldSavedRubicData.MIN_HEIGHT, Constants.NBT.TAG_INT) && data.hasKey(WorldSavedRubicData.MAX_HEIGHT, Constants.NBT.TAG_INT);
+        int min = data.getInteger(WorldSavedRubicData.MIN_HEIGHT);
+        int max = data.getInteger(WorldSavedRubicData.MAX_HEIGHT);
+        if (present && min > -limit && max < limit && (min & 0xF) == 0 && (max & 0xF) == 0 && min < max) { return; }
+        int newMin = RubicWorldControl.minHeight();
+        int newMax = RubicWorldControl.maxHeight();
+        ContentLog.LOGGER.info("The Cubic Chunks world {} has heights {} to {}, which a rubic world cannot keep; using {} to {} instead", world.relativize(file), present ? min : "unset", present ? max : "unset", newMin, newMax);
+        data.setInteger(WorldSavedRubicData.MIN_HEIGHT, newMin);
+        data.setInteger(WorldSavedRubicData.MAX_HEIGHT, newMax);
     }
 
     private static void rename(Path world, Path file, NBTTagCompound data, String key, String theirs, String ours) throws IOException {

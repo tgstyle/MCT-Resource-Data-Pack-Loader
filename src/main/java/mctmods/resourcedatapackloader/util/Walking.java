@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityAIWander;
-
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.ai.EntityAIWander;
@@ -16,7 +14,7 @@ public final class Walking {
 
     public static double pace(EntityCreature mob) {
         for (EntityAITasks.EntityAITaskEntry entry : mob.tasks.taskEntries) {
-            if (entry.action instanceof EntityAIWander) { return ((IEntityAIWander) entry.action).rdpl$speed(); }
+            if (entry.action instanceof EntityAIWander) { return ((EntityAIWander) entry.action).speed; }
         }
         return STROLL;
     }

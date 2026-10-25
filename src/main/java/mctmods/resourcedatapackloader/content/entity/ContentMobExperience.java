@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.entity;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingBase;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.enchantment.Enchantment;
@@ -128,7 +127,7 @@ public final class ContentMobExperience {
         EntityLivingBase hurt = event.getEntityLiving();
         Entity by = event.getSource().getTrueSource();
         if (hurt.world.isRemote || hurt instanceof EntityPlayer || !(by instanceof EntityLiving) || !ContentEntities.collectsExperience(by)) { return; }
-        ((IEntityLivingBase) hurt).rdpl$setRecentlyHit(CREDIT);
+        hurt.recentlyHit = CREDIT;
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onDeath(LivingDeathEvent event) {

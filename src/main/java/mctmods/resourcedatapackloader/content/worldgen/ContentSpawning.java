@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.content.entity.ContentSpawnGate;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -72,10 +71,9 @@ public final class ContentSpawning {
 
     private static void cap(@Nonnull EnumCreatureType type, int wanted) {
         if (wanted < 0) { return; }
-        IEnumCreatureType access = (IEnumCreatureType) (Object) type;
-        int current = access.rdpl$getMaxNumberOfCreature();
+        int current = type.maxNumberOfCreature;
         if (current == wanted) { return; }
-        access.rdpl$setMaxNumberOfCreature(wanted);
+        type.maxNumberOfCreature = wanted;
         Summary.info("mobcaps", "Set the " + type.name().toLowerCase(Locale.ROOT) + " spawn cap to " + wanted + ", was " + current);
     }
 

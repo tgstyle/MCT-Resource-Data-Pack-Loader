@@ -39,7 +39,7 @@ import java.util.List;
                 return;
             }
             for (StructureComponent piece : listIn) {
-                StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
+                StructureBoundingBox held = piece.boundingBox;
                 if (held == null || !rdpl$flatHit(held, boundingboxIn, 0)) { continue; }
                 if (piece instanceof StructureVillagePieces.Path && rdpl$roadShaped(boundingboxIn) && rdpl$crosses(held, boundingboxIn)) { continue; }
                 if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
@@ -52,7 +52,7 @@ import java.util.List;
         }
 
         for (StructureComponent piece : listIn) {
-            StructureBoundingBox held = ((IStructureComponentBox) piece).rdpl$box();
+            StructureBoundingBox held = piece.boundingBox;
             if (held == null) { continue; }
             if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
             if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }

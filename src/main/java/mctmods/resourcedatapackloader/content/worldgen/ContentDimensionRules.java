@@ -5,11 +5,11 @@ import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
 import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MusicTicker;
+import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -146,8 +146,8 @@ public final class ContentDimensionRules {
         colors[0] = (skyRed * channel(look.lightSkyColor, Colors::red) + blockLight * channel(look.lightBlockColor, Colors::red)) * 0.96F + 0.03F;
         colors[1] = (skyRed * channel(look.lightSkyColor, Colors::green) + blockGreen * channel(look.lightBlockColor, Colors::green)) * 0.96F + 0.03F;
         colors[2] = (sky * channel(look.lightSkyColor, Colors::blue) + blockBlue * channel(look.lightBlockColor, Colors::blue)) * 0.96F + 0.03F;
-        IEntityRenderer renderer = (IEntityRenderer) Minecraft.getMinecraft().entityRenderer;
-        float boss = renderer.getBossColorModifierPrev() + (renderer.getBossColorModifier() - renderer.getBossColorModifierPrev()) * partialTicks;
+        EntityRenderer renderer = Minecraft.getMinecraft().entityRenderer;
+        float boss = renderer.bossColorModifierPrev + (renderer.bossColorModifier - renderer.bossColorModifierPrev) * partialTicks;
         if (boss <= 0.0F) { return; }
         colors[0] *= 1.0F - BOSS_RED * boss;
         colors[1] *= 1.0F - BOSS_GREEN_BLUE * boss;

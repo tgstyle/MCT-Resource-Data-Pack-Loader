@@ -5,10 +5,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeardJoins;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSites;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.Facings;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
@@ -40,7 +36,7 @@ public final class BeardSite {
         long cell = Longs.pack(cellX, cellZ);
         Long held = known.get(cell);
         if (held != null) { return held; }
-        if (world.getMinecraftServer() != null) { ((IMinecraftServerMessage) world.getMinecraftServer()).rdpl$setUserMessage("menu.generatingTerrain"); }
+        if (world.getMinecraftServer() != null) { world.getMinecraftServer().setUserMessage("menu.generatingTerrain"); }
         long chosen = chooseSite(world, cellX, cellZ, spacing);
         known.put(cell, chosen);
         if (chosen == ContentBeard.NO_SITE) { ContentLog.LOGGER.debug("Village cell {}, {} has no chunk both flat within {} block(s) and {} chunk(s) clear of its neighbors, so nothing is founded there", cellX, cellZ, ContentBeard.SITE_TOLERANCE, ContentBeard.SITE_SEPARATION); }
@@ -163,12 +159,11 @@ public final class BeardSite {
     public static boolean mansionCandidateNear(World world, int chunkX, int chunkZ) {
         ChunkGeneratorOverworld sampled = BeardSurface.samplerFor(world);
         if (sampled == null) { return false; }
-        MapGenStructure mansions = ((IChunkGeneratorBeardFields) sampled).rdpl$mansions();
-        ((IMapGenBase) mansions).rdpl$setWorld(world);
-        IMapGenStructureSpawn asker = (IMapGenStructureSpawn) mansions;
+        MapGenStructure mansions = sampled.woodlandMansionGenerator;
+        mansions.world = world;
         for (int x = chunkX - 6; x <= chunkX + 2; x++) {
             for (int z = chunkZ - 6; z <= chunkZ + 2; z++) {
-                if (asker.rdpl$canSpawnStructureAtCoords(x, z)) { return true; }
+                if (mansions.canSpawnStructureAtCoords(x, z)) { return true; }
             }
         }
         return false;

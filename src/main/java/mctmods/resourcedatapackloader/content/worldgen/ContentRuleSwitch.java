@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IDifficultyInstance;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -151,7 +150,7 @@ public final class ContentRuleSwitch {
         EnumDifficulty difficulty = world.getDifficulty();
         if (wanted < 0.0F || difficulty == EnumDifficulty.PEACEFUL) { return vanilla; }
         DifficultyInstance ruled = new DifficultyInstance(difficulty, 0L, 0L, 0.0F);
-        ((IDifficultyInstance) ruled).rdpl$additional(wanted);
+        ruled.additionalDifficulty = wanted;
         return ruled;
     }
 

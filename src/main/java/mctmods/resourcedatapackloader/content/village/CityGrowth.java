@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.village;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Longs;
 
@@ -88,14 +87,14 @@ public final class CityGrowth {
         if (built < least && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("District growth drained after {} attempt(s): {} sites too near a well, {} on unreadable ground, {} on built ground, {} beside another village", attempts, CityDistricts.settledCrowded, CityDistricts.settledUngrounded, CityDistricts.settledTaken, CityDistricts.settledNeighbored); }
         CityDistricts.settledCrowded = CityDistricts.settledUngrounded = CityDistricts.settledTaken = CityDistricts.settledNeighbored = 0;
         if (built < least) { built = infill(rand, components, least, sizeFor); }
-        ((IStructureStartGrow) held).rdpl$updateBoundingBox();
+        held.updateBoundingBox();
         ContentLog.LOGGER.debug("The village at chunk {}, {} grew {} district(s) to {} plot(s) against the asked minimum of {}", held.getChunkPosX(), held.getChunkPosZ(), districts, built, least);
     }
 
     public static void backRows(StructureStart held, Random rand) {
         List<StructureComponent> components = held.getComponents();
         int seated = backRowsFrom(components, 0, rand);
-        if (seated > 0) { ((IStructureStartGrow) held).rdpl$updateBoundingBox(); }
+        if (seated > 0) { held.updateBoundingBox(); }
         ContentLog.LOGGER.debug("The village at chunk {}, {} seated {} plot(s) behind its front plots in a second pass, {} plot(s) in all", held.getChunkPosX(), held.getChunkPosZ(), seated, ContentVillages.plots(components));
     }
 

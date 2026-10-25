@@ -88,7 +88,7 @@ import javax.annotation.Nullable;
 
     @Unique private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
         if (isRemote) { return self.getChunk(pos); }
-        ChunkPos populating = IChunk.rdpl$getPopulating();
+        ChunkPos populating = Chunk.populating;
         if (populating == null) { return self.getChunk(pos); }
         if (pos.getX() >> 4 == populating.x && pos.getZ() >> 4 == populating.z) { return self.getChunk(pos); }
         return rdpl$predictInstead(self, pos, populating);

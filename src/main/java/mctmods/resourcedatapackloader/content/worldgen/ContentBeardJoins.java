@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -20,14 +19,14 @@ public final class ContentBeardJoins {
 
     public static void attach(StructureStart start, StructureComponent piece) {
         if (!(piece instanceof StructureVillagePieces.Path)) { return; }
-        StructureBoundingBox box = ((IStructureComponentBox) piece).rdpl$box();
+        StructureBoundingBox box = piece.boundingBox;
         if (box == null) { return; }
         boolean alongX = BeardPlots.roadAlongX(piece);
         if (BeardRoads.roadNarrow(box, alongX)) { return; }
         List<StructureComponent> everyone = ContentBeard.everyone(start.getComponents());
         for (StructureComponent other : everyone) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = other.boundingBox;
             if (met == null) { continue; }
             if (BeardRoads.roadNarrow(met, BeardPlots.roadAlongX(other))) { continue; }
             boolean lined = alongX ? met.maxZ >= box.minZ && met.minZ <= box.maxZ : met.maxX >= box.minX && met.minX <= box.maxX;
@@ -52,7 +51,7 @@ public final class ContentBeardJoins {
         }
         for (StructureComponent other : everyone) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = other.boundingBox;
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             square(everyone, piece, box, alongX, met, true);
         }
@@ -174,7 +173,7 @@ public final class ContentBeardJoins {
     public static boolean claimCorners(List<StructureComponent> pieces, StructureBoundingBox box, boolean alongX) {
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = other.boundingBox;
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             int[] back = cornerRows(box, alongX, met, true);
             if (back != null && !plazaHeld(pieces, box, alongX, back[0], back[1]) && !free(pieces, null, box, alongX, back[0], back[1])) { return false; }
@@ -187,7 +186,7 @@ public final class ContentBeardJoins {
         }
         for (StructureComponent other : pieces) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
-            StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
+            StructureBoundingBox met = other.boundingBox;
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             square(pieces, null, box, alongX, met);
             if (square(pieces, other, met, !alongX, box)) { BeardRoads.clearLayout(other); }

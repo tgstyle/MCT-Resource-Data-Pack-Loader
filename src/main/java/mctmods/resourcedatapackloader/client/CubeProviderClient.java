@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IChunkProviderClient;
 import mctmods.resourcedatapackloader.util.CubePos;
 import mctmods.resourcedatapackloader.util.XYZMap;
 
@@ -36,7 +35,7 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
 
     @Override @Nonnull public Chunk loadChunk(int cubeX, int cubeZ) {
         Chunk column = new Chunk((World) this.world, cubeX, cubeZ);
-        ((IChunkProviderClient) this).getLoadedChunks().put(ChunkPos.asLong(cubeX, cubeZ), column);
+        this.loadedChunks.put(ChunkPos.asLong(cubeX, cubeZ), column);
         MinecraftForge.EVENT_BUS.post(new ChunkEvent.Load(column));
         column.markLoaded(true);
         return column;
@@ -79,10 +78,10 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
     @Nullable @Override public Cube getLoadedCube(int cubeX, int cubeY, int cubeZ) { return cubeMap.get(cubeX, cubeY, cubeZ); }
 
     @Override @Nonnull public String makeString() {
-        return "MultiplayerChunkCache: " + ((IChunkProviderClient) this).getLoadedChunks().values()
+        return "MultiplayerChunkCache: " + this.loadedChunks.values()
                 .stream()
                 .map(c -> ((IColumn) c).getLoadedCubes().size())
                 .reduce(Integer::sum)
-                .orElse(-1) + "/" + ((IChunkProviderClient) this).getLoadedChunks().size();
+                .orElse(-1) + "/" + this.loadedChunks.size();
     }
 }

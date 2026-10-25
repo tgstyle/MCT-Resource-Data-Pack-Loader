@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -65,7 +64,7 @@ public final class ContentBeardSeat {
             ContentBeard.samplerWorld = world;
             generators[at].generate(world, chunkX, chunkZ, UNUSED);
             ContentBeard.samplerWorld = null;
-            for (StructureStart start : ((IMapGenStructure) generators[at]).rdpl$getStructureMap().values()) {
+            for (StructureStart start : generators[at].structureMap.values()) {
                 if (start == null || !start.isSizeableStructure() || !start.getBoundingBox().intersectsWith(reach)) { continue; }
                 for (StructureComponent piece : start.getComponents()) {
                     if (!piece.getBoundingBox().intersectsWith(reach)) { continue; }

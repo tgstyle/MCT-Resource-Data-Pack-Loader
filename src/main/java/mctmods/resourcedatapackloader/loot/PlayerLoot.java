@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentLootSwitch;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingBase;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -70,7 +69,7 @@ public final class PlayerLoot {
         EntityPlayerMP player = (EntityPlayerMP) event.getEntityLiving();
         if (!keeping(player)) { return; }
         List<EntityItem> drops = new ArrayList<>();
-        roll(player, event.getSource(), ((IEntityLivingBase) player).rdpl$getRecentlyHit() > 0, drops);
+        roll(player, event.getSource(), player.recentlyHit > 0, drops);
         for (EntityItem drop : drops) { player.world.spawnEntity(drop); }
     }
 

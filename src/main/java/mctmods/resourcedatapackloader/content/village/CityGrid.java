@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Longs;
@@ -137,7 +136,7 @@ public final class CityGrid {
         StructureBoundingBox bounds = bounds(well);
         int laid = 0;
         for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) { laid += avenue(start, pieces, rand, well, bounds, facing, seated(world, bounds, facing)); }
-        ((IStructureStartGrow) held).rdpl$updateBoundingBox();
+        held.updateBoundingBox();
         ContentLog.LOGGER.debug("The district at {}, {} runs the four streets of its well's cross to its edges, laying {} new length(s) of avenue, so they meet the next districts' at the seams", bounds.minX, bounds.minZ, laid);
     }
 
@@ -232,7 +231,7 @@ public final class CityGrid {
             dropped++;
         }
         if (dropped == 0) { return; }
-        ((IStructureStartGrow) held).rdpl$updateBoundingBox();
+        held.updateBoundingBox();
         ContentLog.LOGGER.debug("The district at {}, {} drops {} piece(s) laid past its edge, so nothing of it stands in the next district", bounds.minX, bounds.minZ, dropped);
     }
 

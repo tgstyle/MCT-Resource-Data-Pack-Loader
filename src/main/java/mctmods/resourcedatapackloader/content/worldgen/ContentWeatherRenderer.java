@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.client.render.WhitenedTexture;
 import mctmods.resourcedatapackloader.content.def.RainDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
 import mctmods.resourcedatapackloader.util.Colors;
 import mctmods.resourcedatapackloader.util.WindGust;
 
@@ -75,7 +74,7 @@ import java.util.Random;
         slantX = -Math.sin(heading) * slope;
         slantZ = Math.cos(heading) * slope;
         mc.entityRenderer.enableLightmap();
-        int ticks = ((IEntityRenderer) mc.entityRenderer).getRendererUpdateCount();
+        int ticks = mc.entityRenderer.rendererUpdateCount;
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         GlStateManager.disableCull();

@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.client;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiScreenResourcePacks;
 import mctmods.resourcedatapackloader.pack.PackInjector;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
@@ -32,7 +31,7 @@ import java.util.List;
             if (manager.isEmpty()) { return; }
 
             GuiScreenResourcePacks screen = (GuiScreenResourcePacks) event.getGui();
-            List<ResourcePackListEntry> entries = ((IGuiScreenResourcePacks) screen).rdpl$getSelectedResourcePacks();
+            List<ResourcePackListEntry> entries = screen.selectedResourcePacks;
             if (entries == null) { return; }
 
             entries.removeIf(resourcePackListEntry -> resourcePackListEntry instanceof PackListEntry);

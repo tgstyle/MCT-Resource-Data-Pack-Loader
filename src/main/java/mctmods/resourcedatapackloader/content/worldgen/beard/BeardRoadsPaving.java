@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.MergePiece;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
@@ -210,9 +209,9 @@ public final class BeardRoadsPaving {
 
         private void row(int i) {
             int row = start + i;
-            if (piece instanceof IVillagePiece && BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
-                path = BeardRoads.surfaceBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
-                gravel = BeardRoads.supportBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()));
+            if (piece instanceof StructureVillagePieces.Village && BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
+                path = BeardRoads.surfaceBlock(((StructureVillagePieces.Village) piece).getBiomeSpecificBlockState(Blocks.GRASS_PATH.getDefaultState()));
+                gravel = BeardRoads.supportBlock(((StructureVillagePieces.Village) piece).getBiomeSpecificBlockState(Blocks.GRAVEL.getDefaultState()));
                 linings = BeardRoadsTunnels.tunnelPalette();
                 light = BeardRoads.tunnelLightBlock();
             }

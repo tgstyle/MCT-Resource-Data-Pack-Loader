@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.interfaces.ITicket;
 
@@ -91,10 +90,9 @@ public class SpawnCubes implements ITicket {
     private static void tellScreen(World world, int percent) {
         MinecraftServer server = world.getMinecraftServer();
         if (server == null) { return; }
-        IMinecraftServerMessage progress = (IMinecraftServerMessage) server;
-        progress.rdpl$setCurrentTask("Preparing spawn area");
-        progress.rdpl$setPercentDone(percent);
-        progress.rdpl$setUserMessage("menu.generatingTerrain");
+        server.currentTask = "Preparing spawn area";
+        server.percentDone = percent;
+        server.setUserMessage("menu.generatingTerrain");
     }
 
     private void forEachCube(int spawnCubeX, int spawnCubeY, int spawnCubeZ, int r, int ry, IXYZConsumer action) {

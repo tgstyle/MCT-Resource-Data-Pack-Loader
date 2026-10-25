@@ -33,7 +33,7 @@ import java.util.Set;
     @Shadow public abstract ChunkPos getPos();
 
     @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD")) private void rdpl$traceCascade(IChunkProvider chunkProvider, IChunkGenerator chunkGenrator, CallbackInfo ci) {
-        ChunkPos parent = IChunk.rdpl$getPopulating();
+        ChunkPos parent = Chunk.populating;
         if (parent != null) { ContentCascade.report(parent, getPos()); }
     }
 

@@ -4,9 +4,6 @@ import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.server.interfaces.IRubicPlayerList;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.core.MCTMixin;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiOptionsRowList;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiScreen;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiVideoSettings;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
@@ -51,16 +48,15 @@ public class RubicClientEvents {
         if (currentGui instanceof GuiVideoSettings) {
             GuiVideoSettings gvs = (GuiVideoSettings) currentGui;
             if (!Rubic.hasOptifine()) {
-                IGuiOptionsRowList gowl = (IGuiOptionsRowList) ((IGuiVideoSettings) gvs).getOptionsRowList();
+                GuiOptionsRowList gowl = (GuiOptionsRowList) gvs.optionsRowList;
                 GuiOptionsRowList.Row row = this.createRow(gvs.width);
-                gowl.getOptions().add(1, row);
+                gowl.options.add(1, row);
             }
             else {
                 int idx = 3;
                 int btnSpacing = 20;
-                ((IGuiScreen) gvs).getButtonList()
-                        .add(idx, new VertViewDistanceSlider(gvs.width / 2 - 155 + 160, gvs.height / 6 + btnSpacing * (idx / 2) - 12));
-                List<GuiButton> buttons = ((IGuiScreen) gvs).getButtonList();
+                gvs.buttonList.add(idx, new VertViewDistanceSlider(gvs.width / 2 - 155 + 160, gvs.height / 6 + btnSpacing * (idx / 2) - 12));
+                List<GuiButton> buttons = gvs.buttonList;
                 for (int i = 0; i < buttons.size() - 4; i++) {
                     GuiButton btn = buttons.get(i);
                     int x = gvs.width / 2 - 155 + i % 2 * 160;
