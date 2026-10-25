@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityType;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -50,7 +49,7 @@ public final class ContentEntityTypes {
                 ContentLog.LOGGER.error("Entity variant {} is based on {}, which nothing registers, leaving it out", def.key(), def.base());
                 continue;
             }
-            EntityType.EntityFactory<?> baseFactory = ((IEntityType) base).rdpl$getFactory();
+            EntityType.EntityFactory<?> baseFactory = base.factory;
             EntityType.EntityFactory<Entity> factory = (type, level) -> EntityClassMaker.make(baseFactory, type, level, def);
             EntityDimensions dims = base.getDimensions();
             float width = def.width() > 0.0F ? def.width() : dims.width;

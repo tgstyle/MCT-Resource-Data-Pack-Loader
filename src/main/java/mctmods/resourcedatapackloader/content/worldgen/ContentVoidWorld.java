@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.DimensionValues;
 
@@ -26,7 +25,7 @@ public final class ContentVoidWorld {
     @Nullable private static volatile VoidMemory remembered;
     private ContentVoidWorld() {}
 
-    public static boolean voidEmpties(StructureManager structures) { return ((IStructureManager) structures).rdpl$getLevel() instanceof WorldGenLevel level && voidApplies(level.getLevel()); }
+    public static boolean voidEmpties(StructureManager structures) { return structures.level instanceof WorldGenLevel level && voidApplies(level.getLevel()); }
 
     static boolean voidAsked() {
         if (ContentControl.off(ContentControl.VOID)) { return false; }

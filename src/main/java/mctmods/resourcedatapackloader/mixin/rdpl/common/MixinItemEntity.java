@@ -16,8 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true) private void rdpl$slowTick(CallbackInfo ci) {
         ItemEntity self = (ItemEntity) (Object) this;
         if (!ContentEntityTicks.slowedNow(self)) { return; }
-        IItemEntity aging = (IItemEntity) self;
-        if (aging.rdpl$getAge() != Short.MIN_VALUE) { aging.rdpl$setAge(aging.rdpl$getAge() + 1); }
+        if (self.age != Short.MIN_VALUE) { self.age++; }
         ci.cancel();
     }
 

@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IRandomizableContainerBlockEntity;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -20,6 +19,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
@@ -145,7 +145,7 @@ public final class ContentDisabledEvents {
     private static void sweep(Container container) { sweep(new InvWrapper(container)); }
 
     private static void sweep(BlockEntity entity) {
-        if (entity instanceof IRandomizableContainerBlockEntity loot && loot.rdpl$getLootTable() != null) { return; }
+        if (entity instanceof RandomizableContainerBlockEntity loot && loot.lootTable != null) { return; }
         if (entity instanceof Container container) {
             sweep(container);
             return;

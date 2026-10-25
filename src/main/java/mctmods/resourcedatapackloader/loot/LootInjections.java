@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILootTable;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -80,7 +79,7 @@ public final class LootInjections {
             try {
                 LootTable parsed = ForgeHooks.loadLootTable(LOOT, synthetic, wrap(pool), true);
                 if (parsed == null) { continue; }
-                for (LootPool each : ((ILootTable) parsed).rdpl$getPools()) { table.addPool(each); }
+                for (LootPool each : parsed.pools) { table.addPool(each); }
             }
             catch (RuntimeException ex) {
                 ContentLog.LOGGER.error("Could not add an injected pool to loot table {}. A pool with the same name may already be there, give each injected pool its own name", event.getName(), ex);

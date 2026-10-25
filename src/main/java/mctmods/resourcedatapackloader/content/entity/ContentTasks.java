@@ -4,8 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.TaskDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILookAtPlayerGoal;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INearestAttackableTargetGoal;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Goals;
 import mctmods.resourcedatapackloader.util.Json;
@@ -322,7 +320,7 @@ public final class ContentTasks {
         if (type == FollowOwnerGoal.class) { return KINDS.get(mob instanceof FlyingAnimal ? "followownerflying" : "followowner"); }
         if (type == NearestAttackableTargetGoal.class) {
             if (mob instanceof Ghast) { return KINDS.get("findentitynearestplayer"); }
-            if (mob instanceof Slime) { return KINDS.get(((INearestAttackableTargetGoal) goal).rdpl$getTargetType() == Player.class ? "findentitynearestplayer" : "findentitynearest"); }
+            if (mob instanceof Slime) { return KINDS.get(((NearestAttackableTargetGoal<?>) goal).targetType == Player.class ? "findentitynearestplayer" : "findentitynearest"); }
             return KINDS.get("nearestattackabletarget");
         }
         if (type == LookAtPlayerGoal.class) { return KINDS.get("watchclosest"); }
@@ -379,7 +377,7 @@ public final class ContentTasks {
 
     private static Goal watching(LookAtPlayerGoal goal, TaskDef task) {
         Predicate<LivingEntity> only = only(task.entity());
-        if (only != null) { ((ILookAtPlayerGoal) goal).rdpl$getLookAtContext().selector(only); }
+        if (only != null) { goal.lookAtContext.selector(only); }
         return goal;
     }
 

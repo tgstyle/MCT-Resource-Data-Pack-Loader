@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INormalNoise;
 import mctmods.resourcedatapackloader.util.LegacyTerrainShape;
 
 import com.mojang.serialization.Codec;
@@ -29,7 +28,7 @@ public record ContentLegacyOffsetFunction(DensityFunction offset, double scale, 
     private double depth(int x, int z) {
         NormalNoise seeded = noise.noise();
         if (seeded == null) { return 0.0D; }
-        double raw = ((INormalNoise) seeded).rdpl$getFirst().getValue(x * depthX / CELL_WIDTH, 0.0D, z * depthZ / CELL_WIDTH) * LegacyTerrainShape.DEPTH_SUM;
+        double raw = seeded.first.getValue(x * depthX / CELL_WIDTH, 0.0D, z * depthZ / CELL_WIDTH) * LegacyTerrainShape.DEPTH_SUM;
         return LegacyTerrainShape.depthOffset(raw, baseSize);
     }
 

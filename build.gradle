@@ -134,6 +134,7 @@ legacyForge {
         minecraftVersion = project.version_minecraft
     }
 
+    accessTransformers.from file('src/main/resources/META-INF/accesstransformer.cfg')
     validateAccessTransformers = true
 
     mods.register(mod_id as String) { sourceSet(sourceSets.main) }

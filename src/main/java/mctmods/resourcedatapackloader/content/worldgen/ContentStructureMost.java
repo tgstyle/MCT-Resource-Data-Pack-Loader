@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -147,7 +146,7 @@ public final class ContentStructureMost {
     }
 
     @Nullable private static ServerLevel level(StructureManager manager) {
-        LevelAccessor held = ((IStructureManager) manager).rdpl$getLevel();
+        LevelAccessor held = manager.level;
         return held instanceof ServerLevelAccessor accessor ? accessor.getLevel() : null;
     }
 }

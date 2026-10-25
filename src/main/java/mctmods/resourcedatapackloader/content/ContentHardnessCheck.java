@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.HardnessDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IWeightedBakedModel;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -69,10 +68,10 @@ public final class ContentHardnessCheck {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model is a {}, which holds one model, so every step will look the same. List {} variants of equal weight, hardest first, and check no other mod is replacing the model after it is baked", def.key(), def.buckets(), state, model.getClass().getName(), def.buckets());
             return;
         }
-        List<WeightedEntry.Wrapper<BakedModel>> models = ((IWeightedBakedModel) weighted).rdpl$getList();
+        List<WeightedEntry.Wrapper<BakedModel>> models = weighted.list;
         for (WeightedEntry.Wrapper<BakedModel> entry : models) { ContentLog.LOGGER.debug("  a variant that survived baking uses the texture {}", texture(entry.getData())); }
         int held = models.size();
-        int weight = ((IWeightedBakedModel) weighted).rdpl$getTotalWeight();
+        int weight = weighted.totalWeight;
         if (held != def.buckets()) {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model holds {} variant(s), so the texture will not match how hard the block is. Make the two counts the same, and check no other mod is replacing the model after it is baked", def.key(), def.buckets(), state, held);
             return;
@@ -90,7 +89,7 @@ public final class ContentHardnessCheck {
         for (BlockState one : state.getBlock().getStateDefinition().getPossibleStates()) {
             if (one == state) { continue; }
             BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(one);
-            int held = model instanceof WeightedBakedModel weighted ? ((IWeightedBakedModel) weighted).rdpl$getList().size() : 1;
+            int held = model instanceof WeightedBakedModel weighted ? weighted.list.size() : 1;
             if (held <= 1) { continue; }
             ContentLog.LOGGER.warn("Hardness group {} does not name {}, but that state now draws from {} variant(s) too, so overriding the blockstate has changed a block the group was not meant to touch", def.key(), one, held);
         }

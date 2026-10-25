@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.entity.ContentSpawnGate;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMobCategory;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
@@ -43,7 +42,7 @@ public final class ContentSpawning {
         if (wanted < 0) { return; }
         int current = category.getMaxInstancesPerChunk();
         if (current == wanted) { return; }
-        ((IMobCategory) (Object) category).rdpl$setMax(wanted);
+        category.max = wanted;
         Summary.info("mobcaps." + category.getName(), "Set the " + category.getName().toLowerCase(Locale.ROOT) + " spawn cap to " + wanted + ", was " + current);
     }
 

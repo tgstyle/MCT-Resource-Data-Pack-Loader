@@ -10,7 +10,6 @@ import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.PotionTypeDef;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IPotionBrewing;
 import mctmods.resourcedatapackloader.pack.FallbackIcon;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -27,6 +26,7 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.alchemy.PotionBrewing;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -203,7 +203,7 @@ public final class ContentPotions {
                 Potion from = type(def.key(), def.from());
                 Potion to = type(def.key(), def.to());
                 if (from == null || to == null) { continue; }
-                IPotionBrewing.rdpl$addMix(from, ingredient.getItem(), to);
+                PotionBrewing.addMix(from, ingredient.getItem(), to);
                 count++;
                 continue;
             }
@@ -213,7 +213,7 @@ public final class ContentPotions {
             BrewingRecipeRegistry.addRecipe(Ingredient.of(input), Ingredient.of(ingredient), output);
             count++;
         }
-        containers(IPotionBrewing::rdpl$addContainer);
+        containers(PotionBrewing::addContainer);
         if (count > 0) { Summary.info("content_brewing", "Added " + count + " brewing recipe(s) from packs"); }
     }
 

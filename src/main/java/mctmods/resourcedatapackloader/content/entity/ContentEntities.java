@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILivingEntity;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -35,11 +34,15 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+import net.minecraftforge.event.entity.EntityTeleportEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingBreatheEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
@@ -282,7 +285,20 @@ public final class ContentEntities {
         if (def != null && !def.despawns()) { event.setResult(Event.Result.DENY); }
     }
 
-    public static void onLeave(EntityLeaveLevelEvent event) {
+    public static void onTeleport(EntityTeleportEvent.EnderEntity event) { if (staysPut(event.getEntity())) { event.setCanceled(true); } }
+
+    public static void onFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        if (event.getSpawnData() == null && event.getEntity() instanceof Zombie && baseBabyChance(event.getEntity(), 1.0F) <= 0.0F) { event.setSpawnData(new Zombie.ZombieGroupData(false, true)); }
+    }
+
+    public static void onJump(LivingEvent.LivingJumpEvent event) {
+        EntityVariantDef def = def(event.getEntity());
+        if (def == null || def.physics().jumpMultiplier() == 1.0F) { return; }
+        Vec3 motion = event.getEntity().getDeltaMovement();
+        event.getEntity().setDeltaMovement(motion.x, motion.y * def.physics().jumpMultiplier(), motion.z);
+    }
+
+    @SuppressWarnings("DataFlowIssue") public static void onLeave(EntityLeaveLevelEvent event) {
         if (!event.getLevel().isClientSide()) {
             ContentEntityBars.drop(event.getEntity());
             ContentEntityPhases.drop(event.getEntity());
@@ -294,8 +310,8 @@ public final class ContentEntities {
         }));
         mob.setTarget(null);
         mob.setLastHurtByMob(null);
-        ((ILivingEntity) mob).rdpl$setLastHurtMob(null);
-        ((ILivingEntity) mob).rdpl$setLastDamageSource(null);
+        mob.lastHurtMob = null;
+        mob.lastDamageSource = null;
         mob.getCombatTracker().recheckStatus();
     }
 

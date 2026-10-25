@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureTemplatePool;
 
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -74,7 +73,7 @@ public final class ContentVillages {
         for (String type : CityGround.VILLAGE_TYPES) {
             StructureTemplatePool pool = pools.get(ResourceLocation.withDefaultNamespace("village/" + type + "/houses"));
             if (pool == null) { continue; }
-            ObjectArrayList<StructurePoolElement> held = ((IStructureTemplatePool) pool).rdpl$getTemplates();
+            ObjectArrayList<StructurePoolElement> held = pool.templates;
             if (held.stream().anyMatch(ContentPlotPoolElement.class::isInstance)) { continue; }
             for (VillageDef def : allowed()) {
                 if (!def.template() || vanillaHouse(def) || ContentStructureMaps.def(ResourceLocation.tryParse(def.structure())) != null) { continue; }

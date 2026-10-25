@@ -25,7 +25,6 @@ import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
 import mctmods.resourcedatapackloader.content.item.ContentLocatorItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
@@ -39,6 +38,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.CompassItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -95,7 +95,7 @@ public final class ContentClient {
         if (bells != null) { event.registerBlockEntityRenderer(bells, ContentBellRenderer::new); }
         EntityType<ReturningThrow> returning = ContentEntities.returningThrow();
         if (returning != null) { event.registerEntityRenderer(returning, ReturningThrowRenderer::new); }
-        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$getProviders();
+        Map<EntityType<?>, EntityRendererProvider<?>> providers = EntityRenderers.PROVIDERS;
         for (EntityType<?> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
             EntityRendererProvider<?> provider = base == null ? null : providers.get(base);

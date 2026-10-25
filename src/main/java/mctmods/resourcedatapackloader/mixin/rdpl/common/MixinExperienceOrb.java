@@ -16,8 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true) private void rdpl$slowTick(CallbackInfo ci) {
         ExperienceOrb self = (ExperienceOrb) (Object) this;
         if (!ContentEntityTicks.slowedNow(self)) { return; }
-        IExperienceOrb aging = (IExperienceOrb) self;
-        aging.rdpl$setAge(aging.rdpl$getAge() + 1);
+        self.age++;
         ci.cancel();
     }
 
