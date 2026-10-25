@@ -24,6 +24,7 @@ import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,6 +95,18 @@ public final class ContentEntityTicks {
             chunks += level.getChunkSource().getLoadedChunksCount();
         }
         ContentLog.LOGGER.debug(String.format(Locale.ROOT, "Every second the server manages %.1f rounds of %.1f ms, holding %d chunk(s) and %d entity/entities. Of %d asked about since the last look, %d were given a slower pace", rate, mean, chunks, entities, asked, paced));
+    }
+
+    public static void onEntityTick(EntityTickEvent.Pre event) {
+        Entity entity = event.getEntity();
+        if (entity instanceof ItemEntity item && slowedNow(item)) {
+            if (item.age != Short.MIN_VALUE) { item.age++; }
+            event.setCanceled(true);
+        }
+        else if (entity instanceof ExperienceOrb orb && slowedNow(orb)) {
+            orb.age++;
+            event.setCanceled(true);
+        }
     }
 
     public static boolean frozen(Entity entity) { return !(entity instanceof Player) && ContentPregen.holdsStill(entity.level()); }

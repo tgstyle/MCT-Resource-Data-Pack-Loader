@@ -121,6 +121,8 @@ neoForge {
 
     mods.register(mod_id as String) { sourceSet(sourceSets.main) }
 
+    accessTransformers.from(sourceSets.main.resources.srcDirs.collectMany { File dir -> ['accesstransformer.cfg', 'accesstransformer.line.cfg'].collect { String name -> new File(dir, "META-INF/$name") } }.findAll { it.isFile() })
+
     runs {
         client {
             client()

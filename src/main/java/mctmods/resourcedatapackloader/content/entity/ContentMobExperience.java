@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.content.entity;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IExperienceOrb;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILivingEntity;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Scores;
 
@@ -58,9 +56,8 @@ public final class ContentMobExperience {
         mob.take(orb, 1);
         int value = mob.level() instanceof ServerLevel ? mended(mob, orb.value) : orb.value;
         if (value > 0) { add(mob, value); }
-        IExperienceOrb held = (IExperienceOrb) orb;
-        held.rdpl$setCount(held.rdpl$getCount() - 1);
-        if (held.rdpl$getCount() <= 0) { orb.discard(); }
+        orb.count = orb.count - 1;
+        if (orb.count <= 0) { orb.discard(); }
     }
 
     private static int mended(Mob mob, int value) {
@@ -136,7 +133,7 @@ public final class ContentMobExperience {
         LivingEntity hurt = event.getEntity();
         Entity by = event.getSource().getEntity();
         if (hurt.level().isClientSide() || hurt instanceof Player || !(by instanceof Mob) || ContentEntities.ignoresExperience(by)) { return; }
-        ((ILivingEntity) hurt).rdpl$setLastHurtByPlayerTime(CREDIT);
+        hurt.lastHurtByPlayerTime = CREDIT;
     }
 
     public static void onDeath(LivingDeathEvent event) {

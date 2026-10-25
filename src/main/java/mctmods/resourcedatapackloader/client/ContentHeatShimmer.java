@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IPostChain;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonSyntaxException;
@@ -88,7 +87,7 @@ public final class ContentHeatShimmer {
         return chain;
     }
 
-    private static void set(PostChain own, String name, float value) { for (PostPass pass : ((IPostChain) own).rdpl$getPasses()) { pass.getEffect().safeGetUniform(name).set(value); } }
+    private static void set(PostChain own, String name, float value) { for (PostPass pass : own.passes) { pass.getEffect().safeGetUniform(name).set(value); } }
 
     private static void close() {
         heat = null;

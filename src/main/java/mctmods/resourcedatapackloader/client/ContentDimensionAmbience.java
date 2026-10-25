@@ -9,7 +9,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.WindGust;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ColorParticleOption;
@@ -21,12 +23,14 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.Music;
+import net.minecraft.sounds.Musics;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.AmbientAdditionsSettings;
 import net.minecraft.world.level.biome.AmbientParticleSettings;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.SelectMusicEvent;
 import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -42,6 +46,13 @@ public final class ContentDimensionAmbience {
         DimensionDef def = ContentDimensions.def(level);
         AmbienceDef ambience = def == null ? null : def.traits().ambience();
         return ambience == null ? null : VANILLA.computeIfAbsent(ambience, held -> new Vanilla(def.key(), held));
+    }
+
+    public static void onSelectMusic(SelectMusicEvent event) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || event.getOriginalMusic() == Musics.CREDITS) { return; }
+        Music music = music(player.level());
+        if (music != null) { event.overrideMusic(music); }
     }
 
     @Nullable public static Music music(@Nullable Level level) {

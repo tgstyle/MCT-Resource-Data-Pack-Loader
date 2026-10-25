@@ -40,7 +40,7 @@ import java.util.Map;
     @Shadow private Map<ResourceLocation, RecipeHolder<?>> byName;
 
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD")) private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
-        ConditionalOps<JsonElement> ops = ((IContextAwareReloadListener) (Object) this).rdpl$makeConditionalOps();
+        ConditionalOps<JsonElement> ops = ((IContextAwareReloadListener) this).rdpl$makeConditionalOps();
         RecipeLoading.begin(object, resourceManager, json -> ICondition.conditionsMatched(ops, json), (id, json) -> Recipe.CONDITIONAL_CODEC.parse(ops, json).getOrThrow(JsonParseException::new));
     }
 

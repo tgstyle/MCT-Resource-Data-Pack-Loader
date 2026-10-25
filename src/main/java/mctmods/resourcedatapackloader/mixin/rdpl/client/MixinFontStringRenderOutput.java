@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Redirect(method = "accept", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/font/FontSet;getGlyph(I)Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;")) private BakedGlyph rdpl$styledGlyph(FontSet regular, int character) {
         ResourceLocation styled = GameFont.styled(rdpl$style);
-        return styled == null ? regular.getGlyph(character) : rdpl$glyph(((IFont) Minecraft.getInstance().font).rdpl$getFontSet(styled), regular, character, styled);
+        return styled == null ? regular.getGlyph(character) : rdpl$glyph(Minecraft.getInstance().font.getFontSet(styled), regular, character, styled);
     }
 
     @ModifyArg(method = "accept", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;renderChar(Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;ZZFFFLorg/joml/Matrix4f;Lcom/mojang/blaze3d/vertex/VertexConsumer;FFFFI)V"), index = 1) private boolean rdpl$syntheticBold(boolean bold) { return bold && rdpl$drawn == null; }

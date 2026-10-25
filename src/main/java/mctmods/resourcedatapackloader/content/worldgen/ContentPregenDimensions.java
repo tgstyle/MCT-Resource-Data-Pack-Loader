@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IServerLevel;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -186,7 +185,7 @@ public final class ContentPregenDimensions {
 
     private static void freshDragon(ServerLevel level) {
         if (level.getDragonFight() == null || ContentEndDragon.unwanted(level)) { return; }
-        ((IServerLevel) level).rdpl$setDragonFight(new EndDragonFight(level, level.getSeed(), EndDragonFight.Data.DEFAULT));
+        level.dragonFight = new EndDragonFight(level, level.getSeed(), EndDragonFight.Data.DEFAULT);
         level.getServer().getWorldData().setEndDragonFightData(EndDragonFight.Data.DEFAULT);
         ContentLog.LOGGER.info("The end's land is gone, so the dragon and its fight start over with it");
     }

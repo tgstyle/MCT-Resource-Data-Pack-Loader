@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlendedNoise;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
@@ -8,6 +7,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.world.level.levelgen.synth.BlendedNoise;
 import net.minecraft.world.level.levelgen.synth.ImprovedNoise;
 import net.minecraft.world.level.levelgen.synth.PerlinNoise;
 
@@ -31,7 +31,7 @@ import javax.annotation.Nonnull;
     public static final KeyDispatchDataCodec<ContentLegacyNoiseFunction> CODEC = KeyDispatchDataCodec.of(DATA);
 
     @Override public double compute(@Nonnull FunctionContext context) {
-        if (!(noise instanceof IBlendedNoise blended)) { return noise.compute(context); }
+        if (!(noise instanceof BlendedNoise blended)) { return noise.compute(context); }
         double xzMultiplier = coordinateScale / CELL_WIDTH;
         double yMultiplier = heightScale / CELL_HEIGHT;
         double limitX = context.blockX() * xzMultiplier;
@@ -40,12 +40,12 @@ import javax.annotation.Nonnull;
         double sampleX = limitX / mainX;
         double sampleY = limitY / mainY;
         double sampleZ = limitZ / mainZ;
-        double limitSmear = yMultiplier * blended.rdpl$getSmearScaleMultiplier();
+        double limitSmear = yMultiplier * blended.smearScaleMultiplier;
         double mainSmear = limitSmear / mainY;
         double mainValue = 0.0D;
         double pow = 1.0D;
         for (int octave = 0; octave < MAIN_OCTAVES; octave++) {
-            ImprovedNoise level = blended.rdpl$getMainNoise().getOctaveNoise(octave);
+            ImprovedNoise level = blended.mainNoise.getOctaveNoise(octave);
             if (level != null) { mainValue += level.noise(PerlinNoise.wrap(sampleX * pow), PerlinNoise.wrap(sampleY * pow), PerlinNoise.wrap(sampleZ * pow), mainSmear * pow, sampleY * pow) / pow; }
             pow /= 2.0D;
         }
@@ -60,9 +60,9 @@ import javax.annotation.Nonnull;
             double wy = PerlinNoise.wrap(limitY * pow);
             double wz = PerlinNoise.wrap(limitZ * pow);
             double smear = limitSmear * pow;
-            ImprovedNoise min = isMax ? null : blended.rdpl$getMinLimitNoise().getOctaveNoise(octave);
+            ImprovedNoise min = isMax ? null : blended.minLimitNoise.getOctaveNoise(octave);
             if (min != null) { blendMin += min.noise(wx, wy, wz, smear, limitY * pow) / pow; }
-            ImprovedNoise max = isMin ? null : blended.rdpl$getMaxLimitNoise().getOctaveNoise(octave);
+            ImprovedNoise max = isMin ? null : blended.maxLimitNoise.getOctaveNoise(octave);
             if (max != null) { blendMax += max.noise(wx, wy, wz, smear, limitY * pow) / pow; }
             pow /= 2.0D;
         }
@@ -76,7 +76,7 @@ import javax.annotation.Nonnull;
     @Override public double minValue() { return -maxValue(); }
 
     @Override public double maxValue() {
-        double bound = noise instanceof IBlendedNoise blended ? blended.rdpl$getMinLimitNoise().maxBrokenValue(heightScale / CELL_HEIGHT) : noise.maxValue();
+        double bound = noise instanceof BlendedNoise blended ? blended.minLimitNoise.maxBrokenValue(heightScale / CELL_HEIGHT) : noise.maxValue();
         return bound * VANILLA_LIMIT / Math.min(lower, upper);
     }
 

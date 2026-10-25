@@ -2,9 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseBasedChunkGenerator;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseChunk;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.Config;
@@ -176,11 +173,11 @@ public final class CityGround {
 
     public int lined() { return bottom() + ContentCitySewerPiece.FLOOR_LEAST; }
 
-    public int surfaceDepth(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceDepth(x, z); }
+    public int surfaceDepth(int x, int z) { return random.surfaceSystem().getSurfaceDepth(x, z); }
 
-    public double surfaceNoise(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceNoise().getValue(x, 0.0, z); }
+    public double surfaceNoise(int x, int z) { return random.surfaceSystem().surfaceNoise.getValue(x, 0.0, z); }
 
-    public BlockState band(int x, int y, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getBand(x, y, z); }
+    public BlockState band(int x, int y, int z) { return random.surfaceSystem().getBand(x, y, z); }
 
     public BlockState stone() { return generator instanceof NoiseBasedChunkGenerator noise ? noise.generatorSettings().value().defaultBlock() : Blocks.STONE.defaultBlockState(); }
 
@@ -276,7 +273,7 @@ public final class CityGround {
             NoiseGeneratorSettings settings = generator.generatorSettings().value();
             this.shape = shape;
             this.fallback = settings.defaultBlock();
-            this.noise = new NoiseChunk(1, random, originX, originZ, shape, MARKER, settings, ((INoiseBasedChunkGenerator) generator).rdpl$getGlobalFluidPicker().get(), Blender.empty());
+            this.noise = new NoiseChunk(1, random, originX, originZ, shape, MARKER, settings, generator.globalFluidPicker.get(), Blender.empty());
             noise.initializeForFirstCellX();
             noise.advanceCellX(0);
         }
@@ -298,7 +295,7 @@ public final class CityGround {
                     noise.updateForY(y, (double) inY / tall);
                     noise.updateForX(x, alongX);
                     noise.updateForZ(z, alongZ);
-                    BlockState state = ((INoiseChunk) noise).rdpl$getInterpolatedState();
+                    BlockState state = noise.getInterpolatedState();
                     BlockState found = state == null ? fallback : state;
                     if (!surfaced && surface.test(found)) {
                         tops[0] = y + 1;

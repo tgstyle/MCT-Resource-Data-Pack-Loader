@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader;
 
 import mctmods.resourcedatapackloader.client.PouchKey;
+import mctmods.resourcedatapackloader.client.ToastFilter;
+import mctmods.resourcedatapackloader.client.ContentDimensionAmbience;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.client.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
@@ -428,10 +431,17 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::beforeServerStart);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentServer::onAboutToStart);
+        NeoForge.EVENT_BUS.addListener(ContentServer::onStarting);
+        NeoForge.EVENT_BUS.addListener(ContentEntities::onEnderTeleport);
+        NeoForge.EVENT_BUS.addListener(ContentEntities::onJump);
+        NeoForge.EVENT_BUS.addListener(ContentEntityTicks::onEntityTick);
         NeoForge.EVENT_BUS.addListener(this::onServerStopped);
         if (FMLEnvironment.dist == Dist.CLIENT) {
             modBus.addListener((RegisterClientReloadListenersEvent held) -> held.registerReloadListener(FaceCacheReset.INSTANCE));
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
+            NeoForge.EVENT_BUS.addListener(ToastFilter::onToastAdd);
+            NeoForge.EVENT_BUS.addListener(ContentDimensionAmbience::onSelectMusic);
             NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
             NeoForge.EVENT_BUS.addListener(BossBackgrounds::onBar);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);

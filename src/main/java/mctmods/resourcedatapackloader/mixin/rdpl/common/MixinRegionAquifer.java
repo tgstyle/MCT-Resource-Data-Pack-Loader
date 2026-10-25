@@ -31,8 +31,8 @@ import javax.annotation.Nullable;
         if (rdpl$regions == null) { return; }
         int pinned = ContentCaveRegions.waterLevel(rdpl$regions, x, y, z);
         if (pinned == CaveRegionDef.NO_WATER) { return; }
-        IFluidStatus deep = (IFluidStatus) (Object) globalFluidPicker.computeFluid(x, DimensionType.WAY_BELOW_MIN_Y, z);
-        int floor = deep.rdpl$getFluidType().is(Blocks.LAVA) ? deep.rdpl$getFluidLevel() + 2 : pinned;
+        Aquifer.FluidStatus deep = globalFluidPicker.computeFluid(x, DimensionType.WAY_BELOW_MIN_Y, z);
+        int floor = deep.fluidType.is(Blocks.LAVA) ? deep.fluidLevel + 2 : pinned;
         int level = Math.max(pinned, floor);
         cir.setReturnValue(new Aquifer.FluidStatus(Math.min(rdpl$seaLevel - 1, level), Blocks.WATER.defaultBlockState()));
     }

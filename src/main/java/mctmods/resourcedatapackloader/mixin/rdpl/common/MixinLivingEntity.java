@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.common.NeoForgeMod;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -42,14 +41,6 @@ import org.slf4j.Logger;
     @Inject(method = "getVoicePitch", at = @At("RETURN"), cancellable = true) private void rdpl$voicePitch(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null && def.sounds().pitch() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().pitch()); }
-    }
-
-    @Inject(method = "jumpFromGround", at = @At("RETURN")) private void rdpl$jumpHigher(CallbackInfo ci) {
-        EntityVariantDef def = rdpl$def();
-        if (def == null || def.physics().jumpMultiplier() == 1.0F) { return; }
-        LivingEntity self = (LivingEntity) (Object) this;
-        Vec3 motion = self.getDeltaMovement();
-        self.setDeltaMovement(motion.x, motion.y * def.physics().jumpMultiplier(), motion.z);
     }
 
     @Inject(method = "getWaterSlowDown", at = @At("RETURN"), cancellable = true) private void rdpl$waterSlowDown(CallbackInfoReturnable<Float> cir) {

@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IDifficultyInstance;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.interfaces.IDayLength;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -153,7 +152,7 @@ public final class ContentRuleSwitch {
         float ruled = ContentEnvironments.rules(level, pos).localDifficulty();
         if (ruled < 0.0F || found.getDifficulty() == Difficulty.PEACEFUL) { return found; }
         DifficultyInstance made = new DifficultyInstance(found.getDifficulty(), 0L, 0L, 0.0F);
-        ((IDifficultyInstance) made).rdpl$effective(ruled);
+        made.effectiveDifficulty = ruled;
         return made;
     }
 

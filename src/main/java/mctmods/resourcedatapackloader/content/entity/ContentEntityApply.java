@@ -5,9 +5,6 @@ import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ICreeper;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IGhast;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMob;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Registered;
@@ -191,16 +188,15 @@ final class ContentEntityApply {
 
     private static void blast(Mob mob, EntityVariantDef.Combat combat) {
         if (mob instanceof Creeper creeper) {
-            ((ICreeper) creeper).rdpl$setMaxSwell(combat.explosionFuse());
-            ((ICreeper) creeper).rdpl$setExplosionRadius((int) combat.explosionPower());
+            creeper.maxSwell = combat.explosionFuse();
+            creeper.explosionRadius = (int) combat.explosionPower();
         }
-        else if (mob instanceof Ghast ghast) { ((IGhast) ghast).rdpl$setExplosionPower((int) combat.explosionPower()); }
+        else if (mob instanceof Ghast ghast) { ghast.explosionPower = (int) combat.explosionPower(); }
     }
 
     private static void climber(Mob mob, boolean climbs) {
-        IMob inner = (IMob) mob;
-        if (climbs && !(mob.getNavigation() instanceof WallClimberNavigation)) { inner.rdpl$setNavigation(new WallClimberNavigation(mob, mob.level())); }
-        else if (!climbs && mob.getNavigation() instanceof WallClimberNavigation) { inner.rdpl$setNavigation(new GroundPathNavigation(mob, mob.level())); }
+        if (climbs && !(mob.getNavigation() instanceof WallClimberNavigation)) { mob.navigation = new WallClimberNavigation(mob, mob.level()); }
+        else if (!climbs && mob.getNavigation() instanceof WallClimberNavigation) { mob.navigation = new GroundPathNavigation(mob, mob.level()); }
     }
 
     private static void walker(Mob mob, EntityVariantDef def) {
@@ -208,27 +204,26 @@ final class ContentEntityApply {
             ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.key(), def.base());
             return;
         }
-        ((IMob) mob).rdpl$setMoveControl(new MoveControl(mob));
+        mob.moveControl = new MoveControl(mob);
     }
 
     private static void navigation(Mob mob, EntityVariantDef def) {
-        IMob inner = (IMob) mob;
         if (def.physics().swims()) {
             swimmer(mob);
             mob.setPathfindingMalus(PathType.WATER, 0.0F);
         }
         else if (def.physics().amphibious() && mob.getNavigation() instanceof GroundPathNavigation ground) { ground.setCanFloat(true); }
         if (def.combat().swoops()) {
-            inner.rdpl$setNavigation(new FlyingPathNavigation(mob, mob.level()));
-            inner.rdpl$setMoveControl(new SwoopMoveControl(mob));
+            mob.navigation = new FlyingPathNavigation(mob, mob.level());
+            mob.moveControl = new SwoopMoveControl(mob);
         }
         if (def.physics().walks()) { walker(mob, def); }
         if (def.physics().breathesUnderwater() || def.physics().swims()) { ContentTasks.drop(mob.goalSelector, FloatGoal.class); }
     }
 
     private static void swimmer(Mob mob) {
-        ((IMob) mob).rdpl$setNavigation(new WaterBoundPathNavigation(mob, mob.level()));
-        ((IMob) mob).rdpl$setMoveControl(new SwimmingMoveControl(mob));
+        mob.navigation = new WaterBoundPathNavigation(mob, mob.level());
+        mob.moveControl = new SwimmingMoveControl(mob);
     }
 
     static void amphibious(Mob mob) {
@@ -240,7 +235,7 @@ final class ContentEntityApply {
         }
         GroundPathNavigation ground = new GroundPathNavigation(mob, mob.level());
         ground.setCanFloat(true);
-        ((IMob) mob).rdpl$setNavigation(ground);
-        ((IMob) mob).rdpl$setMoveControl(new MoveControl(mob));
+        mob.navigation = ground;
+        mob.moveControl = new MoveControl(mob);
     }
 }

@@ -7,7 +7,6 @@ import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILivingEntity;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -35,8 +34,11 @@ import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityTeleportEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEvent;
 import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingBreatheEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
@@ -164,8 +166,8 @@ public final class ContentEntities {
         }));
         mob.setTarget(null);
         mob.setLastHurtByMob(null);
-        ((ILivingEntity) mob).rdpl$setLastHurtMob(null);
-        ((ILivingEntity) mob).rdpl$setLastDamageSource(null);
+        mob.lastHurtMob = null;
+        mob.lastDamageSource = null;
         mob.getCombatTracker().recheckStatus();
     }
 
@@ -367,6 +369,15 @@ public final class ContentEntities {
     public static boolean staysPut(Entity entity) {
         EntityVariantDef def = def(entity);
         return def != null && !def.physics().teleports();
+    }
+
+    public static void onEnderTeleport(EntityTeleportEvent.EnderEntity event) { if (staysPut(event.getEntity())) { event.setCanceled(true); } }
+
+    public static void onJump(LivingEvent.LivingJumpEvent event) {
+        EntityVariantDef def = def(event.getEntity());
+        if (def == null || def.physics().jumpMultiplier() == 1.0F) { return; }
+        Vec3 motion = event.getEntity().getDeltaMovement();
+        event.getEntity().setDeltaMovement(motion.x, motion.y * def.physics().jumpMultiplier(), motion.z);
     }
 
     @Nullable public static Boolean climbs(Entity entity) {

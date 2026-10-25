@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.MobSwitchDef;
 import mctmods.resourcedatapackloader.content.entity.MobStats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMob;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -160,7 +159,7 @@ public final class ContentMobSwitch {
             if (slot == null || item == null || !mob.getItemBySlot(slot).isEmpty()) { continue; }
             CompoundTag given = new CompoundTag();
             given.putString(ITEM, entry.getValue().item());
-            given.putFloat(CHANCE, ((IMob) mob).rdpl$dropChance(slot));
+            given.putFloat(CHANCE, mob.getEquipmentDropChance(slot));
             gear.put(entry.getKey(), given);
             mob.setItemSlot(slot, new ItemStack(item));
             mob.setDropChance(slot, entry.getValue().chance());

@@ -1,11 +1,12 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.util.ContentDisabled;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISmithingRecipe;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.SmithingTransformRecipe;
+import net.minecraft.world.item.crafting.SmithingTrimRecipe;
 import java.util.List;
 
 public final class RecipeDisabled {
@@ -21,7 +22,8 @@ public final class RecipeDisabled {
     }
 
     private static List<Ingredient> ingredients(Recipe<?> recipe) {
-        if (recipe instanceof ISmithingRecipe smithing) { return List.of(smithing.rdpl$getTemplate(), smithing.rdpl$getBase(), smithing.rdpl$getAddition()); }
+        if (recipe instanceof SmithingTransformRecipe transform) { return List.of(transform.template, transform.base, transform.addition); }
+        if (recipe instanceof SmithingTrimRecipe trim) { return List.of(trim.template, trim.base, trim.addition); }
         return recipe.getIngredients();
     }
 

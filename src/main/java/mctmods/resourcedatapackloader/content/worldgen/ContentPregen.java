@@ -2,8 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.card.CardIds;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkMap;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ILevel;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -182,7 +180,7 @@ public final class ContentPregen {
 
     private static void sweepEmpty(MinecraftServer server) {
         for (ServerLevel level : server.getAllLevels()) {
-            if (level.players().isEmpty()) { ((ILevel) level).rdpl$getBlockEntityTickers().removeIf(TickingBlockEntity::isRemoved); }
+            if (level.players().isEmpty()) { level.blockEntityTickers.removeIf(TickingBlockEntity::isRemoved); }
         }
     }
 
@@ -219,7 +217,7 @@ public final class ContentPregen {
             ChunkPos next = order.next();
             issued++;
             flying.add(next.toLong());
-            if (((IChunkMap) chunks.chunkMap).rdpl$isExistingChunkFull(next)) { existing.add(next.toLong()); }
+            if (chunks.chunkMap.isExistingChunkFull(next)) { existing.add(next.toLong()); }
             chunks.addRegionTicket(TICKET, next, 0, next);
             ticketed.add(next.toLong());
             unfollowed.addLast(next);
