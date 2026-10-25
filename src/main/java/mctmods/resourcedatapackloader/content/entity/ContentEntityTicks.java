@@ -24,6 +24,7 @@ import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -75,6 +76,18 @@ public final class ContentEntityTicks {
         if (!(event.getLevel() instanceof Level level)) { return; }
         FAR.remove(level);
         CHECKED.remove(level);
+    }
+
+    public static void onEntityTick(EntityTickEvent.Pre event) {
+        if (event.getEntity() instanceof ItemEntity item) {
+            if (!slowedNow(item)) { return; }
+            if (item.age != Short.MIN_VALUE) { item.age++; }
+            event.setCanceled(true);
+        }
+        else if (event.getEntity() instanceof ExperienceOrb orb && slowedNow(orb)) {
+            orb.age++;
+            event.setCanceled(true);
+        }
     }
 
     public static void onServerTick(ServerTickEvent.Post event) {

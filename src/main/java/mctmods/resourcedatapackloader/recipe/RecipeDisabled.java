@@ -1,12 +1,12 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.util.ContentDisabled;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IShapelessRecipe;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
 import net.minecraft.world.item.crafting.SingleItemRecipe;
 import net.minecraft.world.item.crafting.SmithingRecipe;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
@@ -28,7 +28,7 @@ public final class RecipeDisabled {
 
     private static List<Ingredient> ingredients(Recipe<?> recipe) {
         if (recipe instanceof ShapedRecipe shaped) { return shaped.getIngredients().stream().flatMap(Optional::stream).toList(); }
-        if (recipe instanceof IShapelessRecipe shapeless) { return shapeless.rdpl$getIngredients(); }
+        if (recipe instanceof ShapelessRecipe shapeless) { return shapeless.ingredients; }
         if (recipe instanceof SingleItemRecipe single) { return List.of(single.input()); }
         if (recipe instanceof SmithingRecipe smithing) { return Stream.of(smithing.templateIngredient(), Optional.of(smithing.baseIngredient()), smithing.additionIngredient()).flatMap(Optional::stream).toList(); }
         return recipe.placementInfo().ingredients();

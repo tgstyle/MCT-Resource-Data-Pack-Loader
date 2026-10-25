@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseBasedChunkGenerator;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseChunk;
 
 import com.google.gson.JsonObject;
 import com.mojang.serialization.JsonOps;
@@ -26,7 +24,7 @@ final class CityCells {
         NoiseGeneratorSettings settings = generator.generatorSettings().value();
         this.shape = shape;
         this.fallback = settings.defaultBlock();
-        this.noise = new NoiseChunk(1, random, originX, originZ, shape, MARKER, settings, ((INoiseBasedChunkGenerator) generator).rdpl$getGlobalFluidPicker().get(), Blender.empty());
+        this.noise = new NoiseChunk(1, random, originX, originZ, shape, MARKER, settings, generator.globalFluidPicker.get(), Blender.empty());
         noise.initializeForFirstCellX();
         noise.advanceCellX(0);
     }
@@ -50,7 +48,7 @@ final class CityCells {
                 noise.updateForY(y, (double) inY / tall);
                 noise.updateForX(x, alongX);
                 noise.updateForZ(z, alongZ);
-                BlockState state = ((INoiseChunk) noise).rdpl$getInterpolatedState();
+                BlockState state = noise.getInterpolatedState();
                 BlockState found = state == null ? fallback : state;
                 if (!surfaced && surface.test(found)) {
                     tops[0] = y + 1;

@@ -9,6 +9,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryLoadTask;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceManagerRegistryLoadTask;
 import net.minecraft.server.packs.resources.Resource;
@@ -29,7 +30,7 @@ import java.util.function.Supplier;
     @Shadow @Final private List<Registry.PendingTags<?>> pendingTags;
 
     @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;")) private CompletableFuture<Map<Identifier, Resource>> rdpl$recipes(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
-        if (!Registries.RECIPE.equals(((IRegistryLoadTask) (Object) this).rdpl$getRegistryKey())) { return original.call(supplier, executor); }
+        if (!Registries.RECIPE.equals(((RegistryLoadTask<?>) (Object) this).registryKey())) { return original.call(supplier, executor); }
         Supplier<Map<Identifier, Resource>> filtered = () -> {
             try { return RecipeFiles.filter(supplier.get(), resourceManager, context, pendingTags); }
             finally { RecipeAdvancements.publish(context, Set.of()); }

@@ -7,9 +7,6 @@
         "minVersion": "0.5.3"
     },
     "mixins": [
-        "common.IBlendedNoise",
-        "common.INoiseChunk",
-        "common.INormalNoise",
         "common.MixinAquifer",
         "common.MixinEnvironmentAttributeSystem",
         "common.MixinLevelStorageSource",

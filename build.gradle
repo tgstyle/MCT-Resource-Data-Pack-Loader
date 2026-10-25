@@ -115,6 +115,15 @@ subprojects {
 
         mods.register(mod_id as String) { sourceSet(sourceSets.main) }
 
+        List<File> transformers = []
+        sourceSets.main.resources.srcDirs.each { File dir ->
+            ['accesstransformer.cfg', 'accesstransformer.line.cfg'].each { String name ->
+                File candidate = new File(dir, "META-INF/$name")
+                if (candidate.isFile()) { transformers.add(candidate) }
+            }
+        }
+        accessTransformers.from(transformers)
+
         runs {
             client {
                 client()

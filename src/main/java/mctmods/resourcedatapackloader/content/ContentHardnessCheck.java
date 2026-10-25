@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.HardnessDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IWeightedBakedModel;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -68,7 +67,7 @@ public final class ContentHardnessCheck {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model is a {}, which holds one model, so every step will look the same. List {} variants of equal weight, hardest first, and check no other mod is replacing the model after it is baked", def.key(), def.buckets(), state, model.getClass().getName(), def.buckets());
             return;
         }
-        List<Weighted<BlockStateModel>> models = ((IWeightedBakedModel) weighted).rdpl$getList().unwrap();
+        List<Weighted<BlockStateModel>> models = weighted.list.unwrap();
         for (Weighted<BlockStateModel> entry : models) { ContentLog.LOGGER.debug("  a variant that survived baking uses the texture {}", texture(entry.value())); }
         int held = models.size();
         int weight = models.stream().mapToInt(Weighted::weight).sum();
@@ -89,7 +88,7 @@ public final class ContentHardnessCheck {
         for (BlockState one : state.getBlock().getStateDefinition().getPossibleStates()) {
             if (one == state) { continue; }
             BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(one);
-            int held = model instanceof WeightedVariants weighted ? ((IWeightedBakedModel) weighted).rdpl$getList().unwrap().size() : 1;
+            int held = model instanceof WeightedVariants weighted ? weighted.list.unwrap().size() : 1;
             if (held <= 1) { continue; }
             ContentLog.LOGGER.warn("Hardness group {} does not name {}, but that state now draws from {} variant(s) too, so overriding the blockstate has changed a block the group was not meant to touch", def.key(), one, held);
         }

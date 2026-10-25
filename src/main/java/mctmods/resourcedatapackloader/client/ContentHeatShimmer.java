@@ -4,8 +4,6 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.compat.LineClientCompat;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IGameRenderer;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IPostChain;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
@@ -59,14 +57,14 @@ public final class ContentHeatShimmer {
         }
         float[] values = values(mc, heat, event.getLevelRenderState().cameraRenderState.projectionMatrix);
         if (own != chain || !Arrays.equals(values, written)) {
-            for (PostPass pass : ((IPostChain) own).rdpl$getPasses()) { LineClientCompat.writeUniform(pass, UNIFORM, values); }
+            for (PostPass pass : own.passes) { LineClientCompat.writeUniform(pass, UNIFORM, values); }
             chain = own;
             written = values;
         }
         RenderTarget target = ClientCompat.mainTarget(mc);
         FrameGraphBuilder frame = new FrameGraphBuilder();
         own.addToFrame(frame, target.width, target.height, PostChain.TargetBundle.of(PostChain.MAIN_TARGET_ID, frame.importExternal("main", target)));
-        frame.execute(((IGameRenderer) mc.gameRenderer).rdpl$getResourcePool());
+        frame.execute(mc.gameRenderer.resourcePool);
     }
 
     private static float[] values(Minecraft mc, SkyLookDef.Heat heat, Matrix4fc projection) {

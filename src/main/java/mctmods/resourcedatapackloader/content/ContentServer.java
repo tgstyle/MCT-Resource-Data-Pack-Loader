@@ -4,13 +4,22 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.DedicatedServer;
+import net.minecraft.server.dedicated.DedicatedServerProperties;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
@@ -106,6 +115,47 @@ public final class ContentServer {
     private static void put(Map<String, String> asked, String key, @Nullable Boolean value) { if (value != null) { asked.put(key, value.toString()); } }
 
     private static void put(Map<String, String> asked, String key, int value) { if (value >= 0) { asked.put(key, Integer.toString(value)); } }
+
+    public static void onAboutToStart(ServerAboutToStartEvent event) {
+        if (!(event.getServer() instanceof DedicatedServer server)) { return; }
+        writeGameMode(server);
+        writeProperties(server);
+        applyTo(server);
+    }
+
+    public static void onStarting(ServerStartingEvent event) { if (!event.getServer().isDedicatedServer()) { applyTo(event.getServer()); } }
+
+    private static void writeGameMode(DedicatedServer server) {
+        String mode = Settings.lower(worldGameMode());
+        boolean hardcore = "hardcore".equals(mode);
+        GameType asked = hardcore ? GameType.SURVIVAL : GameType.byName(mode, null);
+        if (asked == null) { return; }
+        DedicatedServerProperties held = server.settings.getProperties();
+        if (held.gameMode.get() == asked && held.hardcore == hardcore) { return; }
+        ContentLog.LOGGER.info("server.properties plays {} and a pack asks for {}, so the pack's mode is written to server.properties and every world plays it", held.hardcore ? "hardcore" : held.gameMode.get().getName(), hardcore ? "hardcore" : asked.getName());
+        write(server, Map.of("gamemode", asked.getName(), "hardcore", Boolean.toString(hardcore)));
+        server.getWorldData().setGameType(asked);
+    }
+
+    private static void writeProperties(DedicatedServer server) {
+        Properties held = server.settings.getProperties().cloneProperties();
+        Map<String, String> asked = properties(held.getProperty("level-type", ""));
+        List<String> written = new ArrayList<>();
+        for (Map.Entry<String, String> line : asked.entrySet()) {
+            if (!line.getValue().equals(held.getProperty(line.getKey()))) { written.add(line.getKey() + "=" + line.getValue()); }
+        }
+        if (written.isEmpty()) { return; }
+        write(server, asked);
+        ContentLog.LOGGER.info("A pack sets {} line(s) of server.properties, so they are written there: {}", written.size(), String.join(", ", written));
+    }
+
+    private static void write(DedicatedServer server, Map<String, String> lines) {
+        server.settings.update(current -> {
+            Properties changed = current.cloneProperties();
+            lines.forEach(changed::setProperty);
+            return new DedicatedServerProperties(changed);
+        });
+    }
 
     public static void applyTo(MinecraftServer server) {
         int idle = idleTimeout();

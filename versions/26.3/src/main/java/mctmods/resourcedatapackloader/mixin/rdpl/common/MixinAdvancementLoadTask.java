@@ -7,6 +7,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.RegistryLoadTask;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceManagerRegistryLoadTask;
 import net.minecraft.server.packs.resources.Resource;
@@ -20,7 +21,7 @@ import java.util.function.Supplier;
 @Mixin(ResourceManagerRegistryLoadTask.class) public abstract class MixinAdvancementLoadTask {
     @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;")) private CompletableFuture<Map<Identifier, Resource>> rdpl$advancements(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
         CompletableFuture<Map<Identifier, Resource>> listed = original.call(supplier, executor);
-        if (!Registries.ADVANCEMENT.equals(((IRegistryLoadTask) (Object) this).rdpl$getRegistryKey())) { return listed; }
+        if (!Registries.ADVANCEMENT.equals(((RegistryLoadTask<?>) (Object) this).registryKey())) { return listed; }
         return RecipeAdvancements.pruned(context, listed);
     }
 }

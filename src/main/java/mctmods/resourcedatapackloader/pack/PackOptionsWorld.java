@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -62,9 +61,9 @@ public final class PackOptionsWorld {
         backup(server);
     }
 
-    @SuppressWarnings("resource") private static void backup(MinecraftServer server) {
+    private static void backup(MinecraftServer server) {
         try {
-            long size = ((IMinecraftServer) server).rdpl$getStorageSource().makeWorldBackup();
+            long size = server.storageSource.makeWorldBackup();
             backedUp = true;
             ContentLog.LOGGER.info("The world was backed up to the game's backups folder before the changed pack options touch it, {} KB", size / 1024);
         }

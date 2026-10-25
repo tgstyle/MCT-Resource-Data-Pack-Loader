@@ -15,6 +15,8 @@ import mctmods.resourcedatapackloader.client.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.render.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.FaceCacheReset;
+import mctmods.resourcedatapackloader.client.ToastFilter;
+import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.compat.LineCompat;
@@ -355,6 +357,11 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentPregenHold::onTeleport);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
+        NeoForge.EVENT_BUS.addListener(ContentEntityTicks::onEntityTick);
+        NeoForge.EVENT_BUS.addListener(ContentEntities::onEnderTeleport);
+        NeoForge.EVENT_BUS.addListener(ContentEntities::onJump);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentServer::onAboutToStart);
+        NeoForge.EVENT_BUS.addListener(ContentServer::onStarting);
         NeoForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentWorldgen::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
@@ -429,6 +436,7 @@ import java.util.Set;
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
             modBus.addListener((AddClientReloadListenersEvent held) -> held.addListener(id("face_cache_reset"), FaceCacheReset.INSTANCE));
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
+            NeoForge.EVENT_BUS.addListener(ToastFilter::onToastAdd);
             NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
             NeoForge.EVENT_BUS.addListener(BossBackgrounds::onBar);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
@@ -524,7 +532,9 @@ import java.util.Set;
         throw new IllegalStateException(message);
     }
 
-    private void onAddReloadListeners(AddServerReloadListenersEvent event) { event.addListener(id("recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
+    private void onAddReloadListeners(AddServerReloadListenersEvent event) {
+        LineCompat.recipeRegistries(event);
+        event.addListener(id("recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
     private void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 

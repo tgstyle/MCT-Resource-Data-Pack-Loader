@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.IMarkedNoise;
+import mctmods.resourcedatapackloader.content.interfaces.IRegionAquifer;
 import mctmods.resourcedatapackloader.content.worldgen.CityDeckBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCraters;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDeepCaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPopulateControl;
@@ -45,7 +47,12 @@ import java.util.Set;
         if (picker != null) { cir.setReturnValue(picker); }
     }
 
-    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$markFill(ChunkAccess chunk, StructureManager structureManager, Blender blender, RandomState randomState, NoiseSettings noiseSettings, CallbackInfoReturnable<NoiseChunk> cir, @Local Beardifier beardifier) { ((IMarkedNoise) cir.getReturnValue()).rdpl$mark(ContentVoidWorld.voidEmpties(structureManager), beardifier instanceof CityDeckBeard city ? city : null, ((IStructureManager) structureManager).rdpl$getLevel() instanceof WorldGenLevel level ? level : null); }
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$markFill(ChunkAccess chunk, StructureManager structureManager, Blender blender, RandomState randomState, NoiseSettings noiseSettings, CallbackInfoReturnable<NoiseChunk> cir, @Local Beardifier beardifier) { ((IMarkedNoise) cir.getReturnValue()).rdpl$mark(ContentVoidWorld.voidEmpties(structureManager), beardifier instanceof CityDeckBeard city ? city : null, structureManager.level instanceof WorldGenLevel level ? level : null); }
+
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$regionWater(CallbackInfoReturnable<NoiseChunk> cir) {
+        ChunkGenerator generator = (ChunkGenerator) (Object) this;
+        if (cir.getReturnValue().aquifer() instanceof IRegionAquifer aquifer && ContentCaveRegions.pinsWater(generator.getBiomeSource())) { aquifer.rdpl$pinRegions(generator.getBiomeSource(), generator.getSeaLevel()); }
+    }
 
     @Inject(method = "doFill", at = @At("HEAD"), cancellable = true) private void rdpl$voidFill(NoiseChunk noiseChunk, ChunkAccess chunk, CallbackInfo ci) { if (((IMarkedNoise) noiseChunk).rdpl$voided()) { ci.cancel(); } }
 

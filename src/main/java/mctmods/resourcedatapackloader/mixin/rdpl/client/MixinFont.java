@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
 
     @SuppressWarnings("resource") @Unique @Nullable private static GlyphProvider rdpl$from(GlyphSource source, int codepoint) {
         if (!(source instanceof FontSet.Source set)) { return null; }
-        for (GlyphProvider provider : ((IFontSet) ((IFontSetSource) set).rdpl$getFontSet()).rdpl$getActiveProviders()) {
+        for (GlyphProvider provider : ((IFontSetSource) set).rdpl$getFontSet().activeProviders) {
             if (provider.getGlyph(codepoint) != null) { return provider; }
         }
         return null;

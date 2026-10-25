@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.compat;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IPostPass;
 
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.platform.InputConstants;
@@ -49,7 +48,7 @@ public final class LineClientCompat {
     public static InputConstants.Key keyV() { return InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_V); }
 
     public static void writeUniform(PostPass pass, String group, float... values) {
-        Map<String, GpuBuffer> uniforms = ((IPostPass) pass).rdpl$getCustomUniforms();
+        Map<String, GpuBuffer> uniforms = pass.customUniforms;
         GpuBuffer buffer = uniforms.get(group);
         if (buffer == null) { return; }
         if ((buffer.usage() & GpuBuffer.USAGE_COPY_DST) == 0) {

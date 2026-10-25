@@ -8,8 +8,6 @@ import mctmods.resourcedatapackloader.content.gate.GateStorage;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
 import mctmods.resourcedatapackloader.content.worldgen.ContentField;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeManager;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkMap;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.Config;
@@ -325,7 +323,7 @@ public final class ContentHardness {
         int swapped = 0;
         int chunks = 0;
         for (ServerLevel level : server.getAllLevels()) {
-            for (ChunkHolder holder : ((IChunkMap) level.getChunkSource().chunkMap).rdpl$getVisibleChunkMap().values()) {
+            for (ChunkHolder holder : level.getChunkSource().chunkMap.visibleChunkMap.values()) {
                 LevelChunk chunk = level.getChunkSource().getChunkNow(holder.getPos().x(), holder.getPos().z());
                 if (chunk == null) { continue; }
                 swapped += swap(level, chunk, def);
@@ -397,7 +395,7 @@ public final class ContentHardness {
 
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof Level level)) { return; }
-        salt = derive(((IBiomeManager) level.getBiomeManager()).rdpl$getBiomeZoomSeed());
+        salt = derive(level.getBiomeManager().biomeZoomSeed);
         ContentLog.LOGGER.debug("Hardness salt {} from {} {}", salt, level.isClientSide() ? "client" : "server", level.dimension().identifier());
     }
 

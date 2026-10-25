@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IServerLevel;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -189,7 +188,7 @@ public final class ContentPregenDimensions {
         EnderDragonFight fresh = EnderDragonFight.createDefault();
         level.getDataStorage().set(EnderDragonFight.TYPE, fresh);
         fresh.init(level, level.getSeed(), BlockPos.ZERO);
-        ((IServerLevel) level).rdpl$setDragonFight(fresh);
+        level.dragonFight = fresh;
         ContentLog.LOGGER.info("The end's land is gone, so the dragon and its fight start over with it");
     }
 

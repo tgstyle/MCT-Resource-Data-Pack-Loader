@@ -2,8 +2,7 @@ package mctmods.resourcedatapackloader.compat;
 
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeNoise;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
+import mctmods.resourcedatapackloader.recipe.interfaces.IRecipeRegistries;
 import mctmods.resourcedatapackloader.util.ConfigCore;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.WorldgenUp;
@@ -136,6 +135,7 @@ import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
 import net.neoforged.neoforge.common.loot.LootModifier;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
 import java.io.InputStream;
@@ -208,6 +208,8 @@ public final class LineCompat {
     public static void herds(WorldGenLevel level, @SuppressWarnings("unused") Holder<Biome> biome, BlockPos at, ChunkPos chunk, RandomSource random) { NaturalSpawner.spawnMobsForChunkGeneration(level, at, chunk, random); }
 
     public static void registerConfig(ModContainer container, IConfigSpec spec) { container.registerConfig(ModConfig.Type.LOCAL, spec, ConfigCore.FILE); }
+
+    public static void recipeRegistries(AddServerReloadListenersEvent event) { if (event.getServerResources().getRecipeManager() instanceof IRecipeRegistries recipes) { recipes.rdpl$registries(event.getServerResources().registryAccess); } }
 
     public static void listen(IEventBus modBus) { modBus.addListener(ModifyDefaultComponentsEvent.class, event -> event.modifyMatching((_, _) -> true, LineCompat::fuel)); }
 
@@ -305,9 +307,9 @@ public final class LineCompat {
         };
     }
 
-    public static double surfaceNoise(RandomState random, int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceNoise().get(x, 0.0, z); }
+    public static double surfaceNoise(RandomState random, int x, int z) { return random.surfaceSystem().surfaceNoise.get(x, 0.0, z); }
 
-    public static float temperatureNoise(BlockPos pos) { return IBiomeNoise.rdpl$getTemperatureNoise().get(pos.getX() / 8.0F, pos.getZ() / 8.0F) * 8.0F; }
+    public static float temperatureNoise(BlockPos pos) { return Biome.TEMPERATURE_NOISE.get(pos.getX() / 8.0F, pos.getZ() / 8.0F) * 8.0F; }
 
     public static RandomState randomState(NoiseGeneratorSettings settings, RegistryAccess registries, long seed) { return RandomState.create(registries.lookupOrThrow(Registries.NOISE), seed, settings); }
 

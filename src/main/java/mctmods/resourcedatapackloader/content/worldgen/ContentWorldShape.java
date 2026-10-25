@@ -4,8 +4,6 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IDedicatedServer;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISettings;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -477,8 +475,8 @@ public final class ContentWorldShape {
         Identifier wanted = overrode;
         if (wanted == null || !(server instanceof DedicatedServer dedicated)) { return; }
         overrode = null;
-        DedicatedServerSettings settings = ((IDedicatedServer) dedicated).rdpl$getSettings();
-        ((ISettings) settings.getProperties()).rdpl$getProperties().setProperty("level-type", wanted.toString());
+        DedicatedServerSettings settings = dedicated.settings;
+        settings.getProperties().properties.setProperty("level-type", wanted.toString());
         settings.forceSave();
         ContentLog.LOGGER.info("Wrote level-type={} back to server.properties, so the file names the preset the world was made with", wanted);
     }

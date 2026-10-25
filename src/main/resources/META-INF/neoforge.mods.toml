@@ -45,3 +45,9 @@ config="mixins.resourcedatapackloader.rdpl.json"
 
 [[mixins]]
 config="mixins.resourcedatapackloader.line.json"
+
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
+
+[[accessTransformers]]
+file="META-INF/accesstransformer.line.cfg"

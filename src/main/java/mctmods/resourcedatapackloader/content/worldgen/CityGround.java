@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.Config;
@@ -168,11 +167,11 @@ public final class CityGround {
 
     public int lined() { return bottom() + ContentCitySewerPiece.FLOOR_LEAST; }
 
-    public int surfaceDepth(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceDepth(x, z); }
+    public int surfaceDepth(int x, int z) { return random.surfaceSystem().getSurfaceDepth(x, z); }
 
     public double surfaceNoise(int x, int z) { return LineCompat.surfaceNoise(random, x, z); }
 
-    public BlockState band(int x, int y, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getBand(x, y, z); }
+    public BlockState band(int x, int y, int z) { return random.surfaceSystem().getBand(x, y, z); }
 
     public BlockState stone() { return generator instanceof NoiseBasedChunkGenerator noise ? noise.generatorSettings().value().defaultBlock() : Blocks.STONE.defaultBlockState(); }
 

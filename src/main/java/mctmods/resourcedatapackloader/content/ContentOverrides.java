@@ -5,11 +5,6 @@ import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.types.ContentToolTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockBehaviour;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStateBase;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IFireBlock;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IItem;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IPotion;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -37,6 +32,7 @@ import net.minecraft.world.item.component.Consumables;
 import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
@@ -179,15 +175,13 @@ public final class ContentOverrides {
         Block block = Registered.find(BuiltInRegistries.BLOCK, def.target());
         if (block == null) { return false; }
         BLOCKS.computeIfAbsent(block, BlockSnapshot::of);
-        IBlockBehaviour inside = (IBlockBehaviour) block;
-        if (def.hardness() != null) { inside.rdpl$setExplosionResistance(Math.max(inside.rdpl$getExplosionResistance(), def.hardness())); }
-        if (def.resistance() != null) { inside.rdpl$setExplosionResistance(Math.max(0.0F, ContentTypes.legacyResistance(def.resistance()))); }
-        if (def.slipperiness() != null) { inside.rdpl$setFriction(def.slipperiness()); }
-        if (def.soundType() != null) { inside.rdpl$setSoundType(ContentTypes.soundType(def.soundType(), inside.rdpl$getSoundType(), def.source())); }
+        if (def.hardness() != null) { block.explosionResistance = Math.max(block.explosionResistance, def.hardness()); }
+        if (def.resistance() != null) { block.explosionResistance = Math.max(0.0F, ContentTypes.legacyResistance(def.resistance())); }
+        if (def.slipperiness() != null) { block.friction = def.slipperiness(); }
+        if (def.soundType() != null) { block.soundType = ContentTypes.soundType(def.soundType(), block.soundType, def.source()); }
         for (BlockState state : block.getStateDefinition().getPossibleStates()) {
-            IBlockStateBase held = (IBlockStateBase) state;
-            if (def.hardness() != null) { held.rdpl$setDestroySpeed(def.hardness()); }
-            if (def.light() != null) { held.rdpl$setLightEmission(Mth.clamp(def.light(), 0, 15)); }
+            if (def.hardness() != null) { state.destroySpeed = def.hardness(); }
+            if (def.light() != null) { state.lightEmission = Mth.clamp(def.light(), 0, 15); }
         }
         if (def.lightOpacity() != null) { lights.put(block, Mth.clamp(def.lightOpacity(), 0, 15)); }
         if (def.flammability() != null) {
@@ -202,7 +196,6 @@ public final class ContentOverrides {
         if (item == null) { return false; }
         if (!holder(item).areComponentsBound()) { return true; }
         ITEMS.computeIfAbsent(item, ItemSnapshot::of);
-        IItem inside = (IItem) item;
         DataComponentMap.Builder builder = DataComponentMap.builder().addAll(item.components());
         if (def.maxStackSize() != null) { builder.set(DataComponents.MAX_STACK_SIZE, Mth.clamp(def.maxStackSize(), 1, 64)); }
         if (def.maxDamage() != null) {
@@ -211,7 +204,7 @@ public final class ContentOverrides {
         }
         if (def.containerItem() != null) {
             Item container = ContentStacks.find(def.source(), def.containerItem());
-            if (container != null) { inside.rdpl$setCraftingRemainingItem(new ItemStackTemplate(container)); }
+            if (container != null) { item.craftingRemainingItem = new ItemStackTemplate(container); }
             else { ContentLog.LOGGER.error("Override {} names container item {}, which does not exist", def.source(), def.containerItem()); }
         }
         OverrideDef.FoodDef food = def.food();
@@ -255,7 +248,7 @@ public final class ContentOverrides {
             if (made != null) { resolved.add(made); }
         }
         POTIONS.computeIfAbsent(potion, held -> List.copyOf(held.getEffects()));
-        ((IPotion) potion).rdpl$setEffects(List.copyOf(resolved));
+        potion.effects = List.copyOf(resolved);
         return true;
     }
 
@@ -274,7 +267,7 @@ public final class ContentOverrides {
         BLOCKS.forEach((block, held) -> held.restore(block));
         FIRE.forEach((block, held) -> held.restore(block));
         ITEMS.forEach((item, held) -> held.restore(item));
-        POTIONS.forEach((potion, held) -> ((IPotion) potion).rdpl$setEffects(held));
+        POTIONS.forEach((potion, held) -> potion.effects = held);
         BLOCKS.clear();
         FIRE.clear();
         ITEMS.clear();
@@ -282,12 +275,12 @@ public final class ContentOverrides {
         lightBlocks = Collections.emptyMap();
     }
 
-    private static IFireBlock fire() { return (IFireBlock) Blocks.FIRE; }
+    private static FireBlock fire() { return (FireBlock) Blocks.FIRE; }
 
     public static void flammable(Block block, int ignite, int burn) {
-        IFireBlock fire = fire();
-        fire.rdpl$getIgniteOdds().put(block, ignite);
-        fire.rdpl$getBurnOdds().put(block, burn);
+        FireBlock fire = fire();
+        fire.igniteOdds.put(block, ignite);
+        fire.burnOdds.put(block, burn);
     }
 
     @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? Json.getFloat(json, key) : null; }
@@ -298,43 +291,41 @@ public final class ContentOverrides {
 
     private record BlockSnapshot(float resistance, float friction, SoundType sound, float[] speeds, int[] lights) {
         static BlockSnapshot of(Block block) {
-            IBlockBehaviour inside = (IBlockBehaviour) block;
             List<BlockState> states = block.getStateDefinition().getPossibleStates();
             float[] speeds = new float[states.size()];
             int[] lights = new int[states.size()];
             for (int i = 0; i < states.size(); i++) {
-                IBlockStateBase state = (IBlockStateBase) states.get(i);
-                speeds[i] = state.rdpl$getDestroySpeed();
-                lights[i] = state.rdpl$getLightEmission();
+                BlockState state = states.get(i);
+                speeds[i] = state.destroySpeed;
+                lights[i] = state.lightEmission;
             }
-            return new BlockSnapshot(inside.rdpl$getExplosionResistance(), inside.rdpl$getFriction(), inside.rdpl$getSoundType(), speeds, lights);
+            return new BlockSnapshot(block.explosionResistance, block.friction, block.soundType, speeds, lights);
         }
 
         void restore(Block block) {
-            IBlockBehaviour inside = (IBlockBehaviour) block;
-            inside.rdpl$setExplosionResistance(resistance);
-            inside.rdpl$setFriction(friction);
-            inside.rdpl$setSoundType(sound);
+            block.explosionResistance = resistance;
+            block.friction = friction;
+            block.soundType = sound;
             List<BlockState> states = block.getStateDefinition().getPossibleStates();
             for (int i = 0; i < states.size(); i++) {
-                IBlockStateBase state = (IBlockStateBase) states.get(i);
-                state.rdpl$setDestroySpeed(speeds[i]);
-                state.rdpl$setLightEmission(lights[i]);
+                BlockState state = states.get(i);
+                state.destroySpeed = speeds[i];
+                state.lightEmission = lights[i];
             }
         }
     }
 
     private record FireSnapshot(@Nullable Integer ignite, @Nullable Integer burn) {
         static FireSnapshot of(Block block) {
-            IFireBlock fire = fire();
-            return new FireSnapshot(fire.rdpl$getIgniteOdds().containsKey(block) ? fire.rdpl$getIgniteOdds().getInt(block) : null, fire.rdpl$getBurnOdds().containsKey(block) ? fire.rdpl$getBurnOdds().getInt(block) : null);
+            FireBlock fire = fire();
+            return new FireSnapshot(fire.igniteOdds.containsKey(block) ? fire.igniteOdds.getInt(block) : null, fire.burnOdds.containsKey(block) ? fire.burnOdds.getInt(block) : null);
         }
 
         void restore(Block block) {
-            IFireBlock fire = fire();
+            FireBlock fire = fire();
             if (ignite == null || burn == null) {
-                fire.rdpl$getIgniteOdds().removeInt(block);
-                fire.rdpl$getBurnOdds().removeInt(block);
+                fire.igniteOdds.removeInt(block);
+                fire.burnOdds.removeInt(block);
                 return;
             }
             flammable(block, ignite, burn);
@@ -342,11 +333,11 @@ public final class ContentOverrides {
     }
 
     private record ItemSnapshot(DataComponentMap components, @Nullable ItemStackTemplate remaining) {
-        static ItemSnapshot of(Item item) { return new ItemSnapshot(item.components(), ((IItem) item).rdpl$getCraftingRemainingItem()); }
+        static ItemSnapshot of(Item item) { return new ItemSnapshot(item.components(), item.craftingRemainingItem); }
 
         void restore(Item item) {
             holder(item).bindComponents(components);
-            ((IItem) item).rdpl$setCraftingRemainingItem(remaining);
+            item.craftingRemainingItem = remaining;
         }
     }
 }

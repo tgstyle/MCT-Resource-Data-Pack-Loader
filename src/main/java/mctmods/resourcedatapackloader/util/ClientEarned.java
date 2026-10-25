@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IClientAdvancements;
-
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
@@ -19,7 +17,7 @@ public final class ClientEarned {
         ClientAdvancements manager = connection.getAdvancements();
         AdvancementHolder advancement = manager.get(id);
         if (advancement == null) { return false; }
-        AdvancementProgress progress = ((IClientAdvancements) manager).rdpl$getProgress().get(advancement);
+        AdvancementProgress progress = manager.progress.get(advancement);
         return progress != null && progress.isDone();
     }
 }

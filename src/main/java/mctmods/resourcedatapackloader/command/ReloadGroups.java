@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.compat.LineClientCompat;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IParticleEngine;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -48,7 +47,7 @@ public final class ReloadGroups {
     }
 
     private static List<PreparableReloadListener> baked(Minecraft minecraft) {
-        return List.of(AnimationLoader.INSTANCE, minecraft.getModelManager(), ((IParticleEngine) minecraft.particleEngine).rdpl$getResourceManager(), ClientCompat.levelListener(minecraft));
+        return List.of(AnimationLoader.INSTANCE, minecraft.getModelManager(), minecraft.particleEngine.resourceManager, ClientCompat.levelListener(minecraft));
     }
 
     public static Set<String> names() { return GROUPS.keySet(); }

@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.ICloudRenderer;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.CloudRenderer;
@@ -48,9 +47,9 @@ public final class ContentCloudLayers {
     private static CloudRenderer extra(CloudRenderer main, int index) {
         while (EXTRA.size() <= index) { EXTRA.add(new CloudRenderer()); }
         CloudRenderer renderer = EXTRA.get(index);
-        CloudRenderer.TextureData texture = ((ICloudRenderer) main).rdpl$getTexture();
-        if (((ICloudRenderer) renderer).rdpl$getTexture() != texture) {
-            ((ICloudRenderer) renderer).rdpl$setTexture(texture);
+        CloudRenderer.TextureData texture = main.texture;
+        if (renderer.texture != texture) {
+            renderer.texture = texture;
             renderer.markForRebuild();
         }
         return renderer;

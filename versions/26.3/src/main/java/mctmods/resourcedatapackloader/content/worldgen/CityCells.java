@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.INoiseBasedChunkGenerator;
 
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Aquifer;
@@ -32,7 +31,7 @@ final class CityCells {
         DensityVolume volume = new DensityVolume(WIDTH, shape.height(), WIDTH, originX, shape.minY(), originZ);
         Predicate<BlockState> surface = Heightmap.Types.WORLD_SURFACE_WG.isOpaque();
         Predicate<BlockState> floor = Heightmap.Types.OCEAN_FLOOR_WG.isOpaque();
-        try (NoiseChunk noise = new NoiseChunk(random, null, settings, ((INoiseBasedChunkGenerator) generator).rdpl$getGlobalFluidPicker().get(), Blender.empty(), volume)) {
+        try (NoiseChunk noise = new NoiseChunk(random, null, settings, generator.globalFluidPicker.get(), Blender.empty(), volume)) {
             Aquifer aquifer = noise.aquifer();
             DensitySampler.Bound density = noise.cachingSamplers().get(settings.noiseRouter().finalDensity());
             try (ScopedDensityBuffer buffer = density.sampleVolume(volume)) {

@@ -25,7 +25,6 @@ import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
 import mctmods.resourcedatapackloader.content.util.ContentTints;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.color.block.BlockTintSource;
@@ -33,6 +32,7 @@ import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.ARGB;
@@ -91,7 +91,7 @@ public final class ContentClient {
         if (bells != null) { event.registerBlockEntityRenderer(bells, ContentBellRenderer::new); }
         EntityType<ReturningThrow> returning = ContentEntities.returningThrow();
         if (returning != null) { event.registerEntityRenderer(returning, ReturningThrowRenderer::new); }
-        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$getProviders();
+        Map<EntityType<?>, EntityRendererProvider<?>> providers = EntityRenderers.PROVIDERS;
         for (EntityType<?> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
             EntityRendererProvider<?> provider = base == null ? null : providers.get(base);

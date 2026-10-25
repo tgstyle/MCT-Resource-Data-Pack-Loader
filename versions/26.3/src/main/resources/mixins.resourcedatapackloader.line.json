@@ -7,10 +7,8 @@
         "minVersion": "0.5.3"
     },
     "mixins": [
-        "common.IRegistryLoadTask",
         "common.MixinRecipeLoadTask",
         "common.MixinAdvancementLoadTask",
-        "common.MixinReloadableServerResources",
         "common.MixinNoiseChunk",
         "common.MixinFeaturePlacer",
         "common.MixinMaterialRuleContext",

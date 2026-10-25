@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IRandomStrollGoal;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
@@ -19,7 +17,7 @@ public final class Walking {
     public static double pace(PathfinderMob mob) {
         if (mob instanceof Villager) { return VILLAGER_STROLL; }
         for (WrappedGoal wrapped : mob.goalSelector.getAvailableGoals()) {
-            if (wrapped.getGoal() instanceof RandomStrollGoal stroll) { return ((IRandomStrollGoal) stroll).rdpl$getSpeedModifier(); }
+            if (wrapped.getGoal() instanceof RandomStrollGoal stroll) { return stroll.speedModifier; }
         }
         return STROLL;
     }
