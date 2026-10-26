@@ -12,6 +12,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.entity.player.Inventory;
 import javax.annotation.Nonnull;
 
@@ -21,6 +22,7 @@ public final class ContentPortwayScreen extends AbstractContainerScreen<ContentP
     private static final int FIELD_TOP = 4;
     private static final int QUIET = 4;
     private static final int LABEL = -12566464;
+    private static final String ELLIPSIS = "...";
     private final EditBox search;
     private int quiet = -1;
 
@@ -63,9 +65,21 @@ public final class ContentPortwayScreen extends AbstractContainerScreen<ContentP
         return super.mouseClicked(event, doubleClick);
     }
 
+    private int titleWidth() { return imageWidth - 16 - FIELD_WIDE - 4; }
+
+    private boolean titleCut() { return font.width(title) > titleWidth(); }
+
     @Override protected void extractLabels(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
-        graphics.text(font, Language.getInstance().getVisualOrder(font.substrByWidth(title, imageWidth - 16 - FIELD_WIDE - 4)), titleLabelX, titleLabelY, LABEL, false);
+        FormattedText shown = titleCut() ? FormattedText.composite(font.substrByWidth(title, titleWidth() - font.width(ELLIPSIS)), FormattedText.of(ELLIPSIS)) : title;
+        graphics.text(font, Language.getInstance().getVisualOrder(shown), titleLabelX, titleLabelY, LABEL, false);
         graphics.text(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, LABEL, false);
+    }
+
+    @Override public void extractRenderState(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partial) {
+        super.extractRenderState(graphics, mouseX, mouseY, partial);
+        int across = mouseX - leftPos - titleLabelX;
+        int down = mouseY - topPos - titleLabelY;
+        if (titleCut() && across >= 0 && across < titleWidth() && down >= 0 && down < font.lineHeight) { graphics.setTooltipForNextFrame(title, mouseX, mouseY); }
     }
 
     @Override public void extractBackground(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partial) {

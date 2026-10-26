@@ -6,19 +6,29 @@ import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Hashes;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.permissions.Permissions;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import java.util.List;
+import java.util.UUID;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class ContentPortwayBlockEntity extends BlockEntity {
     private static final long SALT = 0x706F727477L;
     private static final String NAME = "Name";
     private static final String BIOME = "{biome}";
+    private static final String GLOBAL = "Global";
+    private static final String PLACER = "Placer";
+    private static final String PLACED_AT = "PlacedAt";
     private String name = "";
+    private boolean global;
+    @Nullable private UUID placer;
 
     public ContentPortwayBlockEntity(BlockPos pos, BlockState state) { super(ContentPortways.TYPE.get(), pos, state); }
 
@@ -26,6 +36,20 @@ public final class ContentPortwayBlockEntity extends BlockEntity {
         name = named;
         setChanged();
     }
+
+    public boolean global() { return global; }
+
+    public void setGlobal(boolean now) {
+        global = now;
+        setChanged();
+    }
+
+    public void placedBy(UUID who) {
+        placer = who;
+        setChanged();
+    }
+
+    public boolean mayToggle(Player player) { return player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER) || placer != null && placer.equals(player.getUUID()); }
 
     public String stored() { return name; }
 
@@ -42,7 +66,7 @@ public final class ContentPortwayBlockEntity extends BlockEntity {
 
     @Override public void onLoad() {
         super.onLoad();
-        if (level instanceof ServerLevel server && getBlockState().getBlock() instanceof ContentPortwayBlock block && block.settings().global()) { Portways.publish(server, worldPosition); }
+        if (level instanceof ServerLevel server) { Portways.publish(server, worldPosition); }
     }
 
     @Override public void preRemoveSideEffects(@Nonnull BlockPos pos, @Nonnull BlockState state) {
@@ -53,10 +77,17 @@ public final class ContentPortwayBlockEntity extends BlockEntity {
     @Override protected void loadAdditional(@Nonnull ValueInput input) {
         super.loadAdditional(input);
         name = input.getStringOr(NAME, "");
+        global = input.getBooleanOr(GLOBAL, false);
+        placer = input.getLongOr(PLACED_AT, 0L) == worldPosition.asLong() ? input.read(PLACER, UUIDUtil.CODEC).orElse(null) : null;
     }
 
     @Override protected void saveAdditional(@Nonnull ValueOutput output) {
         super.saveAdditional(output);
         if (!name.isEmpty()) { output.putString(NAME, name); }
+        if (global) { output.putBoolean(GLOBAL, true); }
+        if (placer != null) {
+            output.store(PLACER, UUIDUtil.CODEC, placer);
+            output.putLong(PLACED_AT, worldPosition.asLong());
+        }
     }
 }
