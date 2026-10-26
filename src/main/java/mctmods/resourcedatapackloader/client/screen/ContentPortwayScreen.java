@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.world.entity.player.Inventory;
 import org.lwjgl.glfw.GLFW;
 import javax.annotation.Nonnull;
@@ -20,6 +21,7 @@ public final class ContentPortwayScreen extends BackdropContainerScreen<ContentP
     private static final int FIELD_TOP = 4;
     private static final int QUIET = 4;
     private static final int LABEL = 0x404040;
+    private static final String ELLIPSIS = "...";
     @Nullable private EditBox search;
     private int quiet = -1;
 
@@ -73,10 +75,21 @@ public final class ContentPortwayScreen extends BackdropContainerScreen<ContentP
         return super.mouseClicked(x, y, button);
     }
 
+    private int titleWidth() { return imageWidth - 16 - FIELD_WIDE - 4; }
+
+    private boolean titleCut() { return font.width(title) > titleWidth(); }
+
     @Override protected void renderLabels(@Nonnull GuiGraphics graphics, int mouseX, int mouseY) {
-        int wide = imageWidth - 16 - FIELD_WIDE - 4;
-        graphics.drawString(font, Language.getInstance().getVisualOrder(font.substrByWidth(title, wide)), titleLabelX, titleLabelY, LABEL, false);
+        FormattedText shown = titleCut() ? FormattedText.composite(font.substrByWidth(title, titleWidth() - font.width(ELLIPSIS)), FormattedText.of(ELLIPSIS)) : title;
+        graphics.drawString(font, Language.getInstance().getVisualOrder(shown), titleLabelX, titleLabelY, LABEL, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, LABEL, false);
+    }
+
+    @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partial) {
+        super.render(graphics, mouseX, mouseY, partial);
+        int across = mouseX - leftPos - titleLabelX;
+        int down = mouseY - topPos - titleLabelY;
+        if (titleCut() && across >= 0 && across < titleWidth() && down >= 0 && down < font.lineHeight) { graphics.renderTooltip(font, title, mouseX, mouseY); }
     }
 
     @Override protected void renderBg(@Nonnull GuiGraphics graphics, float partial, int mouseX, int mouseY) {

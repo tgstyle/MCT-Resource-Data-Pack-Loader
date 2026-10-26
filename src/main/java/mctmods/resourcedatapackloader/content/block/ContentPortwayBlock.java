@@ -91,6 +91,7 @@ import javax.annotation.Nullable;
         super.setPlacedBy(level, pos, state, placer, stack);
         if (settings().tall()) { level.setBlock(pos.above(), state.setValue(HALF, DoubleBlockHalf.UPPER), 3); }
         if (stack.hasCustomHoverName() && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held) { held.rename(stack.getHoverName().getString()); }
+        if (placer instanceof Player && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held) { held.placedBy(placer.getUUID()); }
     }
 
     @Override @Nonnull public BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction direction, @Nonnull BlockState neighbor, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos neighborPos) {
