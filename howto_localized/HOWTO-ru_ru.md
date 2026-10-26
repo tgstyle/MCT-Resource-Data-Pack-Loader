@@ -1343,8 +1343,10 @@ assets/mypack/lang/en_us.lang
 | Тип                       | Регистрирует                    | Свойства blockstate                                                                                                    | Вариантов |
 | ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------- |
 | `basic`, `ore`, `falling` | один блок                       | `blocks`                                                                                                               | 16        |
+| `container`               | один блок                       | `blocks`                                                                                                               | 16        |
 | `flower`                  | один блок                       | `blocks`                                                                                                               | 16        |
 | `portal`                  | один блок                       | `blocks`                                                                                                               | 16        |
+| `portway`                 | один блок                       | `blocks`, плюс `facing`, если блок задаёт `facing`, и `half` (`lower`, `upper`), если он задаёт `tall`                 | 1         |
 | `fence`, `pane`           | один блок                       | `blocks`, `north`, `east`, `south`, `west`                                                                             | 16        |
 | `wall`                    | один блок                       | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                       | 16        |
 | `slab`                    | два, `<name>` и `<name>_double` | у половинной плиты `blocks` и `half`, у двойной только `blocks`                                                        | 8         |

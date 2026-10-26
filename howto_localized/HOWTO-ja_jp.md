@@ -1343,8 +1343,10 @@ assets/mypack/lang/en_us.lang
 | 種類                      | 登録されるもの                   | ブロックステートのプロパティ                                                                                            | バリアント |
 | ------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------- |
 | `basic`、`ore`、`falling` | ブロック1つ                      | `blocks`                                                                                                                | 16         |
+| `container`               | ブロック1つ                      | `blocks`                                                                                                                | 16         |
 | `flower`                  | ブロック1つ                      | `blocks`                                                                                                                | 16         |
 | `portal`                  | ブロック1つ                      | `blocks`                                                                                                                | 16         |
+| `portway`                 | ブロック1つ                      | `blocks`、`facing` は `facing` を設定している場合のみ、`half`（`lower`、`upper`）は `tall` を設定している場合のみ       | 1          |
 | `fence`、`pane`           | ブロック1つ                      | `blocks`、`north`、`east`、`south`、`west`                                                                              | 16         |
 | `wall`                    | ブロック1つ                      | `blocks`、`up`、`north`、`east`、`south`、`west`                                                                        | 16         |
 | `slab`                    | 2つ。`<name>` と `<name>_double` | ハーフスラブは `blocks` と `half`、ダブルは `blocks` のみ                                                               | 8          |

@@ -1343,8 +1343,10 @@ Due cose decidono cosa deve contenere un file di blockstate: se il tipo ha la pr
 | Tipo                      | Registra                        | Proprietà del blockstate                                                                                                           | Varianti |
 | ------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `basic`, `ore`, `falling` | un blocco                       | `blocks`                                                                                                                           | 16       |
+| `container`               | un blocco                       | `blocks`                                                                                                                           | 16       |
 | `flower`                  | un blocco                       | `blocks`                                                                                                                           | 16       |
 | `portal`                  | un blocco                       | `blocks`                                                                                                                           | 16       |
+| `portway`                 | un blocco                       | `blocks`, più `facing` se il blocco imposta `facing`, e `half` (`lower`, `upper`) se imposta `tall`                                | 1        |
 | `fence`, `pane`           | un blocco                       | `blocks`, `north`, `east`, `south`, `west`                                                                                         | 16       |
 | `wall`                    | un blocco                       | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                   | 16       |
 | `slab`                    | due, `<name>` e `<name>_double` | la mezza lastra `blocks` e `half`; la doppia solo `blocks`                                                                         | 8        |

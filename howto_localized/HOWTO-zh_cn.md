@@ -1343,8 +1343,10 @@ assets/mypack/lang/en_us.lang
 | 类型                      | 注册内容                          | 方块状态属性                                                                                                      | 变种数 |
 | ------------------------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------ |
 | `basic`、`ore`、`falling` | 一个方块                          | `blocks`                                                                                                          | 16     |
+| `container`               | 一个方块                          | `blocks`                                                                                                          | 16     |
 | `flower`                  | 一个方块                          | `blocks`                                                                                                          | 16     |
 | `portal`                  | 一个方块                          | `blocks`                                                                                                          | 16     |
+| `portway`                 | 一个方块                          | `blocks`，若方块设置了 `facing` 则加上 `facing`，若设置了 `tall` 则加上 `half`（`lower`、`upper`）                | 1      |
 | `fence`、`pane`           | 一个方块                          | `blocks`、`north`、`east`、`south`、`west`                                                                        | 16     |
 | `wall`                    | 一个方块                          | `blocks`、`up`、`north`、`east`、`south`、`west`                                                                  | 16     |
 | `slab`                    | 两个，`<name>` 和 `<name>_double` | 半砖是 `blocks` 和 `half`；双层砖只有 `blocks`                                                                    | 8      |

@@ -1343,8 +1343,10 @@ O tom, co musí soubor blockstate obsahovat, rozhodují dvě věci: zda typ nese
 | Typ                       | Registruje                      | Vlastnosti blockstate                                                                                                           | Varianty |
 | ------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `basic`, `ore`, `falling` | jeden blok                      | `blocks`                                                                                                                        | 16       |
+| `container`               | jeden blok                      | `blocks`                                                                                                                        | 16       |
 | `flower`                  | jeden blok                      | `blocks`                                                                                                                        | 16       |
 | `portal`                  | jeden blok                      | `blocks`                                                                                                                        | 16       |
+| `portway`                 | jeden blok                      | `blocks`, a pokud blok nastavuje `facing`, také `facing`; pokud nastavuje `tall`, také `half` (`lower`, `upper`)                | 1        |
 | `fence`, `pane`           | jeden blok                      | `blocks`, `north`, `east`, `south`, `west`                                                                                      | 16       |
 | `wall`                    | jeden blok                      | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                | 16       |
 | `slab`                    | dva, `<name>` a `<name>_double` | půlblok `blocks` a `half`; dvojitý jen `blocks`                                                                                 | 8        |

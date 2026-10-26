@@ -1343,8 +1343,10 @@ assets/mypack/lang/en_us.lang
 | 유형                      | 등록되는 것                    | 블록 상태 속성                                                                                                             | 변형 |
 | ------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------- | ---- |
 | `basic`, `ore`, `falling` | 블록 하나                      | `blocks`                                                                                                                   | 16   |
+| `container`               | 블록 하나                      | `blocks`                                                                                                                   | 16   |
 | `flower`                  | 블록 하나                      | `blocks`                                                                                                                   | 16   |
 | `portal`                  | 블록 하나                      | `blocks`                                                                                                                   | 16   |
+| `portway`                 | 블록 하나                      | `blocks`, `facing`은 `facing`을 설정한 블록에만, `half`(`lower`, `upper`)는 `tall`을 설정한 블록에만                       | 1    |
 | `fence`, `pane`           | 블록 하나                      | `blocks`, `north`, `east`, `south`, `west`                                                                                 | 16   |
 | `wall`                    | 블록 하나                      | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                           | 16   |
 | `slab`                    | 둘, `<name>`과 `<name>_double` | 반 블록은 `blocks`와 `half`, 더블은 `blocks`만                                                                             | 8    |
