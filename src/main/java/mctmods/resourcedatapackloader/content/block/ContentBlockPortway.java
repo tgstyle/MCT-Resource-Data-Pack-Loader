@@ -104,6 +104,7 @@ import javax.annotation.Nullable;
         TileEntity tile = world.getTileEntity(pos);
         if (world.isRemote || !(tile instanceof TilePortway)) { return; }
         if (stack.hasDisplayName()) { ((TilePortway) tile).rename(stack.getDisplayName()); }
+        if (placer instanceof EntityPlayer) { ((TilePortway) tile).placedBy(placer.getUniqueID()); }
         Portways.register(world, pos);
     }
 

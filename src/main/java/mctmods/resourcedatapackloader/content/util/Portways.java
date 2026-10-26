@@ -63,7 +63,7 @@ public final class Portways {
     public static List<PortwayStop> listed(EntityPlayer player, PortwayDef opening, int originDimension) {
         List<PortwayStop> everyone = shown(stops(player), opening, originDimension, def -> true);
         Set<PortwayStop> seen = new HashSet<>(everyone);
-        for (PortwayStop stop : shown(PortwayGlobal.list(player.getServer()), opening, originDimension, PortwayDef::global)) {
+        for (PortwayStop stop : shown(PortwayGlobal.list(player.getServer()), opening, originDimension, def -> def.global() || def.toggle)) {
             if (seen.add(stop)) { everyone.add(stop); }
         }
         for (PortwayStop stop : shown(teamStops(player), opening, originDimension, PortwayDef::teamWide)) {
@@ -125,7 +125,15 @@ public final class Portways {
     public static void register(World world, BlockPos pos) {
         PortwayStop stop = snapshot(world, pos);
         PortwayDef def = stop == null ? null : stop.def();
-        if (def != null && def.global()) { PortwayGlobal.upsert(world.getMinecraftServer(), stop); }
+        if (def == null) { return; }
+        if (globalNow(world, pos, def)) { PortwayGlobal.upsert(world.getMinecraftServer(), stop); }
+        else { PortwayGlobal.remove(world.getMinecraftServer(), stop.dimension, pos); }
+    }
+
+    public static boolean globalNow(World world, BlockPos pos, PortwayDef def) {
+        if (def.global()) { return true; }
+        TileEntity tile = def.toggle ? world.getTileEntity(pos) : null;
+        return tile instanceof TilePortway && ((TilePortway) tile).global();
     }
 
     public static boolean unknown(EntityPlayer player, PortwayStop stop) { return !stops(player).contains(stop) && !PortwayGlobal.list(player.getServer()).contains(stop) && !teamStops(player).contains(stop); }
@@ -187,7 +195,7 @@ public final class Portways {
             save(player, stops);
         }
         PortwayDef def = live.def();
-        if (def != null && def.global()) { PortwayGlobal.upsert(player.getServer(), live); }
+        if (def != null && (def.global() || PortwayGlobal.contains(player.getServer(), live))) { PortwayGlobal.upsert(player.getServer(), live); }
         PortwayTeam.refresh(player.getServer(), live);
     }
 
@@ -195,7 +203,7 @@ public final class Portways {
         PortwayStop stop = snapshot(world, pos);
         if (stop == null) { return; }
         PortwayFx.card(player, CardRule.PORTWAY_ACTIVATE, stop.block, def.network, "");
-        if (def.global()) {
+        if (globalNow(world, pos, def)) {
             PortwayGlobal.upsert(world.getMinecraftServer(), stop);
             PortwayFx.activated(player, "rdpl.portway.known");
             return;

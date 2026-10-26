@@ -34,6 +34,11 @@ public final class PortwayGlobal extends WorldSavedData {
         return data == null ? new ArrayList<>() : new ArrayList<>(data.stops);
     }
 
+    public static boolean contains(@Nullable MinecraftServer server, PortwayStop stop) {
+        PortwayGlobal data = get(server);
+        return data != null && data.stops.contains(stop);
+    }
+
     public static void upsert(@Nullable MinecraftServer server, PortwayStop stop) {
         PortwayGlobal data = get(server);
         if (data == null) { return; }

@@ -3,16 +3,20 @@ package mctmods.resourcedatapackloader.content.gui;
 import mctmods.resourcedatapackloader.content.block.ContentBlockPortway;
 import mctmods.resourcedatapackloader.content.card.CardRule;
 import mctmods.resourcedatapackloader.content.def.CostPart;
+import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.def.PortwayCost;
 import mctmods.resourcedatapackloader.content.def.PortwayDef;
 import mctmods.resourcedatapackloader.content.def.PortwayMenu;
 import mctmods.resourcedatapackloader.content.item.ContentItemPortway;
+import mctmods.resourcedatapackloader.content.tile.TilePortway;
 import mctmods.resourcedatapackloader.content.util.PortwayCosts;
 import mctmods.resourcedatapackloader.content.util.PortwayFx;
 import mctmods.resourcedatapackloader.content.util.PortwayOrder;
 import mctmods.resourcedatapackloader.content.util.PortwayStop;
 import mctmods.resourcedatapackloader.content.util.PortwayTravel;
 import mctmods.resourcedatapackloader.content.util.Portways;
+import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,6 +29,7 @@ import net.minecraft.inventory.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -56,15 +61,13 @@ public class ContainerPortway extends Container {
     public static final String PAGE = "page";
     public static final String PAGES = "pages";
     public static final String ORDER = "order";
+    public static final String GLOBAL = "global";
+    public static final String OWN = "own";
     public static final int FILTER_MAX = 32;
     public static final int ROWS = 6;
     public static final int COLUMNS = 9;
     private static final int SLOTS = ROWS * COLUMNS;
     private static final int PAGED = 45;
-    private static final int PREVIOUS = 45;
-    private static final int SORT = 47;
-    private static final int PAGE_AT = 49;
-    private static final int NEXT = 53;
     private static final double REACH = 64.0D;
     private final InventoryBasic icons;
     private final InventoryPlayer viewer;
@@ -145,10 +148,40 @@ public class ContainerPortway extends Container {
             PortwayOrder.Entry entry = shown.get(index);
             icons.setInventorySlotContents(slot, describe(viewer.player, opening, entry.stop, entry.label, mine.contains(entry.stop), locked));
         }
-        if (page > 0) { icons.setInventorySlotContents(PREVIOUS, nav(PortwayFx.icon(menu.previous, PortwayMenu.PLAIN.previous), "previous")); }
-        icons.setInventorySlotContents(SORT, sorter(PortwayFx.icon(menu.sort, PortwayMenu.PLAIN.sort)));
-        icons.setInventorySlotContents(PAGE_AT, nav(PortwayFx.icon(menu.page, PortwayMenu.PLAIN.page), "page"));
-        if (page < pages() - 1) { icons.setInventorySlotContents(NEXT, nav(PortwayFx.icon(menu.next, PortwayMenu.PLAIN.next), "next")); }
+        if (page > 0) { icons.setInventorySlotContents(menu.previousAt, nav(PortwayFx.icon(menu.previous, PortwayMenu.PLAIN.previous), "previous")); }
+        icons.setInventorySlotContents(menu.sortAt, sorter(PortwayFx.icon(menu.sort, PortwayMenu.PLAIN.sort)));
+        icons.setInventorySlotContents(menu.pageAt, nav(PortwayFx.icon(menu.page, PortwayMenu.PLAIN.page), "page"));
+        if (page < pages() - 1) { icons.setInventorySlotContents(menu.nextAt, nav(PortwayFx.icon(menu.next, PortwayMenu.PLAIN.next), "next")); }
+        TilePortway tile = scoper(opening);
+        if (tile != null) { icons.setInventorySlotContents(menu.scopeAt, scope(PortwayFx.icon(menu.scope, PortwayMenu.PLAIN.scope), tile.global(), opening.scope)); }
+    }
+
+    @Nullable private TilePortway scoper(PortwayDef opening) {
+        if (!opening.toggle || origin == null) { return null; }
+        TileEntity tile = viewer.player.world.getTileEntity(origin);
+        return tile instanceof TilePortway && ((TilePortway) tile).mayToggle(viewer.player) ? (TilePortway) tile : null;
+    }
+
+    private static ItemStack scope(ItemStack icon, boolean global, String own) {
+        NBTTagCompound tag = icon.getOrCreateSubCompound(NAV);
+        tag.setString(KIND, "scope");
+        tag.setBoolean(GLOBAL, global);
+        tag.setString(OWN, own);
+        return icon;
+    }
+
+    private void switchScope(PortwayDef opening) {
+        TilePortway tile = scoper(opening);
+        if (tile == null) {
+            ContentLog.LOGGER.info("Portway scope click by {} refused", viewer.player.getName());
+            return;
+        }
+        boolean now = !tile.global();
+        tile.setGlobal(now);
+        Portways.register(viewer.player.world, origin);
+        PortwayFx.activated(viewer.player, "rdpl.portway.scope.changed", Lang.tr(viewer.player, "rdpl.portway.scope." + (now ? GateDef.GLOBAL : opening.scope)));
+        reload();
+        detectAndSendChanges();
     }
 
     private ItemStack nav(ItemStack icon, String kind) {
@@ -227,9 +260,16 @@ public class ContainerPortway extends Container {
     }
 
     private void turn(int slot) {
-        if (slot == PREVIOUS && page > 0) { page--; }
-        else if (slot == NEXT && page < pages() - 1) { page++; }
-        else if (slot == SORT) {
+        PortwayDef opening = opening(viewer.player);
+        if (opening == null) { return; }
+        PortwayMenu menu = opening.menu;
+        if (slot == menu.scopeAt && opening.toggle) {
+            switchScope(opening);
+            return;
+        }
+        if (slot == menu.previousAt && page > 0) { page--; }
+        else if (slot == menu.nextAt && page < pages() - 1) { page++; }
+        else if (slot == menu.sortAt) {
             order = PortwayMenu.after(order);
             PortwayOrder.save(viewer.player, order);
             PortwayOrder.arrange(sorted, order);
@@ -237,7 +277,7 @@ public class ContainerPortway extends Container {
             page = 0;
         }
         else { return; }
-        refill(opening(viewer.player));
+        refill(opening);
         detectAndSendChanges();
     }
 

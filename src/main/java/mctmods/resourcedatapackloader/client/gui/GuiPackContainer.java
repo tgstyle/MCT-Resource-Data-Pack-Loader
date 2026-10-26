@@ -36,7 +36,9 @@ public class GuiPackContainer extends GuiContainer {
     private final IInventory held;
     private final int rows;
     private final int columns;
+    private static final String ELLIPSIS = "...";
     private int slots = -1;
+    @Nullable private String cutTitle;
     @Nullable private final ResourceLocation texture;
 
     public GuiPackContainer(InventoryPlayer player, TileEntityPackContainer tile, @Nullable ContainerDef def) {
@@ -66,7 +68,13 @@ public class GuiPackContainer extends GuiContainer {
 
     @Override protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         String title = held.getDisplayName().getUnformattedText();
-        fontRenderer.drawString(fontRenderer.trimStringToWidth(title, titleWidth()), 8, 6, 0x404040);
+        String shown = title;
+        cutTitle = null;
+        if (fontRenderer.getStringWidth(title) > titleWidth()) {
+            cutTitle = title;
+            shown = fontRenderer.trimStringToWidth(title, titleWidth() - fontRenderer.getStringWidth(ELLIPSIS)) + ELLIPSIS;
+        }
+        fontRenderer.drawString(shown, 8, 6, 0x404040);
         fontRenderer.drawString(I18n.format("container.inventory"), 8, ySize - 94, 0x404040);
     }
 
@@ -136,5 +144,10 @@ public class GuiPackContainer extends GuiContainer {
         drawDefaultBackground();
         super.drawScreen(mouseX, mouseY, partial);
         renderHoveredToolTip(mouseX, mouseY);
+        int across = mouseX - guiLeft;
+        int down = mouseY - guiTop;
+        if (cutTitle != null && across >= 8 && across < 8 + titleWidth() && down >= 6 && down < 6 + fontRenderer.FONT_HEIGHT) {
+            drawHoveringText(cutTitle, mouseX, mouseY);
+        }
     }
 }

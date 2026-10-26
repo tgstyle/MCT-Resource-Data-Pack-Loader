@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class PortwayDef {
-    public static final PortwayDef PLAIN = new PortwayDef("minecraft:block.beacon.activate", "minecraft:block.portal.travel", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), true, "", "", GateDef.PLAYER, false, false, "", "", CarryDef.NONE, PortwayCost.FREE, PortwayMenu.PLAIN);
+    public static final PortwayDef PLAIN = new PortwayDef("minecraft:block.beacon.activate", "minecraft:block.portal.travel", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), true, "", "", GateDef.PLAYER, false, false, false, "", "", CarryDef.NONE, PortwayCost.FREE, PortwayMenu.PLAIN);
     public final String activateSound;
     public final String travelSound;
     public final List<String> names;
@@ -14,6 +14,7 @@ public final class PortwayDef {
     public final String gate;
     public final String network;
     public final String scope;
+    public final boolean toggle;
     public final boolean tall;
     public final boolean facing;
     public final String activateParticle;
@@ -22,7 +23,7 @@ public final class PortwayDef {
     public final PortwayCost cost;
     public final PortwayMenu menu;
 
-    public PortwayDef(String activateSound, String travelSound, List<String> names, List<Integer> allow, List<Integer> deny, boolean crossDimension, String gate, String network, String scope, boolean tall, boolean facing, String activateParticle, String travelParticle, CarryDef carry, PortwayCost cost, PortwayMenu menu) {
+    public PortwayDef(String activateSound, String travelSound, List<String> names, List<Integer> allow, List<Integer> deny, boolean crossDimension, String gate, String network, String scope, boolean toggle, boolean tall, boolean facing, String activateParticle, String travelParticle, CarryDef carry, PortwayCost cost, PortwayMenu menu) {
         this.activateSound = activateSound;
         this.travelSound = travelSound;
         this.names = names;
@@ -32,6 +33,7 @@ public final class PortwayDef {
         this.gate = gate;
         this.network = network;
         this.scope = scope;
+        this.toggle = toggle;
         this.tall = tall;
         this.facing = facing;
         this.activateParticle = activateParticle;

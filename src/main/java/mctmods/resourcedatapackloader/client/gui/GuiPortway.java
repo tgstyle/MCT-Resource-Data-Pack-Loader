@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.def.PortwayMenu;
 import mctmods.resourcedatapackloader.content.gui.ContainerPortway;
 import mctmods.resourcedatapackloader.content.util.Portways;
@@ -107,6 +108,13 @@ public class GuiPortway extends GuiPackContainer {
                 String order = nav.getString(ContainerPortway.ORDER);
                 drawHoveringText(Arrays.asList(I18n.format("rdpl.portway.sort", I18n.format("rdpl.portway.order." + order)),
                         TextFormatting.GRAY + I18n.format("rdpl.portway.sort.click", I18n.format("rdpl.portway.order." + PortwayMenu.after(order)))), x, y);
+                return;
+            }
+            if ("scope".equals(kind)) {
+                boolean global = nav.getBoolean(ContainerPortway.GLOBAL);
+                String own = nav.getString(ContainerPortway.OWN);
+                drawHoveringText(Arrays.asList(I18n.format("rdpl.portway.scope", I18n.format("rdpl.portway.scope." + (global ? GateDef.GLOBAL : own))),
+                        TextFormatting.GRAY + I18n.format("rdpl.portway.scope.click", I18n.format("rdpl.portway.scope." + (global ? own : GateDef.GLOBAL)))), x, y);
                 return;
             }
             drawHoveringText(Collections.singletonList(I18n.format("rdpl.portway." + kind, nav.getInteger(ContainerPortway.PAGE), nav.getInteger(ContainerPortway.PAGES))), x, y);
