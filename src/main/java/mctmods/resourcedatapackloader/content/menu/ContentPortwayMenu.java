@@ -2,8 +2,10 @@ package mctmods.resourcedatapackloader.content.menu;
 
 import mctmods.resourcedatapackloader.content.ContentContainers;
 import mctmods.resourcedatapackloader.content.block.ContentPortwayBlock;
+import mctmods.resourcedatapackloader.content.block.ContentPortwayBlockEntity;
 import mctmods.resourcedatapackloader.content.card.CardRule;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
+import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.def.PortwayDef;
 import mctmods.resourcedatapackloader.content.def.PortwayItemDef;
 import mctmods.resourcedatapackloader.content.def.PortwayMenu;
@@ -14,6 +16,8 @@ import mctmods.resourcedatapackloader.content.util.PortwayOrder;
 import mctmods.resourcedatapackloader.content.util.PortwayStop;
 import mctmods.resourcedatapackloader.content.util.PortwayTravel;
 import mctmods.resourcedatapackloader.content.util.Portways;
+import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -51,10 +55,6 @@ public final class ContentPortwayMenu extends AbstractContainerMenu {
     public static final ContainerDef SHAPE = new ContainerDef(ROWS, COLUMNS, "", false, null, null, 0, 0);
     private static final int SLOTS = ROWS * COLUMNS;
     private static final int PAGED = SLOTS - COLUMNS;
-    private static final int PREVIOUS = PAGED;
-    private static final int SORT = PAGED + 2;
-    private static final int PAGE = PAGED + 4;
-    private static final int NEXT = SLOTS - 1;
     private static final int TOP = 18;
     private static final double REACH = 64.0D;
     private static final String NAV = "rdplNav";
@@ -123,16 +123,44 @@ public final class ContentPortwayMenu extends AbstractContainerMenu {
         PortwayMenu menu = opening.menu();
         ItemStack locked = PortwayFx.icon(menu.locked(), PortwayMenu.PLAIN.locked());
         for (int slot = 0; slot < PAGED && page * PAGED + slot < visible.size(); slot++) { icons.setItem(slot, describe(player, visible.get(page * PAGED + slot), locked)); }
-        if (page > 0) { icons.setItem(PREVIOUS, nav(PortwayFx.icon(menu.previous(), PortwayMenu.PLAIN.previous()), "previous", Component.translatable("rdpl.portway.previous"))); }
-        icons.setItem(SORT, sorter(PortwayFx.icon(menu.sort(), PortwayMenu.PLAIN.sort())));
-        icons.setItem(PAGE, nav(PortwayFx.icon(menu.page(), PortwayMenu.PLAIN.page()), "page", Component.translatable("rdpl.portway.page", page + 1, pages())));
-        if (page < pages() - 1) { icons.setItem(NEXT, nav(PortwayFx.icon(menu.next(), PortwayMenu.PLAIN.next()), "next", Component.translatable("rdpl.portway.next"))); }
+        if (page > 0) { icons.setItem(menu.previousAt(), nav(PortwayFx.icon(menu.previous(), PortwayMenu.PLAIN.previous()), "previous", Component.translatable("rdpl.portway.previous"))); }
+        icons.setItem(menu.sortAt(), sorter(PortwayFx.icon(menu.sort(), PortwayMenu.PLAIN.sort())));
+        icons.setItem(menu.pageAt(), nav(PortwayFx.icon(menu.page(), PortwayMenu.PLAIN.page()), "page", Component.translatable("rdpl.portway.page", page + 1, pages())));
+        if (page < pages() - 1) { icons.setItem(menu.nextAt(), nav(PortwayFx.icon(menu.next(), PortwayMenu.PLAIN.next()), "next", Component.translatable("rdpl.portway.next"))); }
+        ContentPortwayBlockEntity held = scoper();
+        if (held != null) { icons.setItem(menu.scopeAt(), scope(PortwayFx.icon(menu.scope(), PortwayMenu.PLAIN.scope()), held.global())); }
     }
+
+    @Nullable private ContentPortwayBlockEntity scoper() {
+        if (!opening.toggle() || origin == null) { return null; }
+        return viewer.level().getBlockEntity(origin.pos()) instanceof ContentPortwayBlockEntity held && held.mayToggle(viewer) ? held : null;
+    }
+
+    private ItemStack scope(ItemStack icon, boolean global) {
+        ItemStack button = nav(icon, "scope", Component.translatable("rdpl.portway.scope", Component.translatable("rdpl.portway.scope." + (global ? GateDef.GLOBAL : opening.scope()))));
+        lore(button, Component.translatable("rdpl.portway.scope.click", Component.translatable("rdpl.portway.scope." + (global ? opening.scope() : GateDef.GLOBAL))));
+        return button;
+    }
+
+    private void switchScope(ServerPlayer player) {
+        ContentPortwayBlockEntity held = scoper();
+        if (held == null) {
+            ContentLog.LOGGER.info("Portway scope click by {} refused", player.getGameProfile().getName());
+            return;
+        }
+        boolean now = !held.global();
+        held.setGlobal(now);
+        Portways.publish(player.serverLevel(), held.getBlockPos());
+        PortwayFx.activated(player, "rdpl.portway.scope.changed", Lang.tr(player, "rdpl.portway.scope." + (now ? GateDef.GLOBAL : opening.scope())));
+        load(player);
+        broadcastChanges();
+    }
+
+    private static void lore(ItemStack stack, Component note) { stack.set(DataComponents.LORE, new ItemLore(List.of(note.copy().withStyle(style -> style.withColor(ChatFormatting.GRAY).withItalic(false))))); }
 
     private ItemStack sorter(ItemStack icon) {
         ItemStack sorter = nav(icon, "sort", Component.translatable("rdpl.portway.sort", Component.translatable("rdpl.portway.order." + order)));
-        Component click = Component.translatable("rdpl.portway.sort.click", Component.translatable("rdpl.portway.order." + PortwayMenu.after(order)));
-        sorter.set(DataComponents.LORE, new ItemLore(List.of(click.copy().withStyle(style -> style.withColor(ChatFormatting.GRAY).withItalic(false)))));
+        lore(sorter, Component.translatable("rdpl.portway.sort.click", Component.translatable("rdpl.portway.order." + PortwayMenu.after(order))));
         return sorter;
     }
 
@@ -204,9 +232,14 @@ public final class ContentPortwayMenu extends AbstractContainerMenu {
     }
 
     private void turn(ServerPlayer player, int slot) {
-        if (slot == PREVIOUS && page > 0) { page--; }
-        else if (slot == NEXT && page < pages() - 1) { page++; }
-        else if (slot == SORT) {
+        PortwayMenu menu = opening.menu();
+        if (slot == menu.scopeAt() && opening.toggle()) {
+            switchScope(player);
+            return;
+        }
+        if (slot == menu.previousAt() && page > 0) { page--; }
+        else if (slot == menu.nextAt() && page < pages() - 1) { page++; }
+        else if (slot == menu.sortAt()) {
             order = PortwayMenu.after(order);
             PortwayOrder.save(player, order);
             PortwayOrder.arrange(sorted, order);

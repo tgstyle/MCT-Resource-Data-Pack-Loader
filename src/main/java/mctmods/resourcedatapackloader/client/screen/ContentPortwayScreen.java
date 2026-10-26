@@ -19,6 +19,7 @@ public final class ContentPortwayScreen extends BackdropContainerScreen<ContentP
     private static final int FIELD_HIGH = 10;
     private static final int FIELD_TOP = 4;
     private static final int QUIET = 4;
+    private static final String ELLIPSIS = "...";
     @Nullable private EditBox search;
     private int quiet = -1;
 
@@ -68,10 +69,21 @@ public final class ContentPortwayScreen extends BackdropContainerScreen<ContentP
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    private int titleWidth() { return imageWidth - 16 - FIELD_WIDE - 4; }
+
+    private boolean titleCut() { return font.width(title) > titleWidth(); }
+
     @Override protected void renderLabels(@Nonnull GuiGraphics graphics, int mouseX, int mouseY) {
-        FormattedText trimmed = font.substrByWidth(title, imageWidth - 16 - FIELD_WIDE - 4);
-        graphics.drawString(font, Language.getInstance().getVisualOrder(trimmed), titleLabelX, titleLabelY, 0x404040, false);
+        FormattedText shown = titleCut() ? FormattedText.composite(font.substrByWidth(title, titleWidth() - font.width(ELLIPSIS)), FormattedText.of(ELLIPSIS)) : title;
+        graphics.drawString(font, Language.getInstance().getVisualOrder(shown), titleLabelX, titleLabelY, 0x404040, false);
         graphics.drawString(font, playerInventoryTitle, inventoryLabelX, inventoryLabelY, 0x404040, false);
+    }
+
+    @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partial) {
+        super.render(graphics, mouseX, mouseY, partial);
+        int across = mouseX - leftPos - titleLabelX;
+        int down = mouseY - topPos - titleLabelY;
+        if (titleCut() && across >= 0 && across < titleWidth() && down >= 0 && down < font.lineHeight) { graphics.renderTooltip(font, title, mouseX, mouseY); }
     }
 
     @Override protected void renderBg(@Nonnull GuiGraphics graphics, float partial, int mouseX, int mouseY) {

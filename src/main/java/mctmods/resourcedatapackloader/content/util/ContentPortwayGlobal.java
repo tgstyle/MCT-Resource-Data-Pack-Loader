@@ -35,6 +35,13 @@ public final class ContentPortwayGlobal extends SavedData {
 
     public List<PortwayStop> stops() { return List.copyOf(stops); }
 
+    public boolean contains(PortwayStop stop) {
+        for (PortwayStop held : stops) {
+            if (held.same(stop)) { return true; }
+        }
+        return false;
+    }
+
     public void put(PortwayStop stop) {
         for (int index = 0; index < stops.size(); index++) {
             if (!stops.get(index).same(stop)) { continue; }

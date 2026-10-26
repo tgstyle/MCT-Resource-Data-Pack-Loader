@@ -91,6 +91,7 @@ public final class ContentPortwayBlock extends ContentBlock implements EntityBlo
         if (settings().tall()) { level.setBlock(pos.above(), state.setValue(HALF, DoubleBlockHalf.UPPER), 3); }
         Component named = stack.get(DataComponents.CUSTOM_NAME);
         if (named != null && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held) { held.rename(named.getString()); }
+        if (placer instanceof Player && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held) { held.placedBy(placer.getUUID()); }
     }
 
     @Override @Nonnull public BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction direction, @Nonnull BlockState neighbor, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos neighborPos) {

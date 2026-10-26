@@ -74,7 +74,7 @@ public final class Portways {
         List<PortwayStop> everyone = shown(stops(player), opening, origin, def -> true);
         Set<PortwayStop.Key> seen = new HashSet<>();
         for (PortwayStop stop : everyone) { seen.add(stop.key()); }
-        for (PortwayStop stop : shown(ContentPortwayGlobal.get(player.server).stops(), opening, origin, PortwayDef::global)) {
+        for (PortwayStop stop : shown(ContentPortwayGlobal.get(player.server).stops(), opening, origin, def -> def.global() || def.toggle())) {
             if (seen.add(stop.key())) { everyone.add(stop); }
         }
         for (PortwayStop stop : shown(teamStops(player), opening, origin, PortwayDef::teamWide)) {
@@ -130,7 +130,14 @@ public final class Portways {
     public static void publish(ServerLevel level, BlockPos pos) {
         PortwayStop stop = snapshot(level, pos);
         PortwayDef def = stop == null ? null : stop.def();
-        if (def != null && def.global()) { ContentPortwayGlobal.get(level.getServer()).put(stop); }
+        if (def == null) { return; }
+        if (globalNow(level, pos, def)) { ContentPortwayGlobal.get(level.getServer()).put(stop); }
+        else { ContentPortwayGlobal.get(level.getServer()).remove(level.dimension(), pos); }
+    }
+
+    public static boolean globalNow(ServerLevel level, BlockPos pos, PortwayDef def) {
+        if (def.global()) { return true; }
+        return def.toggle() && level.getBlockEntity(pos) instanceof ContentPortwayBlockEntity held && held.global();
     }
 
     public static void withdraw(ServerLevel level, BlockPos pos) {
@@ -195,7 +202,7 @@ public final class Portways {
             save(player, stops);
         }
         PortwayDef def = live.def();
-        if (def != null && def.global()) { ContentPortwayGlobal.get(player.server).put(live); }
+        if (def != null && (def.global() || ContentPortwayGlobal.get(player.server).contains(live))) { ContentPortwayGlobal.get(player.server).put(live); }
         ContentPortwayTeam.get(player.server).refresh(live);
     }
 
@@ -204,7 +211,7 @@ public final class Portways {
         if (stop == null) { return; }
         PortwayFx.card(player, CardRule.PORTWAY_ACTIVATE, stop.block(), def.network(), "");
         String who = player.getGameProfile().getName();
-        if (def.global()) {
+        if (globalNow(level, pos, def)) {
             ContentPortwayGlobal.get(level.getServer()).put(stop);
             PortwayFx.activated(player, "rdpl.portway.known");
             return;
