@@ -33,6 +33,23 @@ public final class ContentSpawnChunks {
 
     public static int chunks(int dimension) { return (radius(dimension) + 8) / 16; }
 
+    public static boolean overridden(int dimension) {
+        load();
+        return everywhere != VANILLA || BY_DIMENSION.containsKey(dimension);
+    }
+
+    public static int bootReach() { return radius(0) > 0 ? chunks(0) + 4 : -1; }
+
+    public static int bootPrepared(int reach) {
+        int across = 2 * reach + 1;
+        return reach < 0 ? 0 : across * across;
+    }
+
+    public static void logBoot(int reach) {
+        if (reach < 0) { ContentLog.LOGGER.info("Prepared no chunks around the spawn point as the world started, as spawnChunkRadius 0 asks"); }
+        else { ContentLog.LOGGER.info("Prepared {} chunk(s) around the spawn point as the world started, {} each way from the spawn chunk", bootPrepared(reach), reach); }
+    }
+
     private static void load() {
         if (loaded) { return; }
         loaded = true;

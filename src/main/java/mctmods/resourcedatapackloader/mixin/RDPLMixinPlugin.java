@@ -67,6 +67,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static Boolean lightingReplaced;
     private static Boolean sponge;
     private static Boolean pathfindingReplaced;
+    private static Boolean paperSpawn;
     private static Boolean optimizationsOff;
     private static Boolean universalTweaks;
 
@@ -168,6 +169,8 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             }
             if (pathfindingReplaced) { return false; }
         }
+        if (simple.equals("MixinMinecraftServerBoot")) { return !paperSpawnRule(); }
+        if (simple.equals("MixinMinecraftServerPaperBoot")) { return paperSpawnRule(); }
         if (OPTIMIZATIONS.contains(simple)) {
             if (optimizationsOff == null) {
                 optimizationsOff = optimizationsDisabled();
@@ -206,6 +209,15 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static boolean universalTweaksPresent() {
         if (universalTweaks == null) { universalTweaks = Launch.classLoader.getResource("mod/acgaming/universaltweaks/UniversalTweaks.class") != null; }
         return universalTweaks;
+    }
+
+    private static boolean paperSpawnRule() {
+        if (paperSpawn == null) {
+            paperSpawn = Launch.classLoader.getResource("me/elephant1214/paperfixes/mixin/common/world/spawn_chunk_gr/MinecraftServerMixin.class") != null
+                    && cfgFlag("paperfixes.cfg", "B:spawnChunkGamerule=", true);
+            if (paperSpawn) { MCTMixin.LOGGER.info("PaperFixes already sets the spawn area size, so spawnChunkRadius reaches the world start another way: it decides when the pack sets it, and PaperFixes' spawnChunkRadius game rule decides otherwise"); }
+        }
+        return paperSpawn;
     }
 
     private static boolean settingOn() { return cfgFlag("paperfixes.cfg", "B:pathNodeCache=", true); }
