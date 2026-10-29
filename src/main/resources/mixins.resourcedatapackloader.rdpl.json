@@ -271,6 +271,8 @@
     "client.MixinRenderGlobalDimensionOverlay",
     "client.MixinCloudRendererDimensionOverlay",
     "client.MixinFMLClientHandlerClouds",
+    "client.ISplashTexture",
+    "client.MixinSplashProgressLogo",
     "client.MixinMinecraftDimensionOverlay"
   ],
   "server": [
