@@ -229,6 +229,8 @@ public final class ContentTypes {
         return cleaned;
     }
 
+    public static int hexDigits(String value) { return digits(value).length(); }
+
     @Nullable public static Long hex(String value) {
         String digits = digits(value);
         if (digits.isEmpty()) { return null; }

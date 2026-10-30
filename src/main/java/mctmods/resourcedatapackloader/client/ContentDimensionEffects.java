@@ -140,6 +140,11 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
             aura(pose, aura, alpha * aura[3] * AURA_ALPHA * lift, size * reach);
             RenderSystem.blendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
         }
+        float lineAlpha = look == null ? 0.0F : alpha * (look.sunLineColor() >>> 24) / 255.0F;
+        if (look != null && look.sunLineCount() > 0 && look.sunLineLength() > 0.0F && look.sunLineWidth() > 0.0F && lineAlpha > 0.0F) {
+            lines(pose, look, lineAlpha, size);
+            RenderSystem.blendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
+        }
         float[] tint = ContentWindowLook.sunTint(level);
         if (tint == null) {
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
@@ -169,6 +174,32 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
         for (int step = 0; step <= AURA_STEPS; step++) {
             float at = step * ((float) Math.PI * 2.0F) / AURA_STEPS;
             buffer.vertex(pose, Mth.cos(at) * wide, SkyMesh.SIZE, Mth.sin(at) * wide).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
+        }
+        BufferUploader.drawWithShader(buffer.end());
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+    }
+
+    private static void lines(Matrix4f pose, SkyLookDef look, float alpha, float size) {
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.defaultBlendFunc();
+        float red = Rgb.channel(look.sunLineColor(), 16);
+        float green = Rgb.channel(look.sunLineColor(), 8);
+        float blue = Rgb.channel(look.sunLineColor(), 0);
+        float half = size * look.sunLineWidth() / 2.0F;
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        for (int line = 0; line < look.sunLineCount(); line++) {
+            float at = line * (float) Math.PI * 2.0F / look.sunLineCount();
+            float dx = Mth.cos(at);
+            float dz = Mth.sin(at);
+            float near = size * look.sunLineStart() / Math.max(Math.abs(dx), Math.abs(dz));
+            float far = near + size * look.sunLineLength();
+            float sideX = -dz * half;
+            float sideZ = dx * half;
+            buffer.vertex(pose, dx * near + sideX, SkyMesh.SIZE, dz * near + sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.vertex(pose, dx * near - sideX, SkyMesh.SIZE, dz * near - sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.vertex(pose, dx * far - sideX, SkyMesh.SIZE, dz * far - sideZ).color(red, green, blue, 0.0F).endVertex();
+            buffer.vertex(pose, dx * far + sideX, SkyMesh.SIZE, dz * far + sideZ).color(red, green, blue, 0.0F).endVertex();
         }
         BufferUploader.drawWithShader(buffer.end());
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
