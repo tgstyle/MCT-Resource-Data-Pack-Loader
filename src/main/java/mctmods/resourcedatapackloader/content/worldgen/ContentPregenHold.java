@@ -154,7 +154,7 @@ public final class ContentPregenHold {
     private static void flashHeld() {
         String said = progress;
         boolean titles = beats % 6L == 0L;
-        boolean keepAlive = beats % 8L == 0L;
+        boolean keepAlive = beats % 6L == 0L;
         beats++;
         boolean changed = !said.isEmpty() && !said.equals(lastSaid);
         if (changed) { lastSaid = said; }
