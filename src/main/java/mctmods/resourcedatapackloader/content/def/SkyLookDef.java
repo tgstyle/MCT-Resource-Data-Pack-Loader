@@ -30,10 +30,15 @@ public final class SkyLookDef {
     public final int sunAuraColor;
     public final float sunAuraSize;
     public final float sunAuraHorizon;
+    public final int sunLineCount;
+    public final float sunLineStart;
+    public final float sunLineLength;
+    public final float sunLineWidth;
+    public final int sunLineColor;
     public final int grassTint;
     public final int foliageTint;
 
-    public SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWeight, int lightSkyColor, int lightBlockColor, float skyFactor, float cloudSpeed, List<CloudLayer> cloudLayers, float sunBrightness, float moonBrightness, @Nullable Heat heat, int snowColor, int waterFogColor, int lavaFogColor, int starColor, float starTwinkle, int lightningColor, @Nullable Skybox skybox, @Nullable Aurora aurora, boolean rainbow, int sunColor, int sunAuraColor, float sunAuraSize, float sunAuraHorizon, int grassTint, int foliageTint) {
+    public SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWeight, int lightSkyColor, int lightBlockColor, float skyFactor, float cloudSpeed, List<CloudLayer> cloudLayers, float sunBrightness, float moonBrightness, @Nullable Heat heat, int snowColor, int waterFogColor, int lavaFogColor, int starColor, float starTwinkle, int lightningColor, @Nullable Skybox skybox, @Nullable Aurora aurora, boolean rainbow, int sunColor, int sunAuraColor, float sunAuraSize, float sunAuraHorizon, int sunLineCount, float sunLineStart, float sunLineLength, float sunLineWidth, int sunLineColor, int grassTint, int foliageTint) {
         this.sampleFog = sampleFog;
         this.fogDensity = fogDensity;
         this.fogGroundWeight = fogGroundWeight;
@@ -58,6 +63,11 @@ public final class SkyLookDef {
         this.sunAuraColor = sunAuraColor;
         this.sunAuraSize = sunAuraSize;
         this.sunAuraHorizon = sunAuraHorizon;
+        this.sunLineCount = sunLineCount;
+        this.sunLineStart = sunLineStart;
+        this.sunLineLength = sunLineLength;
+        this.sunLineWidth = sunLineWidth;
+        this.sunLineColor = sunLineColor;
         this.grassTint = grassTint;
         this.foliageTint = foliageTint;
     }

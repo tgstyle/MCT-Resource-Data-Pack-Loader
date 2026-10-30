@@ -77,16 +77,17 @@ import java.util.WeakHashMap;
         float[] aura = ContentWindowLook.aura(world, sunHeight());
         float[] tint = ContentWindowLook.sunTint(world);
         boolean hazed = aura != null && aura[3] > 0.0F;
-        if (hazed || tint != null) {
+        SkyLookDef look = ContentFogSampler.look(world);
+        float lineAlpha = look == null ? 0.0F : alpha * (look.sunLineColor >>> 24) / 255.0F;
+        boolean lines = look != null && look.sunLineCount > 0 && look.sunLineLength > 0.0F && look.sunLineWidth > 0.0F && lineAlpha > 0.0F;
+        if (hazed || tint != null || lines) {
             int sourceRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
             int destRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
             int sourceAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
             int destAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
-            if (hazed) {
-                GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-                SkyLookDef look = ContentFogSampler.look(world);
-                aura(aura, alpha * aura[3] * AURA_ALPHA, size * (look == null ? ContentParserSkyLook.AURA_SIZE : look.sunAuraSize));
-            }
+            if (hazed || lines) { GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO); }
+            if (hazed) { aura(aura, alpha * aura[3] * AURA_ALPHA, size * (look == null ? ContentParserSkyLook.AURA_SIZE : look.sunAuraSize)); }
+            if (lines) { lines(look, lineAlpha, size); }
             if (tint != null) {
                 GL11.glBlendFunc(GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_COLOR);
                 color(alpha, alpha, alpha, 1.0F, rawColor);
@@ -140,6 +141,37 @@ import java.util.WeakHashMap;
         for (int step = 0; step <= AURA_SEGMENTS; step++) {
             float at = step * (float) Math.PI * 2.0F / AURA_SEGMENTS;
             buffer.pos(MathHelper.cos(at) * size, 100.0D, MathHelper.sin(at) * size).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
+        }
+        tessellator.draw();
+        GL11.glShadeModel(GL11.GL_FLAT);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        if (alphaTest) { GL11.glEnable(GL11.GL_ALPHA_TEST); }
+    }
+
+    private static void lines(SkyLookDef look, float alpha, float size) {
+        boolean alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        if (alphaTest) { GL11.glDisable(GL11.GL_ALPHA_TEST); }
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+        float red = Colors.red(look.sunLineColor) / 255.0F;
+        float green = Colors.green(look.sunLineColor) / 255.0F;
+        float blue = Colors.blue(look.sunLineColor) / 255.0F;
+        float half = size * look.sunLineWidth / 2.0F;
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        for (int line = 0; line < look.sunLineCount; line++) {
+            float at = line * (float) Math.PI * 2.0F / look.sunLineCount;
+            float dx = MathHelper.cos(at);
+            float dz = MathHelper.sin(at);
+            float near = size * look.sunLineStart / Math.max(Math.abs(dx), Math.abs(dz));
+            float far = near + size * look.sunLineLength;
+            float sideX = -dz * half;
+            float sideZ = dx * half;
+            buffer.pos(dx * near + sideX, 100.0D, dz * near + sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.pos(dx * near - sideX, 100.0D, dz * near - sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.pos(dx * far - sideX, 100.0D, dz * far - sideZ).color(red, green, blue, 0.0F).endVertex();
+            buffer.pos(dx * far + sideX, 100.0D, dz * far + sideZ).color(red, green, blue, 0.0F).endVertex();
         }
         tessellator.draw();
         GL11.glShadeModel(GL11.GL_FLAT);
