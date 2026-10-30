@@ -122,7 +122,7 @@ public final class ContentSkyExtras {
         ClientLevel level = Minecraft.getInstance().level;
         RenderTarget target = Minecraft.getInstance().gameRenderer.mainRenderTarget();
         GpuTextureView color = target.getColorTextureView();
-        float[] aura = ContentWindowLook.aura(level, fade);
+        float[] aura = ContentWindowLook.aura(level, fade, ContentSkyShapes.height(poseStack));
         float[] tint = ContentWindowLook.sunTint(level);
         if (color == null || aura == null && tint == null) { return tint; }
         if (aura != null && sunAura == null) { sunAura = colored(null, "RDPL sun aura", ContentSkyShapes.aura()); }
@@ -133,7 +133,7 @@ public final class ContentSkyExtras {
         modelView.scale(size, 1.0F, size);
         Matrix4f placed = new Matrix4f(modelView);
         modelView.popMatrix();
-        GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(aura[0], aura[1], aura[2], aura[3]));
+        GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(ContentWindowLook.auraPlaced(level, placed), new Vector4f(aura[0], aura[1], aura[2], aura[3]));
         GpuBufferSlice shade = tint == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(fade, fade, fade, 1.0F));
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL sun haze", color, Optional.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
             RenderSystem.bindDefaultUniforms(pass);

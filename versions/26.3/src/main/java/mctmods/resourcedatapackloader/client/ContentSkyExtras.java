@@ -121,7 +121,7 @@ public final class ContentSkyExtras {
 
     @Nullable public static float[] underSun(RenderPass renderPass, PoseStack poseStack, float size, float fade, AbstractTexture image, @Nullable GpuBuffer vertices) {
         ClientLevel level = Minecraft.getInstance().level;
-        float[] aura = ContentWindowLook.aura(level, fade);
+        float[] aura = ContentWindowLook.aura(level, fade, ContentSkyShapes.height(poseStack));
         float[] tint = ContentWindowLook.sunTint(level);
         if (aura == null && tint == null) { return null; }
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
@@ -130,7 +130,7 @@ public final class ContentSkyExtras {
         modelView.translate(0.0F, ContentSkyShapes.SIZE, 0.0F);
         modelView.scale(size, 1.0F, size);
         Matrix4f placed = new Matrix4f(modelView);
-        GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(aura[0], aura[1], aura[2], aura[3]));
+        GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(ContentWindowLook.auraPlaced(level, placed), new Vector4f(aura[0], aura[1], aura[2], aura[3]));
         GpuBufferSlice shade = tint == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(fade, fade, fade, 1.0F));
         modelView.popMatrix();
         renderPass.pushDebugGroup(() -> "RDPL sun haze");

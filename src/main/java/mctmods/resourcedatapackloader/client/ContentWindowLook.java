@@ -10,6 +10,7 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 import javax.annotation.Nullable;
 import java.util.function.ToIntFunction;
 
@@ -91,15 +92,27 @@ public final class ContentWindowLook {
         return tint;
     }
 
-    @Nullable static float[] aura(@Nullable Level level, float alpha) {
+    @Nullable static float[] aura(@Nullable Level level, float alpha, float sunHeight) {
         SkyLookDef look = ContentFogSampler.look(level);
         TimeWindowDef first = first(level, TimeWindowDef.SUN_AURA);
         boolean based = look != null && look.sunAuraColor() != SkyLookDef.UNSET;
-        if (!based && first == null) { return null; }
+        if (!based && first == null || look != null && look.sunAuraSize() <= 0.0F) { return null; }
         float[] aura = based ? rgba(look.sunAuraColor(), 1.0F) : rgba(first.sunAuraColor(), 0.0F);
         blendWindows(level, aura, TimeWindowDef.SUN_AURA, TimeWindowDef::sunAuraColor);
-        aura[3] *= alpha * AURA_ALPHA;
+        aura[3] *= alpha * AURA_ALPHA * nearHorizon(look, sunHeight);
         return aura;
+    }
+
+    static Matrix4f auraPlaced(@Nullable Level level, Matrix4f placed) {
+        SkyLookDef look = ContentFogSampler.look(level);
+        float scale = look == null ? 1.0F : look.sunAuraSize() / ContentSkyShapes.AURA_REACH;
+        return new Matrix4f(placed).scale(scale, 1.0F, scale);
+    }
+
+    private static float nearHorizon(@Nullable SkyLookDef look, float sunHeight) {
+        if (look == null || look.sunAuraHorizon() <= 0.0F) { return 1.0F; }
+        float elevation = (float) Math.toDegrees(Math.asin(Mth.clamp(sunHeight, -1.0F, 1.0F)));
+        return 1.0F - Mth.clamp(Math.abs(elevation) / look.sunAuraHorizon(), 0.0F, 1.0F);
     }
 
     @Nullable private static TimeWindowDef first(@Nullable Level level, String key) {

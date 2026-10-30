@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
@@ -10,6 +11,7 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import javax.annotation.Nullable;
 
 public final class ContentSkyShapes {
@@ -34,7 +36,7 @@ public final class ContentSkyShapes {
     public static final int PANORAMA_VERTICES = LATITUDES * LONGITUDES * 4;
     public static final int AURORA_VERTICES = 2 * AURORA_STEPS * 4;
     public static final int BOW_VERTICES = (BOW_RADII.length - 1) * BOW_STEPS * 4;
-    private static final float AURA_REACH = 1.5F;
+    public static final float AURA_REACH = 1.5F;
     private static final int AURA_STEPS = 32;
     public static final int AURA_VERTICES = AURA_STEPS / 2 * 4;
     private static final int WHITE = 0xFFFFFF;
@@ -64,6 +66,8 @@ public final class ContentSkyShapes {
         Level level = Minecraft.getInstance().level;
         return (level == null ? 0L : level.getGameTime()) + (double) partialTick();
     }
+
+    public static float height(PoseStack poseStack) { return poseStack.last().pose().transformDirection(new Vector3f(0.0F, 1.0F, 0.0F)).normalize().y(); }
 
     public static Matrix4f oriented(Matrix4f pose, SkyLookDef.Skybox box, double ticks, float turn) {
         if (box.followsTime()) { pose.rotateZ(turn); }

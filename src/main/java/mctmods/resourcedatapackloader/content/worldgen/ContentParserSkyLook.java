@@ -20,8 +20,9 @@ public final class ContentParserSkyLook {
     private static final List<String> FACES = List.of("up", "down", "north", "east", "south", "west");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
-    private static final List<String> HAZE = List.of("color", "auraColor");
+    private static final List<String> HAZE = List.of("color", "auraColor", "auraSize", "auraHorizon");
     public static final float GROUND_WEIGHT = 0.5F;
+    public static final float AURA_SIZE = 1.5F;
     private static final float HOT = 1.5F;
     private static final float HEAT_STRENGTH = 0.1F;
     private static final float HEAT_START = 32.0F;
@@ -43,7 +44,7 @@ public final class ContentParserSkyLook {
                 sky.has("heat") ? heat(key, Json.getJsonObject(sky, "heat")) : null, color(key, sky, "snowColor"), color(key, sky, "waterFogColor"), color(key, sky, "lavaFogColor"),
                 color(key, sky, "starColor"), unit(key, sky, "starTwinkle", 0.0F), color(key, sky, "lightningColor"), skybox(key, sky),
                 sky.has("aurora") ? aurora(key, Json.getJsonObject(sky, "aurora")) : null, Json.getBoolean(sky, "rainbow", false),
-                color(key, sun, "color"), color(key, sun, "auraColor"), color(key, sky, "grassTint"), color(key, sky, "foliageTint"));
+                color(key, sun, "color"), color(key, sun, "auraColor"), auraSize(key, sun), auraHorizon(key, sun), color(key, sky, "grassTint"), color(key, sky, "foliageTint"));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(Identifier key, JsonObject sky) {
@@ -74,6 +75,15 @@ public final class ContentParserSkyLook {
     private static float roll(Identifier key, JsonObject box) { return finite(key, box, "sky.skybox", "roll"); }
 
     private static float spin(Identifier key, JsonObject box) { return finite(key, box, "sky.skybox", "spin"); }
+
+    private static float auraSize(Identifier key, JsonObject sun) {
+        float value = Json.getFloat(sun, "auraSize", AURA_SIZE);
+        if (Float.isFinite(value)) { return value; }
+        ContentLog.LOGGER.error("Dimension {} gives sky.sun.auraSize of {}, which is not a finite number, using {}", key, value, AURA_SIZE);
+        return AURA_SIZE;
+    }
+
+    private static float auraHorizon(Identifier key, JsonObject sun) { return Math.max(0.0F, finite(key, sun, "sky.sun", "auraHorizon")); }
 
     static float finite(Identifier key, JsonObject json, String owner, String member) {
         float value = Json.getFloat(json, member, 0.0F);
