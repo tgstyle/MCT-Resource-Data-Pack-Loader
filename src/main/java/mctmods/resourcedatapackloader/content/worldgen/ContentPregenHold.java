@@ -147,7 +147,7 @@ public final class ContentPregenHold {
         String said = progress;
         long beat = BEATS.getAndIncrement();
         boolean titles = beat % 6L == 0L;
-        boolean keepAlive = beat % 8L == 0L;
+        boolean keepAlive = beat % 6L == 0L;
         boolean changed = !said.isEmpty() && !said.equals(lastSaid);
         if (changed) { lastSaid = said; }
         for (Held held : HELD.values()) {
