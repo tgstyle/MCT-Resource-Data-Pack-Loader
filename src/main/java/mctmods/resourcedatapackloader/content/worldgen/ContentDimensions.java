@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentInherits;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
@@ -59,7 +60,7 @@ public final class ContentDimensions {
         if (loaded) { return; }
         loaded = true;
         if (Config.definitionsOff() || !Config.content.dimensions()) { return; }
-        Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
+        Json.eachInheritedFile(PackManager.DIMENSIONS, "dimension definition", ContentInherits.DIMENSION_IDENTITY, (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             JsonObject json = Json.object(key, contents, "dimension");
             if (json == null) { return; }
@@ -73,6 +74,14 @@ public final class ContentDimensions {
     }
 
     public static Collection<DimensionDef> all() { return Collections.unmodifiableCollection(DEFS.values()); }
+
+    public static List<DimensionDef> available() {
+        List<DimensionDef> out = new ArrayList<>();
+        for (DimensionDef def : DEFS.values()) {
+            if (ContentRegistry.available(def.requires(), def.key())) { out.add(def); }
+        }
+        return out;
+    }
 
     public static boolean existing(ResourceLocation dimension) { return EXISTING.contains(dimension); }
 

@@ -47,7 +47,7 @@ public final class ContentSeasonTint {
     }
 
     private static boolean compute() {
-        for (DimensionDef def : ContentDimensions.all()) {
+        for (DimensionDef def : ContentDimensions.available()) {
             if (def.look() != null && def.look().tintsPlants()) { return true; }
         }
         for (SkyLookDef look : ContentEnvironments.looks()) {

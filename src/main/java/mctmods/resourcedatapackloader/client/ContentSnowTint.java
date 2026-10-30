@@ -42,7 +42,7 @@ public final class ContentSnowTint {
     private ContentSnowTint() {}
 
     static boolean wanted() {
-        for (DimensionDef def : ContentDimensions.all()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
+        for (DimensionDef def : ContentDimensions.available()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
         for (SkyLookDef look : ContentEnvironments.looks()) { if (look.snowColor() != SkyLookDef.UNSET) { return true; } }
         return ContentBiomes.tintsSnow();
     }
