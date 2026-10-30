@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -34,6 +35,8 @@ final class ContentSkyRenderer {
     private final DimensionTraitsDef.Sky sky;
     private final ResourceLocation moonTexture;
     private final float moonSize;
+    private final float moonTilt;
+    private final SkyPoseDef moonPose;
     @Nullable private VertexBuffer skyBuffer;
     @Nullable private VertexBuffer darkBuffer;
     private final ContentStars stars;
@@ -42,22 +45,26 @@ final class ContentSkyRenderer {
         this.sky = sky;
         moonTexture = moon == null ? MOON_PHASES : moon.texture();
         moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
-        stars = new ContentStars(sky.starCount(), sky.starSize(), occluders(sky, moonTexture, moonSize));
+        moonTilt = moon == null ? 0.0F : moon.tilt();
+        moonPose = moon == null ? SkyPoseDef.NONE : moon.pose();
+        stars = new ContentStars(sky.starCount(), sky.starSize(), occluders(sky, moonTexture, moonSize, moonTilt, moonPose));
     }
 
-    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize) {
+    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize, float moonTilt, SkyPoseDef moonPose) {
         List<SkyOccluder> bodies = new ArrayList<>();
-        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, 0.0F, sky.sunSize(), false, false, new ResourceLocation[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, rad(sky.sunTilt()), sky.sunSize(), sky.sunPose(), false, false, new ResourceLocation[] {sky.sunTexture()}, 1, 1)); }
         if (sky.bodies() == null) {
-            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, 0.0F, moonSize, true, false, new ResourceLocation[] {moonTexture}, 4, 2)); }
+            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, rad(moonTilt), moonSize, moonPose, true, false, new ResourceLocation[] {moonTexture}, 4, 2)); }
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
-                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle()), (float) Math.toRadians(body.tilt()), body.size(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1));
+                bodies.add(new SkyOccluder(rad(body.angle()), rad(body.tilt()), body.size(), body.pose(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1));
             }
         }
         return bodies.toArray(new SkyOccluder[0]);
     }
+
+    private static float rad(float degrees) { return (float) Math.toRadians(degrees); }
 
     void render(ClientLevel level, float partialTick, PoseStack poseStack, Camera camera, Matrix4f projection, boolean foggy, Runnable setupFog) {
         setupFog.run();
@@ -72,7 +79,7 @@ final class ContentSkyRenderer {
         RenderSystem.setShaderColor((float) color.x, (float) color.y, (float) color.z, 1.0F);
         ShaderInstance shader = RenderSystem.getShader();
         draw(skyBuffer, poseStack, projection, shader);
-        ContentSkyExtras.backdrop(level, poseStack.last().pose());
+        ContentSkyExtras.backdrop(level, poseStack.last().pose(), partialTick);
         RenderSystem.enableBlend();
         sunrise(level, partialTick, poseStack);
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -83,12 +90,23 @@ final class ContentSkyRenderer {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotationDegrees(turn));
+        double ticks = level.getGameTime() + (double) partialTick;
         if (sky.sunSize() > 0.0F) {
+            poseStack.pushPose();
+            poseStack.mulPose(Axis.ZP.rotationDegrees(sky.sunTilt()));
+            poseStack.mulPose(Axis.YP.rotationDegrees(sky.sunPose().degrees(ticks)));
             ContentDimensionEffects.sunHaze(level, clear * ContentDimensionEffects.sun(level), sky.sunSize(), poseStack.last().pose(), sky.sunTexture());
             quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize());
+            poseStack.popPose();
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
-        if (sky.bodies() == null && moonSize > 0.0F) { moon(poseStack.last().pose(), level.getMoonPhase()); }
+        if (sky.bodies() == null && moonSize > 0.0F) {
+            poseStack.pushPose();
+            poseStack.mulPose(Axis.ZP.rotationDegrees(-moonTilt));
+            poseStack.mulPose(Axis.YP.rotationDegrees(-moonPose.degrees(ticks)));
+            moon(poseStack.last().pose(), level.getMoonPhase());
+            poseStack.popPose();
+        }
         poseStack.popPose();
         if (sky.bodies() != null) {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
@@ -96,6 +114,7 @@ final class ContentSkyRenderer {
                 if (body.followsTime()) { poseStack.mulPose(Axis.XP.rotationDegrees(turn)); }
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(body.tilt()));
+                poseStack.mulPose(Axis.YP.rotationDegrees(body.pose().degrees(ticks)));
                 quad(poseStack.last().pose(), body.texture(), body.size());
                 poseStack.popPose();
             }

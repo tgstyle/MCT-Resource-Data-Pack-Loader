@@ -17,9 +17,9 @@ public record SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWei
 
     public record CloudLayer(float height, float speed, int color) {}
 
-    public record Skybox(@Nullable ResourceLocation panorama, List<ResourceLocation> faces) {}
+    public record Skybox(@Nullable ResourceLocation panorama, List<ResourceLocation> faces, float yaw, float pitch, float roll, float spin, boolean followsTime) {}
 
-    public record Aurora(int color, int topColor) {}
+    public record Aurora(int color, int topColor, float yaw) {}
 
     public record Heat(float strength, float minTemperature, boolean dayOnly, boolean followsWorld, float startDistance) {}
 }

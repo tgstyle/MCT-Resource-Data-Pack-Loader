@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -49,7 +50,13 @@ public final class ContentParserSkyLook {
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
         if (!sky.has("skybox")) { return null; }
         JsonObject box = Json.getJsonObject(sky, "skybox");
-        if (box.has("panorama")) { return new SkyLookDef.Skybox(ResourceLocation.parse(Json.getString(box, "panorama").trim()), List.of()); }
+        String owner = "sky.skybox";
+        float yaw = finite(key, box, owner, "yaw");
+        float pitch = finite(key, box, owner, "pitch");
+        float roll = finite(key, box, owner, "roll");
+        float spin = finite(key, box, owner, "spin");
+        boolean follows = Json.getBoolean(box, "followsTime", false);
+        if (box.has("panorama")) { return new SkyLookDef.Skybox(ResourceLocation.parse(Json.getString(box, "panorama").trim()), List.of(), yaw, pitch, roll, spin, follows); }
         List<ResourceLocation> faces = new ArrayList<>();
         for (String face : FACES) {
             if (!box.has(face)) {
@@ -58,14 +65,23 @@ public final class ContentParserSkyLook {
             }
             faces.add(ResourceLocation.parse(Json.getString(box, face).trim()));
         }
-        return new SkyLookDef.Skybox(null, List.copyOf(faces));
+        return new SkyLookDef.Skybox(null, List.copyOf(faces), yaw, pitch, roll, spin, follows);
     }
 
     private static SkyLookDef.Aurora aurora(ResourceLocation key, JsonObject aurora) {
         int color = color(key, aurora, "color");
         int top = color(key, aurora, "topColor");
-        return new SkyLookDef.Aurora(color == SkyLookDef.UNSET ? AURORA : color, top == SkyLookDef.UNSET ? AURORA_TOP : top);
+        return new SkyLookDef.Aurora(color == SkyLookDef.UNSET ? AURORA : color, top == SkyLookDef.UNSET ? AURORA_TOP : top, finite(key, aurora, "sky.aurora", "yaw"));
     }
+
+    static float finite(ResourceLocation key, JsonObject json, String owner, String member) {
+        float value = Json.getFloat(json, member, 0.0F);
+        if (Float.isFinite(value)) { return value; }
+        ContentLog.LOGGER.error("Dimension {} gives {}.{} of {}, which is not a finite number, using 0", key, owner, member, value);
+        return 0.0F;
+    }
+
+    static SkyPoseDef pose(ResourceLocation key, JsonObject json, String owner) { return new SkyPoseDef(finite(key, json, owner, "roll"), finite(key, json, owner, "spin")); }
 
     static float unit(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " sky"); }
 

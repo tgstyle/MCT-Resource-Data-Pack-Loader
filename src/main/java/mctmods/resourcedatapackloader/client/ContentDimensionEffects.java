@@ -44,6 +44,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     private static final Vector3f BOSS_SHADE = new Vector3f(0.7F, 0.6F, 0.6F);
     private static final Vector3f GRAY = new Vector3f(0.75F, 0.75F, 0.75F);
     private static final DimensionSpecialEffects DAYLIT = new OverworldEffects();
+    private static final List<String> WHOLE_SKY = List.of("sky.bodies", "sky.stars", "sky.sun.size", "sky.sun.tilt", "sky.sun.roll", "sky.sun.spin", "sky.moon.size", "sky.moon.tilt", "sky.moon.roll", "sky.moon.spin");
     private static final float AURA_ALPHA = 0.5F;
     private static final float AURA_REACH = 1.5F;
     private static final int AURA_STEPS = 32;
@@ -73,7 +74,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     private static boolean drawsWholeSky(DimensionDef def) {
         if (!ContentDimensions.existing(def.key())) { return true; }
-        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size");
+        return WHOLE_SKY.stream().anyMatch(def::gives);
     }
 
     public static DimensionSpecialEffects existing(DimensionSpecialEffects base, @Nullable DimensionDef def) {

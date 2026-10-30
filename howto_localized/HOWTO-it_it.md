@@ -4562,21 +4562,42 @@ Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco com
 
 `sun.color` tinge il sole e `sun.auraColor` stende attorno a esso un bagliore morbido, una foschia solare. Entrambi sfumano con la pioggia e con `sunBrightness`, come il sole. Funzionano nel cielo vanilla di una [dimensione esistente](#dimensioni-esistenti) come in quello proprio di RDPL, e una [fascia oraria](#il-blocco-time) può cambiarli per una parte della giornata.
 
-| Chiave                 | Obbligatorio | Valore                 | Predefinito     | Cosa fa                                                                                                                                                                                            |
-| ---------------------- | ------------ | ---------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sun.texture`          | no           | percorso della texture | il sole vanilla | L'immagine del sole                                                                                                                                                                                |
-| `sun.size`             | no           | decimale               | `30`            | Metà della larghezza del sole a una distanza di 100. `0` lo nasconde                                                                                                                               |
-| `sun.color`            | no           | colore esadecimale     | bianco          | Tinta del sole                                                                                                                                                                                     |
-| `sun.auraColor`        | no           | colore esadecimale     | nessuno         | Colore del bagliore attorno al sole. Senza, non c'è alcun bagliore                                                                                                                                 |
-| `moon.texture`         | no           | percorso della texture | la luna vanilla | Una tavola delle otto fasi della luna, quattro in orizzontale e due in verticale. Senza, viene disegnata la luna vanilla                                                                           |
-| `moon.size`            | no           | decimale               | `20`            | Metà della larghezza della luna a una distanza di 100. `0` la nasconde. Omesso con `bodies`                                                                                                        |
-| `bodies[].texture`     | sì           | percorso della texture |                 | L'immagine del corpo                                                                                                                                                                               |
-| `bodies[].size`        | no           | decimale               | `20`            | Metà della sua larghezza a una distanza di 100. La luna vanilla è `20`                                                                                                                             |
-| `bodies[].angle`       | no           | decimale, gradi        | `180`           | A che distanza lungo il percorso del sole si trova dietro il sole. `180` è dove sta la luna vanilla. Con `followsTime` disattivato si misura dallo zenit, quindi `0` è lo zenit e `90` l'orizzonte |
-| `bodies[].tilt`        | no           | decimale, gradi        | `0`             | Quanto sta fuori dal percorso del sole, a nord o a sud                                                                                                                                             |
-| `bodies[].followsTime` | no           | booleano               | `true`          | Se disattivato, resta fermo nel cielo invece di girare con il sole                                                                                                                                 |
-| `stars.count`          | no           | intero                 | `1500`          | Quante stelle                                                                                                                                                                                      |
-| `stars.size`           | no           | decimale               | `0.15`          | La stella più piccola; la più grande è due terzi più grande ancora                                                                                                                                 |
+```json
+{
+  "sky": {
+    "sun": { "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 }
+    ]
+  }
+}
+```
+
+`roll` fa ruotare il sole, la luna o un corpo attorno al centro della propria immagine, in senso orario come lo si guarda, e `spin` continua a farla girare di quei gradi al secondo di tempo di gioco, sommati a `roll`. L'immagine mantiene il proprio angolo rispetto al percorso che segue. `tilt` sposta il sole o la luna vanilla fuori dal percorso del sole, verso nord se positivo, come fa `bodies[].tilt` per un corpo. Le chiavi `moon` vengono ignorate quando `bodies` è impostato. In una [dimensione esistente](#dimensioni-esistenti), qualsiasi chiave di `sun` o `moon` attiva il cielo proprio di RDPL, come `sun.size`.
+
+| Chiave                 | Obbligatorio | Valore                     | Predefinito     | Cosa fa                                                                                                                                                                                            |
+| ---------------------- | ------------ | -------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | no           | percorso della texture     | il sole vanilla | L'immagine del sole                                                                                                                                                                                |
+| `sun.size`             | no           | decimale                   | `30`            | Metà della larghezza del sole a una distanza di 100. `0` lo nasconde                                                                                                                               |
+| `sun.color`            | no           | colore esadecimale         | bianco          | Tinta del sole                                                                                                                                                                                     |
+| `sun.auraColor`        | no           | colore esadecimale         | nessuno         | Colore del bagliore attorno al sole. Senza, non c'è alcun bagliore                                                                                                                                 |
+| `sun.tilt`             | no           | decimale, gradi            | `0`             | Di quanto il sole si trova fuori dal suo percorso, a nord o a sud, come `bodies[].tilt` per un corpo                                                                                               |
+| `sun.roll`             | no           | decimale, gradi            | `0`             | Ruota l'immagine del sole attorno al proprio centro, in senso orario                                                                                                                               |
+| `sun.spin`             | no           | decimale, gradi al secondo | `0`             | Continua a far girare l'immagine, si somma a `roll`. Un valore negativo la fa girare al contrario                                                                                                  |
+| `moon.texture`         | no           | percorso della texture     | la luna vanilla | Una tavola delle otto fasi della luna, quattro in orizzontale e due in verticale. Senza, viene disegnata la luna vanilla                                                                           |
+| `moon.size`            | no           | decimale                   | `20`            | Metà della larghezza della luna a una distanza di 100. `0` la nasconde. Omesso con `bodies`                                                                                                        |
+| `moon.tilt`            | no           | decimale, gradi            | `0`             | Di quanto la luna vanilla si trova fuori dal suo percorso, come `sun.tilt`. Ignorato con `bodies`                                                                                                  |
+| `moon.roll`            | no           | decimale, gradi            | `0`             | Ruota l'immagine della luna attorno al proprio centro, in senso orario. Ignorato con `bodies`                                                                                                      |
+| `moon.spin`            | no           | decimale, gradi al secondo | `0`             | Continua a far girare l'immagine della luna, come `sun.spin`. Ignorato con `bodies`                                                                                                                |
+| `bodies[].texture`     | sì           | percorso della texture     |                 | L'immagine del corpo                                                                                                                                                                               |
+| `bodies[].size`        | no           | decimale                   | `20`            | Metà della sua larghezza a una distanza di 100. La luna vanilla è `20`                                                                                                                             |
+| `bodies[].angle`       | no           | decimale, gradi            | `180`           | A che distanza lungo il percorso del sole si trova dietro il sole. `180` è dove sta la luna vanilla. Con `followsTime` disattivato si misura dallo zenit, quindi `0` è lo zenit e `90` l'orizzonte |
+| `bodies[].tilt`        | no           | decimale, gradi            | `0`             | Di quanto si trova fuori dal percorso del sole, a nord o a sud. `angle` corre lungo il percorso, `tilt` di traverso                                                                                |
+| `bodies[].followsTime` | no           | booleano                   | `true`          | Se disattivato, resta fermo nel cielo invece di girare con il sole                                                                                                                                 |
+| `bodies[].roll`        | no           | decimale, gradi            | `0`             | Ruota la sua immagine attorno al proprio centro, in senso orario                                                                                                                                   |
+| `bodies[].spin`        | no           | decimale, gradi al secondo | `0`             | Continua a far girare l'immagine, si somma a `roll`. Un valore negativo la fa girare al contrario                                                                                                  |
+| `stars.count`          | no           | intero                     | `1500`          | Quante stelle                                                                                                                                                                                      |
+| `stars.size`           | no           | decimale                   | `0.15`          | La stella più piccola; la più grande è due terzi più grande ancora                                                                                                                                 |
 
 ### Nebbia, luce, nuvole e calore
 
@@ -4687,11 +4708,13 @@ Anche queste chiavi stanno nel blocco `sky`, e anch'esse sono disegnate solo sul
       "north": "mypack:textures/sky/north.png",
       "east": "mypack:textures/sky/east.png",
       "south": "mypack:textures/sky/south.png",
-      "west": "mypack:textures/sky/west.png"
+      "west": "mypack:textures/sky/west.png",
+      "yaw": 90
     },
     "aurora": {
       "color": "#40FF90",
-      "topColor": "#8040FF"
+      "topColor": "#8040FF",
+      "yaw": 90
     },
     "rainbow": true
   }
@@ -4701,6 +4724,8 @@ Anche queste chiavi stanno nel blocco `sky`, e anch'esse sono disegnate solo sul
 `skybox` dipinge sul cielo le tue immagini, dietro il bagliore dell'alba, il sole, la luna e le stelle. Indica tutte e sei le facce di un cubo come percorsi completi di texture, disposte come il cubo spiegato: `up` incontra il bordo superiore di `north`, `down` il suo bordo inferiore, `west` sta alla sua sinistra ed `east` alla sua destra, con `south` oltre `east`. Oppure indica solo `panorama`, un'unica immagine 2:1 avvolta attorno a tutto il cielo: il suo bordo sinistro è rivolto a nord e prosegue in senso orario attraverso est, sud e ovest, la riga in alto è dritta verso l'alto e quella in basso dritta verso il basso. Uno skybox a cui manca una faccia e senza panorama viene scartato, con un errore nel log.
 
 `aurora` stende tende luminose basse sul cielo settentrionale di notte. Ondeggiano lentamente, compaiono con il calare del sole e scompaiono di giorno e con la pioggia. `color` è il colore alla base e `topColor` quello in cui sfumano in alto.
+
+`skybox.yaw` ruota lo skybox in senso orario visto dall'alto, `skybox.pitch` lo inclina attorno all'asse est-ovest e `skybox.roll` attorno all'asse nord-sud, e `skybox.spin` continua a farlo girare attorno al proprio polo, dopo `pitch` e `roll`, in gradi al secondo di tempo di gioco; un valore positivo lo ruota in senso orario visto dall'alto, come `yaw`. Con `skybox.followsTime` attivo, gira durante il giorno insieme alle stelle. `aurora.yaw` ruota le cortine in senso orario visto dall'alto. L'arcobaleno, il bagliore dell'alba e le stelle non ruotano.
 
 `rainbow` mostra un arcobaleno opposto al sole quando la pioggia smette di giorno. Svanisce nei due minuti dopo la fine della pioggia, e un nuovo acquazzone lo cancella.
 
@@ -4714,13 +4739,19 @@ Nessuna chiave vanilla dà a una dimensione immagini del cielo proprie, un'auror
 }
 ```
 
-| Chiave            | Obbligatorio | Valore                 | Predefinito | Cosa fa                                                                                    |
-| ----------------- | ------------ | ---------------------- | ----------- | ------------------------------------------------------------------------------------------ |
-| `skybox.<face>`   | no           | percorso della texture | nessuno     | Una faccia del cubo: `up`, `down`, `north`, `east`, `south` o `west`. Indicale tutte e sei |
-| `skybox.panorama` | no           | percorso della texture | nessuno     | Un'unica immagine avvolta attorno a tutto il cielo, usata al posto delle facce             |
-| `aurora.color`    | no           | colore esadecimale     | `40FF90`    | Colore alla base delle tende                                                               |
-| `aurora.topColor` | no           | colore esadecimale     | `8040FF`    | Colore in alto, dove le tende sfumano                                                      |
-| `rainbow`         | no           | booleano               | `false`     | Mostra un arcobaleno dopo la pioggia                                                       |
+| Chiave               | Obbligatorio | Valore                     | Predefinito | Cosa fa                                                                                    |
+| -------------------- | ------------ | -------------------------- | ----------- | ------------------------------------------------------------------------------------------ |
+| `skybox.<face>`      | no           | percorso della texture     | nessuno     | Una faccia del cubo: `up`, `down`, `north`, `east`, `south` o `west`. Indicale tutte e sei |
+| `skybox.panorama`    | no           | percorso della texture     | nessuno     | Un'unica immagine avvolta attorno a tutto il cielo, usata al posto delle facce             |
+| `skybox.yaw`         | no           | decimale, gradi            | `0`         | Ruota lo skybox in senso orario visto dall'alto                                            |
+| `skybox.pitch`       | no           | decimale, gradi            | `0`         | Inclina lo skybox attorno all'asse est-ovest                                               |
+| `skybox.roll`        | no           | decimale, gradi            | `0`         | Inclina lo skybox attorno all'asse nord-sud                                                |
+| `skybox.spin`        | no           | decimale, gradi al secondo | `0`         | Continua a far girare lo skybox attorno al proprio polo, dopo `pitch` e `roll`             |
+| `skybox.followsTime` | no           | booleano                   | `false`     | Attivo, la skybox gira durante la giornata insieme alle stelle                             |
+| `aurora.color`       | no           | colore esadecimale         | `40FF90`    | Colore alla base delle tende                                                               |
+| `aurora.topColor`    | no           | colore esadecimale         | `8040FF`    | Colore in alto, dove le tende sfumano                                                      |
+| `aurora.yaw`         | no           | decimale, gradi            | `0`         | Ruota le cortine in senso orario visto dall'alto. `0` è il nord                            |
+| `rainbow`            | no           | booleano                   | `false`     | Mostra un arcobaleno dopo la pioggia                                                       |
 
 ### Il blocco `physics`
 

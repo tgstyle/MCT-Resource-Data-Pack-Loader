@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -38,19 +39,23 @@ public final class ContentSkyExtras {
 
     private ContentSkyExtras() {}
 
-    public static void backdrop(@Nullable ClientLevel level, Matrix4f pose) {
+    public static void backdrop(@Nullable ClientLevel level, Matrix4f base, float partialTick) {
         SkyLookDef look = ContentFogSampler.look(level);
-        if (look == null || look.skybox() == null) { return; }
+        if (level == null || look == null || look.skybox() == null) { return; }
+        SkyLookDef.Skybox box = look.skybox();
+        Matrix4f pose = new Matrix4f(base);
+        if (box.followsTime()) { pose.rotateZ(level.getTimeOfDay(partialTick) * Mth.TWO_PI); }
+        pose.rotateY(-(float) Math.toRadians(box.yaw())).rotateX((float) Math.toRadians(box.pitch())).rotateZ((float) Math.toRadians(box.roll())).rotateY(-(float) Math.toRadians(SkyPoseDef.spun(box.spin(), level.getGameTime() + (double) partialTick)));
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableCull();
-        if (look.skybox().panorama() != null) {
-            RenderSystem.setShaderTexture(0, look.skybox().panorama());
+        if (box.panorama() != null) {
+            RenderSystem.setShaderTexture(0, box.panorama());
             panorama(pose);
         }
         else {
             for (int face = 0; face < FACES.length; ++face) {
-                RenderSystem.setShaderTexture(0, look.skybox().faces().get(face));
+                RenderSystem.setShaderTexture(0, box.faces().get(face));
                 face(pose, FACES[face]);
             }
         }
@@ -70,7 +75,7 @@ public final class ContentSkyExtras {
         RenderSystem.disableCull();
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        if (glow > 0.0F) { aurora(pose, look.aurora(), glow, level.getGameTime() + partialTick); }
+        if (glow > 0.0F) { aurora(new Matrix4f(pose).rotateY(-(float) Math.toRadians(look.aurora().yaw())), look.aurora(), glow, level.getGameTime() + partialTick); }
         if (bow > 0.0F) { bow(pose, angle * Mth.TWO_PI, bow); }
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
