@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.client;
 
 import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
 
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -16,22 +18,27 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.util.Mth;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import javax.annotation.Nullable;
 
 public final class ContentSunHaze {
     private static final float AURA_ALPHA = 0.5F;
-    private static final float AURA_REACH = 1.5F;
     private static final int AURA_STEPS = 32;
 
     private ContentSunHaze() {}
 
     public static Matrix4f sunPose(ClientLevel level, Matrix4f frustum, float partialTick) { return new Matrix4f(frustum).rotate(Axis.YP.rotationDegrees(-90.0F)).rotate(Axis.XP.rotationDegrees(level.getTimeOfDay(partialTick) * 360.0F)); }
 
-    public static void aura(@Nullable ClientLevel level, Matrix4f pose, float alpha, float size) {
-        float[] aura = ContentWindowLook.aura(ContentDimensions.def(level));
+    public static void aura(@Nullable ClientLevel level, Matrix4f pose, float alpha, float size, Matrix4f view) {
+        DimensionDef def = ContentDimensions.def(level);
+        float[] aura = ContentWindowLook.aura(def);
         if (aura == null || aura[3] <= 0.0F) { return; }
-        float center = alpha * aura[3] * AURA_ALPHA;
-        float wide = size * AURA_REACH;
+        SkyLookDef look = def == null ? null : def.look();
+        float reach = look == null ? SkyLookDef.AURA_REACH : look.sunAuraSize();
+        if (reach <= 0.0F) { return; }
+        float center = alpha * aura[3] * AURA_ALPHA * lowSun(look, pose, view);
+        if (center <= 0.0F) { return; }
+        float wide = size * reach;
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -45,6 +52,14 @@ public final class ContentSunHaze {
         additive();
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+    }
+
+    private static float lowSun(@Nullable SkyLookDef look, Matrix4f pose, Matrix4f view) {
+        if (look == null || look.sunAuraHorizon() <= 0.0F) { return 1.0F; }
+        Vector3f up = pose.transformDirection(new Vector3f(0.0F, 1.0F, 0.0F));
+        new Matrix4f(view).invert().transformDirection(up).normalize();
+        float elevation = (float) Math.toDegrees(Math.asin(Mth.clamp(up.y, -1.0F, 1.0F)));
+        return 1.0F - Mth.clamp(Math.abs(elevation) / look.sunAuraHorizon(), 0.0F, 1.0F);
     }
 
     public static void sun(@Nullable ClientLevel level, Matrix4f pose, float alpha, float size, Runnable plain) {

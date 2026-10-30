@@ -99,7 +99,7 @@ final class ContentSkyRenderer {
             poseStack.pushPose();
             orient(poseStack, sky.sunTilt(), sky.sunPose().degrees(ticks));
             Matrix4f pose = poseStack.last().pose();
-            ContentSunHaze.aura(level, pose, sunAlpha, sky.sunSize());
+            ContentSunHaze.aura(level, pose, sunAlpha, sky.sunSize(), modelView);
             RenderSystem.setShaderTexture(0, sky.sunTexture());
             ContentSunHaze.sun(level, pose, sunAlpha, sky.sunSize(), () -> ContentSunHaze.quad(pose, sky.sunSize()));
             poseStack.popPose();
