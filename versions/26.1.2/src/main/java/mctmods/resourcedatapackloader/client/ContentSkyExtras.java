@@ -24,6 +24,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.util.Mth;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
@@ -43,7 +45,6 @@ public final class ContentSkyExtras {
     @Nullable private static GpuBuffer panorama;
     @Nullable private static GpuBuffer aurora;
     @Nullable private static GpuBuffer bow;
-    private static float turn;
 
     private ContentSkyExtras() {}
 
@@ -54,7 +55,7 @@ public final class ContentSkyExtras {
         if (skybox == null || color == null) { return; }
         AbstractTexture[] images = ContentSkyShapes.images(skybox);
         GpuBuffer mesh = skybox.panorama() != null ? panorama() : box();
-        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(ContentSkyShapes.oriented(new Matrix4f(RenderSystem.getModelViewStack()), skybox, ContentSkyShapes.ticks(), turn), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), new Vector3f(), new Matrix4f());
+        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(ContentSkyShapes.oriented(new Matrix4f(RenderSystem.getModelViewStack()), skybox, ContentSkyShapes.ticks(), Minecraft.getInstance().gameRenderer.getMainCamera().attributeProbe().getValue(EnvironmentAttributes.STAR_ANGLE, ContentSkyShapes.partialTick()) * Mth.DEG_TO_RAD), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F), new Vector3f(), new Matrix4f());
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL skybox", color, OptionalInt.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
             pass.setPipeline(BOX);
             RenderSystem.bindDefaultUniforms(pass);
@@ -84,8 +85,7 @@ public final class ContentSkyExtras {
         return box;
     }
 
-    public static void overlay(PoseStack poseStack, float sunAngle, float starAngle) {
-        turn = starAngle;
+    public static void overlay(PoseStack poseStack, float sunAngle) {
         ClientLevel level = Minecraft.getInstance().level;
         SkyLookDef look = ContentFogSampler.look(level);
         RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
