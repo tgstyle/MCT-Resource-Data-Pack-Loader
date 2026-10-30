@@ -46,7 +46,6 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     private static final DimensionSpecialEffects DAYLIT = new OverworldEffects();
     private static final List<String> WHOLE_SKY = List.of("sky.bodies", "sky.stars", "sky.sun.size", "sky.sun.tilt", "sky.sun.roll", "sky.sun.spin", "sky.moon.size", "sky.moon.tilt", "sky.moon.roll", "sky.moon.spin");
     private static final float AURA_ALPHA = 0.5F;
-    private static final float AURA_REACH = 1.5F;
     private static final int AURA_STEPS = 32;
     private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> SKIES = new IdentityHashMap<>();
     private static final Drawn NOTHING = new Drawn(null, null, null);
@@ -134,8 +133,11 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     public static void sunHaze(@Nullable ClientLevel level, float alpha, float size, Matrix4f pose, ResourceLocation texture) {
         int[] blend = {GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB), GL11.glGetInteger(GL14.GL_BLEND_DST_RGB), GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA), GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA)};
         float[] aura = ContentWindowLook.aura(level);
-        if (aura != null && aura[3] > 0.0F) {
-            aura(pose, aura, alpha * aura[3] * AURA_ALPHA, size);
+        SkyLookDef look = ContentFogSampler.look(level);
+        float reach = look == null ? SkyLookDef.AURA_SIZE : look.sunAuraSize();
+        float lift = look == null ? 1.0F : horizon(pose, look.sunAuraHorizon());
+        if (aura != null && aura[3] > 0.0F && reach > 0.0F && lift > 0.0F) {
+            aura(pose, aura, alpha * aura[3] * AURA_ALPHA * lift, size * reach);
             RenderSystem.blendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
         }
         float[] tint = ContentWindowLook.sunTint(level);
@@ -150,8 +152,15 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
         RenderSystem.setShaderColor(tint[0], tint[1], tint[2], alpha);
     }
 
-    private static void aura(Matrix4f pose, float[] aura, float alpha, float size) {
-        float wide = size * AURA_REACH;
+    private static float horizon(Matrix4f pose, float degrees) {
+        if (degrees <= 0.0F) { return 1.0F; }
+        Vector3f up = pose.transformDirection(0.0F, 1.0F, 0.0F, new Vector3f()).normalize();
+        Minecraft.getInstance().gameRenderer.getMainCamera().rotation().transform(up);
+        float elevation = (float) Math.toDegrees(Math.asin(Mth.clamp(up.y, -1.0F, 1.0F)));
+        return 1.0F - Mth.clamp(Math.abs(elevation) / degrees, 0.0F, 1.0F);
+    }
+
+    private static void aura(Matrix4f pose, float[] aura, float alpha, float wide) {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.defaultBlendFunc();

@@ -21,7 +21,7 @@ public final class ContentParserSkyLook {
     private static final List<String> FACES = List.of("up", "down", "north", "east", "south", "west");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
-    private static final List<String> HAZE = List.of("color", "auraColor");
+    private static final List<String> HAZE = List.of("color", "auraColor", "auraSize", "auraHorizon");
     public static final float GROUND_WEIGHT = 0.5F;
     private static final float HOT = 1.5F;
     private static final float HEAT_STRENGTH = 0.1F;
@@ -44,7 +44,7 @@ public final class ContentParserSkyLook {
                 sky.has("heat") ? heat(key, Json.getJsonObject(sky, "heat")) : null, color(key, sky, "snowColor"), color(key, sky, "waterFogColor"), color(key, sky, "lavaFogColor"),
                 color(key, sky, "starColor"), unit(key, sky, "starTwinkle", 0.0F), color(key, sky, "lightningColor"), skybox(key, sky),
                 sky.has("aurora") ? aurora(key, Json.getJsonObject(sky, "aurora")) : null, Json.getBoolean(sky, "rainbow", false),
-                color(key, sun, "color"), color(key, sun, "auraColor"), color(key, sky, "grassTint"), color(key, sky, "foliageTint"));
+                color(key, sun, "color"), color(key, sun, "auraColor"), auraSize(key, sun), finite(key, sun, "sky.sun", "auraHorizon"), color(key, sky, "grassTint"), color(key, sky, "foliageTint"));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
@@ -79,6 +79,13 @@ public final class ContentParserSkyLook {
         if (Float.isFinite(value)) { return value; }
         ContentLog.LOGGER.error("Dimension {} gives {}.{} of {}, which is not a finite number, using 0", key, owner, member, value);
         return 0.0F;
+    }
+
+    private static float auraSize(ResourceLocation key, JsonObject sun) {
+        float value = Json.getFloat(sun, "auraSize", SkyLookDef.AURA_SIZE);
+        if (Float.isFinite(value)) { return value; }
+        ContentLog.LOGGER.error("Dimension {} gives sky.sun.auraSize of {}, which is not a finite number, using {}", key, value, SkyLookDef.AURA_SIZE);
+        return SkyLookDef.AURA_SIZE;
     }
 
     static SkyPoseDef pose(ResourceLocation key, JsonObject json, String owner) { return new SkyPoseDef(finite(key, json, owner, "roll"), finite(key, json, owner, "spin")); }
