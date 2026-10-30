@@ -5,6 +5,7 @@ import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -47,6 +48,39 @@ public final class ContentSunHaze {
         for (int step = 0; step <= AURA_STEPS; step++) {
             float at = step * Mth.TWO_PI / AURA_STEPS;
             buffer.addVertex(pose, Mth.cos(at) * wide, SIZE, Mth.sin(at) * wide).setColor(aura[0], aura[1], aura[2], 0.0F);
+        }
+        BufferUploader.drawWithShader(buffer.buildOrThrow());
+        additive();
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+    }
+
+    public static void lines(@Nullable ClientLevel level, Matrix4f pose, float alpha, float size) {
+        DimensionDef def = ContentDimensions.def(level);
+        SkyLookDef look = def == null ? null : def.look();
+        if (look == null || look.sunLineCount() <= 0 || look.sunLineLength() <= 0.0F || look.sunLineWidth() <= 0.0F) { return; }
+        float near = alpha * (look.sunLineColor() >>> 24) / 255.0F;
+        if (near <= 0.0F) { return; }
+        float red = Rgb.red(look.sunLineColor());
+        float green = Rgb.green(look.sunLineColor());
+        float blue = Rgb.blue(look.sunLineColor());
+        float half = size * look.sunLineWidth() / 2.0F;
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        for (int line = 0; line < look.sunLineCount(); line++) {
+            float at = line * Mth.TWO_PI / look.sunLineCount();
+            float dx = Mth.cos(at);
+            float dz = Mth.sin(at);
+            float start = size * look.sunLineStart() / Math.max(Math.abs(dx), Math.abs(dz));
+            float end = start + size * look.sunLineLength();
+            float sideX = -dz * half;
+            float sideZ = dx * half;
+            buffer.addVertex(pose, dx * start + sideX, SIZE, dz * start + sideZ).setColor(red, green, blue, near);
+            buffer.addVertex(pose, dx * start - sideX, SIZE, dz * start - sideZ).setColor(red, green, blue, near);
+            buffer.addVertex(pose, dx * end - sideX, SIZE, dz * end - sideZ).setColor(red, green, blue, 0.0F);
+            buffer.addVertex(pose, dx * end + sideX, SIZE, dz * end + sideZ).setColor(red, green, blue, 0.0F);
         }
         BufferUploader.drawWithShader(buffer.buildOrThrow());
         additive();

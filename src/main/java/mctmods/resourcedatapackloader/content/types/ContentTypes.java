@@ -222,6 +222,8 @@ public final class ContentTypes {
 
     private static String key(String name) { return name == null ? "" : Settings.lower(name); }
 
+    public static int hexDigits(String value) { return digits(value).length(); }
+
     public static String digits(String value) {
         String cleaned = value == null ? "" : value.trim();
         if (cleaned.startsWith("#")) { cleaned = cleaned.substring(1); }
