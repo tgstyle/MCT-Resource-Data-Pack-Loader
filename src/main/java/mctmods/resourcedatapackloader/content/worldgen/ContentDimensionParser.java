@@ -148,7 +148,7 @@ public final class ContentDimensionParser {
 
     private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {
         ResourceLocation texture = texture(key, Json.getString(moon, "texture", MOON));
-        return new DimensionTraitsDef.Moon(texture == null ? ResourceLocation.parse(MOON) : texture, Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
+        return new DimensionTraitsDef.Moon(texture == null ? ResourceLocation.parse(MOON) : texture, Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)), Json.getFloat(moon, "tilt", 0.0F), ContentParserSkyLook.pose(key, moon, "sky.moon"));
     }
 
     private static AmbienceDef ambience(ResourceLocation key, JsonObject json) {
@@ -189,13 +189,13 @@ public final class ContentDimensionParser {
                 ResourceLocation texture = texture(key, Json.getString(body, "texture"));
                 if (texture == null) { continue; }
                 found.add(new DimensionTraitsDef.Body(texture, Math.max(0.0F, Json.getFloat(body, "size", 20.0F)),
-                        Json.getFloat(body, "angle", 180.0F), Json.getFloat(body, "tilt", 0.0F), Json.getBoolean(body, "followsTime", true)));
+                        Json.getFloat(body, "angle", 180.0F), Json.getFloat(body, "tilt", 0.0F), Json.getBoolean(body, "followsTime", true), ContentParserSkyLook.pose(key, body, "sky.bodies")));
             }
             bodies = List.copyOf(found);
         }
         ResourceLocation sunTexture = texture(key, Json.getString(sun, "texture", SUN));
-        return new DimensionTraitsDef.Sky(sunTexture == null ? ResourceLocation.parse(SUN) : sunTexture, Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
-                Math.max(0, Json.getInt(stars, "count", STARS)), Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
+        return new DimensionTraitsDef.Sky(sunTexture == null ? ResourceLocation.parse(SUN) : sunTexture, Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)),
+                Json.getFloat(sun, "tilt", 0.0F), ContentParserSkyLook.pose(key, sun, "sky.sun"), bodies, Math.max(0, Json.getInt(stars, "count", STARS)), Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
     }
 
     @Nullable private static ResourceLocation texture(ResourceLocation key, String named) {

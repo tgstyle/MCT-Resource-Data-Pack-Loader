@@ -61,7 +61,8 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     private static boolean drawsWholeSky(DimensionDef def) {
         if (!ContentDimensions.existing(def.key())) { return true; }
-        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size");
+        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size")
+                || def.gives("sky.sun.tilt") || def.gives("sky.sun.roll") || def.gives("sky.sun.spin") || def.gives("sky.moon.tilt") || def.gives("sky.moon.roll") || def.gives("sky.moon.spin");
     }
 
     public static DimensionSpecialEffects existing(DimensionSpecialEffects base, @Nullable DimensionDef def) {

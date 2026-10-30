@@ -4554,21 +4554,42 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 
 `sun.color` färbt die Sonne ein, und `sun.auraColor` legt einen weichen Schein um sie, einen Sonnendunst. Beide blassen mit Regen und `sunBrightness` aus wie die Sonne selbst. Sie wirken im Vanilla-Himmel einer [bestehenden Dimension](#bestehende-dimensionen) ebenso wie im eigenen von RDPL, und ein [Zeitfenster](#der-block-time) kann sie für einen Teil des Tages ändern.
 
-| Schlüssel              | Pflicht | Wert        | Standard          | Was er macht                                                                                                                                                                                       |
-| ---------------------- | ------- | ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sun.texture`          | nein    | Texturpfad  | die Vanilla-Sonne | Das Bild der Sonne                                                                                                                                                                                 |
-| `sun.size`             | nein    | float       | `30`              | Halbe Breite der Sonne auf 100 Blöcke Abstand. `0` blendet sie aus                                                                                                                                 |
-| `sun.color`            | nein    | Hex-Farbe   | weiß              | Färbung der Sonne                                                                                                                                                                                  |
-| `sun.auraColor`        | nein    | Hex-Farbe   | keine             | Farbe des Scheins um die Sonne. Ohne sie gibt es keinen Schein                                                                                                                                     |
-| `moon.texture`         | nein    | Texturpfad  | der Vanilla-Mond  | Ein Blatt mit den acht Mondphasen, vier nebeneinander und zwei untereinander. Ohne sie wird der Vanilla-Mond gezeichnet                                                                            |
-| `moon.size`            | nein    | float       | `20`              | Halbe Breite des Mondes auf 100 Blöcke Abstand. `0` blendet ihn aus. Mit `bodies` entfällt er                                                                                                      |
-| `bodies[].texture`     | ja      | Texturpfad  |                   | Das Bild des Körpers                                                                                                                                                                               |
-| `bodies[].size`        | nein    | float       | `20`              | Halbe Breite auf 100 Blöcke Abstand. Der Vanilla-Mond hat `20`                                                                                                                                     |
-| `bodies[].angle`       | nein    | float, Grad | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont |
-| `bodies[].tilt`        | nein    | float, Grad | `0`               | Wie weit er nördlich oder südlich neben der Sonnenbahn steht                                                                                                                                       |
-| `bodies[].followsTime` | nein    | boolean     | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                       |
-| `stars.count`          | nein    | int         | `1500`            | Wie viele Sterne                                                                                                                                                                                   |
-| `stars.size`           | nein    | float       | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                        |
+```json
+{
+  "sky": {
+    "sun": { "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 }
+    ]
+  }
+}
+```
+
+`tilt`, `roll` und `spin` drehen Sonne, Mond und Himmelskörper. `tilt` versetzt Sonne oder Mond neben ihre Bahn, so wie `bodies[].tilt` es für einen Körper tut. `roll` dreht das Bild um seine eigene Mitte und `spin` dreht es weiter, sodass das Bild mit diesem Winkel auf seiner Bahn mitwandert. `spin` zählt Spielticks, 20 pro Sekunde, deshalb lassen Schlafen und `/time` es nicht springen. Sterne bleiben hinter einem gedrehten Bild verdeckt. Die Mond-Schlüssel entfallen, wenn `bodies` gesetzt ist.
+
+| Schlüssel              | Pflicht | Wert                    | Standard          | Was er macht                                                                                                                                                                                       |
+| ---------------------- | ------- | ----------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | nein    | Texturpfad              | die Vanilla-Sonne | Das Bild der Sonne                                                                                                                                                                                 |
+| `sun.size`             | nein    | float                   | `30`              | Halbe Breite der Sonne auf 100 Blöcke Abstand. `0` blendet sie aus                                                                                                                                 |
+| `sun.color`            | nein    | Hex-Farbe               | weiß              | Färbung der Sonne                                                                                                                                                                                  |
+| `sun.auraColor`        | nein    | Hex-Farbe               | keine             | Farbe des Scheins um die Sonne. Ohne sie gibt es keinen Schein                                                                                                                                     |
+| `sun.tilt`             | nein    | float, Grad             | `0`               | Wie weit die Sonne nördlich oder südlich neben ihrer Bahn steht, wie `bodies[].tilt` bei einem Körper                                                                                              |
+| `sun.roll`             | nein    | float, Grad             | `0`               | Dreht das Bild der Sonne im Uhrzeigersinn um seine eigene Mitte                                                                                                                                    |
+| `sun.spin`             | nein    | float, Grad pro Sekunde | `0`               | Dreht das Bild weiter, zu `roll` addiert. Negativ dreht es andersherum                                                                                                                             |
+| `moon.texture`         | nein    | Texturpfad              | der Vanilla-Mond  | Ein Blatt mit den acht Mondphasen, vier nebeneinander und zwei untereinander. Ohne sie wird der Vanilla-Mond gezeichnet                                                                            |
+| `moon.size`            | nein    | float                   | `20`              | Halbe Breite des Mondes auf 100 Blöcke Abstand. `0` blendet ihn aus. Mit `bodies` entfällt er                                                                                                      |
+| `moon.tilt`            | nein    | float, Grad             | `0`               | Wie weit der Vanilla-Mond neben seiner Bahn steht, wie `sun.tilt`. Entfällt mit `bodies`                                                                                                           |
+| `moon.roll`            | nein    | float, Grad             | `0`               | Dreht das Bild des Mondes im Uhrzeigersinn um seine eigene Mitte. Entfällt mit `bodies`                                                                                                            |
+| `moon.spin`            | nein    | float, Grad pro Sekunde | `0`               | Dreht das Mondbild weiter, wie `sun.spin`. Entfällt mit `bodies`                                                                                                                                   |
+| `bodies[].texture`     | ja      | Texturpfad              |                   | Das Bild des Körpers                                                                                                                                                                               |
+| `bodies[].size`        | nein    | float                   | `20`              | Halbe Breite auf 100 Blöcke Abstand. Der Vanilla-Mond hat `20`                                                                                                                                     |
+| `bodies[].angle`       | nein    | float, Grad             | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont |
+| `bodies[].tilt`        | nein    | float, Grad             | `0`               | Wie weit er nördlich oder südlich neben der Sonnenbahn steht                                                                                                                                       |
+| `bodies[].followsTime` | nein    | boolean                 | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                       |
+| `bodies[].roll`        | nein    | float, Grad             | `0`               | Dreht sein Bild im Uhrzeigersinn um seine eigene Mitte. Ein Ring aus `body` bleibt, wie er ist                                                                                                     |
+| `bodies[].spin`        | nein    | float, Grad pro Sekunde | `0`               | Dreht das Bild weiter, zu `roll` addiert. Negativ dreht es andersherum                                                                                                                             |
+| `stars.count`          | nein    | int                     | `1500`            | Wie viele Sterne                                                                                                                                                                                   |
+| `stars.size`           | nein    | float                   | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                        |
 
 ### Nebel, Licht, Wolken und Hitze
 
@@ -4679,11 +4700,13 @@ Auch diese Schlüssel stehen im Block `sky` und werden ebenfalls nur auf dem Cli
       "north": "mypack:textures/sky/north.png",
       "east": "mypack:textures/sky/east.png",
       "south": "mypack:textures/sky/south.png",
-      "west": "mypack:textures/sky/west.png"
+      "west": "mypack:textures/sky/west.png",
+      "yaw": 90
     },
     "aurora": {
       "color": "#40FF90",
-      "topColor": "#8040FF"
+      "topColor": "#8040FF",
+      "yaw": 90
     },
     "rainbow": true
   }
@@ -4698,6 +4721,8 @@ Auch diese Schlüssel stehen im Block `sky` und werden ebenfalls nur auf dem Cli
 
 Kein Vanilla-Schlüssel gibt einer Dimension eigene Himmelsbilder, ein Polarlicht oder einen Regenbogen, deshalb wirken diese Schlüssel in jeder Version gleich.
 
+`skybox.yaw` dreht die Skybox von oben gesehen im Uhrzeigersinn, `skybox.pitch` kippt sie um die Ost-West-Achse und `skybox.roll` um die Nord-Süd-Achse, und `skybox.spin` dreht sie weiter um ihren eigenen Pol, nach `pitch` und `roll`, in Grad pro Sekunde Spielzeit; positiv dreht sie von oben gesehen im Uhrzeigersinn, wie `yaw`. Mit `skybox.followsTime` läuft sie im Lauf des Tages mit den Sternen um. `aurora.yaw` dreht die Vorhänge von oben gesehen im Uhrzeigersinn. Regenbogen, Morgenröte und Sterne drehen sich nicht.
+
 ```json
 {
   "sky": {
@@ -4706,13 +4731,19 @@ Kein Vanilla-Schlüssel gibt einer Dimension eigene Himmelsbilder, ein Polarlich
 }
 ```
 
-| Schlüssel         | Pflicht | Wert       | Standard | Was er macht                                                                             |
-| ----------------- | ------- | ---------- | -------- | ---------------------------------------------------------------------------------------- |
-| `skybox.<face>`   | nein    | Texturpfad | keiner   | Eine Würfelseite: `up`, `down`, `north`, `east`, `south` oder `west`. Alle sechs angeben |
-| `skybox.panorama` | nein    | Texturpfad | keiner   | Ein Bild, das um den ganzen Himmel gelegt wird, anstelle der Seiten                      |
-| `aurora.color`    | nein    | Hex-Farbe  | `40FF90` | Farbe am Fuß der Vorhänge                                                                |
-| `aurora.topColor` | nein    | Hex-Farbe  | `8040FF` | Farbe oben, wo die Vorhänge verblassen                                                   |
-| `rainbow`         | nein    | boolean    | `false`  | Nach dem Regen einen Regenbogen zeigen                                                   |
+| Schlüssel            | Pflicht | Wert                    | Standard | Was er macht                                                                                                                                                         |
+| -------------------- | ------- | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skybox.<face>`      | nein    | Texturpfad              | keiner   | Eine Würfelseite: `up`, `down`, `north`, `east`, `south` oder `west`. Alle sechs angeben                                                                             |
+| `skybox.panorama`    | nein    | Texturpfad              | keiner   | Ein Bild, das um den ganzen Himmel gelegt wird, anstelle der Seiten                                                                                                  |
+| `skybox.yaw`         | nein    | float, Grad             | `0`      | Dreht die Skybox von oben gesehen im Uhrzeigersinn                                                                                                                   |
+| `skybox.pitch`       | nein    | float, Grad             | `0`      | Kippt die Skybox um die Ost-West-Achse                                                                                                                               |
+| `skybox.roll`        | nein    | float, Grad             | `0`      | Kippt die Skybox um die Nord-Süd-Achse                                                                                                                               |
+| `skybox.spin`        | nein    | float, Grad pro Sekunde | `0`      | Dreht die Skybox weiter um ihren eigenen Pol, nach `pitch` und `roll`, in Grad pro Sekunde Spielzeit; positiv dreht sie von oben gesehen im Uhrzeigersinn, wie `yaw` |
+| `skybox.followsTime` | nein    | boolean                 | `false`  | An, dreht sich die Skybox im Lauf des Tages mit den Sternen mit                                                                                                      |
+| `aurora.color`       | nein    | Hex-Farbe               | `40FF90` | Farbe am Fuß der Vorhänge                                                                                                                                            |
+| `aurora.topColor`    | nein    | Hex-Farbe               | `8040FF` | Farbe oben, wo die Vorhänge verblassen                                                                                                                               |
+| `aurora.yaw`         | nein    | float, Grad             | `0`      | Dreht die Vorhänge von oben gesehen im Uhrzeigersinn. `0` ist Norden                                                                                                 |
+| `rainbow`            | nein    | boolean                 | `false`  | Nach dem Regen einen Regenbogen zeigen                                                                                                                               |
 
 ### Der Block `physics`
 

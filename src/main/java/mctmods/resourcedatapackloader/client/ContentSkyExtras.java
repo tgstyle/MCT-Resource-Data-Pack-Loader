@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -39,9 +40,17 @@ public final class ContentSkyExtras {
 
     private ContentSkyExtras() {}
 
-    public static void backdrop(@Nullable ClientLevel level, Matrix4f pose) {
+    private static Matrix4f turned(ClientLevel level, SkyLookDef.Skybox box, Matrix4f pose, float partialTick) {
+        if (!box.moves()) { return pose; }
+        double ticks = level.getGameTime() + (double) partialTick;
+        float wheel = box.followsTime() ? level.getTimeOfDay(partialTick) * Mth.TWO_PI : 0.0F;
+        return new Matrix4f(pose).rotateZ(wheel).rotateY((float) Math.toRadians(-box.yaw())).rotateX((float) Math.toRadians(box.pitch())).rotateZ((float) Math.toRadians(box.roll())).rotateY(-(float) Math.toRadians(SkyPoseDef.spun(box.spin(), ticks)));
+    }
+
+    public static void backdrop(@Nullable ClientLevel level, Matrix4f frame, float partialTick) {
         SkyLookDef look = ContentFogSampler.look(level);
-        if (look == null || look.skybox() == null) { return; }
+        if (level == null || look == null || look.skybox() == null) { return; }
+        Matrix4f pose = turned(level, look.skybox(), frame, partialTick);
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.disableCull();
@@ -71,7 +80,7 @@ public final class ContentSkyExtras {
         RenderSystem.disableCull();
         RenderSystem.enableBlend();
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        if (glow > 0.0F) { aurora(pose, look.aurora(), glow, level.getGameTime() + partialTick); }
+        if (glow > 0.0F) { aurora(look.aurora().yaw() == 0.0F ? pose : new Matrix4f(pose).rotateY((float) Math.toRadians(-look.aurora().yaw())), look.aurora(), glow, level.getGameTime() + partialTick); }
         if (bow > 0.0F) { bow(pose, angle * Mth.TWO_PI, bow); }
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableBlend();
