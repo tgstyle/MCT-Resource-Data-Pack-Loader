@@ -82,7 +82,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     public static void register(RegisterDimensionSpecialEffectsEvent event) {
-        for (DimensionDef def : ContentDimensions.all()) {
+        for (DimensionDef def : ContentDimensions.available()) {
             if (!ContentEnvironments.hasEffects(def.key(), def) || ContentDimensions.existing(def.key())) { continue; }
             DimensionSpecialEffects base = new OverworldEffects();
             if (def.surfaceWorld()) { event.register(def.key(), new ContentDimensionEffects(def, base, def.cloudHeight() >= 0 ? def.cloudHeight() : base.getCloudHeight(), SkyType.NORMAL)); }

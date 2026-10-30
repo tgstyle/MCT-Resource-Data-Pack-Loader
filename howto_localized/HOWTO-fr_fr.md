@@ -439,6 +439,13 @@ Une définition de bloc ou d'objet peut partir d'une autre du même genre avec `
 
 L'enfant copie chaque statistique du fichier du parent et de la variante nommée, l'ordre des fichiers n'a jamais d'importance, les chaînes se résolvent en commençant par le parent, et un cercle ou un parent manquant est consigné et laisse l'enfant tel qu'il est écrit. Les champs que l'enfant écrit remplacent la valeur héritée ; les propriétés imbriquées des variantes se surchargent une à une, mais les listes comme `requires` se remplacent en entier, donc écrivez la liste complète voulue. Les blocs n'héritent que de blocs et les objets que d'objets.
 
+Les fichiers de dimension et de biome héritent de la même façon, mais nomment un autre fichier du même genre (`ns:chemin`, ou simplement `chemin` dans le même espace de noms) au lieu d'une variante :
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+L'enfant part d'une copie du fichier parent. Les valeurs que l'enfant écrit remplacent celles héritées, les listes comme `requires` sont remplacées en entier, et un objet comme `sky` est fusionné clé par clé un niveau plus bas, si bien que l'enfant garde les autres clés de `sky` du parent. Les chaînes se résolvent en partant du parent, et un cycle ou un parent absent est consigné dans `rdpl.log` et laisse l'enfant tel qu'il est écrit. Le parent est le fichier de ce nom du pack gagnant, quel que soit le pack de l'enfant. Les dimensions n'héritent que de dimensions et les biomes que de biomes ; pour partir d'un biome vanilla, utilisez `baseBiome`.
+
 ### Modèles de blocs et d'objets
 
 *fonctionnement des définitions*
@@ -483,7 +490,7 @@ Un parent peut être un pur modèle qui n'entre jamais dans le jeu, puisque l'h�
 }
 ```
 
-Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le matériau, le son, l'outil, l'onglet, les gains d'expérience et la résistance du modèle, ne surchargeant que la dureté. L'enfant doit écrire son propre `requires`, ici vidé en liste vide, car il hérite sinon de celui du parent et disparaîtrait avec lui.
+Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le matériau, le son, l'outil, l'onglet, les gains d'expérience et la résistance du modèle, ne surchargeant que la dureté. L'enfant doit écrire son propre `requires`, ici vidé en liste vide, car il hérite sinon de celui du parent et disparaîtrait avec lui. Les parents de dimensions et de biomes peuvent être des modèles de la même façon.
 
 ## Ce que vous pouvez surcharger
 
@@ -4225,6 +4232,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | `name`      | non    | texte                                         | le nom du fichier  | Nom montré au joueur                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `types`     | non    | liste de types de biomes                      | deviné             | Inscrit le biome dans les tags que ces mots de type désignent, comme `forest`, `cold`, `wet` ou `nether`, afin que d'autres mods le trouvent. Omis, les types sont devinés à partir du biome, comme le jeu les devinait : `forest` ou `jungle` à partir de trois arbres ou plus, `plains` sinon, `hot`, `cold`, `wet` et `dry` d'après la température et les précipitations, `sparse` ou `dense` d'après le nombre d'arbres, `snowy` d'après `snow`, et `sandy`, `mushroom` ou `mesa` d'après un sol de sable, de mycélium ou de terre cuite |
 | `baseBiome` | non    | nom de biome                                  | `minecraft:plains` | Un biome existant dont copier les réglages. Un nom qui n'est pas un biome fourni par le jeu ou un mod est consigné dans le journal, et les plaines sont utilisées                                                                                                                                                                                                                                                                                                                                                                            |
+| `inherits`  | non    | nom de fichier                                | aucun              | Part d'un autre fichier de biome, puis remplace ce qui diffère ; un biome vanilla se copie avec `baseBiome`                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | `requires`  | non    | liste d'ids de mods ou de namespaces de packs | aucun              | Le fichier est ignoré à moins que tous ne soient présents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
 Sur cette version, un biome est une entrée de pack de données, écrite pour vous sous `worldgen/biome/`, et le terrain qui se trouve dessous relève des réglages de bruit plutôt que du biome, ce qui explique l'absence de `baseHeight` et de `heightVariation` : la forme du terrain vient de l'endroit où le climat place le biome, comme pour ceux du jeu. Un `id` de 1.12.2 est lu puis ignoré.
@@ -4440,6 +4448,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 
 | Clé         | Requis | Valeur                                        | Défaut | Rôle                                                                                                               |
 | ----------- | ------ | --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| `inherits`  | non    | nom de fichier                                | aucun  | Part d'un autre fichier de dimension, puis remplace ce qui diffère                                                 |
 | `gameRules` | non    | objet                                         | aucun  | Règles qui ne s'appliquent qu'ici                                                                                  |
 | `portal`    | non    | objet                                         | aucun  | Un cadre qui ouvre cette dimension. Voir [Ouvrir une dimension avec un cadre](#ouvrir-une-dimension-avec-un-cadre) |
 | `requires`  | non    | liste d'ids de mods ou de namespaces de packs | aucun  | Le fichier est ignoré à moins que tous ne soient présents                                                          |

@@ -439,6 +439,13 @@ Eine Block- oder Item-Definition kann mit `"inherits"` von einer anderen derselb
 
 Das Kind kopiert jeden Wert aus der Datei des Elternteils und aus der genannten Variante, die Dateireihenfolge spielt nie eine Rolle, Ketten werden vom Elternteil abwärts aufgelöst, und ein Kreis oder ein fehlender Elternteil landet im Log und lässt das Kind so, wie es geschrieben steht. Felder, die das Kind schreibt, ersetzen den geerbten Wert; verschachtelte Varianteneigenschaften überschreiben einzeln, Listen wie `requires` dagegen komplett, schreib also die ganze Liste, die du haben willst. Blöcke erben nur von Blöcken und Items nur von Items.
 
+Dimensions- und Biomdateien erben auf dieselbe Weise, nur nennen sie statt einer Variante eine andere Datei ihrer eigenen Art (`ns:pfad` oder ein bloßes `pfad` im selben Namensraum):
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Das Kind beginnt mit einer Kopie der Elterndatei. Werte, die das Kind schreibt, ersetzen die geerbten, Listen wie `requires` werden ganz ersetzt, und ein Objekt wie `sky` wird eine Ebene tiefer Schlüssel für Schlüssel zusammengeführt, sodass das Kind die übrigen `sky`-Schlüssel des Elternteils behält. Ketten werden vom Elternteil her aufgelöst, ein Kreis oder ein fehlendes Elternteil wird in `rdpl.log` vermerkt und lässt das Kind wie geschrieben. Elternteil ist die Datei dieses Namens aus dem siegreichen Pack, in welchem Pack das Kind auch liegt. Dimensionen erben nur von Dimensionen und Biome nur von Biomen; für den Start von einem Vanilla-Biom dient `baseBiome`.
+
 ### Block- und Item-Vorlagen
 
 *wie definitionen funktionieren*
@@ -483,7 +490,7 @@ Ein Elternteil kann eine reine Vorlage sein, die nie ins Spiel kommt, denn die V
 }
 ```
 
-Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werkzeug, Tab, Erfahrungsdrops und Widerstand der Vorlage registriert wird und nur die Härte überschreibt. Das Kind muss sein eigenes `requires` schreiben, hier auf eine leere Liste gesetzt, weil es sonst das des Elternteils erbt und mit ihm verschwinden würde.
+Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werkzeug, Tab, Erfahrungsdrops und Widerstand der Vorlage registriert wird und nur die Härte überschreibt. Das Kind muss sein eigenes `requires` schreiben, hier auf eine leere Liste gesetzt, weil es sonst das des Elternteils erbt und mit ihm verschwinden würde. Eltern von Dimensionen und Biomen können auf dieselbe Weise Vorlagen sein.
 
 ## Was du überschreiben kannst
 
@@ -4225,6 +4232,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `name`      | nein    | Text                                   | der Dateiname      | Name, den der Spieler sieht                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `types`     | nein    | Liste von Biomtypen                    | geschätzt          | Schreibt das Biom in die Tags, für die diese Typwörter stehen, etwa `forest`, `cold`, `wet` oder `nether`, damit andere Mods es finden. Weggelassen werden die Typen aus dem Biom geschätzt, so wie das Spiel sie schätzte: `forest` oder `jungle` ab drei Bäumen, sonst `plains`, `hot`, `cold`, `wet` und `dry` aus Temperatur und Niederschlag, `sparse` oder `dense` aus der Baumzahl, `snowy` aus `snow` und `sandy`, `mushroom` oder `mesa` aus einem Boden aus Sand, Myzel oder Terrakotta |
 | `baseBiome` | nein    | Biomname                               | `minecraft:plains` | Ein vorhandenes Biom, von dem Einstellungen kopiert werden. Eines, das weder das Spiel noch ein Mod mitbringt, wird protokolliert, und die Ebene wird genommen                                                                                                                                                                                                                                                                                                                                    |
+| `inherits`  | nein    | Dateiname                              | keine              | Beginnt mit einer anderen Biomdatei und überschreibt dann, was abweicht; ein Vanilla-Biom wird stattdessen mit `baseBiome` kopiert                                                                                                                                                                                                                                                                                                                                                                |
 | `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine              | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 Ein Biom ist in dieser Version ein Datenpaket-Eintrag, der für dich unter `worldgen/biome/` geschrieben wird, und das Gelände darunter gehört den Noise-Einstellungen und nicht dem Biom, weshalb es kein `baseHeight` und kein `heightVariation` gibt: Die Form des Landes ergibt sich daraus, wo das Klima das Biom hinsetzt, genau wie bei den Biomen des Spiels. Eine `id` aus 1.12.2 wird gelesen und ignoriert.
@@ -4440,6 +4448,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 | Schlüssel   | Pflicht | Wert                                   | Standard | Was er macht                                                                                                                      |
 | ----------- | ------- | -------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | nein    | Dateiname                              | keines   | Beginnt mit einer anderen Dimensionsdatei und überschreibt dann, was abweicht                                                     |
 | `gameRules` | nein    | Objekt                                 | keines   | Regeln, die nur hier gelten                                                                                                       |
 | `portal`    | nein    | Objekt                                 | keines   | Ein Rahmen, der diese Dimension öffnet. Siehe [Eine Dimension über einen Rahmen öffnen](#eine-dimension-über-einen-rahmen-öffnen) |
 | `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine    | Die Datei wird übersprungen, wenn nicht alle da sind                                                                              |

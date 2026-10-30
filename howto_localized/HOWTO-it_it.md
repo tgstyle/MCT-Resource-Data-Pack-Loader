@@ -439,6 +439,13 @@ La definizione di un blocco o di un oggetto può partire da un'altra dello stess
 
 Il figlio copia ogni statistica del file del genitore e della variante indicata, l'ordine dei file non conta mai, le catene si risolvono partendo dal genitore, e un ciclo o un genitore mancante viene registrato nel log e lascia il figlio com'è scritto. I campi scritti dal figlio sostituiscono il valore ereditato; le proprietà annidate delle varianti si sovrascrivono una per una, ma gli elenchi come `requires` vengono sostituiti per intero, quindi scrivi l'elenco completo che vuoi. I blocchi ereditano solo da blocchi e gli oggetti solo da oggetti.
 
+I file di dimensione e di bioma ereditano allo stesso modo, ma nominano un altro file dello stesso tipo (`ns:percorso`, oppure solo `percorso` nello stesso namespace) invece di una variante:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Il figlio parte da una copia del file genitore. I valori scritti dal figlio sostituiscono quelli ereditati, le liste come `requires` vengono sostituite per intero e un oggetto come `sky` viene unito chiave per chiave un livello più sotto, così il figlio mantiene le altre chiavi `sky` del genitore. Le catene si risolvono partendo dal genitore, e un cerchio o un genitore mancante viene annotato in `rdpl.log` e lascia il figlio com'è scritto. Il genitore è il file con quel nome del pack vincente, in qualunque pack si trovi il figlio. Le dimensioni ereditano solo da dimensioni e i biomi solo da biomi; per partire da un bioma vanilla usa `baseBiome`.
+
 ### Modelli di blocchi e oggetti
 
 *come funzionano le definizioni*
@@ -483,7 +490,7 @@ Un genitore può essere un puro modello che non entra mai nel gioco, poiché l'e
 }
 ```
 
-Il modello non si registra mai, mentre `jacks_ore` si registra con il materiale, il suono, lo strumento, la scheda, i drop di esperienza e la resistenza del modello, sovrascrivendo solo la durezza. Il figlio deve scrivere il proprio `requires`, qui svuotato in un elenco vuoto, perché altrimenti eredita quello del genitore e sparirebbe insieme a lui.
+Il modello non si registra mai, mentre `jacks_ore` si registra con il materiale, il suono, lo strumento, la scheda, i drop di esperienza e la resistenza del modello, sovrascrivendo solo la durezza. Il figlio deve scrivere il proprio `requires`, qui svuotato in un elenco vuoto, perché altrimenti eredita quello del genitore e sparirebbe insieme a lui. I genitori di dimensioni e biomi possono essere modelli allo stesso modo.
 
 ## Cosa puoi sovrascrivere
 
@@ -4225,6 +4232,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `name`      | no           | stringa                                 | il nome del file   | Nome mostrato al giocatore                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `types`     | no           | elenco di tipi di bioma                 | indovinati         | Scrive il bioma nei tag che quelle parole di tipo rappresentano, come `forest`, `cold`, `wet` o `nether`, così le altre mod lo trovano. Se omesso, i tipi vengono indovinati dal bioma come li indovinava il gioco: `forest` o `jungle` da tre alberi in su, altrimenti `plains`, `hot`, `cold`, `wet` e `dry` da temperatura e piovosità, `sparse` o `dense` dal numero di alberi, `snowy` da `snow`, e `sandy`, `mushroom` o `mesa` dal terreno di sabbia, micelio o terracotta |
 | `baseBiome` | no           | nome del bioma                          | `minecraft:plains` | Un bioma esistente da cui copiare le impostazioni. Uno che non è un bioma fornito dal gioco o da una mod viene segnalato nel log e si usa plains                                                                                                                                                                                                                                                                                                                                  |
+| `inherits`  | no           | nome del file                           | nessuno            | Parte da un altro file di bioma, poi sovrascrive ciò che cambia; un bioma vanilla si copia con `baseBiome`                                                                                                                                                                                                                                                                                                                                                                        |
 | `requires`  | no           | elenco di id di mod o namespace di pack | nessuno            | Il file viene saltato a meno che tutti siano presenti                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 Su questa versione un bioma è una voce di data pack, scritta per te sotto `worldgen/biome/`, e il terreno sottostante è quello delle impostazioni del rumore e non quello del bioma, ed è per questo che non ci sono `baseHeight` né `heightVariation`: la forma del terreno viene da dove il clima colloca il bioma, come per quelli del gioco. Un `id` di 1.12.2 viene letto e ignorato.
@@ -4440,6 +4448,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 
 | Chiave      | Obbligatorio | Valore                                  | Predefinito | Cosa fa                                                                                                                |
 | ----------- | ------------ | --------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | no           | nome del file                           | nessuno     | Parte da un altro file di dimensione, poi sovrascrive ciò che cambia                                                   |
 | `gameRules` | no           | oggetto JSON                            | nessuno     | Regole che valgono solo qui                                                                                            |
 | `portal`    | no           | oggetto JSON                            | nessuno     | Un telaio che apre questa dimensione. Vedi [Aprire una dimensione con un telaio](#aprire-una-dimensione-con-un-telaio) |
 | `requires`  | no           | elenco di id di mod o namespace di pack | nessuno     | Il file viene saltato a meno che tutti siano presenti                                                                  |

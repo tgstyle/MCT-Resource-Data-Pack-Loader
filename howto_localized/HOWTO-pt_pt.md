@@ -439,6 +439,13 @@ Uma definição de bloco ou de item pode partir de outra do mesmo tipo com `"inh
 
 O filho copia todos os valores do ficheiro do pai e da variante indicada, a ordem dos ficheiros nunca importa, as cadeias resolvem-se começando pelo pai, e um ciclo ou um pai em falta é registado e deixa o filho como foi escrito. Os campos que o filho escreve substituem o valor herdado; as propriedades de variante aninhadas substituem-se uma a uma, mas listas como `requires` substituem-se por inteiro, por isso escreve a lista completa que pretendes. Os blocos herdam apenas de blocos e os itens apenas de itens.
 
+Os ficheiros de dimensão e de bioma herdam da mesma forma, mas indicam outro ficheiro do mesmo tipo (`ns:caminho`, ou só `caminho` no mesmo espaço de nomes) em vez de uma variante:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+O filho parte de uma cópia do ficheiro pai. Os valores que o filho escreve substituem os herdados, listas como `requires` são substituídas por inteiro e um objeto como `sky` é fundido chave a chave um nível abaixo, pelo que o filho mantém as outras chaves de `sky` do pai. As cadeias resolvem-se a partir do pai, e um círculo ou um pai em falta fica registado em `rdpl.log` e deixa o filho como foi escrito. O pai é o ficheiro desse nome do pacote vencedor, esteja o filho em que pacote estiver. As dimensões só herdam de dimensões e os biomas só de biomas; para partir de um bioma vanilla, use `baseBiome`.
+
 ### Modelos de blocos e itens
 
 *como funcionam as definições*
@@ -483,7 +490,7 @@ Um pai pode ser um modelo puro que nunca entra no jogo, já que a herança lê o
 }
 ```
 
-O modelo nunca é registado, enquanto `jacks_ore` é registado com o material, o som, a ferramenta, o separador, os itens de experiência largados e a resistência do modelo, substituindo apenas a dureza. O filho tem de escrever o seu próprio `requires`, aqui limpo para uma lista vazia, porque de outro modo herdaria o do pai e desapareceria com ele.
+O modelo nunca é registado, enquanto `jacks_ore` é registado com o material, o som, a ferramenta, o separador, os itens de experiência largados e a resistência do modelo, substituindo apenas a dureza. O filho tem de escrever o seu próprio `requires`, aqui limpo para uma lista vazia, porque de outro modo herdaria o do pai e desapareceria com ele. Os pais de dimensões e biomas podem ser modelos da mesma forma.
 
 ## O que podes substituir
 
@@ -4225,6 +4232,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 | `name`      | não         | texto                                         | o nome do ficheiro | Nome mostrado ao jogador                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `types`     | não         | lista de tipos de bioma                       | deduzido           | Escreve o bioma nas tags que essas palavras de tipo representam, como `forest`, `cold`, `wet` ou `nether`, para que outros mods o encontrem. Se omitido, os tipos são deduzidos do bioma como o jogo os deduzia: `forest` ou `jungle` a partir de três árvores ou mais, `plains` caso contrário, `hot`, `cold`, `wet` e `dry` da temperatura e da pluviosidade, `sparse` ou `dense` da contagem de árvores, `snowy` de `snow`, e `sandy`, `mushroom` ou `mesa` de solo de areia, micélio ou terracota |
 | `baseBiome` | não         | nome de bioma                                 | `minecraft:plains` | Um bioma existente de onde copiar definições. Um que não seja um bioma do jogo ou de um mod é assinalado no registo, e usa-se a planície                                                                                                                                                                                                                                                                                                                                                              |
+| `inherits`  | não         | nome de ficheiro                              | nenhum             | Parte de outro ficheiro de bioma e depois substitui o que muda; um bioma vanilla é copiado com `baseBiome`                                                                                                                                                                                                                                                                                                                                                                                            |
 | `requires`  | não         | lista de ids de mods ou namespaces de pacotes | nenhum             | O ficheiro é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 Um bioma é uma entrada de pacote de dados nesta versão, escrita automaticamente em `worldgen/biome/`, e o terreno por baixo é o das definições de ruído e não o do bioma, razão pela qual não há `baseHeight` nem `heightVariation`: a forma da terra vem de onde o clima coloca o bioma, como acontece com os do próprio jogo. Um `id` do 1.12.2 é lido e ignorado.
@@ -4440,6 +4448,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 
 | Chave       | Obrigatório | Valor                                         | Predefinição | O que faz                                                                                                         |
 | ----------- | ----------- | --------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | não         | nome de ficheiro                              | nenhum       | Parte de outro ficheiro de dimensão e depois substitui o que muda                                                 |
 | `gameRules` | não         | objeto                                        | nenhum       | Regras que se aplicam só aqui                                                                                     |
 | `portal`    | não         | objeto                                        | nenhum       | Uma moldura que abre esta dimensão. Ver [Abrir uma dimensão com uma moldura](#abrir-uma-dimensão-com-uma-moldura) |
 | `requires`  | não         | lista de ids de mods ou namespaces de pacotes | nenhum       | O ficheiro é ignorado a menos que todos estejam presentes                                                         |

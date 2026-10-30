@@ -439,6 +439,13 @@ A block or item definition can start from another in the same kind with `"inheri
 
 The child copies every stat of the parent's file and the named variant, file order never matters, chains resolve parent-first, and a circle or a missing parent is logged and leaves the child as written. Fields the child writes replace the inherited value; nested variant properties override one by one, but lists such as `requires` replace whole, so write the full list wanted. Blocks inherit only from blocks and items only from items.
 
+Dimension and biome files inherit the same way, naming another file of their own kind (`ns:path`, or a bare `path` in the same namespace) instead of a variant:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+The child starts from a copy of the parent file. Values the child writes replace the inherited ones, lists such as `requires` replace whole, and an object such as `sky` merges key by key one level down, so the child keeps the parent's other `sky` keys. Chains resolve parent-first, and a circle or a missing parent is logged to `rdpl.log` and leaves the child as written. The parent is the file of that name from the winning pack, whichever pack the child is in. Dimensions inherit only from dimensions and biomes only from biomes; to start from a vanilla biome use `baseBiome`.
+
 ### Block and item templates
 
 *how definitions work*
@@ -483,7 +490,7 @@ A parent can be a pure template that never enters the game, since inheritance re
 }
 ```
 
-The template never registers, while `jacks_ore` registers with the template's material, sound, tool, tab, exp drops and resistance, overriding only hardness. The child must write its own `requires`, here cleared to an empty list, because it inherits the parent's otherwise and would vanish with it.
+The template never registers, while `jacks_ore` registers with the template's material, sound, tool, tab, exp drops and resistance, overriding only hardness. The child must write its own `requires`, here cleared to an empty list, because it inherits the parent's otherwise and would vanish with it. Dimension and biome parents can be templates in the same way.
 
 ## What you can override
 
@@ -4225,6 +4232,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `name`      | no       | string                             | the file name      | Name shown to the player                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `types`     | no       | list of biome types                | guessed            | Writes the biome into the tags those type words stand for, such as `forest`, `cold`, `wet` or `nether`, so other mods find it. Left out, the types are guessed from the biome the way the game guessed them: `forest` or `jungle` from three trees or more, `plains` otherwise, `hot`, `cold`, `wet` and `dry` from temperature and rainfall, `sparse` or `dense` from the tree count, `snowy` from `snow`, and `sandy`, `mushroom` or `mesa` from sand, mycelium or terracotta ground |
 | `baseBiome` | no       | biome name                         | `minecraft:plains` | An existing biome to copy settings from. One that is not a biome the game or a mod ships is logged, and plains is used                                                                                                                                                                                                                                                                                                                                                                 |
+| `inherits`  | no       | file name                          | none               | Start from another biome file, then override what differs; a vanilla biome is copied with `baseBiome` instead                                                                                                                                                                                                                                                                                                                                                                          |
 | `requires`  | no       | list of mod ids or pack namespaces | none               | The file is skipped unless all are present                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 A biome is a data pack entry on this version, written for you under `worldgen/biome/`, and the terrain under it is the noise settings' rather than the biome's, which is why there is no `baseHeight` or `heightVariation`: the shape of the land comes from where the climate places the biome, as it does for the game's own. A 1.12.2 `id` is read and ignored.
@@ -4440,6 +4448,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 | Key         | Required | Value                              | Default | What it does                                                                                                 |
 | ----------- | -------- | ---------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `inherits`  | no       | file name                          | none    | Start from another dimension file, then override what differs                                                |
 | `gameRules` | no       | object                             | none    | Rules that apply only here                                                                                   |
 | `portal`    | no       | object                             | none    | A frame that opens this dimension. See [Opening a dimension with a frame](#opening-a-dimension-with-a-frame) |
 | `requires`  | no       | list of mod ids or pack namespaces | none    | The file is skipped unless all are present                                                                   |

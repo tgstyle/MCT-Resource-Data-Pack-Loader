@@ -439,6 +439,13 @@ Una definición de bloque o de ítem puede partir de otra del mismo tipo con `"i
 
 El hijo copia todas las estadísticas del archivo del padre y de la variante nombrada, el orden de los archivos nunca importa, las cadenas se resuelven empezando por el padre, y un círculo o un padre ausente se anota en el registro y deja al hijo tal como está escrito. Los campos que escribe el hijo sustituyen al valor heredado; las propiedades anidadas de las variantes se sobrescriben una a una, pero las listas como `requires` se sustituyen enteras, así que escribe la lista completa que quieras. Los bloques solo heredan de bloques y los ítems solo de ítems.
 
+Los archivos de dimensión y de bioma heredan de la misma manera, pero nombran otro archivo de su mismo tipo (`ns:ruta`, o solo `ruta` en el mismo espacio de nombres) en lugar de una variante:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+El hijo parte de una copia del archivo padre. Los valores que escribe el hijo sustituyen a los heredados, las listas como `requires` se sustituyen enteras y un objeto como `sky` se fusiona clave por clave un nivel más abajo, de modo que el hijo conserva las demás claves de `sky` del padre. Las cadenas se resuelven empezando por el padre, y un círculo o un padre que falta se anota en `rdpl.log` y deja al hijo tal como está escrito. El padre es el archivo de ese nombre del pack ganador, esté el hijo en el pack que esté. Las dimensiones solo heredan de dimensiones y los biomas solo de biomas; para partir de un bioma de vanilla usa `baseBiome`.
+
 ### Plantillas de bloques e ítems
 
 *cómo funcionan las definiciones*
@@ -483,7 +490,7 @@ Un padre puede ser una plantilla pura que nunca entra en el juego, ya que la her
 }
 ```
 
-La plantilla nunca se registra, mientras que `jacks_ore` se registra con el material, el sonido, la herramienta, la pestaña, los drops de experiencia y la resistencia de la plantilla, sobrescribiendo solo la dureza. El hijo debe escribir su propio `requires`, aquí vaciado a una lista vacía, porque de lo contrario hereda el del padre y desaparecería con él.
+La plantilla nunca se registra, mientras que `jacks_ore` se registra con el material, el sonido, la herramienta, la pestaña, los drops de experiencia y la resistencia de la plantilla, sobrescribiendo solo la dureza. El hijo debe escribir su propio `requires`, aquí vaciado a una lista vacía, porque de lo contrario hereda el del padre y desaparecería con él. Los padres de dimensiones y biomas pueden ser plantillas de la misma manera.
 
 ## Qué puedes sobrescribir
 
@@ -4225,6 +4232,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `name`      | no          | cadena                                            | el nombre del archivo | Nombre que se muestra al jugador                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `types`     | no          | lista de tipos de bioma                           | deducidos             | Escribe el bioma en las etiquetas que representan esas palabras de tipo, como `forest`, `cold`, `wet` o `nether`, para que otros mods lo encuentren. Si se omite, los tipos se deducen del bioma como los deducía el juego: `forest` o `jungle` a partir de tres árboles o más, `plains` en caso contrario, `hot`, `cold`, `wet` y `dry` según la temperatura y la lluvia, `sparse` o `dense` según el número de árboles, `snowy` según `snow`, y `sandy`, `mushroom` o `mesa` según un suelo de arena, micelio o terracota |
 | `baseBiome` | no          | nombre de bioma                                   | `minecraft:plains`    | Un bioma existente del que copiar ajustes. Si no es un bioma que traiga el juego o un mod, se anota en el registro y se usa la llanura                                                                                                                                                                                                                                                                                                                                                                                      |
+| `inherits`  | no          | nombre de archivo                                 | ninguno               | Parte de otro archivo de bioma y luego sobrescribe lo que cambia; un bioma de vanilla se copia con `baseBiome`                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno               | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 Un bioma es una entrada de data pack en esta versión, escrita por ti bajo `worldgen/biome/`, y el terreno que hay debajo es el de los ajustes de ruido y no el del bioma, por lo que no hay `baseHeight` ni `heightVariation`: la forma del terreno viene de dónde coloca el clima al bioma, como ocurre con los del propio juego. Un `id` de 1.12.2 se lee y se ignora.
@@ -4440,6 +4448,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 | Clave       | Obligatorio | Valor                                             | Por defecto | Qué hace                                                                                                      |
 | ----------- | ----------- | ------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | no          | nombre de archivo                                 | ninguno     | Parte de otro archivo de dimensión y luego sobrescribe lo que cambia                                          |
 | `gameRules` | no          | objeto                                            | ninguno     | Reglas que se aplican solo aquí                                                                               |
 | `portal`    | no          | objeto                                            | ninguno     | Un marco que abre esta dimensión. Véase [Abrir una dimensión con un marco](#abrir-una-dimensión-con-un-marco) |
 | `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno     | El archivo se omite a menos que estén presentes todos                                                         |

@@ -439,6 +439,13 @@ Definice bloku nebo předmětu může začít od jiné téhož druhu pomocí `"i
 
 Potomek zkopíruje všechny staty rodičovského souboru a pojmenované varianty, na pořadí souborů nikdy nezáleží, řetězce se řeší od rodiče a kruh nebo chybějící rodič se zapíše do logu a potomek zůstane tak, jak je napsaný. Pole, která potomek napíše, nahradí zděděnou hodnotu; vnořené vlastnosti variant se přepisují po jedné, ale seznamy jako `requires` se nahrazují celé, takže napiš celý požadovaný seznam. Bloky dědí jen z bloků a předměty jen z předmětů.
 
+Soubory dimenzí a biomů dědí stejným způsobem, jen místo varianty uvedou jiný soubor svého druhu (`ns:cesta`, nebo prostě `cesta` ve stejném jmenném prostoru):
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Potomek vychází z kopie rodičovského souboru. Hodnoty, které potomek zapíše, nahradí zděděné, seznamy jako `requires` se nahrazují celé a objekt jako `sky` se slučuje klíč po klíči o úroveň níž, takže potomek si ponechá ostatní klíče `sky` rodiče. Řetězce se řeší od rodiče, a kruh nebo chybějící rodič se zapíše do `rdpl.log` a potomek zůstane tak, jak je napsán. Rodičem je soubor tohoto jména z vítězného balíčku, ať je potomek v jakémkoli balíčku. Dimenze dědí jen z dimenzí a biomy jen z biomů; chcete-li vyjít z vanilkového biomu, použijte `baseBiome`.
+
 ### Šablony bloků a předmětů
 
 *jak fungují definice*
@@ -483,7 +490,7 @@ Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože d�
 }
 ```
 
-Šablona se nikdy nezaregistruje, zatímco `jacks_ore` se zaregistruje s materiálem, zvukem, nástrojem, kartou, dropy zkušeností a odolností šablony a přepíše jen tvrdost. Potomek musí napsat vlastní `requires`, zde vymazaný na prázdný seznam, protože jinak zdědí rodičův a zmizel by s ním.
+Šablona se nikdy nezaregistruje, zatímco `jacks_ore` se zaregistruje s materiálem, zvukem, nástrojem, kartou, dropy zkušeností a odolností šablony a přepíše jen tvrdost. Potomek musí napsat vlastní `requires`, zde vymazaný na prázdný seznam, protože jinak zdědí rodičův a zmizel by s ním. Rodiči dimenzí a biomů mohou být šablony stejným způsobem.
 
 ## Co můžeš přepsat
 
@@ -4225,6 +4232,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 | `name`      | ne      | řetězec                               | název souboru      | Název zobrazený hráči                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `types`     | ne      | seznam typů biomů                     | odhadnuto          | Zapíše biom do tagů, za které tato slova typů stojí, například `forest`, `cold`, `wet` nebo `nether`, aby ho našly jiné módy. Pokud chybí, typy se odhadnou z biomu tak, jak je odhadovala hra: `forest` nebo `jungle` ze tří stromů a více, jinak `plains`, `hot`, `cold`, `wet` a `dry` z teploty a srážek, `sparse` nebo `dense` z počtu stromů, `snowy` ze `snow` a `sandy`, `mushroom` nebo `mesa` z písku, mycelia nebo terakoty na zemi |
 | `baseBiome` | ne      | název biomu                           | `minecraft:plains` | Existující biom, ze kterého se kopírují nastavení. Ten, který není biomem dodaným hrou nebo módem, se zaloguje a použijí se pláně                                                                                                                                                                                                                                                                                                              |
+| `inherits`  | ne      | název souboru                         | žádný              | Vychází z jiného souboru biomu a pak přepíše, co se liší; vanilkový biom se kopíruje přes `baseBiome`                                                                                                                                                                                                                                                                                                                                          |
 | `requires`  | ne      | seznam id módů nebo namespaců balíčků | žádný              | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                                                                              |
 
 Biom je v této verzi položka datového balíčku, kterou za tebe zapíše pod `worldgen/biome/`, a terén pod ním patří nastavením šumu, ne biomu, a proto zde není žádné `baseHeight` ani `heightVariation`: tvar krajiny vzniká tím, kam biom klima umístí, jako u herních. `id` z 1.12.2 se přečte a ignoruje.
@@ -4440,6 +4448,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 
 | Klíč        | Povinné | Hodnota                               | Výchozí | Co dělá                                                                                |
 | ----------- | ------- | ------------------------------------- | ------- | -------------------------------------------------------------------------------------- |
+| `inherits`  | ne      | název souboru                         | žádný   | Vychází z jiného souboru dimenze a pak přepíše, co se liší                             |
 | `gameRules` | ne      | objekt                                | žádný   | Pravidla, která platí jen zde                                                          |
 | `portal`    | ne      | objekt                                | žádný   | Rám, který tuto dimenzi otevírá. Viz [Otevření dimenze rámem](#otevření-dimenze-rámem) |
 | `requires`  | ne      | seznam id módů nebo namespaců balíčků | žádný   | Soubor se přeskočí, pokud nejsou přítomny všechny                                      |
