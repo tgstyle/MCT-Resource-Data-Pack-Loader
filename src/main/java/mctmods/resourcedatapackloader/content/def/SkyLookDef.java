@@ -11,9 +11,9 @@ public record SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWei
 
     public boolean tintsStars() { return starColor != UNSET || starTwinkle > 0.0F; }
 
-    public record Skybox(@Nullable Identifier panorama, List<Identifier> faces) {}
+    public record Skybox(@Nullable Identifier panorama, List<Identifier> faces, float yaw, float pitch, float roll, float spin, boolean followsTime) {}
 
-    public record Aurora(int color, int topColor) {}
+    public record Aurora(int color, int topColor, float yaw) {}
 
     public record CloudLayer(float height, float speed, int color) {}
 

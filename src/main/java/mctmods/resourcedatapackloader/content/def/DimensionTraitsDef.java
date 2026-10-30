@@ -14,9 +14,9 @@ public record DimensionTraitsDef(double gravity, double fallDamage, double arrow
 
     public record Cycle(int rainMin, int rainMax, int clearMin, int clearMax, float strength, int thunderMin, int thunderMax, int calmMin, int calmMax, float thunderStrength) {}
 
-    public record Sky(Identifier sunTexture, float sunSize, @Nullable List<Body> bodies, int starCount, float starSize) {}
+    public record Sky(Identifier sunTexture, float sunSize, float sunTilt, SkyPoseDef sunPose, @Nullable List<Body> bodies, int starCount, float starSize) {}
 
-    public record Moon(@Nullable Identifier texture, float size) {}
+    public record Moon(@Nullable Identifier texture, float size, float tilt, SkyPoseDef pose) {}
 
-    public record Body(Identifier texture, float size, float angle, float tilt, boolean followsTime) {}
+    public record Body(Identifier texture, float size, float angle, float tilt, boolean followsTime, SkyPoseDef pose) {}
 }

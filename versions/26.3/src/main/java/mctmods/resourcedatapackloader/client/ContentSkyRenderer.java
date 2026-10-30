@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -45,13 +46,17 @@ public final class ContentSkyRenderer {
     private final ContentStars stars;
     @Nullable private final Identifier moonTexture;
     private final float moonSize;
+    private final float moonTilt;
+    private final SkyPoseDef moonPose;
     private final float[] offsets;
 
     private ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
         this.moonTexture = moon == null ? null : moon.texture();
         this.moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
-        SkyOccluder[] bodies = occluders(sky, moonTexture, moonSize);
+        this.moonTilt = moon == null ? 0.0F : moon.tilt();
+        this.moonPose = moon == null ? SkyPoseDef.NONE : moon.pose();
+        SkyOccluder[] bodies = occluders();
         this.offsets = new float[bodies.length];
         this.stars = new ContentStars(sky.starCount(), sky.starSize(), bodies);
     }
@@ -62,14 +67,14 @@ public final class ContentSkyRenderer {
         return sky == null ? null : RENDERERS.computeIfAbsent(sky, held -> new ContentSkyRenderer(held, def.traits().moon()));
     }
 
-    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, @Nullable Identifier moonTexture, float moonSize) {
+    private SkyOccluder[] occluders() {
         List<SkyOccluder> bodies = new ArrayList<>();
-        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, sky.sunSize(), false, false, new Identifier[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder((float) Math.toRadians(sky.sunTilt()), sky.sunSize(), sky.sunPose(), false, false, new Identifier[] {sky.sunTexture()}, 1, 1)); }
         if (sky.bodies() == null) {
-            if (moonSize > 0.0F) { bodies.add(moonTexture == null ? new SkyOccluder(0.0F, moonSize, true, false, MOONS, 1, 1) : new SkyOccluder(0.0F, moonSize, true, false, new Identifier[] {moonTexture}, 4, 2)); }
+            if (moonSize > 0.0F) { bodies.add(moonTexture == null ? new SkyOccluder((float) Math.toRadians(moonTilt), moonSize, moonPose, true, false, MOONS, 1, 1) : new SkyOccluder((float) Math.toRadians(moonTilt), moonSize, moonPose, true, false, new Identifier[] {moonTexture}, 4, 2)); }
         }
         else {
-            for (DimensionTraitsDef.Body body : sky.bodies()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), false, !body.followsTime(), new Identifier[] {body.texture()}, 1, 1)); }
+            for (DimensionTraitsDef.Body body : sky.bodies()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), body.pose(), false, !body.followsTime(), new Identifier[] {body.texture()}, 1, 1)); }
         }
         return bodies.toArray(new SkyOccluder[0]);
     }
@@ -103,15 +108,20 @@ public final class ContentSkyRenderer {
 
     public void render(RenderPass renderPass, PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, int phase, float rainBrightness, float starBrightness, Consumer<PoseStack> moon) {
         poseStack.pushPose();
+        double ticks = ContentSkyShapes.ticks();
         poseStack.rotateDegrees(Axis.YP, -90.0F);
         poseStack.pushPose();
         poseStack.rotate(Axis.XP, sunAngle);
+        poseStack.rotateDegrees(Axis.ZP, sky.sunTilt());
+        poseStack.rotateDegrees(Axis.YP, sky.sunPose().degrees(ticks));
         if (sky.sunSize() > 0.0F) { sun(renderPass, poseStack, rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level)); }
         poseStack.popPose();
         if (sky.bodies() == null) {
             if (moonSize > 0.0F) {
                 poseStack.pushPose();
                 poseStack.rotate(Axis.XP, moonAngle);
+                poseStack.rotateDegrees(Axis.ZP, moonTilt);
+                poseStack.rotateDegrees(Axis.YP, moonPose.degrees(ticks));
                 if (moonTexture != null) { draw(renderPass, poseStack, moonTexture, moonSize, UNTINTED, rainBrightness, phaseBuffer, Math.floorMod(phase, PHASES) * 4); }
                 else {
                     poseStack.scale(moonSize / DimensionTraitsDef.VANILLA_MOON, 1.0F, moonSize / DimensionTraitsDef.VANILLA_MOON);
@@ -126,6 +136,7 @@ public final class ContentSkyRenderer {
                 if (body.followsTime()) { poseStack.rotate(Axis.XP, sunAngle); }
                 poseStack.rotateDegrees(Axis.XP, body.angle());
                 poseStack.rotateDegrees(Axis.ZP, body.tilt());
+                poseStack.rotateDegrees(Axis.YP, body.pose().degrees(ticks));
                 quad(renderPass, poseStack, body.texture(), body.size(), rainBrightness * ContentFogSampler.moon(Minecraft.getInstance().level));
                 poseStack.popPose();
             }

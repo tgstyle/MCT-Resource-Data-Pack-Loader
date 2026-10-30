@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -8,6 +9,7 @@ import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import org.joml.Matrix4f;
 import javax.annotation.Nullable;
 
 public final class ContentSkyShapes {
@@ -57,6 +59,18 @@ public final class ContentSkyShapes {
     }
 
     public static float partialTick() { return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false); }
+
+    public static double ticks() {
+        Level level = Minecraft.getInstance().level;
+        return (level == null ? 0L : level.getGameTime()) + (double) partialTick();
+    }
+
+    public static Matrix4f oriented(Matrix4f pose, SkyLookDef.Skybox box, double ticks, float turn) {
+        if (box.followsTime()) { pose.rotateZ(turn); }
+        return pose.rotateY(-box.yaw() * Mth.DEG_TO_RAD).rotateX(box.pitch() * Mth.DEG_TO_RAD).rotateZ(box.roll() * Mth.DEG_TO_RAD).rotateY(-SkyPoseDef.spun(box.spin(), ticks) * Mth.DEG_TO_RAD);
+    }
+
+    public static Matrix4f yawed(Matrix4f pose, float yaw) { return pose.rotateY(-yaw * Mth.DEG_TO_RAD); }
 
     public static float aurora(@Nullable Level level, float partialTick, float sunAngle) {
         SkyLookDef look = ContentFogSampler.look(level);

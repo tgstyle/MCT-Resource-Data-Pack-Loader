@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "renderSun(Lcom/mojang/renderpearl/api/commands/RenderPass;FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD")) private void rdpl$underSun(RenderPass renderPass, float rainBrightness, PoseStack poseStack, CallbackInfo ci) { ContentSkyExtras.underSun(renderPass, poseStack, DimensionTraitsDef.VANILLA_SUN, rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level), celestialsAtlas, sunBuffer); }
 
     @Inject(method = "render(Lcom/mojang/renderpearl/api/buffers/GpuBufferSlice;Lnet/minecraft/client/renderer/state/level/SkyRenderState;)V", at = @At("HEAD")) private void rdpl$preparePackSky(GpuBufferSlice skyFog, SkyRenderState state, CallbackInfo ci) {
-        ContentSkyExtras.prepare(state.sunAngle);
+        ContentSkyExtras.prepare(state.sunAngle, state.starAngle);
         ContentSkyRenderer sky = ContentSkyRenderer.of(Minecraft.getInstance().level);
         if (sky != null) { sky.prepare(state.sunAngle, state.moonAngle, state.starAngle, state.starBrightness); }
         if (ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { ContentStars.VANILLA.prepare(); }

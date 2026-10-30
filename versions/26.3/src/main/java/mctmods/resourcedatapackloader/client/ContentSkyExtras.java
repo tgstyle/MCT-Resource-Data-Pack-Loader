@@ -41,13 +41,17 @@ public final class ContentSkyExtras {
     private static AbstractTexture[] images = new AbstractTexture[0];
     private static float glow;
     private static float arc;
+    private static float turn;
+    private static float auroraYaw;
 
     private ContentSkyExtras() {}
 
-    public static void prepare(float sunAngle) {
+    public static void prepare(float sunAngle, float starAngle) {
         ClientLevel level = Minecraft.getInstance().level;
         SkyLookDef look = ContentFogSampler.look(level);
         skybox = look == null ? null : look.skybox();
+        turn = starAngle;
+        auroraYaw = look == null || look.aurora() == null ? 0.0F : look.aurora().yaw();
         glow = 0.0F;
         arc = 0.0F;
         if (sunAura == null) { sunAura = colored(null, "RDPL sun aura", ContentSkyShapes.aura()); }
@@ -66,7 +70,7 @@ public final class ContentSkyExtras {
 
     public static void backdrop(RenderPass renderPass) {
         if (skybox == null) { return; }
-        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(RenderSystem.getModelViewMatrixCopy(), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F));
+        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(ContentSkyShapes.oriented(RenderSystem.getModelViewMatrixCopy(), skybox, ContentSkyShapes.ticks(), turn), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F));
         renderPass.pushDebugGroup(() -> "RDPL skybox");
         renderPass.setPipeline(RenderSystem.getCompiledPipeline(BOX));
         RenderSystem.bindDefaultUniforms(renderPass);
@@ -96,17 +100,19 @@ public final class ContentSkyExtras {
         modelView.pushMatrix();
         modelView.mul(poseStack.last().pose());
         GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f(modelView), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F));
+        GpuBufferSlice yawed = RenderSystem.getDynamicUniforms().writeTransform(ContentSkyShapes.yawed(new Matrix4f(modelView), auroraYaw), new Vector4f(1.0F, 1.0F, 1.0F, 1.0F));
         modelView.popMatrix();
         renderPass.pushDebugGroup(() -> "RDPL sky glow");
         renderPass.setPipeline(RenderSystem.getCompiledPipeline(GLOW));
         RenderSystem.bindDefaultUniforms(renderPass);
-        renderPass.setUniform("DynamicTransforms", transforms);
+        renderPass.setUniform("DynamicTransforms", yawed);
         renderPass.setIndexBuffer(QUAD_INDICES.getBuffer(ContentSkyShapes.BOW_VERTICES / 4 * 6), QUAD_INDICES.type());
         if (showsAurora) {
             renderPass.setVertexBuffer(0, aurora.slice());
             renderPass.drawIndexed(ContentSkyShapes.AURORA_VERTICES / 4 * 6, 1, 0, 0, 0);
         }
         if (showsBow) {
+            renderPass.setUniform("DynamicTransforms", transforms);
             renderPass.setVertexBuffer(0, bow.slice());
             renderPass.drawIndexed(ContentSkyShapes.BOW_VERTICES / 4 * 6, 1, 0, 0, 0);
         }

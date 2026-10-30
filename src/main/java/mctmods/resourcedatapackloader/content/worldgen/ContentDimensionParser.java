@@ -159,7 +159,8 @@ public final class ContentDimensionParser {
     }
 
     private static DimensionTraitsDef.Moon moon(Identifier key, JsonObject moon) {
-        return new DimensionTraitsDef.Moon(moon.has("texture") ? texture(key, Json.getString(moon, "texture")) : null, Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
+        return new DimensionTraitsDef.Moon(moon.has("texture") ? texture(key, Json.getString(moon, "texture")) : null, Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)),
+                ContentParserSkyLook.finite(key, moon, "sky.moon", "tilt"), ContentParserSkyLook.pose(key, moon, "sky.moon"));
     }
 
     private static AmbienceDef ambience(Identifier key, JsonObject json) {
@@ -200,12 +201,13 @@ public final class ContentDimensionParser {
                 Identifier texture = texture(key, Json.getString(body, "texture"));
                 if (texture == null) { continue; }
                 found.add(new DimensionTraitsDef.Body(texture, Math.max(0.0F, Json.getFloat(body, "size", 20.0F)),
-                        Json.getFloat(body, "angle", 180.0F), Json.getFloat(body, "tilt", 0.0F), Json.getBoolean(body, "followsTime", true)));
+                        Json.getFloat(body, "angle", 180.0F), Json.getFloat(body, "tilt", 0.0F), Json.getBoolean(body, "followsTime", true), ContentParserSkyLook.pose(key, body, "sky.bodies")));
             }
             bodies = List.copyOf(found);
         }
         Identifier sunTexture = texture(key, Json.getString(sun, "texture", SUN));
-        return new DimensionTraitsDef.Sky(sunTexture == null ? Identifier.parse(SUN) : sunTexture, Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
+        return new DimensionTraitsDef.Sky(sunTexture == null ? Identifier.parse(SUN) : sunTexture, Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)),
+                ContentParserSkyLook.finite(key, sun, "sky.sun", "tilt"), ContentParserSkyLook.pose(key, sun, "sky.sun"), bodies,
                 Math.max(0, Json.getInt(stars, "count", STARS)), Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
     }
 

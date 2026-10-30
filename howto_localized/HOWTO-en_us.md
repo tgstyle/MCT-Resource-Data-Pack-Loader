@@ -4555,28 +4555,38 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
   }
 }
 ```
 
+`tilt`, `roll` and `spin` turn the sun, the moon and each body in `bodies`. `tilt` is applied first, then `roll`. `roll` and `spin` turn the picture about its own center and ride its path across the sky. `spin` is degrees per second of game time, and positive is clockwise. The `moon` keys are ignored when `bodies` is set.
+
 `sun.color` tints the sun and `sun.auraColor` lays a soft glow around it, a sun haze. Both fade with rain and `sunBrightness` as the sun does. They work in the vanilla sky of an [existing dimension](#existing-dimensions) as well as in RDPL's own, and a [time window](#the-time-block) can change them for part of the day.
 
-| Key                    | Required | Value          | Default         | What it does                                                                                                                                                                                     |
-| ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sun.texture`          | no       | texture path   | the vanilla sun | The sun's picture                                                                                                                                                                                |
-| `sun.size`             | no       | float          | `30`            | Half the sun's width at a distance of 100. `0` hides it                                                                                                                                          |
-| `sun.color`            | no       | hex color      | white           | Tint of the sun                                                                                                                                                                                  |
-| `sun.auraColor`        | no       | hex color      | none            | Color of the glow around the sun. Without it there is no glow                                                                                                                                    |
-| `moon.texture`         | no       | texture path   | vanilla's moon  | A sheet of the moon's eight phases, four across and two down. Without it the vanilla moon is drawn                                                                                               |
-| `moon.size`            | no       | float          | `20`            | Half the moon's width at a distance of 100. `0` hides it. Left out with `bodies`                                                                                                                 |
-| `bodies[].texture`     | yes      | texture path   |                 | The body's picture                                                                                                                                                                               |
-| `bodies[].size`        | no       | float          | `20`            | Half its width at a distance of 100. The vanilla moon is `20`                                                                                                                                    |
-| `bodies[].angle`       | no       | float, degrees | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon |
-| `bodies[].tilt`        | no       | float, degrees | `0`             | How far it sits off the sun's path, north or south                                                                                                                                               |
-| `bodies[].followsTime` | no       | boolean        | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                            |
-| `stars.count`          | no       | int            | `1500`          | How many stars                                                                                                                                                                                   |
-| `stars.size`           | no       | float          | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                        |
+| Key                    | Required | Value                     | Default         | What it does                                                                                                                                                                                     |
+| ---------------------- | -------- | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sun.texture`          | no       | texture path              | the vanilla sun | The sun's picture                                                                                                                                                                                |
+| `sun.size`             | no       | float                     | `30`            | Half the sun's width at a distance of 100. `0` hides it                                                                                                                                          |
+| `sun.color`            | no       | hex color                 | white           | Tint of the sun                                                                                                                                                                                  |
+| `sun.auraColor`        | no       | hex color                 | none            | Color of the glow around the sun. Without it there is no glow                                                                                                                                    |
+| `sun.tilt`             | no       | float, degrees            | `0`             | How far the sun sits off its path, north or south, as `bodies[].tilt` does for a body                                                                                                            |
+| `sun.roll`             | no       | float, degrees            | `0`             | Turns the sun's picture about its own center, clockwise                                                                                                                                          |
+| `sun.spin`             | no       | float, degrees per second | `0`             | Keeps turning the picture, added to `roll`. Negative turns it the other way                                                                                                                      |
+| `moon.texture`         | no       | texture path              | vanilla's moon  | A sheet of the moon's eight phases, four across and two down. Without it the vanilla moon is drawn                                                                                               |
+| `moon.size`            | no       | float                     | `20`            | Half the moon's width at a distance of 100. `0` hides it. Left out with `bodies`                                                                                                                 |
+| `moon.tilt`            | no       | float, degrees            | `0`             | How far the vanilla moon sits off its path, as `sun.tilt`. Left out with `bodies`                                                                                                                |
+| `moon.roll`            | no       | float, degrees            | `0`             | Turns the moon's picture about its own center, clockwise. Left out with `bodies`                                                                                                                 |
+| `moon.spin`            | no       | float, degrees per second | `0`             | Keeps turning the moon's picture, as `sun.spin`. Left out with `bodies`                                                                                                                          |
+| `bodies[].texture`     | yes      | texture path              |                 | The body's picture                                                                                                                                                                               |
+| `bodies[].size`        | no       | float                     | `20`            | Half its width at a distance of 100. The vanilla moon is `20`                                                                                                                                    |
+| `bodies[].angle`       | no       | float, degrees            | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon |
+| `bodies[].tilt`        | no       | float, degrees            | `0`             | How far it sits off the sun's path, north or south. `angle` runs along the path, `tilt` across it                                                                                                |
+| `bodies[].roll`        | no       | float, degrees            | `0`             | Turns its picture about its own center, clockwise                                                                                                                                                |
+| `bodies[].spin`        | no       | float, degrees per second | `0`             | Keeps turning the picture, added to `roll`. Negative turns it the other way                                                                                                                      |
+| `bodies[].followsTime` | no       | boolean                   | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                            |
+| `stars.count`          | no       | int                       | `1500`          | How many stars                                                                                                                                                                                   |
+| `stars.size`           | no       | float                     | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                        |
 
 ### Fog, light, clouds and heat
 
@@ -4687,16 +4697,20 @@ These keys sit in the `sky` block as well, and they too are drawn on the client 
       "north": "mypack:textures/sky/north.png",
       "east": "mypack:textures/sky/east.png",
       "south": "mypack:textures/sky/south.png",
-      "west": "mypack:textures/sky/west.png"
+      "west": "mypack:textures/sky/west.png",
+      "yaw": 90
     },
     "aurora": {
       "color": "#40FF90",
-      "topColor": "#8040FF"
+      "topColor": "#8040FF",
+      "yaw": 90
     },
     "rainbow": true
   }
 }
 ```
+
+`skybox.yaw` turns the skybox clockwise as seen from above, `skybox.pitch` tips it about the east-west axis and `skybox.roll` about the north-south axis, and `skybox.spin` keeps it turning about its own pole, after pitch and roll, in degrees per second of game time; positive turns it clockwise as seen from above, the way yaw does. With `skybox.followsTime` on, it wheels through the day with the stars. `aurora.yaw` turns the curtains clockwise as seen from above. The rainbow, the sunrise glow and the stars do not turn.
 
 `skybox` paints your own images on the sky, behind the sunrise glow, the sun, the moon and the stars. Give all six faces of a cube as full texture paths, laid out as the cube unfolds: `up` meets the top edge of `north`, `down` its bottom edge, `west` sits to its left and `east` to its right, with `south` past `east`. Or give `panorama` alone instead, one 2:1 image wrapped around the whole sky: its left edge faces north and it runs clockwise through east, south and west, its top row is straight up and its bottom row straight down. A skybox with a face missing and no panorama is left out, with an error in the log.
 
@@ -4714,13 +4728,19 @@ No vanilla key gives a dimension its own sky images, an aurora or a rainbow, so 
 }
 ```
 
-| Key               | Required | Value        | Default  | What it does                                                                  |
-| ----------------- | -------- | ------------ | -------- | ----------------------------------------------------------------------------- |
-| `skybox.<face>`   | no       | texture path | none     | One cube face: `up`, `down`, `north`, `east`, `south` or `west`. Give all six |
-| `skybox.panorama` | no       | texture path | none     | One image wrapped around the whole sky, used in place of the faces            |
-| `aurora.color`    | no       | hex color    | `40FF90` | Color at the foot of the curtains                                             |
-| `aurora.topColor` | no       | hex color    | `8040FF` | Color at the top, where the curtains fade out                                 |
-| `rainbow`         | no       | boolean      | `false`  | Show a rainbow after rain                                                     |
+| Key                  | Required | Value                     | Default  | What it does                                                                                                                                                            |
+| -------------------- | -------- | ------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skybox.<face>`      | no       | texture path              | none     | One cube face: `up`, `down`, `north`, `east`, `south` or `west`. Give all six                                                                                           |
+| `skybox.panorama`    | no       | texture path              | none     | One image wrapped around the whole sky, used in place of the faces                                                                                                      |
+| `skybox.yaw`         | no       | float, degrees            | `0`      | Turns the skybox clockwise as seen from above                                                                                                                           |
+| `skybox.pitch`       | no       | float, degrees            | `0`      | Tips the skybox about the east-west axis                                                                                                                                |
+| `skybox.roll`        | no       | float, degrees            | `0`      | Tips the skybox about the north-south axis                                                                                                                              |
+| `skybox.spin`        | no       | float, degrees per second | `0`      | Keeps turning the skybox about its own pole, after pitch and roll, in degrees per second of game time; positive turns it clockwise as seen from above, the way yaw does |
+| `skybox.followsTime` | no       | boolean                   | `false`  | On, the skybox wheels round with the sun through the day                                                                                                                |
+| `aurora.yaw`         | no       | float, degrees            | `0`      | Turns the curtains clockwise as seen from above. `0` is north                                                                                                           |
+| `aurora.color`       | no       | hex color                 | `40FF90` | Color at the foot of the curtains                                                                                                                                       |
+| `aurora.topColor`    | no       | hex color                 | `8040FF` | Color at the top, where the curtains fade out                                                                                                                           |
+| `rainbow`            | no       | boolean                   | `false`  | Show a rainbow after rain                                                                                                                                               |
 
 ### The `physics` block
 
