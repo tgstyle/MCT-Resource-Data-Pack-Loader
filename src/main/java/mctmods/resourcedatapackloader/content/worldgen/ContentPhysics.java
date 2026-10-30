@@ -24,7 +24,7 @@ public final class ContentPhysics {
 
     public static boolean enabled() {
         if (GRAVITY.asked().length > 0 || FALL_DAMAGE.asked().length > 0 || JUMP.asked().length > 0 || TERMINAL.asked().length > 0) { return true; }
-        for (DimensionDef def : ContentDimensions.all().values()) { if (def.traits.fallDamage > 0.0D) { return true; } }
+        for (DimensionDef def : ContentDimensions.available().values()) { if (def.traits.fallDamage > 0.0D) { return true; } }
         return false;
     }
 

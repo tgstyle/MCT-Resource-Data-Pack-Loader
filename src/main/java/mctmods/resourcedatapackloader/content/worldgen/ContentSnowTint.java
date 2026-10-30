@@ -40,7 +40,7 @@ import javax.annotation.Nullable;
     private ContentSnowTint() {}
 
     static boolean wanted() {
-        for (DimensionDef def : ContentDimensions.all().values()) {
+        for (DimensionDef def : ContentDimensions.available().values()) {
             if (def.look != null && def.look.snowColor != SkyLookDef.UNSET) { return true; }
         }
         for (SkyLookDef look : ContentEnvironments.looks()) {

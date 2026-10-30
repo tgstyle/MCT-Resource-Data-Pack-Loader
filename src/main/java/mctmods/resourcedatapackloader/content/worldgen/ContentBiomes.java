@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentInherits;
 import mctmods.resourcedatapackloader.content.ContentOwners;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
@@ -94,7 +95,7 @@ public final class ContentBiomes {
         if (loaded) { return !DEFS.isEmpty(); }
         loaded = true;
         if (!Config.registersToClients() || !Config.content.biomes) { return false; }
-        Json.eachFile(PackManager.BIOMES, "biome file", (key, contents) -> {
+        Json.eachInheritedFile(PackManager.BIOMES, "biome file", ContentInherits.BIOME_IDENTITY, (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
             read(key, contents);
         });

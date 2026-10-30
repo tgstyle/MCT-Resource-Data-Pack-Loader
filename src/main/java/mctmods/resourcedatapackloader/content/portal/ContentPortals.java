@@ -42,7 +42,7 @@ public final class ContentPortals {
 
     public static Map<ResourceLocation, DimensionDef> opening() {
         Map<ResourceLocation, DimensionDef> out = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, DimensionDef> entry : ContentDimensions.all().entrySet()) {
+        for (Map.Entry<ResourceLocation, DimensionDef> entry : ContentDimensions.available().entrySet()) {
             if (entry.getValue().portal != null) { out.put(entry.getKey(), entry.getValue()); }
         }
         return out;

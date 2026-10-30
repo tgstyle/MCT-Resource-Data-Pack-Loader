@@ -426,6 +426,14 @@ Uma definição de bloco ou de item pode partir de outra do mesmo tipo com `"inh
 
 O filho copia todos os atributos do arquivo do pai e da variante nomeada, a ordem dos arquivos nunca importa, as cadeias são resolvidas começando pelo pai, e um círculo ou um pai ausente é registrado no log e deixa o filho como foi escrito. Os campos que o filho escreve substituem o valor herdado; as propriedades aninhadas das variantes são substituídas uma a uma, mas listas como `requires` são substituídas por inteiro, então escreva a lista completa que deseja. Blocos herdam apenas de blocos e itens apenas de itens.
 
+Arquivos de dimensão e de bioma herdam do mesmo jeito, só que por arquivo e não por variante. `"inherits"` nomeia outro arquivo do mesmo tipo, como `namespace:caminho` ou só o caminho no mesmo namespace, e o filho começa de uma cópia dele:
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+As chaves que o filho escreve substituem o valor herdado, exceto que um objeto de nível superior como `terrain`, `biomes`, `sky` ou `placement` é mesclado um nível abaixo: as chaves do filho vencem e as outras do pai ficam. Tudo o que está dentro dessas chaves, e toda lista, é substituído por inteiro. `id` e `suffix` nunca são herdados, então um filho de dimensão ainda precisa do seu próprio `id`. `requires` é herdado como qualquer lista, por isso escreva `"requires": []` para esvaziá-lo. As cadeias são resolvidas a partir do pai, a ordem dos arquivos nunca importa, e um ciclo ou um pai ausente é registrado em `rdpl.log` e deixa o filho como foi escrito. Quando dois packs têm o mesmo nome de arquivo, o pack que o vence fornece o pai. Um bioma que parte de um bioma do vanilla usa `baseBiome`; `inherits` nomeia apenas arquivos de bioma do RDPL.
+
 ### Modelos de blocos e itens
 
 *como as definições funcionam*
@@ -470,7 +478,7 @@ Um pai pode ser um modelo puro que nunca entra no jogo, já que a herança lê o
 }
 ```
 
-O modelo nunca é registrado, enquanto `jacks_ore` é registrado com o material, o som, a ferramenta, a aba, os drops de experiência e a resistência do modelo, substituindo apenas a dureza. O filho precisa escrever o próprio `requires`, aqui esvaziado para uma lista vazia, porque senão herda o do pai e desapareceria junto com ele.
+O modelo nunca é registrado, enquanto `jacks_ore` é registrado com o material, o som, a ferramenta, a aba, os drops de experiência e a resistência do modelo, substituindo apenas a dureza. O filho precisa escrever o próprio `requires`, aqui esvaziado para uma lista vazia, porque senão herda o do pai e desapareceria junto com ele. Um pai de dimensão ou de bioma pode ser um modelo do mesmo jeito, bloqueado pela mesma opção desligada à força; uma dimensão modelo ainda precisa de um `id`, então dê a ela um que nenhuma dimensão use.
 
 ## O que você pode substituir
 
@@ -4390,6 +4398,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
 | ----------- | ----------- | --------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`      | não         | texto                                         | o nome do arquivo   | Nome mostrado ao jogador                                                                                                                                                                                                                               |
 | `id`        | não         | int                                           | atribuído para você | Id fixo do bioma. Só defina se precisar que seja estável                                                                                                                                                                                               |
+| `inherits`  | não         | nome do arquivo (`ns:caminho` ou `caminho`)   | nenhum              | Começa de outro arquivo de bioma e sobrescreve o que mudar. Biomas do vanilla são nomeados com `baseBiome`                                                                                                                                             |
 | `types`     | não         | lista de tipos do dicionário                  | estimado            | Registra o bioma sob esses tipos, como `FOREST`, `COLD`, `WET` ou `NETHER`, para que outros mods o encontrem. Se omitido, o Forge estima da melhor forma a partir da quantidade de árvores, altura, temperatura, precipitação e bloco do solo do bioma |
 | `baseBiome` | não         | nome de bioma                                 | nenhum              | Um bioma existente de onde copiar configurações                                                                                                                                                                                                        |
 | `requires`  | não         | lista de ids de mods ou namespaces de pacotes | nenhum              | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                               |
@@ -4608,13 +4617,14 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
 
 *dimensões*
 
-| Chave        | Obrigatória | Valor                                         | Padrão       | O que faz                                                |
-| ------------ | ----------- | --------------------------------------------- | ------------ | -------------------------------------------------------- |
-| `id`         | sim         | int                                           |              | O id da dimensão. Não pode conflitar com outro mod       |
-| `suffix`     | não         | texto                                         | `DIM_<name>` | A pasta de salvamento                                    |
-| `keepLoaded` | não         | booleano                                      | `false`      | Mantém-na carregada quando ninguém está nela             |
-| `gameRules`  | não         | objeto                                        | nenhum       | Regras que se aplicam somente aqui                       |
-| `requires`   | não         | lista de ids de mods ou namespaces de pacotes | nenhum       | O arquivo é ignorado a menos que todos estejam presentes |
+| Chave        | Obrigatória | Valor                                         | Padrão       | O que faz                                                     |
+| ------------ | ----------- | --------------------------------------------- | ------------ | ------------------------------------------------------------- |
+| `id`         | sim         | int                                           |              | O id da dimensão. Não pode conflitar com outro mod            |
+| `suffix`     | não         | texto                                         | `DIM_<name>` | A pasta de salvamento                                         |
+| `inherits`   | não         | nome do arquivo (`ns:caminho` ou `caminho`)   | nenhum       | Começa de outro arquivo de dimensão e sobrescreve o que mudar |
+| `keepLoaded` | não         | booleano                                      | `false`      | Mantém-na carregada quando ninguém está nela                  |
+| `gameRules`  | não         | objeto                                        | nenhum       | Regras que se aplicam somente aqui                            |
+| `requires`   | não         | lista de ids de mods ou namespaces de pacotes | nenhum       | O arquivo é ignorado a menos que todos estejam presentes      |
 
 ### Dimensões existentes
 

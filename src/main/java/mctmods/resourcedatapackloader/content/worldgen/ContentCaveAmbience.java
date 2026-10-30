@@ -41,7 +41,7 @@ public final class ContentCaveAmbience {
         for (CaveRegionDef def : ContentRegistry.caveRegions()) {
             if (def.weight > 0 && def.hasAmbience()) { return true; }
         }
-        for (DimensionDef def : ContentDimensions.all().values()) {
+        for (DimensionDef def : ContentDimensions.available().values()) {
             if (def.traits.ambience != null && def.traits.ambience.sounds()) { return true; }
         }
         return false;

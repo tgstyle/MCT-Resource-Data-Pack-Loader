@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentInherits;
 import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
@@ -42,7 +43,7 @@ public final class ContentDimensions {
         if (parsed) { return; }
         parsed = true;
         if (!Config.registersToClients() || !Config.content.dimensions) { return; }
-        Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
+        Json.eachInheritedFile(PackManager.DIMENSIONS, "dimension definition", ContentInherits.DIMENSION_IDENTITY, (key, contents) -> {
             JsonObject json = Json.object(key, contents, "dimension");
             if (json == null) { return; }
             DimensionDef def = ContentParserWorlds.dimension(key, json);
@@ -137,6 +138,14 @@ public final class ContentDimensions {
     public static DimensionType typeFor(int dimension) {
         DimensionType type = TYPES.get(dimension);
         return type == null ? DimensionType.OVERWORLD : type;
+    }
+
+    public static Map<ResourceLocation, DimensionDef> available() {
+        Map<ResourceLocation, DimensionDef> out = new LinkedHashMap<>();
+        for (Map.Entry<ResourceLocation, DimensionDef> entry : all().entrySet()) {
+            if (ContentRegistry.available(entry.getValue().requires, entry.getKey())) { out.put(entry.getKey(), entry.getValue()); }
+        }
+        return out;
     }
 
     public static Map<ResourceLocation, DimensionDef> all() {

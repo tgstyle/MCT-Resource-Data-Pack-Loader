@@ -426,6 +426,14 @@ Une définition de bloc ou d'objet peut partir d'une autre du même genre avec `
 
 L'enfant copie toutes les caractéristiques du fichier du parent et de la variante nommée, l'ordre des fichiers n'a jamais d'importance, les chaînes se résolvent en commençant par le parent, et un cycle ou un parent manquant est journalisé et laisse l'enfant tel qu'il est écrit. Les champs que l'enfant écrit remplacent la valeur héritée ; les propriétés imbriquées des variantes se surchargent une à une, mais les listes comme `requires` se remplacent entièrement, alors écrivez la liste complète voulue. Les blocs n'héritent que de blocs et les objets que d'objets.
 
+Les fichiers de dimension et de biome héritent de la même façon, mais par fichier et non par variante. `"inherits"` nomme un autre fichier du même genre, sous la forme `namespace:chemin` ou d'un simple chemin dans le même espace de noms, et l'enfant part d'une copie de celui-ci :
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+Les clés que l'enfant écrit remplacent la valeur héritée, sauf qu'un objet de premier niveau comme `terrain`, `biomes`, `sky` ou `placement` est fusionné un niveau plus bas : les clés de l'enfant l'emportent et les autres clés du parent restent. Tout ce qui se trouve dans ces clés, et chaque liste, est remplacé en entier. `id` et `suffix` ne sont jamais hérités, donc un enfant de dimension a toujours besoin de son propre `id`. `requires` est hérité comme n'importe quelle liste, il faut donc écrire `"requires": []` pour le vider. Les chaînes se résolvent en partant du parent, l'ordre des fichiers ne compte jamais, et un cercle ou un parent manquant est consigné dans `rdpl.log` et laisse l'enfant tel qu'écrit. Quand deux packs ont le même nom de fichier, le pack qui l'emporte fournit le parent. Un biome qui s'appuie sur un biome vanilla utilise `baseBiome` ; `inherits` ne nomme que des fichiers de biome RDPL.
+
 ### Modèles de blocs et d'objets
 
 *fonctionnement des définitions*
@@ -470,7 +478,7 @@ Un parent peut être un pur modèle qui n'entre jamais dans le jeu, puisque l'h�
 }
 ```
 
-Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le matériau, le son, l'outil, l'onglet, les gains d'expérience et la résistance du modèle, en ne surchargeant que la dureté. L'enfant doit écrire son propre `requires`, ici vidé en liste vide, car il hérite sinon de celui du parent et disparaîtrait avec lui.
+Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le matériau, le son, l'outil, l'onglet, les gains d'expérience et la résistance du modèle, en ne surchargeant que la dureté. L'enfant doit écrire son propre `requires`, ici vidé en liste vide, car il hérite sinon de celui du parent et disparaîtrait avec lui. Un parent de dimension ou de biome peut être un modèle de la même façon, verrouillé par la même option désactivée de force ; une dimension modèle a toujours besoin d'un `id`, donnez-lui-en un qu'aucune dimension n'utilise.
 
 ## Ce que vous pouvez surcharger
 
@@ -4390,6 +4398,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | ----------- | ------ | --------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | non    | texte                                         | le nom du fichier  | Nom montré au joueur                                                                                                                                                                                                                                                |
 | `id`        | non    | entier                                        | attribué pour vous | Identifiant de biome fixe. À définir seulement si vous avez besoin qu'il soit stable                                                                                                                                                                                |
+| `inherits`  | non    | nom de fichier (`ns:chemin` ou `chemin`)      | aucun              | Part d'un autre fichier de biome, puis remplace ce qui diffère. Les biomes vanilla se nomment avec `baseBiome`                                                                                                                                                      |
 | `types`     | non    | liste de types du dictionnaire                | deviné             | Enregistre le biome sous ces types, comme `FOREST`, `COLD`, `WET` ou `NETHER`, pour que d'autres mods le trouvent. S'ils sont omis, Forge les devine au mieux d'après le nombre d'arbres, l'altitude, la température, les précipitations et le bloc du sol du biome |
 | `baseBiome` | non    | nom de biome                                  | aucun              | Un biome existant dont on copie les réglages                                                                                                                                                                                                                        |
 | `requires`  | non    | liste d'ids de mods ou de namespaces de packs | aucun              | Le fichier est ignoré à moins que tous soient présents                                                                                                                                                                                                              |
@@ -4612,6 +4621,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | ------------ | ------ | --------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------- |
 | `id`         | oui    | entier                                        |              | L'identifiant de la dimension. Il ne doit pas entrer en conflit avec celui d'un autre mod |
 | `suffix`     | non    | texte                                         | `DIM_<name>` | Le dossier de sauvegarde                                                                  |
+| `inherits`   | non    | nom de fichier (`ns:chemin` ou `chemin`)      | aucun        | Part d'un autre fichier de dimension, puis remplace ce qui diffère                        |
 | `keepLoaded` | non    | booléen                                       | `false`      | La garde chargée quand personne n'y est                                                   |
 | `gameRules`  | non    | objet                                         | aucun        | Des règles qui ne s'appliquent qu'ici                                                     |
 | `requires`   | non    | liste d'ids de mods ou de namespaces de packs | aucun        | Le fichier est ignoré à moins que tous soient présents                                    |

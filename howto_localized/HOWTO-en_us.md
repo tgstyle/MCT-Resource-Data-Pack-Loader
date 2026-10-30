@@ -426,6 +426,14 @@ A block or item definition can start from another in the same kind with `"inheri
 
 The child copies every stat of the parent's file and the named variant, file order never matters, chains resolve parent-first, and a circle or a missing parent is logged and leaves the child as written. Fields the child writes replace the inherited value; nested variant properties override one by one, but lists such as `requires` replace whole, so write the full list wanted. Blocks inherit only from blocks and items only from items.
 
+Dimension and biome files inherit the same way, by file instead of by variant. `"inherits"` names another file of the same kind, as `namespace:path` or a bare path in the same namespace, and the child starts from a copy of it:
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+Keys the child writes replace the inherited value, except that a top-level object such as `terrain`, `biomes`, `sky` or `placement` merges one level deeper: the child's keys win and the parent's other keys stay. Everything inside those keys, and every list, replaces whole. `id` and `suffix` are never inherited, so a dimension child still needs its own `id`. `requires` is inherited like any list, so write `"requires": []` to clear it. Chains resolve parent-first, file order never matters, and a circle or a missing parent is logged to `rdpl.log` and leaves the child as written. When two packs hold the same file name, the pack that wins it supplies the parent. A biome that builds on a vanilla biome uses `baseBiome`; `inherits` names only RDPL biome files.
+
 ### Block and item templates
 
 *how definitions work*
@@ -470,7 +478,7 @@ A parent can be a pure template that never enters the game, since inheritance re
 }
 ```
 
-The template never registers, while `jacks_ore` registers with the template's material, sound, tool, tab, exp drops and resistance, overriding only hardness. The child must write its own `requires`, here cleared to an empty list, because it inherits the parent's otherwise and would vanish with it.
+The template never registers, while `jacks_ore` registers with the template's material, sound, tool, tab, exp drops and resistance, overriding only hardness. The child must write its own `requires`, here cleared to an empty list, because it inherits the parent's otherwise and would vanish with it. A dimension or biome parent can be a template in the same way, gated by the same forced-off option; a template dimension still needs an `id`, so give it one no dimension uses.
 
 ## What you can override
 
@@ -4390,6 +4398,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | ----------- | -------- | ---------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`      | no       | string                             | the file name    | Name shown to the player                                                                                                                                                                                           |
 | `id`        | no       | int                                | assigned for you | Fixed biome id. Only set this if you need it stable                                                                                                                                                                |
+| `inherits`  | no       | file name (`ns:path` or `path`)    | none             | Start from another biome file, then override what differs. Vanilla biomes are named with `baseBiome` instead                                                                                                       |
 | `types`     | no       | list of dictionary types           | guessed          | Registers the biome under these, such as `FOREST`, `COLD`, `WET` or `NETHER`, so other mods find it. Left out, Forge best-guesses them from the biome's tree count, height, temperature, rainfall and ground block |
 | `baseBiome` | no       | biome name                         | none             | An existing biome to copy settings from                                                                                                                                                                            |
 | `requires`  | no       | list of mod ids or pack namespaces | none             | The file is skipped unless all are present                                                                                                                                                                         |
@@ -4608,13 +4617,14 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 *dimensions*
 
-| Key          | Required | Value                              | Default      | What it does                                      |
-| ------------ | -------- | ---------------------------------- | ------------ | ------------------------------------------------- |
-| `id`         | yes      | int                                |              | The dimension id. Must not clash with another mod |
-| `suffix`     | no       | string                             | `DIM_<name>` | The save folder                                   |
-| `keepLoaded` | no       | boolean                            | `false`      | Keep it loaded when nobody is in it               |
-| `gameRules`  | no       | object                             | none         | Rules that apply only here                        |
-| `requires`   | no       | list of mod ids or pack namespaces | none         | The file is skipped unless all are present        |
+| Key          | Required | Value                              | Default      | What it does                                                  |
+| ------------ | -------- | ---------------------------------- | ------------ | ------------------------------------------------------------- |
+| `id`         | yes      | int                                |              | The dimension id. Must not clash with another mod             |
+| `suffix`     | no       | string                             | `DIM_<name>` | The save folder                                               |
+| `inherits`   | no       | file name (`ns:path` or `path`)    | none         | Start from another dimension file, then override what differs |
+| `keepLoaded` | no       | boolean                            | `false`      | Keep it loaded when nobody is in it                           |
+| `gameRules`  | no       | object                             | none         | Rules that apply only here                                    |
+| `requires`   | no       | list of mod ids or pack namespaces | none         | The file is skipped unless all are present                    |
 
 ### Existing dimensions
 

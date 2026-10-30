@@ -426,6 +426,14 @@ Eine Block- oder Item-Definition kann mit `"inherits"` von einer anderen derselb
 
 Das Kind kopiert jeden Wert aus der Datei des Elternteils und aus der genannten Variante, die Dateireihenfolge spielt nie eine Rolle, Ketten werden vom Elternteil abwärts aufgelöst, und ein Zirkelbezug oder ein fehlender Elternteil landet im Log und lässt das Kind so, wie es geschrieben steht. Felder, die das Kind schreibt, ersetzen den geerbten Wert; verschachtelte Varianteneigenschaften überschreiben einzeln, Listen wie `requires` dagegen komplett – schreib also die ganze Liste, die du haben willst. Blöcke erben nur von Blöcken und Items nur von Items.
 
+Dimensions- und Biomdateien erben auf dieselbe Weise, nur pro Datei statt pro Variante. `"inherits"` nennt eine andere Datei derselben Art, als `namespace:pfad` oder als bloßen Pfad im selben Namespace, und das Kind beginnt mit einer Kopie davon:
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+Schlüssel, die das Kind schreibt, ersetzen den geerbten Wert. Ausnahme ist ein Objekt auf oberster Ebene wie `terrain`, `biomes`, `sky` oder `placement`, das eine Ebene tiefer verschmolzen wird: Die Schlüssel des Kindes gewinnen, die übrigen des Elternteils bleiben. Alles darunter und jede Liste wird ganz ersetzt. `id` und `suffix` werden nie geerbt, ein Dimensions-Kind braucht also weiterhin eine eigene `id`. `requires` wird wie jede Liste geerbt, zum Leeren also `"requires": []` schreiben. Ketten werden vom Elternteil aus aufgelöst, die Dateireihenfolge spielt nie eine Rolle, und ein Kreis oder ein fehlender Elternteil wird in `rdpl.log` protokolliert und lässt das Kind wie geschrieben. Haben zwei Packs denselben Dateinamen, liefert das Pack, das ihn gewinnt, den Elternteil. Ein Biom auf Basis eines Vanilla-Bioms nutzt `baseBiome`; `inherits` nennt nur RDPL-Biomdateien.
+
 ### Block- und Item-Vorlagen
 
 *wie definitionen funktionieren*
@@ -470,7 +478,7 @@ Ein Elternteil kann eine reine Vorlage sein, die nie ins Spiel kommt, denn die V
 }
 ```
 
-Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werkzeug, Tab, Erfahrungsdrops und Widerstand der Vorlage registriert wird und nur die Härte überschreibt. Das Kind muss sein eigenes `requires` schreiben, hier auf eine leere Liste gesetzt, weil es sonst das des Elternteils erbt und mit ihm verschwinden würde.
+Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werkzeug, Tab, Erfahrungsdrops und Widerstand der Vorlage registriert wird und nur die Härte überschreibt. Das Kind muss sein eigenes `requires` schreiben, hier auf eine leere Liste gesetzt, weil es sonst das des Elternteils erbt und mit ihm verschwinden würde. Ein Dimensions- oder Biom-Elternteil kann auf die gleiche Weise eine Vorlage sein, gesperrt durch dieselbe abgeschaltete Option. Eine Vorlagen-Dimension braucht trotzdem eine `id`, vergib also eine, die keine Dimension nutzt.
 
 ## Was du überschreiben kannst
 
@@ -4390,6 +4398,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | ----------- | ------- | -------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | nein    | Text                                   | der Dateiname | Name, den der Spieler sieht                                                                                                                                                                                     |
 | `id`        | nein    | int                                    | wird vergeben | Feste Biom-ID. Setze sie nur, wenn du sie stabil brauchst                                                                                                                                                       |
+| `inherits`  | nein    | Dateiname (`ns:pfad` oder `pfad`)      | keiner        | Von einer anderen Biomdatei ausgehen und nur das Abweichende überschreiben. Vanilla-Biome werden stattdessen mit `baseBiome` genannt                                                                            |
 | `types`     | nein    | Liste von Dictionary-Typen             | geraten       | Registriert das Biom unter diesen, etwa `FOREST`, `COLD`, `WET` oder `NETHER`, damit andere Mods es finden. Fehlen sie, errät Forge sie aus Baumdichte, Höhe, Temperatur, Niederschlag und Bodenblock des Bioms |
 | `baseBiome` | nein    | Biomname                               | keiner        | Ein vorhandenes Biom, von dem Einstellungen kopiert werden                                                                                                                                                      |
 | `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine         | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                            |
@@ -4608,13 +4617,14 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 *dimensionen*
 
-| Schlüssel    | Pflicht | Wert                                   | Standard     | Was er macht                                               |
-| ------------ | ------- | -------------------------------------- | ------------ | ---------------------------------------------------------- |
-| `id`         | ja      | int                                    |              | Die Dimensions-ID. Darf mit keinem anderen Mod kollidieren |
-| `suffix`     | nein    | Text                                   | `DIM_<name>` | Der Speicherordner                                         |
-| `keepLoaded` | nein    | boolean                                | `false`      | Geladen halten, auch wenn niemand darin ist                |
-| `gameRules`  | nein    | Objekt                                 | keines       | Regeln, die nur hier gelten                                |
-| `requires`   | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine        | Die Datei wird übersprungen, wenn nicht alle da sind       |
+| Schlüssel    | Pflicht | Wert                                   | Standard     | Was er macht                                                                     |
+| ------------ | ------- | -------------------------------------- | ------------ | -------------------------------------------------------------------------------- |
+| `id`         | ja      | int                                    |              | Die Dimensions-ID. Darf mit keinem anderen Mod kollidieren                       |
+| `suffix`     | nein    | Text                                   | `DIM_<name>` | Der Speicherordner                                                               |
+| `inherits`   | nein    | Dateiname (`ns:pfad` oder `pfad`)      | keiner       | Von einer anderen Dimensionsdatei ausgehen und nur das Abweichende überschreiben |
+| `keepLoaded` | nein    | boolean                                | `false`      | Geladen halten, auch wenn niemand darin ist                                      |
+| `gameRules`  | nein    | Objekt                                 | keines       | Regeln, die nur hier gelten                                                      |
+| `requires`   | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine        | Die Datei wird übersprungen, wenn nicht alle da sind                             |
 
 ### Bestehende Dimensionen
 

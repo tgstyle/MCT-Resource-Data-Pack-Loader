@@ -426,6 +426,14 @@ Una definición de bloque o ítem puede partir de otra del mismo tipo con `"inhe
 
 El hijo copia todas las estadísticas del archivo del padre y de la variante nombrada, el orden de los archivos nunca importa, las cadenas de herencia se resuelven empezando por el padre, y un ciclo o un padre ausente se anota en el registro y deja al hijo tal como está escrito. Los campos que escribe el hijo sustituyen al valor heredado; las propiedades anidadas de las variantes se sobrescriben una a una, pero las listas como `requires` se sustituyen enteras, así que escribe la lista completa que quieras. Los bloques solo heredan de bloques y los ítems solo de ítems.
 
+Los archivos de dimensión y de bioma heredan igual, solo que por archivo y no por variante. `"inherits"` nombra otro archivo del mismo tipo, como `namespace:ruta` o como una ruta sola en el mismo espacio de nombres, y el hijo parte de una copia de él:
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+Las claves que escribe el hijo sustituyen el valor heredado, salvo que un objeto de nivel superior como `terrain`, `biomes`, `sky` o `placement` se fusiona un nivel más abajo: ganan las claves del hijo y las demás del padre se quedan. Todo lo que hay dentro de esas claves, y cada lista, se sustituye entero. `id` y `suffix` nunca se heredan, así que un hijo de dimensión sigue necesitando su propio `id`. `requires` se hereda como cualquier lista, de modo que para vaciarlo hay que escribir `"requires": []`. Las cadenas se resuelven empezando por el padre, el orden de los archivos nunca importa, y un círculo o un padre que falta se registra en `rdpl.log` y deja al hijo como está escrito. Si dos packs tienen el mismo nombre de archivo, el pack que lo gana aporta el padre. Un bioma que parte de uno de vanilla usa `baseBiome`; `inherits` solo nombra archivos de bioma de RDPL.
+
 ### Plantillas de bloques e ítems
 
 *cómo funcionan las definiciones*
@@ -470,7 +478,7 @@ Un padre puede ser una plantilla pura que nunca entra en el juego, ya que la her
 }
 ```
 
-La plantilla nunca se registra, mientras que `jacks_ore` se registra con el material, el sonido, la herramienta, la pestaña, los drops de experiencia y la resistencia de la plantilla, sobrescribiendo solo la dureza. El hijo debe escribir su propio `requires`, aquí vaciado a una lista vacía, porque de lo contrario heredaría el del padre y desaparecería con él.
+La plantilla nunca se registra, mientras que `jacks_ore` se registra con el material, el sonido, la herramienta, la pestaña, los drops de experiencia y la resistencia de la plantilla, sobrescribiendo solo la dureza. El hijo debe escribir su propio `requires`, aquí vaciado a una lista vacía, porque de lo contrario heredaría el del padre y desaparecería con él. Un padre de dimensión o de bioma puede ser una plantilla de la misma forma, cerrada por la misma opción apagada a la fuerza; una dimensión plantilla sigue necesitando un `id`, así que dale uno que no use ninguna dimensión.
 
 ## Qué puedes sobrescribir
 
@@ -4390,6 +4398,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | ----------- | ----------- | ------------------------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | no          | cadena                                            | el nombre del archivo    | Nombre que se muestra al jugador                                                                                                                                                                                                                   |
 | `id`        | no          | entero                                            | asignado automáticamente | Id de bioma fijo. Establécelo solo si necesitas que sea estable                                                                                                                                                                                    |
+| `inherits`  | no          | nombre de archivo (`ns:ruta` o `ruta`)            | ninguno                  | Parte de otro archivo de bioma y sobrescribe lo que cambie. Los biomas de vanilla se nombran con `baseBiome`                                                                                                                                       |
 | `types`     | no          | lista de tipos del diccionario                    | deducido                 | Registra el bioma bajo estos tipos, como `FOREST`, `COLD`, `WET` o `NETHER`, para que otros mods lo encuentren. Si se omite, Forge los estima a partir del número de árboles, la altura, la temperatura, la lluvia y el bloque del suelo del bioma |
 | `baseBiome` | no          | nombre de bioma                                   | ninguno                  | Un bioma existente del que copiar los ajustes                                                                                                                                                                                                      |
 | `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno                  | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                              |
@@ -4608,13 +4617,14 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 *dimensiones*
 
-| Clave        | Obligatorio | Valor                                             | Por defecto  | Qué hace                                                 |
-| ------------ | ----------- | ------------------------------------------------- | ------------ | -------------------------------------------------------- |
-| `id`         | sí          | entero                                            |              | El id de la dimensión. No debe chocar con el de otro mod |
-| `suffix`     | no          | cadena                                            | `DIM_<name>` | La carpeta de guardado                                   |
-| `keepLoaded` | no          | booleano                                          | `false`      | La mantiene cargada cuando no hay nadie en ella          |
-| `gameRules`  | no          | objeto                                            | ninguno      | Reglas que se aplican solo aquí                          |
-| `requires`   | no          | lista de ids de mod o espacios de nombres de pack | ninguno      | El archivo se omite a menos que estén presentes todos    |
+| Clave        | Obligatorio | Valor                                             | Por defecto  | Qué hace                                                       |
+| ------------ | ----------- | ------------------------------------------------- | ------------ | -------------------------------------------------------------- |
+| `id`         | sí          | entero                                            |              | El id de la dimensión. No debe chocar con el de otro mod       |
+| `suffix`     | no          | cadena                                            | `DIM_<name>` | La carpeta de guardado                                         |
+| `inherits`   | no          | nombre de archivo (`ns:ruta` o `ruta`)            | ninguno      | Parte de otro archivo de dimensión y sobrescribe lo que cambie |
+| `keepLoaded` | no          | booleano                                          | `false`      | La mantiene cargada cuando no hay nadie en ella                |
+| `gameRules`  | no          | objeto                                            | ninguno      | Reglas que se aplican solo aquí                                |
+| `requires`   | no          | lista de ids de mod o espacios de nombres de pack | ninguno      | El archivo se omite a menos que estén presentes todos          |
 
 ### Dimensiones existentes
 

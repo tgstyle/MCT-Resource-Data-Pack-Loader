@@ -426,6 +426,14 @@ La definizione di un blocco o di un oggetto può partire da un'altra dello stess
 
 Il figlio copia ogni statistica del file del genitore e della variante indicata, l'ordine dei file non conta mai, le catene si risolvono partendo dal genitore, e un ciclo o un genitore mancante viene registrato nel log e lascia il figlio com'è scritto. I campi scritti dal figlio sostituiscono il valore ereditato; le proprietà annidate delle varianti si sovrascrivono una per una, ma gli elenchi come `requires` vengono sostituiti per intero, quindi scrivi l'elenco completo che vuoi. I blocchi ereditano solo da blocchi e gli oggetti solo da oggetti.
 
+I file di dimensione e di bioma ereditano allo stesso modo, ma per file e non per variante. `"inherits"` nomina un altro file dello stesso tipo, come `namespace:percorso` o come semplice percorso nello stesso namespace, e il figlio parte da una copia di quello:
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+Le chiavi scritte dal figlio sostituiscono il valore ereditato, tranne che un oggetto di primo livello come `terrain`, `biomes`, `sky` o `placement` viene unito un livello più in basso: vincono le chiavi del figlio e le altre chiavi del genitore restano. Tutto ciò che sta dentro quelle chiavi, e ogni lista, viene sostituito per intero. `id` e `suffix` non si ereditano mai, quindi un figlio di dimensione ha ancora bisogno di un proprio `id`. `requires` si eredita come ogni lista, perciò per svuotarlo scrivi `"requires": []`. Le catene si risolvono partendo dal genitore, l'ordine dei file non conta mai, e un ciclo o un genitore mancante viene registrato in `rdpl.log` e lascia il figlio com'è scritto. Quando due pack hanno lo stesso nome di file, il pack che lo vince fornisce il genitore. Un bioma che parte da un bioma vanilla usa `baseBiome`; `inherits` nomina solo file di bioma RDPL.
+
 ### Modelli di blocchi e oggetti
 
 *come funzionano le definizioni*
@@ -470,7 +478,7 @@ Un genitore può essere un puro modello che non entra mai nel gioco, poiché l'e
 }
 ```
 
-Il modello non si registra mai, mentre `jacks_ore` si registra con il materiale, il suono, lo strumento, la scheda, i drop di esperienza e la resistenza del modello, sovrascrivendo solo la durezza. Il figlio deve scrivere il proprio `requires`, qui svuotato in un elenco vuoto, perché altrimenti eredita quello del genitore e sparirebbe insieme a lui.
+Il modello non si registra mai, mentre `jacks_ore` si registra con il materiale, il suono, lo strumento, la scheda, i drop di esperienza e la resistenza del modello, sovrascrivendo solo la durezza. Il figlio deve scrivere il proprio `requires`, qui svuotato in un elenco vuoto, perché altrimenti eredita quello del genitore e sparirebbe insieme a lui. Un genitore di dimensione o di bioma può essere un modello allo stesso modo, bloccato dalla stessa opzione spenta a forza; una dimensione modello ha comunque bisogno di un `id`, quindi dagliene uno che nessuna dimensione usa.
 
 ## Cosa puoi sovrascrivere
 
@@ -4386,13 +4394,14 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 
 *biomi*
 
-| Chiave      | Obbligatorio | Valore                                  | Predefinito             | Cosa fa                                                                                                                                                                                                                                                         |
-| ----------- | ------------ | --------------------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`      | no           | stringa                                 | il nome del file        | Nome mostrato al giocatore                                                                                                                                                                                                                                      |
-| `id`        | no           | intero                                  | assegnato in automatico | id fisso del bioma. Impostalo solo se ti serve stabile                                                                                                                                                                                                          |
-| `types`     | no           | elenco di tipi del dizionario           | dedotti                 | Registra il bioma sotto questi tipi, come `FOREST`, `COLD`, `WET` o `NETHER`, così le altre mod lo trovano. Se omessi, Forge li deduce al meglio dal numero di alberi, dall'altezza, dalla temperatura, dalle precipitazioni e dal blocco del terreno del bioma |
-| `baseBiome` | no           | nome del bioma                          | nessuno                 | Un bioma esistente da cui copiare le impostazioni                                                                                                                                                                                                               |
-| `requires`  | no           | elenco di id di mod o namespace di pack | nessuno                 | Il file viene saltato a meno che tutti siano presenti                                                                                                                                                                                                           |
+| Chiave      | Obbligatorio | Valore                                     | Predefinito             | Cosa fa                                                                                                                                                                                                                                                         |
+| ----------- | ------------ | ------------------------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`      | no           | stringa                                    | il nome del file        | Nome mostrato al giocatore                                                                                                                                                                                                                                      |
+| `id`        | no           | intero                                     | assegnato in automatico | id fisso del bioma. Impostalo solo se ti serve stabile                                                                                                                                                                                                          |
+| `inherits`  | no           | nome del file (`ns:percorso` o `percorso`) | nessuno                 | Parte da un altro file di bioma e sovrascrive ciò che cambia. I biomi vanilla si nominano invece con `baseBiome`                                                                                                                                                |
+| `types`     | no           | elenco di tipi del dizionario              | dedotti                 | Registra il bioma sotto questi tipi, come `FOREST`, `COLD`, `WET` o `NETHER`, così le altre mod lo trovano. Se omessi, Forge li deduce al meglio dal numero di alberi, dall'altezza, dalla temperatura, dalle precipitazioni e dal blocco del terreno del bioma |
+| `baseBiome` | no           | nome del bioma                             | nessuno                 | Un bioma esistente da cui copiare le impostazioni                                                                                                                                                                                                               |
+| `requires`  | no           | elenco di id di mod o namespace di pack    | nessuno                 | Il file viene saltato a meno che tutti siano presenti                                                                                                                                                                                                           |
 
 ### Clima
 
@@ -4608,13 +4617,14 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 
 *dimensioni*
 
-| Chiave       | Obbligatorio | Valore                                  | Predefinito  | Cosa fa                                                               |
-| ------------ | ------------ | --------------------------------------- | ------------ | --------------------------------------------------------------------- |
-| `id`         | sì           | intero                                  |              | L'id della dimensione. Non deve entrare in conflitto con un'altra mod |
-| `suffix`     | no           | stringa                                 | `DIM_<name>` | La cartella di salvataggio                                            |
-| `keepLoaded` | no           | booleano                                | `false`      | La mantiene caricata quando non c'è nessuno al suo interno            |
-| `gameRules`  | no           | oggetto JSON                            | nessuno      | Regole che valgono solo qui                                           |
-| `requires`   | no           | elenco di id di mod o namespace di pack | nessuno      | Il file viene saltato a meno che tutti siano presenti                 |
+| Chiave       | Obbligatorio | Valore                                     | Predefinito  | Cosa fa                                                               |
+| ------------ | ------------ | ------------------------------------------ | ------------ | --------------------------------------------------------------------- |
+| `id`         | sì           | intero                                     |              | L'id della dimensione. Non deve entrare in conflitto con un'altra mod |
+| `suffix`     | no           | stringa                                    | `DIM_<name>` | La cartella di salvataggio                                            |
+| `inherits`   | no           | nome del file (`ns:percorso` o `percorso`) | nessuno      | Parte da un altro file di dimensione e sovrascrive ciò che cambia     |
+| `keepLoaded` | no           | booleano                                   | `false`      | La mantiene caricata quando non c'è nessuno al suo interno            |
+| `gameRules`  | no           | oggetto JSON                               | nessuno      | Regole che valgono solo qui                                           |
+| `requires`   | no           | elenco di id di mod o namespace di pack    | nessuno      | Il file viene saltato a meno che tutti siano presenti                 |
 
 ### Dimensioni esistenti
 

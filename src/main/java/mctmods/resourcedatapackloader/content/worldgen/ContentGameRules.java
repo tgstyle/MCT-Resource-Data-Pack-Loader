@@ -25,7 +25,7 @@ public final class ContentGameRules {
         Json.eachFile(PackManager.GAMERULES, "game rule file", (key, contents) -> {
             for (Map.Entry<Integer, Map<String, String>> entry : ContentParserWorlds.gameRuleFile(key, contents).entrySet()) { wanted.computeIfAbsent(entry.getKey(), id -> new LinkedHashMap<>()).putAll(entry.getValue()); }
         });
-        for (DimensionDef def : ContentDimensions.all().values()) {
+        for (DimensionDef def : ContentDimensions.available().values()) {
             if (def.gameRules.isEmpty()) { continue; }
             wanted.computeIfAbsent(def.id, id -> new LinkedHashMap<>()).putAll(def.gameRules);
         }

@@ -51,7 +51,7 @@ import javax.annotation.Nullable;
     }
 
     private static boolean compute() {
-        for (DimensionDef def : ContentDimensions.all().values()) {
+        for (DimensionDef def : ContentDimensions.available().values()) {
             if (def.look != null && def.look.tintsPlants()) { return true; }
         }
         for (SkyLookDef look : ContentEnvironments.looks()) {

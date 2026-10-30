@@ -426,6 +426,14 @@ Definice bloku nebo předmětu může začít od jiné téhož druhu pomocí `"i
 
 Potomek zkopíruje všechny staty rodičovského souboru a pojmenované varianty, na pořadí souborů nikdy nezáleží, řetězce se řeší od rodiče a kruh nebo chybějící rodič se zapíše do logu a potomek zůstane tak, jak je napsaný. Pole, která potomek napíše, nahradí zděděnou hodnotu; vnořené vlastnosti variant se přepisují po jedné, ale seznamy jako `requires` se nahrazují celé, takže napiš celý požadovaný seznam. Bloky dědí jen z bloků a předměty jen z předmětů.
 
+Soubory dimenzí a biomů dědí stejným způsobem, jen po souborech a ne po variantách. `"inherits"` pojmenuje jiný soubor stejného druhu, jako `namespace:cesta` nebo jen cestu ve stejném jmenném prostoru, a potomek vychází z jeho kopie:
+
+    { "inherits": "mypack:ruby_overworld",
+      "id": 13,
+      "sky": { "fogColor": "112233" } }
+
+Klíče, které potomek napíše, nahradí zděděnou hodnotu, kromě objektu nejvyšší úrovně jako `terrain`, `biomes`, `sky` nebo `placement`, který se sloučí o úroveň hlouběji: klíče potomka vyhrají a ostatní klíče rodiče zůstanou. Vše uvnitř těchto klíčů a každý seznam se nahradí celé. `id` a `suffix` se nikdy nedědí, takže potomek dimenze stále potřebuje vlastní `id`. `requires` se dědí jako každý seznam, k vyprázdnění proto napište `"requires": []`. Řetězy se řeší od rodiče, na pořadí souborů nikdy nezáleží a kruh nebo chybějící rodič se zapíše do `rdpl.log` a potomek zůstane tak, jak je napsán. Mají-li dva packy stejný název souboru, rodiče dodá pack, který jej vyhraje. Biom stavějící na vanilla biomu používá `baseBiome`; `inherits` jmenuje jen soubory biomů RDPL.
+
 ### Šablony bloků a předmětů
 
 *jak fungují definice*
@@ -470,7 +478,7 @@ Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože d�
 }
 ```
 
-Šablona se nikdy nezaregistruje, zatímco `jacks_ore` se zaregistruje s materiálem, zvukem, nástrojem, kartou, dropy zkušeností a odolností šablony a přepíše jen tvrdost. Potomek musí napsat vlastní `requires`, zde vymazaný na prázdný seznam, protože jinak zdědí rodičův a zmizel by s ním.
+Šablona se nikdy nezaregistruje, zatímco `jacks_ore` se zaregistruje s materiálem, zvukem, nástrojem, kartou, dropy zkušeností a odolností šablony a přepíše jen tvrdost. Potomek musí napsat vlastní `requires`, zde vymazaný na prázdný seznam, protože jinak zdědí rodičův a zmizel by s ním. Rodič dimenze nebo biomu může být šablona stejným způsobem, uzamčená stejnou natvrdo vypnutou volbou; šablonová dimenze stále potřebuje `id`, dejte jí tedy takové, které žádná dimenze nepoužívá.
 
 ## Co můžeš přepsat
 
@@ -4386,13 +4394,14 @@ Všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 
 *biomy*
 
-| Klíč        | Povinné | Hodnota                               | Výchozí            | Co dělá                                                                                                                                                                                                            |
-| ----------- | ------- | ------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `name`      | ne      | řetězec                               | název souboru      | Název zobrazený hráči                                                                                                                                                                                              |
-| `id`        | ne      | celé číslo                            | přidělí se za tebe | Pevné id biomu. Nastav ho jen tehdy, když ho potřebuješ stabilní                                                                                                                                                   |
-| `types`     | ne      | seznam slovníkových typů              | odhadnuto          | Zaregistruje biom pod těmito typy, například `FOREST`, `COLD`, `WET` nebo `NETHER`, aby ho našly jiné módy. Při vynechání je Forge co nejlépe odhadne z počtu stromů, výšky, teploty, srážek a bloku povrchu biomu |
-| `baseBiome` | ne      | název biomu                           | žádný              | Existující biom, ze kterého se zkopírují nastavení                                                                                                                                                                 |
-| `requires`  | ne      | seznam id módů nebo namespace balíčků | žádný              | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                  |
+| Klíč        | Povinné | Hodnota                                 | Výchozí            | Co dělá                                                                                                                                                                                                            |
+| ----------- | ------- | --------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`      | ne      | řetězec                                 | název souboru      | Název zobrazený hráči                                                                                                                                                                                              |
+| `id`        | ne      | celé číslo                              | přidělí se za tebe | Pevné id biomu. Nastav ho jen tehdy, když ho potřebuješ stabilní                                                                                                                                                   |
+| `inherits`  | ne      | název souboru (`ns:cesta` nebo `cesta`) | žádná              | Vyjde z jiného souboru biomu a přepíše jen to, co se liší. Vanilla biomy se místo toho jmenují přes `baseBiome`                                                                                                    |
+| `types`     | ne      | seznam slovníkových typů                | odhadnuto          | Zaregistruje biom pod těmito typy, například `FOREST`, `COLD`, `WET` nebo `NETHER`, aby ho našly jiné módy. Při vynechání je Forge co nejlépe odhadne z počtu stromů, výšky, teploty, srážek a bloku povrchu biomu |
+| `baseBiome` | ne      | název biomu                             | žádný              | Existující biom, ze kterého se zkopírují nastavení                                                                                                                                                                 |
+| `requires`  | ne      | seznam id módů nebo namespace balíčků   | žádný              | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                  |
 
 ### Podnebí
 
@@ -4608,13 +4617,14 @@ Všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 
 *dimenze*
 
-| Klíč         | Povinné | Hodnota                               | Výchozí      | Co dělá                                           |
-| ------------ | ------- | ------------------------------------- | ------------ | ------------------------------------------------- |
-| `id`         | ano     | celé číslo                            |              | Id dimenze. Nesmí se srážet s jiným módem         |
-| `suffix`     | ne      | řetězec                               | `DIM_<name>` | Složka uložení                                    |
-| `keepLoaded` | ne      | boolean                               | `false`      | Drží ji načtenou, i když v ní nikdo není          |
-| `gameRules`  | ne      | objekt                                | žádný        | Pravidla platná jen tady                          |
-| `requires`   | ne      | seznam id módů nebo namespace balíčků | žádný        | Soubor se přeskočí, pokud nejsou přítomny všechny |
+| Klíč         | Povinné | Hodnota                                 | Výchozí      | Co dělá                                                     |
+| ------------ | ------- | --------------------------------------- | ------------ | ----------------------------------------------------------- |
+| `id`         | ano     | celé číslo                              |              | Id dimenze. Nesmí se srážet s jiným módem                   |
+| `suffix`     | ne      | řetězec                                 | `DIM_<name>` | Složka uložení                                              |
+| `inherits`   | ne      | název souboru (`ns:cesta` nebo `cesta`) | žádná        | Vyjde z jiného souboru dimenze a přepíše jen to, co se liší |
+| `keepLoaded` | ne      | boolean                                 | `false`      | Drží ji načtenou, i když v ní nikdo není                    |
+| `gameRules`  | ne      | objekt                                  | žádný        | Pravidla platná jen tady                                    |
+| `requires`   | ne      | seznam id módů nebo namespace balíčků   | žádný        | Soubor se přeskočí, pokud nejsou přítomny všechny           |
 
 ### Existující dimenze
 
