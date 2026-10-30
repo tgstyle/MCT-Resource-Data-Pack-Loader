@@ -34,7 +34,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         GlStateManager.color(0.0F, 0.0F, 0.0F, 0.0F);
     }
 
-    @Inject(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderHelper;disableStandardItemLighting()V")) private void rdpl$skybox(float partialTicks, int pass, CallbackInfo ci) { ContentSkyExtras.backdrop(world); }
+    @Inject(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderHelper;disableStandardItemLighting()V")) private void rdpl$skybox(float partialTicks, int pass, CallbackInfo ci) { ContentSkyExtras.backdrop(world, partialTicks); }
 
     @Inject(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;popMatrix()V", ordinal = 1, shift = At.Shift.AFTER)) private void rdpl$skyOverlay(float partialTicks, int pass, CallbackInfo ci) { ContentSkyExtras.overlay(world, partialTicks); }
 

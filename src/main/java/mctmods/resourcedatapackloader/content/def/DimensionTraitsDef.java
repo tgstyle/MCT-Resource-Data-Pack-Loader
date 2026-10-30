@@ -45,10 +45,14 @@ public final class DimensionTraitsDef {
     public static final class Moon {
         public final ResourceLocation texture;
         public final float size;
+        public final float tilt;
+        public final SkyPoseDef pose;
 
-        public Moon(ResourceLocation texture, float size) {
+        public Moon(ResourceLocation texture, float size, float tilt, SkyPoseDef pose) {
             this.texture = texture;
             this.size = size;
+            this.tilt = tilt;
+            this.pose = pose;
         }
     }
 
@@ -81,13 +85,17 @@ public final class DimensionTraitsDef {
     public static final class Sky {
         public final ResourceLocation sunTexture;
         public final float sunSize;
+        public final float sunTilt;
+        public final SkyPoseDef sunPose;
         @Nullable public final List<Body> bodies;
         public final int starCount;
         public final float starSize;
 
-        public Sky(ResourceLocation sunTexture, float sunSize, @Nullable List<Body> bodies, int starCount, float starSize) {
+        public Sky(ResourceLocation sunTexture, float sunSize, float sunTilt, SkyPoseDef sunPose, @Nullable List<Body> bodies, int starCount, float starSize) {
             this.sunTexture = sunTexture;
             this.sunSize = sunSize;
+            this.sunTilt = sunTilt;
+            this.sunPose = sunPose;
             this.bodies = bodies;
             this.starCount = starCount;
             this.starSize = starSize;
@@ -100,9 +108,11 @@ public final class DimensionTraitsDef {
         public final float angle;
         public final float tilt;
         public final boolean followsTime;
+        public final SkyPoseDef pose;
         @Nullable public final String ringBody;
 
-        public Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, @Nullable String ringBody) {
+        public Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, SkyPoseDef pose, @Nullable String ringBody) {
+            this.pose = pose;
             this.ringBody = ringBody;
             this.texture = texture;
             this.size = size;

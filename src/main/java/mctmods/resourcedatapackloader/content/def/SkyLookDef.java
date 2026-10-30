@@ -81,20 +81,32 @@ public final class SkyLookDef {
     public static final class Skybox {
         @Nullable public final ResourceLocation panorama;
         public final List<ResourceLocation> faces;
+        public final float yaw;
+        public final float pitch;
+        public final float roll;
+        public final float spin;
+        public final boolean followsTime;
 
-        public Skybox(@Nullable ResourceLocation panorama, List<ResourceLocation> faces) {
+        public Skybox(@Nullable ResourceLocation panorama, List<ResourceLocation> faces, float yaw, float pitch, float roll, float spin, boolean followsTime) {
             this.panorama = panorama;
             this.faces = faces;
+            this.yaw = yaw;
+            this.pitch = pitch;
+            this.roll = roll;
+            this.spin = spin;
+            this.followsTime = followsTime;
         }
     }
 
     public static final class Aurora {
         public final int color;
         public final int topColor;
+        public final float yaw;
 
-        public Aurora(int color, int topColor) {
+        public Aurora(int color, int topColor, float yaw) {
             this.color = color;
             this.topColor = topColor;
+            this.yaw = yaw;
         }
     }
 

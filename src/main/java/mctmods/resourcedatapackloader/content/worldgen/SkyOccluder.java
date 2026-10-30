@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.resources.IResource;
@@ -13,6 +15,7 @@ import java.io.IOException;
 @SideOnly(Side.CLIENT) public final class SkyOccluder {
     private static final double RADIUS = 100.0D;
     private static final int THRESHOLD = 8;
+    private static final double REACH = Math.sqrt(0.5D);
     private static final double MARGIN = 0.055D;
     private static int generation;
     private final float angle;
@@ -23,13 +26,20 @@ import java.io.IOException;
     private final ResourceLocation[] textures;
     private final int columns;
     private final int rows;
+    private final double rollCos;
+    private final double rollSin;
+    private final boolean spins;
     private float turn;
     private boolean[] mask;
+    private boolean[] rings;
     private int loaded;
     private int width;
     private int height;
 
-    SkyOccluder(float angle, float tilt, float size, boolean moon, boolean fixed, ResourceLocation[] textures, int columns, int rows) {
+    SkyOccluder(float angle, float tilt, float size, SkyPoseDef pose, boolean moon, boolean fixed, ResourceLocation[] textures, int columns, int rows) {
+        rollCos = Math.cos(Math.toRadians(pose.roll));
+        rollSin = Math.sin(Math.toRadians(pose.roll));
+        spins = pose.spins();
         this.angle = angle;
         this.tilt = tilt;
         this.size = size;
@@ -60,13 +70,16 @@ import java.io.IOException;
         double x2 = x * Math.cos(tilt) + y1 * Math.sin(tilt);
         double y2 = y1 * Math.cos(tilt) - x * Math.sin(tilt);
         if (y2 <= 0.0D) { return false; }
-        double px = x2 * RADIUS / (y2 * size);
-        double pz = z1 * RADIUS / (y2 * size);
+        double sx = x2 * RADIUS / (y2 * size);
+        double sz = z1 * RADIUS / (y2 * size);
+        double r = (fixed ? reach + MARGIN * (RADIUS / y2) * (RADIUS / y2) : reach) / (2.0D * size);
+        if (mask == null || loaded != generation) { load(); }
+        if (spins) { return spunCovers(Math.hypot(sx, sz) / 2.0D, r); }
+        double px = sx * rollCos - sz * rollSin;
+        double pz = sx * rollSin + sz * rollCos;
         double u = moon ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
         double v = moon ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
-        double r = (fixed ? reach + MARGIN * (RADIUS / y2) * (RADIUS / y2) : reach) / (2.0D * size);
         if (u + r < 0.0D || u - r > 1.0D || v + r < 0.0D || v - r > 1.0D) { return false; }
-        if (mask == null || loaded != generation) { load(); }
         int fromX = clamp((int) Math.floor((u - r) * width), width);
         int toX = clamp((int) Math.floor((u + r) * width), width);
         int fromY = clamp((int) Math.floor((v - r) * height), height);
@@ -79,9 +92,40 @@ import java.io.IOException;
         return false;
     }
 
+    private boolean spunCovers(double rho, double r) {
+        if (rho - r > REACH) { return false; }
+        double step = REACH / rings.length;
+        int from = clamp((int) (Math.max(rho - r, 0.0D) / step), rings.length);
+        int to = clamp((int) ((rho + r) / step), rings.length);
+        for (int ring = from; ring <= to; ++ring) {
+            if (rings[ring]) { return true; }
+        }
+        return false;
+    }
+
     private static int clamp(int value, int limit) { return MathHelper.clamp(value, 0, limit - 1); }
 
     private void load() {
+        read();
+        if (!spins) { return; }
+        rings = new boolean[Math.max(width, height)];
+        double step = REACH / rings.length;
+        double halfX = 0.5D / width;
+        double halfY = 0.5D / height;
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                if (!mask[y * width + x]) { continue; }
+                double across = Math.abs((x + 0.5D) / width - 0.5D);
+                double down = Math.abs((y + 0.5D) / height - 0.5D);
+                double near = Math.hypot(Math.max(across - halfX, 0.0D), Math.max(down - halfY, 0.0D));
+                double far = Math.hypot(across + halfX, down + halfY);
+                int to = clamp((int) (far / step), rings.length);
+                for (int ring = clamp((int) (near / step), rings.length); ring <= to; ++ring) { rings[ring] = true; }
+            }
+        }
+    }
+
+    private void read() {
         mask = null;
         loaded = generation;
         for (ResourceLocation texture : textures) {

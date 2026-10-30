@@ -82,12 +82,13 @@ public final class ContentParserDimensionTraits {
                 weather.has("cycle") ? cycle(key, Json.getJsonObject(weather, "cycle")) : null,
                 weather.has("rain") || weather.has("wind") ? rain(key, Json.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, Json.getJsonObject(weather, "wind")) : null) : null,
                 sky(key, sky),
-                sky.has("moon") ? moon(Json.getJsonObject(sky, "moon")) : null,
+                sky.has("moon") ? moon(key, Json.getJsonObject(sky, "moon")) : null,
                 json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null);
     }
 
-    private static DimensionTraitsDef.Moon moon(JsonObject moon) {
-        return new DimensionTraitsDef.Moon(new ResourceLocation(Json.getString(moon, "texture", MOON).trim()), Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
+    private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {
+        return new DimensionTraitsDef.Moon(new ResourceLocation(Json.getString(moon, "texture", MOON).trim()), Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)),
+                ContentParserSkyLook.finite(key, moon, "sky.moon", "tilt"), ContentParserSkyLook.pose(key, moon, "sky.moon"));
     }
 
     private static AmbienceDef ambience(ResourceLocation key, JsonObject json) {
@@ -212,12 +213,15 @@ public final class ContentParserDimensionTraits {
                         Json.getFloat(body, "angle", 180.0F),
                         Json.getFloat(body, "tilt", 0.0F),
                         Json.getBoolean(body, "followsTime", true),
+                        ContentParserSkyLook.pose(key, body, "sky.bodies"),
                         ringBody.isEmpty() ? null : ringBody));
             }
             bodies = Collections.unmodifiableList(found);
         }
         return new DimensionTraitsDef.Sky(new ResourceLocation(Json.getString(sun, "texture", SUN).trim()),
                 Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)),
+                ContentParserSkyLook.finite(key, sun, "sky.sun", "tilt"),
+                ContentParserSkyLook.pose(key, sun, "sky.sun"),
                 bodies,
                 Math.max(0, Json.getInt(stars, "count", STARS)),
                 Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));

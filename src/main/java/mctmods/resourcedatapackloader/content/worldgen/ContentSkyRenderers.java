@@ -58,7 +58,8 @@ import java.util.WeakHashMap;
 
     private static boolean drawsWholeSky(DimensionDef def) {
         if (ContentDimensions.overlay(def.id) == null) { return true; }
-        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size");
+        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size")
+                || def.gives("sky.sun.tilt") || def.gives("sky.sun.roll") || def.gives("sky.sun.spin") || def.gives("sky.moon.tilt") || def.gives("sky.moon.roll") || def.gives("sky.moon.spin");
     }
 
     private static boolean fogHidesEndSky(WorldProvider provider, DimensionDef def) { return def.showFog && provider.getDimensionType() == DimensionType.THE_END; }

@@ -4719,29 +4719,39 @@ Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste co
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
   }
 }
 ```
 
+`roll` fait tourner le soleil, la lune ou un corps autour du centre de sa propre image, dans le sens des aiguilles d'une montre tel qu'on le regarde, et `spin` continue de la faire tourner de ce nombre de degrés par seconde de temps de jeu, ajoutés à `roll`. L'image garde son angle par rapport à la trajectoire qu'elle suit. `tilt` écarte le soleil ou la lune vanilla de la trajectoire du soleil, vers le nord pour une valeur positive, comme `bodies[].tilt` le fait pour un corps. L'anneau d'un corps ne tourne pas avec son image, et le soleil du ciel propre à AsmodeusCore n'est pas tourné. Les clés `moon` sont ignorées quand `bodies` est donné.
+
 `sun.color` teinte le soleil et `sun.auraColor` dépose autour de lui une lueur douce, une brume solaire. Toutes deux s'estompent avec la pluie et `sunBrightness`, comme le soleil. Elles fonctionnent dans le ciel vanilla d'une [dimension existante](#dimensions-existantes), dans le ciel de l'Overworld d'AsmodeusCore et sur un [corps céleste de Galacticraft](#corps-célestes-de-galacticraft) comme dans le ciel propre à RDPL, et une [plage horaire](#le-bloc-time) peut les modifier pendant une partie de la journée.
 
-| Clé                    | Requis | Valeur               | Défaut            | Rôle                                                                                                                                                                                                                                                    |
-| ---------------------- | ------ | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sun.texture`          | non    | chemin de texture    | le soleil vanilla | L'image du soleil                                                                                                                                                                                                                                       |
-| `sun.size`             | non    | flottant             | `30`              | La moitié de la largeur du soleil à une distance de 100. `0` le masque                                                                                                                                                                                  |
-| `sun.color`            | non    | couleur hexadécimale | blanc             | Teinte du soleil                                                                                                                                                                                                                                        |
-| `sun.auraColor`        | non    | couleur hexadécimale | aucun             | Couleur de la lueur autour du soleil. Sans elle, il n'y a pas de lueur                                                                                                                                                                                  |
-| `moon.texture`         | non    | chemin de texture    | la lune vanilla   | L'image de la lune : une planche de ses huit phases, quatre en largeur et deux en hauteur, comme `moon_phases.png` en vanilla                                                                                                                           |
-| `moon.size`            | non    | flottant             | `20`              | La moitié de la largeur de la lune à une distance de 100. `0` la masque. Ignoré avec `bodies`                                                                                                                                                           |
-| `bodies[].texture`     | oui    | chemin de texture    |                   | L'image du corps                                                                                                                                                                                                                                        |
-| `bodies[].size`        | non    | flottant             | `20`              | La moitié de sa largeur à une distance de 100. La lune vanilla vaut `20`                                                                                                                                                                                |
-| `bodies[].angle`       | non    | flottant, degrés     | `180`             | Sa distance le long de la trajectoire du soleil, derrière celui-ci. `180` est l'endroit où se trouve la lune vanilla. Avec `followsTime` désactivé, elle se mesure depuis le point juste au-dessus de la tête, donc `0` est le zénith et `90` l'horizon |
-| `bodies[].tilt`        | non    | flottant, degrés     | `0`               | De combien il s'écarte de la trajectoire du soleil, vers le nord ou le sud. `angle` suit la trajectoire, `tilt` la traverse                                                                                                                             |
-| `bodies[].body`        | non    | nom                  | aucun             | Un corps céleste du pack, par son nom ou le nom de son fichier. S'il définit un `ring`, le même anneau est dessiné autour de ce corps, derrière et devant                                                                                               |
-| `bodies[].followsTime` | non    | booléen              | `true`            | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil                                                                                                                                                                             |
-| `stars.count`          | non    | entier               | `1500`            | Le nombre d'étoiles                                                                                                                                                                                                                                     |
-| `stars.size`           | non    | flottant             | `0.15`            | La plus petite étoile ; la plus grande est encore deux tiers plus grosse                                                                                                                                                                                |
+| Clé                    | Requis | Valeur                       | Défaut            | Rôle                                                                                                                                                                                                                                                    |
+| ---------------------- | ------ | ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | non    | chemin de texture            | le soleil vanilla | L'image du soleil                                                                                                                                                                                                                                       |
+| `sun.size`             | non    | flottant                     | `30`              | La moitié de la largeur du soleil à une distance de 100. `0` le masque                                                                                                                                                                                  |
+| `sun.color`            | non    | couleur hexadécimale         | blanc             | Teinte du soleil                                                                                                                                                                                                                                        |
+| `sun.auraColor`        | non    | couleur hexadécimale         | aucun             | Couleur de la lueur autour du soleil. Sans elle, il n'y a pas de lueur                                                                                                                                                                                  |
+| `moon.texture`         | non    | chemin de texture            | la lune vanilla   | L'image de la lune : une planche de ses huit phases, quatre en largeur et deux en hauteur, comme `moon_phases.png` en vanilla                                                                                                                           |
+| `moon.size`            | non    | flottant                     | `20`              | La moitié de la largeur de la lune à une distance de 100. `0` la masque. Ignoré avec `bodies`                                                                                                                                                           |
+| `bodies[].texture`     | oui    | chemin de texture            |                   | L'image du corps                                                                                                                                                                                                                                        |
+| `bodies[].size`        | non    | flottant                     | `20`              | La moitié de sa largeur à une distance de 100. La lune vanilla vaut `20`                                                                                                                                                                                |
+| `bodies[].angle`       | non    | flottant, degrés             | `180`             | Sa distance le long de la trajectoire du soleil, derrière celui-ci. `180` est l'endroit où se trouve la lune vanilla. Avec `followsTime` désactivé, elle se mesure depuis le point juste au-dessus de la tête, donc `0` est le zénith et `90` l'horizon |
+| `bodies[].tilt`        | non    | flottant, degrés             | `0`               | De combien il s'écarte de la trajectoire du soleil, vers le nord ou le sud. `angle` suit la trajectoire, `tilt` la traverse                                                                                                                             |
+| `bodies[].body`        | non    | nom                          | aucun             | Un corps céleste du pack, par son nom ou le nom de son fichier. S'il définit un `ring`, le même anneau est dessiné autour de ce corps, derrière et devant                                                                                               |
+| `sun.tilt`             | non    | flottant, degrés             | `0`               | De combien le soleil s'écarte de sa trajectoire, vers le nord ou le sud, comme `bodies[].tilt` pour un corps                                                                                                                                            |
+| `sun.roll`             | non    | flottant, degrés             | `0`               | Fait tourner l'image du soleil autour de son propre centre, dans le sens des aiguilles d'une montre                                                                                                                                                     |
+| `sun.spin`             | non    | flottant, degrés par seconde | `0`               | Continue de faire tourner l'image, s'ajoute à `roll`. Une valeur négative la fait tourner dans l'autre sens                                                                                                                                             |
+| `moon.tilt`            | non    | flottant, degrés             | `0`               | De combien la lune vanilla s'écarte de sa trajectoire, comme `sun.tilt`. Ignoré avec `bodies`                                                                                                                                                           |
+| `moon.roll`            | non    | flottant, degrés             | `0`               | Fait tourner l'image de la lune autour de son propre centre, dans le sens des aiguilles d'une montre. Ignoré avec `bodies`                                                                                                                              |
+| `moon.spin`            | non    | flottant, degrés par seconde | `0`               | Continue de faire tourner l'image de la lune, comme `sun.spin`. Ignoré avec `bodies`                                                                                                                                                                    |
+| `bodies[].roll`        | non    | flottant, degrés             | `0`               | Fait tourner son image autour de son propre centre, dans le sens des aiguilles d'une montre. Un anneau donné par `body` reste tel quel                                                                                                                  |
+| `bodies[].spin`        | non    | flottant, degrés par seconde | `0`               | Continue de faire tourner l'image, s'ajoute à `roll`. Une valeur négative la fait tourner dans l'autre sens                                                                                                                                             |
+| `bodies[].followsTime` | non    | booléen                      | `true`            | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil                                                                                                                                                                             |
+| `stars.count`          | non    | entier                       | `1500`            | Le nombre d'étoiles                                                                                                                                                                                                                                     |
+| `stars.size`           | non    | flottant                     | `0.15`            | La plus petite étoile ; la plus grande est encore deux tiers plus grosse                                                                                                                                                                                |
 
 ### Brouillard, lumière, nuages et chaleur
 
@@ -4850,16 +4860,20 @@ Ces clés se placent elles aussi dans le bloc `sky`, et elles aussi ne sont dess
       "north": "mypack:textures/sky/north.png",
       "east": "mypack:textures/sky/east.png",
       "south": "mypack:textures/sky/south.png",
-      "west": "mypack:textures/sky/west.png"
+      "west": "mypack:textures/sky/west.png",
+      "yaw": 90
     },
     "aurora": {
       "color": "#40FF90",
-      "topColor": "#8040FF"
+      "topColor": "#8040FF",
+      "yaw": 90
     },
     "rainbow": true
   }
 }
 ```
+
+`skybox.yaw` fait tourner la skybox dans le sens des aiguilles d'une montre, vue de dessus, `skybox.pitch` l'incline autour de l'axe est-ouest et `skybox.roll` autour de l'axe nord-sud, et `skybox.spin` continue de la faire tourner autour de son propre pôle, après `pitch` et `roll`, en degrés par seconde de temps de jeu ; une valeur positive la fait tourner dans le sens des aiguilles d'une montre, vue de dessus, comme `yaw`. Avec `skybox.followsTime` activé, elle tourne au fil de la journée avec les étoiles. `aurora.yaw` fait tourner les rideaux dans le sens des aiguilles d'une montre, vus de dessus. L'arc-en-ciel, la lueur de l'aube et les étoiles ne tournent pas.
 
 Une seule image enroulée autour de tout le ciel, à la place des six faces :
 
@@ -4881,13 +4895,19 @@ Une seule image enroulée autour de tout le ciel, à la place des six faces :
 
 Aucune clé vanilla ne donne à une dimension ses propres images de ciel, une aurore ou un arc-en-ciel, ces clés fonctionnent donc de la même façon sur toutes les versions.
 
-| Clé               | Requis | Valeur               | Défaut   | Rôle                                                                                          |
-| ----------------- | ------ | -------------------- | -------- | --------------------------------------------------------------------------------------------- |
-| `skybox.<face>`   | non    | chemin de texture    | aucun    | Une face du cube : `up`, `down`, `north`, `east`, `south` ou `west`. Les six sont nécessaires |
-| `skybox.panorama` | non    | chemin de texture    | aucun    | Une image enroulée autour de tout le ciel, à la place des faces                               |
-| `aurora.color`    | non    | couleur hexadécimale | `40FF90` | Couleur au pied des rideaux                                                                   |
-| `aurora.topColor` | non    | couleur hexadécimale | `8040FF` | Couleur en haut, là où les rideaux s'estompent                                                |
-| `rainbow`         | non    | booléen              | `false`  | Afficher un arc-en-ciel après la pluie                                                        |
+| Clé                  | Requis | Valeur                       | Défaut   | Rôle                                                                                             |
+| -------------------- | ------ | ---------------------------- | -------- | ------------------------------------------------------------------------------------------------ |
+| `skybox.<face>`      | non    | chemin de texture            | aucun    | Une face du cube : `up`, `down`, `north`, `east`, `south` ou `west`. Les six sont nécessaires    |
+| `skybox.panorama`    | non    | chemin de texture            | aucun    | Une image enroulée autour de tout le ciel, à la place des faces                                  |
+| `skybox.yaw`         | non    | flottant, degrés             | `0`      | Fait tourner la skybox dans le sens des aiguilles d'une montre, vue de dessus                    |
+| `skybox.pitch`       | non    | flottant, degrés             | `0`      | Incline la skybox autour de l'axe est-ouest                                                      |
+| `skybox.roll`        | non    | flottant, degrés             | `0`      | Incline la skybox autour de l'axe nord-sud                                                       |
+| `skybox.spin`        | non    | flottant, degrés par seconde | `0`      | Continue de faire tourner la skybox autour de son propre pôle, après `pitch` et `roll`           |
+| `skybox.followsTime` | non    | booléen                      | `false`  | Activé, la skybox tourne au fil de la journée avec les étoiles                                   |
+| `aurora.color`       | non    | couleur hexadécimale         | `40FF90` | Couleur au pied des rideaux                                                                      |
+| `aurora.topColor`    | non    | couleur hexadécimale         | `8040FF` | Couleur en haut, là où les rideaux s'estompent                                                   |
+| `aurora.yaw`         | non    | flottant, degrés             | `0`      | Fait tourner les rideaux dans le sens des aiguilles d'une montre, vus de dessus. `0` est le nord |
+| `rainbow`            | non    | booléen                      | `false`  | Afficher un arc-en-ciel après la pluie                                                           |
 
 ### Le bloc `physics`
 

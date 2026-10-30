@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.client.Minecraft;
@@ -37,7 +38,7 @@ import org.lwjgl.opengl.GL11;
 
     private ContentSkyExtras() {}
 
-    public static void backdrop(World world) {
+    public static void backdrop(World world, float partialTicks) {
         SkyLookDef look = ContentFogSampler.look(world);
         if (look == null || look.skybox == null) { return; }
         Minecraft mc = Minecraft.getMinecraft();
@@ -46,6 +47,12 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.enableTexture2D();
         GlStateManager.disableCull();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager.pushMatrix();
+        if (look.skybox.followsTime) { GlStateManager.rotate(world.getCelestialAngle(partialTicks) * 360.0F, 0.0F, 0.0F, 1.0F); }
+        GlStateManager.rotate(-look.skybox.yaw, 0.0F, 1.0F, 0.0F);
+        GlStateManager.rotate(look.skybox.pitch, 1.0F, 0.0F, 0.0F);
+        GlStateManager.rotate(look.skybox.roll, 0.0F, 0.0F, 1.0F);
+        GlStateManager.rotate(-SkyPoseDef.spun(look.skybox.spin, world.getTotalWorldTime() + (double) partialTicks), 0.0F, 1.0F, 0.0F);
         if (look.skybox.panorama != null) {
             mc.renderEngine.bindTexture(look.skybox.panorama);
             panorama(buffer, tessellator);
@@ -56,6 +63,7 @@ import org.lwjgl.opengl.GL11;
                 face(buffer, tessellator, FACES[face]);
             }
         }
+        GlStateManager.popMatrix();
         GlStateManager.enableCull();
         GlStateManager.disableTexture2D();
     }
@@ -76,7 +84,12 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         GlStateManager.shadeModel(GL11.GL_SMOOTH);
-        if (glow > 0.0F) { aurora(buffer, tessellator, look.aurora, glow, world.getTotalWorldTime() + partialTicks); }
+        if (glow > 0.0F) {
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(-look.aurora.yaw, 0.0F, 1.0F, 0.0F);
+            aurora(buffer, tessellator, look.aurora, glow, world.getTotalWorldTime() + partialTicks);
+            GlStateManager.popMatrix();
+        }
         if (bow > 0.0F) { bow(buffer, tessellator, angle * (float) Math.PI * 2.0F, bow); }
         GlStateManager.shadeModel(GL11.GL_FLAT);
         Blends.translucent();

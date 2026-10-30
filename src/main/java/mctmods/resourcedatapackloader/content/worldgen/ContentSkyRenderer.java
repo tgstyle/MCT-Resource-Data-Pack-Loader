@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.client.render.RingQuads;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.SkyPoseDef;
 import mctmods.resourcedatapackloader.util.BodyRings;
 
 import net.minecraft.client.Minecraft;
@@ -34,22 +35,27 @@ import javax.annotation.Nullable;
     private int lists = -1;
     private boolean floor = true;
 
+    private final float moonTilt;
+    private final SkyPoseDef moonPose;
+
     ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
         moonTexture = moon == null ? MOON_PHASES : moon.texture;
         moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size;
-        starField = new ContentStars(sky.starCount, sky.starSize, occluders(sky, moonTexture, moonSize));
+        moonTilt = moon == null ? 0.0F : moon.tilt;
+        moonPose = moon == null ? SkyPoseDef.NONE : moon.pose;
+        starField = new ContentStars(sky.starCount, sky.starSize, occluders(sky, moonTexture, moonSize, moonTilt, moonPose));
     }
 
-    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize) {
+    private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize, float moonTilt, SkyPoseDef moonPose) {
         List<SkyOccluder> bodies = new ArrayList<>();
-        if (sky.sunSize > 0.0F) { bodies.add(new SkyOccluder(0.0F, 0.0F, sky.sunSize, false, false, new ResourceLocation[] {sky.sunTexture}, 1, 1)); }
+        if (sky.sunSize > 0.0F) { bodies.add(new SkyOccluder(0.0F, (float) Math.toRadians(sky.sunTilt), sky.sunSize, sky.sunPose, false, false, new ResourceLocation[] {sky.sunTexture}, 1, 1)); }
         if (sky.bodies == null) {
-            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, 0.0F, moonSize, true, false, new ResourceLocation[] {moonTexture}, 4, 2)); }
+            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, (float) Math.toRadians(moonTilt), moonSize, moonPose, true, false, new ResourceLocation[] {moonTexture}, 4, 2)); }
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies) {
-                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle), (float) Math.toRadians(body.tilt), body.size, false, !body.followsTime, new ResourceLocation[] {body.texture}, 1, 1));
+                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle), (float) Math.toRadians(body.tilt), body.size, body.pose, false, !body.followsTime, new ResourceLocation[] {body.texture}, 1, 1));
             }
         }
         return bodies.toArray(new SkyOccluder[0]);
@@ -80,7 +86,7 @@ import javax.annotation.Nullable;
         GlStateManager.disableAlpha();
         GlStateManager.enableBlend();
         Blends.translucent();
-        ContentSkyExtras.backdrop(world);
+        ContentSkyExtras.backdrop(world, partialTicks);
         RenderHelper.disableStandardItemLighting();
         sunrise(world, mc, buffer, tessellator, partialTicks);
         GlStateManager.enableTexture2D();
@@ -92,13 +98,18 @@ import javax.annotation.Nullable;
         float turn = world.getCelestialAngle(partialTicks) * 360.0F;
         GlStateManager.pushMatrix();
         GlStateManager.rotate(turn, 1.0F, 0.0F, 0.0F);
+        double ticks = world.getTotalWorldTime() + (double) partialTicks;
         if (sky.sunSize > 0.0F) {
+            GlStateManager.pushMatrix();
+            GlStateManager.rotate(sky.sunTilt, 0.0F, 0.0F, 1.0F);
+            GlStateManager.rotate(sky.sunPose.degrees(ticks), 0.0F, 1.0F, 0.0F);
             ContentSkyRenderers.sunHaze(world, sky.sunTexture, clear * ContentSkyRenderers.sun(world), sky.sunSize, false);
             mc.renderEngine.bindTexture(sky.sunTexture);
             ContentSkyRenderers.quad(sky.sunSize);
+            GlStateManager.popMatrix();
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, clear * ContentSkyRenderers.moon(world));
-        if (sky.bodies == null && moonSize > 0.0F) { moon(world, mc, buffer, tessellator); }
+        if (sky.bodies == null && moonSize > 0.0F) { moon(world, mc, buffer, tessellator, ticks); }
         GlStateManager.popMatrix();
         if (sky.bodies != null) {
             for (DimensionTraitsDef.Body body : sky.bodies) {
@@ -112,7 +123,10 @@ import javax.annotation.Nullable;
                     RingQuads.sky(ring, body.size, false);
                 }
                 mc.renderEngine.bindTexture(body.texture);
+                GlStateManager.pushMatrix();
+                GlStateManager.rotate(body.pose.degrees(ticks), 0.0F, 1.0F, 0.0F);
                 ContentSkyRenderers.quad(body.size);
+                GlStateManager.popMatrix();
                 if (ring != null) {
                     RingQuads.sky(ring, body.size, true);
                     GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -178,7 +192,7 @@ import javax.annotation.Nullable;
         GlStateManager.shadeModel(GL11.GL_FLAT);
     }
 
-    private void moon(WorldClient world, Minecraft mc, BufferBuilder buffer, Tessellator tessellator) {
+    private void moon(WorldClient world, Minecraft mc, BufferBuilder buffer, Tessellator tessellator, double ticks) {
         float size = moonSize;
         mc.renderEngine.bindTexture(moonTexture);
         int phase = world.getMoonPhase();
@@ -188,12 +202,16 @@ import javax.annotation.Nullable;
         float top = row / 2.0F;
         float right = (column + 1) / 4.0F;
         float bottom = (row + 1) / 2.0F;
+        GlStateManager.pushMatrix();
+        GlStateManager.rotate(-moonTilt, 0.0F, 0.0F, 1.0F);
+        GlStateManager.rotate(-moonPose.degrees(ticks), 0.0F, 1.0F, 0.0F);
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
         buffer.pos(-size, -100.0D, size).tex(right, bottom).endVertex();
         buffer.pos(size, -100.0D, size).tex(left, bottom).endVertex();
         buffer.pos(size, -100.0D, -size).tex(left, top).endVertex();
         buffer.pos(-size, -100.0D, -size).tex(right, top).endVertex();
         tessellator.draw();
+        GlStateManager.popMatrix();
     }
 
     private static void voidBox(BufferBuilder buffer, Tessellator tessellator, int lists, double below) {

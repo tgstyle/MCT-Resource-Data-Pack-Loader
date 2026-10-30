@@ -4719,29 +4719,39 @@ Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším k
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
   }
 }
 ```
 
+`roll` otáčí sluncem, měsícem nebo tělesem kolem středu jeho vlastního obrázku, po směru hodinových ručiček, jak se na něj díváte, a `spin` ho otáčí dál o tolik stupňů za sekundu herního času, přičtených k `roll`. Obrázek si drží svůj úhel k dráze, po které putuje. `tilt` posune slunce nebo vanilkový měsíc stranou od dráhy slunce, kladná hodnota na sever, stejně jako `bodies[].tilt` u tělesa. Prstenec tělesa se s jeho obrázkem neotáčí a slunce z vlastní oblohy AsmodeusCore se neotáčí také. Klíče `moon` se při zadaných `bodies` ignorují.
+
 `sun.color` obarví slunce a `sun.auraColor` rozprostře kolem něj jemnou záři, sluneční závoj. Obě slábnou s deštěm a `sunBrightness` stejně jako samotné slunce. Fungují ve vanilla obloze [existující dimenze](#existující-dimenze), v obloze Overworldu z AsmodeusCore i na [tělese Galacticraftu](#tělesa-galacticraftu), stejně jako ve vlastní obloze RDPL, a [časové okno](#blok-time) je může na část dne změnit.
 
-| Klíč                   | Povinné | Hodnota                 | Výchozí        | Co dělá                                                                                                                                                                    |
-| ---------------------- | ------- | ----------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sun.texture`          | ne      | cesta k textuře         | vanilla slunce | Obrázek slunce                                                                                                                                                             |
-| `sun.size`             | ne      | desetinné číslo         | `30`           | Polovina šířky slunce ze vzdálenosti 100. `0` ho skryje                                                                                                                    |
-| `sun.color`            | ne      | hexadecimální barva     | bílá           | Odstín slunce                                                                                                                                                              |
-| `sun.auraColor`        | ne      | hexadecimální barva     | žádná          | Barva záře kolem slunce. Bez ní žádná záře není                                                                                                                            |
-| `moon.texture`         | ne      | cesta k textuře         | vanilla měsíc  | Obrázek měsíce: list jeho osmi fází, čtyři vedle sebe a dvě pod sebou, jako vanilla `moon_phases.png`                                                                      |
-| `moon.size`            | ne      | desetinné číslo         | `20`           | Polovina šířky měsíce ze vzdálenosti 100. `0` ho skryje. S `bodies` se vynechá                                                                                             |
-| `bodies[].texture`     | ano     | cesta k textuře         |                | Obrázek tělesa                                                                                                                                                             |
-| `bodies[].size`        | ne      | desetinné číslo         | `20`           | Polovina jeho šířky ze vzdálenosti 100. Vanilla měsíc má `20`                                                                                                              |
-| `bodies[].angle`       | ne      | desetinné číslo, stupně | `180`          | Jak daleko po dráze slunce leží za sluncem. `180` je místo vanilla měsíce. Při vypnutém `followsTime` se měří od bodu přímo nad hlavou, takže `0` je zenit a `90` horizont |
-| `bodies[].tilt`        | ne      | desetinné číslo, stupně | `0`            | Jak daleko leží stranou od dráhy slunce, na sever nebo na jih. `angle` běží podél dráhy, `tilt` napříč                                                                     |
-| `bodies[].body`        | ne      | název                   | žádný          | Nebeské těleso balíčku, podle názvu nebo názvu souboru. Pokud nastavuje `ring`, stejný prstenec se kreslí kolem tohoto tělesa, za ním i před ním                           |
-| `bodies[].followsTime` | ne      | boolean                 | `true`         | Při vypnutí visí nehybně na obloze, místo aby se otáčelo se sluncem                                                                                                        |
-| `stars.count`          | ne      | celé číslo              | `1500`         | Kolik je hvězd                                                                                                                                                             |
-| `stars.size`           | ne      | desetinné číslo         | `0.15`         | Nejmenší hvězda; největší je o dvě třetiny větší                                                                                                                           |
+| Klíč                   | Povinné | Hodnota                            | Výchozí        | Co dělá                                                                                                                                                                    |
+| ---------------------- | ------- | ---------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | ne      | cesta k textuře                    | vanilla slunce | Obrázek slunce                                                                                                                                                             |
+| `sun.size`             | ne      | desetinné číslo                    | `30`           | Polovina šířky slunce ze vzdálenosti 100. `0` ho skryje                                                                                                                    |
+| `sun.color`            | ne      | hexadecimální barva                | bílá           | Odstín slunce                                                                                                                                                              |
+| `sun.auraColor`        | ne      | hexadecimální barva                | žádná          | Barva záře kolem slunce. Bez ní žádná záře není                                                                                                                            |
+| `moon.texture`         | ne      | cesta k textuře                    | vanilla měsíc  | Obrázek měsíce: list jeho osmi fází, čtyři vedle sebe a dvě pod sebou, jako vanilla `moon_phases.png`                                                                      |
+| `moon.size`            | ne      | desetinné číslo                    | `20`           | Polovina šířky měsíce ze vzdálenosti 100. `0` ho skryje. S `bodies` se vynechá                                                                                             |
+| `bodies[].texture`     | ano     | cesta k textuře                    |                | Obrázek tělesa                                                                                                                                                             |
+| `bodies[].size`        | ne      | desetinné číslo                    | `20`           | Polovina jeho šířky ze vzdálenosti 100. Vanilla měsíc má `20`                                                                                                              |
+| `bodies[].angle`       | ne      | desetinné číslo, stupně            | `180`          | Jak daleko po dráze slunce leží za sluncem. `180` je místo vanilla měsíce. Při vypnutém `followsTime` se měří od bodu přímo nad hlavou, takže `0` je zenit a `90` horizont |
+| `bodies[].tilt`        | ne      | desetinné číslo, stupně            | `0`            | Jak daleko leží stranou od dráhy slunce, na sever nebo na jih. `angle` běží podél dráhy, `tilt` napříč                                                                     |
+| `bodies[].body`        | ne      | název                              | žádný          | Nebeské těleso balíčku, podle názvu nebo názvu souboru. Pokud nastavuje `ring`, stejný prstenec se kreslí kolem tohoto tělesa, za ním i před ním                           |
+| `sun.tilt`             | ne      | desetinné číslo, stupně            | `0`            | Jak daleko leží slunce stranou od své dráhy, na sever nebo na jih, jako `bodies[].tilt` u tělesa                                                                           |
+| `sun.roll`             | ne      | desetinné číslo, stupně            | `0`            | Otáčí obrázkem slunce kolem jeho středu po směru hodinových ručiček                                                                                                        |
+| `sun.spin`             | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek dál otáčí, přičítá se k `roll`. Záporná hodnota ho otáčí na druhou stranu                                                                                          |
+| `moon.tilt`            | ne      | desetinné číslo, stupně            | `0`            | Jak daleko leží vanilkový měsíc stranou od své dráhy, jako `sun.tilt`. S `bodies` se vynechává                                                                             |
+| `moon.roll`            | ne      | desetinné číslo, stupně            | `0`            | Otáčí obrázkem měsíce kolem jeho středu po směru hodinových ručiček. S `bodies` se vynechává                                                                               |
+| `moon.spin`            | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek měsíce dál otáčí, jako `sun.spin`. S `bodies` se vynechává                                                                                                         |
+| `bodies[].roll`        | ne      | desetinné číslo, stupně            | `0`            | Otáčí jeho obrázkem kolem jeho středu po směru hodinových ručiček. Prstenec z `body` zůstává, jak je                                                                       |
+| `bodies[].spin`        | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek dál otáčí, přičítá se k `roll`. Záporná hodnota ho otáčí na druhou stranu                                                                                          |
+| `bodies[].followsTime` | ne      | boolean                            | `true`         | Při vypnutí visí nehybně na obloze, místo aby se otáčelo se sluncem                                                                                                        |
+| `stars.count`          | ne      | celé číslo                         | `1500`         | Kolik je hvězd                                                                                                                                                             |
+| `stars.size`           | ne      | desetinné číslo                    | `0.15`         | Nejmenší hvězda; největší je o dvě třetiny větší                                                                                                                           |
 
 ### Mlha, světlo, mraky a žár
 
@@ -4850,16 +4860,20 @@ Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
       "north": "mypack:textures/sky/north.png",
       "east": "mypack:textures/sky/east.png",
       "south": "mypack:textures/sky/south.png",
-      "west": "mypack:textures/sky/west.png"
+      "west": "mypack:textures/sky/west.png",
+      "yaw": 90
     },
     "aurora": {
       "color": "#40FF90",
-      "topColor": "#8040FF"
+      "topColor": "#8040FF",
+      "yaw": 90
     },
     "rainbow": true
   }
 }
 ```
+
+`skybox.yaw` otáčí skyboxem po směru hodinových ručiček při pohledu shora, `skybox.pitch` ho naklání kolem osy východ–západ, `skybox.roll` kolem osy sever–jih a `skybox.spin` ho dál otáčí kolem jeho vlastního pólu, po `pitch` a `roll`, ve stupních za sekundu herního času; kladná hodnota ho otáčí po směru hodinových ručiček při pohledu shora, stejně jako `yaw`. Se zapnutým `skybox.followsTime` se během dne otáčí spolu s hvězdami. `aurora.yaw` otáčí závoje po směru hodinových ručiček při pohledu shora. Duha, červánky a hvězdy se neotáčejí.
 
 Jeden obrázek omotaný kolem celé oblohy místo šesti stěn:
 
@@ -4881,13 +4895,19 @@ Jeden obrázek omotaný kolem celé oblohy místo šesti stěn:
 
 Žádný vanilla klíč nedává dimenzi vlastní obrázky oblohy, polární záři ani duhu, takže tyto fungují stejně na každé verzi.
 
-| Klíč              | Povinné | Hodnota             | Výchozí  | Co dělá                                                                                   |
-| ----------------- | ------- | ------------------- | -------- | ----------------------------------------------------------------------------------------- |
-| `skybox.<face>`   | ne      | cesta k textuře     | žádný    | Jedna stěna krychle: `up`, `down`, `north`, `east`, `south` nebo `west`. Zadej všech šest |
-| `skybox.panorama` | ne      | cesta k textuře     | žádný    | Jeden obrázek omotaný kolem celé oblohy, použitý místo stěn                               |
-| `aurora.color`    | ne      | hexadecimální barva | `40FF90` | Barva u paty závěsů                                                                       |
-| `aurora.topColor` | ne      | hexadecimální barva | `8040FF` | Barva nahoře, kde závěsy mizí                                                             |
-| `rainbow`         | ne      | boolean             | `false`  | Zobrazí duhu po dešti                                                                     |
+| Klíč                 | Povinné | Hodnota                            | Výchozí  | Co dělá                                                                                   |
+| -------------------- | ------- | ---------------------------------- | -------- | ----------------------------------------------------------------------------------------- |
+| `skybox.<face>`      | ne      | cesta k textuře                    | žádný    | Jedna stěna krychle: `up`, `down`, `north`, `east`, `south` nebo `west`. Zadej všech šest |
+| `skybox.panorama`    | ne      | cesta k textuře                    | žádný    | Jeden obrázek omotaný kolem celé oblohy, použitý místo stěn                               |
+| `skybox.yaw`         | ne      | desetinné číslo, stupně            | `0`      | Otáčí skyboxem po směru hodinových ručiček při pohledu shora                              |
+| `skybox.pitch`       | ne      | desetinné číslo, stupně            | `0`      | Naklání skybox kolem osy východ–západ                                                     |
+| `skybox.roll`        | ne      | desetinné číslo, stupně            | `0`      | Naklání skybox kolem osy sever–jih                                                        |
+| `skybox.spin`        | ne      | desetinné číslo, stupně za sekundu | `0`      | Skybox dál otáčí kolem jeho vlastního pólu, po `pitch` a `roll`                           |
+| `skybox.followsTime` | ne      | boolean                            | `false`  | Zapnuto, skybox se během dne otáčí spolu s hvězdami                                       |
+| `aurora.color`       | ne      | hexadecimální barva                | `40FF90` | Barva u paty závěsů                                                                       |
+| `aurora.topColor`    | ne      | hexadecimální barva                | `8040FF` | Barva nahoře, kde závěsy mizí                                                             |
+| `aurora.yaw`         | ne      | desetinné číslo, stupně            | `0`      | Otáčí závoje po směru hodinových ručiček při pohledu shora. `0` je sever                  |
+| `rainbow`            | ne      | boolean                            | `false`  | Zobrazí duhu po dešti                                                                     |
 
 ### Blok `physics`
 
