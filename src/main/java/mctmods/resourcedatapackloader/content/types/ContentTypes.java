@@ -240,6 +240,8 @@ public final class ContentTypes {
         catch (NumberFormatException ex) { return null; }
     }
 
+    public static int hexDigits(String value) { return digits(value).length(); }
+
     public record Preset(MapColor color, SoundType sound, boolean blocks, boolean tool, boolean burns, boolean replaceable, PushReaction push) {
         Preset sounding(SoundType other) { return new Preset(color, other, blocks, tool, burns, replaceable, push); }
     }

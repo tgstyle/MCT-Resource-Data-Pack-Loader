@@ -33,6 +33,8 @@ public final class ContentSkyExtras {
     private static final RenderPipeline SHADE = RenderPipelines.CELESTIAL.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sun_shade")).withColorTargetState(new ColorTargetState(new BlendFunction(BlendFactor.ZERO, BlendFactor.ONE_MINUS_SRC_COLOR))).build();
     private static final RenderSystem.AutoStorageIndexBuffer QUAD_INDICES = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
     @Nullable private static GpuBuffer sunAura;
+    @Nullable private static GpuBuffer sunLines;
+    @Nullable private static SkyLookDef linesLook;
     @Nullable private static GpuBuffer box;
     @Nullable private static GpuBuffer panorama;
     @Nullable private static GpuBuffer aurora;
@@ -56,6 +58,10 @@ public final class ContentSkyExtras {
         arc = 0.0F;
         if (sunAura == null) { sunAura = colored(null, "RDPL sun aura", ContentSkyShapes.aura()); }
         if (level == null || look == null) { return; }
+        if (look != linesLook && look.sunLineCount() > 0) {
+            sunLines = colored(sunLines, "RDPL sun lines", ContentSkyShapes.lines(look.sunLineCount(), look.sunLineStart(), look.sunLineLength(), look.sunLineWidth()));
+            linesLook = look;
+        }
         if (skybox != null) {
             images = ContentSkyShapes.images(skybox);
             if (skybox.panorama() != null && panorama == null) { panorama = textured("RDPL sky panorama", ContentSkyShapes.panorama()); }
@@ -123,7 +129,9 @@ public final class ContentSkyExtras {
         ClientLevel level = Minecraft.getInstance().level;
         float[] aura = ContentWindowLook.aura(level, fade, ContentSkyShapes.height(poseStack));
         float[] tint = ContentWindowLook.sunTint(level);
-        if (aura == null && tint == null) { return null; }
+        SkyLookDef look = ContentFogSampler.look(level);
+        boolean lines = ContentWindowLook.lined(look, fade);
+        if (aura == null && tint == null && !lines) { return null; }
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.mul(poseStack.last().pose());
@@ -131,16 +139,24 @@ public final class ContentSkyExtras {
         modelView.scale(size, 1.0F, size);
         Matrix4f placed = new Matrix4f(modelView);
         GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(ContentWindowLook.auraPlaced(level, placed), new Vector4f(aura[0], aura[1], aura[2], aura[3]));
+        float[] line = lines ? ContentWindowLook.lineColor(look, fade) : null;
+        GpuBufferSlice stroke = line == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(line[0], line[1], line[2], line[3]));
         GpuBufferSlice shade = tint == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(fade, fade, fade, 1.0F));
         modelView.popMatrix();
         renderPass.pushDebugGroup(() -> "RDPL sun haze");
         RenderSystem.bindDefaultUniforms(renderPass);
-        renderPass.setIndexBuffer(QUAD_INDICES.getBuffer(ContentSkyShapes.AURA_VERTICES / 4 * 6), QUAD_INDICES.type());
+        renderPass.setIndexBuffer(QUAD_INDICES.getBuffer(Math.max(ContentSkyShapes.AURA_VERTICES / 4 * 6, lines ? look.sunLineCount() * 6 : 0)), QUAD_INDICES.type());
         if (glow != null && sunAura != null) {
             renderPass.setPipeline(RenderSystem.getCompiledPipeline(AURA));
             renderPass.setUniform("DynamicTransforms", glow);
             renderPass.setVertexBuffer(0, sunAura.slice());
             renderPass.drawIndexed(ContentSkyShapes.AURA_VERTICES / 4 * 6, 1, 0, 0, 0);
+        }
+        if (stroke != null && sunLines != null) {
+            renderPass.setPipeline(RenderSystem.getCompiledPipeline(AURA));
+            renderPass.setUniform("DynamicTransforms", stroke);
+            renderPass.setVertexBuffer(0, sunLines.slice());
+            renderPass.drawIndexed(look.sunLineCount() * 6, 1, 0, 0, 0);
         }
         if (shade != null && vertices != null) {
             renderPass.setPipeline(RenderSystem.getCompiledPipeline(SHADE));

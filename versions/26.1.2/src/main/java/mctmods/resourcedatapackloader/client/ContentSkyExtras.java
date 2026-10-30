@@ -41,6 +41,8 @@ public final class ContentSkyExtras {
     private static final RenderPipeline SHADE = RenderPipelines.CELESTIAL.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sun_shade")).withColorTargetState(new ColorTargetState(new BlendFunction(SourceFactor.ZERO, DestFactor.ONE_MINUS_SRC_COLOR))).build();
     private static final RenderSystem.AutoStorageIndexBuffer QUAD_INDICES = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
     @Nullable private static GpuBuffer sunAura;
+    @Nullable private static GpuBuffer sunLines;
+    @Nullable private static SkyLookDef linesLook;
     @Nullable private static GpuBuffer box;
     @Nullable private static GpuBuffer panorama;
     @Nullable private static GpuBuffer aurora;
@@ -126,8 +128,14 @@ public final class ContentSkyExtras {
         GpuTextureView color = target.getColorTextureView();
         float[] aura = ContentWindowLook.aura(level, fade, ContentSkyShapes.height(poseStack));
         float[] tint = ContentWindowLook.sunTint(level);
-        if (color == null || aura == null && tint == null) { return tint; }
+        SkyLookDef look = ContentFogSampler.look(level);
+        boolean lines = ContentWindowLook.lined(look, fade);
+        if (color == null || aura == null && tint == null && !lines) { return tint; }
         if (aura != null && sunAura == null) { sunAura = colored(null, "RDPL sun aura", ContentSkyShapes.aura()); }
+        if (lines && look != linesLook) {
+            sunLines = colored(sunLines, "RDPL sun lines", ContentSkyShapes.lines(look.sunLineCount(), look.sunLineStart(), look.sunLineLength(), look.sunLineWidth()));
+            linesLook = look;
+        }
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.mul(poseStack.last().pose());
@@ -136,15 +144,23 @@ public final class ContentSkyExtras {
         Matrix4f placed = new Matrix4f(modelView);
         modelView.popMatrix();
         GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(ContentWindowLook.auraPlaced(level, placed), new Vector4f(aura[0], aura[1], aura[2], aura[3]), new Vector3f(), new Matrix4f());
+        float[] line = lines ? ContentWindowLook.lineColor(look, fade) : null;
+        GpuBufferSlice stroke = line == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(line[0], line[1], line[2], line[3]), new Vector3f(), new Matrix4f());
         GpuBufferSlice shade = tint == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(fade, fade, fade, 1.0F), new Vector3f(), new Matrix4f());
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL sun haze", color, OptionalInt.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
             RenderSystem.bindDefaultUniforms(pass);
-            pass.setIndexBuffer(QUAD_INDICES.getBuffer(ContentSkyShapes.AURA_VERTICES / 4 * 6), QUAD_INDICES.type());
+            pass.setIndexBuffer(QUAD_INDICES.getBuffer(Math.max(ContentSkyShapes.AURA_VERTICES / 4 * 6, lines ? look.sunLineCount() * 6 : 0)), QUAD_INDICES.type());
             if (glow != null && sunAura != null) {
                 pass.setPipeline(AURA);
                 pass.setUniform("DynamicTransforms", glow);
                 pass.setVertexBuffer(0, sunAura);
                 pass.drawIndexed(0, 0, ContentSkyShapes.AURA_VERTICES / 4 * 6, 1);
+            }
+            if (stroke != null && sunLines != null) {
+                pass.setPipeline(AURA);
+                pass.setUniform("DynamicTransforms", stroke);
+                pass.setVertexBuffer(0, sunLines);
+                pass.drawIndexed(0, 0, look.sunLineCount() * 6, 1);
             }
             if (shade != null) {
                 pass.setPipeline(SHADE);

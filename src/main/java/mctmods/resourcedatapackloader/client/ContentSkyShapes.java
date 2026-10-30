@@ -39,6 +39,7 @@ public final class ContentSkyShapes {
     public static final float AURA_REACH = 1.5F;
     private static final int AURA_STEPS = 32;
     public static final int AURA_VERTICES = AURA_STEPS / 2 * 4;
+    public static final int LINE_MAX = 64;
     private static final int WHITE = 0xFFFFFF;
     private static final long RAINBOW_TICKS = 2400L;
     private static final float RAINBOW_FADE = 600.0F;
@@ -175,6 +176,26 @@ public final class ContentSkyShapes {
                 float around = corner * Mth.TWO_PI / AURA_STEPS;
                 at = colored(out, at, Mth.cos(around) * AURA_REACH, 0.0F, Mth.sin(around) * AURA_REACH, WHITE, 0.0F);
             }
+        }
+        return out;
+    }
+
+    public static float[] lines(int count, float start, float length, float width) {
+        float[] out = new float[LINE_MAX * 4 * COLORED];
+        int at = 0;
+        float half = width / 2.0F;
+        for (int line = 0; line < Math.min(count, LINE_MAX); line++) {
+            float around = line * Mth.TWO_PI / count;
+            float dx = Mth.cos(around);
+            float dz = Mth.sin(around);
+            float near = start / Math.max(Math.abs(dx), Math.abs(dz));
+            float far = near + length;
+            float sideX = -dz * half;
+            float sideZ = dx * half;
+            at = colored(out, at, dx * near + sideX, 0.0F, dz * near + sideZ, WHITE, 1.0F);
+            at = colored(out, at, dx * near - sideX, 0.0F, dz * near - sideZ, WHITE, 1.0F);
+            at = colored(out, at, dx * far - sideX, 0.0F, dz * far - sideZ, WHITE, 0.0F);
+            at = colored(out, at, dx * far + sideX, 0.0F, dz * far + sideZ, WHITE, 0.0F);
         }
         return out;
     }

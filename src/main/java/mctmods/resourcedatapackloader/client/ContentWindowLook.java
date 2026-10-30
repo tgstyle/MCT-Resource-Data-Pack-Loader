@@ -103,6 +103,10 @@ public final class ContentWindowLook {
         return aura;
     }
 
+    static boolean lined(@Nullable SkyLookDef look, float fade) { return look != null && look.sunLineCount() > 0 && look.sunLineLength() > 0.0F && look.sunLineWidth() > 0.0F && ARGB.alphaFloat(look.sunLineColor()) * fade > 0.0F; }
+
+    static float[] lineColor(SkyLookDef look, float fade) { return new float[] {ARGB.redFloat(look.sunLineColor()), ARGB.greenFloat(look.sunLineColor()), ARGB.blueFloat(look.sunLineColor()), ARGB.alphaFloat(look.sunLineColor()) * fade}; }
+
     static Matrix4f auraPlaced(@Nullable Level level, Matrix4f placed) {
         SkyLookDef look = ContentFogSampler.look(level);
         float scale = look == null ? 1.0F : look.sunAuraSize() / ContentSkyShapes.AURA_REACH;
