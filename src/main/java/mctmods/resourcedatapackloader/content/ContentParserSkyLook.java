@@ -22,7 +22,8 @@ public final class ContentParserSkyLook {
     private static final List<String> FACES = Arrays.asList("up", "down", "north", "east", "south", "west");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
-    private static final List<String> HAZE = Arrays.asList("color", "auraColor");
+    private static final List<String> HAZE = Arrays.asList("color", "auraColor", "auraSize", "auraHorizon");
+    public static final float AURA_SIZE = 1.5F;
     public static final float GROUND_WEIGHT = 0.5F;
     private static final float HOT = 1.5F;
     private static final float HEAT_STRENGTH = 0.1F;
@@ -62,6 +63,8 @@ public final class ContentParserSkyLook {
                 Json.getBoolean(sky, "rainbow", false),
                 color(key, sun, "color"),
                 color(key, sun, "auraColor"),
+                Json.ranged(sun, "auraSize", AURA_SIZE, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"),
+                Json.ranged(sun, "auraHorizon", 0.0F, 0.0F, 90.0F, "Dimension " + key + " sky.sun"),
                 color(key, sky, "grassTint"),
                 color(key, sky, "foliageTint"));
     }

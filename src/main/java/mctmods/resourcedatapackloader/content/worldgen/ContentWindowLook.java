@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
 import mctmods.resourcedatapackloader.util.Colors;
 
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
@@ -91,17 +92,19 @@ import javax.annotation.Nullable;
         return tint;
     }
 
-    @Nullable static float[] aura(@Nullable World world) {
+    @Nullable static float[] aura(@Nullable World world, float height) {
         SkyLookDef look = ContentFogSampler.look(world);
         TimeWindowDef first = first(world, TimeWindowDef.SUN_AURA);
         if ((look == null || look.sunAuraColor == SkyLookDef.UNSET) && first == null) { return null; }
         float[] aura = look == null || look.sunAuraColor == SkyLookDef.UNSET ? rgba(first.sunAuraColor, 0.0F) : rgba(look.sunAuraColor, 1.0F);
         DimensionDef def = current(world);
-        if (def == null) { return aura; }
-        for (int index = 0; index < weights.length; index++) {
-            TimeWindowDef window = def.windows.get(index);
-            if (window.gives(TimeWindowDef.SUN_AURA)) { blend(aura, rgba(window.sunAuraColor, 1.0F), weights[index]); }
+        if (def != null) {
+            for (int index = 0; index < weights.length; index++) {
+                TimeWindowDef window = def.windows.get(index);
+                if (window.gives(TimeWindowDef.SUN_AURA)) { blend(aura, rgba(window.sunAuraColor, 1.0F), weights[index]); }
+            }
         }
+        if (look != null && look.sunAuraHorizon > 0.0F) { aura[3] *= 1.0F - MathHelper.clamp(Math.abs((float) Math.toDegrees(Math.asin(MathHelper.clamp(height, -1.0F, 1.0F)))) / look.sunAuraHorizon, 0.0F, 1.0F); }
         return aura;
     }
 

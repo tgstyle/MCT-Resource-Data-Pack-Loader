@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.util.Colors;
@@ -12,6 +13,7 @@ import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DimensionType;
@@ -20,8 +22,10 @@ import net.minecraft.world.WorldProvider;
 import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +37,7 @@ import java.util.WeakHashMap;
         @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {}
     };
     private static final float AURA_ALPHA = 0.5F;
-    private static final float AURA_REACH = 1.5F;
+    private static final FloatBuffer MODELVIEW = BufferUtils.createFloatBuffer(16);
     private static final int AURA_SEGMENTS = 32;
     private static final Map<DimensionDef, ContentSkyRenderer> PACK_SKIES = new HashMap<>();
     private static final Map<DimensionDef, ContentWeatherRenderer> PACK_WEATHER = new HashMap<>();
@@ -70,7 +74,7 @@ import java.util.WeakHashMap;
     }
 
     public static void sunHaze(World world, ResourceLocation texture, float alpha, float size, boolean rawColor) {
-        float[] aura = ContentWindowLook.aura(world);
+        float[] aura = ContentWindowLook.aura(world, sunHeight());
         float[] tint = ContentWindowLook.sunTint(world);
         boolean hazed = aura != null && aura[3] > 0.0F;
         if (hazed || tint != null) {
@@ -80,7 +84,8 @@ import java.util.WeakHashMap;
             int destAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
             if (hazed) {
                 GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-                aura(aura, alpha * aura[3] * AURA_ALPHA, size);
+                SkyLookDef look = ContentFogSampler.look(world);
+                aura(aura, alpha * aura[3] * AURA_ALPHA, size * (look == null ? ContentParserSkyLook.AURA_SIZE : look.sunAuraSize));
             }
             if (tint != null) {
                 GL11.glBlendFunc(GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_COLOR);
@@ -92,6 +97,19 @@ import java.util.WeakHashMap;
         }
         if (tint == null) { color(1.0F, 1.0F, 1.0F, alpha, rawColor); }
         else { color(tint[0], tint[1], tint[2], alpha, rawColor); }
+    }
+
+    private static float sunHeight() {
+        Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
+        if (viewer == null) { return 1.0F; }
+        MODELVIEW.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, MODELVIEW);
+        float pitch = (float) Math.toRadians(viewer.prevRotationPitch + (viewer.rotationPitch - viewer.prevRotationPitch) * Minecraft.getMinecraft().getRenderPartialTicks());
+        float x = MODELVIEW.get(4);
+        float y = MODELVIEW.get(5);
+        float z = MODELVIEW.get(6);
+        float length = MathHelper.sqrt(x * x + y * y + z * z);
+        return length == 0.0F ? 1.0F : (y * MathHelper.cos(pitch) + z * MathHelper.sin(pitch)) / length;
     }
 
     private static void color(float red, float green, float blue, float alpha, boolean raw) {
@@ -115,14 +133,13 @@ import java.util.WeakHashMap;
         if (alphaTest) { GL11.glDisable(GL11.GL_ALPHA_TEST); }
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glShadeModel(GL11.GL_SMOOTH);
-        float wide = size * AURA_REACH;
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
         buffer.pos(0.0D, 100.0D, 0.0D).color(aura[0], aura[1], aura[2], alpha).endVertex();
         for (int step = 0; step <= AURA_SEGMENTS; step++) {
             float at = step * (float) Math.PI * 2.0F / AURA_SEGMENTS;
-            buffer.pos(MathHelper.cos(at) * wide, 100.0D, MathHelper.sin(at) * wide).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
+            buffer.pos(MathHelper.cos(at) * size, 100.0D, MathHelper.sin(at) * size).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
         }
         tessellator.draw();
         GL11.glShadeModel(GL11.GL_FLAT);
