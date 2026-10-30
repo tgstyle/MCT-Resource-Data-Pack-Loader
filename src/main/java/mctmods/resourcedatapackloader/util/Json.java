@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.util;
 
+import mctmods.resourcedatapackloader.content.ContentInherits;
 import mctmods.resourcedatapackloader.pack.PackManager;
 
 import com.google.gson.Gson;
@@ -248,17 +249,22 @@ public final class Json {
     }
 
     public static void eachFile(String folder, String kind, BiConsumer<Identifier, String> reader) {
-        PackManager.get().forEach(folder, PackManager.JSON, (namespace, path, contents) -> {
-            Identifier key = Identifier.fromNamespaceAndPath(namespace, path);
-            try {
-                within(kind, key, () -> {
-                    reader.accept(key, contents);
-                    return null;
-                });
-            }
-            catch (JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in {} {}, ignoring it: {}", kind, key, ex.getMessage()); }
-            catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in " + kind + " {}, ignoring it", key, ex); }
-        });
+        PackManager.get().forEach(folder, PackManager.JSON, (namespace, path, contents) -> read(Identifier.fromNamespaceAndPath(namespace, path), contents, kind, reader));
+    }
+
+    public static void eachInheritedFile(String folder, String kind, Set<String> identity, BiConsumer<Identifier, String> reader) {
+        for (Map.Entry<Identifier, String> file : ContentInherits.collectFiles(folder, identity).entrySet()) { read(file.getKey(), file.getValue(), kind, reader); }
+    }
+
+    private static void read(Identifier key, String contents, String kind, BiConsumer<Identifier, String> reader) {
+        try {
+            within(kind, key, () -> {
+                reader.accept(key, contents);
+                return null;
+            });
+        }
+        catch (JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in {} {}, ignoring it: {}", kind, key, ex.getMessage()); }
+        catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in " + kind + " {}, ignoring it", key, ex); }
     }
 
     public static void eachObject(String folder, String kind, BiConsumer<Identifier, JsonObject> reader) {

@@ -39,7 +39,7 @@ public final class ContentPortals {
 
     public static Map<Identifier, DimensionDef> opening() {
         Map<Identifier, DimensionDef> out = new LinkedHashMap<>();
-        for (DimensionDef def : ContentDimensions.all()) {
+        for (DimensionDef def : ContentDimensions.available()) {
             if (def.portal() != null) { out.put(def.key(), def); }
         }
         return out;

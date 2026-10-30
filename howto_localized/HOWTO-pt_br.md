@@ -439,6 +439,13 @@ Uma definição de bloco ou item pode partir de outra do mesmo tipo com `"inheri
 
 O filho copia todas as estatísticas do arquivo do pai e da variante nomeada, a ordem dos arquivos nunca importa, as cadeias são resolvidas começando pelo pai, e um ciclo ou um pai ausente é registrado no log e deixa o filho como foi escrito. Os campos que o filho escreve substituem o valor herdado; as propriedades aninhadas das variantes são substituídas uma a uma, mas listas como `requires` são substituídas por inteiro, então escreva a lista completa que quiser. Blocos herdam apenas de blocos e itens apenas de itens.
 
+Um arquivo de dimensão ou de bioma também pode herdar de outro arquivo do mesmo tipo, nomeando-o como `namespace:caminho` ou como um simples caminho no próprio namespace:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Esses arquivos não têm variantes, então o filho copia o arquivo do pai inteiro. Um valor que o filho escreve substitui o herdado, listas incluídas, exceto que um objeto de nível superior como `sky` ou `placement` é mesclado chave por chave um nível abaixo: aqui o céu do pai mantém tudo menos `fogColor`. `id` e `suffix` nunca são herdados, `requires` é, então escreva `"requires": []` para esvaziá-lo. O pai é a cópia vencedora desse nome de arquivo entre os pacotes, e um bioma do próprio jogo é indicado com `baseBiome`, não com `inherits`. As cadeias são resolvidas a partir do pai, e um círculo ou um pai ausente é registrado no log e deixa o filho como foi escrito.
+
 ### Modelos de blocos e itens
 
 *como as definições funcionam*
@@ -484,6 +491,8 @@ Um pai pode ser um modelo puro que nunca entra no jogo, já que a herança lê o
 ```
 
 O modelo nunca é registrado, enquanto `jacks_ore` é registrado com o material, o som, a ferramenta, a aba, os drops de experiência e a resistência do modelo, substituindo apenas a dureza. O filho precisa escrever o próprio `requires`, aqui esvaziado para uma lista vazia, porque, do contrário, herda o do pai e sumiria junto com ele.
+
+O pai de uma dimensão ou de um bioma pode ser um modelo do mesmo jeito, atrás da mesma opção forçada como desligada.
 
 ## O que você pode substituir
 
@@ -4230,6 +4239,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | ----------- | ----------- | --------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`      | não         | texto                                         | o nome do arquivo  | Nome mostrado ao jogador                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `types`     | não         | lista de tipos de bioma                       | deduzido           | Escreve o bioma nas tags que essas palavras de tipo representam, como `forest`, `cold`, `wet` ou `nether`, para que outros mods o encontrem. Se omitida, os tipos são deduzidos do bioma como o jogo os deduzia: `forest` ou `jungle` a partir de três árvores ou mais, `plains` caso contrário, `hot`, `cold`, `wet` e `dry` a partir da temperatura e da umidade, `sparse` ou `dense` a partir da contagem de árvores, `snowy` a partir de `snow`, e `sandy`, `mushroom` ou `mesa` a partir de solo de areia, micélio ou terracota |
+| `inherits`  | não         | nome de arquivo                               | nenhum             | Parte de outro arquivo de bioma dos pacotes e sobrescreve só o que difere. Um bioma do próprio jogo é indicado por `baseBiome`                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `baseBiome` | não         | nome de bioma                                 | `minecraft:plains` | Um bioma existente de onde copiar configurações. Um que não seja um bioma que o jogo ou um mod entrega é registrado no log, e as planícies são usadas                                                                                                                                                                                                                                                                                                                                                                                |
 | `requires`  | não         | lista de ids de mods ou namespaces de pacotes | nenhum             | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
@@ -4444,11 +4454,12 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 
 *dimensões*
 
-| Chave       | Obrigatória | Valor                                         | Padrão | O que faz                                                                                                              |
-| ----------- | ----------- | --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------- |
-| `gameRules` | não         | objeto                                        | nenhum | Regras que se aplicam apenas aqui                                                                                      |
-| `portal`    | não         | objeto                                        | nenhum | Uma moldura que abre esta dimensão. Veja [Abrindo uma dimensão com uma moldura](#abrindo-uma-dimensão-com-uma-moldura) |
-| `requires`  | não         | lista de ids de mods ou namespaces de pacotes | nenhum | O arquivo é ignorado a menos que todos estejam presentes                                                               |
+| Chave       | Obrigatória | Valor                                         | Padrão | O que faz                                                                                                                |
+| ----------- | ----------- | --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `inherits`  | não         | nome de arquivo                               | nenhum | Parte de outro arquivo de dimensão e sobrescreve só o que difere; um objeto de nível superior é mesclado chave por chave |
+| `gameRules` | não         | objeto                                        | nenhum | Regras que se aplicam apenas aqui                                                                                        |
+| `portal`    | não         | objeto                                        | nenhum | Uma moldura que abre esta dimensão. Veja [Abrindo uma dimensão com uma moldura](#abrindo-uma-dimensão-com-uma-moldura)   |
+| `requires`  | não         | lista de ids de mods ou namespaces de pacotes | nenhum | O arquivo é ignorado a menos que todos estejam presentes                                                                 |
 
 Uma dimensão é uma entrada de data pack nesta versão: o tipo de dimensão e as configurações de ruído são escritos para você sob o namespace do pacote, de modo que um cliente vanilla é informado dela ao entrar e viaja até lá como a qualquer outra. A dimensão mantém sua própria pasta de save dentro do mundo, com o nome do seu id, e é carregada enquanto alguém está nela, ou enquanto um `forceload` mantém um chunk.
 

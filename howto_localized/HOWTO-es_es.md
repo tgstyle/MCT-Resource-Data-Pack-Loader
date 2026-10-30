@@ -439,6 +439,13 @@ Una definición de bloque o de ítem puede partir de otra del mismo tipo con `"i
 
 El hijo copia todas las estadísticas del archivo del padre y de la variante nombrada, el orden de los archivos nunca importa, las cadenas se resuelven empezando por el padre, y un círculo o un padre ausente se anota en el registro y deja al hijo tal como está escrito. Los campos que escribe el hijo sustituyen al valor heredado; las propiedades anidadas de las variantes se sobrescriben una a una, pero las listas como `requires` se sustituyen enteras, así que escribe la lista completa que quieras. Los bloques solo heredan de bloques y los ítems solo de ítems.
 
+Un archivo de dimensión o de bioma también puede heredar de otro archivo de su mismo tipo, nombrándolo como `namespace:ruta` o como una ruta sin más en su propio espacio de nombres:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Estos archivos no tienen variantes, así que el hijo copia el archivo del padre entero. Un valor que escribe el hijo sustituye al heredado, listas incluidas, salvo que un objeto de primer nivel como `sky` o `placement` se fusiona clave por clave un nivel más abajo: aquí el cielo del padre conserva todo menos `fogColor`. `id` y `suffix` nunca se heredan, `requires` sí, así que escribe `"requires": []` para vaciarlo. El padre es la copia ganadora de ese nombre de archivo entre los packs, y un bioma del propio juego se indica con `baseBiome`, no con `inherits`. Las cadenas se resuelven desde el padre, y un círculo o un padre que falta se registra y deja al hijo tal como está escrito.
+
 ### Plantillas de bloques e ítems
 
 *cómo funcionan las definiciones*
@@ -484,6 +491,8 @@ Un padre puede ser una plantilla pura que nunca entra en el juego, ya que la her
 ```
 
 La plantilla nunca se registra, mientras que `jacks_ore` se registra con el material, el sonido, la herramienta, la pestaña, los drops de experiencia y la resistencia de la plantilla, sobrescribiendo solo la dureza. El hijo debe escribir su propio `requires`, aquí vaciado a una lista vacía, porque de lo contrario hereda el del padre y desaparecería con él.
+
+El padre de una dimensión o de un bioma puede ser una plantilla del mismo modo, detrás de la misma opción forzada a desactivada.
 
 ## Qué puedes sobrescribir
 
@@ -4230,6 +4239,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | ----------- | ----------- | ------------------------------------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | no          | cadena                                            | el nombre del archivo | Nombre que se muestra al jugador                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `types`     | no          | lista de tipos de bioma                           | deducidos             | Escribe el bioma en las etiquetas que representan esas palabras de tipo, como `forest`, `cold`, `wet` o `nether`, para que otros mods lo encuentren. Si se omite, los tipos se deducen del bioma como los deducía el juego: `forest` o `jungle` a partir de tres árboles o más, `plains` en caso contrario, `hot`, `cold`, `wet` y `dry` según la temperatura y la lluvia, `sparse` o `dense` según el número de árboles, `snowy` según `snow`, y `sandy`, `mushroom` o `mesa` según un suelo de arena, micelio o terracota |
+| `inherits`  | no          | nombre de archivo                                 | ninguno               | Parte de otro archivo de bioma de los packs y sobrescribe solo lo que difiere. Un bioma del propio juego se indica con `baseBiome`                                                                                                                                                                                                                                                                                                                                                                                          |
 | `baseBiome` | no          | nombre de bioma                                   | `minecraft:plains`    | Un bioma existente del que copiar ajustes. Si no es un bioma que traiga el juego o un mod, se anota en el registro y se usa la llanura                                                                                                                                                                                                                                                                                                                                                                                      |
 | `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno               | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
@@ -4444,11 +4454,12 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 *dimensiones*
 
-| Clave       | Obligatorio | Valor                                             | Por defecto | Qué hace                                                                                                      |
-| ----------- | ----------- | ------------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------- |
-| `gameRules` | no          | objeto                                            | ninguno     | Reglas que se aplican solo aquí                                                                               |
-| `portal`    | no          | objeto                                            | ninguno     | Un marco que abre esta dimensión. Véase [Abrir una dimensión con un marco](#abrir-una-dimensión-con-un-marco) |
-| `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno     | El archivo se omite a menos que estén presentes todos                                                         |
+| Clave       | Obligatorio | Valor                                             | Por defecto | Qué hace                                                                                                                   |
+| ----------- | ----------- | ------------------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | no          | nombre de archivo                                 | ninguno     | Parte de otro archivo de dimensión y sobrescribe solo lo que difiere; un objeto de primer nivel se fusiona clave por clave |
+| `gameRules` | no          | objeto                                            | ninguno     | Reglas que se aplican solo aquí                                                                                            |
+| `portal`    | no          | objeto                                            | ninguno     | Un marco que abre esta dimensión. Véase [Abrir una dimensión con un marco](#abrir-una-dimensión-con-un-marco)              |
+| `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno     | El archivo se omite a menos que estén presentes todos                                                                      |
 
 Una dimensión es una entrada de data pack en esta versión: el tipo de dimensión y los ajustes de ruido se escriben por ti bajo el espacio de nombres del pack, de modo que a un cliente vanilla se le informa de ella al unirse y viaja allí como a cualquier otra. La dimensión conserva su propia carpeta de guardado dentro del mundo, con el nombre de su id, y se carga mientras alguien está en ella, o mientras un `forceload` mantiene un chunk.
 

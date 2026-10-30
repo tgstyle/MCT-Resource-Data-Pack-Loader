@@ -439,6 +439,13 @@ Definice bloku nebo předmětu může začít od jiné téhož druhu pomocí `"i
 
 Potomek zkopíruje všechny staty rodičovského souboru a pojmenované varianty, na pořadí souborů nikdy nezáleží, řetězce se řeší od rodiče a kruh nebo chybějící rodič se zapíše do logu a potomek zůstane tak, jak je napsaný. Pole, která potomek napíše, nahradí zděděnou hodnotu; vnořené vlastnosti variant se přepisují po jedné, ale seznamy jako `requires` se nahrazují celé, takže napiš celý požadovaný seznam. Bloky dědí jen z bloků a předměty jen z předmětů.
 
+Stejným způsobem může dědit i soubor dimenze nebo biomu z jiného souboru svého druhu; pojmenuje ho jako `namespace:cesta` nebo holou cestou ve vlastním namespace:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Tyto soubory nemají varianty, takže potomek převezme celý soubor rodiče. Hodnota, kterou potomek napíše, nahradí zděděnou, i u seznamů; jen objekt nejvyšší úrovně, například `sky` nebo `placement`, se sloučí klíč po klíči o jednu úroveň hlouběji: zde si obloha rodiče ponechá vše kromě `fogColor`. `id` a `suffix` se nikdy nedědí, `requires` ano, takže ho vyprázdníte zápisem `"requires": []`. Rodičem je vítězná kopie daného názvu souboru napříč balíčky a biom samotné hry se zadává přes `baseBiome`, ne přes `inherits`. Řetězy se řeší od rodiče, cyklus nebo chybějící rodič se zapíše do logu a potomek zůstane tak, jak je napsán.
+
 ### Šablony bloků a předmětů
 
 *jak fungují definice*
@@ -484,6 +491,8 @@ Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože d�
 ```
 
 Šablona se nikdy nezaregistruje, zatímco `jacks_ore` se zaregistruje s materiálem, zvukem, nástrojem, kartou, dropy zkušeností a odolností šablony a přepíše jen tvrdost. Potomek musí napsat vlastní `requires`, zde vymazaný na prázdný seznam, protože jinak zdědí rodičův a zmizel by s ním.
+
+Rodičem dimenze nebo biomu může být šablona stejným způsobem, zablokovaná za stejnou natvrdo vypnutou volbou.
 
 ## Co můžeš přepsat
 
@@ -4230,6 +4239,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 | ----------- | ------- | ------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | ne      | řetězec                               | název souboru      | Název zobrazený hráči                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `types`     | ne      | seznam typů biomů                     | odhadnuto          | Zapíše biom do tagů, za které tato slova typů stojí, například `forest`, `cold`, `wet` nebo `nether`, aby ho našly jiné módy. Pokud chybí, typy se odhadnou z biomu tak, jak je odhadovala hra: `forest` nebo `jungle` ze tří stromů a více, jinak `plains`, `hot`, `cold`, `wet` a `dry` z teploty a srážek, `sparse` nebo `dense` z počtu stromů, `snowy` ze `snow` a `sandy`, `mushroom` nebo `mesa` z písku, mycelia nebo terakoty na zemi |
+| `inherits`  | ne      | název souboru                         | žádný              | Vyjde z jiného souboru biomu v balíčcích a přepíše jen to, co se liší. Biom samotné hry se místo toho zadává přes `baseBiome`                                                                                                                                                                                                                                                                                                                  |
 | `baseBiome` | ne      | název biomu                           | `minecraft:plains` | Existující biom, ze kterého se kopírují nastavení. Ten, který není biomem dodaným hrou nebo módem, se zaloguje a použijí se pláně                                                                                                                                                                                                                                                                                                              |
 | `requires`  | ne      | seznam id módů nebo namespaců balíčků | žádný              | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                                                                              |
 
@@ -4444,11 +4454,12 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 
 *dimenze*
 
-| Klíč        | Povinné | Hodnota                               | Výchozí | Co dělá                                                                                |
-| ----------- | ------- | ------------------------------------- | ------- | -------------------------------------------------------------------------------------- |
-| `gameRules` | ne      | objekt                                | žádný   | Pravidla, která platí jen zde                                                          |
-| `portal`    | ne      | objekt                                | žádný   | Rám, který tuto dimenzi otevírá. Viz [Otevření dimenze rámem](#otevření-dimenze-rámem) |
-| `requires`  | ne      | seznam id módů nebo namespaců balíčků | žádný   | Soubor se přeskočí, pokud nejsou přítomny všechny                                      |
+| Klíč        | Povinné | Hodnota                               | Výchozí | Co dělá                                                                                                      |
+| ----------- | ------- | ------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `inherits`  | ne      | název souboru                         | žádný   | Vyjde z jiného souboru dimenze a přepíše jen to, co se liší; objekt nejvyšší úrovně se slučuje klíč po klíči |
+| `gameRules` | ne      | objekt                                | žádný   | Pravidla, která platí jen zde                                                                                |
+| `portal`    | ne      | objekt                                | žádný   | Rám, který tuto dimenzi otevírá. Viz [Otevření dimenze rámem](#otevření-dimenze-rámem)                       |
+| `requires`  | ne      | seznam id módů nebo namespaců balíčků | žádný   | Soubor se přeskočí, pokud nejsou přítomny všechny                                                            |
 
 Dimenze je v této verzi položka datového balíčku: typ dimenze a nastavení šumu se za tebe zapíšou pod namespace balíčku, takže vanilla klient se o ní dozví při připojení a cestuje tam jako do jakékoli jiné. Dimenze si drží vlastní složku uložení pod světem, pojmenovanou podle jejího id, a načítá se, dokud v ní někdo je nebo dokud `forceload` drží chunk.
 

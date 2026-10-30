@@ -439,6 +439,13 @@ Eine Block- oder Item-Definition kann mit `"inherits"` von einer anderen derselb
 
 Das Kind kopiert jeden Wert aus der Datei des Elternteils und aus der genannten Variante, die Dateireihenfolge spielt nie eine Rolle, Ketten werden vom Elternteil abwärts aufgelöst, und ein Kreis oder ein fehlender Elternteil landet im Log und lässt das Kind so, wie es geschrieben steht. Felder, die das Kind schreibt, ersetzen den geerbten Wert; verschachtelte Varianteneigenschaften überschreiben einzeln, Listen wie `requires` dagegen komplett, schreib also die ganze Liste, die du haben willst. Blöcke erben nur von Blöcken und Items nur von Items.
 
+Auch eine Dimensions- oder Biomdatei kann auf dieselbe Weise von einer anderen Datei ihrer Art erben; sie nennt sie als `namespace:pfad` oder als bloßen Pfad im eigenen Namespace:
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Diese Dateien haben keine Varianten, deshalb übernimmt das Kind die ganze Elterndatei. Ein Wert, den das Kind schreibt, ersetzt den geerbten, auch bei Listen; nur ein Objekt auf oberster Ebene wie `sky` oder `placement` wird Schlüssel für Schlüssel eine Ebene tief zusammengeführt: hier behält der Himmel des Elternteils alles außer `fogColor`. `id` und `suffix` werden nie geerbt, `requires` schon, also `"requires": []` schreiben, um es zu leeren. Das Elternteil ist die gewinnende Kopie dieses Dateinamens über alle Packs hinweg, und ein Biom des Spiels selbst wird mit `baseBiome` angesprochen, nicht mit `inherits`. Ketten werden vom Elternteil her aufgelöst, ein Kreis oder ein fehlendes Elternteil wird protokolliert und lässt das Kind wie geschrieben.
+
 ### Block- und Item-Vorlagen
 
 *wie definitionen funktionieren*
@@ -484,6 +491,8 @@ Ein Elternteil kann eine reine Vorlage sein, die nie ins Spiel kommt, denn die V
 ```
 
 Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werkzeug, Tab, Erfahrungsdrops und Widerstand der Vorlage registriert wird und nur die Härte überschreibt. Das Kind muss sein eigenes `requires` schreiben, hier auf eine leere Liste gesetzt, weil es sonst das des Elternteils erbt und mit ihm verschwinden würde.
+
+Ein Dimensions- oder Biom-Elternteil kann auf dieselbe Weise eine Vorlage sein, hinter derselben erzwungen ausgeschalteten Option.
 
 ## Was du überschreiben kannst
 
@@ -4230,6 +4239,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | ----------- | ------- | -------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | nein    | Text                                   | der Dateiname      | Name, den der Spieler sieht                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `types`     | nein    | Liste von Biomtypen                    | geschätzt          | Schreibt das Biom in die Tags, für die diese Typwörter stehen, etwa `forest`, `cold`, `wet` oder `nether`, damit andere Mods es finden. Weggelassen werden die Typen aus dem Biom geschätzt, so wie das Spiel sie schätzte: `forest` oder `jungle` ab drei Bäumen, sonst `plains`, `hot`, `cold`, `wet` und `dry` aus Temperatur und Niederschlag, `sparse` oder `dense` aus der Baumzahl, `snowy` aus `snow` und `sandy`, `mushroom` oder `mesa` aus einem Boden aus Sand, Myzel oder Terrakotta |
+| `inherits`  | nein    | Dateiname                              | keine              | Von einer anderen Biomdatei der Packs ausgehen und nur Abweichendes überschreiben. Ein Biom des Spiels selbst nennt stattdessen `baseBiome`                                                                                                                                                                                                                                                                                                                                                       |
 | `baseBiome` | nein    | Biomname                               | `minecraft:plains` | Ein vorhandenes Biom, von dem Einstellungen kopiert werden. Eines, das weder das Spiel noch ein Mod mitbringt, wird protokolliert, und die Ebene wird genommen                                                                                                                                                                                                                                                                                                                                    |
 | `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine              | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
@@ -4444,11 +4454,12 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 *dimensionen*
 
-| Schlüssel   | Pflicht | Wert                                   | Standard | Was er macht                                                                                                                      |
-| ----------- | ------- | -------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `gameRules` | nein    | Objekt                                 | keines   | Regeln, die nur hier gelten                                                                                                       |
-| `portal`    | nein    | Objekt                                 | keines   | Ein Rahmen, der diese Dimension öffnet. Siehe [Eine Dimension über einen Rahmen öffnen](#eine-dimension-über-einen-rahmen-öffnen) |
-| `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine    | Die Datei wird übersprungen, wenn nicht alle da sind                                                                              |
+| Schlüssel   | Pflicht | Wert                                   | Standard | Was er macht                                                                                                                                              |
+| ----------- | ------- | -------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | nein    | Dateiname                              | keine    | Von einer anderen Dimensionsdatei ausgehen und nur Abweichendes überschreiben; ein Objekt auf oberster Ebene wird Schlüssel für Schlüssel zusammengeführt |
+| `gameRules` | nein    | Objekt                                 | keines   | Regeln, die nur hier gelten                                                                                                                               |
+| `portal`    | nein    | Objekt                                 | keines   | Ein Rahmen, der diese Dimension öffnet. Siehe [Eine Dimension über einen Rahmen öffnen](#eine-dimension-über-einen-rahmen-öffnen)                         |
+| `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine    | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                      |
 
 Eine Dimension ist in dieser Version ein Datenpaket-Eintrag: Der Dimensionstyp und die Noise-Einstellungen werden für dich unter dem Namespace des Packs geschrieben, ein Vanilla-Client erfährt also beim Beitreten von ihr und reist wie in jede andere dorthin. Die Dimension behält ihren eigenen Speicherordner unter der Welt, benannt nach ihrer ID, und ist geladen, solange jemand darin ist oder ein `forceload` einen Chunk hält.
 

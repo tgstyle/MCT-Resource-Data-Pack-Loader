@@ -33,7 +33,7 @@ public final class ContentSnowTint {
     public static boolean tints(BlockState state) { return wanted && (state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK)); }
 
     static boolean wanted() {
-        for (DimensionDef def : ContentDimensions.all()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
+        for (DimensionDef def : ContentDimensions.available()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
         for (SkyLookDef look : ContentEnvironments.looks()) { if (look.snowColor() != SkyLookDef.UNSET) { return true; } }
         return ContentBiomes.tintsSnow();
     }

@@ -439,6 +439,13 @@ Une définition de bloc ou d'objet peut partir d'une autre du même genre avec `
 
 L'enfant copie chaque statistique du fichier du parent et de la variante nommée, l'ordre des fichiers n'a jamais d'importance, les chaînes se résolvent en commençant par le parent, et un cercle ou un parent manquant est consigné et laisse l'enfant tel qu'il est écrit. Les champs que l'enfant écrit remplacent la valeur héritée ; les propriétés imbriquées des variantes se surchargent une à une, mais les listes comme `requires` se remplacent en entier, donc écrivez la liste complète voulue. Les blocs n'héritent que de blocs et les objets que d'objets.
 
+Un fichier de dimension ou de biome peut hériter de la même façon d'un autre fichier de son espèce, en le nommant `namespace:chemin` ou par un simple chemin dans son propre namespace :
+
+    { "inherits": "mypack:ruby_overworld",
+      "sky": { "fogColor": "112233" } }
+
+Ces fichiers n'ont pas de variantes, donc l'enfant copie le fichier parent en entier. Une valeur écrite par l'enfant remplace celle héritée, listes comprises, sauf qu'un objet de premier niveau comme `sky` ou `placement` est fusionné clé par clé un niveau plus bas : ici le ciel du parent garde tout sauf `fogColor`. `id` et `suffix` ne sont jamais hérités, `requires` l'est, donc écrivez `"requires": []` pour le vider. Le parent est la copie gagnante de ce nom de fichier parmi les packs, et un biome du jeu lui-même se désigne par `baseBiome`, pas par `inherits`. Les chaînes se résolvent en partant du parent, et un cercle ou un parent manquant est consigné dans le journal et laisse l'enfant tel qu'écrit.
+
 ### Modèles de blocs et d'objets
 
 *fonctionnement des définitions*
@@ -484,6 +491,8 @@ Un parent peut être un pur modèle qui n'entre jamais dans le jeu, puisque l'h�
 ```
 
 Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le matériau, le son, l'outil, l'onglet, les gains d'expérience et la résistance du modèle, ne surchargeant que la dureté. L'enfant doit écrire son propre `requires`, ici vidé en liste vide, car il hérite sinon de celui du parent et disparaîtrait avec lui.
+
+Le parent d'une dimension ou d'un biome peut être un modèle de la même façon, placé derrière la même option forcée à désactivée.
 
 ## Ce que vous pouvez surcharger
 
@@ -4230,6 +4239,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | ----------- | ------ | --------------------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`      | non    | texte                                         | le nom du fichier  | Nom montré au joueur                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `types`     | non    | liste de types de biomes                      | deviné             | Inscrit le biome dans les tags que ces mots de type désignent, comme `forest`, `cold`, `wet` ou `nether`, afin que d'autres mods le trouvent. Omis, les types sont devinés à partir du biome, comme le jeu les devinait : `forest` ou `jungle` à partir de trois arbres ou plus, `plains` sinon, `hot`, `cold`, `wet` et `dry` d'après la température et les précipitations, `sparse` ou `dense` d'après le nombre d'arbres, `snowy` d'après `snow`, et `sandy`, `mushroom` ou `mesa` d'après un sol de sable, de mycélium ou de terre cuite |
+| `inherits`  | non    | nom de fichier                                | aucun              | Part d'un autre fichier de biome des packs et ne remplace que ce qui diffère. Un biome du jeu lui-même se désigne plutôt par `baseBiome`                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `baseBiome` | non    | nom de biome                                  | `minecraft:plains` | Un biome existant dont copier les réglages. Un nom qui n'est pas un biome fourni par le jeu ou un mod est consigné dans le journal, et les plaines sont utilisées                                                                                                                                                                                                                                                                                                                                                                            |
 | `requires`  | non    | liste d'ids de mods ou de namespaces de packs | aucun              | Le fichier est ignoré à moins que tous ne soient présents                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
@@ -4444,11 +4454,12 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 
 *dimensions*
 
-| Clé         | Requis | Valeur                                        | Défaut | Rôle                                                                                                               |
-| ----------- | ------ | --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| `gameRules` | non    | objet                                         | aucun  | Règles qui ne s'appliquent qu'ici                                                                                  |
-| `portal`    | non    | objet                                         | aucun  | Un cadre qui ouvre cette dimension. Voir [Ouvrir une dimension avec un cadre](#ouvrir-une-dimension-avec-un-cadre) |
-| `requires`  | non    | liste d'ids de mods ou de namespaces de packs | aucun  | Le fichier est ignoré à moins que tous ne soient présents                                                          |
+| Clé         | Requis | Valeur                                        | Défaut | Rôle                                                                                                                         |
+| ----------- | ------ | --------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `inherits`  | non    | nom de fichier                                | aucun  | Part d'un autre fichier de dimension et ne remplace que ce qui diffère ; un objet de premier niveau est fusionné clé par clé |
+| `gameRules` | non    | objet                                         | aucun  | Règles qui ne s'appliquent qu'ici                                                                                            |
+| `portal`    | non    | objet                                         | aucun  | Un cadre qui ouvre cette dimension. Voir [Ouvrir une dimension avec un cadre](#ouvrir-une-dimension-avec-un-cadre)           |
+| `requires`  | non    | liste d'ids de mods ou de namespaces de packs | aucun  | Le fichier est ignoré à moins que tous ne soient présents                                                                    |
 
 Sur cette version, une dimension est une entrée de pack de données : le type de dimension et les réglages de bruit sont écrits pour vous sous le namespace du pack, de sorte qu'un client vanilla en est informé en se connectant et s'y rend comme dans n'importe quelle autre. La dimension garde son propre dossier de sauvegarde sous le monde, nommé d'après son id, et elle est chargée tant que quelqu'un s'y trouve, ou tant qu'un `forceload` retient un chunk.
 

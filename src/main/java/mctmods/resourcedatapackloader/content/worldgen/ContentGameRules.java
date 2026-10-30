@@ -49,7 +49,7 @@ public final class ContentGameRules {
                 ContentDimensionParser.rules(dimension, entry.getValue().getAsJsonObject(), BY_DIMENSION.computeIfAbsent(dimension, _ -> new LinkedHashMap<>()));
             }
         });
-        for (DimensionDef def : ContentDimensions.all()) {
+        for (DimensionDef def : ContentDimensions.available()) {
             if (def.gameRules().isEmpty()) { continue; }
             BY_DIMENSION.computeIfAbsent(def.key(), _ -> new LinkedHashMap<>()).putAll(def.gameRules());
         }
