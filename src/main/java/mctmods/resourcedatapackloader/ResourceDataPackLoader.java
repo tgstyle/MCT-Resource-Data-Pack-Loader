@@ -240,6 +240,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentHearts::onClone);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onRespawn);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onAdvancement);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentHearts::onDeath);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onFinish);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onTick);
         NeoForge.EVENT_BUS.addListener(ContentBoards::onServerStarted);
