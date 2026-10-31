@@ -10,8 +10,6 @@ import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -128,20 +126,32 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         setChanged();
     }
 
+    public boolean watched() { return openers > 0; }
+
+    public boolean pendingLoot() { return lootTable != null || (!stocked && !def().lootTable().isEmpty()); }
+
+    public CompoundTag vacate(HolderLookup.Provider registries) {
+        if (!stocked && level != null) { stock(level.getRandom().nextLong()); }
+        stocked = true;
+        CompoundTag tag = saveWithoutMetadata(registries);
+        lootTable = null;
+        items = NonNullList.withSize(items.size(), ItemStack.EMPTY);
+        return tag;
+    }
+
+    public void adopt(CompoundTag tag, HolderLookup.Provider registries) {
+        if (rows * columns >= tag.getInt(ROWS) * tag.getInt(COLUMNS)) {
+            tag.putInt(ROWS, rows);
+            tag.putInt(COLUMNS, columns);
+        }
+        lootTable = null;
+        loadWithComponents(tag, registries);
+        setChanged();
+    }
+
     @Override public boolean canOpen(@Nonnull Player player) { return true; }
 
     @Override public boolean stillValid(@Nonnull Player player) { return Container.stillValidBlockEntity(this, player); }
-
-    @Override protected void applyImplicitComponents(@Nonnull DataComponentInput input) {
-        super.applyImplicitComponents(new DataComponentInput() {
-            @Override @Nullable public <T> T get(@Nonnull DataComponentType<T> type) {
-                T value = input.get(type);
-                return type == DataComponents.CUSTOM_NAME ? null : value;
-            }
-
-            @Override @Nonnull public <T> T getOrDefault(@Nonnull DataComponentType<? extends T> type, @Nonnull T fallback) { return input.getOrDefault(type, fallback); }
-        });
-    }
 
     @Override public void unpackLootTable(@Nullable Player player) {
         if (!stocked && level != null && !level.isClientSide()) { stock(level.getRandom().nextLong()); }

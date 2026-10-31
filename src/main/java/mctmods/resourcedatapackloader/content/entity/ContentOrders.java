@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.content.ContentCarry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.OrderDef;
@@ -236,7 +237,7 @@ public final class ContentOrders {
         OrderBoard.of(level).open(level, haul, pos, null, player, true);
     }
 
-    public static void onBreak(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof ServerLevel level) { OrderBoard.of(level).cancelAt(event.getPos()); } }
+    public static void onBreak(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof ServerLevel level && !ContentCarry.probing()) { OrderBoard.of(level).cancelAt(event.getPos()); } }
 
     private static void signs(ServerLevel level) {
         Map<BlockPos, Pending> waiting = PENDING.get(level.dimension());

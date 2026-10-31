@@ -63,10 +63,13 @@ public final class ContentCarry {
     private static final Set<EntityType<?>> MOB_RULES = new HashSet<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean breaking;
+    private static boolean probing;
 
     private ContentCarry() {}
 
     public static boolean breaking() { return breaking; }
+
+    public static boolean probing() { return probing; }
 
     public static boolean listsMob(Entity target) {
         rules();
@@ -219,6 +222,12 @@ public final class ContentCarry {
         breaking = true;
         try { return !CommonHooks.fireBlockBreak(player.level(), player.gameMode.getGameModeForPlayer(), player, pos, state).isCanceled(); }
         finally { breaking = false; }
+    }
+
+    public static boolean asks(ServerPlayer player, BlockPos pos) {
+        probing = true;
+        try { return permits(player, pos, player.serverLevel().getBlockState(pos)); }
+        finally { probing = false; }
     }
 
     private static void pickUp(ServerPlayer player, BlockPos pos, BlockState state) {

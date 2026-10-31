@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.content.ContentContainers;
 import mctmods.resourcedatapackloader.content.ContentDrops;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
@@ -96,10 +97,10 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
     @Override protected void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
         if (state.is(replaced.getBlock())) { return; }
         if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) {
-            Containers.dropContents(level, pos, held);
+            if (ContentContainerUpgrades.dropsOnRemove()) { Containers.dropContents(level, pos, held); }
             level.updateNeighbourForOutputSignal(pos, this);
         }
-        ContentDrops.removed(level, pos, state, replaced);
+        if (ContentContainerUpgrades.dropsOnRemove()) { ContentDrops.removed(level, pos, state, replaced); }
         super.onRemove(state, level, pos, replaced, moving);
     }
 

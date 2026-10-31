@@ -1024,6 +1024,42 @@ Položka `structure` nahradí vygenerovaný strom některou z tvých šablon, co
 
 Položka v `wornEffects` bere `potion`, `amplifier`, `ambient` a `showParticles`, které je tady ve výchozím stavu vypnuté. Nemá `duration`: efekt se udržuje, dokud se předmět nosí, a po sundání vyprchá za jednu až dvě sekundy. Položka v `wornAttributes` bere `attribute`, `amount` a `operation`, kde `0` přičítá, `1` násobí základ a `2` násobí celek, a změna se sundáním předmětu odebere. Není tu `uuid`: změna je pojmenovaná podle předmětu, takže dva stejné nošené předměty sdílejí jednu změnu a nesčítají se. Obojí se čte jednou za sekundu a nikdy se neukládá s hráčem.
 
+### Vylepšení kontejneru
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Nastavení      | Typ            | Výchozí  | Co dělá                                                                                                                                                                                                           |
+| -------------- | -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | seznam objektů | žádný    | Změny, které tento předmět umí provést, každá jako `fromBlock` a `toBlock`. Použije se první záznam, jehož `fromBlock` sedí                                                                                       |
+| `fromBlock`    | text           | žádný    | Blok kontejneru, na který předmět působí                                                                                                                                                                          |
+| `toBlock`      | text           | žádný    | Blok kontejneru, ve který se promění. Musí mít alespoň tolik slotů                                                                                                                                                |
+| `consume`      | boolean        | `true`   | Spotřebuje při každém vylepšení jeden předmět. Hráč v kreativním režimu žádný nespotřebuje                                                                                                                        |
+| `unopenedLoot` | text           | `refuse` | Co dělat s kontejnerem, jehož kořist se ještě nevygenerovala. `refuse` požádá hráče, aby ho nejdřív otevřel; `carry` přenese čekající tabulku kořisti, takže se vygeneruje při prvním otevření většího kontejneru |
+
+**Co se přenese.** Každý předmět zůstane na svém čísle slotu spolu se směrem, vlastním jménem a zámkem. Cíl s více sloupci zobrazí stejné předměty v jiném uspořádání, protože sloty se počítají zleva doprava a shora dolů. Tabulka kořisti nastavená na cíli se u kontejneru, který už má obsah, ignoruje. Cesta se shoduje jen podle ID bloku, bez metadat. Cíl dostane svůj výchozí stav se zkopírovaným směrem.
+
+**Jak ho držet.** Drž předmět v hlavní ruce a klikni pravým tlačítkem na kontejner. Předmět v druhé ruce funguje jen při plížení s prázdnou hlavní rukou. V dobrodružném režimu se otevře obrazovka kontejneru, sada zůstane zachována a nic se nevymění.
+
+**Kdy odmítne.** Předmět zůstane u tebe a akční lišta řekne proč: špatný kontejner, menší cíl, někdo jiný ho má otevřený, kořist se ještě nevygenerovala nebo místo, které hráč nesmí měnit. Obyčejné truhly z vanilly a úložiště jiných módů se otevřou jako obvykle.
+
 ## Typy slotů Curios
 
 *předměty*

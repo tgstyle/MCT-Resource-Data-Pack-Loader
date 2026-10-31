@@ -1024,6 +1024,42 @@ Ein `structure` ersetzt den generierten Baum durch eine deiner Vorlagen, und das
 
 Ein Eintrag in `wornEffects` nimmt `potion`, `amplifier`, `ambient` und `showParticles`, das hier standardmäßig aus ist. Er hat kein `duration`: Der Effekt wird gehalten, solange das Item getragen wird, und klingt ein bis zwei Sekunden nach dem Ablegen ab. Ein Eintrag in `wornAttributes` nimmt `attribute`, `amount` und `operation`, wobei `0` addiert, `1` die Basis multipliziert und `2` das Gesamtergebnis multipliziert, und die Änderung wird mit dem Item wieder abgenommen. Es gibt kein `uuid`: Die Änderung ist nach dem Item benannt, zwei gleiche getragene Items teilen sich also eine Änderung und stapeln sich nicht. Beides wird einmal pro Sekunde gelesen und nie mit dem Spieler gespeichert.
 
+### Einen Behälter aufwerten
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Einstellung    | Typ                | Standard | Was sie macht                                                                                                                                                                                                                                     |
+| -------------- | ------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | Liste von Objekten | keine    | Die Änderungen, die dieser Gegenstand vornehmen kann, jeweils ein `fromBlock` und ein `toBlock`. Der erste Eintrag, dessen `fromBlock` passt, wird benutzt                                                                                        |
+| `fromBlock`    | Text               | keine    | Der Behälterblock, an dem der Gegenstand wirkt                                                                                                                                                                                                    |
+| `toBlock`      | Text               | keine    | Der Behälterblock, zu dem er wird. Er muss mindestens ebenso viele Plätze haben                                                                                                                                                                   |
+| `consume`      | boolean            | `true`   | Verbraucht pro Aufwertung einen Gegenstand. Ein Spieler im Kreativmodus verbraucht nie einen                                                                                                                                                      |
+| `unopenedLoot` | Text               | `refuse` | Was mit einem Behälter geschieht, dessen Beute noch nicht ausgewürfelt wurde. `refuse` bittet den Spieler, ihn zuerst zu öffnen; `carry` nimmt die wartende Beutetabelle mit, sodass sie beim ersten Öffnen des größeren Behälters gewürfelt wird |
+
+**Was mitwandert.** Jeder Gegenstand bleibt auf seiner Platznummer, ebenso Ausrichtung, eigener Name und Schloss. Ein Ziel mit mehr Spalten zeigt dieselben Gegenstände in anderer Anordnung, weil die Plätze von links nach rechts und von oben nach unten gezählt werden. Eine am Ziel gesetzte Beutetabelle wird bei einem Behälter, der schon Inhalt hat, ignoriert. Ein Pfad passt nur auf die Block-ID, ohne Metadaten. Das Ziel erhält seinen Standardzustand, wobei die Ausrichtung übernommen wird.
+
+**Halten.** Halte den Gegenstand in der Haupthand und klicke mit der rechten Maustaste auf den Behälter. Ein Gegenstand in der Nebenhand wirkt nur beim Schleichen mit leerer Haupthand. Im Abenteuermodus öffnet sich der Behälterbildschirm, das Kit bleibt erhalten und es findet kein Tausch statt.
+
+**Wann er ablehnt.** Der Gegenstand bleibt erhalten, und die Aktionsleiste nennt den Grund: der falsche Behälter, ein kleineres Ziel, jemand anderes hat ihn geöffnet, die Beute ist noch nicht ausgewürfelt oder ein Ort, den der Spieler nicht ändern darf. Vanilla-Truhen und der Speicher anderer Mods öffnen sich wie gewohnt.
+
 ## Curios-Slot-Typen
 
 *items*

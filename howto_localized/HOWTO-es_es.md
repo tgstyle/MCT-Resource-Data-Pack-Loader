@@ -1024,6 +1024,42 @@ Una `structure` sustituye el árbol generado por una de tus plantillas, que es l
 
 Una entrada de `wornEffects` admite `potion`, `amplifier`, `ambient` y `showParticles`, que aquí viene desactivado por defecto. No tiene `duration`: el efecto se mantiene mientras el ítem esté puesto y se desvanece uno o dos segundos después de quitarlo. Una entrada de `wornAttributes` admite `attribute`, `amount` y `operation`, donde `0` suma, `1` multiplica la base y `2` multiplica el total, y el cambio se retira junto con el ítem. No hay `uuid`: el cambio lleva el nombre del ítem, así que dos ítems iguales puestos a la vez comparten un solo cambio y no se acumulan. Ambos se leen una vez por segundo y nunca se guardan con el jugador.
 
+### Mejorar un contenedor
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Ajuste         | Tipo             | Por defecto | Qué hace                                                                                                                                                                                                                       |
+| -------------- | ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `paths`        | lista de objetos | ninguno     | Los cambios que puede hacer este ítem, cada uno con un `fromBlock` y un `toBlock`. Se usa la primera entrada cuyo `fromBlock` coincide                                                                                         |
+| `fromBlock`    | texto            | ninguno     | El bloque contenedor sobre el que actúa el ítem                                                                                                                                                                                |
+| `toBlock`      | texto            | ninguno     | El bloque contenedor en el que se convierte. Debe tener al menos tantas ranuras                                                                                                                                                |
+| `consume`      | booleano         | `true`      | Gasta un ítem por mejora. Un jugador en modo creativo nunca gasta ninguno                                                                                                                                                      |
+| `unopenedLoot` | texto            | `refuse`    | Qué hacer con un contenedor cuyo botín aún no se ha sorteado. `refuse` pide al jugador que lo abra primero; `carry` traslada la tabla de botín pendiente, de modo que se sortea la primera vez que se abre el contenedor mayor |
+
+**Qué se conserva.** Cada ítem sigue en su número de ranura, igual que la orientación, el nombre personalizado y el candado. Un destino con más columnas muestra los mismos ítems en otra disposición, porque las ranuras se cuentan de izquierda a derecha y de arriba abajo. Una tabla de botín fijada en el destino se ignora si el contenedor ya tiene contenido. Una ruta coincide solo con el ID del bloque, sin metadatos. El destino toma su estado predeterminado, con la orientación copiada.
+
+**Cómo sostenerlo.** Sostén el ítem en la mano principal y haz clic derecho en el contenedor. Un ítem en la mano secundaria solo funciona al agacharse con la mano principal vacía. En modo aventura se abre la pantalla del contenedor, el kit se conserva y no hay intercambio.
+
+**Cuándo lo rechaza.** El ítem se conserva y la barra de acción dice el motivo: el contenedor equivocado, un destino más pequeño, otra persona lo tiene abierto, el botín aún no se ha sorteado o un terreno que el jugador no puede modificar. Los cofres de vanilla y el almacenamiento de otros mods se abren como siempre.
+
 ## Tipos de ranura de Curios
 
 *ítems*

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentCarry;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.card.CardIds;
@@ -125,6 +126,7 @@ public final class ContentProspect {
     }
 
     public static void onBreak(BlockEvent.BreakEvent event) {
+        if (ContentCarry.probing()) { return; }
         if (!(event.getPlayer() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel level) || !player.isShiftKeyDown() || idle()) { return; }
         ItemStack held = player.getMainHandItem();
         Entry entry = holding(held);

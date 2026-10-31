@@ -252,6 +252,7 @@ public final class ContentRegistry {
         }
         ContentGenerated.cropLoot();
         for (ItemDef def : ITEM_DEFS.values()) {
+            if (def.upgrade() != null) { ContentContainerUpgrades.check(def); }
             if (def.container().isEmpty()) { continue; }
             Item container = ContentStacks.find(def.key(), def.container());
             for (ItemEntry entry : ITEMS.values()) {
