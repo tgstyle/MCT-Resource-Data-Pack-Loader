@@ -136,7 +136,7 @@ public final class ContentProspect {
     }
 
     @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) {
-        if (event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP) || !event.getPlayer().isSneaking() || idle()) { return; }
+        if (mctmods.resourcedatapackloader.content.ContentCarry.probing() || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP) || !event.getPlayer().isSneaking() || idle()) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getPlayer();
         ItemStack held = player.getHeldItemMainhand();
         Entry entry = holding(held);

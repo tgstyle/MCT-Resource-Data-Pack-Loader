@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
@@ -43,10 +44,12 @@ import javax.annotation.Nullable;
 
     @Override @Nullable public TileEntity createTileEntity(@Nonnull World world, @Nonnull IBlockState state) {
         TileEntityPackContainer tile = new TileEntityPackContainer();
-        tile.shape(held(), getTranslationKey() + "." + getDef().at(getMetaFromState(state)).name + ".name");
+        reshape(tile, state);
         if (!world.isRemote && !held().lootTable.isEmpty()) { tile.loot(new ResourceLocation(held().lootTable), world.rand.nextLong()); }
         return tile;
     }
+
+    public void reshape(TileEntityPackContainer tile, IBlockState state) { tile.shape(held(), getTranslationKey() + "." + getDef().at(getMetaFromState(state)).name + ".name"); }
 
     @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
         if (world.isRemote) { return true; }
@@ -62,13 +65,14 @@ import javax.annotation.Nullable;
         if (!(tile instanceof TileEntityPackContainer)) { return; }
         ((TileEntityPackContainer) tile).unloot();
         ((TileEntityPackContainer) tile).face(placer.getHorizontalFacing().getOpposite());
+        if (stack.hasDisplayName()) { ((TileEntityPackContainer) tile).setCustomName(stack.getDisplayName()); }
         tile.markDirty();
         world.notifyBlockUpdate(pos, state, state, 3);
     }
 
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         TileEntity tile = world.getTileEntity(pos);
-        if (tile instanceof TileEntityPackContainer) { net.minecraft.inventory.InventoryHelper.dropInventoryItems(world, pos, (TileEntityPackContainer) tile); }
+        if (tile instanceof TileEntityPackContainer && !ContentContainerUpgrades.swapping()) { net.minecraft.inventory.InventoryHelper.dropInventoryItems(world, pos, (TileEntityPackContainer) tile); }
         super.breakBlock(world, pos, state);
     }
 

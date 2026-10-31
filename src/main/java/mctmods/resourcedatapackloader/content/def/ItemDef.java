@@ -37,9 +37,10 @@ public final class ItemDef {
     @Nullable public final WeaponDef weapon;
     @Nullable public final PortwayItemDef portway;
     public final boolean sleepingBag;
+    @Nullable public final ContainerUpgradeDef upgrade;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes, @Nullable WeaponDef weapon, @Nullable PortwayItemDef portway, boolean sleepingBag) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes, @Nullable WeaponDef weapon, @Nullable PortwayItemDef portway, boolean sleepingBag, @Nullable ContainerUpgradeDef upgrade) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -70,6 +71,7 @@ public final class ItemDef {
         this.weapon = weapon;
         this.portway = portway;
         this.sleepingBag = sleepingBag;
+        this.upgrade = upgrade;
     }
 
     public boolean worn() { return !bauble.isEmpty() && (!wornEffects.isEmpty() || !wornAttributes.isEmpty()); }

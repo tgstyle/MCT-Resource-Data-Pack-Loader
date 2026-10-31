@@ -20,7 +20,7 @@ public final class PortalEvents {
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentBlockPortal.forget(event.player.getUniqueID()); }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onBroken(BlockEvent.BreakEvent event) { ContentPortals.shaken(event.getWorld(), event.getPos(), event.getState()); }
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onBroken(BlockEvent.BreakEvent event) { if (!mctmods.resourcedatapackloader.content.ContentCarry.probing()) { ContentPortals.shaken(event.getWorld(), event.getPos(), event.getState()); } }
 
     @SubscribeEvent public static void onLit(PlayerInteractEvent.RightClickBlock event) {
         World world = event.getWorld();

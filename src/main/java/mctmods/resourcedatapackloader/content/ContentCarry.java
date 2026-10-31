@@ -61,10 +61,13 @@ public final class ContentCarry {
     private static final Set<ResourceLocation> MOB_RULES = new HashSet<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean breaking;
+    private static boolean probing;
 
     private ContentCarry() {}
 
     public static boolean breaking() { return breaking; }
+
+    public static boolean probing() { return probing; }
 
     public static boolean listsMob(Entity target) {
         rules();
@@ -206,6 +209,12 @@ public final class ContentCarry {
         breaking = true;
         try { return ForgeHooks.onBlockBreakEvent(player.world, player.interactionManager.getGameType(), player, pos) >= 0; }
         finally { breaking = false; }
+    }
+
+    public static boolean asks(EntityPlayerMP player, BlockPos pos) {
+        probing = true;
+        try { return permits(player, pos); }
+        finally { probing = false; }
     }
 
     private static ITextComponent called(Block block) { return new TextComponentTranslation(block.getTranslationKey() + ".name"); }

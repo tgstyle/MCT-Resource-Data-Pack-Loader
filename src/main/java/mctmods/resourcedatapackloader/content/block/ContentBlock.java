@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
@@ -119,7 +120,7 @@ import javax.annotation.Nullable;
     }
 
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        if (!world.isRemote && def.opensWith == null) { VariantDrops.spawnEntities(world, pos, def.at(getMetaFromState(state))); }
+        if (!world.isRemote && def.opensWith == null && !ContentContainerUpgrades.swapping()) { VariantDrops.spawnEntities(world, pos, def.at(getMetaFromState(state))); }
         super.breakBlock(world, pos, state);
     }
 

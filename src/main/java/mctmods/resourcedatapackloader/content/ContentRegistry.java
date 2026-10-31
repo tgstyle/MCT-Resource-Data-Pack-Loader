@@ -423,6 +423,7 @@ public final class ContentRegistry {
         }
         for (ItemDef def : ITEM_DEFS.values()) {
             if (!def.container.isEmpty()) { def.resolveContainer(ContentStacks.parse(def.registryName, def.container, 1)); }
+            if (def.upgrade != null) { ContentContainerUpgrades.check(def); }
         }
         for (Map.Entry<ResourceLocation, ContentBlockFluid> entry : FLUID_BLOCKS.entrySet()) {
             FluidDef def = FLUID_DEFS.get(entry.getKey());

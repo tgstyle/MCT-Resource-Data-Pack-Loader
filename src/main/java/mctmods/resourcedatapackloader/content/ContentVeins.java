@@ -92,7 +92,7 @@ public final class ContentVeins {
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onBreak(BlockEvent.BreakEvent event) {
-        if (veining || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP)) { return; }
+        if (veining || ContentCarry.probing() || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP)) { return; }
         EntityPlayerMP player = (EntityPlayerMP) event.getPlayer();
         if (player.isCreative() || player.isSpectator()) { return; }
         if (GENERATION.stale()) { reload(); }

@@ -26,6 +26,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     private static final String COLUMNS = "RdplColumns";
     private static final String NAMED = "RdplNamed";
     private static final String FACING = "RdplFacing";
+    private static final String CUSTOM_NAME = "CustomName";
     private NonNullList<ItemStack> items = NonNullList.withSize(27, ItemStack.EMPTY);
     private int rows = 3;
     private int columns = 9;
@@ -111,6 +112,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
         columns = Math.max(1, tag.getInteger(COLUMNS));
         named = tag.getString(NAMED);
         facing = EnumFacing.byHorizontalIndex(tag.getInteger(FACING));
+        customName = tag.hasKey(CUSTOM_NAME, 8) ? tag.getString(CUSTOM_NAME) : null;
     }
 
     private void writeShape(NBTTagCompound tag) {
@@ -118,6 +120,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
         tag.setInteger(COLUMNS, columns);
         tag.setString(NAMED, named);
         tag.setInteger(FACING, facing.getHorizontalIndex());
+        if (hasCustomName()) { tag.setString(CUSTOM_NAME, customName); }
     }
 
     @Override public void openInventory(@Nonnull EntityPlayer player) {
@@ -158,6 +161,28 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
             lid = net.minecraft.util.math.MathHelper.clamp(lid + (watchers > 0 ? 0.1F : -0.1F), 0.0F, 1.0F);
             if (lid < 0.5F && lidBefore >= 0.5F && watchers == 0) { sound(false); }
         }
+    }
+
+    public boolean watched() { return watchers > 0; }
+
+    public boolean pendingLoot() { return lootTable != null; }
+
+    public NBTTagCompound vacate() {
+        NBTTagCompound tag = writeToNBT(new NBTTagCompound());
+        lootTable = null;
+        items = NonNullList.withSize(items.size(), ItemStack.EMPTY);
+        return tag;
+    }
+
+    public void adopt(NBTTagCompound tag) {
+        if (rows * columns >= tag.getInteger(ROWS) * tag.getInteger(COLUMNS)) {
+            tag.setInteger(ROWS, rows);
+            tag.setInteger(COLUMNS, columns);
+        }
+        tag.setString(NAMED, named);
+        lootTable = null;
+        readFromNBT(tag);
+        markDirty();
     }
 
     public void loot(@Nullable ResourceLocation table, long seed) {

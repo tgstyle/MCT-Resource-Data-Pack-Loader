@@ -223,7 +223,7 @@ public final class ContentOrders {
         OrderBoard.of(world).open(world, haul, pos, null, player, true);
     }
 
-    @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) { if (!event.getWorld().isRemote) { OrderBoard.of(event.getWorld()).cancelAt(event.getPos()); } }
+    @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) { if (!event.getWorld().isRemote && !mctmods.resourcedatapackloader.content.ContentCarry.probing()) { OrderBoard.of(event.getWorld()).cancelAt(event.getPos()); } }
 
     public static void plotSign(World world, BlockPos pos) {
         if (DEFS.isEmpty()) { return; }
