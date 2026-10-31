@@ -45,6 +45,11 @@ public final class Standing {
 
     public boolean any() { return !team.isEmpty() || !objective.isEmpty() && scoreAtLeast != null || dietAtLeast > 0; }
 
+    public boolean unreadable(EntityPlayer player) {
+        Scoreboard board = player.world.getScoreboard();
+        return !team.isEmpty() && !board.getTeamNames().contains(team) || !objective.isEmpty() && board.getObjective(objective) == null;
+    }
+
     public boolean earnedBy(EntityPlayer player) { return any() && met(player); }
 
     public static String teamOf(EntityPlayer player) {

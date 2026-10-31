@@ -147,6 +147,7 @@ rdpl.carry.down=%s abgesetzt
 rdpl.carry.denied=Das geht hier nicht
 rdpl.carry.full=Du trägst bereits etwas
 rdpl.hearts.gained=Du fühlst dich widerstandsfähiger.
+rdpl.hearts.lost=Du fühlst dich gebrechlicher.
 rdpl.portway.activated=%s aktiviert (%s bekannt)
 rdpl.portway.known=Du kennst dieses Wegportal bereits
 rdpl.portway.stop=%s: %s, %s, %s

@@ -147,6 +147,7 @@ rdpl.carry.down=Položeno: %s
 rdpl.carry.denied=Tady to nejde
 rdpl.carry.full=Už něco neseš
 rdpl.hearts.gained=Cítíš se odolnější.
+rdpl.hearts.lost=Cítíš se křehčí.
 rdpl.portway.activated=%s aktivován (známo %s)
 rdpl.portway.known=Tento průchod už znáš
 rdpl.portway.stop=%s: %s, %s, %s

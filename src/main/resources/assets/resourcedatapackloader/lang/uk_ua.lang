@@ -147,6 +147,7 @@ rdpl.carry.down=Ви поставили: %s
 rdpl.carry.denied=Тут цього зробити не можна
 rdpl.carry.full=Ви вже щось несете
 rdpl.hearts.gained=Ви відчуваєте себе витривалішим.
+rdpl.hearts.lost=Ви відчуваєте себе слабшим.
 rdpl.portway.activated=%s: активовано (відомо: %s)
 rdpl.portway.known=Ви вже знаєте цей перехід
 rdpl.portway.stop=%s: %s, %s, %s

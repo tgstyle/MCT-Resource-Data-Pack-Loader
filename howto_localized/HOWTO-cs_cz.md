@@ -173,7 +173,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/entities/*.json`                                                                   | Varianty entit postavené na entitách, které už existují. [Varianty entit](#varianty-entit)                                                                                                                        |
 | `<namespace>/hardness/*.json`                                                                   | Doba těžby a násobiče výbuchu pro skupiny bloků. [Skupiny tvrdosti](#skupiny-tvrdosti)                                                                                                                            |
 | `<namespace>/ranks/*.json`                                                                      | Náhodné úrovně, které mob získá při objevení: zdraví navíc, poškození, efekty, kořist a jmenovka. [Hodnosti mobů](#hodnosti-mobů)                                                                                 |
-| `<namespace>/hearts/*.json`                                                                     | Srdce navíc, která hráč získá za pokroky, pestrý jídelníček nebo skóre týmu a která se ukládají u hráče. [Odměny za maximální zdraví](#odměny-za-maximální-zdraví)                                                |
+| `<namespace>/hearts/*.json`                                                                     | Srdce navíc, která hráč získá za pokroky, pestrý jídelníček nebo skóre týmu a která se ukládají u hráče, a způsoby, jak o ně zase přijít. [Odměny za maximální zdraví](#odměny-za-maximální-zdraví)               |
 | `<namespace>/orders/*.json`                                                                     | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                                                                                    |
 | `<namespace>/exposures/*.json`                                                                  | Nebezpečí, která vystavují hráče účinku poblíž pojmenovaných bloků, při nošení pojmenovaných předmětů nebo v pojmenovaných dimenzích, biomech, strukturách, oblastech jeskyní nebo výškách. [Expozice](#expozice) |
 | `<namespace>/enchanting/*.json`                                                                 | Co čarovací stůl nabízí, žádá a bere: podle očarování, podle předmětu a celkově. [Čarovací stůl](#čarovací-stůl)                                                                                                  |
@@ -3986,7 +3986,7 @@ Nástroje, brnění a výbava, kterou mob nesl, se neznásobují a moby s invent
 
 `<namespace>/hearts/*.json`
 
-Soubor tady umožní hráčům získat navíc maximální zdraví ze zdrojů, které určíš: z pokroku, pestrého jídelníčku podle [Pestrost jídla](#pestrost-jídla), seznamu snědených jídel nebo skóre týmu. Co hráč získal, se ukládá u hráče. Bez souboru se nic nemění.
+Soubor tady umožní hráčům získat navíc maximální zdraví ze zdrojů, které určíš: z pokroku, pestrého jídelníčku podle [Pestrost jídla](#pestrost-jídla), seznamu snědených jídel nebo skóre týmu. Co hráč získal, se ukládá u hráče. Bez souboru se nic nemění. Balíček může toto zdraví také zase odebrat.
 
 Název souboru si zvolíš sám, čte se jen složka. `rewards` ze všech souborů se používají dohromady. U každého klíče nejvyšší úrovně platí první soubor, který ho nastaví, ostatní se zapíšou do logu a ignorují.
 
@@ -4046,6 +4046,69 @@ Každá položka `rewards`:
 **Smrt.** S `keepOnDeath` `true` získaná srdce zůstanou. S `false` smrt nastaví každý počet na 0 a zapomene snědená jídla a odměnu znovu získá až nový spouštěč.
 
 **Dohnání.** Při přihlášení a po `/rdpl reload` se srdce každého hráče online znovu spočítají z uložených počtů a aktuálních pravidel. Odměna, pro kterou hráč ještě nemá počet a jejíž podmínka už platí (pokrok je splněn, stupeň jídelníčku dosažen, snědená jídla dosahují `count`, podmínka týmu nebo skóre platí), se pak udělí, bez zprávy. Odměna vynulovaná smrtí se nedožene znovu. Odměna odebraná ze souborů si v uložených datech ponechá počet, ale dokud chybí, nic nedává, a po návratu se počítá znovu.
+
+### Odebírání srdcí
+
+Soubor se srdci může maximální zdraví také odebírat. Bez `losses` se nikdy nic neodebere a `floor`, `floorDebt`, `floorKills`, `lossHealth`, `lossSound` a `lossParticle` nedělají nic.
+
+```json
+{
+  "startHearts": 10,
+  "floor": 3,
+  "floorDebt": false,
+  "lossHealth": "keep",
+  "lossSound": "minecraft:entity.player.hurt",
+  "lossParticle": "smoke",
+  "losses": [
+    { "id": "death", "death": true, "hearts": 1, "times": 5 },
+    { "id": "pvp", "death": true, "deathBy": "player", "hearts": 1 },
+    { "id": "pact", "advancement": "minecraft:nether/root", "hearts": 2 },
+    { "id": "rot", "foods": ["minecraft:rotten_flesh"], "count": 1, "hearts": 0.5, "repeat": "always", "clearOnDeath": true },
+    { "id": "traitor", "team": "exiles", "hearts": 3, "repeat": "while_met" },
+    { "id": "hungry", "dietAtLeast": 4, "invert": true, "hearts": 1, "repeat": "while_met" },
+    { "id": "debt", "objective": "debts", "scoreAtLeast": 1, "hearts": 1, "repeat": "always", "requires": ["somepack"], "message": "mypack.hearts.debt" }
+  ]
+}
+```
+
+| Klíč           | Povinný | Hodnota                              | Výchozí | Co dělá                                                                                                                                        |
+| -------------- | ------- | ------------------------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `floor`        | ne      | číslo, 0,5 nebo více, po krocích 0,5 | `0.5`   | Nejméně srdcí, která ztráta může nechat. Nikdy nezvedne hráče, který jich má na začátku méně. Nad `cap` se zapíše do logu a použije se `0.5`   |
+| `floorDebt`    | ne      | true nebo false                      | `false` | `true`: ztráta na spodní hranici se přesto počítá a pozdější zisky ji splácejí jako první                                                      |
+| `floorKills`   | ne      | true nebo false                      | `false` | `true`: ztráta, která by hráče srazila pod spodní hranici, ho místo toho zabije a on se oživí na hranici. Ne u ztrát s `death` ani `while_met` |
+| `lossHealth`   | ne      | `keep` nebo `scale`                  | `keep`  | `keep`: zdraví zůstane, jaké je, a sníží se na nové maximum. `scale`: zdraví klesne ve stejném poměru                                          |
+| `lossSound`    | ne      | ID zvuku nebo `""`                   | `""`    | Přehraje se u hráče při ztrátě                                                                                                                 |
+| `lossParticle` | ne      | název částice nebo `""`              | `""`    | Vyvolá se u hráče při ztrátě; jen jednoduché částice                                                                                           |
+| `losses`       | ne      | seznam objektů                       | žádné   | Způsoby, jak o srdce přijít, s klíči níže                                                                                                      |
+
+Každá položka `losses`:
+
+| Klíč                                               | Povinný | Hodnota                                       | Výchozí                                     | Co dělá                                                                                                                                                                                                                |
+| -------------------------------------------------- | ------- | --------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                               | ano     | text, mezi ztrátami souboru jedinečný         | žádné                                       | Pojmenuje ztrátu v uložených datech, proto ho při úpravě položky zachovej                                                                                                                                              |
+| `advancement`                                      | ne      | ID pokroku                                    | žádné                                       | Spouštěč: pokrok je získán                                                                                                                                                                                             |
+| `foods`, `count`                                   | ne      | jako u odměny                                 | žádné                                       | Spouštěč: jídla jsou snědena. S `repeat: always` začíná seznam po každé ztrátě znovu                                                                                                                                   |
+| `team`, `objective`, `scoreAtLeast`, `dietAtLeast` | ne      | jako u odměny                                 | žádné                                       | Spouštěč: podmínka se změní z nepravdy na pravdu, kontroluje se každých 5 sekund                                                                                                                                       |
+| `invert`                                           | ne      | true nebo false                               | `false`                                     | S podmínkou: čte se obráceně, takže spouštěčem je změna podmínky z pravdy na nepravdu. Trest za špatný jídelníček se píše jako `dietAtLeast` s `invert`; potřebuje soubor Pestrost jídla a ztráta nemůže použít `diet` |
+| `death`                                            | ne      | true nebo false                               | `false`                                     | Spouštěč: hráč zemře. Totem nebo zrušená smrt nic neodebere                                                                                                                                                            |
+| `deathBy`                                          | ne      | `any`, `player`, `mob` nebo `world`           | `any`                                       | S `death`: kdo ji musel způsobit. `world` je žádný původce nebo vlastní zásah hráče                                                                                                                                    |
+| `hearts`                                           | ano     | číslo nad 0, po krocích 0,5                   | žádné                                       | Kolik srdcí jedna ztráta odebere                                                                                                                                                                                       |
+| `repeat`                                           | ne      | `once_per_player`, `always` nebo `while_met`  | s `death` `always`, jinak `once_per_player` | `always`: každý nový spouštěč odebere znovu. `while_met`: s podmínkou jsou srdce pryč, jen dokud platí, a nic se neukládá                                                                                              |
+| `times`                                            | ne      | int, 1 nebo více                              | `1`, s `always` neomezeně                   | Nejvíce ztrát, které z položky jeden hráč dostane; `while_met` ji ignoruje                                                                                                                                             |
+| `clearFoodsOnDeath`                                | ne      | true nebo false                               | `false`                                     | Smrt smaže dosud snědená jídla, ale už ztracená srdce zůstanou ztracená. Jen s `foods`                                                                                                                                 |
+| `clearOnDeath`                                     | ne      | true nebo false                               | `false`                                     | Smrt vrátí, co tato položka odebrala. Ne s `death` ani `while_met`                                                                                                                                                     |
+| `requires`                                         | ne      | seznam ID modů nebo jmenných prostorů balíčků | žádné                                       | Položka se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                     |
+| `message`                                          | ne      | lang klíč nebo `""`                           | `rdpl.hearts.lost`                          | Zobrazí se při ztrátě; `""` nezobrazí nic                                                                                                                                                                              |
+
+**Jak se součet počítá.** Odměny se přičtou k `startHearts` a omezí se na `cap`, pak se odečtou ztráty a výsledek se omezí na `floor`. Protože ztráta přichází po `cap`, vždy se projeví, ale srdce získaná nad `cap` ztracené srdce nevrátí. Získaná srdce a ztráty se počítají zvlášť, takže `keepOnDeath: false` žádné ztracené srdce nevrátí; to dokáže jen `clearOnDeath`.
+
+**Na spodní hranici.** Ztráta na spodní hranici nic neodebere a nic neukáže a pozdější odměna se počítá celá. Větší ztráta, která zčásti přesáhne spodní hranici, se počítá celá.
+
+**Podmínky a noví hráči.** Pravidlo s `invert` potřebuje skutečný pád: nový hráč, který podmínku nikdy nesplnil, nic neztratí, dokud ji nesplní a pak nepřestane. `while_met` s `invert` platí hned, pokud existují všechny týmy a cíle, které jmenuje; chybí-li některý, nic neodebere. Hráč, který v existujícím cíli ještě nemá skóre, se počítá jako ten, kdo podmínku nesplňuje, takže mu `invert` srdce odebere. Pravidlo s `invert` na `dietAtLeast` potřebuje soubor Pestrost jídla, jinak se položka přeskočí.
+
+**Zdraví.** Když ztráta s `while_met` přestane platit, srdce se vrátí, ale zdraví zůstane, jaké je, takže zapínání a vypínání nikdy neléčí.
+
+**Jiné mody.** Srdce tady jsou vlastní počet RDPL. Nošený předmět nebo modifikátor jiného modu zdraví navíc stále mění.
 
 **Na obrazovce.** Zdraví nad 20 nevytváří nové řady srdcí. Každých dalších 10 srdcí je vrstva vykreslená přes stejnou první řadu: druhá vrstva první barvou z `heartColors`, třetí druhou a tak dál. Vrstva ve stavu (jed, wither, zmrznutí) ukazuje tento vanilkový vzhled bez odstínu a absorpce je nad řadou jako ve vanille. Barvy posílá server při přihlášení a po reloadu; klient, který je nedostal, použije výchozí seznam.
 

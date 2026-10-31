@@ -147,6 +147,7 @@ rdpl.carry.down=Vous avez posé %s
 rdpl.carry.denied=Impossible ici
 rdpl.carry.full=Vous portez déjà quelque chose
 rdpl.hearts.gained=Vous vous sentez plus robuste.
+rdpl.hearts.lost=Vous vous sentez plus fragile.
 rdpl.portway.activated=%s activé (%s connus)
 rdpl.portway.known=Vous connaissez déjà ce relais
 rdpl.portway.stop=%s : %s, %s, %s
