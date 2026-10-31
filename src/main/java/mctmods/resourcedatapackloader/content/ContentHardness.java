@@ -358,7 +358,7 @@ public final class ContentHardness {
     }
 
     public static void onBreak(BlockEvent.BreakEvent event) {
-        if (ContentCarry.breaking() || idle() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player)) { return; }
+        if (ContentCarry.breaking() || ContentCarry.probing() || idle() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player)) { return; }
         BlockState state = event.getState();
         ItemStack held = player.getMainHandItem();
         if (event.isCanceled() && player.gameMode.getGameModeForPlayer() == GameType.ADVENTURE && mayBreak(player, state, held)) { event.setCanceled(false); }

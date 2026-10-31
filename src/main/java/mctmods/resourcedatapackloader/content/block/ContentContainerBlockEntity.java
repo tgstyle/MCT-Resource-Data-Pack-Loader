@@ -125,6 +125,29 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         setChanged();
     }
 
+    public boolean watched() { return openers > 0; }
+
+    public boolean pendingLoot() { return lootTable != null || (!stocked && !def().lootTable().isEmpty()); }
+
+    public CompoundTag vacate() {
+        if (!stocked && level != null) { stock(level.getRandom().nextLong()); }
+        stocked = true;
+        CompoundTag tag = saveWithoutMetadata();
+        lootTable = null;
+        items = NonNullList.withSize(items.size(), ItemStack.EMPTY);
+        return tag;
+    }
+
+    public void adopt(CompoundTag tag) {
+        if (rows * columns >= tag.getInt(ROWS) * tag.getInt(COLUMNS)) {
+            tag.putInt(ROWS, rows);
+            tag.putInt(COLUMNS, columns);
+        }
+        lootTable = null;
+        load(tag);
+        setChanged();
+    }
+
     @Override public boolean canOpen(@Nonnull Player player) { return true; }
 
     @Override public void unpackLootTable(@Nullable Player player) {

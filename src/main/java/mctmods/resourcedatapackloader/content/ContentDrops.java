@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 public final class ContentDrops {
     private ContentDrops() {}
 
-    public static void removed(Level level, BlockPos pos, BlockState state, BlockState replaced) { if (level instanceof ServerLevel server && !state.is(replaced.getBlock())) { release(server, pos, state); } }
+    public static void removed(Level level, BlockPos pos, BlockState state, BlockState replaced) { if (level instanceof ServerLevel server && !state.is(replaced.getBlock()) && ContentContainerUpgrades.idle()) { release(server, pos, state); } }
 
     private static void release(ServerLevel level, BlockPos pos, BlockState state) {
         ContentRegistry.BlockEntry entry = ContentRegistry.entry(state.getBlock());

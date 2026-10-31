@@ -1027,6 +1027,42 @@ A `structure` replaces the generated tree with one of your templates, which is t
 
 An entry in `wornEffects` takes `potion`, `amplifier`, `ambient` and `showParticles`, which is off here. It has no `duration`: the effect is kept up for as long as the item is worn and fades one to two seconds after it comes off. An entry in `wornAttributes` takes `attribute`, `amount` and `operation`, where `0` adds, `1` multiplies the base and `2` multiplies the total, and the change is taken off with the item. There is no `uuid`: the change is named after the item, so two of the same item worn at once share one change and do not stack. Both are read once a second and are never saved with the player. Taking off a health bonus brings the wearer's health down to the new maximum.
 
+### Upgrading a container
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Setting        | Type            | Default  | What it does                                                                                                                                                                                         |
+| -------------- | --------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | list of objects | none     | The changes this item can make, each one a `fromBlock` and a `toBlock`. The first entry whose `fromBlock` matches is used                                                                            |
+| `fromBlock`    | text            | none     | The container block the item works on                                                                                                                                                                |
+| `toBlock`      | text            | none     | The container block it becomes. It must have at least as many slots                                                                                                                                  |
+| `consume`      | boolean         | `true`   | Uses one item per upgrade. A player in creative mode never uses one up                                                                                                                               |
+| `unopenedLoot` | text            | `refuse` | What to do with a container whose loot has not rolled. `refuse` asks the player to open it first; `carry` moves the waiting loot table across, so it rolls the first time the larger container opens |
+
+**What moves.** Every item stays in its slot number, along with the facing, the custom name and the lock. A target with more columns shows the same items in a different arrangement, because slots count left to right and top to bottom. A loot table set on the target is ignored for a container that already has contents. A path matches on the block id alone, with no metadata. The target takes its default state, with the facing copied.
+
+**Holding it.** Hold the item in your main hand and right-click the container. An item in the off hand only works when sneaking with an empty main hand. In adventure mode the container screen opens, the kit is kept, and there is no swap.
+
+**When it refuses.** The item is kept and the action bar says why: the wrong container, a smaller target, someone else has it open, loot not rolled yet, or ground the player may not change. Vanilla chests and other mods' storage open as usual.
+
 ## Curios slot types
 
 *items*

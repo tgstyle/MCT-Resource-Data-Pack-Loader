@@ -63,10 +63,13 @@ public final class ContentCarry {
     private static final PackGeneration GENERATION = new PackGeneration();
     private static BlockGroup blockRules = new BlockGroup();
     private static boolean breaking;
+    private static boolean probing;
 
     private ContentCarry() {}
 
     public static boolean breaking() { return breaking; }
+
+    public static boolean probing() { return probing; }
 
     public static boolean listsMob(Entity target) {
         rules();
@@ -214,6 +217,12 @@ public final class ContentCarry {
         breaking = true;
         try { return ForgeHooks.onBlockBreakEvent(player.level(), player.gameMode.getGameModeForPlayer(), player, pos) >= 0; }
         finally { breaking = false; }
+    }
+
+    public static boolean asks(ServerPlayer player, BlockPos pos) {
+        probing = true;
+        try { return permits(player, pos); }
+        finally { probing = false; }
     }
 
     private static void pickUp(ServerPlayer player, BlockPos pos, BlockState state) {

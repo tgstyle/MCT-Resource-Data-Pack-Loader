@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
+import mctmods.resourcedatapackloader.content.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.content.ContentContainers;
 import mctmods.resourcedatapackloader.content.ContentDrops;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
@@ -87,12 +88,15 @@ import javax.annotation.Nullable;
 
     @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (placer != null && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.placed(); }
+        if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) {
+            if (placer != null) { held.placed(); }
+            if (stack.hasCustomHoverName()) { held.setCustomName(stack.getHoverName()); }
+        }
     }
 
     @Override public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
         if (state.is(replaced.getBlock())) { return; }
-        if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) {
+        if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held && ContentContainerUpgrades.idle()) {
             Containers.dropContents(level, pos, held);
             level.updateNeighbourForOutputSignal(pos, this);
         }

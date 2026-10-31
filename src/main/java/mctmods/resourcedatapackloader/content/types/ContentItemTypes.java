@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.def.MaterialDef;
 import mctmods.resourcedatapackloader.content.def.PortwayItemDef;
 import mctmods.resourcedatapackloader.content.item.ContentContainerItem;
 import mctmods.resourcedatapackloader.content.item.ContentDrinkItem;
+import mctmods.resourcedatapackloader.content.item.ContentItemContainerUpgrade;
 import mctmods.resourcedatapackloader.content.item.ContentFoodItem;
 import mctmods.resourcedatapackloader.content.item.ContentPortwayItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
@@ -49,7 +50,8 @@ public final class ContentItemTypes {
     public static final String POTION_BOTTLE = "potion_bottle";
     public static final String CONTAINER = "container";
     public static final String PORTWAY = "portway";
-    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, PORTWAY);
+    public static final String CONTAINER_UPGRADE = "container_upgrade";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, PORTWAY, CONTAINER_UPGRADE);
     private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0);
     private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, ResourceLocation.parse(ContentFormats.MINEABLE_SWORD));
     private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
@@ -75,6 +77,7 @@ public final class ContentItemTypes {
             case ARMOR -> armor(def, variant, properties.stacksTo(1));
             case SEED -> seed(def, variant, properties);
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
+            case CONTAINER_UPGRADE -> new ContentItemContainerUpgrade(def, properties);
             case PORTWAY -> portway(def, properties);
             default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
         };

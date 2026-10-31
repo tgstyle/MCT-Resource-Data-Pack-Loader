@@ -124,7 +124,7 @@ public final class ContentStates {
         return state;
     }
 
-    @SuppressWarnings("unchecked") private static <T extends Comparable<T>> BlockState with(BlockState state, Property<T> property, Comparable<?> value) { return state.setValue(property, (T) value); }
+    @SuppressWarnings("unchecked") static <T extends Comparable<T>> BlockState with(BlockState state, Property<T> property, Comparable<?> value) { return state.setValue(property, (T) value); }
 
     private static Map<Property<?>, Comparable<?>> wanted(Block block, Map<String, String> properties, Object context) {
         Map<Property<?>, Comparable<?>> wanted = new LinkedHashMap<>();

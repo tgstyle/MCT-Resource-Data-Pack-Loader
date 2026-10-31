@@ -1027,6 +1027,42 @@ Uma `structure` substitui a árvore gerada por um dos seus modelos, que é o jei
 
 Uma entrada de `wornEffects` aceita `potion`, `amplifier`, `ambient` e `showParticles`, que aqui vem desligado por padrão. Ela não tem `duration`: o efeito é mantido enquanto o item estiver equipado e some de um a dois segundos depois de tirado. Uma entrada de `wornAttributes` aceita `attribute`, `amount` e `operation`, em que `0` soma, `1` multiplica a base e `2` multiplica o total, e a alteração é removida junto com o item. Não há `uuid`: a alteração leva o nome do item, então dois itens iguais equipados ao mesmo tempo compartilham uma só alteração e não se acumulam. Ambos são lidos uma vez por segundo e nunca são salvos com o jogador. Tirar um bônus de vida reduz a vida de quem o usava ao novo máximo.
 
+### Melhorando um contêiner
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Configuração   | Tipo             | Padrão   | O que faz                                                                                                                                                                                                                        |
+| -------------- | ---------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | lista de objetos | nenhum   | As mudanças que este item pode fazer, cada uma com um `fromBlock` e um `toBlock`. Vale a primeira entrada cujo `fromBlock` combina                                                                                               |
+| `fromBlock`    | texto            | nenhum   | O bloco de contêiner em que o item atua                                                                                                                                                                                          |
+| `toBlock`      | texto            | nenhum   | O bloco de contêiner em que ele se transforma. Precisa ter pelo menos tantos espaços quanto o original                                                                                                                           |
+| `consume`      | booleano         | `true`   | Gasta um item por melhoria. Um jogador no modo criativo nunca gasta nenhum                                                                                                                                                       |
+| `unopenedLoot` | texto            | `refuse` | O que fazer com um contêiner cujo saque ainda não foi sorteado. `refuse` pede ao jogador que o abra primeiro; `carry` leva junto a tabela de saque pendente, que então é sorteada na primeira vez que o contêiner maior é aberto |
+
+**O que se mantém.** Cada item continua no mesmo número de espaço, junto com a direção, o nome personalizado e a trava. Um destino com mais colunas mostra os mesmos itens em outro arranjo, porque os espaços são contados da esquerda para a direita e de cima para baixo. Uma tabela de saque definida no destino é ignorada em um contêiner que já tem conteúdo. Um caminho corresponde apenas ao id do bloco, sem metadados. O destino assume seu estado padrão, com a direção copiada.
+
+**Segurando o item.** Segure o item na mão principal e clique com o botão direito no contêiner. Um item na mão secundária só funciona ao agachar com a mão principal vazia. No modo aventura, a tela do contêiner abre, o kit é mantido e não há troca.
+
+**Quando ele recusa.** O item é mantido e a barra de ação diz o motivo: contêiner errado, destino menor, outra pessoa com ele aberto, saque ainda não sorteado ou terreno que o jogador não pode alterar. Os baús vanilla e o armazenamento de outros mods abrem normalmente.
+
 ## Tipos de espaço do Curios
 
 *itens*
