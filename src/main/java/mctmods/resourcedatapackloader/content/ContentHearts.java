@@ -32,6 +32,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEntityUseItemEvent;
 import net.minecraftforge.event.entity.player.AdvancementEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -60,10 +61,16 @@ public final class ContentHearts {
     private static final Map<UUID, Set<String>> MET = new HashMap<>();
     private static float start = HeartsDef.VANILLA;
     @Nullable private static Float cap;
+    private static float floor = 0.5F;
     private static boolean keep = true;
+    private static boolean debt;
+    private static boolean kills;
+    private static boolean scale;
     private static String style = "bar";
     private static String sound = "";
     private static String particle = "";
+    private static String lossSound = "";
+    private static String lossParticle = "";
     private static int[] colors = DEFAULT_COLORS;
     private static boolean polled;
 
@@ -75,35 +82,59 @@ public final class ContentHearts {
         MET.clear();
         start = HeartsDef.VANILLA;
         cap = null;
+        floor = 0.5F;
         keep = true;
+        debt = false;
+        kills = false;
+        scale = false;
         style = "bar";
         sound = "";
         particle = "";
+        lossSound = "";
+        lossParticle = "";
         colors = DEFAULT_COLORS;
         Json.eachObject(PackManager.HEARTS, "hearts file", ContentHearts::read);
         Float least = cap;
         if (least != null && least < start) {
             ContentLog.LOGGER.error("Hearts cap {} is below startHearts {}, so there is no cap", least, start);
             cap = null;
+            least = null;
+        }
+        if (least != null && floor > least) {
+            ContentLog.LOGGER.error("Hearts floor {} is above cap {}, so the floor is 0.5", floor, least);
+            floor = 0.5F;
         }
         polled = false;
-        for (HeartReward reward : REWARDS) { polled |= reward.trigger == HeartReward.Trigger.CONDITION; }
-        if (!REWARDS.isEmpty() || start != HeartsDef.VANILLA) { Summary.info("hearts", "Loaded " + REWARDS.size() + " hearts reward(s), starting at " + start + " heart(s)"); }
+        int losses = 0;
+        for (HeartReward reward : REWARDS) {
+            polled |= reward.trigger == HeartReward.Trigger.CONDITION;
+            if (reward.loss) { losses++; }
+        }
+        if (!REWARDS.isEmpty() || start != HeartsDef.VANILLA) { Summary.info("hearts", "Loaded " + (REWARDS.size() - losses) + " hearts reward(s), starting at " + start + " heart(s)" + (losses > 0 ? ", with " + losses + " way(s) to lose them" : "")); }
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         HeartsDef def = HeartsDef.parse(key, json);
         if (def.startHearts != null && first("startHearts", key)) { start = def.startHearts; }
         if (def.cap != null && first("cap", key)) { cap = def.cap; }
+        if (def.floor != null && first("floor", key)) { floor = def.floor; }
         if (def.keepOnDeath != null && first("keepOnDeath", key)) { keep = def.keepOnDeath; }
+        if (def.floorDebt != null && first("floorDebt", key)) { debt = def.floorDebt; }
+        if (def.floorKills != null && first("floorKills", key)) { kills = def.floorKills; }
+        if (def.lossHealth != null && first("lossHealth", key)) { scale = "scale".equals(def.lossHealth); }
         if (def.style != null && first("style", key)) { style = def.style; }
         if (def.sound != null && first("sound", key)) { sound = def.sound; }
         if (def.particle != null && first("particle", key)) { particle = def.particle; }
+        if (def.lossSound != null && first("lossSound", key)) { lossSound = def.lossSound; }
+        if (def.lossParticle != null && first("lossParticle", key)) { lossParticle = def.lossParticle; }
         if (def.colors != null && first("heartColors", key)) {
             colors = def.colors;
             VanillaClients.clientDrawn("Hearts file " + key, "heartColors");
         }
         for (HeartReward reward : def.rewards) {
+            if (ContentRegistry.available(reward.requires, key)) { REWARDS.add(reward); }
+        }
+        for (HeartReward reward : def.losses) {
             if (ContentRegistry.available(reward.requires, key)) { REWARDS.add(reward); }
         }
     }
@@ -123,7 +154,7 @@ public final class ContentHearts {
 
     private static void sync(ServerPlayer player) {
         catchUp(player);
-        apply(player);
+        apply(player, REWARDS.stream().noneMatch(r -> r.whileMet));
         RDPLNetwork.sendHeartColors(player);
     }
 
@@ -133,8 +164,11 @@ public final class ContentHearts {
 
     public static void onClone(PlayerEvent.Clone event) {
         if (!(event.getEntity() instanceof ServerPlayer next)) { return; }
-        if (event.isWasDeath() && !keep) { forget(next); }
-        apply(next);
+        if (event.isWasDeath()) {
+            if (!keep) { forget(next); }
+            clearLosses(next);
+        }
+        apply(next, true);
         if (!event.isWasDeath()) { next.setHealth(Math.min(event.getOriginal().getHealth(), next.getMaxHealth())); }
     }
 
@@ -148,10 +182,20 @@ public final class ContentHearts {
         }
     }
 
+    public static void onDeath(LivingDeathEvent event) {
+        if (event.isCanceled() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
+        for (HeartReward reward : REWARDS) {
+            if (reward.trigger == HeartReward.Trigger.DEATH && reward.diedTo(player, event.getSource())) { grant(player, reward); }
+        }
+    }
+
     public static void onFinish(LivingEntityUseItemEvent.Finish event) {
         if (REWARDS.isEmpty() || !(event.getEntity() instanceof ServerPlayer player) || !event.getItem().isEdible()) { return; }
         for (HeartReward reward : REWARDS) {
-            if (reward.trigger == HeartReward.Trigger.FOODS && mark(player, reward, event.getItem())) { grant(player, reward); }
+            if (reward.trigger == HeartReward.Trigger.FOODS && mark(player, reward, event.getItem())) {
+                grant(player, reward);
+                if (reward.limit > 1) { PlayerPersisted.section(player, SECTION).remove(reward.eatenKey); }
+            }
         }
     }
 
@@ -160,8 +204,18 @@ public final class ContentHearts {
         Set<String> met = MET.computeIfAbsent(player.getUUID(), id -> new HashSet<>());
         for (HeartReward reward : REWARDS) {
             if (reward.trigger != HeartReward.Trigger.CONDITION) { continue; }
-            if (!reward.standing.earnedBy(player)) { met.remove(reward.key); }
-            else if (met.add(reward.key)) { grant(player, reward); }
+            if (reward.invert && !reward.whileMet && reward.standing.unreadable(player)) {
+                met.add(reward.key);
+                continue;
+            }
+            if (!reward.met(player)) {
+                if (met.remove(reward.key) && reward.whileMet) { apply(player, false); }
+            }
+            else if (!met.contains(reward.key)) {
+                double before = hearts(player);
+                met.add(reward.key);
+                if (!reward.whileMet || hearts(player) != before) { grant(player, reward); }
+            }
         }
     }
 
@@ -195,8 +249,19 @@ public final class ContentHearts {
     private static void forget(Player player) {
         CompoundTag section = PlayerPersisted.read(player, SECTION);
         for (String name : new ArrayList<>(section.getAllKeys())) {
+            if (name.startsWith(HeartReward.LOST) || name.startsWith(HeartReward.EATEN + HeartReward.LOST)) { continue; }
             if (name.startsWith(HeartReward.EATEN)) { section.remove(name); }
             else { section.putInt(name, 0); }
+        }
+    }
+
+    private static void clearLosses(Player player) {
+        CompoundTag section = PlayerPersisted.read(player, SECTION);
+        for (HeartReward reward : REWARDS) {
+            if (reward.clearFoodsOnDeath) { section.remove(reward.eatenKey); }
+            if (!reward.clearOnDeath) { continue; }
+            if (section.contains(reward.key)) { section.putInt(reward.key, 0); }
+            section.remove(reward.eatenKey);
         }
     }
 
@@ -210,13 +275,14 @@ public final class ContentHearts {
                 case ADVANCEMENT: reached = done(player, reward.advancement); break;
                 case DIET: reached = ContentDiet.distinct(player) >= reward.diet; break;
                 case FOODS: reached = marked(section, reward).size() >= reward.need; break;
+                case DEATH: reached = false; break;
                 default:
-                    reached = reward.standing.earnedBy(player);
+                    reached = reward.met(player);
                     if (reached) { met.add(reward.key); }
                     else { met.remove(reward.key); }
                     break;
             }
-            if (absent && reached) { award(player, reward); }
+            if (absent && reached && !reward.invert && !reward.whileMet) { award(player, reward); }
         }
     }
 
@@ -230,31 +296,56 @@ public final class ContentHearts {
         CompoundTag section = PlayerPersisted.section(player, SECTION);
         int held = section.getInt(reward.key);
         if (held >= reward.limit) { return false; }
+        if (reward.loss && !debt && hearts(player) <= floor) {
+            section.putInt(reward.key, held);
+            return false;
+        }
         section.putInt(reward.key, held + 1);
         return true;
     }
 
+    private static boolean fatal(ServerPlayer player, HeartReward reward) {
+        return kills && reward.loss && !reward.whileMet && reward.trigger != HeartReward.Trigger.DEATH
+            && PlayerPersisted.read(player, SECTION).getInt(reward.key) < reward.limit
+            && hearts(player) - reward.hearts < floor;
+    }
+
     private static void grant(ServerPlayer player, HeartReward reward) {
-        if (!award(player, reward)) { return; }
-        apply(player);
+        boolean fatal = fatal(player, reward);
+        if (!reward.whileMet && !award(player, reward)) {
+            if (fatal) { player.kill(); }
+            return;
+        }
+        apply(player, true);
         if (!reward.message.isEmpty()) { player.displayClientMessage(Component.literal(Lang.tr(player, reward.message)), !CHAT.equals(style)); }
-        SoundEvent heard = sound.isEmpty() ? null : Registered.find(ForgeRegistries.SOUND_EVENTS, ResourceLocation.tryParse(sound));
+        String heardName = reward.loss ? lossSound : sound;
+        String shownName = reward.loss ? lossParticle : particle;
+        SoundEvent heard = heardName.isEmpty() ? null : Registered.find(ForgeRegistries.SOUND_EVENTS, ResourceLocation.tryParse(heardName));
         if (heard != null) { player.level().playSound(null, player.getX(), player.getY(), player.getZ(), heard, SoundSource.PLAYERS, 1.0F, 1.0F); }
-        if (!particle.isEmpty() && ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(particle)) instanceof SimpleParticleType shown) {
+        if (!shownName.isEmpty() && ForgeRegistries.PARTICLE_TYPES.getValue(ResourceLocation.tryParse(shownName)) instanceof SimpleParticleType shown) {
             ((ServerLevel) player.level()).sendParticles(shown, player.getX(), player.getY() + 1.0D, player.getZ(), 8, 0.4D, 0.5D, 0.4D, 0.0D);
         }
+        if (fatal) { player.kill(); }
     }
 
-    private static double extra(Player player) {
+    private static double hearts(Player player) {
         CompoundTag section = PlayerPersisted.read(player, SECTION);
-        double hearts = start;
-        for (HeartReward reward : REWARDS) { hearts += section.getInt(reward.key) * (double) reward.hearts; }
+        Set<String> met = MET.get(player.getUUID());
+        double earned = start;
+        double lost = 0.0D;
+        for (HeartReward reward : REWARDS) {
+            if (!reward.loss) { earned += section.getInt(reward.key) * (double) reward.hearts; }
+            else if (reward.whileMet) { lost += met != null && met.contains(reward.key) ? reward.hearts : 0.0D; }
+            else { lost += section.getInt(reward.key) * (double) reward.hearts; }
+        }
         Float least = cap;
-        if (least != null) { hearts = Math.min(least, hearts); }
-        return 2.0D * (hearts - HeartsDef.VANILLA);
+        if (least != null) { earned = Math.min(least, earned); }
+        return Math.max(Math.min(floor, earned), earned - lost);
     }
 
-    private static void apply(Player player) {
+    private static double extra(Player player) { return 2.0D * (hearts(player) - HeartsDef.VANILLA); }
+
+    private static void apply(Player player, boolean lift) {
         AttributeInstance max = player.getAttribute(Attributes.MAX_HEALTH);
         if (max == null) { return; }
         double amount = extra(player);
@@ -265,7 +356,7 @@ public final class ContentHearts {
         if (amount != 0.0D) { max.addPermanentModifier(new AttributeModifier(ID, NAME, amount, AttributeModifier.Operation.ADDITION)); }
         float newMax = player.getMaxHealth();
         float health = player.getHealth();
-        if (newMax > oldMax) { player.setHealth(health * newMax / oldMax); }
+        if (lift && newMax > oldMax || scale && newMax < oldMax) { player.setHealth(health * newMax / oldMax); }
         else if (health > newMax) { player.setHealth(newMax); }
     }
 }

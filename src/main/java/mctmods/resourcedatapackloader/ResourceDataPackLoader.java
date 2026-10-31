@@ -240,6 +240,7 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onClone);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onRespawn);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onAdvancement);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentHearts::onDeath);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onFinish);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onServerStarted);

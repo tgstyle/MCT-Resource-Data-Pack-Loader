@@ -83,6 +83,7 @@
   "rdpl.diet.repeat": "この食べ物にも飽きてきた",
   "rdpl.diet.variety": "いろいろな物を食べると体が喜ぶ",
   "rdpl.hearts.gained": "体が丈夫になった気がする。",
+  "rdpl.hearts.lost": "体が弱くなった気がする。",
   "rdpl.carry.block": "%sを持ち上げました（スニーク中に右クリックで置けます）",
   "rdpl.carry.mob": "%sを持ち上げました（スニーク中にブロックを右クリックで置けます）",
   "rdpl.carry.down": "%sを置きました",

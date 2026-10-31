@@ -83,6 +83,7 @@
   "rdpl.diet.repeat": "Questo cibo inizia a stancare",
   "rdpl.diet.variety": "Un'alimentazione varia fa bene",
   "rdpl.hearts.gained": "Ti senti più robusto.",
+  "rdpl.hearts.lost": "Ti senti più fragile.",
   "rdpl.carry.block": "Stai trasportando %s (accovacciati e fai clic destro per posarlo)",
   "rdpl.carry.mob": "Stai trasportando %s (accovacciati e fai clic destro su un blocco per posarlo)",
   "rdpl.carry.down": "Hai posato %s",

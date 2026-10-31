@@ -146,74 +146,74 @@ A pack has two roots, the same two a vanilla pack has. `assets/` holds what the 
 
 Under `data/`:
 
-| Path                                         | What it holds                                                                                                                                                    |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<namespace>/blocks/*.json`                  | Block definitions. [Blocks](#blocks)                                                                                                                             |
-| `<namespace>/curioslots/*.json`              | Curios slot types an item can be worn in. [Curios slot types](#curios-slot-types)                                                                                |
-| `<namespace>/items/*.json`                   | Item definitions. [Items](#items)                                                                                                                                |
-| `<namespace>/fluids/*.json`                  | Fluids, with a block and a bucket. [Fluids](#fluids)                                                                                                             |
-| `<namespace>/materials/*.json`               | Tool and armor materials. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                           |
-| `<namespace>/tabs/*.json`                    | Creative tabs. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                      |
-| `<namespace>/sounds/*.json`                  | Sound events. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                       |
-| `<namespace>/biomes/*.json`                  | Biome definitions. [Biomes](#biomes)                                                                                                                             |
-| `<namespace>/worldgen/*.json`                | What generates, and where. [Worldgen entries](#worldgen-entries)                                                                                                 |
-| `<namespace>/caveregions/*.json`             | Named regions painted over the underground. [Cave regions](#cave-regions)                                                                                        |
-| `<namespace>/dimensions/*.json`              | Dimension definitions. [Dimensions](#dimensions)                                                                                                                 |
-| `<namespace>/worldtemplates/*.json`          | A whole world's settings in one file. [World templates](#world-templates)                                                                                        |
-| `<namespace>/worldintro/*.json`              | Pages shown when a player enters the world. [World intro](#world-intro)                                                                                          |
-| `<namespace>/gates/*.json`                   | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates)                                                                                    |
-| `<namespace>/gamerules/*.json`               | Game rules for new worlds. [Game rules](#game-rules)                                                                                                             |
-| `<namespace>/teams/*.json`                   | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams)                                                                                            |
-| `<namespace>/scoring/*.json`                 | Objectives, points and how a match ends. [Scoring](#scoring)                                                                                                     |
-| `<namespace>/raids/*.json`                   | Waves that come for a village when a player brings an omen into it. [Raids](#raids)                                                                              |
-| `<namespace>/entities/*.json`                | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                                                                        |
-| `<namespace>/hardness/*.json`                | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                                                                      |
-| `<namespace>/affixes/*.json`                 | Random attribute bonuses and sockets an item rolls the first time a player holds it. [Affixes and sockets](#affixes-and-sockets)                                 |
-| `<namespace>/gems/*.json`                    | Items an anvil fits into a socket for an attribute bonus. [Affixes and sockets](#affixes-and-sockets)                                                            |
-| `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                            |
-| `<namespace>/enchanting/*.json`              | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                    |
-| `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                       |
-| `<namespace>/dialogs/*.json`                 | Branching talk with an entity variant: text nodes and replies that go on, run a function or show a card. [Dialogs](#dialogs)                                     |
-| `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                               |
-| `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                             |
-| `<namespace>/ranks/*.json`                   | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                                            |
-| `<namespace>/hearts/*.json`                  | Extra hearts a player earns from advancements, a varied diet or a team score, kept with the player. [Max health rewards](#max-health-rewards)                    |
-| `<namespace>/orders/*.json`                  | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                                                     |
-| `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions, biomes, structures, cave regions or heights. [Exposures](#exposures) |
-| `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                                               |
-| `<namespace>/villages/*.json`                | Plots a city or village can build. [Village plots](#village-plots)                                                                                               |
-| `<namespace>/pathintersects/*.json`          | Designs painted where village roads meet. [Village roads](#village-roads)                                                                                        |
-| `<namespace>/structuremaps/*.json`           | Templates composed into one large building on a grid. [Structure maps](#structure-maps)                                                                          |
-| `<namespace>/citymaps/*.json`                | A drawn street plan a city is laid out from instead of rolling one. [City layout maps](#city-layout-maps)                                                        |
-| `<namespace>/portalframes/*.json`            | Frames a player can build and light. [Portal frames](#portal-frames)                                                                                             |
-| `<namespace>/blastplaster/*.json`            | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration)                                               |
-| `<namespace>/structures/*.nbt`               | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                            |
-| `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                             |
-| `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                    |
-| `<namespace>/recipe_locks/*.json`            | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                      |
-| `<namespace>/spawn_locks/*.json`             | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                        |
-| `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                      |
-| `<namespace>/furnace/*.json`                 | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                       |
-| `<namespace>/tooltips/*.json`                | Extra tooltip lines. [Tooltips](#tooltips)                                                                                                                       |
-| `<namespace>/fuels/*.json`                   | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                                              |
-| `<namespace>/brewing/*.json`                 | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                    |
-| `<namespace>/potions/*.json`                 | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                           |
-| `<namespace>/potion_types/*.json`            | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                 |
-| `<namespace>/enchantments/*.json`            | Custom enchantments. [Enchantments](#enchantments)                                                                                                               |
-| `<namespace>/villagers/*.json`               | Villager professions. [Villagers and trades](#villagers-and-trades)                                                                                              |
-| `<namespace>/trades/*.json`                  | What professions buy and sell. [Villagers and trades](#villagers-and-trades)                                                                                     |
-| `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                                                           |
-| `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                     |
-| `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                           |
-| `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                     |
-| `<namespace>/veins/*.json`                   | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                             |
-| `<namespace>/carries/*.json`                 | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                                            |
-| `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                              |
-| `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                             |
-| `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                    |
-| `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                  |
-| `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                        |
-| `<namespace>/registry_remap/*.json`          | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                                              |
+| Path                                         | What it holds                                                                                                                                                                  |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<namespace>/blocks/*.json`                  | Block definitions. [Blocks](#blocks)                                                                                                                                           |
+| `<namespace>/curioslots/*.json`              | Curios slot types an item can be worn in. [Curios slot types](#curios-slot-types)                                                                                              |
+| `<namespace>/items/*.json`                   | Item definitions. [Items](#items)                                                                                                                                              |
+| `<namespace>/fluids/*.json`                  | Fluids, with a block and a bucket. [Fluids](#fluids)                                                                                                                           |
+| `<namespace>/materials/*.json`               | Tool and armor materials. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                         |
+| `<namespace>/tabs/*.json`                    | Creative tabs. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                                    |
+| `<namespace>/sounds/*.json`                  | Sound events. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                                     |
+| `<namespace>/biomes/*.json`                  | Biome definitions. [Biomes](#biomes)                                                                                                                                           |
+| `<namespace>/worldgen/*.json`                | What generates, and where. [Worldgen entries](#worldgen-entries)                                                                                                               |
+| `<namespace>/caveregions/*.json`             | Named regions painted over the underground. [Cave regions](#cave-regions)                                                                                                      |
+| `<namespace>/dimensions/*.json`              | Dimension definitions. [Dimensions](#dimensions)                                                                                                                               |
+| `<namespace>/worldtemplates/*.json`          | A whole world's settings in one file. [World templates](#world-templates)                                                                                                      |
+| `<namespace>/worldintro/*.json`              | Pages shown when a player enters the world. [World intro](#world-intro)                                                                                                        |
+| `<namespace>/gates/*.json`                   | Conditions on portals and dimensions. [Portals and gates](#portals-and-gates)                                                                                                  |
+| `<namespace>/gamerules/*.json`               | Game rules for new worlds. [Game rules](#game-rules)                                                                                                                           |
+| `<namespace>/teams/*.json`                   | Sides on the vanilla scoreboard, and what joins them. [Teams](#teams)                                                                                                          |
+| `<namespace>/scoring/*.json`                 | Objectives, points and how a match ends. [Scoring](#scoring)                                                                                                                   |
+| `<namespace>/raids/*.json`                   | Waves that come for a village when a player brings an omen into it. [Raids](#raids)                                                                                            |
+| `<namespace>/entities/*.json`                | Entity variants built on entities that already exist. [Entity variants](#entity-variants)                                                                                      |
+| `<namespace>/hardness/*.json`                | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                                                                                    |
+| `<namespace>/affixes/*.json`                 | Random attribute bonuses and sockets an item rolls the first time a player holds it. [Affixes and sockets](#affixes-and-sockets)                                               |
+| `<namespace>/gems/*.json`                    | Items an anvil fits into a socket for an attribute bonus. [Affixes and sockets](#affixes-and-sockets)                                                                          |
+| `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work)                                                          |
+| `<namespace>/enchanting/*.json`              | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                                  |
+| `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                                                                                     |
+| `<namespace>/dialogs/*.json`                 | Branching talk with an entity variant: text nodes and replies that go on, run a function or show a card. [Dialogs](#dialogs)                                                   |
+| `<namespace>/dice/*.json`                    | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks)                                             |
+| `<namespace>/games/*.json`                   | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games)                                           |
+| `<namespace>/ranks/*.json`                   | Random tiers a mob can roll as it spawns: extra health, damage, effects, loot and a name tag. [Mob ranks](#mob-ranks)                                                          |
+| `<namespace>/hearts/*.json`                  | Extra hearts a player earns from advancements, a varied diet or a team score, kept with the player, and the ways to lose them again. [Max health rewards](#max-health-rewards) |
+| `<namespace>/orders/*.json`                  | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                                                                   |
+| `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions, biomes, structures, cave regions or heights. [Exposures](#exposures)               |
+| `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                                                             |
+| `<namespace>/villages/*.json`                | Plots a city or village can build. [Village plots](#village-plots)                                                                                                             |
+| `<namespace>/pathintersects/*.json`          | Designs painted where village roads meet. [Village roads](#village-roads)                                                                                                      |
+| `<namespace>/structuremaps/*.json`           | Templates composed into one large building on a grid. [Structure maps](#structure-maps)                                                                                        |
+| `<namespace>/citymaps/*.json`                | A drawn street plan a city is laid out from instead of rolling one. [City layout maps](#city-layout-maps)                                                                      |
+| `<namespace>/portalframes/*.json`            | Frames a player can build and light. [Portal frames](#portal-frames)                                                                                                           |
+| `<namespace>/blastplaster/*.json`            | What Blast Plaster does after an explosion, per dimension. [Blast Plaster integration](#blast-plaster-integration)                                                             |
+| `<namespace>/structures/*.nbt`               | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                                          |
+| `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                                           |
+| `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                                  |
+| `<namespace>/recipe_locks/*.json`            | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                                    |
+| `<namespace>/spawn_locks/*.json`             | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                                      |
+| `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                                    |
+| `<namespace>/furnace/*.json`                 | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                                     |
+| `<namespace>/tooltips/*.json`                | Extra tooltip lines. [Tooltips](#tooltips)                                                                                                                                     |
+| `<namespace>/fuels/*.json`                   | Burn times. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                                                            |
+| `<namespace>/brewing/*.json`                 | Brewing stand recipes. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                                  |
+| `<namespace>/potions/*.json`                 | Potion effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                                                         |
+| `<namespace>/potion_types/*.json`            | Bottled potions built from those effects. [Potions, potion types and brewing](#potions-potion-types-and-brewing)                                                               |
+| `<namespace>/enchantments/*.json`            | Custom enchantments. [Enchantments](#enchantments)                                                                                                                             |
+| `<namespace>/villagers/*.json`               | Villager professions. [Villagers and trades](#villagers-and-trades)                                                                                                            |
+| `<namespace>/trades/*.json`                  | What professions buy and sell. [Villagers and trades](#villagers-and-trades)                                                                                                   |
+| `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                                                                         |
+| `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                                   |
+| `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                                         |
+| `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                                   |
+| `<namespace>/veins/*.json`                   | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                                           |
+| `<namespace>/carries/*.json`                 | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                                                          |
+| `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                                            |
+| `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
+| `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                                  |
+| `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                                |
+| `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                      |
+| `<namespace>/registry_remap/*.json`          | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                                                            |
 
 Under `assets/`:
 
@@ -3869,6 +3869,71 @@ Each entry of `rewards`:
 **Death.** With `keepOnDeath` `true` the earned hearts stay. With `false` death sets every count to 0 and forgets the foods eaten, and only a new trigger earns a reward again.
 
 **Catch-up.** On login and after `/rdpl reload` every online player's hearts are worked out again from the saved counts and the current rules. A reward the player has no count for yet, whose condition already holds (the advancement is done, the diet tier is reached, the foods eaten reach `count`, the team or score condition holds), is granted then, without a message. A reward set to 0 by a death is not caught up again. A reward removed from the files keeps its count in the save but gives nothing while it is gone, and counts again if it comes back.
+
+**On screen.** Health above 20 does not make new rows of hearts. Each further 10 hearts is a layer drawn over the same first row: the second layer in the first color of `heartColors`, the third in the second, and so on. A layer in a status look (poison, wither, freezing) shows that vanilla look untinted, and absorption sits above the row as in vanilla. The colors come from the server, sent on login and after a reload; a client that has not received them uses the default list.
+
+### Taking hearts away
+
+A hearts file can also take maximum health away. Without `losses` nothing is ever taken, and `floor`, `floorDebt`, `floorKills`, `lossHealth`, `lossSound` and `lossParticle` do nothing.
+
+```json
+{
+  "startHearts": 10,
+  "floor": 3,
+  "floorDebt": false,
+  "lossHealth": "keep",
+  "lossSound": "minecraft:entity.player.hurt",
+  "lossParticle": "smoke",
+  "losses": [
+    { "id": "death", "death": true, "hearts": 1, "times": 5 },
+    { "id": "pvp", "death": true, "deathBy": "player", "hearts": 1 },
+    { "id": "pact", "advancement": "minecraft:nether/root", "hearts": 2 },
+    { "id": "rot", "foods": ["minecraft:rotten_flesh"], "count": 1, "hearts": 0.5, "repeat": "always", "clearOnDeath": true },
+    { "id": "traitor", "team": "exiles", "hearts": 3, "repeat": "while_met" },
+    { "id": "hungry", "dietAtLeast": 4, "invert": true, "hearts": 1, "repeat": "while_met" },
+    { "id": "debt", "objective": "debts", "scoreAtLeast": 1, "hearts": 1, "repeat": "always", "requires": ["somepack"], "message": "mypack.hearts.debt" }
+  ]
+}
+```
+
+| Key            | Required | Value                                | Default | What it does                                                                                                                                       |
+| -------------- | -------- | ------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `floor`        | no       | number, 0.5 or more, in steps of 0.5 | `0.5`   | The fewest hearts a loss can leave. Never lifts a player who has fewer to begin with. Above `cap` it is logged and `0.5` is used                   |
+| `floorDebt`    | no       | true or false                        | `false` | `true`: a loss at the floor still counts, and later gains pay it off first                                                                         |
+| `floorKills`   | no       | true or false                        | `false` | `true`: a loss that would take the player below the floor kills them instead, and they respawn at the floor. Not for `death` or `while_met` losses |
+| `lossHealth`   | no       | `keep` or `scale`                    | `keep`  | `keep`: health stays as it is, cut to the new maximum. `scale`: health falls in the same proportion                                                |
+| `lossSound`    | no       | sound id or `""`                     | `""`    | Played at the player on a loss                                                                                                                     |
+| `lossParticle` | no       | particle name or `""`                | `""`    | Spawned at the player on a loss; simple particles only                                                                                             |
+| `losses`       | no       | list of objects                      | none    | The ways to lose hearts, with the keys below                                                                                                       |
+
+Each entry of `losses`:
+
+| Key                                                | Required | Value                                      | Default                                            | What it does                                                                                                                                                                                                                     |
+| -------------------------------------------------- | -------- | ------------------------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                               | yes      | text, unique among the file's losses       | none                                               | Names the loss in the save, so keep it when you edit the entry                                                                                                                                                                   |
+| `advancement`                                      | no       | advancement id                             | none                                               | Trigger: the advancement is earned                                                                                                                                                                                               |
+| `foods`, `count`                                   | no       | as in a reward                             | none                                               | Trigger: the foods are eaten. With `repeat: always` the list starts over after each loss                                                                                                                                         |
+| `team`, `objective`, `scoreAtLeast`, `dietAtLeast` | no       | as in a reward                             | none                                               | Trigger: the condition turns from false to true, checked every 5 seconds                                                                                                                                                         |
+| `invert`                                           | no       | true or false                              | `false`                                            | With a condition: read it upside down, so the trigger is the condition turning from true to false. `dietAtLeast` with `invert` is how a poor diet penalty is written; it needs a Food variety file, and a loss cannot use `diet` |
+| `death`                                            | no       | true or false                              | `false`                                            | Trigger: the player dies. A totem or a canceled death takes nothing                                                                                                                                                              |
+| `deathBy`                                          | no       | `any`, `player`, `mob` or `world`          | `any`                                              | With `death`: who must have caused it. `world` is no killer, or the player's own doing                                                                                                                                           |
+| `hearts`                                           | yes      | number above 0, in steps of 0.5            | none                                               | The hearts one loss takes                                                                                                                                                                                                        |
+| `repeat`                                           | no       | `once_per_player`, `always` or `while_met` | `always` with `death`, otherwise `once_per_player` | `always`: each new trigger takes again. `while_met`: with a condition, the hearts are gone only while it holds, and nothing is saved                                                                                             |
+| `times`                                            | no       | int, 1 or more                             | `1`, unlimited with `always`                       | The most losses one player can get from the entry; `while_met` ignores it                                                                                                                                                        |
+| `clearFoodsOnDeath`                                | no       | true or false                              | `false`                                            | Death clears the foods eaten so far, but hearts already lost stay lost. Only with `foods`                                                                                                                                        |
+| `clearOnDeath`                                     | no       | true or false                              | `false`                                            | Death gives back what this entry took. Not with `death` or `while_met`                                                                                                                                                           |
+| `requires`                                         | no       | list of mod ids or pack namespaces         | none                                               | The entry is skipped unless all are present                                                                                                                                                                                      |
+| `message`                                          | no       | lang key or `""`                           | `rdpl.hearts.lost`                                 | Shown on a loss; `""` shows nothing                                                                                                                                                                                              |
+
+**How the total is worked out.** Rewards are added to `startHearts` and held to `cap`, and then losses are taken off and the result held to `floor`. Because the loss comes after `cap`, it always shows, but hearts earned past `cap` do not win a lost heart back. Earned hearts and losses are counted apart, so `keepOnDeath: false` gives no lost heart back; only `clearOnDeath` does.
+
+**At the floor.** A loss at the floor takes nothing and shows nothing, and a later reward counts in full. A larger loss landing partly past the floor counts whole.
+
+**Conditions and new players.** A rule with `invert` needs a real fall: a new player who has never met the condition loses nothing until they meet it and then stop. `while_met` with `invert` applies at once, as long as every team and objective it names exists; if one is missing it takes nothing. A player who has no score yet in an existing objective counts as not meeting the condition, so `invert` takes hearts from them. A rule with `invert` on `dietAtLeast` needs a Food variety file, or the entry is skipped.
+
+**Health.** When a `while_met` loss stops holding, the hearts come back but health stays as it is, so switching it on and off never heals.
+
+**Other mods.** The hearts here are RDPL's own count. A worn item or another mod's modifier still changes the bar on top of it.
 
 **On screen.** Health above 20 does not make new rows of hearts. Each further 10 hearts is a layer drawn over the same first row: the second layer in the first color of `heartColors`, the third in the second, and so on. A layer in a status look (poison, wither, freezing) shows that vanilla look untinted, and absorption sits above the row as in vanilla. The colors come from the server, sent on login and after a reload; a client that has not received them uses the default list.
 

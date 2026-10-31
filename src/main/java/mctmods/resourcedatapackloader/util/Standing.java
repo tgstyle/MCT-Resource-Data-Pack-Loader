@@ -56,6 +56,11 @@ public final class Standing {
 
     public boolean any() { return !team.isEmpty() || !objective.isEmpty() && scoreAtLeast != null || dietAtLeast > 0; }
 
+    public boolean unreadable(ServerPlayer player) {
+        Scoreboard board = player.level().getScoreboard();
+        return !team.isEmpty() && Scores.team(board, team) == null || !objective.isEmpty() && Scores.objective(board, objective) == null;
+    }
+
     public boolean earnedBy(ServerPlayer player) { return any() && met(player); }
 
     public static String teamOf(ServerPlayer player) {
