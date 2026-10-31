@@ -1026,6 +1026,42 @@ Uma `structure` substitui a árvore gerada por um dos teus moldes, que é a form
 
 Uma entrada de `wornEffects` aceita `potion`, `amplifier`, `ambient` e `showParticles`, que aqui vem desligado por predefinição. Não tem `duration`: o efeito mantém-se enquanto o item estiver a ser usado e desaparece um a dois segundos depois de ser retirado. Uma entrada de `wornAttributes` aceita `attribute`, `amount` e `operation`, em que `0` soma, `1` multiplica a base e `2` multiplica o total, e a alteração é retirada juntamente com o item. Não existe `uuid`: a alteração tem o nome do item, por isso dois itens iguais usados ao mesmo tempo partilham uma única alteração e não se acumulam. Ambos são lidos uma vez por segundo e nunca são guardados com o jogador.
 
+### Melhorar um contentor
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Definição      | Tipo             | Predefinição | O que faz                                                                                                                                                                                                                          |
+| -------------- | ---------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | lista de objetos | nenhum       | As alterações que este item pode fazer, cada uma com um `fromBlock` e um `toBlock`. É usada a primeira entrada cujo `fromBlock` coincide                                                                                           |
+| `fromBlock`    | texto            | nenhum       | O bloco de contentor sobre o qual o item atua                                                                                                                                                                                      |
+| `toBlock`      | texto            | nenhum       | O bloco de contentor em que se transforma. Tem de ter pelo menos tantas ranhuras                                                                                                                                                   |
+| `consume`      | booleano         | `true`       | Gasta um item por melhoria. Um jogador em modo criativo nunca gasta nenhum                                                                                                                                                         |
+| `unopenedLoot` | texto            | `refuse`     | O que fazer com um contentor cujo saque ainda não foi sorteado. `refuse` pede ao jogador que o abra primeiro; `carry` leva consigo a tabela de saque pendente, que é então sorteada na primeira vez que o contentor maior é aberto |
+
+**O que se mantém.** Cada item fica no mesmo número de ranhura, tal como a orientação, o nome personalizado e o bloqueio. Um destino com mais colunas mostra os mesmos itens por outra ordem, porque as ranhuras contam-se da esquerda para a direita e de cima para baixo. Uma tabela de saque definida no destino é ignorada num contentor que já tenha conteúdo. Um percurso corresponde apenas ao identificador do bloco, sem metadados. O destino assume o seu estado predefinido, com a orientação copiada.
+
+**Como o segurar.** Segura o item na mão principal e clica com o botão direito no contentor. Um item na mão secundária só funciona ao agachar com a mão principal vazia. No modo aventura abre-se o ecrã do contentor, o kit é mantido e não há troca.
+
+**Quando recusa.** O item fica guardado e a barra de ação diz porquê: contentor errado, destino mais pequeno, outra pessoa tem-no aberto, saque ainda não sorteado ou terreno que o jogador não pode alterar. Os baús vanilla e o armazenamento de outros mods abrem como habitualmente.
+
 ## Tipos de ranhura do Curios
 
 *itens*

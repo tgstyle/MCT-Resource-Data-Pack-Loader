@@ -9,14 +9,13 @@ import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponentGetter;
-import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.ContainerUser;
@@ -30,8 +29,11 @@ import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
+import java.util.Collections;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -48,7 +50,10 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
         super(ContentContainers.TYPE.get(), pos, state);
-        ContainerDef def = def(state);
+        reshape(def(state));
+    }
+
+    public void reshape(ContainerDef def) {
         this.rows = def.rows();
         this.columns = def.columns();
         this.items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
@@ -134,15 +139,27 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
 
     @Override public boolean stillValid(@Nonnull Player player) { return Container.stillValidBlockEntity(this, player); }
 
-    @Override protected void applyImplicitComponents(@Nonnull DataComponentGetter input) {
-        super.applyImplicitComponents(new DataComponentGetter() {
-            @Override @Nullable public <T> T get(@Nonnull DataComponentType<? extends T> type) {
-                T value = input.get(type);
-                return type == DataComponents.CUSTOM_NAME ? null : value;
-            }
+    public boolean watched() { return openers > 0; }
 
-            @Override @Nonnull public <T> T getOrDefault(@Nonnull DataComponentType<? extends T> type, @Nonnull T fallback) { return input.getOrDefault(type, fallback); }
-        });
+    public boolean pendingLoot() { return lootTable != null || (!stocked && !def().lootTable().isEmpty()); }
+
+    public CompoundTag vacate() {
+        if (!stocked && level != null) { stock(level.getRandom().nextLong()); }
+        stocked = true;
+        CompoundTag tag = saveWithFullMetadata(Objects.requireNonNull(level).registryAccess());
+        lootTable = null;
+        Collections.fill(items, ItemStack.EMPTY);
+        return tag;
+    }
+
+    public void adopt(CompoundTag tag) {
+        if (rows * columns >= tag.getIntOr(ROWS, 0) * tag.getIntOr(COLUMNS, 0)) {
+            tag.putInt(ROWS, rows);
+            tag.putInt(COLUMNS, columns);
+        }
+        lootTable = null;
+        loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, Objects.requireNonNull(level).registryAccess(), tag));
+        setChanged();
     }
 
     @Override public void unpackLootTable(@Nullable Player player) {

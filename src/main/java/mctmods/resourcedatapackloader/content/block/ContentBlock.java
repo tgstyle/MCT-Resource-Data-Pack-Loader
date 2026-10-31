@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.compat.LineCompat;
+import mctmods.resourcedatapackloader.content.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.content.ContentDrops;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
@@ -96,6 +97,7 @@ public class ContentBlock extends Block implements IContentBlock, LineCompat.ITr
     }
 
     public static void changed(ServerLevel level, BlockPos pos, BlockState state, BlockState replaced) {
+        if (ContentContainerUpgrades.swapping()) { return; }
         if (state.getBlock() instanceof ContentBlock block) { block.removed(level, pos, state, replaced); }
         else if (state.getBlock() instanceof ContentContainerBlock) { ContentDrops.removed(level, pos, state, replaced); }
     }

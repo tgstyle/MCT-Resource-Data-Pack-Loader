@@ -2,13 +2,17 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.AttributeDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
+import mctmods.resourcedatapackloader.content.def.ContainerUpgradeDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
@@ -63,6 +67,28 @@ public final class ContentParserContainers {
         Identifier sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(Settings.lower(asked.getAsString()), key) : null;
         return new ContainerDef(rows, columns, Settings.lower(Json.getString(held, "lootTable", "")),
                 chest, sheet, texture, wide, tall);
+    }
+
+    @Nullable static ContainerUpgradeDef upgrade(Identifier key, JsonObject json) {
+        if (!"container_upgrade".equals(Settings.lower(Json.getString(json, "type", "")))) { return null; }
+        if (!json.has("upgrade")) {
+            ContentLog.LOGGER.error("The container upgrade {} has no upgrade block, so it fits nothing", key);
+            return ContainerUpgradeDef.PLAIN;
+        }
+        JsonObject held = Json.getJsonObject(json, "upgrade", new JsonObject());
+        List<ContainerUpgradeDef.Path> paths = new ArrayList<>();
+        for (JsonElement element : Json.getJsonArray(held, "paths", new JsonArray())) {
+            String from = element.isJsonObject() ? Json.getString(element.getAsJsonObject(), "fromBlock", "").trim() : "";
+            String to = element.isJsonObject() ? Json.getString(element.getAsJsonObject(), "toBlock", "").trim() : "";
+            if (from.isEmpty() || to.isEmpty()) {
+                ContentLog.LOGGER.error("A path in the container upgrade {} names no fromBlock or no toBlock, skipping it", key);
+                continue;
+            }
+            paths.add(new ContainerUpgradeDef.Path(from, to));
+        }
+        if (paths.isEmpty()) { ContentLog.LOGGER.error("The container upgrade {} has no valid path, so it fits nothing", key); }
+        boolean carry = "carry".equals(Json.choice(held, "unopenedLoot", "refuse", "Container upgrade " + key, Arrays.asList("refuse", "carry")));
+        return new ContainerUpgradeDef(Collections.unmodifiableList(paths), Json.getBoolean(held, "consume", true), carry);
     }
 
     static String curioSlot(Identifier key, JsonObject json) {

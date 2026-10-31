@@ -1026,6 +1026,42 @@ Une `structure` remplace l'arbre généré par l'un de vos modèles, ce qui perm
 
 Une entrée de `wornEffects` accepte `potion`, `amplifier`, `ambient` et `showParticles`, désactivé par défaut ici. Elle n'a pas de `duration` : l'effet est maintenu tant que l'objet est porté et s'estompe une à deux secondes après son retrait. Une entrée de `wornAttributes` accepte `attribute`, `amount` et `operation`, où `0` ajoute, `1` multiplie la base et `2` multiplie le total, et la modification est retirée avec l'objet. Il n'y a pas de `uuid` : la modification porte le nom de l'objet, donc deux objets identiques portés en même temps partagent une seule modification et ne se cumulent pas. Les deux sont lus une fois par seconde et ne sont jamais enregistrés avec le joueur.
 
+### Améliorer un conteneur
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Réglage        | Type           | Défaut   | Rôle                                                                                                                                                                                                                                |
+| -------------- | -------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | liste d'objets | aucun    | Les changements que cet objet peut effectuer, chacun avec un `fromBlock` et un `toBlock`. La première entrée dont le `fromBlock` correspond est utilisée                                                                            |
+| `fromBlock`    | texte          | aucun    | Le bloc de conteneur sur lequel l'objet agit                                                                                                                                                                                        |
+| `toBlock`      | texte          | aucun    | Le bloc de conteneur qu'il devient. Il doit avoir au moins autant d'emplacements                                                                                                                                                    |
+| `consume`      | booléen        | `true`   | Utilise un objet par amélioration. Un joueur en mode créatif n'en consomme jamais                                                                                                                                                   |
+| `unopenedLoot` | texte          | `refuse` | Que faire d'un conteneur dont le butin n'a pas encore été tiré. `refuse` demande au joueur de l'ouvrir d'abord ; `carry` transfère la table de butin en attente, qui est donc tirée à la première ouverture du plus grand conteneur |
+
+**Ce qui suit.** Chaque objet reste dans son numéro d'emplacement, avec l'orientation, le nom personnalisé et le verrou. Une cible comptant plus de colonnes présente les mêmes objets dans une autre disposition, car les emplacements se comptent de gauche à droite et de haut en bas. Une table de butin définie sur la cible est ignorée pour un conteneur qui a déjà un contenu. Un chemin ne correspond qu'à l'identifiant du bloc, sans métadonnées. La cible prend son état par défaut, avec l'orientation copiée.
+
+**Le tenir en main.** Tenez l'objet dans la main principale et faites un clic droit sur le conteneur. Un objet dans la main secondaire ne fonctionne qu'en étant accroupi avec la main principale vide. En mode aventure, l'écran du conteneur s'ouvre, le kit est conservé et il n'y a pas d'échange.
+
+**Quand il refuse.** L'objet est conservé et la barre d'action en donne la raison : mauvais conteneur, cible plus petite, quelqu'un d'autre l'a ouvert, butin pas encore tiré, ou terrain que le joueur n'a pas le droit de modifier. Les coffres de vanilla et le stockage d'autres mods s'ouvrent comme d'habitude.
+
 ## Emplacements Curios
 
 *objets*

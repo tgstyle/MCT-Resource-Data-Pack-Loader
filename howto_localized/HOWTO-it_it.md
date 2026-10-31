@@ -1026,6 +1026,42 @@ Una `structure` sostituisce l'albero generato con uno dei tuoi modelli, ed è il
 
 Una voce di `wornEffects` accetta `potion`, `amplifier`, `ambient` e `showParticles`, che qui è disattivato per impostazione predefinita. Non ha `duration`: l'effetto viene mantenuto finché l'oggetto è indossato e svanisce da uno a due secondi dopo che lo si toglie. Una voce di `wornAttributes` accetta `attribute`, `amount` e `operation`, dove `0` somma, `1` moltiplica la base e `2` moltiplica il totale, e la modifica viene rimossa insieme all'oggetto. Non c'è `uuid`: la modifica prende il nome dell'oggetto, quindi due oggetti uguali indossati insieme condividono una sola modifica e non si sommano. Entrambi vengono letti una volta al secondo e non vengono mai salvati con il giocatore.
 
+### Potenziare un contenitore
+
+*items*
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "type": "container_upgrade",
+  "creativeTab": "tools",
+  "upgrade": {
+    "paths": [
+      { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+    ],
+    "consume": true,
+    "unopenedLoot": "refuse"
+  },
+  "variants": [ { "name": "iron_chest_kit" } ]
+}
+```
+
+| Impostazione   | Tipo              | Predefinito | Cosa fa                                                                                                                                                                                                                                 |
+| -------------- | ----------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paths`        | elenco di oggetti | nessuno     | Le modifiche che questo oggetto può fare, ciascuna con un `fromBlock` e un `toBlock`. Si usa la prima voce il cui `fromBlock` corrisponde                                                                                               |
+| `fromBlock`    | testo             | nessuno     | Il blocco contenitore su cui agisce l'oggetto                                                                                                                                                                                           |
+| `toBlock`      | testo             | nessuno     | Il blocco contenitore in cui si trasforma. Deve avere almeno altrettanti slot                                                                                                                                                           |
+| `consume`      | booleano          | `true`      | Consuma un oggetto per ogni potenziamento. Un giocatore in modalità creativa non ne consuma mai                                                                                                                                         |
+| `unopenedLoot` | testo             | `refuse`    | Cosa fare con un contenitore la cui loot table non è ancora stata assegnata. `refuse` chiede al giocatore di aprirlo prima; `carry` sposta la loot table in attesa, così viene assegnata alla prima apertura del contenitore più grande |
+
+**Cosa si sposta.** Ogni oggetto resta nel proprio numero di slot, insieme a orientamento, nome personalizzato e serratura. Una destinazione con più colonne mostra gli stessi oggetti in una disposizione diversa, perché gli slot si contano da sinistra a destra e dall'alto in basso. Una loot table impostata sulla destinazione viene ignorata per un contenitore che ha già un contenuto. Un percorso corrisponde solo all'ID del blocco, senza metadati. La destinazione assume il suo stato predefinito, con l'orientamento copiato.
+
+**Come tenerlo.** Tieni l'oggetto nella mano principale e fai clic destro sul contenitore. Un oggetto nella mano secondaria funziona solo restando accovacciati con la mano principale vuota. In modalità avventura si apre la schermata del contenitore, il kit viene conservato e non avviene alcuno scambio.
+
+**Quando rifiuta.** L'oggetto viene conservato e la barra delle azioni ne dice il motivo: il contenitore sbagliato, una destinazione più piccola, qualcun altro lo ha aperto, la loot table non è ancora stata assegnata, oppure un terreno che il giocatore non può modificare. I bauli vanilla e i depositi di altre mod si aprono come al solito.
+
 ## Tipi di slot Curios
 
 *oggetti*
