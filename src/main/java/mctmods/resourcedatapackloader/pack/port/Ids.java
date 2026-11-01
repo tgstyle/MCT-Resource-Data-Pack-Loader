@@ -22,8 +22,8 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
-final class Ids {
-    static final String MINECRAFT = "minecraft";
+public final class Ids {
+    public static final String MINECRAFT = "minecraft";
     private static final String TABLE = "/assets/resourcedatapackloader/port/flattening.json";
     private static final String ENTITY_TABLES = "entities/";
     private static final Map<String, List<Legacy>> BLOCKS = new HashMap<>();
@@ -93,12 +93,12 @@ final class Ids {
 
     private Ids() {}
 
-    static final class Legacy {
-        final String id;
-        final int meta;
+    public static final class Legacy {
+        public final String id;
+        public final int meta;
         final Map<String, String> properties;
         final Map<String, String> legacyProperties;
-        final boolean lossy;
+        public final boolean lossy;
 
         Legacy(String id, int meta, Map<String, String> properties, Map<String, String> legacyProperties, boolean lossy) {
             this.id = id;
@@ -111,9 +111,9 @@ final class Ids {
         Legacy lossy() { return new Legacy(id, meta, properties, legacyProperties, true); }
     }
 
-    static boolean vanilla(String name) { return name.startsWith(MINECRAFT + ":") || name.indexOf(':') < 0; }
+    public static boolean vanilla(String name) { return name.startsWith(MINECRAFT + ":") || name.indexOf(':') < 0; }
 
-    static String namespaced(String name) {
+    public static String namespaced(String name) {
         return IdNames.namespaced(name.trim());
     }
 
@@ -180,23 +180,23 @@ final class Ids {
         for (JsonElement element : table.getAsJsonArray(section)) { into.add(element.getAsString()); }
     }
 
-    static boolean unknownBlock(String name) {
+    public static boolean unknownBlock(String name) {
         load();
         return !LEGACY_BLOCKS.contains(namespaced(name));
     }
 
-    static boolean legacyItem(String name) {
+    public static boolean legacyItem(String name) {
         load();
         return LEGACY_ITEMS.contains(namespaced(name)) || LEGACY_BLOCKS.contains(namespaced(name));
     }
 
-    @Nullable static Legacy block(String name, Map<String, String> properties) {
+    @Nullable public static Legacy block(String name, Map<String, String> properties) {
         load();
         List<Legacy> list = BLOCKS.get(namespaced(name));
         return list == null ? null : pick(list, properties);
     }
 
-    @Nullable static Legacy item(String name) {
+    @Nullable public static Legacy item(String name) {
         load();
         List<Legacy> list = ITEMS.get(namespaced(name));
         if (list != null) { return list.get(0); }
@@ -205,17 +205,17 @@ final class Ids {
         return list == null ? null : list.get(0);
     }
 
-    static boolean variedBlock(String legacyId) {
+    public static boolean variedBlock(String legacyId) {
         load();
         return VARIED_BLOCKS.contains(legacyId);
     }
 
-    static boolean variedItem(String legacyId) {
+    public static boolean variedItem(String legacyId) {
         load();
         return VARIED_ITEMS.contains(legacyId);
     }
 
-    @Nullable static String spawnEgg(String name) {
+    @Nullable public static String spawnEgg(String name) {
         load();
         return SPAWN_EGGS.get(namespaced(name));
     }
@@ -241,21 +241,21 @@ final class Ids {
         return best == null ? list.get(0).lossy() : best;
     }
 
-    static String entity(String name) {
+    public static String entity(String name) {
         load();
         String id = namespaced(name.toLowerCase(Locale.ROOT));
         String found = ENTITIES.get(id);
         return found == null ? id : found;
     }
 
-    static String biome(String name) {
+    public static String biome(String name) {
         load();
         String id = namespaced(name.toLowerCase(Locale.ROOT));
         String found = BIOMES.get(id);
         return found == null ? id : found;
     }
 
-    static String lootTable(String name) {
+    public static String lootTable(String name) {
         String asked = namespaced(Settings.lower(name));
         if (!asked.startsWith(MINECRAFT + ":")) { return asked; }
         String path = asked.substring(MINECRAFT.length() + 1);
@@ -268,19 +268,19 @@ final class Ids {
         return MINECRAFT + ":" + ENTITY_TABLES + IdNames.path(entity) + (slash < 0 ? "" : rest.substring(slash));
     }
 
-    static String attribute(String name) {
+    public static String attribute(String name) {
         String trimmed = IdNames.bare(name.trim());
         int dot = trimmed.indexOf('.');
         if (dot < 0) { return trimmed; }
         return trimmed.substring(0, dot + 1) + camel(trimmed.substring(dot + 1), false);
     }
 
-    static String enchantment(String name) {
+    public static String enchantment(String name) {
         String id = namespaced(name.toLowerCase(Locale.ROOT));
         return "minecraft:sweeping_edge".equals(id) ? "minecraft:sweeping" : id;
     }
 
-    static String sound(String given) {
+    public static String sound(String given) {
         String name = given.trim();
         String namespace = "";
         if (name.startsWith(MINECRAFT + ":")) {
@@ -301,9 +301,9 @@ final class Ids {
         return given;
     }
 
-    @Nullable static String particle(String given) { return PARTICLES.get(IdNames.bare(given.trim())); }
+    @Nullable public static String particle(String given) { return PARTICLES.get(IdNames.bare(given.trim())); }
 
-    @Nullable static String oreName(String tag) {
+    @Nullable public static String oreName(String tag) {
         String id = namespaced(tag.trim().startsWith("#") ? tag.trim().substring(1) : tag.trim());
         String namespace = id.substring(0, id.indexOf(':'));
         String path = IdNames.path(id);
@@ -322,7 +322,7 @@ final class Ids {
         return camel(path, false);
     }
 
-    static String camel(String snake, boolean capitalFirst) {
+    public static String camel(String snake, boolean capitalFirst) {
         StringBuilder out = new StringBuilder();
         boolean upper = capitalFirst;
         for (int i = 0; i < snake.length(); i++) {

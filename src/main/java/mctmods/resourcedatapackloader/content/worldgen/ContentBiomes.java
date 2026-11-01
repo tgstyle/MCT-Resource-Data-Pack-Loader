@@ -71,7 +71,7 @@ public final class ContentBiomes {
         }
     }
 
-    static Collection<BiomeDef> defs() { return DEFS.values(); }
+    public static Collection<BiomeDef> defs() { return DEFS.values(); }
 
     public static double lowestSkyIslands(double fallback) {
         double lowest = fallback;
@@ -81,7 +81,7 @@ public final class ContentBiomes {
         return lowest;
     }
 
-    static int widestCrater() {
+    public static int widestCrater() {
         int widest = 0;
         for (BiomeDef def : DEFS.values()) {
             if (def.craters != null) { widest = Math.max(widest, def.craters.maxRadius); }

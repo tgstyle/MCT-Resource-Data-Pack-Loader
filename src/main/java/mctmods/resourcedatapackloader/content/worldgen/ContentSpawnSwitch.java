@@ -44,7 +44,7 @@ public final class ContentSpawnSwitch {
         long tick = -1L;
     }
 
-    @Nullable static SpawnSwitchDef parse(String owner, @Nullable JsonElement element) {
+    @Nullable public static SpawnSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives spawning that is not an object of rate, cap and weights keys, ignoring it", owner);

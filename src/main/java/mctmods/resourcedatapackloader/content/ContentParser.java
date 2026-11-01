@@ -493,7 +493,7 @@ public final class ContentParser {
         return new AmountDef(least, Math.max(least, Json.getInt(range, "max", least)));
     }
 
-    static IntRange heights(String what, ResourceLocation key, JsonObject json, int minFallback, int maxFallback) {
+    public static IntRange heights(String what, ResourceLocation key, JsonObject json, int minFallback, int maxFallback) {
         int minHeight = Json.getInt(json, "minHeight", minFallback);
         int maxHeight = Json.getInt(json, "maxHeight", maxFallback);
         if (maxHeight < minHeight) {

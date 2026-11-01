@@ -480,7 +480,7 @@ public final class BeardRoadsPaving {
         return true;
     }
 
-    static int vergeFill(World world, StructureComponent piece, List<RailPiece> bores, int x, int z, int level, BlockPos.MutableBlockPos at) {
+    public static int vergeFill(World world, StructureComponent piece, List<RailPiece> bores, int x, int z, int level, BlockPos.MutableBlockPos at) {
         if (BeardRoads.insidePlaza(x, z)) { return 0; }
         StructureStart holder = ContentBeard.current();
         if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }

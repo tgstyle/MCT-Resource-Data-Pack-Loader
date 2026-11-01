@@ -27,7 +27,7 @@ import java.util.function.Predicate;
 public final class ContentBeardTrees {
     private ContentBeardTrees() {}
 
-    static int fellAround(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at, boolean bare) {
+    public static int fellAround(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at, boolean bare) {
         List<BlockPos> seeds = new ArrayList<>();
         List<BlockPos> canopy = new ArrayList<>();
         int felled = 0;

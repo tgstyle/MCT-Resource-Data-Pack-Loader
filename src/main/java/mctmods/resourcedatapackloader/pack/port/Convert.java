@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
-final class Convert {
+public final class Convert {
     static final String FLAT = "flat";
     private static final Set<String> BLOCK_KEYS = set("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "middle", "budding", "crystal", "bell", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock", "fromBlock", "toBlock");
     private static final Set<String> ITEM_KEYS = set("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "immuneItems", "ignitedBy", "saysIcon", "outputs", "with");
@@ -52,9 +52,9 @@ final class Convert {
 
     private enum Context { NONE, BLOCK, ITEM, ENTITY, BIOME, DIMENSION }
 
-    static final class Ref {
-        final String id;
-        final int meta;
+    public static final class Ref {
+        public final String id;
+        public final int meta;
         final boolean specific;
         final boolean vanilla;
 
@@ -84,7 +84,7 @@ final class Convert {
         return head.isEmpty() || head.indexOf(':') <= 0 || head.indexOf('=') >= 0 || head.indexOf(' ') >= 0 || head.split(":").length != 2;
     }
 
-    @Nullable static Ref block(String text, Map<String, String> given, Ported pack, String where) {
+    @Nullable public static Ref block(String text, Map<String, String> given, Ported pack, String where) {
         String trimmed = text.trim();
         if (notAnId(trimmed)) { return null; }
         Map<String, String> properties = new LinkedHashMap<>(given);
@@ -114,7 +114,7 @@ final class Convert {
         return notAnId(trimmed) || !Ids.vanilla(trimmed) ? text : Ids.biome(trimmed);
     }
 
-    @Nullable static Ref item(String text, Ported pack, String where) {
+    @Nullable public static Ref item(String text, Ported pack, String where) {
         String trimmed = text.trim();
         int components = trimmed.indexOf('[');
         if (components > 0) {
@@ -143,20 +143,20 @@ final class Convert {
         return new Ref(found.id, found.meta, found.meta > 0 || Ids.variedItem(found.id), true);
     }
 
-    static String itemString(String text, Ported pack) { return itemString(text, pack, pack.mainNamespace() + " pack data"); }
+    public static String itemString(String text, Ported pack) { return itemString(text, pack, pack.mainNamespace() + " pack data"); }
 
     static String itemString(String text, Ported pack, String where) {
         Ref ref = item(text, pack, where);
         return ref == null ? text : ref.text();
     }
 
-    static int flatShift(JsonObject settings) {
+    public static int flatShift(JsonObject settings) {
         if (!JsonUtils.isJsonPrimitive(settings, "worldType") || !FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString()))) { return 0; }
         int floor = JsonUtils.isJsonPrimitive(settings, "worldMinHeight") && settings.getAsJsonPrimitive("worldMinHeight").isNumber() ? settings.get("worldMinHeight").getAsInt() : Ported.MODERN_FLAT_FLOOR;
         return -floor;
     }
 
-    static String shiftY(String written, int shift) {
+    public static String shiftY(String written, int shift) {
         String trimmed = written.trim();
         if (shift == 0 || trimmed.isEmpty()) { return written; }
         try { return String.valueOf(Integer.parseInt(trimmed) + shift); }
@@ -166,7 +166,7 @@ final class Convert {
         }
     }
 
-    static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
+    public static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
         String where = namespace + ":" + folder + "/" + file;
         switch (folder) {
             case "blocks":

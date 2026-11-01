@@ -61,9 +61,9 @@ public final class ContentTurns {
 
     public static boolean free(Entity who) { return !HELD.contains(who.getUniqueID()); }
 
-    static boolean holdsNobody() { return HELD.isEmpty(); }
+    public static boolean holdsNobody() { return HELD.isEmpty(); }
 
-    static void second(MinecraftServer server, boolean open) {
+    public static void second(MinecraftServer server, boolean open) {
         ScoreDef def = turnsDef();
         if (def == null) { return; }
         TurnsDef turns = def.turns;
@@ -195,14 +195,14 @@ public final class ContentTurns {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { back(player); }
     }
 
-    static void over(MinecraftServer server, ScoreDef def, @Nullable String winner) {
+    public static void over(MinecraftServer server, ScoreDef def, @Nullable String winner) {
         if (def.turns == null) { return; }
         ended = true;
         lastWinner = winner == null ? leader(server, def) : winner;
         stop(server);
     }
 
-    static void reset(@Nullable MinecraftServer server) {
+    public static void reset(@Nullable MinecraftServer server) {
         ended = false;
         ORDER.clear();
         at = 0;
@@ -230,7 +230,7 @@ public final class ContentTurns {
         if (refusal != null) { Says.chat(player, TextFormatting.RED, ContentDice.words(player, refusal)); }
     }
 
-    static boolean refused(EntityPlayer player) {
+    public static boolean refused(EntityPlayer player) {
         if (free(player)) { return false; }
         long now = player.world.getTotalWorldTime();
         if (TOLD.ready(player.getName(), now)) {
@@ -291,7 +291,7 @@ public final class ContentTurns {
         return top.size() == 1 ? top.get(0).getPlayerName() : null;
     }
 
-    static String shown(String group) {
+    public static String shown(String group) {
         TeamDef side = ContentTeams.named(group);
         return side == null ? group : side.displayName;
     }

@@ -51,7 +51,7 @@ public class ContentStructureMaps {
 
     public static boolean none() { return DEFS.isEmpty(); }
 
-    static Collection<StructureMapDef> defs() { return DEFS.values(); }
+    public static Collection<StructureMapDef> defs() { return DEFS.values(); }
 
     @Nullable public static StructureMapDef byName(String name) { return name == null || name.isEmpty() ? null : DEFS.get(name.toLowerCase(Locale.ROOT)); }
 

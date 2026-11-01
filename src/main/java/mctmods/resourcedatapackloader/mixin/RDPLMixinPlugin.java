@@ -6,62 +6,73 @@ import mctmods.resourcedatapackloader.core.util.EarlyConfig;
 import mctmods.resourcedatapackloader.util.ModJars;
 import mctmods.resourcedatapackloader.util.WriteBoxWatch;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.launchwrapper.Launch;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
+import org.spongepowered.asm.service.MixinService;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Predicate;
 import java.util.zip.ZipFile;
 
 public class RDPLMixinPlugin implements IMixinConfigPlugin {
+    private static final List<String> GATED_CONFIGS = Arrays.asList("rdpl", "rubiclight", "galacticraft", "vanillagrowth", "vanillatweaks");
+    private static final List<String> SIDES = Arrays.asList("mixins", "client", "server");
     private static final Set<String> OPTIMIZATIONS = new HashSet<>(Arrays.asList(
             "MixinWorldLight", "MixinChunkLight",
             "MixinBlockState", "MixinBlockStateContainer", "MixinBlockStatePalette", "MixinChunkPrimer",
             "MixinThreadedFileIOBase", "MixinRegionFile", "MixinRegionFileCache",
             "MixinChunkProviderLookup"));
+    private static final Set<String> LIGHT = new HashSet<>(Arrays.asList("MixinWorldLight", "MixinChunkLight"));
     private static final Set<String> PATHFINDING = new HashSet<>(Arrays.asList("MixinWalkNodeProcessorRaw", "MixinBlockPathNode"));
+    private static final Map<String, Predicate<String>> GATES = gates();
     private static final Object2BooleanMap<String> RUBIC_CONDITIONS = new Object2BooleanLinkedOpenHashMap<>();
     private static final String CUBIC_CHUNKS_MARKER = "io/github/opencubicchunks/cubicchunks/core/CubicChunks.class";
-    private static final String RUBIC_PACKAGE = "mctmods.resourcedatapackloader.mixin.rdpl.";
+    private static final String RUBIC_NO_OPTIFINE = "MixinRenderGlobalNoOptifine";
+    private static final String RUBIC_BETTER_FPS = "MixinTileEntityBeaconBetterFps";
+    private static final Set<String> RUBIC_OPTIFINE = new HashSet<>(Arrays.asList(
+            "MixinRenderGlobalOptifineE", "MixinRenderChunkOptifine", "MixinRenderChunkUtils", "MixinExtendedBlockStorage",
+            "MixinRenderList", "MixinViewFrustumOptifine", "MixinChunkVisibility"));
     private static final Set<String> RUBIC = new HashSet<>(Arrays.asList(
-            "client.MixinChunk", "client.MixinChunkCache",
-            "client.MixinChunkVisibility", "client.MixinDebugRenderChunkBorder", "client.MixinEmptyChunk", "client.MixinEntityPlayerSP",
-            "client.MixinEntityRendererRubic", "client.MixinEntityRubic", "client.MixinExtendedBlockStorage", "client.MixinGuiOverlayDebug",
-            "client.MixinRenderChunk", "client.MixinRenderChunkOptifine", "client.MixinRenderChunkUtils", "client.MixinRenderGlobal",
-            "client.MixinRenderGlobalNoOptifine", "client.MixinRenderGlobalOptifineE", "client.MixinRenderGlobalVertViewDistance", "client.MixinRenderList",
-            "client.MixinRenderWorker", "client.MixinViewFrustum", "client.MixinViewFrustumOptifine", "client.MixinViewFrustumVertViewDistance",
-            "client.MixinWorldClient", "client.MixinWorldProvider", "common.IASMEventHandler", "common.IBlockAccessMinMaxHeight",
-            "common.IEventBus", "common.IGameRegistry", "common.MixinAnvilSaveHandler",
-            "common.MixinBiomeDecorator", "common.MixinBiomeTemperatureConfig", "common.MixinBlockBeaconAsyncUpdate", "common.MixinBlockChorusFlower",
-            "common.MixinBlockFallingHeightLimits", "common.MixinBlockGrass", "common.MixinBlockLilyPadHeightLimits", "common.MixinBlockMushroom",
-            "common.MixinBlockPistonBaseHeightFix", "common.MixinBlockPortalSizeHeightLimits", "common.MixinBlockSkullWitherSpawnLimits", "common.MixinBlockStaticLiquid",
-            "common.MixinChunk", "common.MixinChunkCache", "common.MixinChunkEntities", "common.MixinCommandBase",
-            "common.MixinCommandFill", "common.MixinCommandTP", "common.MixinCommandTeleport", "common.MixinCommandsHeightLimits",
-            "common.MixinEntityBat", "common.MixinEntityBoat", "common.MixinEntityFallingBlock", "common.MixinEntityLivingBaseRubic",
-            "common.MixinEntityMinecartKillFix", "common.MixinEntityRubic", "common.MixinEntityTracker", "common.MixinEntityTrackerEntry",
-            "common.MixinForgeChunkManager", "common.MixinForgeEventFactory", "common.MixinItemChorusFruit", "common.MixinItemMap", "common.MixinMinecraftServer",
-            "common.MixinNetHandlerPlayServer", "common.MixinNetHandlerPlayServerBuild", "common.MixinPacketBufferBlockPosWrite", "common.MixinPathNavigateGround",
-            "common.MixinPlayerList", "common.MixinRandomPositionGenerator", "common.MixinRegionFileCacheRubic", "common.MixinRubicEndWorkaround",
-            "common.MixinStructureStartRubic", "common.MixinTeleporter", "common.MixinTerrainGen",
-            "common.MixinTicket", "common.MixinTileEntityBeacon", "common.MixinTileEntityBeaconBetterFps", "common.MixinTileEntityEndGateway",
-            "common.MixinTileEntityStructure", "common.MixinWalkNodeProcessorRubic", "common.MixinWorld", "common.MixinWorldEntitySpawner", "common.MixinWorldGenBigMushroom",
-            "common.MixinWorldGenBlockBlobRubic", "common.MixinWorldGenBonusChest", "common.MixinWorldGenCanopyTree", "common.MixinWorldGenDeadBush",
-            "common.MixinWorldGenDesertWells", "common.MixinWorldGenDoublePlants", "common.MixinWorldGenDungeonsRubic", "common.MixinWorldGenFlowers",
-            "common.MixinWorldGenHugeTrees", "common.MixinWorldGenIcePath", "common.MixinWorldGenIceSpike", "common.MixinWorldGenLakesRubic",
-            "common.MixinWorldGenShrub", "common.MixinWorldGenSpikes", "common.MixinWorldGenSwamp", "common.MixinWorldGenTaiga1",
-            "common.MixinWorldGenTaiga2", "common.MixinWorldGenTallGrass", "common.MixinWorldGenTreeBirchSavanna", "common.MixinWorldGenTrees",
-            "common.MixinWorldProvider", "common.MixinWorldServer", "common.MixinWorldSettings",
-            "server.MixinDedicatedServerHeightLimits"));
-    private static final String RUBIC_LIGHT_PACKAGE = "mctmods.resourcedatapackloader.mixin.rubiclight.";
-    private static final String RUBIC_GC_PACKAGE = "mctmods.resourcedatapackloader.mixin.galacticraft.";
-    private static final Set<String> RUBIC_GC = new HashSet<>(Arrays.asList("MixinBlockVec3", "MixinThreadFindSeal", "MixinTransformerHooksCamera"));
+            "IASMEventHandler", "IBlockAccessMinMaxHeight", "IEventBus", "IGameRegistry", "MixinAnvilSaveHandler", "MixinBiomeDecorator",
+            "MixinBiomeTemperatureConfig", "MixinBlockBeaconAsyncUpdate", "MixinBlockChorusFlower", "MixinBlockFallingHeightLimits", "MixinBlockGrass",
+            "MixinBlockLilyPadHeightLimits", "MixinBlockMushroom", "MixinBlockPistonBaseHeightFix", "MixinBlockPortalSizeHeightLimits",
+            "MixinBlockSkullWitherSpawnLimits", "MixinBlockStaticLiquid", "MixinChunk", "MixinChunkCache", "MixinChunkEntities", "MixinChunkVisibility",
+            "MixinCommandBase", "MixinCommandFill", "MixinCommandsHeightLimits", "MixinCommandTeleport", "MixinCommandTP", "MixinDebugRenderChunkBorder",
+            "MixinDedicatedServerHeightLimits", "MixinEmptyChunk", "MixinEntityBat", "MixinEntityBoat", "MixinEntityFallingBlock", "MixinEntityLivingBaseRubic",
+            "MixinEntityMinecartKillFix", "MixinEntityPlayerSP", "MixinEntityRendererRubic", "MixinEntityRubic", "MixinEntityTracker", "MixinEntityTrackerEntry",
+            "MixinExtendedBlockStorage", "MixinForgeChunkManager", "MixinForgeEventFactory", "MixinGuiOverlayDebug", "MixinItemChorusFruit", "MixinItemMap",
+            "MixinMinecraftServer", "MixinNetHandlerPlayServer", "MixinNetHandlerPlayServerBuild", "MixinPacketBufferBlockPosWrite", "MixinPathNavigateGround",
+            "MixinPlayerList", "MixinRandomPositionGenerator", "MixinRegionFileCacheRubic", "MixinRenderChunk", "MixinRenderChunkOptifine",
+            "MixinRenderChunkUtils", "MixinRenderGlobal", "MixinRenderGlobalNoOptifine", "MixinRenderGlobalOptifineE", "MixinRenderGlobalVertViewDistance",
+            "MixinRenderList", "MixinRenderWorker", "MixinRubicEndWorkaround", "MixinStructureStartRubic", "MixinTeleporterRubic", "MixinTerrainGen", "MixinTicket",
+            "MixinTileEntityBeacon", "MixinTileEntityBeaconBetterFps", "MixinTileEntityEndGateway", "MixinTileEntityStructure", "MixinViewFrustum",
+            "MixinViewFrustumOptifine", "MixinViewFrustumVertViewDistance", "MixinWalkNodeProcessorRubic", "MixinWorld", "MixinWorldClient",
+            "MixinWorldEntitySpawner", "MixinWorldGenBigMushroom", "MixinWorldGenBlockBlobRubic", "MixinWorldGenBonusChest", "MixinWorldGenCanopyTree",
+            "MixinWorldGenDeadBush", "MixinWorldGenDesertWells", "MixinWorldGenDoublePlants", "MixinWorldGenDungeonsRubic", "MixinWorldGenFlowers",
+            "MixinWorldGenHugeTrees", "MixinWorldGenIcePath", "MixinWorldGenIceSpike", "MixinWorldGenLakesRubic", "MixinWorldGenShrub", "MixinWorldGenSpikes",
+            "MixinWorldGenSwamp", "MixinWorldGenTaiga1", "MixinWorldGenTaiga2", "MixinWorldGenTallGrass", "MixinWorldGenTreeBirchSavanna", "MixinWorldGenTrees",
+            "MixinWorldProvider", "MixinWorldServer", "MixinWorldSettings",
+            "MixinChunkLightRubic", "MixinWorldLightRubic", "MixinChunkCacheLightRubic",
+            "MixinBlockVec3", "MixinThreadFindSeal", "MixinTransformerHooksCamera"));
     private static Boolean cubicChunks;
     private static boolean rubicLoaded;
     private static Boolean lightingReplaced;
@@ -72,11 +83,60 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static Boolean universalTweaks;
 
     @Override public void onLoad(String mixinPackage) {
-        if (mixinPackage.endsWith(".mixin.rdpl") && !rubicLoaded) {
-            rubicLoaded = true;
-            if (cubicChunksPresent()) { return; }
-            loadRubicGating();
+        if (rubicLoaded) { return; }
+        checkGateNames();
+        rubicLoaded = true;
+        if (!cubicChunksPresent()) { loadRubicGating(); }
+    }
+
+    private static Map<String, Predicate<String>> gates() {
+        Map<String, Predicate<String>> gates = new HashMap<>();
+        gates.put("MixinChunkWriteBox", name -> WriteBoxWatch.watching());
+        gates.put("MixinBlockCactus", name -> standDown(name, universalTweaksPresent()));
+        gates.put("MixinBlockReed", name -> standDown(name, universalTweaksPresent()));
+        gates.put("MixinBlockGrassPath", name -> standDown(name, universalTweaksPresent() && tweakOn("Lenient Paths")));
+        gates.put("MixinBlockLeaves", name -> standDown(name, universalTweaksPresent() && tweakOn("Fast Leaf Decay")));
+        gates.put("MixinMinecraftServerBoot", name -> !paperSpawnRule());
+        gates.put("MixinMinecraftServerPaperBoot", name -> paperSpawnRule());
+        gates.put("MixinWorldServerWeather", name -> !spongePresent());
+        gates.put("MixinNetHandlerPlayServerReach", name -> !spongePresent());
+        return gates;
+    }
+
+    private static void checkGateNames() {
+        Set<String> stale = new TreeSet<>(RUBIC);
+        stale.addAll(RUBIC_OPTIFINE);
+        stale.add(RUBIC_NO_OPTIFINE);
+        stale.add(RUBIC_BETTER_FPS);
+        stale.addAll(OPTIMIZATIONS);
+        stale.addAll(LIGHT);
+        stale.addAll(PATHFINDING);
+        stale.addAll(GATES.keySet());
+        for (String config : GATED_CONFIGS) { stale.removeAll(listedMixins("mixins.resourcedatapackloader." + config + ".json")); }
+        if (!stale.isEmpty()) { throw gateError("The mixin plugin gates names that no mixin config lists: " + stale); }
+    }
+
+    private static Set<String> listedMixins(String file) {
+        InputStream in = MixinService.getService().getResourceAsStream(file);
+        if (in == null) { throw gateError("The mixin plugin could not find " + file); }
+        Set<String> listed = new HashSet<>();
+        try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+            JsonObject json = new Gson().fromJson(reader, JsonObject.class);
+            for (String side : SIDES) {
+                if (!json.has(side)) { continue; }
+                for (JsonElement entry : json.getAsJsonArray(side)) {
+                    String name = entry.getAsString();
+                    listed.add(name.substring(name.lastIndexOf('.') + 1));
+                }
+            }
         }
+        catch (IOException failed) { throw gateError("The mixin plugin could not read " + file); }
+        return listed;
+    }
+
+    private static Error gateError(String message) {
+        MCTMixin.LOGGER.fatal(message);
+        return new Error(message);
     }
 
     public static boolean cubicChunksPresent() {
@@ -115,7 +175,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
                 optifineVersion = optifineVersion.substring(optifineVersion.length() - 2);
                 MCTMixin.LOGGER.info("Detected Optifine version: {}", optifineVersion);
             }
-            catch (ClassNotFoundException e) { optifineVersion = null; }
+            catch (ClassNotFoundException ignored) {}
             catch (Exception e) {
                 MCTMixin.LOGGER.error("Optifine detected, but could not detect version. It may not work. Assuming Optifine E1...", e);
                 optifineVersion = "E1";
@@ -125,15 +185,8 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if (optifine && optifineVersion.compareTo("E1") < 0) { throw new RuntimeException("OptiFine " + optifineVersion + " is not supported. Use OptiFine 1.12.2 HD U G5."); }
         if (optifine && optifineVersion.compareTo("G5") > 0) { MCTMixin.LOGGER.error("Unknown optifine version: {}, it may not work. Assuming E1-G5.", optifineVersion); }
         RUBIC_CONDITIONS.defaultReturnValue(true);
-        String selectable = "mctmods.resourcedatapackloader.mixin.rdpl.";
-        RUBIC_CONDITIONS.put(selectable + "client.MixinRenderGlobalNoOptifine", !optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinRenderGlobalOptifineE", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinRenderChunkOptifine", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinRenderChunkUtils", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinExtendedBlockStorage", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinRenderList", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinViewFrustumOptifine", optifine);
-        RUBIC_CONDITIONS.put(selectable + "client.MixinChunkVisibility", optifine);
+        RUBIC_CONDITIONS.put(RUBIC_NO_OPTIFINE, !optifine);
+        for (String name : RUBIC_OPTIFINE) { RUBIC_CONDITIONS.put(name, optifine); }
         boolean betterFpsBeacon = false;
         try {
             Class betterFpsConditions = Class.forName("guichaguri.betterfps.transformers.Conditions");
@@ -141,25 +194,17 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             betterFpsBeacon = (boolean) getFixSetting.invoke(null, "fastBeacon");
         }
         catch (Exception ignored) {}
-        RUBIC_CONDITIONS.put(selectable + "common.MixinTileEntityBeaconBetterFps", betterFpsBeacon);
+        RUBIC_CONDITIONS.put(RUBIC_BETTER_FPS, betterFpsBeacon);
     }
 
     @Override public String getRefMapperConfig() { return null; }
 
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (rubic(mixinClassName) && cubicChunksPresent()) { return false; }
-        if (RUBIC_CONDITIONS.containsKey(mixinClassName)) { return RUBIC_CONDITIONS.getBoolean(mixinClassName); }
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
-        if (simple.equals("MixinChunkWriteBox")) { return WriteBoxWatch.watching(); }
-        switch (simple) {
-            case "MixinBlockCactus":
-            case "MixinBlockReed":
-                return standDown(simple, universalTweaksPresent());
-            case "MixinBlockGrassPath":
-                return standDown(simple, universalTweaksPresent() && tweakOn("Lenient Paths"));
-            case "MixinBlockLeaves":
-                return standDown(simple, universalTweaksPresent() && tweakOn("Fast Leaf Decay"));
-        }
+        if (RUBIC.contains(simple) && cubicChunksPresent()) { return false; }
+        if (RUBIC_CONDITIONS.containsKey(simple)) { return RUBIC_CONDITIONS.getBoolean(simple); }
+        Predicate<String> gate = GATES.get(simple);
+        if (gate != null) { return gate.test(simple); }
         if (PATHFINDING.contains(simple)) {
             if (pathfindingReplaced == null) {
                 pathfindingReplaced = Launch.classLoader.getResource("me/jellysquid/mods/lithium/common/ai/pathing/PathNodeCache.class") != null
@@ -169,8 +214,6 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             }
             if (pathfindingReplaced) { return false; }
         }
-        if (simple.equals("MixinMinecraftServerBoot")) { return !paperSpawnRule(); }
-        if (simple.equals("MixinMinecraftServerPaperBoot")) { return paperSpawnRule(); }
         if (OPTIMIZATIONS.contains(simple)) {
             if (optimizationsOff == null) {
                 optimizationsOff = optimizationsDisabled();
@@ -178,8 +221,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             }
             if (optimizationsOff) { return false; }
         }
-        if (mixinClassName.endsWith(".MixinWorldServerWeather") || mixinClassName.endsWith(".MixinNetHandlerPlayServerReach")) { return !spongePresent(); }
-        if (!mixinClassName.endsWith(".MixinWorldLight") && !mixinClassName.endsWith(".MixinChunkLight")) { return true; }
+        if (!LIGHT.contains(simple)) { return true; }
         if (lightingReplaced == null) {
             lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null
                     || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null
@@ -188,12 +230,6 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             if (lightingReplaced) { MCTMixin.LOGGER.info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
         }
         return !lightingReplaced;
-    }
-
-    private static boolean rubic(String mixinClassName) {
-        if (mixinClassName.startsWith(RUBIC_LIGHT_PACKAGE)) { return true; }
-        if (mixinClassName.startsWith(RUBIC_GC_PACKAGE)) { return RUBIC_GC.contains(mixinClassName.substring(RUBIC_GC_PACKAGE.length())); }
-        return mixinClassName.startsWith(RUBIC_PACKAGE) && RUBIC.contains(mixinClassName.substring(RUBIC_PACKAGE.length()));
     }
 
     private static boolean spongePresent() {

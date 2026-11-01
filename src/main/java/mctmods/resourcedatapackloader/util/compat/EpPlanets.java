@@ -14,22 +14,22 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import java.util.Map;
 
-final class EpPlanets {
+public final class EpPlanets {
     private EpPlanets() {}
 
-    static float temperature(ExtraPlanetsDef ep, boolean daytime, float base) {
+    public static float temperature(ExtraPlanetsDef ep, boolean daytime, float base) {
         if (!Config.THERMAL_PADDINGS) { return base; }
         return FMLCommonHandler.instance().getEffectiveSide().isServer() && daytime ? ep.temperatureDay : ep.temperatureNight;
     }
 
-    static void radiation(Map<String, Integer> levels) {
+    public static void radiation(Map<String, Integer> levels) {
         for (Map.Entry<String, Integer> level : levels.entrySet()) {
             if (level.getValue() > 0) { Config.OTHER_ADDON_PLANET_MOON_RAD_VALUES_LIST.put(level.getKey(), level.getValue()); }
             else { Config.OTHER_ADDON_PLANET_MOON_RAD_VALUES_LIST.remove(level.getKey()); }
         }
     }
 
-    static EntityLanderBase lander(String kind, EntityPlayerMP player) {
+    public static EntityLanderBase lander(String kind, EntityPlayerMP player) {
         switch (kind) {
             case "jupiter": return new EntityJupiterLander(player);
             case "saturn": return new EntitySaturnLander(player);

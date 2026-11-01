@@ -30,7 +30,7 @@ public final class ContentRuleSwitch {
 
     private ContentRuleSwitch() {}
 
-    @Nullable static RuleSwitchDef parse(String owner, @Nullable JsonElement element, boolean local, boolean precipitation) {
+    @Nullable public static RuleSwitchDef parse(String owner, @Nullable JsonElement element, boolean local, boolean precipitation) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives rules that is not an object of dayLength, weather, weatherSpeed, difficulty, localDifficulty, sleep and wakeAt keys, ignoring it", owner);
@@ -136,9 +136,9 @@ public final class ContentRuleSwitch {
         return def == null ? DimensionTraitsDef.VANILLA_DAY : def.traits.dayLength;
     }
 
-    static boolean forces(World world) { return ContentEnvironments.wide(world.provider.getDimension()).weather != RuleSwitchDef.UNSET; }
+    public static boolean forces(World world) { return ContentEnvironments.wide(world.provider.getDimension()).weather != RuleSwitchDef.UNSET; }
 
-    static int speed(World world) {
+    public static int speed(World world) {
         if (world.isRemote) { return 1; }
         return ContentGrowSwitch.roll(ContentEnvironments.wide(world.provider.getDimension()).weatherSpeed, world.rand);
     }

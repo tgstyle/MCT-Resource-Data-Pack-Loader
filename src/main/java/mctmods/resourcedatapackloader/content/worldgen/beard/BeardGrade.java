@@ -243,7 +243,7 @@ public final class BeardGrade {
         return trimmed;
     }
 
-    static void walk(int[] profile, int[] target, boolean[] fixed, boolean[] claimed, int from, int dir, int level, int climb) {
+    public static void walk(int[] profile, int[] target, boolean[] fixed, boolean[] claimed, int from, int dir, int level, int climb) {
         int last = from - dir * climb;
         for (int row = from; row >= 0 && row < profile.length && !fixed[row] && !claimed[row]; row += dir) {
             boolean spaced = (row - last) * dir >= climb;

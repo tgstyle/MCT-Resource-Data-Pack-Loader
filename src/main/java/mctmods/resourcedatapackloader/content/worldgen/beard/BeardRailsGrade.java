@@ -125,7 +125,7 @@ public final class BeardRailsGrade {
         return new BeardRoads.Grade(profile, ground, bridged, new boolean[rows], rowLeast, 0);
     }
 
-    static double[] filled(int[] ground, int sea) {
+    public static double[] filled(int[] ground, int sea) {
         int rows = ground.length;
         double[] base = new double[rows];
         int i = 0;
@@ -152,7 +152,7 @@ public final class BeardRailsGrade {
         return base;
     }
 
-    static int[] smoothed(double[] base, int climb) {
+    public static int[] smoothed(double[] base, int climb) {
         int rows = base.length;
         double step = 1.0D / climb;
         double[] mean = meaned(base, span(climb));
@@ -262,7 +262,7 @@ public final class BeardRailsGrade {
         return moved;
     }
 
-    static void settle(int[] profile, boolean[] fixed, boolean[] settled, int climb) {
+    public static void settle(int[] profile, boolean[] fixed, boolean[] settled, int climb) {
         int rows = profile.length;
         rein(profile, fixed);
         int since = -climb;
@@ -282,7 +282,7 @@ public final class BeardRailsGrade {
         rein(profile, fixed);
     }
 
-    static void approach(int[] profile, boolean[] fixed, boolean[] band, int climb) {
+    public static void approach(int[] profile, boolean[] fixed, boolean[] band, int climb) {
         int rows = profile.length;
         int[] target = profile.clone();
         boolean[] claimed = new boolean[rows];

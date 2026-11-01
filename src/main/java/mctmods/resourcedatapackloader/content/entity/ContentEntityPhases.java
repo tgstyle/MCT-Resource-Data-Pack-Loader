@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-final class ContentEntityPhases {
+public final class ContentEntityPhases {
     private static final String MODIFIER = "rdpl phase";
     private static final Map<UUID, State> STATES = new HashMap<>();
 
@@ -37,7 +37,7 @@ final class ContentEntityPhases {
 
     private ContentEntityPhases() {}
 
-    static void join(Entity entity) {
+    public static void join(Entity entity) {
         STATES.put(entity.getUniqueID(), new State());
     }
 
@@ -48,7 +48,7 @@ final class ContentEntityPhases {
         return phased == null ? def.bossBar : phased;
     }
 
-    static void tick(EntityLiving living, EntityVariantDef def) {
+    public static void tick(EntityLiving living, EntityVariantDef def) {
         UUID id = living.getUniqueID();
         State state = STATES.get(id);
         if (state == null) { return; }
@@ -71,7 +71,7 @@ final class ContentEntityPhases {
         if (ContentLog.LOGGER.debugEnabled()) { report(living, def, target, was); }
     }
 
-    static void sweep(MinecraftServer server) {
+    public static void sweep(MinecraftServer server) {
         STATES.keySet().removeIf(id -> {
             Entity entity = server.getEntityFromUuid(id);
             return entity == null || entity.isDead;

@@ -130,7 +130,7 @@ public final class ContentDimensionRules {
         return new Vec3d(sky.x * keep + gray * (1.0D - keep), sky.y * keep + gray * (1.0D - keep), sky.z * keep + gray * (1.0D - keep));
     }
 
-    @SideOnly(Side.CLIENT) static Vec3d fogColor(int rgb, float celestialAngle) {
+    @SideOnly(Side.CLIENT) public static Vec3d fogColor(int rgb, float celestialAngle) {
         float light = daylight(celestialAngle);
         Vec3d fog = color(rgb);
         return new Vec3d(fog.x * (light * 0.94F + 0.06F), fog.y * (light * 0.94F + 0.06F), fog.z * (light * 0.91F + 0.09F));

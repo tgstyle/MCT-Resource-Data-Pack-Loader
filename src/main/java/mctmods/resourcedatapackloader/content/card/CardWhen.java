@@ -11,16 +11,16 @@ import java.util.Collections;
 import java.util.List;
 
 public final class CardWhen {
-    List<String> biomes = Collections.emptyList();
-    List<String> environments = Collections.emptyList();
-    int timeFrom = -1;
-    int timeTo = -1;
-    long dayAtLeast = -1L;
-    String advancement = "";
-    String gameMode = "";
-    String portway = "";
-    String network = "";
-    Standing standing = Standing.NONE;
+    public List<String> biomes = Collections.emptyList();
+    public List<String> environments = Collections.emptyList();
+    public int timeFrom = -1;
+    public int timeTo = -1;
+    public long dayAtLeast = -1L;
+    public String advancement = "";
+    public String gameMode = "";
+    public String portway = "";
+    public String network = "";
+    public Standing standing = Standing.NONE;
 
     public boolean fails(EntityPlayerMP player) {
         if (!biomes.isEmpty() && !BiomeNames.matches(biomes, player.world.getBiome(player.getPosition()))) { return true; }

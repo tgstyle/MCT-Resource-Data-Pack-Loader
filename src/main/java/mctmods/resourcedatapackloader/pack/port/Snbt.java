@@ -5,13 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-final class Snbt {
+public final class Snbt {
     private final String text;
     private int at;
 
     private Snbt(String text) { this.text = text; }
 
-    static Object parse(String text) {
+    public static Object parse(String text) {
         Snbt reader = new Snbt(text.trim());
         Object value = reader.value();
         reader.skip();
@@ -19,7 +19,7 @@ final class Snbt {
         return value;
     }
 
-    static String write(Object value) {
+    public static String write(Object value) {
         if (value instanceof Map) {
             List<String> parts = new ArrayList<>();
             for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) { parts.add(entry.getKey() + ":" + write(entry.getValue())); }
@@ -38,7 +38,7 @@ final class Snbt {
         return raw.length() > 1 && (raw.startsWith("\"") && raw.endsWith("\"") || raw.startsWith("'") && raw.endsWith("'")) ? raw.substring(1, raw.length() - 1) : raw;
     }
 
-    @SuppressWarnings("unchecked") static void spawner(Object nbt) {
+    @SuppressWarnings("unchecked") public static void spawner(Object nbt) {
         if (!(nbt instanceof Map)) { return; }
         Map<String, Object> spawner = (Map<String, Object>) nbt;
         Object data = spawner.get("SpawnData");

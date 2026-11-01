@@ -42,7 +42,7 @@ public final class ContentGrowSwitch {
         }
     }
 
-    @Nullable static GrowSwitchDef parse(String owner, @Nullable JsonElement element) {
+    @Nullable public static GrowSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives growth that is not an object of crops, saplings, animals and breeding keys, ignoring it", owner);

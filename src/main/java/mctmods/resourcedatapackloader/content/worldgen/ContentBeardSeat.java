@@ -26,10 +26,10 @@ public final class ContentBeardSeat {
     private static final int SIZE = 24;
     private static final double SCALE = 8.0D;
     private static final float[] KERNEL = new float[SIZE * SIZE * SIZE];
-    static final Map<String, Mode> MODES = new LinkedHashMap<>();
+    public static final Map<String, Mode> MODES = new LinkedHashMap<>();
     private static boolean modesLoaded;
     private static boolean applying;
-    static final ChunkPrimer UNUSED = new ChunkPrimer();
+    public static final ChunkPrimer UNUSED = new ChunkPrimer();
     static {
         for (int z = 0; z < SIZE; z++) {
             for (int x = 0; x < SIZE; x++) {
@@ -128,7 +128,7 @@ public final class ContentBeardSeat {
         MODES.clear();
     }
 
-    static void loadModes() {
+    public static void loadModes() {
         if (modesLoaded) { return; }
         modesLoaded = true;
         MODES.put("villages", Mode.BEARD_THIN);

@@ -30,7 +30,7 @@ public final class ContentSeasons {
 
     private ContentSeasons() {}
 
-    static void parse(ResourceLocation key, JsonObject json, DimensionDef base) {
+    public static void parse(ResourceLocation key, JsonObject json, DimensionDef base) {
         if (!json.has(SEASONS)) { return; }
         String owner = "Dimension " + key + " seasons";
         if (ContentEnvironments.names(base).isEmpty()) {
@@ -96,7 +96,7 @@ public final class ContentSeasons {
         return names;
     }
 
-    static void tick(MinecraftServer server) {
+    public static void tick(MinecraftServer server) {
         if (BY_DIMENSION.isEmpty() || ++ticks % INTERVAL != 0) { return; }
         WorldServer overworld = DimensionManager.getWorld(0);
         if (overworld == null) { return; }
@@ -133,7 +133,7 @@ public final class ContentSeasons {
         }
     }
 
-    static void forget() {
+    public static void forget() {
         APPLIED.clear();
         ticks = 0;
     }

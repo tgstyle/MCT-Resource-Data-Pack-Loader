@@ -45,16 +45,16 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class ContentEntityApply {
+public final class ContentEntityApply {
     private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
     private static final Set<String> MISSING = new HashSet<>();
     private static final String ROLLED = "rdplBabyRolled";
-    static final String YOUNG = "rdplBabyYoung";
+    public static final String YOUNG = "rdplBabyYoung";
     private static final String DRESSED = "rdplDressed";
 
     private ContentEntityApply() {}
 
-    static void apply(Entity entity, EntityVariantDef def) {
+    public static void apply(Entity entity, EntityVariantDef def) {
         if (!def.name.isEmpty() && !entity.hasCustomName()) {
             entity.setCustomNameTag(def.name);
             entity.setAlwaysRenderNameTag(def.showName);
@@ -155,7 +155,7 @@ final class ContentEntityApply {
         if (def.career > 0) { villager.careerId = def.career; }
     }
 
-    static void remember(Entity entity, EntityVariantDef def) {
+    public static void remember(Entity entity, EntityVariantDef def) {
         if (def.width > 0.0F && def.height > 0.0F) {
             SIZES.put(entity.getClass(), new float[] { def.width, def.height });
             return;
@@ -164,7 +164,7 @@ final class ContentEntityApply {
         SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
     }
 
-    static void resize(Entity entity, float scale) {
+    public static void resize(Entity entity, float scale) {
         float[] base = entity instanceof EntitySlime
                 ? new float[] { 0.51000005F * ((EntitySlime) entity).getSlimeSize(), 0.51000005F * ((EntitySlime) entity).getSlimeSize() }
                 : SIZES.get(entity.getClass());
@@ -204,7 +204,7 @@ final class ContentEntityApply {
         living.moveHelper = new SwimmingMoveHelper(living);
     }
 
-    static void amphibious(EntityLiving living) {
+    public static void amphibious(EntityLiving living) {
         boolean wet = living.isInWater();
         boolean swimming = living.getNavigator() instanceof PathNavigateSwimmer;
         if (wet == swimming) { return; }

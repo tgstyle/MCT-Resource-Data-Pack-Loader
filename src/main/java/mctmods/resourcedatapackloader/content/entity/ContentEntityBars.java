@@ -12,7 +12,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
-final class ContentEntityBars {
+public final class ContentEntityBars {
     private static final long EVERY = 10L;
     private static final long STALE = 40L;
     private static final Map<UUID, Held> HELD = new HashMap<>();
@@ -29,7 +29,7 @@ final class ContentEntityBars {
 
     private ContentEntityBars() {}
 
-    static void tick(EntityLivingBase living, EntityVariantDef def) {
+    public static void tick(EntityLivingBase living, EntityVariantDef def) {
         BossBarDef spec = ContentEntityPhases.bar(living, def);
         if (spec == null || !(living.world instanceof WorldServer)) { return; }
         UUID id = living.getUniqueID();
@@ -50,7 +50,7 @@ final class ContentEntityBars {
         BossBars.sync(held.bar, BossBars.near((WorldServer) living.world, living.posX, living.posY, living.posZ, def.trackingRange));
     }
 
-    static void sweep(long now) {
+    public static void sweep(long now) {
         Iterator<Held> each = HELD.values().iterator();
         while (each.hasNext()) {
             Held held = each.next();

@@ -38,7 +38,7 @@ public final class LangGates {
 
     private LangGates() {}
 
-    static void build() {
+    public static void build() {
         Map<String, Map<String, List<Gate>>> builtNormal = new HashMap<>();
         Map<String, Map<String, List<Gate>>> builtOverriding = new HashMap<>();
         List<RDPLPack> packs = PackManager.get().getPacks();
@@ -57,7 +57,7 @@ public final class LangGates {
         overriding = builtOverriding;
     }
 
-    static void clear() {
+    public static void clear() {
         normal = Collections.emptyMap();
         overriding = Collections.emptyMap();
     }
@@ -108,7 +108,7 @@ public final class LangGates {
 
     private static boolean holds(Gate gate) { return ContentRegistry.holds(gate.requires, new ResourceLocation(gate.namespace, PREFIX + gate.name)); }
 
-    static boolean active(String namespace, String path, boolean tierOverriding) {
+    public static boolean active(String namespace, String path, boolean tierOverriding) {
         for (Gate gate : gatesAt(namespace, path, tierOverriding)) {
             if (holds(gate)) { return true; }
         }
@@ -132,7 +132,7 @@ public final class LangGates {
         return false;
     }
 
-    @Nullable static InputStream merged(String namespace, String path, boolean tierOverriding, @Nullable byte[] base) {
+    @Nullable public static InputStream merged(String namespace, String path, boolean tierOverriding, @Nullable byte[] base) {
         List<String> parts = new ArrayList<>();
         if (base != null) { parts.add(new String(base, StandardCharsets.UTF_8)); }
         int own = parts.size();

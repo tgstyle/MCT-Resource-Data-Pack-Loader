@@ -52,7 +52,7 @@ public final class ContentMobSwitch {
 
     private ContentMobSwitch() {}
 
-    @Nullable static MobSwitchDef parse(String owner, String name, @Nullable JsonElement element) {
+    @Nullable public static MobSwitchDef parse(String owner, String name, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives mobs that is not an object of entities, health, damage, speed and equipment keys, ignoring it", owner);
@@ -196,7 +196,7 @@ public final class ContentMobSwitch {
         return slot.getSlotType() == EntityEquipmentSlot.Type.HAND ? mob.inventoryHandsDropChances : mob.inventoryArmorDropChances;
     }
 
-    static void settleAll(World world) {
+    public static void settleAll(World world) {
         for (Object entity : new ArrayList<>(world.loadedEntityList)) {
             if (entity instanceof EntityLiving) { settle((EntityLiving) entity); }
         }

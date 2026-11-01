@@ -41,7 +41,7 @@ public final class ContentBeardLamps {
 
     private ContentBeardLamps() {}
 
-    static void lampPosts(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
+    public static void lampPosts(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         if (CityGrowth.bulbWide(piece)) {
             bulbLamps(start, piece, world, box, clip, at);
             return;

@@ -21,7 +21,7 @@ public final class ContentTimeWindows {
 
     private static long dayTick(World world, DimensionDef def) { return Math.floorMod(clock(world, def), DimensionTraitsDef.VANILLA_DAY); }
 
-    @Nullable static TimeWindowDef active(World world, DimensionDef def) {
+    @Nullable public static TimeWindowDef active(World world, DimensionDef def) {
         if (def.windows.isEmpty()) { return null; }
         long tick = dayTick(world, def);
         for (TimeWindowDef window : def.windows) {

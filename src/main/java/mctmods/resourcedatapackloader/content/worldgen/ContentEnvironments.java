@@ -194,32 +194,32 @@ public final class ContentEnvironments {
         return sets == null ? null : sets.get(active.get(0));
     }
 
-    static RuleSwitchDef wide(int dimension) {
+    public static RuleSwitchDef wide(int dimension) {
         DimensionDef set = whole(dimension);
         return set == null ? RuleSwitchDef.NONE : RULESETS.getOrDefault(set, RuleSwitchDef.NONE);
     }
 
-    static RuleSwitchDef rules(World world, BlockPos pos) { return chosen(world, pos, RULESETS, RuleSwitchDef.NONE); }
+    public static RuleSwitchDef rules(World world, BlockPos pos) { return chosen(world, pos, RULESETS, RuleSwitchDef.NONE); }
 
-    static SpawnSwitchDef spawning(World world, BlockPos pos) { return chosen(world, pos, SPAWNS, SpawnSwitchDef.NONE); }
+    public static SpawnSwitchDef spawning(World world, BlockPos pos) { return chosen(world, pos, SPAWNS, SpawnSwitchDef.NONE); }
 
-    static GrowSwitchDef growth(World world, BlockPos pos) { return chosen(world, pos, GROWS, GrowSwitchDef.NONE); }
+    public static GrowSwitchDef growth(World world, BlockPos pos) { return chosen(world, pos, GROWS, GrowSwitchDef.NONE); }
 
-    static RaidSwitchDef raids(World world, BlockPos pos) { return chosen(world, pos, RAIDLINES, RaidSwitchDef.NONE); }
+    public static RaidSwitchDef raids(World world, BlockPos pos) { return chosen(world, pos, RAIDLINES, RaidSwitchDef.NONE); }
 
-    static MobSwitchDef mobs(World world, BlockPos pos) { return chosen(world, pos, MOBLINES, MobSwitchDef.NONE); }
+    public static MobSwitchDef mobs(World world, BlockPos pos) { return chosen(world, pos, MOBLINES, MobSwitchDef.NONE); }
 
-    static Collection<MobSwitchDef> allMobs() { return MOBLINES.values(); }
+    public static Collection<MobSwitchDef> allMobs() { return MOBLINES.values(); }
 
-    static Map<ResourceLocation, ResourceLocation> loot(World world, BlockPos pos) { return chosen(world, pos, LOOTS, Collections.emptyMap()); }
+    public static Map<ResourceLocation, ResourceLocation> loot(World world, BlockPos pos) { return chosen(world, pos, LOOTS, Collections.emptyMap()); }
 
-    static TradeSwitchDef trades(World world, BlockPos pos) { return chosen(world, pos, TRADELINES, TradeSwitchDef.NONE); }
+    public static TradeSwitchDef trades(World world, BlockPos pos) { return chosen(world, pos, TRADELINES, TradeSwitchDef.NONE); }
 
-    static Collection<Map<ResourceLocation, ResourceLocation>> allLoot() { return LOOTS.values(); }
+    public static Collection<Map<ResourceLocation, ResourceLocation>> allLoot() { return LOOTS.values(); }
 
-    static Collection<TradeSwitchDef> allTrades() { return TRADELINES.values(); }
+    public static Collection<TradeSwitchDef> allTrades() { return TRADELINES.values(); }
 
-    static List<SpawnSwitchDef> spawnings(int dimension) {
+    public static List<SpawnSwitchDef> spawnings(int dimension) {
         List<String> active = ACTIVE.get(dimension);
         Map<String, DimensionDef> sets = active == null ? null : setsOf(dimension);
         if (sets == null) { return Collections.emptyList(); }
@@ -231,7 +231,7 @@ public final class ContentEnvironments {
         return found;
     }
 
-    static Collection<SpawnSwitchDef> allSpawning() { return SPAWNS.values(); }
+    public static Collection<SpawnSwitchDef> allSpawning() { return SPAWNS.values(); }
 
     public static Set<String> names(@Nullable DimensionDef def) {
         Map<String, DimensionDef> sets = def == null ? null : SETS.get(BASES.getOrDefault(def, def));
@@ -252,13 +252,13 @@ public final class ContentEnvironments {
         announce(server, dimension, before);
     }
 
-    static void announce(MinecraftServer server, int dimension, List<String> before) {
+    public static void announce(MinecraftServer server, int dimension, List<String> before) {
         List<String> entered = new ArrayList<>(active(dimension));
         entered.removeAll(before);
         if (!entered.isEmpty()) { CardEvents.environmentChanged(server, dimension, entered); }
     }
 
-    static void change(MinecraftServer server, int dimension, String name, boolean on) {
+    public static void change(MinecraftServer server, int dimension, String name, boolean on) {
         List<String> now = new ArrayList<>(active(dimension));
         if (local(ContentDimensions.byId(dimension), name)) {
             now.remove(name);

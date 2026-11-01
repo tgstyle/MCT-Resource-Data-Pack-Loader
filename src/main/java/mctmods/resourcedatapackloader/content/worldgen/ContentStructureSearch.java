@@ -411,7 +411,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return found instanceof MapGenVillage ? found : null;
     }
 
-    @Nullable static MapGenVillage villageShell(@Nullable IChunkGenerator maker) {
+    @Nullable public static MapGenVillage villageShell(@Nullable IChunkGenerator maker) {
         if (maker instanceof ChunkGeneratorOverworld) {
             ChunkGeneratorOverworld fields = (ChunkGeneratorOverworld) maker;
             return fields.mapFeaturesEnabled ? fields.villageGenerator : null;

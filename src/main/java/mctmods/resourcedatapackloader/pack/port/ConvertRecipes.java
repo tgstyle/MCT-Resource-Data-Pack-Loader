@@ -10,14 +10,14 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
-final class ConvertRecipes {
+public final class ConvertRecipes {
     private static final Set<String> TWINNED_RECIPES = Convert.set("minecraft:crafting_shaped", "minecraft:crafting_shapeless", "forge:ore_shaped", "forge:ore_shapeless", "minecraft:smelting");
 
     private ConvertRecipes() {}
 
-    static boolean noTwinRecipe(String type) { return type.startsWith(Ids.MINECRAFT + ":") && !TWINNED_RECIPES.contains(type); }
+    public static boolean noTwinRecipe(String type) { return type.startsWith(Ids.MINECRAFT + ":") && !TWINNED_RECIPES.contains(type); }
 
-    static String recipe(JsonObject json, String from, Ported pack) {
+    public static String recipe(JsonObject json, String from, Ported pack) {
         conditions(json);
         boolean ores = false;
         if (json.has("key") && json.get("key").isJsonObject()) {
@@ -138,7 +138,7 @@ final class ConvertRecipes {
         return held;
     }
 
-    @Nullable static JsonObject smelting(JsonObject json, Ported pack) {
+    @Nullable public static JsonObject smelting(JsonObject json, Ported pack) {
         String from = "a smelting recipe";
         JsonElement ingredient = json.get("ingredient");
         if (ingredient != null && ingredient.isJsonArray() && ingredient.getAsJsonArray().size() > 0) { ingredient = ingredient.getAsJsonArray().get(0); }

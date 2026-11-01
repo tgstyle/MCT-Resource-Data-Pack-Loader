@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-final class Downed {
+public final class Downed {
     private static final int LAST_1_21_DATA_FORMAT = 48;
     private static final int LAST_1_21_RESOURCE_FORMAT = 34;
     private static final int LAST_26_2_DATA_FORMAT = 107;
@@ -30,7 +30,7 @@ final class Downed {
         this.lined = lined;
     }
 
-    @Nullable static Downed of(Path root) {
+    @Nullable public static Downed of(Path root) {
         JsonObject meta = Ported.readJson(root.resolve(PackManager.PACK_META));
         JsonObject pack = meta != null && meta.has("pack") && meta.get("pack").isJsonObject() ? meta.getAsJsonObject("pack") : new JsonObject();
         boolean data = Files.isDirectory(root.resolve(Port.DATA));
@@ -45,11 +45,11 @@ final class Downed {
         return held.isJsonPrimitive() && held.getAsJsonPrimitive().isNumber() ? held.getAsInt() : 0;
     }
 
-    String title() { return lined ? "26.3" : "26.x"; }
+    public String title() { return lined ? "26.3" : "26.x"; }
 
-    String path(String path) { return lined ? LinePort.path(path) : path; }
+    public String path(String path) { return lined ? LinePort.path(path) : path; }
 
-    @Nullable String asset(Ported pack, String namespace, String written) {
+    @Nullable public String asset(Ported pack, String namespace, String written) {
         String path = lined ? LinePort.assetPath(written) : written;
         Path home = root.resolve(RDPLPack.ASSETS).resolve(namespace);
         String base = RDPLPack.ASSETS + "/" + namespace + "/";
@@ -68,7 +68,7 @@ final class Downed {
         return null;
     }
 
-    @Nullable JsonObject json(Path real, String from, Ported pack) {
+    @Nullable public JsonObject json(Path real, String from, Ported pack) {
         try {
             JsonElement held = new JsonParser().parse(new String(read(Files.readAllBytes(real), from, pack), StandardCharsets.UTF_8));
             return held.isJsonObject() ? held.getAsJsonObject() : null;
@@ -76,7 +76,7 @@ final class Downed {
         catch (IOException | RuntimeException unreadable) { return null; }
     }
 
-    byte[] read(byte[] raw, String from, Ported pack) {
+    public byte[] read(byte[] raw, String from, Ported pack) {
         boolean asset = from.startsWith(RDPLPack.ASSETS + "/");
         String written = from.substring(from.indexOf('/', from.indexOf('/') + 1) + 1);
         String path = asset ? lined ? LinePort.assetPath(written) : written : path(written);

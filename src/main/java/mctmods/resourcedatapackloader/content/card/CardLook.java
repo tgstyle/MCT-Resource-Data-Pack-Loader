@@ -13,7 +13,7 @@ public final class CardLook {
     public static final String CENTER = "center";
     public static final String CHAT = "chat";
     public static final String BAR = "bar";
-    static final List<String> STYLES = Collections.unmodifiableList(Arrays.asList(CORNER, CENTER, CHAT, BAR));
+    public static final List<String> STYLES = Collections.unmodifiableList(Arrays.asList(CORNER, CENTER, CHAT, BAR));
     String title = "";
     List<String> lines;
     ItemStack icon;

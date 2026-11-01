@@ -58,16 +58,16 @@ public final class BeardRoads {
     }
 
     public static final class Grade {
-        final int[] profile;
-        final int[] ground;
-        final boolean[] bridged;
+        public final int[] profile;
+        public final int[] ground;
+        public final boolean[] bridged;
         final boolean[] held;
         final int[] deck;
         final boolean[] covered;
-        final int start;
+        public final int start;
         final int capped;
 
-        Grade(int[] profile, int[] ground, boolean[] bridged, boolean[] held, int start, int capped) {
+        public Grade(int[] profile, int[] ground, boolean[] bridged, boolean[] held, int start, int capped) {
             this.profile = profile;
             this.ground = ground;
             this.bridged = bridged;

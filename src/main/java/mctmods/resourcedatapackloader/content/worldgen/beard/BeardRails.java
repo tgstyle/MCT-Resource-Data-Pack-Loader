@@ -26,15 +26,15 @@ import java.util.List;import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class BeardRails {
-    static final int MARGIN = 7;
+    public static final int MARGIN = 7;
     static final int OVER = 6;
     private static final int FLOOR_LEAST = 6;
-    static final int FILL = 3;
-    static final int LEAST_OPEN = 8;
+    public static final int FILL = 3;
+    public static final int LEAST_OPEN = 8;
     static final int CLEAR = 4;
     static final int FILL_UNDER = 8;
-    static final int BELOW = 24;
-    static final int ABOVE = 40;
+    public static final int BELOW = 24;
+    public static final int ABOVE = 40;
 
     private BeardRails() {}
 
@@ -200,13 +200,13 @@ public final class BeardRails {
         return rand.nextBoolean();
     }
 
-    static int half(boolean sub) { return (width(sub) - 1) / 2 + (sub ? BeardStations.reach() : 0); }
+    public static int half(boolean sub) { return (width(sub) - 1) / 2 + (sub ? BeardStations.reach() : 0); }
 
-    static int clear(boolean sub) { return sub ? 0 : ContentBeard.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + BeardRoads.pathFullWidth() + half(false) + 2; }
+    public static int clear(boolean sub) { return sub ? 0 : ContentBeard.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + BeardRoads.pathFullWidth() + half(false) + 2; }
 
     private static int acrossReach() { return half(true) + 1 + BeardLinks.linkReach(); }
 
-    static boolean clearsWell(StructureBoundingBox well, boolean alongX, int center, boolean sub) {
+    public static boolean clearsWell(StructureBoundingBox well, boolean alongX, int center, boolean sub) {
         if (!sub) { return true; }
         int reach = acrossReach();
         return center + reach < (alongX ? well.minZ : well.minX) || center - reach > (alongX ? well.maxZ : well.maxX);
@@ -228,7 +228,7 @@ public final class BeardRails {
         return false;
     }
 
-    static int[] firstLine(World world, StructureBoundingBox wellBox, boolean sub) {
+    public static int[] firstLine(World world, StructureBoundingBox wellBox, boolean sub) {
         Random roll = BeardLinks.roll(world, wellBox, sub);
         boolean alongX = direction(roll, sub);
         int candidate = clear(sub) + roll.nextInt(Math.max(1, spacing(sub) / 2));
@@ -463,7 +463,7 @@ public final class BeardRails {
         }
     }
 
-    static int[] trackRows(boolean sub, int center) {
+    public static int[] trackRows(boolean sub, int center) {
         int count = Math.max(1, tracks(sub));
         int gap = trackGap(sub);
         int first = count == 1 ? center : center - (count - 1) * gap / 2;
@@ -472,7 +472,7 @@ public final class BeardRails {
         return rows;
     }
 
-    static IBlockState shaped(IBlockState state, BlockRailBase.EnumRailDirection wanted, boolean alongX) {
+    public static IBlockState shaped(IBlockState state, BlockRailBase.EnumRailDirection wanted, boolean alongX) {
         for (IProperty<?> property : state.getPropertyKeys()) {
             if (property.getValueClass() != BlockRailBase.EnumRailDirection.class) { continue; }
             @SuppressWarnings("unchecked") IProperty<BlockRailBase.EnumRailDirection> shape = (IProperty<BlockRailBase.EnumRailDirection>) property;

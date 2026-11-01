@@ -20,14 +20,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-final class VariantDrops {
+public final class VariantDrops {
     private static final Random FALLBACK = new Random();
 
     private VariantDrops() {}
 
-    static int experience(BlockDef def, Random rand) { return Math.max(0, (def.expDropMax <= def.expDropMin ? AmountDef.of(def.expDropMin) : new AmountDef(def.expDropMin, def.expDropMax)).pick(rand)); }
+    public static int experience(BlockDef def, Random rand) { return Math.max(0, (def.expDropMax <= def.expDropMin ? AmountDef.of(def.expDropMin) : new AmountDef(def.expDropMin, def.expDropMax)).pick(rand)); }
 
-    static void roll(Block block, NonNullList<ItemStack> drops, IBlockAccess world, IBlockState state, BlockVariant value, int fortune) {
+    public static void roll(Block block, NonNullList<ItemStack> drops, IBlockAccess world, IBlockState state, BlockVariant value, int fortune) {
         Random rand = world instanceof World ? ((World) world).rand : FALLBACK;
         items(drops, value, rand, block.quantityDropped(state, fortune, rand), fortune);
     }
@@ -58,7 +58,7 @@ final class VariantDrops {
         if (roll <= drop.chanceFor(fortune)) { drops.add(stack.copy()); }
     }
 
-    static void spawnEntities(World world, BlockPos pos, BlockVariant value) {
+    public static void spawnEntities(World world, BlockPos pos, BlockVariant value) {
         List<DropDef> pool = new ArrayList<>();
         for (DropDef drop : value.drops) {
             if (drop.isEntity() && drop.weight > 0) { pool.add(drop); }

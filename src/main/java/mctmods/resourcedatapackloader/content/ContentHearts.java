@@ -224,7 +224,7 @@ public final class ContentHearts {
         }
     }
 
-    static void onMeal(EntityPlayerMP player, int distinctBefore, int distinctAfter) {
+    public static void onMeal(EntityPlayerMP player, int distinctBefore, int distinctAfter) {
         for (HeartReward reward : REWARDS) {
             if (reward.trigger == HeartReward.Trigger.DIET && distinctBefore < reward.diet && distinctAfter >= reward.diet) { grant(player, reward); }
         }

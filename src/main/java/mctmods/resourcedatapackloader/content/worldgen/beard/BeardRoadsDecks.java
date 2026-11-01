@@ -198,7 +198,7 @@ public final class BeardRoadsDecks {
         return frameRows(frames, least, run);
     }
 
-    static boolean[] frameRows(boolean[] decking, int least, int run) {
+    public static boolean[] frameRows(boolean[] decking, int least, int run) {
         int rows = decking.length;
         boolean[] frames = new boolean[rows];
         for (int i = 0; i < rows; i++) {
@@ -275,7 +275,7 @@ public final class BeardRoadsDecks {
         return false;
     }
 
-    static int piling(World world, boolean alongX, int row, int across, int fromY, IBlockState support, BlockPos.MutableBlockPos at) {
+    public static int piling(World world, boolean alongX, int row, int across, int fromY, IBlockState support, BlockPos.MutableBlockPos at) {
         int floor = BeardRails.boreFloor(world, alongX ? row : across, alongX ? across : row);
         int laid = 0;
         for (int y = fromY; y >= fromY - PILING_REACH && y >= floor; y--) {

@@ -73,7 +73,7 @@ public final class ContentScoring {
     private static int waiting;
     @Nullable private static ScoreDef resetting;
     private static boolean closed;
-    static final Map<String, GameType> OUT = new LinkedHashMap<>();
+    public static final Map<String, GameType> OUT = new LinkedHashMap<>();
     private static final Set<String> IN_PLAY = new LinkedHashSet<>();
     private static boolean lobbied;
     private static final String RESET = "reset";
@@ -177,7 +177,7 @@ public final class ContentScoring {
         watch(def, board.getOrCreateScore(side, objective).getScorePoints());
     }
 
-    @Nullable static String sideOf(World world, Entity who, String member) {
+    @Nullable public static String sideOf(World world, Entity who, String member) {
         ScorePlayerTeam team = ContentTeams.teamOf(world, member);
         if (team != null) { return team.getName(); }
         if (who instanceof EntityPlayer) { return null; }
@@ -236,7 +236,7 @@ public final class ContentScoring {
         finish(def, "score", null);
     }
 
-    static void finish(ScoreDef def, String why, @Nullable String winner) {
+    public static void finish(ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name)) { return; }
         ContentScoringBar.over(def);
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();

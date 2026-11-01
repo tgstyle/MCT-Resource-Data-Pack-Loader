@@ -39,10 +39,10 @@ import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
 
 public final class Ported {
-    static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    static final String BLOCKS = "blocks";
+    public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+    public static final String BLOCKS = "blocks";
     static final String ITEMS = "items";
-    static final int MODERN_FLAT_FLOOR = -64;
+    public static final int MODERN_FLAT_FLOOR = -64;
     private static final String CONVERTED = "converted";
     private static final List<String> VANILLA_DIMENSIONS = Collections.unmodifiableList(Arrays.asList("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end"));
     private static final Set<String> SINGLE_STATE_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("ladder", "torch", "cane", "crop", "sapling", "door", "banner", "trapdoor", "fence_gate", "stairs", "vine")));
@@ -79,14 +79,14 @@ public final class Ported {
         this.down = Downed.of(root);
     }
 
-    static final class Own {
+    public static final class Own {
         final String namespace;
-        final String folder;
+        public final String folder;
         final String file;
-        final String variant;
-        final int meta;
-        final String type;
-        final int variants;
+        public final String variant;
+        public final int meta;
+        public final String type;
+        public final int variants;
 
         Own(String namespace, String folder, String file, String variant, int meta, String type, int variants) {
             this.namespace = namespace;
@@ -98,7 +98,7 @@ public final class Ported {
             this.variants = variants;
         }
 
-        String id() { return namespace + ":" + file; }
+        public String id() { return namespace + ":" + file; }
 
         boolean variantProperty() { return BLOCKS.equals(folder) && !SINGLE_STATE_TYPES.contains(type); }
     }
@@ -225,7 +225,7 @@ public final class Ported {
         if (!mapped.path.equals(written)) { movedLine(from, namespace, mapped.path); }
     }
 
-    void alias(String namespace, String path, Path real, String from, @Nullable byte[] made) {
+    public void alias(String namespace, String path, Path real, String from, @Nullable byte[] made) {
         expose(namespace, path, new Source(real, made == null ? Port.Kind.RAW : Port.Kind.MODEL, from, made));
         if (made == null) { movedLine(from, namespace, path); }
     }
@@ -429,36 +429,36 @@ public final class Ported {
         note("could not carry '" + from + "': " + why);
     }
 
-    void note(String said) { if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); } }
+    public void note(String said) { if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); } }
 
-    void noTwin(String id, String where) { if (missing.add(id)) { note(where + " names " + id + ", which has no twin on 1.12.2, so it is left as written"); } }
+    public void noTwin(String id, String where) { if (missing.add(id)) { note(where + " names " + id + ", which has no twin on 1.12.2, so it is left as written"); } }
 
-    String mainNamespace() {
+    public String mainNamespace() {
         for (String namespace : namespaces) {
             if (!"minecraft".equals(namespace)) { return namespace; }
         }
         return "minecraft";
     }
 
-    boolean ownsNamespace(String namespace) { return namespaces.contains(namespace) && !"minecraft".equals(namespace); }
+    public boolean ownsNamespace(String namespace) { return namespaces.contains(namespace) && !"minecraft".equals(namespace); }
 
-    @Nullable Own ownBlock(String id) { return ownBlocks.getOrDefault(id, ownFiles.get(BLOCKS + ":" + id)); }
+    @Nullable public Own ownBlock(String id) { return ownBlocks.getOrDefault(id, ownFiles.get(BLOCKS + ":" + id)); }
 
-    boolean ownFluid(String id) { return ownFluids.contains(id); }
+    public boolean ownFluid(String id) { return ownFluids.contains(id); }
 
-    @Nullable Own ownItem(String id) {
+    @Nullable public Own ownItem(String id) {
         Own held = ownItems.getOrDefault(id, ownFiles.get(ITEMS + ":" + id));
         return held != null ? held : ownBlock(id);
     }
 
-    @Nullable Integer dimensionNumber(String named) {
+    @Nullable public Integer dimensionNumber(String named) {
         String id = Ids.namespaced(Settings.lower(named));
         int vanilla = VANILLA_DIMENSIONS.indexOf(id);
         if (vanilla >= 0) { return vanilla == 0 ? 0 : vanilla == 1 ? -1 : 1; }
         return dimensionNumbers.get(id);
     }
 
-    int overworldShift() {
+    public int overworldShift() {
         if (templateShifts.isEmpty()) { return 0; }
         int first = templateShifts.get(0);
         for (int shift : templateShifts) {
@@ -467,13 +467,13 @@ public final class Ported {
         return first;
     }
 
-    int shiftIn(String dimension) {
+    public int shiftIn(String dimension) {
         String id = Ids.namespaced(dimension.trim());
         if ("minecraft:overworld".equals(id) || "0".equals(dimension.trim())) { return overworldShift(); }
         return dimensionShifts.getOrDefault(id, 0);
     }
 
-    int dimensionShift(String id) { return dimensionShifts.getOrDefault(id, 0); }
+    public int dimensionShift(String id) { return dimensionShifts.getOrDefault(id, 0); }
 
     @Nullable public InputStream open(String namespace, String path) throws IOException {
         Map<String, Source> paths = exposed.get(namespace);
@@ -522,7 +522,7 @@ public final class Ported {
 
     private static JsonObject object(byte[] raw) { return new JsonParser().parse(text(raw)).getAsJsonObject(); }
 
-    @Nullable static JsonObject readJson(Path file) {
+    @Nullable public static JsonObject readJson(Path file) {
         try {
             JsonElement held = new JsonParser().parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
             return held.isJsonObject() ? held.getAsJsonObject() : null;

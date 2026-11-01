@@ -16,7 +16,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.minecraft.util.JsonUtils;
 
-final class ConvertAssets {
+public final class ConvertAssets {
     private static final Pattern LANG_BLOCK = Pattern.compile("^(block|item)\\.([a-z0-9_.-]+?)\\.([a-z0-9_/.-]+?)(\\.locked)?$");
     private static final Pattern LANG_FLUID = Pattern.compile("^fluid(?:_type)?\\.([a-z0-9_.-]+)\\.([a-z0-9_/-]+)$");
     private static final Pattern LANG_POTION = Pattern.compile("^item\\.minecraft\\.(potion|splash_potion|lingering_potion|tipped_arrow)\\.effect\\.(.+)$");
@@ -40,7 +40,7 @@ final class ConvertAssets {
 
     private ConvertAssets() {}
 
-    static String lang(String contents, Ported pack) {
+    public static String lang(String contents, Ported pack) {
         JsonObject json = new JsonParser().parse(contents).getAsJsonObject();
         Map<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
@@ -101,7 +101,7 @@ final class ConvertAssets {
         return held;
     }
 
-    static String model(JsonObject json, Ported pack) {
+    public static String model(JsonObject json, Ported pack) {
         if (json.has("textures") && json.get("textures").isJsonObject()) {
             JsonObject textures = json.getAsJsonObject("textures");
             for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
@@ -118,7 +118,7 @@ final class ConvertAssets {
         return Ported.GSON.toJson(json);
     }
 
-    static String blockstate(JsonObject json) {
+    public static String blockstate(JsonObject json) {
         if (json.has("variants") && json.get("variants").isJsonObject()) {
             JsonObject variants = json.getAsJsonObject("variants");
             JsonObject out = new JsonObject();
@@ -154,7 +154,7 @@ final class ConvertAssets {
         }
     }
 
-    static String pixelMap(JsonObject json) {
+    public static String pixelMap(JsonObject json) {
         if (JsonUtils.isJsonPrimitive(json, "extends")) { json.addProperty("extends", textureRef(json.get("extends").getAsString())); }
         return Ported.GSON.toJson(json);
     }

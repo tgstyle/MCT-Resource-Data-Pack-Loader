@@ -10,12 +10,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@SideOnly(Side.CLIENT) final class MarkText {
+@SideOnly(Side.CLIENT) public final class MarkText {
     static final int CODE = 0x55FFFF;
 
     private MarkText() {}
 
-    static final class Piece {
+    public static final class Piece {
         final FontRenderer face;
         final String text;
         final String codes;
@@ -33,7 +33,7 @@ import java.util.List;
         Piece with(String part) { return new Piece(face, codes, part, code); }
     }
 
-    static List<Piece> pieces(String font, String said) { return pieces(font, said, 0); }
+    public static List<Piece> pieces(String font, String said) { return pieces(font, said, 0); }
 
     static List<Piece> pieces(String font, String said, int marks) {
         if (marks == 0 && Marks.plain(said)) { return literal(font, said); }
@@ -67,9 +67,9 @@ import java.util.List;
         return width;
     }
 
-    static int width(String font, String said) { return width(pieces(font, said)); }
+    public static int width(String font, String said) { return width(pieces(font, said)); }
 
-    static void draw(List<Piece> pieces, float x, float y, int color) {
+    public static void draw(List<Piece> pieces, float x, float y, int color) {
         float at = x;
         for (Piece piece : pieces) {
             piece.face.drawStringWithShadow(piece.codes + piece.text, at, y, piece.code ? color & 0xFF000000 | CODE : color);
@@ -77,9 +77,9 @@ import java.util.List;
         }
     }
 
-    static void draw(String font, String said, float x, float y, int color) { draw(pieces(font, said), x, y, color); }
+    public static void draw(String font, String said, float x, float y, int color) { draw(pieces(font, said), x, y, color); }
 
-    static List<List<Piece>> wrap(List<Piece> pieces, int widest) {
+    public static List<List<Piece>> wrap(List<Piece> pieces, int widest) {
         List<List<Piece>> lines = new ArrayList<>();
         if (pieces.size() == 1 && pieces.get(0).codes.isEmpty() && !pieces.get(0).code) {
             Piece only = pieces.get(0);

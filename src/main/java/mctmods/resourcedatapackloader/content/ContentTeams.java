@@ -305,7 +305,7 @@ public final class ContentTeams {
         }
     }
 
-    static <T extends EntityLivingBase> void eachAlive(MinecraftServer server, Class<T> kind, BiConsumer<WorldServer, T> action) {
+    public static <T extends EntityLivingBase> void eachAlive(MinecraftServer server, Class<T> kind, BiConsumer<WorldServer, T> action) {
         eachNonPlayer(server, (world, one) -> {
             if (kind.isInstance(one) && kind.cast(one).getHealth() > 0.0F) { action.accept(world, kind.cast(one)); }
         });

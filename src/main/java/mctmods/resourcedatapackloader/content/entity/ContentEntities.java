@@ -62,7 +62,7 @@ import javax.annotation.Nullable;
 
 public final class ContentEntities {
     static final Map<ResourceLocation, EntityVariantDef> DEFS = new LinkedHashMap<>();
-    static final Map<Class<?>, EntityVariantDef> BY_CLASS = new LinkedHashMap<>();
+    public static final Map<Class<?>, EntityVariantDef> BY_CLASS = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> NAMES = new LinkedHashMap<>();
     private static final Map<String, SoundEvent> SOUNDS = new LinkedHashMap<>();
@@ -581,7 +581,7 @@ public final class ContentEntities {
         return now - held.getLong(BORN) >= def.despawnTicks;
     }
 
-    @Nullable static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
+    @Nullable public static Class<? extends EntityLivingBase> living(String name, EntityVariantDef def) {
         ResourceLocation location = new ResourceLocation(name);
         if ("minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return EntityPlayer.class; }
         EntityEntry entry = Registries.find(ForgeRegistries.ENTITIES, location);

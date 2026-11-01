@@ -280,7 +280,7 @@ public final class BeardPlots {
         return new ArrayList<>(wells(pieces));
     }
 
-    static List<StructureBoundingBox> wells(List<StructureComponent> pieces) {
+    public static List<StructureBoundingBox> wells(List<StructureComponent> pieces) {
         if (pieces != wellsFrom.get() || pieces.size() != wellsCount) {
             WELLS.clear();
             if (!pieces.isEmpty() && pieces.get(0) instanceof StructureVillagePieces.Start) {
@@ -343,9 +343,9 @@ public final class BeardPlots {
         return Math.abs((alongX ? z : x) - center);
     }
 
-    static int roadSpan(StructureBoundingBox box, boolean alongX) { return (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1; }
+    public static int roadSpan(StructureBoundingBox box, boolean alongX) { return (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1; }
 
-    static int coreOf(int span) { return Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2); }
+    public static int coreOf(int span) { return Math.min(1 + BeardRoads.pathExtraWidth(), (span - 1) / 2); }
 
     public static int restingFloor(int[] tops, int depth, int spot, int from) {
         int own = tops[spot];

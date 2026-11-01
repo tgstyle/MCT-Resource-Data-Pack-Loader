@@ -12,7 +12,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT) final class ContentWindowLook {
+@SideOnly(Side.CLIENT) public final class ContentWindowLook {
     private static final float EASE = 0.1F;
     private static final float[] NO_WEIGHTS = new float[0];
     @Nullable private static DimensionDef held;
@@ -54,7 +54,7 @@ import javax.annotation.Nullable;
         return density;
     }
 
-    static Vec3d fogColor(@Nullable World world, Vec3d base, float celestialAngle) {
+    public static Vec3d fogColor(@Nullable World world, Vec3d base, float celestialAngle) {
         DimensionDef def = current(world);
         if (def == null) { return base; }
         Vec3d color = base;
@@ -67,7 +67,7 @@ import javax.annotation.Nullable;
         return color;
     }
 
-    static float colorFog(@Nullable World world) {
+    public static float colorFog(@Nullable World world) {
         DimensionDef def = current(world);
         if (def == null) { return 0.0F; }
         float lit = 0.0F;

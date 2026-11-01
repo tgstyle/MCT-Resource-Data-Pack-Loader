@@ -6,10 +6,10 @@ import java.util.ArrayList;
 import java.util.Map;
 import net.minecraft.util.JsonUtils;
 
-final class ConvertAdvancements {
+public final class ConvertAdvancements {
     private ConvertAdvancements() {}
 
-    static String advancement(JsonObject json, String from, Ported pack) {
+    public static String advancement(JsonObject json, String from, Ported pack) {
         if (json.has("display") && json.get("display").isJsonObject()) {
             JsonObject display = json.getAsJsonObject("display");
             if (display.has("icon") && display.get("icon").isJsonObject()) { display.add("icon", ConvertRecipes.stack(display.get("icon"), from, pack)); }

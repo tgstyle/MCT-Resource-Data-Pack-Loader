@@ -25,7 +25,7 @@ public final class ContentLootSwitch {
 
     private ContentLootSwitch() {}
 
-    @Nullable static Map<ResourceLocation, ResourceLocation> parse(String owner, @Nullable JsonElement element) {
+    @Nullable public static Map<ResourceLocation, ResourceLocation> parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives loot that is not an object of loot table ids, ignoring it", owner);

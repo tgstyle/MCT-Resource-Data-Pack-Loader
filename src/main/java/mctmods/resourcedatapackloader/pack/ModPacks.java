@@ -34,7 +34,7 @@ public final class ModPacks {
     static final String IN_JAR = PackManager.ROOT_DIRECTORY;
     private static final String ASSETS_PREFIX = IN_JAR + "/" + RDPLPack.ASSETS + "/";
     private static final String MCMOD_INFO = "mcmod.info";
-    static final String CONTROL_STEM = "mods";
+    public static final String CONTROL_STEM = "mods";
     private static final String CONTROL_FILE = CONTROL_STEM + "." + PackManager.JSON;
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";

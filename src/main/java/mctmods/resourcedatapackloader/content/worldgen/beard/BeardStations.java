@@ -261,15 +261,15 @@ public final class BeardStations {
         return 1;
     }
 
-    static BeardRoads.Palette railingBlocks() { return BeardRoads.pathPalette("villageSubwayRailingBlock", Config.worldgen.villageSubwayRailingBlock, Blocks.AIR.getDefaultState()); }
+    public static BeardRoads.Palette railingBlocks() { return BeardRoads.pathPalette("villageSubwayRailingBlock", Config.worldgen.villageSubwayRailingBlock, Blocks.AIR.getDefaultState()); }
 
     private static IBlockState benchBlock() { return BeardRoads.pathBlock("villageSubwayBenchBlock", Config.worldgen.villageSubwayBenchBlock, Blocks.AIR.getDefaultState()); }
 
     private static BeardRoads.Palette benchEndBlocks() { return BeardRoads.pathPalette("villageSubwayBenchEndBlock", Config.worldgen.villageSubwayBenchEndBlock, Blocks.AIR.getDefaultState()); }
 
-    static int benchLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayBenchLength", Config.worldgen.villageSubwayBenchLength)); }
+    public static int benchLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageSubwayBenchLength", Config.worldgen.villageSubwayBenchLength)); }
 
-    static boolean edgeRailed(StructureBoundingBox road, boolean alongX, int row, boolean high) { return openingAt(ContentBeard.components(), road, alongX, row, high) == null; }
+    public static boolean edgeRailed(StructureBoundingBox road, boolean alongX, int row, boolean high) { return openingAt(ContentBeard.components(), road, alongX, row, high) == null; }
 
     @Nullable public static StructureBoundingBox openingAt(@Nullable List<StructureComponent> pieces, StructureBoundingBox road, boolean alongX, int row, boolean high) {
         if (!on() || pieces == null) { return null; }
@@ -297,7 +297,7 @@ public final class BeardStations {
         return seat.withProperty(BlockHorizontal.FACING, way);
     }
 
-    static int bench(World world, StructureBoundingBox clip, boolean alongX, int from, int across, int y, EnumFacing facing, BlockPos.MutableBlockPos at) {
+    public static int bench(World world, StructureBoundingBox clip, boolean alongX, int from, int across, int y, EnumFacing facing, BlockPos.MutableBlockPos at) {
         IBlockState seat = faced(benchBlock(), facing);
         BeardRoads.Palette arms = benchEndBlocks();
         int span = benchLength();
@@ -319,7 +319,7 @@ public final class BeardStations {
         return laid;
     }
 
-    static EnumFacing awayFrom(boolean alongX, int way) {
+    public static EnumFacing awayFrom(boolean alongX, int way) {
         return Facings.across(alongX, way > 0);
     }
 

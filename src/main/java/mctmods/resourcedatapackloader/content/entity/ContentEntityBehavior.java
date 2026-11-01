@@ -50,7 +50,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Collections;
 import java.util.List;
 
-final class ContentEntityBehavior {
+public final class ContentEntityBehavior {
     private static final List<String> PLAYER_ONLY = Collections.singletonList("minecraft:player");
     private static final String HOME_X = "rdplHomeX";
     private static final String HOME_Y = "rdplHomeY";
@@ -70,7 +70,7 @@ final class ContentEntityBehavior {
 
     private ContentEntityBehavior() {}
 
-    static boolean declaresAttackDamage(EntityVariantDef def) {
+    public static boolean declaresAttackDamage(EntityVariantDef def) {
         for (String key : def.attributes.keySet()) {
             if (ContentAttributes.lookup(key) == SharedMonsterAttributes.ATTACK_DAMAGE) { return true; }
         }

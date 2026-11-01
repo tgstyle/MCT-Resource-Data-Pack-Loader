@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import net.minecraft.util.JsonUtils;
 
-final class ConvertLoot {
+public final class ConvertLoot {
     private static final Set<String> LOOT_FUNCTIONS = Convert.set("set_count", "set_data", "set_damage", "set_nbt", "enchant_randomly", "enchant_with_levels", "looting_enchant", "furnace_smelt", "set_attributes", "exploration_map");
     private static final Set<String> LOOT_CONDITIONS = Convert.set("random_chance", "random_chance_with_looting", "entity_properties", "entity_scores", "killed_by_player");
     private static final Map<String, String> OPERATIONS = new HashMap<>();
@@ -26,7 +26,7 @@ final class ConvertLoot {
 
     private ConvertLoot() {}
 
-    static String loot(JsonObject json, String from, Ported pack) {
+    public static String loot(JsonObject json, String from, Ported pack) {
         if (JsonUtils.isJsonPrimitive(json, "target")) { json.addProperty("target", Ids.lootTable(json.get("target").getAsString())); }
         json.remove("type");
         json.remove("random_sequence");

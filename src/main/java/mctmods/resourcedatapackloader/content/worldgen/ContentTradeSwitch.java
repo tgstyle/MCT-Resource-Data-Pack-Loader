@@ -71,7 +71,7 @@ public final class ContentTradeSwitch {
         }
     }
 
-    @Nullable static TradeSwitchDef parse(ResourceLocation key, String owner, String set, @Nullable JsonElement element) {
+    @Nullable public static TradeSwitchDef parse(ResourceLocation key, String owner, String set, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonArray()) {
             ContentLog.LOGGER.error("{} gives trades that is not a list of trades, ignoring it", owner);
@@ -158,7 +158,7 @@ public final class ContentTradeSwitch {
         }
     }
 
-    static void closeTrades(World world) {
+    public static void closeTrades(World world) {
         for (EntityPlayer player : world.playerEntities) {
             if (player.openContainer instanceof ContainerMerchant) { player.closeScreen(); }
         }

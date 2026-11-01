@@ -35,12 +35,12 @@ import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class BeardLinks {
-    static final int NONE = 0;
-    static final int OPEN = 1;
-    static final int SPUR = 2;
-    static final int CURVE = 3;
+    public static final int NONE = 0;
+    public static final int OPEN = 1;
+    public static final int SPUR = 2;
+    public static final int CURVE = 3;
     static final int BED = 5;
-    static final int WALL = 6;
+    public static final int WALL = 6;
     static final int APPROACH = 4;
     private static final int PACKED = 10;
     private static final int HEAD = 5;
@@ -61,15 +61,15 @@ public final class BeardLinks {
 
     private static boolean stations() { return !stationShape().isEmpty() && !stationShape().startsWith("n") && stationLength() > 0 && platformWidth() > 0; }
 
-    static BeardRoads.Palette platformBlocks() { return BeardRoads.pathPalette("villageRailLinkPlatformBlock", Config.worldgen.villageRailLinkPlatformBlock, Blocks.STONEBRICK.getDefaultState()); }
+    public static BeardRoads.Palette platformBlocks() { return BeardRoads.pathPalette("villageRailLinkPlatformBlock", Config.worldgen.villageRailLinkPlatformBlock, Blocks.STONEBRICK.getDefaultState()); }
 
-    static BeardRoads.Palette railing() { return BeardStations.railingBlocks(); }
+    public static BeardRoads.Palette railing() { return BeardStations.railingBlocks(); }
 
     static int pinRows(boolean buried) { return APPROACH + (stations() && !buried ? stationLength() : 0); }
 
     static int platformReach(boolean buried) { return stations() && !buried ? platformWidth() + 1 : 0; }
 
-    static int linkReach() { return on() && carriedUnderground() ? platformReach(false) : 0; }
+    public static int linkReach() { return on() && carriedUnderground() ? platformReach(false) : 0; }
 
     static int ramp() { return BeardRails.subwayDepth() * BeardRails.climb(true); }
 
@@ -77,7 +77,7 @@ public final class BeardLinks {
 
     public static int chunkRange(int spacing) { return spacing * 3 / 2 + 2; }
 
-    static Random roll(World world, StructureBoundingBox well, boolean sub) { return SeededRandom.at(world, well.minX, sub ? 1 : 0, well.minZ); }
+    public static Random roll(World world, StructureBoundingBox well, boolean sub) { return SeededRandom.at(world, well.minX, sub ? 1 : 0, well.minZ); }
 
     public static final class Trunk {
         final boolean alongX;
@@ -129,7 +129,7 @@ public final class BeardLinks {
         @Override public int hashCode() { return Arrays.hashCode(pack()); }
     }
 
-    static int lineCenter(World world, StructureBoundingBox well, boolean sub, int rolled) {
+    public static int lineCenter(World world, StructureBoundingBox well, boolean sub, int rolled) {
         if (!on() || sub != carriedUnderground() || BeardSurface.unreadable(world)) { return rolled; }
         int grid = grid(world);
         Node node = BeardLinksSurvey.node(world, grid, Math.floorDiv((well.minX + 2) >> 4, grid), Math.floorDiv((well.minZ + 2) >> 4, grid));
@@ -146,7 +146,7 @@ public final class BeardLinks {
         return new BeardRoads.Grade(graded[0].clone(), graded[1].clone(), bridged, new boolean[rows], trunk.least, 0);
     }
 
-    static void extend(World world, StructureStart start, StructureVillagePieces.Start well, boolean sub) {
+    public static void extend(World world, StructureStart start, StructureVillagePieces.Start well, boolean sub) {
         if (!on() || sub != carriedUnderground() || BeardSurface.unreadable(world)) { return; }
         StructureBoundingBox wellBox = well.getBoundingBox();
         int grid = grid(world);
@@ -315,7 +315,7 @@ public final class BeardLinks {
 
     private static int joinOf(Trunk trunk, int dir) { return trunk.sides[0] == -dir ? 0 : 1; }
 
-    static int pin(World world, RailPiece rail, int rowLeast, int[] profile, boolean[] fixed, int climb) {
+    public static int pin(World world, RailPiece rail, int rowLeast, int[] profile, boolean[] fixed, int climb) {
         int[] ends = rail.ends();
         int pinned = 0;
         boolean[] band = new boolean[profile.length];
@@ -339,7 +339,7 @@ public final class BeardLinks {
         return pinned;
     }
 
-    @Nullable static int[] climbOut(RailPiece rail) {
+    @Nullable public static int[] climbOut(RailPiece rail) {
         int[] ends = rail.ends();
         if (ends.length < END || trunkOfEnd(ends, 0).buried) { return null; }
         int dir = ends[0];
@@ -357,7 +357,7 @@ public final class BeardLinks {
         return -1;
     }
 
-    static boolean opens(RailPiece rail, int row) {
+    public static boolean opens(RailPiece rail, int row) {
         int[] packed = rail.trunk();
         if (packed == null) { return fromEnd(rail, row, true, true) >= 0; }
         Trunk trunk = Trunk.of(packed);
@@ -366,7 +366,7 @@ public final class BeardLinks {
         return false;
     }
 
-    static boolean joinRow(RailPiece rail, int row) {
+    public static boolean joinRow(RailPiece rail, int row) {
         int[] packed = rail.trunk();
         if (packed == null) { return fromEnd(rail, row, false, false) >= 0; }
         Trunk trunk = Trunk.of(packed);
@@ -374,13 +374,13 @@ public final class BeardLinks {
         return false;
     }
 
-    static int platformAt(RailPiece rail, int row) {
+    public static int platformAt(RailPiece rail, int row) {
         if (rail.trunk() != null || !stations()) { return -1; }
         int k = fromEnd(rail, row, true, true);
         return k >= APPROACH ? platformWidth() : -1;
     }
 
-    static boolean platformSide(RailPiece rail, int row, int side) {
+    public static boolean platformSide(RailPiece rail, int row, int side) {
         if (!stationShape().startsWith("o")) { return true; }
         int[] ends = rail.ends();
         for (int at = 0; at + END <= ends.length; at += END) {
@@ -391,7 +391,7 @@ public final class BeardLinks {
         return false;
     }
 
-    static int junction(RailPiece rail, int row, int across) {
+    public static int junction(RailPiece rail, int row, int across) {
         int[] packed = rail.trunk();
         if (packed == null) { return NONE; }
         Trunk trunk = Trunk.of(packed);
@@ -443,7 +443,7 @@ public final class BeardLinks {
 
     private static boolean contains(int[] rows, int row) { return index(rows, row, true) >= 0; }
 
-    static IBlockState junctionTrack(RailPiece rail, int row, int across, IBlockState track) {
+    public static IBlockState junctionTrack(RailPiece rail, int row, int across, IBlockState track) {
         int code = junction(rail, row, across);
         int[] packed = rail.trunk();
         if (packed == null || (code != SPUR && code != CURVE)) { return track; }
@@ -458,7 +458,7 @@ public final class BeardLinks {
         return BeardRails.shaped(track, shape, trunk.alongX);
     }
 
-    static int force(World world, StructureBoundingBox clip, RailPiece rail, BeardRoads.Grade grade, IBlockState track, BlockPos.MutableBlockPos at) {
+    public static int force(World world, StructureBoundingBox clip, RailPiece rail, BeardRoads.Grade grade, IBlockState track, BlockPos.MutableBlockPos at) {
         int[] packed = rail.trunk();
         if (packed == null || !BeardRails.railBlock(track)) { return 0; }
         Trunk trunk = Trunk.of(packed);
@@ -486,7 +486,7 @@ public final class BeardLinks {
         return forced;
     }
 
-    static int benches(World world, StructureBoundingBox clip, RailPiece rail, BeardRoads.Grade grade, int center, int boreHalf, boolean inBed) {
+    public static int benches(World world, StructureBoundingBox clip, RailPiece rail, BeardRoads.Grade grade, int center, int boreHalf, boolean inBed) {
         if (rail.trunk() != null || !stations()) { return 0; }
         int[] ends = rail.ends();
         int span = BeardStations.benchLength();

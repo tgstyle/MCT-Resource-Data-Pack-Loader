@@ -145,7 +145,7 @@
     "common.MixinStructureStartRubic",
     "common.MixinStructureVillagePieces",
     "common.MixinSwimNodeProcessor",
-    "common.MixinTeleporter",
+    "common.MixinTeleporterRubic",
     "common.MixinTemplate",
     "common.MixinTemplateManager",
     "common.MixinTerrainGen",

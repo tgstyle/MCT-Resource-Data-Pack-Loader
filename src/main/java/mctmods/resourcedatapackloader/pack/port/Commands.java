@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import net.minecraft.util.JsonUtils;
 
-final class Commands {
+public final class Commands {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String SELF = "@s";
     private static final Set<String> SIMPLE = new HashSet<>(Arrays.asList("say", "me", "msg", "tell", "w", "time", "seed", "list", "help", "stop", "save-all", "save-on", "save-off", "op", "deop", "ban", "ban-ip", "pardon", "pardon-ip", "whitelist", "kick", "worldborder", "setidletimeout", "publish", "debug", "reload", "trigger", "defaultgamemode", "difficulty", "gamemode", "spawnpoint", "setworldspawn", "advancement", "recipe"));
@@ -52,7 +52,7 @@ final class Commands {
         Kept(String why) { super(why, null, false, false); }
     }
 
-    static String function(String contents, String from, Ported pack) {
+    public static String function(String contents, String from, Ported pack) {
         String[] lines = contents.split("\r?\n", -1);
         StringBuilder out = new StringBuilder();
         int changed = 0;

@@ -79,7 +79,7 @@ public final class RDPLPack {
 
     public Set<String> getNamespaces() { return Collections.unmodifiableSet(index.keySet()); }
 
-    Set<String> getPaths(String namespace) { return index.getOrDefault(namespace, Collections.emptySet()); }
+    public Set<String> getPaths(String namespace) { return index.getOrDefault(namespace, Collections.emptySet()); }
 
     public int getFileCount() { return fileCount; }
 

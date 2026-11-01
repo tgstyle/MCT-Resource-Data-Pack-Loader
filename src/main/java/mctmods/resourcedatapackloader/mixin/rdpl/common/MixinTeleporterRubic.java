@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.Slice;
 import java.util.Objects;
 import java.util.Random;
 
-@Mixin(value = Teleporter.class, priority = 900) public class MixinTeleporter {
+@Mixin(value = Teleporter.class, priority = 900) public class MixinTeleporterRubic {
     @Shadow @Final protected WorldServer world;
     @Shadow @Final protected Random random;
 

@@ -27,9 +27,9 @@ public final class ContentCelestial {
 
     public static boolean orbits(DimensionDef def) { return def.galacticraft != null && present(); }
 
-    static boolean holds(int dimension) { return present() && GcCelestial.holds(dimension); }
+    public static boolean holds(int dimension) { return present() && GcCelestial.holds(dimension); }
 
-    static boolean stationType(int dimension) { return present() && GcCelestial.stationType(dimension); }
+    public static boolean stationType(int dimension) { return present() && GcCelestial.stationType(dimension); }
 
     public static void defer(DimensionDef def) { BODIED.add(def); }
 

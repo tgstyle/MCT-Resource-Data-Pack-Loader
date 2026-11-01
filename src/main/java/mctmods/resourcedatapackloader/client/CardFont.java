@@ -17,9 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT) final class CardFont {
-    static final String RDPL = "resourcedatapackloader:rdpl";
-    static final String RUNIC = "resourcedatapackloader:rdpl_runic";
+@SideOnly(Side.CLIENT) public final class CardFont {
+    public static final String RDPL = "resourcedatapackloader:rdpl";
+    public static final String RUNIC = "resourcedatapackloader:rdpl_runic";
     private static final String GAME = "minecraft:default";
     private static final String OURS = "resourcedatapackloader:";
     private static final Set<String> SHORT = new HashSet<>(Arrays.asList("rdpl", "rdpl_bold", "rdpl_italic", "rdpl_runic", "rdpl_runic_bold", "rdpl_runic_italic"));
@@ -35,7 +35,7 @@ import javax.annotation.Nullable;
         return SHORT.contains(name) ? OURS + name : name;
     }
 
-    static FontRenderer of(String name) {
+    public static FontRenderer of(String name) {
         Minecraft mc = Minecraft.getMinecraft();
         String asked = named(name);
         if (GAME.equals(asked)) { return mc.fontRenderer; }
@@ -45,7 +45,7 @@ import javax.annotation.Nullable;
         return mc.fontRenderer;
     }
 
-    @Nullable static FontRenderer bold(String name) {
+    @Nullable public static FontRenderer bold(String name) {
         String asked = named(name);
         return GAME.equals(asked) ? null : find(asked + "_bold");
     }

@@ -8,7 +8,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.storage.WorldInfo;
 import java.util.Random;
 
-final class ContentWeatherCycle {
+public final class ContentWeatherCycle {
     private static final float STEP = 0.004F;
     private static final float THUNDER_STEP = 0.01F;
     private static final float RAIN_STEP = 0.01F;
@@ -21,7 +21,7 @@ final class ContentWeatherCycle {
     private int shift;
     private float target;
 
-    static void clear(World world) {
+    public static void clear(World world) {
         world.getWorldInfo().setRainTime(0);
         world.getWorldInfo().setRaining(false);
         world.getWorldInfo().setThunderTime(0);
@@ -32,7 +32,7 @@ final class ContentWeatherCycle {
         world.thunderingStrength = 0.0F;
     }
 
-    static void pour(World world) {
+    public static void pour(World world) {
         if (world.isRemote) { return; }
         world.getWorldInfo().setRaining(true);
         if (world.getWorldInfo().getRainTime() < 2) { world.getWorldInfo().setRainTime(RAIN_HOLD); }
@@ -40,7 +40,7 @@ final class ContentWeatherCycle {
         world.rainingStrength = Math.max(world.rainingStrength, MathHelper.clamp(world.prevRainingStrength + RAIN_STEP, 0.0F, 1.0F));
     }
 
-    static void dry(World world) {
+    public static void dry(World world) {
         if (world.isRemote) { return; }
         world.prevRainingStrength = world.rainingStrength;
         world.rainingStrength = Math.max(0.0F, world.rainingStrength - RAIN_STEP);
@@ -48,7 +48,7 @@ final class ContentWeatherCycle {
         world.thunderingStrength = Math.max(0.0F, world.thunderingStrength - THUNDER_STEP);
     }
 
-    static void force(World world, int kind) {
+    public static void force(World world, int kind) {
         if (world.isRemote) { return; }
         if (kind == RuleSwitchDef.CLEAR) {
             dry(world);
@@ -60,7 +60,7 @@ final class ContentWeatherCycle {
         world.thunderingStrength = MathHelper.clamp(world.thunderingStrength + (kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
     }
 
-    static void hurry(World world, int steps) {
+    public static void hurry(World world, int steps) {
         if (world.isRemote || steps == 1 || world.provider.getDimension() != 0 || !world.getGameRules().getBoolean("doWeatherCycle")) { return; }
         WorldInfo info = world.getWorldInfo();
         info.setCleanWeatherTime(shifted(info.getCleanWeatherTime(), steps));
@@ -73,7 +73,7 @@ final class ContentWeatherCycle {
         return steps == 0 ? time + 1 : Math.max(1, time - (steps - 1));
     }
 
-    void tick(World world, DimensionTraitsDef.Cycle cycle, int steps) {
+    public void tick(World world, DimensionTraitsDef.Cycle cycle, int steps) {
         if (world.isRemote) { return; }
         Random random = world.rand;
         if (!started) {

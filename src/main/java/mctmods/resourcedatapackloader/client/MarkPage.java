@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT) final class MarkPage {
+@SideOnly(Side.CLIENT) public final class MarkPage {
     private static final int LINE = 12;
     private static final int INDENT = 12;
     private static final int GAP = 4;
@@ -56,15 +56,15 @@ import javax.annotation.Nullable;
         }
     }
 
-    MarkPage(List<String> written, int widest) {
+    public MarkPage(List<String> written, int widest) {
         this.widest = widest;
         for (MarkLines.Line line : MarkLines.parse(written)) { lay(line); }
         for (Row row : rows) { height += row.height; }
     }
 
-    float height() { return height; }
+    public float height() { return height; }
 
-    float last() { return rows.isEmpty() ? LINE : rows.get(rows.size() - 1).height; }
+    public float last() { return rows.isEmpty() ? LINE : rows.get(rows.size() - 1).height; }
 
     private void lay(MarkLines.Line line) {
         switch (line.kind) {
@@ -138,7 +138,7 @@ import javax.annotation.Nullable;
         return true;
     }
 
-    void draw(int screenWidth, int screenHeight, float top, float scale, boolean centered) {
+    public void draw(int screenWidth, int screenHeight, float top, float scale, boolean centered) {
         float y = top;
         float block = (screenWidth - widest * scale) / 2.0F;
         for (Row row : rows) {

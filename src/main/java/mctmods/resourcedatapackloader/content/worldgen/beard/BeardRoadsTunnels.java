@@ -32,7 +32,7 @@ public final class BeardRoadsTunnels {
     static final int BORE = 4;
     private static final Map<World, Map<StructureBoundingBox, boolean[]>> HILLS = new WeakHashMap<>();
 
-    static void forget(World world) { HILLS.remove(world); }
+    public static void forget(World world) { HILLS.remove(world); }
 
     public static boolean crossesHill(@Nullable List<StructureComponent> own, StructureBoundingBox box) {
         if (tunnelDepth() <= 0 || ContentBeard.samplerWorld == null) { return false; }
@@ -144,7 +144,7 @@ public final class BeardRoadsTunnels {
         return room;
     }
 
-    static int tunnelWall(World world, StructureComponent piece, BlockPos.MutableBlockPos at, int x, int z, int level, BeardRoads.Palette linings) {
+    public static int tunnelWall(World world, StructureComponent piece, BlockPos.MutableBlockPos at, int x, int z, int level, BeardRoads.Palette linings) {
         boolean buried = BeardRails.buried(piece);
         if (!buried) {
             if (BeardRoads.insidePlaza(x, z)) { return 0; }
@@ -200,7 +200,7 @@ public final class BeardRoadsTunnels {
         return boreCell(world, at, x, z, y, block);
     }
 
-    static int boreCell(World world, BlockPos.MutableBlockPos at, int x, int z, int y, IBlockState block) {
+    public static int boreCell(World world, BlockPos.MutableBlockPos at, int x, int z, int y, IBlockState block) {
         at.setPos(x, y, z);
         world.setBlockState(at, block, BlockFlags.UPDATE_CLIENTS);
         return 1;
