@@ -18,5 +18,5 @@ public record DimensionTraitsDef(double gravity, double fallDamage, double arrow
 
     public record Moon(ResourceLocation texture, float size, float tilt, SkyPoseDef pose) {}
 
-    public record Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, SkyPoseDef pose) {}
+    public record Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, SkyPoseDef pose, String gate) {}
 }

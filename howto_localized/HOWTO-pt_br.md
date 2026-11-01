@@ -4660,13 +4660,16 @@ Sem `bodies`, a lua vanilla e suas fases permanecem. Com `bodies`, a lista é tu
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 }
+      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 },
+      { "texture": "mypack:textures/sky/station.png", "angle": 120, "tilt": -10, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `tilt`, `roll` e `spin` giram o sol, a lua e os corpos. `tilt` afasta o sol ou a lua do seu caminho, como `bodies[].tilt` faz com um corpo. `roll` gira a imagem em torno do próprio centro e `spin` continua girando, então a imagem acompanha o caminho com esse ângulo. `spin` conta ticks de jogo, 20 por segundo, então dormir e `/time` não o fazem pular. As estrelas continuam escondidas atrás de uma imagem girada. As chaves da lua são ignoradas quando `bodies` é dado.
+
+Um corpo pode esperar pela pesquisa. Dê a ele `gate`, o nome de uma [passagem](#passagens), e ele fica fora do céu do jogador até que essa passagem esteja aberta para ele. A passagem não precisa de `dimension`. Uma lista que um ambiente dá substitui a lista da dimensão, passagens e tudo.
 
 | Chave                  | Obrigatória | Valor                    | Padrão           | O que faz                                                                                                                                                                                                                                                                                                |
 | ---------------------- | ----------- | ------------------------ | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4694,6 +4697,7 @@ Sem `bodies`, a lua vanilla e suas fases permanecem. Com `bodies`, a lista é tu
 | `bodies[].angle`       | não         | float, graus             | `180`            | Quanto adiante, no caminho do sol, ele fica atrás do sol. `180` é onde está a lua vanilla. Com `followsTime` desligado, é medido a partir do ponto diretamente acima, então `0` é o zênite e `90` o horizonte                                                                                            |
 | `bodies[].tilt`        | não         | float, graus             | `0`              | Quanto ele fica fora do caminho do sol, ao norte ou ao sul                                                                                                                                                                                                                                               |
 | `bodies[].followsTime` | não         | booleano                 | `true`           | Desligado, ele fica parado no céu em vez de girar junto com o sol                                                                                                                                                                                                                                        |
+| `bodies[].gate`        | não         | nome de passagem         | nenhum           | Esconde o corpo de cada jogador até que esta passagem esteja aberta para ele. Um nome que nenhuma passagem tem mostra o corpo e registra um erro                                                                                                                                                         |
 | `bodies[].roll`        | não         | float, graus             | `0`              | Gira a imagem em torno do próprio centro, no sentido horário. Um anel de `body` fica como está                                                                                                                                                                                                           |
 | `bodies[].spin`        | não         | float, graus por segundo | `0`              | Continua girando a imagem, somado a `roll`. Negativo gira ao contrário                                                                                                                                                                                                                                   |
 | `stars.count`          | não         | int                      | `1500`           | Quantas estrelas                                                                                                                                                                                                                                                                                         |
@@ -5226,6 +5230,8 @@ Quebrar qualquer bloco da moldura apaga o portal, como no vanilla.
 *portais e passagens*
 
 `<namespace>/gates/*.json`
+
+Uma passagem sem `dimension` também pode esconder um corpo celeste, veja [O renderizador do céu](#o-renderizador-do-céu).
 
 O caminho do arquivo é o nome de registro da passagem, que um portal então cita em `gate`.
 

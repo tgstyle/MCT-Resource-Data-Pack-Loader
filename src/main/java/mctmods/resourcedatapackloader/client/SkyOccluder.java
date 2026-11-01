@@ -23,6 +23,7 @@ public final class SkyOccluder {
     private final float size;
     private final boolean moon;
     private final boolean fixed;
+    private final String gate;
     private final ResourceLocation[] textures;
     private final int columns;
     private final int rows;
@@ -33,7 +34,7 @@ public final class SkyOccluder {
     private int width;
     private int height;
 
-    SkyOccluder(float angle, float tilt, float size, SkyPoseDef pose, boolean moon, boolean fixed, ResourceLocation[] textures, int columns, int rows) {
+    SkyOccluder(float angle, float tilt, float size, SkyPoseDef pose, boolean moon, boolean fixed, ResourceLocation[] textures, int columns, int rows, String gate) {
         this.angle = angle;
         this.tilt = (float) Math.toRadians(tilt);
         cosRoll = Math.cos(Math.toRadians(pose.roll()));
@@ -42,6 +43,7 @@ public final class SkyOccluder {
         this.size = size;
         this.moon = moon;
         this.fixed = fixed;
+        this.gate = gate;
         this.textures = textures;
         this.columns = columns;
         this.rows = rows;
@@ -56,11 +58,13 @@ public final class SkyOccluder {
     void turn(float turn) { this.turn = turn; }
 
     boolean sweeps(double x, double reach) {
+        if (ContentSkyGates.hides(gate)) { return false; }
         double gap = Math.abs(Math.asin(Mth.clamp(x, -1.0D, 1.0D)) - Math.asin(-Math.sin(tilt)));
         return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
     }
 
     boolean covers(double x, double y, double z, double reach) {
+        if (ContentSkyGates.hides(gate)) { return false; }
         double a = fixed ? angle - turn : angle;
         double y1 = y * Math.cos(a) + z * Math.sin(a);
         double z1 = z * Math.cos(a) - y * Math.sin(a);

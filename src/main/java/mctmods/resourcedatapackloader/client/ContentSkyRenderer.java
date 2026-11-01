@@ -54,13 +54,13 @@ final class ContentSkyRenderer {
 
     private static SkyOccluder[] occluders(DimensionTraitsDef.Sky sky, ResourceLocation moonTexture, float moonSize, float moonTilt, SkyPoseDef moonPose) {
         List<SkyOccluder> bodies = new ArrayList<>();
-        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, sky.sunTilt(), sky.sunSize(), sky.sunPose(), false, false, new ResourceLocation[] {sky.sunTexture()}, 1, 1)); }
+        if (sky.sunSize() > 0.0F) { bodies.add(new SkyOccluder(0.0F, sky.sunTilt(), sky.sunSize(), sky.sunPose(), false, false, new ResourceLocation[] {sky.sunTexture()}, 1, 1, "")); }
         if (sky.bodies() == null) {
-            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, moonTilt, moonSize, moonPose, true, false, new ResourceLocation[] {moonTexture}, 4, 2)); }
+            if (moonSize > 0.0F) { bodies.add(new SkyOccluder((float) Math.PI, moonTilt, moonSize, moonPose, true, false, new ResourceLocation[] {moonTexture}, 4, 2, "")); }
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
-                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle()), body.tilt(), body.size(), body.pose(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1));
+                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle()), body.tilt(), body.size(), body.pose(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1, body.gate()));
             }
         }
         return bodies.toArray(new SkyOccluder[0]);
@@ -115,6 +115,7 @@ final class ContentSkyRenderer {
         poseStack.popPose();
         if (sky.bodies() != null) {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
+                if (ContentSkyGates.hides(body.gate())) { continue; }
                 poseStack.pushPose();
                 if (body.followsTime()) { poseStack.mulPose(Axis.XP.rotationDegrees(turn)); }
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));

@@ -4660,13 +4660,16 @@ Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco com
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 }
+      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 },
+      { "texture": "mypack:textures/sky/station.png", "angle": 120, "tilt": -10, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `tilt`, `roll` e `spin` ruotano il sole, la luna e i corpi. `tilt` sposta il sole o la luna fuori dal loro percorso, come `bodies[].tilt` fa con un corpo. `roll` ruota l'immagine attorno al suo centro e `spin` continua a ruotarla, così l'immagine percorre la sua traiettoria con quell'angolo. `spin` conta i tick di gioco, 20 al secondo, quindi dormire e `/time` non lo fanno saltare. Le stelle restano nascoste dietro un'immagine ruotata. Le chiavi della luna sono ignorate quando è dato `bodies`.
+
+Un corpo può attendere la ricerca. Dagli `gate`, il nome di un [varco](#varchi), e resta fuori dal cielo del giocatore finché quel varco non è aperto per lui. Il varco non richiede `dimension`. Un elenco dato da un ambiente sostituisce quello della dimensione, varchi compresi.
 
 | Chiave                 | Obbligatorio | Valore                     | Predefinito     | Cosa fa                                                                                                                                                                                                                                                                                                                |
 | ---------------------- | ------------ | -------------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4694,6 +4697,7 @@ Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco com
 | `bodies[].angle`       | no           | decimale, gradi            | `180`           | A che distanza lungo il percorso del sole si trova dietro il sole. `180` è dove sta la luna vanilla. Con `followsTime` disattivato si misura dallo zenit, quindi `0` è lo zenit e `90` l'orizzonte                                                                                                                     |
 | `bodies[].tilt`        | no           | decimale, gradi            | `0`             | Quanto sta fuori dal percorso del sole, a nord o a sud                                                                                                                                                                                                                                                                 |
 | `bodies[].followsTime` | no           | booleano                   | `true`          | Se disattivato, resta fermo nel cielo invece di girare con il sole                                                                                                                                                                                                                                                     |
+| `bodies[].gate`        | no           | nome di varco              | nessuno         | Nasconde il corpo a ogni giocatore finché questo varco non è aperto per lui. Un nome che nessun varco ha mostra il corpo e registra un errore                                                                                                                                                                          |
 | `bodies[].roll`        | no           | decimale, gradi            | `0`             | Ruota la sua immagine attorno al proprio centro, in senso orario. Un anello di `body` resta com'è                                                                                                                                                                                                                      |
 | `bodies[].spin`        | no           | decimale, gradi al secondo | `0`             | Continua a far girare l'immagine, si somma a `roll`. Un valore negativo la fa girare al contrario                                                                                                                                                                                                                      |
 | `stars.count`          | no           | intero                     | `1500`          | Quante stelle                                                                                                                                                                                                                                                                                                          |
@@ -5226,6 +5230,8 @@ Rompere un qualsiasi blocco del telaio spegne il portale, come in vanilla.
 *portali e varchi*
 
 `<namespace>/gates/*.json`
+
+Un varco senza `dimension` può anche nascondere un corpo celeste, vedi [Il renderer del cielo](#il-renderer-del-cielo).
 
 Il percorso del file è il nome di registro del varco, che un portale poi indica in `gate`.
 

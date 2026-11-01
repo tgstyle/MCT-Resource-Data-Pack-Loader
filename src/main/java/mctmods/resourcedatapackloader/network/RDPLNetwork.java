@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.network;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
+import mctmods.resourcedatapackloader.client.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.TalkScreen;
@@ -28,6 +29,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -45,6 +47,7 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageToasts.TYPE, MessageToasts.CODEC, (message, context) -> Toasts.show(message.kinds()));
         registrar.playToClient(MessageAnvilCosts.TYPE, MessageAnvilCosts.CODEC, (message, context) -> AnvilCosts.show(message.cap(), ints(message.paid()), ints(message.lapis()), message.opening()));
         registrar.playToClient(MessageHeartColors.TYPE, MessageHeartColors.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HeartsHud.show(message.colors()); } });
+        registrar.playToClient(MessageGates.TYPE, MessageGates.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ContentSkyGates.receive(message.open()); } });
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } });
         registrar.playToClient(MessageIntroLandMade.TYPE, MessageIntroLandMade.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); } });
         registrar.playToClient(MessageEnvironments.TYPE, MessageEnvironments.CODEC, (message, context) -> {
@@ -87,6 +90,8 @@ public final class RDPLNetwork {
     public static void sendAnvilCosts(ServerPlayer player) { send(player, new MessageAnvilCosts(AnvilCosts.servedCap(), boxed(AnvilCosts.servedPaid()), boxed(AnvilCosts.servedLapis()), AnvilCosts.servedOpening())); }
 
     public static void sendHeartColors(ServerPlayer player) { send(player, new MessageHeartColors(boxed(ContentHearts.colors()))); }
+
+    public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new MessageGates(open.stream().limit(MessageGates.MOST).toList())); }
 
     private static List<Integer> boxed(int[] values) { return Arrays.stream(values).boxed().toList(); }
 

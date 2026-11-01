@@ -4660,13 +4660,16 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 }
+      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 },
+      { "texture": "mypack:textures/sky/station.png", "angle": 120, "tilt": -10, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `tilt`, `roll` and `spin` turn the sun, the moon and the bodies. `tilt` offsets the sun or the moon from its path as `bodies[].tilt` does a body. `roll` turns the picture about its own center and `spin` keeps turning it, so the picture rides along its path at that angle. `spin` counts game ticks, 20 to a second, so sleeping and `/time` do not make it jump. Stars stay hidden behind a turned picture. The moon keys are left out when `bodies` is given.
+
+A body can wait for research. Give it `gate`, the name of a [gate](#gates), and it stays out of a player's sky until that gate is open for them. The gate needs no `dimension`. A list an environment gives replaces the dimension's list, gates and all.
 
 | Key                    | Required | Value                     | Default         | What it does                                                                                                                                                                                                                                                                    |
 | ---------------------- | -------- | ------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4694,6 +4697,7 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
 | `bodies[].angle`       | no       | float, degrees            | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon                                                                                |
 | `bodies[].tilt`        | no       | float, degrees            | `0`             | How far it sits off the sun's path, north or south                                                                                                                                                                                                                              |
 | `bodies[].followsTime` | no       | boolean                   | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                                                                                                           |
+| `bodies[].gate`        | no       | gate name                 | none            | Hides the body from each player until this gate is open for them. A name no gate has shows the body and logs an error                                                                                                                                                           |
 | `bodies[].roll`        | no       | float, degrees            | `0`             | Turns its picture about its own center, clockwise. A ring from `body` stays as it is                                                                                                                                                                                            |
 | `bodies[].spin`        | no       | float, degrees per second | `0`             | Keeps turning the picture, added to `roll`. Negative turns it the other way                                                                                                                                                                                                     |
 | `stars.count`          | no       | int                       | `1500`          | How many stars                                                                                                                                                                                                                                                                  |
@@ -5228,6 +5232,8 @@ Breaking any block of the frame puts the portal out, as it does in vanilla.
 `<namespace>/gates/*.json`
 
 The file's path is the gate's registry name, which a portal then names in `gate`.
+
+A gate with no `dimension` can also hide a sky body, see [The sky renderer](#the-sky-renderer).
 
 Every key, shown at once. A real file writes only the ones it needs.
 

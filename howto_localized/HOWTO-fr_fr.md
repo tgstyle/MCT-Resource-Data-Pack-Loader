@@ -4660,13 +4660,16 @@ Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste co
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 }
+      { "texture": "mypack:textures/sky/planet.png", "angle": 60, "tilt": 20, "roll": 30, "spin": -12 },
+      { "texture": "mypack:textures/sky/station.png", "angle": 120, "tilt": -10, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `tilt`, `roll` et `spin` font tourner le soleil, la lune et les corps. `tilt` écarte le soleil ou la lune de sa trajectoire, comme `bodies[].tilt` le fait pour un corps. `roll` fait tourner l'image autour de son centre et `spin` continue de la faire tourner, si bien que l'image suit sa trajectoire sous cet angle. `spin` compte les ticks de jeu, 20 par seconde, donc dormir et `/time` ne le font pas sauter. Les étoiles restent cachées derrière une image tournée. Les clés de la lune sont ignorées quand `bodies` est donné.
+
+Un corps peut attendre la recherche. Donnez-lui `gate`, le nom d'un [passage](#passages), et il reste hors du ciel du joueur tant que ce passage ne lui est pas ouvert. Le passage n'a pas besoin de `dimension`. Une liste donnée par un environnement remplace celle de la dimension, passages compris.
 
 | Clé                    | Requis | Valeur                       | Défaut            | Rôle                                                                                                                                                                                                                                                                                                                                         |
 | ---------------------- | ------ | ---------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4694,6 +4697,7 @@ Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste co
 | `bodies[].angle`       | non    | flottant, degrés             | `180`             | À quelle distance, le long de la trajectoire du soleil, il se trouve derrière lui. `180` est l'emplacement de la lune vanilla. Avec `followsTime` désactivé, il se mesure depuis la verticale, de sorte que `0` est le zénith et `90` l'horizon                                                                                              |
 | `bodies[].tilt`        | non    | flottant, degrés             | `0`               | À quelle distance il se trouve de la trajectoire du soleil, vers le nord ou le sud                                                                                                                                                                                                                                                           |
 | `bodies[].followsTime` | non    | booléen                      | `true`            | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil                                                                                                                                                                                                                                                                  |
+| `bodies[].gate`        | non    | nom de passage               | aucun             | Masque le corps à chaque joueur tant que ce passage ne lui est pas ouvert. Un nom qu'aucun passage ne porte affiche le corps et consigne une erreur                                                                                                                                                                                          |
 | `bodies[].roll`        | non    | flottant, degrés             | `0`               | Fait tourner son image autour de son propre centre, dans le sens des aiguilles d'une montre. Un anneau donné par `body` reste tel quel                                                                                                                                                                                                       |
 | `bodies[].spin`        | non    | flottant, degrés par seconde | `0`               | Continue de faire tourner l'image, s'ajoute à `roll`. Une valeur négative la fait tourner dans l'autre sens                                                                                                                                                                                                                                  |
 | `stars.count`          | non    | entier                       | `1500`            | Combien d'étoiles                                                                                                                                                                                                                                                                                                                            |
@@ -5226,6 +5230,8 @@ Casser n'importe quel bloc du cadre éteint le portail, comme dans vanilla.
 *portails et passages*
 
 `<namespace>/gates/*.json`
+
+Un passage sans `dimension` peut aussi masquer un corps céleste, voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel).
 
 Le chemin du fichier est le nom de registre du passage, qu'un portail nomme ensuite dans `gate`.
 
