@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.WindDef;
+import mctmods.resourcedatapackloader.content.gate.GateSync;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -208,13 +209,16 @@ public final class ContentParserDimensionTraits {
                 }
                 JsonObject body = element.getAsJsonObject();
                 String ringBody = Json.getString(body, "body", "").trim();
+                String gate = Json.getString(body, "gate", "").trim();
+                if (!gate.isEmpty()) { GateSync.watch(gate); }
                 found.add(new DimensionTraitsDef.Body(new ResourceLocation(Json.getString(body, "texture").trim()),
                         Math.max(0.0F, Json.getFloat(body, "size", 20.0F)),
                         Json.getFloat(body, "angle", 180.0F),
                         Json.getFloat(body, "tilt", 0.0F),
                         Json.getBoolean(body, "followsTime", true),
                         ContentParserSkyLook.pose(key, body, "sky.bodies"),
-                        ringBody.isEmpty() ? null : ringBody));
+                        ringBody.isEmpty() ? null : ringBody,
+                        gate));
             }
             bodies = Collections.unmodifiableList(found);
         }

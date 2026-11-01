@@ -76,6 +76,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
+import mctmods.resourcedatapackloader.content.gate.GateSync;
 import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.CubicChunksWorld;
@@ -270,6 +271,7 @@ public class ResourceDataPackLoader {
         ContentBlastPlaster.install();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
+        MinecraftForge.EVENT_BUS.register(GateSync.class);
         MinecraftForge.EVENT_BUS.register(ContentSleepingBags.class);
         CardRules.load();
         ContentDialogs.load();
@@ -415,6 +417,7 @@ public class ResourceDataPackLoader {
         ContentMobSwitch.serverStopped();
         ContentTradeSwitch.serverStopped();
         FunctionOverrides.serverStopped();
+        GateEvents.serverStopped();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }
         PackManager.get().close();
     }

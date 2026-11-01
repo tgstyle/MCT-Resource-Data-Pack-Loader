@@ -4817,10 +4817,15 @@ Nastavení kteréhokoli z `sun`, `moon`, `bodies` nebo `stars` vymění vanilla 
 
 Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším kromě slunce, takže prázdný seznam je obloha bez měsíce.
 
+Těleso může počkat na výzkum. Dej mu `gate`, název [brány](#brány), a zůstane mimo oblohu hráče, dokud pro něj tato brána není otevřená. Brána nepotřebuje `dimension`. Seznam, který dá prostředí, nahradí seznam dimenze i s branami.
+
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/mars.png", "gate": "research_mars" }
+    ]
   }
 }
 ```
@@ -4858,6 +4863,7 @@ Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším k
 | `bodies[].roll`        | ne      | desetinné číslo, stupně            | `0`            | Otáčí jeho obrázkem kolem jeho středu po směru hodinových ručiček. Prstenec z `body` zůstává, jak je                                                                                                                                                                 |
 | `bodies[].spin`        | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek dál otáčí, přičítá se k `roll`. Záporná hodnota ho otáčí na druhou stranu                                                                                                                                                                                    |
 | `bodies[].followsTime` | ne      | boolean                            | `true`         | Při vypnutí visí nehybně na obloze, místo aby se otáčelo se sluncem                                                                                                                                                                                                  |
+| `bodies[].gate`        | ne      | název brány                        | žádný          | Skryje těleso každému hráči, dokud je pro něj tato brána otevřená. Název, který žádná brána nemá, zobrazí těleso a zaznamená chybu                                                                                                                                   |
 | `stars.count`          | ne      | celé číslo                         | `1500`         | Kolik je hvězd                                                                                                                                                                                                                                                       |
 | `stars.size`           | ne      | desetinné číslo                    | `0.15`         | Nejmenší hvězda; největší je o dvě třetiny větší                                                                                                                                                                                                                     |
 
@@ -5866,6 +5872,8 @@ Rozbití kteréhokoli bloku rámu portál zhasne, stejně jako ve vanille.
 `<namespace>/gates/*.json`
 
 Cesta souboru je registrační název brány, který pak portál uvádí v `gate`.
+
+Brána bez `dimension` může skrýt i nebeské těleso a na 1.12.2 se planeta za bránou na mapě planet Galacticraftu odmítne.
 
 Každý klíč najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 

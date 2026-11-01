@@ -84,6 +84,13 @@ public final class ContentGates {
         return !(openFor(player, def) && def.standing.met(player));
     }
 
+    public static boolean barsDimension(EntityPlayer player, int dimension) {
+        for (GateDef def : forDimension(dimension)) {
+            if (bars(player, def)) { return true; }
+        }
+        return false;
+    }
+
     public static boolean admits(EntityPlayer player, GateDef def) {
         if (bars(player, def)) { return false; }
         if (def.standsAlone() && !openFor(player, def)) { unlock(player, def, true); }

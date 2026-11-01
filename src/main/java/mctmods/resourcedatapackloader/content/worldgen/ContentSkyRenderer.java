@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies) {
-                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle), (float) Math.toRadians(body.tilt), body.size, body.pose, false, !body.followsTime, new ResourceLocation[] {body.texture}, 1, 1));
+                bodies.add(new SkyOccluder((float) Math.toRadians(body.angle), (float) Math.toRadians(body.tilt), body.size, body.pose, false, !body.followsTime, new ResourceLocation[] {body.texture}, 1, 1).gated(body.gate));
             }
         }
         return bodies.toArray(new SkyOccluder[0]);
@@ -113,6 +113,7 @@ import javax.annotation.Nullable;
         GlStateManager.popMatrix();
         if (sky.bodies != null) {
             for (DimensionTraitsDef.Body body : sky.bodies) {
+                if (ContentSkyGates.hides(body.gate)) { continue; }
                 GlStateManager.pushMatrix();
                 if (body.followsTime) { GlStateManager.rotate(turn, 1.0F, 0.0F, 0.0F); }
                 GlStateManager.rotate(body.angle, 1.0F, 0.0F, 0.0F);

@@ -4817,10 +4817,15 @@ Setting any of `sun`, `moon`, `bodies` or `stars` swaps the vanilla sky for RDPL
 
 Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list is everything besides the sun, so an empty list is a sky with no moon.
 
+A body can wait for research. Give it `gate`, the name of a [gate](#gates), and it stays out of a player's sky until that gate is open for them. The gate needs no `dimension`. A list an environment gives replaces the dimension's list, gates and all.
+
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/mars.png", "gate": "research_mars" }
+    ]
   }
 }
 ```
@@ -4858,6 +4863,7 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
 | `bodies[].roll`        | no       | float, degrees            | `0`             | Turns its picture about its own center, clockwise. A ring from `body` stays as it is                                                                                                                                                                                            |
 | `bodies[].spin`        | no       | float, degrees per second | `0`             | Keeps turning the picture, added to `roll`. Negative turns it the other way                                                                                                                                                                                                     |
 | `bodies[].followsTime` | no       | boolean                   | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                                                                                                           |
+| `bodies[].gate`        | no       | gate name                 | none            | Hides the body from each player until this gate is open for them. A name no gate has shows the body and logs an error                                                                                                                                                           |
 | `stars.count`          | no       | int                       | `1500`          | How many stars                                                                                                                                                                                                                                                                  |
 | `stars.size`           | no       | float                     | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                                                                                                       |
 
@@ -5866,6 +5872,8 @@ Breaking any block of the frame puts the portal out, as it does in vanilla.
 `<namespace>/gates/*.json`
 
 The file's path is the gate's registry name, which a portal then names in `gate`.
+
+A gate with no `dimension` can also hide a sky body, and on 1.12.2 a planet behind a gate is refused on Galacticraft's planet map.
 
 Every key, shown at once. A real file writes only the ones it needs.
 

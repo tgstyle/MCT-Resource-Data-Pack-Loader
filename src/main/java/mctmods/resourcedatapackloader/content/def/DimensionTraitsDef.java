@@ -110,10 +110,12 @@ public final class DimensionTraitsDef {
         public final boolean followsTime;
         public final SkyPoseDef pose;
         @Nullable public final String ringBody;
+        public final String gate;
 
-        public Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, SkyPoseDef pose, @Nullable String ringBody) {
+        public Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, SkyPoseDef pose, @Nullable String ringBody, String gate) {
             this.pose = pose;
             this.ringBody = ringBody;
+            this.gate = gate;
             this.texture = texture;
             this.size = size;
             this.angle = angle;

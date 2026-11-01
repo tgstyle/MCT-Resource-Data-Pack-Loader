@@ -35,6 +35,7 @@ import java.io.IOException;
     private int loaded;
     private int width;
     private int height;
+    private String gate = "";
 
     SkyOccluder(float angle, float tilt, float size, SkyPoseDef pose, boolean moon, boolean fixed, ResourceLocation[] textures, int columns, int rows) {
         rollCos = Math.cos(Math.toRadians(pose.roll));
@@ -56,14 +57,21 @@ import java.io.IOException;
 
     boolean fixed() { return fixed; }
 
+    SkyOccluder gated(String gate) {
+        this.gate = gate;
+        return this;
+    }
+
     void turn(float turn) { this.turn = turn; }
 
     boolean sweeps(double x, double reach) {
+        if (ContentSkyGates.hides(gate)) { return false; }
         double gap = Math.abs(Math.asin(MathHelper.clamp(x, -1.0D, 1.0D)) - Math.asin(-Math.sin(tilt)));
         return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
     }
 
     boolean covers(double x, double y, double z, double reach) {
+        if (ContentSkyGates.hides(gate)) { return false; }
         double a = fixed ? angle - turn : angle;
         double y1 = y * Math.cos(a) + z * Math.sin(a);
         double z1 = z * Math.cos(a) - y * Math.sin(a);

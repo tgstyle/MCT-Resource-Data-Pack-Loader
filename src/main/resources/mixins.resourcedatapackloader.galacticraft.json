@@ -16,6 +16,7 @@
     "MixinTransformerHooks",
     "MixinTransformerHooksGravity",
     "MixinWorldProviderExitHeight",
+    "MixinWorldUtilGates",
     "MixinWorldUtilStationHome"
   ],
   "client": [

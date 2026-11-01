@@ -52,6 +52,7 @@ import java.util.WeakHashMap;
     }
 
     public static void reload() {
+        ContentSkyGates.forget();
         List<ContentSkyRenderer> retired = new ArrayList<>(PACK_SKIES.values());
         PACK_SKIES.clear();
         PACK_WEATHER.clear();

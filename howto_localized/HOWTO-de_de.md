@@ -4817,10 +4817,15 @@ Sobald `sun`, `moon`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanill
 
 Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Liste alles außer der Sonne, eine leere Liste ist also ein Himmel ohne Mond.
 
+Ein Körper kann auf die Forschung warten. Gib ihm `gate`, den Namen eines [Tores](#tore), und er bleibt aus dem Himmel eines Spielers, bis dieses Tor für ihn geöffnet ist. Das Tor braucht keine `dimension`. Eine Liste, die eine Umgebung angibt, ersetzt die Liste der Dimension, Tore eingeschlossen.
+
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/mars.png", "gate": "research_mars" }
+    ]
   }
 }
 ```
@@ -4858,6 +4863,7 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 | `bodies[].roll`        | nein    | float, Grad             | `0`               | Dreht sein Bild im Uhrzeigersinn um seine eigene Mitte. Ein Ring aus `body` bleibt, wie er ist                                                                                                                                                                                                                        |
 | `bodies[].spin`        | nein    | float, Grad pro Sekunde | `0`               | Dreht das Bild weiter, zu `roll` addiert. Negativ dreht es andersherum                                                                                                                                                                                                                                                |
 | `bodies[].followsTime` | nein    | boolean                 | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                                                                                                                                          |
+| `bodies[].gate`        | nein    | Tor-Name                | keines            | Blendet den Körper für jeden Spieler aus, bis dieses Tor für ihn geöffnet ist. Ein Name, den kein Tor hat, zeigt den Körper und protokolliert einen Fehler                                                                                                                                                            |
 | `stars.count`          | nein    | int                     | `1500`            | Wie viele Sterne                                                                                                                                                                                                                                                                                                      |
 | `stars.size`           | nein    | float                   | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                                                                                                                                           |
 
@@ -5866,6 +5872,8 @@ Wird irgendein Block des Rahmens abgebaut, geht das Portal aus, wie in Vanilla.
 `<namespace>/gates/*.json`
 
 Der Pfad der Datei ist der Registry-Name des Tors, das ein Portal dann in `gate` nennt.
+
+Ein Tor ohne `dimension` kann auch einen Himmelskörper ausblenden, und auf 1.12.2 wird ein Planet hinter einem Tor auf Galacticrafts Planetenkarte abgewiesen.
 
 Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 

@@ -4817,10 +4817,15 @@ Impostare uno qualsiasi tra `sun`, `moon`, `bodies` o `stars` sostituisce il cie
 
 Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco comprende tutto tranne il sole, quindi un elenco vuoto è un cielo senza luna.
 
+Un corpo può attendere la ricerca. Dagli `gate`, il nome di un [varco](#varchi), e resta fuori dal cielo del giocatore finché quel varco non è aperto per lui. Il varco non richiede `dimension`. Un elenco dato da un ambiente sostituisce quello della dimensione, varchi compresi.
+
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/mars.png", "gate": "research_mars" }
+    ]
   }
 }
 ```
@@ -4858,6 +4863,7 @@ Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco com
 | `bodies[].roll`        | no           | decimale, gradi            | `0`             | Ruota la sua immagine attorno al proprio centro, in senso orario. Un anello di `body` resta com'è                                                                                                                                                                                                                      |
 | `bodies[].spin`        | no           | decimale, gradi al secondo | `0`             | Continua a far girare l'immagine, si somma a `roll`. Un valore negativo la fa girare al contrario                                                                                                                                                                                                                      |
 | `bodies[].followsTime` | no           | booleano                   | `true`          | Se disattivato, resta fermo nel cielo invece di girare con il sole                                                                                                                                                                                                                                                     |
+| `bodies[].gate`        | no           | nome di varco              | nessuno         | Nasconde il corpo a ogni giocatore finché questo varco non è aperto per lui. Un nome che nessun varco ha mostra il corpo e registra un errore                                                                                                                                                                          |
 | `stars.count`          | no           | intero                     | `1500`          | Quante stelle                                                                                                                                                                                                                                                                                                          |
 | `stars.size`           | no           | decimale                   | `0.15`          | La stella più piccola; la più grande è due terzi più grande ancora                                                                                                                                                                                                                                                     |
 
@@ -5866,6 +5872,8 @@ Rompere un qualsiasi blocco del telaio spegne il portale, come in vanilla.
 `<namespace>/gates/*.json`
 
 Il percorso del file è il nome di registro del varco, che un portale poi indica in `gate`.
+
+Un varco senza `dimension` può anche nascondere un corpo celeste, e nella 1.12.2 un pianeta dietro un varco viene respinto sulla mappa dei pianeti di Galacticraft.
 
 Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli servono.
 

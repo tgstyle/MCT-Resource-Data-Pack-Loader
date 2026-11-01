@@ -4817,10 +4817,15 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 
 没有 `bodies` 时，保留原版的月亮及其月相。有了 `bodies`，该列表就是太阳之外的一切，所以空列表就是没有月亮的天空。
 
+天体可以等待研究解锁。给它设置 `gate`，即一个[闸门](#闸门)的名称，在该闸门为玩家打开之前，它不会出现在玩家的天空中。闸门不需要 `dimension`。环境给出的列表会替换维度的列表，闸门也一并替换。
+
 ```json
 {
   "sky": {
-    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 }
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30", "tilt": 10, "roll": 20, "spin": 6 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/mars.png", "gate": "research_mars" }
+    ]
   }
 }
 ```
@@ -4858,6 +4863,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 | `bodies[].roll`        | 否   | 浮点数，单位为度    | `0`         | 让它的图片绕自己的中心顺时针旋转。`body` 指定的环保持不变                                                                                                                                              |
 | `bodies[].spin`        | 否   | 浮点数，单位为度/秒 | `0`         | 让图片持续转动，与 `roll` 相加。负值则反向转动                                                                                                                                                         |
 | `bodies[].followsTime` | 否   | 布尔值              | `true`      | 关闭后，它静止悬挂在天空中，而不是随太阳转动                                                                                                                                                           |
+| `bodies[].gate`        | 否   | 闸门名称            | 无          | 在这扇闸门为该玩家打开之前，对每位玩家隐藏此天体。没有任何闸门使用的名称会显示此天体并记录错误                                                                                                         |
 | `stars.count`          | 否   | 整数                | `1500`      | 星星的数量                                                                                                                                                                                             |
 | `stars.size`           | 否   | 浮点数              | `0.15`      | 最小的星星；最大的星星比它再大三分之二                                                                                                                                                                 |
 
@@ -5866,6 +5872,8 @@ override 有几样东西不会改动：GalaxySpace 和 ExtraPlanets 地图上天
 `<namespace>/gates/*.json`
 
 文件路径即闸门的注册名，传送门随后在 `gate` 中引用它。
+
+没有 `dimension` 的闸门也能隐藏天体，而在 1.12.2 中，闸门之后的星球会在 Galacticraft 的星球地图上被拒绝。
 
 此处一次性展示所有键。实际文件只写需要的键。
 
