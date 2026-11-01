@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentRuleClient;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
+import mctmods.resourcedatapackloader.client.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.TalkScreen;
@@ -30,6 +31,7 @@ import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
+import java.util.List;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -80,6 +82,7 @@ public final class RDPLNetwork {
             if (player != null) { DialogTalk.pick(player, message.index()); }
         }).add();
         channel.messageBuilder(MessageHeartColors.class, 15, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageHeartColors::write).decoder(MessageHeartColors::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HeartsHud.show(message.colors()); } }).add();
+        channel.messageBuilder(MessageGates.class, 16, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageGates::write).decoder(MessageGates::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ContentSkyGates.receive(message.ids()); } }).add();
     }
 
     public static void openWorn() { if (channel != null) { channel.sendToServer(new MessageOpenWorn()); } }
@@ -122,6 +125,8 @@ public final class RDPLNetwork {
     public static void sendTalkPick(int index) { if (channel != null) { channel.sendToServer(new MessageTalkPick(index)); } }
 
     public static void sendHeartColors(ServerPlayer player) { toPlayer(player, new MessageHeartColors(ContentHearts.colors())); }
+
+    public static void sendGates(ServerPlayer player, List<String> ids) { toPlayer(player, new MessageGates(ids)); }
 
     public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { toPlayer(player, environments); }
 }

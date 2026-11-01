@@ -4668,13 +4668,16 @@ Sem `bodies`, a lua vanilla e as suas fases mantêm-se. Com `bodies`, a lista é
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 }
+      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 },
+      { "texture": "mypack:textures/sky/mars.png", "size": 8, "angle": 60, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `roll` roda o sol, a lua ou um corpo em torno do centro da própria imagem, no sentido horário tal como se vê, e `spin` mantém-no a rodar esses graus por segundo de tempo de jogo, somados a `roll`. A imagem mantém o ângulo em relação à trajetória que percorre. `tilt` afasta o sol ou a lua vanilla da trajetória do sol, para norte quando positivo, como `bodies[].tilt` faz com um corpo. As chaves de `moon` são ignoradas quando `bodies` está definido. Numa [dimensão existente](#dimensões-existentes), qualquer chave de `sun` ou `moon` ativa o céu próprio do RDPL, como `sun.size`.
+
+Um corpo pode esperar pela investigação. Dê-lhe `gate`, o nome de uma [passagem](#passagens), e fica fora do céu do jogador até essa passagem estar aberta para ele. A passagem não precisa de `dimension`. Uma lista que um ambiente dá substitui a lista da dimensão, passagens incluídas.
 
 | Chave                  | Obrigatório | Valor                             | Predefinição  | O que faz                                                                                                                                                                                                                                                                                                                |
 | ---------------------- | ----------- | --------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -4702,6 +4705,7 @@ Sem `bodies`, a lua vanilla e as suas fases mantêm-se. Com `bodies`, a lista é
 | `bodies[].angle`       | não         | número decimal, graus             | `180`         | A que distância ao longo da trajetória do sol fica atrás dele. `180` é onde está a lua vanilla. Com `followsTime` desativado, mede-se a partir do ponto mais alto, pelo que `0` é o zénite e `90` o horizonte                                                                                                            |
 | `bodies[].tilt`        | não         | número decimal, graus             | `0`           | A que distância fica da trajetória do sol, para norte ou para sul. `angle` corre ao longo da trajetória, `tilt` atravessa-a                                                                                                                                                                                              |
 | `bodies[].followsTime` | não         | booleano                          | `true`        | Desligado, fica parado no céu em vez de girar com o sol                                                                                                                                                                                                                                                                  |
+| `bodies[].gate`        | não         | nome de passagem                  | nenhum        | Oculta o corpo a cada jogador até que esta passagem esteja aberta para ele. Um nome que nenhuma passagem tem mostra o corpo e regista um erro                                                                                                                                                                            |
 | `bodies[].roll`        | não         | número decimal, graus             | `0`           | Roda a imagem em torno do próprio centro, no sentido horário                                                                                                                                                                                                                                                             |
 | `bodies[].spin`        | não         | número decimal, graus por segundo | `0`           | Continua a rodar a imagem, somado a `roll`. Negativo roda ao contrário                                                                                                                                                                                                                                                   |
 | `stars.count`          | não         | número inteiro                    | `1500`        | Quantas estrelas                                                                                                                                                                                                                                                                                                         |
@@ -5235,7 +5239,7 @@ Partir qualquer bloco da moldura apaga o portal, como no vanilla.
 
 `<namespace>/gates/*.json`
 
-O caminho do ficheiro é o nome de registo da passagem, que um portal depois indica em `gate`.
+O caminho do ficheiro é o nome de registo da passagem, que um portal depois indica em `gate`. Uma passagem sem `dimension` também pode ocultar um corpo celeste.
 
 Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que precisa.
 

@@ -4668,13 +4668,16 @@ Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším k
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 }
+      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 },
+      { "texture": "mypack:textures/sky/mars.png", "size": 8, "angle": 60, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `roll` otáčí sluncem, měsícem nebo tělesem kolem středu jeho vlastního obrázku, po směru hodinových ručiček, jak se na něj díváte, a `spin` ho otáčí dál o tolik stupňů za sekundu herního času, přičtených k `roll`. Obrázek si drží svůj úhel k dráze, po které putuje. `tilt` posune slunce nebo vanilkový měsíc stranou od dráhy slunce, kladná hodnota na sever, stejně jako `bodies[].tilt` u tělesa. Klíče `moon` se při zadaných `bodies` ignorují. Klíč `sun` nebo `moon` zadaný u [existující dimenze](#existující-dimenze) nasadí vlastní oblohu RDPL, stejně jako `sun.size`.
+
+Těleso může počkat na výzkum. Dej mu `gate`, název [brány](#brány), a zůstane mimo oblohu hráče, dokud pro něj tato brána není otevřená. Brána nepotřebuje `dimension`. Seznam, který dá prostředí, nahradí seznam dimenze i s branami.
 
 | Klíč                   | Povinné | Hodnota                            | Výchozí        | Co dělá                                                                                                                                                                                                                                                              |
 | ---------------------- | ------- | ---------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4702,6 +4705,7 @@ Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším k
 | `bodies[].angle`       | ne      | desetinné číslo, stupně            | `180`          | Jak daleko po dráze slunce leží za sluncem. `180` je místo vanilla měsíce. Při vypnutém `followsTime` se měří od bodu přímo nad hlavou, takže `0` je zenit a `90` horizont                                                                                           |
 | `bodies[].tilt`        | ne      | desetinné číslo, stupně            | `0`            | Jak daleko leží stranou od dráhy slunce, na sever nebo na jih. `angle` běží podél dráhy, `tilt` napříč                                                                                                                                                               |
 | `bodies[].followsTime` | ne      | boolean                            | `true`         | Při vypnutí visí nehybně na obloze, místo aby se otáčelo se sluncem                                                                                                                                                                                                  |
+| `bodies[].gate`        | ne      | název brány                        | žádný          | Skryje těleso každému hráči, dokud je pro něj tato brána otevřená. Název, který žádná brána nemá, zobrazí těleso a zaznamená chybu                                                                                                                                   |
 | `bodies[].roll`        | ne      | desetinné číslo, stupně            | `0`            | Otáčí jeho obrázkem kolem jeho středu po směru hodinových ručiček                                                                                                                                                                                                    |
 | `bodies[].spin`        | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek dál otáčí, přičítá se k `roll`. Záporná hodnota ho otáčí na druhou stranu                                                                                                                                                                                    |
 | `stars.count`          | ne      | celé číslo                         | `1500`         | Kolik je hvězd                                                                                                                                                                                                                                                       |
@@ -5235,7 +5239,7 @@ Rozbití kteréhokoli bloku rámu portál zhasne, stejně jako ve vanille.
 
 `<namespace>/gates/*.json`
 
-Cesta souboru je registrační název brány, který pak portál uvádí v `gate`.
+Cesta souboru je registrační název brány, který pak portál uvádí v `gate`. Brána bez `dimension` může skrýt i nebeské těleso.
 
 Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 

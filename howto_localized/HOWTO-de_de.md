@@ -4668,13 +4668,16 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
   "sky": {
     "sun": { "tilt": 10, "roll": 20, "spin": 6 },
     "bodies": [
-      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 }
+      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 },
+      { "texture": "mypack:textures/sky/mars.png", "size": 8, "angle": 60, "gate": "research_mars" }
     ]
   }
 }
 ```
 
 `roll` dreht die Sonne, den Mond oder einen Himmelskörper um die Mitte seines eigenen Bildes, im Uhrzeigersinn aus Sicht des Betrachters, und `spin` dreht es weiter, mit so vielen Grad pro Sekunde Spielzeit, zu `roll` addiert. Das Bild behält seinen Winkel zur Bahn, auf der es wandert. `tilt` rückt die Sonne oder den Vanilla-Mond neben die Sonnenbahn, bei einem positiven Wert nach Norden, wie `bodies[].tilt` es für einen Himmelskörper tut. Die `moon`-Schlüssel werden ignoriert, wenn `bodies` gesetzt ist. In einer [bestehenden Dimension](#bestehende-dimensionen) holt jeder Schlüssel von `sun` oder `moon` den eigenen Himmel von RDPL herein, so wie `sun.size`.
+
+Ein Körper kann auf die Forschung warten. Gib ihm `gate`, den Namen eines [Tores](#tore), und er bleibt aus dem Himmel eines Spielers, bis dieses Tor für ihn geöffnet ist. Das Tor braucht keine `dimension`. Eine Liste, die eine Umgebung angibt, ersetzt die Liste der Dimension, Tore eingeschlossen.
 
 | Schlüssel              | Pflicht | Wert                    | Standard          | Was er macht                                                                                                                                                                                                                                                                                                          |
 | ---------------------- | ------- | ----------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -4702,6 +4705,7 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 | `bodies[].angle`       | nein    | float, Grad             | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont                                                                                                                    |
 | `bodies[].tilt`        | nein    | float, Grad             | `0`               | Wie weit er nördlich oder südlich neben der Sonnenbahn steht. `angle` läuft entlang der Bahn, `tilt` quer dazu                                                                                                                                                                                                        |
 | `bodies[].followsTime` | nein    | boolean                 | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                                                                                                                                          |
+| `bodies[].gate`        | nein    | Tor-Name                | keines            | Blendet den Körper für jeden Spieler aus, bis dieses Tor für ihn geöffnet ist. Ein Name, den kein Tor hat, zeigt den Körper und protokolliert einen Fehler                                                                                                                                                            |
 | `bodies[].roll`        | nein    | float, Grad             | `0`               | Dreht sein Bild im Uhrzeigersinn um seine eigene Mitte                                                                                                                                                                                                                                                                |
 | `bodies[].spin`        | nein    | float, Grad pro Sekunde | `0`               | Dreht das Bild weiter, zu `roll` addiert. Negativ dreht es andersherum                                                                                                                                                                                                                                                |
 | `stars.count`          | nein    | int                     | `1500`            | Wie viele Sterne                                                                                                                                                                                                                                                                                                      |
@@ -5235,7 +5239,7 @@ Bricht ein Block des Rahmens weg, geht das Portal aus, wie in Vanilla.
 
 `<namespace>/gates/*.json`
 
-Der Pfad der Datei ist der Registry-Name des Tors, das ein Portal dann in `gate` nennt.
+Der Pfad der Datei ist der Registry-Name des Tors, das ein Portal dann in `gate` nennt. Ein Tor ohne `dimension` kann auch einen Himmelskörper verbergen.
 
 Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 

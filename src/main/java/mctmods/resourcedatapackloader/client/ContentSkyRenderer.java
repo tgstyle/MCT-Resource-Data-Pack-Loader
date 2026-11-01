@@ -58,7 +58,7 @@ final class ContentSkyRenderer {
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
-                bodies.add(new SkyOccluder(rad(body.angle()), rad(body.tilt()), body.size(), body.pose(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1));
+                bodies.add(new SkyOccluder(rad(body.angle()), rad(body.tilt()), body.size(), body.pose(), false, !body.followsTime(), new ResourceLocation[] {body.texture()}, 1, 1).gated(body.gate()));
             }
         }
         return bodies.toArray(new SkyOccluder[0]);
@@ -110,6 +110,7 @@ final class ContentSkyRenderer {
         poseStack.popPose();
         if (sky.bodies() != null) {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
+                if (ContentSkyGates.hides(body.gate())) { continue; }
                 poseStack.pushPose();
                 if (body.followsTime()) { poseStack.mulPose(Axis.XP.rotationDegrees(turn)); }
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));
