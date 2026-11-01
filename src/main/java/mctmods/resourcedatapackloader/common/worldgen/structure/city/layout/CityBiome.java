@@ -1,0 +1,87 @@
+package mctmods.resourcedatapackloader.common.worldgen.structure.city.layout;
+
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+
+public final class CityBiome {
+    private static final Map<ResourceLocation, String> SECTIONS = new HashMap<>();
+    private static final ThreadLocal<BlockPos.MutableBlockPos> LOOKUP = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
+    @Nullable private static Object sectionsFrom;
+
+    private CityBiome() {}
+
+    public static void enter(WorldGenLevel level, int x, int z) { if (ContentControl.hasBiomeSettings()) { ContentControl.enterSection(at(level, x, z)); } }
+
+    public static void leave() { ContentControl.leaveSection(); }
+
+    public static void within(WorldGenLevel level, BoundingBox box, Runnable laid) { within(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2, laid); }
+
+    public static void within(WorldGenLevel level, int x, int z, Runnable laid) {
+        enter(level, x, z);
+        try { laid.run(); }
+        finally { leave(); }
+    }
+
+    public static boolean moved(WorldGenLevel level, int x, int z) {
+        if (!ContentControl.hasBiomeSettings()) { return false; }
+        String here = at(level, x, z);
+        if (Objects.equals(here, ContentControl.buildingSection())) { return false; }
+        ContentControl.enterSection(here);
+        return true;
+    }
+
+    @Nullable private static String at(WorldGenLevel level, int x, int z) { return sectionFor(surface(level, x, z)); }
+
+    public static Holder<Biome> surface(WorldGenLevel level, int x, int z) {
+        BlockPos.MutableBlockPos at = LOOKUP.get();
+        at.set(x, level.getLevel().getChunkSource().getGenerator().getSeaLevel(), z);
+        return level.getBiome(at);
+    }
+
+    @Nullable private static synchronized String sectionFor(Holder<Biome> biome) {
+        ResourceLocation named = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        if (named == null) { return null; }
+        Object mark = ContentControl.biomeSettingsMark();
+        if (mark != sectionsFrom) {
+            SECTIONS.clear();
+            sectionsFrom = mark;
+        }
+        String held = SECTIONS.get(named);
+        if (held != null) { return held.isEmpty() ? null : held; }
+        String found = matched(biome, named);
+        SECTIONS.put(named, found == null ? "" : found);
+        if (found != null) { ContentLog.LOGGER.debug("The biome {} takes the village settings under biomes.{}", named, found); }
+        else { ContentLog.LOGGER.debug("The biome {} matches no biomes section, so it builds with the plain village settings. It would answer to {}, {}, or a biome type it carries as a tag", named, named, named.getPath()); }
+        return found;
+    }
+
+    @Nullable private static String matched(Holder<Biome> biome, ResourceLocation named) {
+        if (ContentControl.hasBiomeSection(named.toString())) { return named.toString(); }
+        if (ContentControl.hasBiomeSection(named.getPath())) { return named.getPath(); }
+        for (String section : ContentControl.biomeSectionNames()) {
+            if (section.contains(":")) {
+                TagKey<Biome> tag = BiomeNames.tagged(section);
+                if (tag != null && biome.is(tag)) { return section; }
+                continue;
+            }
+            TagKey<Biome> mapped = BiomeNames.tag(section.toLowerCase(Locale.ROOT));
+            if (mapped != null && biome.is(mapped)) { return section; }
+        }
+        return null;
+    }
+}

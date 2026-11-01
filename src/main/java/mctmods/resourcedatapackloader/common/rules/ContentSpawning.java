@@ -1,0 +1,140 @@
+package mctmods.resourcedatapackloader.common.rules;
+
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
+import mctmods.resourcedatapackloader.common.entities.spawning.ContentSpawnGate;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.BiomeDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
+import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentVoidWorld;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.Summary;
+
+import java.util.Locale;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.monster.Enemy;
+import net.minecraft.world.level.BlockAndTintGetter;
+import net.minecraft.world.level.LightLayer;
+import net.minecraftforge.event.entity.living.MobSpawnEvent;
+import net.minecraftforge.eventbus.api.Event;
+
+public final class ContentSpawning {
+    private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
+    private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
+    private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
+    public static final String ANIMALS = "animals";
+
+    private ContentSpawning() {}
+
+    public static void applyCaps() {
+        if (ContentControl.off(ContentControl.SPAWNING)) { return; }
+        cap(MobCategory.MONSTER, ContentControl.number(ContentControl.SPAWNING, "monsterCap", Config.worldgen.monsterCap()));
+        cap(MobCategory.CREATURE, ContentControl.number(ContentControl.SPAWNING, "creatureCap", Config.worldgen.creatureCap()));
+        cap(MobCategory.AMBIENT, ContentControl.number(ContentControl.SPAWNING, "ambientCap", Config.worldgen.ambientCap()));
+        cap(MobCategory.WATER_CREATURE, ContentControl.number(ContentControl.SPAWNING, "waterCreatureCap", Config.worldgen.waterCreatureCap()));
+    }
+
+    private static void cap(MobCategory category, int wanted) {
+        if (wanted < 0) { return; }
+        int current = category.getMaxInstancesPerChunk();
+        if (current == wanted) { return; }
+        category.max = wanted;
+        Summary.info("mobcaps." + category.getName(), "Set the " + category.getName().toLowerCase(Locale.ROOT) + " spawn cap to " + wanted + ", was " + current);
+    }
+
+    public static void onPlacementCheck(MobSpawnEvent.SpawnPlacementCheck event) {
+        if (event.getDefaultResult() || event.getResult() != Event.Result.DEFAULT || placed(event.getSpawnType()) || event.getEntityType().getCategory() != MobCategory.CREATURE) { return; }
+        if (animalGround(event.getLevel(), event.getPos())) { event.setResult(Event.Result.ALLOW); }
+    }
+
+    public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
+        ServerLevel level = event.getLevel().getLevel();
+        if (ContentVoidWorld.voidApplies(level) || ContentDimensions.spawnsOff(level)) {
+            deny(event);
+            return;
+        }
+        boolean spawner = event.getSpawnType() == MobSpawnType.SPAWNER;
+        if (!spawner && placed(event.getSpawnType())) { return; }
+        Mob mob = event.getEntity();
+        if (!spawner && deniedAboveWindow(mob)) {
+            deny(event);
+            return;
+        }
+        if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
+            if (ContentThreat.deniedAtGeneration(mob) || ContentSpawnGate.barred(mob)) { deny(event); }
+            return;
+        }
+        if (!spawner && (ContentThreat.barred(mob) || ContentSpawnGate.barred(mob))) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        BlockPos pos = mob.blockPosition();
+        if (event.getSpawnType() == MobSpawnType.NATURAL && ContentSpawnSwitch.overCap(level, mob, pos)) {
+            deny(event);
+            return;
+        }
+        if (!(mob instanceof Enemy)) {
+            if (!spawner && mob instanceof Animal && animalGround(level, pos)) { event.setResult(mob.checkSpawnObstruction(level) ? Event.Result.ALLOW : Event.Result.DENY); }
+            return;
+        }
+        if (!spawner) {
+            int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight()));
+            if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
+                deny(event);
+                return;
+            }
+        }
+        float rate = rateFor(level, pos) * ContentThreat.spawnRate(level, pos);
+        if (rate == 1.0F) { return; }
+        if (rate <= 0.0F) {
+            deny(event);
+            return;
+        }
+        if (rate < 1.0F) {
+            if (level.random.nextFloat() >= rate) { deny(event); }
+            return;
+        }
+        if (level.random.nextFloat() < rate - 1.0F) { event.setResult(Event.Result.ALLOW); }
+    }
+
+    private static boolean deniedAboveWindow(Mob mob) {
+        if (mob instanceof Enemy || mob.getY() <= ContentWorldShape.VANILLA_MAX) { return false; }
+        return !SKY_ANIMALS.get(() -> ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals()));
+    }
+
+    private static void deny(MobSpawnEvent.PositionCheck event) { event.setResult(Event.Result.DENY); }
+
+    private static boolean placed(MobSpawnType type) { return type != MobSpawnType.NATURAL && type != MobSpawnType.CHUNK_GENERATION; }
+
+    private static boolean animalGround(BlockAndTintGetter level, BlockPos pos) {
+        if (ContentRegistry.lacks(ANIMALS, level.getBlockState(pos.below()).getBlock())) { return false; }
+        return level.getRawBrightness(pos, 0) > 8;
+    }
+
+    private static float rateFor(ServerLevel level, BlockPos pos) {
+        boolean sky = level.canSeeSky(pos);
+        boolean day = level.isDay();
+        float switched = ContentSpawnSwitch.rate(level, pos, sky, day);
+        if (switched >= 0.0F) { return switched; }
+        BiomeDef biome = level.getBiome(pos).unwrapKey().map(key -> ContentBiomes.def(key.location())).orElse(null);
+        if (biome != null) {
+            float wanted = biome.rate(sky, day);
+            if (wanted >= 0.0F) { return wanted; }
+        }
+        float[] rates = RATES.get(() -> new float[] {
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate()),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate()) });
+        if (sky) { return day ? rates[0] : rates[1]; }
+        return day ? rates[2] : rates[3];
+    }
+}

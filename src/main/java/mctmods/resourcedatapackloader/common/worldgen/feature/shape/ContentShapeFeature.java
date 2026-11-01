@@ -1,0 +1,50 @@
+package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
+
+import mctmods.resourcedatapackloader.common.worldgen.feature.IContentChunkShape;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import java.util.ArrayList;
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
+
+public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup> {
+    public static final ContentShapeFeature INSTANCE = new ContentShapeFeature();
+
+    private ContentShapeFeature() { super(Setup.CODEC); }
+
+    @Override public boolean place(FeaturePlaceContext<Setup> context) {
+        ContentWorldgen.Entry entry = ContentWorldgen.entry(context.config().entry());
+        if (entry == null) { return false; }
+        ChunkPos center = new ChunkPos(context.origin());
+        return run(entry, new ContentPlacer(context.level(), entry.palette(), center), context.random(), center, context.origin());
+    }
+
+    public static boolean run(ContentWorldgen.Entry entry, ContentPlacer placer, RandomSource random, ChunkPos center, BlockPos origin) {
+        if (entry.shape() instanceof IContentChunkShape chunked) {
+            Predicate<BlockPos> valid = pos -> ContentWorldgen.allows(entry, placer.level(), pos);
+            chunked.generateChunk(placer, center, valid);
+            if (entry.def().follows()) {
+                for (BlockPos led : chunked.originsIn(placer, center, valid)) { ContentWorldgen.after(entry, placer, random, led, new ArrayList<>()); }
+            }
+            return true;
+        }
+        if (entry.shape() instanceof ContentImprint imprint && imprint.pinned()) { return imprint.placePinned(placer, center, origin); }
+        boolean placed = entry.shape().generate(placer, random, origin);
+        if (placed && entry.def().follows()) { ContentWorldgen.after(entry, placer, random, origin, new ArrayList<>()); }
+        return placed;
+    }
+
+    public record Setup(ResourceLocation entry) implements FeatureConfiguration {
+        public static final Codec<Setup> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                ResourceLocation.CODEC.fieldOf("entry").forGetter(Setup::entry)).apply(instance, Setup::new));
+    }
+}

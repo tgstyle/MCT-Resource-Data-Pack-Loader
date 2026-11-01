@@ -1,0 +1,99 @@
+package mctmods.resourcedatapackloader.common.gates;
+
+import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
+
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
+
+public final class PortalStorage extends SavedData {
+    private static final String NAME = "rdpl_portals";
+    private static final String TAG = "positions";
+    private static final String EARLIER_TAG = "Positions";
+    private final Map<Long, String> positions = new LinkedHashMap<>();
+
+    private static PortalStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(PortalStorage::read, PortalStorage::new, NAME); }
+
+    private static PortalStorage read(CompoundTag tag) {
+        PortalStorage held = new PortalStorage();
+        for (Tag entry : tag.getList(EARLIER_TAG, Tag.TAG_COMPOUND)) {
+            CompoundTag stored = (CompoundTag) entry;
+            held.positions.put(stored.getLong("At"), stored.getString("Owner"));
+        }
+        for (Tag entry : tag.getList(TAG, Tag.TAG_COMPOUND)) {
+            CompoundTag stored = (CompoundTag) entry;
+            held.positions.put(BlockPos.asLong(stored.getInt("x"), stored.getInt("y"), stored.getInt("z")), stored.getString("owner"));
+        }
+        return held;
+    }
+
+    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag) {
+        ListTag list = new ListTag();
+        for (Map.Entry<Long, String> stored : positions.entrySet()) {
+            BlockPos at = BlockPos.of(stored.getKey());
+            CompoundTag entry = new CompoundTag();
+            entry.putInt("x", at.getX());
+            entry.putInt("y", at.getY());
+            entry.putInt("z", at.getZ());
+            entry.putString("owner", stored.getValue());
+            list.add(entry);
+        }
+        tag.put(TAG, list);
+        return tag;
+    }
+
+    public static void add(ServerLevel level, BlockPos pos, @Nullable UUID owner) {
+        PortalStorage data = get(level);
+        String stored = owner == null ? "" : owner.toString();
+        if (stored.equals(data.positions.get(pos.asLong()))) { return; }
+        data.positions.put(pos.asLong(), stored);
+        data.setDirty();
+    }
+
+    @Nullable public static UUID owner(ServerLevel level, BlockPos pos) {
+        String stored = get(level).positions.get(pos.asLong());
+        if (stored == null || stored.isEmpty()) { return null; }
+        try { return UUID.fromString(stored); }
+        catch (IllegalArgumentException broken) { return null; }
+    }
+
+    public static void remove(ServerLevel level, BlockPos pos) {
+        PortalStorage data = get(level);
+        if (data.positions.remove(pos.asLong()) == null) { return; }
+        data.setDirty();
+    }
+
+    @Nullable public static BlockPos nearest(ServerLevel level, BlockPos around) {
+        PortalStorage data = get(level);
+        if (data.positions.isEmpty()) { return null; }
+        BlockPos best = null;
+        double closest = Double.MAX_VALUE;
+        Set<Long> stale = new LinkedHashSet<>();
+        for (long packed : data.positions.keySet()) {
+            BlockPos at = BlockPos.of(packed);
+            if (level.isLoaded(at) && !(level.getBlockState(at).getBlock() instanceof ContentPortalBlock)) {
+                stale.add(packed);
+                continue;
+            }
+            double distance = at.distSqr(around);
+            if (distance >= closest) { continue; }
+            closest = distance;
+            best = at;
+        }
+        if (!stale.isEmpty()) {
+            data.positions.keySet().removeAll(stale);
+            data.setDirty();
+        }
+        return best;
+    }
+}

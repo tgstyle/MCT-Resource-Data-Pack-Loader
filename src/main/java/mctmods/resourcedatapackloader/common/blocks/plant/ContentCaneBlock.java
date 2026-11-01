@@ -1,0 +1,127 @@
+package mctmods.resourcedatapackloader.common.blocks.plant;
+
+import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
+import mctmods.resourcedatapackloader.common.blocks.fluid.ContentLiquidBlock;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+
+import java.util.function.Predicate;
+import javax.annotation.Nonnull;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.IPlantable;
+import net.minecraftforge.common.PlantType;
+
+@SuppressWarnings("deprecation") public final class ContentCaneBlock extends Block implements IContentSoil, IPlantable {
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_15;
+    private static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
+    private final GrowthDef growth;
+    private final ContentSoil soil;
+
+    public ContentCaneBlock(BlockDef def, GrowthDef growth, Properties properties) {
+        super(properties);
+        this.growth = growth;
+        this.soil = new ContentSoil(def.key());
+        registerDefaultState(stateDefinition.any().setValue(AGE, 0));
+    }
+
+    @Override public void resolveSoil(@Nonnull ContentRegistry.BlockEntry entry) { soil.resolve(growth.soil()); }
+
+    @Override @Nonnull public PlantType getPlantType(@Nonnull BlockGetter level, @Nonnull BlockPos pos) {
+        if (growth.needsWater()) { return PlantType.BEACH; }
+        return growth.damage() ? PlantType.DESERT : PlantType.PLAINS;
+    }
+
+    @Override @Nonnull public BlockState getPlant(@Nonnull BlockGetter level, @Nonnull BlockPos pos) { return defaultBlockState(); }
+
+    @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(AGE); }
+
+    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return SHAPE; }
+
+    @Override @Nonnull public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return growth.damage() ? SHAPE : Shapes.empty(); }
+
+    @Override public void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
+        if (!state.canSurvive(level, pos)) {
+            level.destroyBlock(pos, true);
+            return;
+        }
+        if (!level.isEmptyBlock(pos.above())) { return; }
+        int height = 1;
+        while (level.getBlockState(pos.below(height)).is(this)) { height++; }
+        if (height >= growth.maxHeight()) { return; }
+        int age = state.getValue(AGE);
+        if (!ForgeHooks.onCropsGrowPre(level, pos, state, true)) { return; }
+        if (age >= growth.stages() - 1) {
+            level.setBlockAndUpdate(pos.above(), defaultBlockState());
+            level.setBlock(pos, state.setValue(AGE, 0), 4);
+        }
+        else { level.setBlock(pos, state.setValue(AGE, age + 1), 4); }
+        ForgeHooks.onCropsGrowPost(level, pos, state);
+    }
+
+    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) { if (!level.isClientSide() && !old.is(this) && !state.canSurvive(level, pos)) { level.destroyBlock(pos, true); } }
+
+    @Override @Nonnull public BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction direction, @Nonnull BlockState neighbor, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos neighborPos) {
+        if (!state.canSurvive(level, pos)) { level.scheduleTick(pos, this, 1); }
+        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    }
+
+    @Override public void tick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) { if (!state.canSurvive(level, pos)) { level.destroyBlock(pos, true); } }
+
+    @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) {
+        BlockPos below = pos.below();
+        BlockState under = level.getBlockState(below);
+        if (under.is(this)) { return true; }
+        if (!soil.sustains(level, below, this)) { return false; }
+        if (growth.needsSky() && !level.canSeeSky(pos)) { return false; }
+        if (growth.breaksNeighbors() && crowded(level, pos)) { return false; }
+        if (!growth.needsWater()) { return true; }
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            for (int step = 1; step <= growth.waterRange(); step++) {
+                BlockPos side = below.relative(facing, step);
+                BlockState held = level.getBlockState(side);
+                if (liquid(level, side, held, FluidTags.WATER, FluidDef::waterMaterial)) { return true; }
+                if (held.isAir()) { continue; }
+                break;
+            }
+        }
+        return false;
+    }
+
+    private boolean crowded(LevelReader level, BlockPos pos) {
+        for (Direction facing : Direction.Plane.HORIZONTAL) {
+            BlockPos side = pos.relative(facing);
+            BlockState held = level.getBlockState(side);
+            if (held.isSolid() || liquid(level, side, held, FluidTags.LAVA, FluidDef::lavaMaterial)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean liquid(LevelReader level, BlockPos pos, BlockState held, TagKey<Fluid> tag, Predicate<FluidDef> material) {
+        if (level.getFluidState(pos).is(tag)) { return true; }
+        return held.getBlock() instanceof ContentLiquidBlock liquid && material.test(liquid.getDef());
+    }
+
+    @Override public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) { if (growth.damage()) { entity.hurt(level.damageSources().cactus(), growth.damageAmount()); } }
+}

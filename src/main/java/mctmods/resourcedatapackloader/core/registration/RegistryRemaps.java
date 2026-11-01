@@ -1,0 +1,88 @@
+package mctmods.resourcedatapackloader.core.registration;
+
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.MissingMappingsEvent;
+
+public final class RegistryRemaps {
+    private static final String REGISTRY = "registry";
+    private static final String MAPPING = "mapping";
+    private static final Map<String, String> LEGACY_REGISTRIES = Map.of("minecraft:blocks", "minecraft:block", "minecraft:items", "minecraft:item", "minecraft:biomes", "minecraft:worldgen/biome", "minecraft:enchantments", "minecraft:enchantment", "minecraft:potions", "minecraft:mob_effect", "minecraft:potiontypes", "minecraft:potion", "minecraft:soundevents", "minecraft:sound_event", "minecraft:entities", "minecraft:entity_type", "minecraft:villagerprofessions", "minecraft:villager_profession");
+    private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
+    private static final PackGeneration GENERATION = new PackGeneration();
+
+    private RegistryRemaps() {}
+
+    public static void reload() {
+        REMAPS.clear();
+        GENERATION.stale();
+        if (Config.data.registryRemapsOff()) { return; }
+        int[] count = new int[1];
+        Json.eachObject(PackManager.REGISTRY_REMAP, "registry remap", (key, json) -> count[0] += read(json));
+        if (count[0] > 0) { Summary.info("remaps", "Loaded " + count[0] + " registry rename(s) across " + REMAPS.size() + " registry/registries"); }
+    }
+
+    private static int read(JsonObject json) {
+        String named = Json.getString(json, REGISTRY);
+        ResourceLocation registry = ResourceLocation.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
+        JsonObject mapping = Json.getJsonObject(json, MAPPING);
+        Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());
+        int count = 0;
+        for (Map.Entry<String, JsonElement> entry : mapping.entrySet()) {
+            target.put(ResourceLocation.parse(entry.getKey()), ResourceLocation.parse(entry.getValue().getAsString()));
+            count++;
+        }
+        return count;
+    }
+
+    @Nullable private static ResourceLocation follow(Map<ResourceLocation, ResourceLocation> target, ResourceLocation from) {
+        ResourceLocation current = target.get(from);
+        if (current == null) { return null; }
+        Set<ResourceLocation> seen = new HashSet<>();
+        seen.add(from);
+        while (seen.add(current)) {
+            ResourceLocation next = target.get(current);
+            if (next == null) { return current; }
+            current = next;
+        }
+        ContentLog.LOGGER.error("Registry remap chain from {} loops back on itself, so it is ignored", from);
+        return null;
+    }
+
+    @SuppressWarnings("unchecked") public static void onMissingMappings(MissingMappingsEvent event) {
+        if (Config.data.registryRemapsOff()) { return; }
+        if (GENERATION.stale()) { reload(); }
+        Map<ResourceLocation, ResourceLocation> target = REMAPS.get(event.getKey().location());
+        if (target == null) { return; }
+        remap(event, (ResourceKey<? extends Registry<Object>>) event.getKey(), (IForgeRegistry<Object>) event.getRegistry(), target);
+    }
+
+    private static <T> void remap(MissingMappingsEvent event, ResourceKey<? extends Registry<T>> key, IForgeRegistry<T> pool, Map<ResourceLocation, ResourceLocation> target) {
+        for (MissingMappingsEvent.Mapping<T> mapping : event.getAllMappings(key)) {
+            ResourceLocation renamed = follow(target, mapping.getKey());
+            if (renamed == null) { continue; }
+            if (!pool.containsKey(renamed)) {
+                ContentLog.LOGGER.warn("Registry remap sends {} to {} in {}, but nothing is registered under that name", mapping.getKey(), renamed, key.location());
+                continue;
+            }
+            mapping.remap(pool.getValue(renamed));
+            ContentLog.LOGGER.debug("Remapped {} to {} in {}", mapping.getKey(), renamed, key.location());
+        }
+    }
+}

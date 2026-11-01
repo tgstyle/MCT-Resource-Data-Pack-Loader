@@ -1,0 +1,159 @@
+package mctmods.resourcedatapackloader.common.entities.behavior;
+
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
+import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.LlamaSpit;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.level.LevelEvent;
+
+public final class ContentEntityTicks {
+    private static final List<String> KINDS = List.of("items", "experience", "projectiles");
+    private static final int SNAPSHOT = 100;
+    private static final Map<Level, Long2BooleanOpenHashMap> FAR = new HashMap<>();
+    private static final Map<Level, Long> CHECKED = new HashMap<>();
+    private static final TemplateMemo<Slowing> SLOWING = new TemplateMemo<>();
+    private static long considered;
+    private static long slowed;
+
+    private ContentEntityTicks() {}
+
+    private record Slowing(boolean on, int rate, int recheck, double reach, Set<String> kinds, Set<String> spared) {}
+
+    public static void reload() {
+        SLOWING.forget();
+        considered = 0L;
+        slowed = 0L;
+        FAR.clear();
+        CHECKED.clear();
+    }
+
+    private static Slowing slowing() { return SLOWING.get(ContentEntityTicks::readSlowing); }
+
+    private static Slowing readSlowing() {
+        boolean on = !ContentControl.off(ContentControl.ENTITIES) && ContentControl.flag(ContentControl.ENTITIES, "slowDistantEntities", Config.entities.slowDistantEntities());
+        int rate = Math.max(1, ContentControl.number(ContentControl.ENTITIES, "slowRate", Config.entities.slowRate()));
+        int recheck = Math.max(1, ContentControl.number(ContentControl.ENTITIES, "slowRecheck", Config.entities.slowRecheck()));
+        double distance = Math.max(64, ContentControl.number(ContentControl.ENTITIES, "slowDistance", Config.entities.slowDistance()));
+        Set<String> kinds = new HashSet<>();
+        for (String kind : ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds())) {
+            String lowered = Settings.lower(kind);
+            if (KINDS.contains(lowered)) { kinds.add(lowered); }
+            else { ContentLog.LOGGER.error("slowedKinds names '{}', which is not one of {}, so nothing is slowed for it. Anything that thinks for itself is already given a slower pace without being named, and machines are never slowed", kind, KINDS); }
+        }
+        Set<String> spared = Settings.lower(ContentControl.list(ContentControl.ENTITIES, "neverSlowed", Config.entities.neverSlowed()));
+        if (on && rate > 1) { ContentLog.LOGGER.debug("Entities more than {} block(s) from every player are given one tick in {}", (int) distance, rate); }
+        return new Slowing(on, rate, recheck, distance * distance, kinds, spared);
+    }
+
+    public static void onLevelUnload(LevelEvent.Unload event) {
+        if (!(event.getLevel() instanceof Level level)) { return; }
+        FAR.remove(level);
+        CHECKED.remove(level);
+    }
+
+    public static void onServerTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) { return; }
+        MinecraftServer server = event.getServer();
+        if (server.getTickCount() % SNAPSHOT != 0) { return; }
+        long asked = considered;
+        long paced = slowed;
+        considered = 0L;
+        slowed = 0L;
+        if (!ContentLog.LOGGER.debugEnabled()) { return; }
+        double mean = server.getAverageTickTime();
+        double rate = Math.min(20.0D, 1000.0D / Math.max(50.0D, mean));
+        int entities = 0;
+        int chunks = 0;
+        for (ServerLevel level : server.getAllLevels()) {
+            for (Entity ignored : level.getAllEntities()) { entities++; }
+            chunks += level.getChunkSource().getLoadedChunksCount();
+        }
+        ContentLog.LOGGER.debug(String.format(Locale.ROOT, "Every second the server manages %.1f rounds of %.1f ms, holding %d chunk(s) and %d entity/entities. Of %d asked about since the last look, %d were given a slower pace", rate, mean, chunks, entities, asked, paced));
+    }
+
+    public static boolean frozen(Entity entity) { return !(entity instanceof Player) && ContentPregen.holdsStill(entity.level()); }
+
+    public static boolean slowedNow(Entity entity) {
+        if (entity.level().isClientSide()) { return false; }
+        if (frozen(entity)) { return true; }
+        Slowing slowing = slowing();
+        if (!slowing.on() || slowing.rate() <= 1 || !kindSlowed(entity, slowing) || spared(entity, slowing)) { return false; }
+        considered++;
+        if (near(entity.level(), entity.chunkPosition(), slowing)) { return false; }
+        boolean skip = Math.floorMod(entity.getId() + entity.level().getGameTime(), slowing.rate()) != 0L;
+        if (skip) { slowed++; }
+        return skip;
+    }
+
+    private static boolean near(Level level, ChunkPos chunk, Slowing slowing) {
+        long now = level.getGameTime() / slowing.recheck();
+        Long last = CHECKED.get(level);
+        Long2BooleanOpenHashMap known = FAR.get(level);
+        if (last == null || last != now || known == null) {
+            known = new Long2BooleanOpenHashMap();
+            FAR.put(level, known);
+            CHECKED.put(level, now);
+        }
+        long key = chunk.toLong();
+        if (known.containsKey(key)) { return known.get(key); }
+        boolean answer = reached(level, chunk, slowing);
+        known.put(key, answer);
+        return answer;
+    }
+
+    private static boolean reached(Level level, ChunkPos chunk, Slowing slowing) {
+        if (level instanceof ServerLevel server && server.getForcedChunks().contains(chunk.toLong())) { return true; }
+        if (level.players().isEmpty()) { return false; }
+        double middleX = chunk.getMiddleBlockX() + 0.5D;
+        double middleZ = chunk.getMiddleBlockZ() + 0.5D;
+        for (Player player : level.players()) {
+            double awayX = player.getX() - middleX;
+            double awayZ = player.getZ() - middleZ;
+            if (awayX * awayX + awayZ * awayZ <= slowing.reach()) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean kindSlowed(Entity entity, Slowing slowing) {
+        if (entity instanceof Mob) { return true; }
+        if (entity instanceof ItemEntity) { return slowing.kinds().contains("items"); }
+        if (entity instanceof ExperienceOrb) { return slowing.kinds().contains("experience"); }
+        if (entity instanceof AbstractArrow || entity instanceof ThrowableProjectile || entity instanceof LlamaSpit) { return slowing.kinds().contains("projectiles"); }
+        return false;
+    }
+
+    private static boolean spared(Entity entity, Slowing slowing) {
+        if (entity.isVehicle() || entity.isPassenger() || entity.hasCustomName() || entity.isCurrentlyGlowing()) { return true; }
+        if (entity instanceof Mob mob && (mob.isPersistenceRequired() || mob.isLeashed() || mob.getTarget() != null)) { return true; }
+        if (entity instanceof LivingEntity living && !living.getActiveEffects().isEmpty()) { return true; }
+        if (slowing.spared().isEmpty()) { return false; }
+        ResourceLocation name = EntityType.getKey(entity.getType());
+        return slowing.spared().contains(name.toString().toLowerCase(Locale.ROOT));
+    }
+}

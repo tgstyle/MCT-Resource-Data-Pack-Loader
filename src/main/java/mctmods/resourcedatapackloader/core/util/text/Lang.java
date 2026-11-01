@@ -1,0 +1,83 @@
+package mctmods.resourcedatapackloader.core.util.text;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Stream;
+import javax.annotation.Nullable;
+import net.minecraft.locale.Language;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraftforge.fml.ModList;
+
+public final class Lang {
+    private static final String DEFAULT = "en_us";
+    private static final Map<String, Map<String, String>> TABLES = new HashMap<>();
+
+    private Lang() {}
+
+    public static void load() {
+        TABLES.clear();
+        Path home = null;
+        try {
+            home = ModList.get().getModFileById(ResourceDataPackLoader.MOD_ID).getFile().findResource("assets", ResourceDataPackLoader.MOD_ID, "lang");
+            try (Stream<Path> files = Files.list(home)) {
+                for (Path file : (Iterable<Path>) files::iterator) {
+                    String name = file.getFileName().toString();
+                    if (name.endsWith(PackManager.JSON_SUFFIX) && Files.isRegularFile(file)) { table(name.substring(0, name.length() - PackManager.JSON_SUFFIX.length()).toLowerCase(Locale.ROOT), file); }
+                }
+            }
+        }
+        catch (IOException | RuntimeException ex) { ContentLog.LOGGER.error("Could not look through the jar for language files under {}", home, ex); }
+        if (!TABLES.containsKey(DEFAULT)) {
+            ContentLog.LOGGER.error("The language files are missing from the jar, so players will see raw language keys");
+            return;
+        }
+        ContentLog.LOGGER.info("Speaking {} language(s) to players", TABLES.size());
+    }
+
+    public static String vanilla(String key) { return Language.getInstance().getOrDefault(key); }
+
+    public static String tr(String key, Object... args) { return line(TABLES.get(DEFAULT), key, args); }
+
+    public static String tr(@Nullable ServerPlayer player, String key, Object... args) {
+        if (player == null) { return tr(key, args); }
+        Map<String, String> table = TABLES.get(player.getLanguage().toLowerCase(Locale.ROOT));
+        if (table == null || !table.containsKey(key)) { table = TABLES.get(DEFAULT); }
+        return line(table, key, args);
+    }
+
+    private static void table(String locale, Path file) {
+        Map<String, String> lines = new HashMap<>();
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+                if (entry.getValue().isJsonPrimitive()) { lines.put(entry.getKey(), entry.getValue().getAsString()); }
+            }
+        }
+        catch (IOException | RuntimeException ex) {
+            ContentLog.LOGGER.error("Could not read the language file {}", file.getFileName(), ex);
+            return;
+        }
+        TABLES.put(locale, lines);
+    }
+
+    private static String line(@Nullable Map<String, String> table, String key, Object... args) {
+        String held = table == null ? null : table.get(key);
+        if (held == null) { return key; }
+        if (args.length == 0) { return held; }
+        try { return String.format(held, args); }
+        catch (RuntimeException ex) { return held; }
+    }
+}
