@@ -29,6 +29,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [La règle unique](#la-règle-unique)
 - [Organiser les packs](#organiser-les-packs)
 - [Packs de ressources : qui l'emporte](#packs-de-ressources--qui-lemporte)
+  - [La liste des packs](#la-liste-des-packs)
 
 **Fonctionnement des packs**
 - [Fonctionnement des définitions](#fonctionnement-des-définitions)
@@ -326,6 +327,43 @@ rdploader/RDPL1O Seasonal       priority and override combined
 ```
 
 Les packs sans lettre suivent l'option de configuration `overrideResourcePacks`. `/rdpl list` marque les packs qui surchargent. La lettre doit terminer le préfixe (suivie d'une espace, d'un tiret, d'un tiret bas, ou de rien), de sorte que `RDPLOverhaul` est un pack nommé `Overhaul`, et non un indicateur `O`.
+
+### La liste des packs
+
+Un fichier placé dans `assets/<namespace>/packlist/` décide comment la liste des packs de ressources du jeu traite chaque pack de ressources côté client, y compris ceux de RDPL. Sans fichier, la liste se comporte comme avant.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+Un pack est désigné par son identifiant : le nom du fichier dans `resourcepacks`, avec ou sans `file/`, puis `RDPL` et `RDPL (overriding)` pour les packs de RDPL, et `vanilla` pour celui du jeu. Les packs se fusionnent dans l'ordre des packs : un pack ultérieur l'emporte pour chaque clé et chaque identifiant, et un `defaultPacks` ultérieur remplace entièrement le précédent. Les modifications prennent effet au prochain démarrage du jeu.
+
+| Clé du fichier   | Type   | Défaut | Ce qu'elle fait                                                                                                                                                  |
+| ---------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | liste  | vide   | Packs activés la première fois que le jeu démarre sans aucune sélection. RDPL note dans `rdploader/config/packlist.seen` qu'il a déjà vérifié.                   |
+| `reloadFailures` | nombre | 0      | Après ce nombre de rechargements de ressources échoués dans une session, la sélection devient `defaultPacks` au lieu de rien. 0 conserve le comportement du jeu. |
+| `packs`          | objet  | vide   | Réglages par identifiant de pack, ci-dessous.                                                                                                                    |
+
+| Clé du pack     | Type                   | Défaut | Ce qu'elle fait                                                                                                         |
+| --------------- | ---------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `title`         | texte ou clé de langue | -      | Remplace le nom affiché dans la liste.                                                                                  |
+| `description`   | texte ou clé de langue | -      | Remplace la description affichée dans la liste.                                                                         |
+| `compatible`    | true ou false          | false  | Pas d'avertissement d'incompatibilité, et le jeu ne retire jamais le pack de la sélection à cause de son format.        |
+| `hidden`        | true ou false          | false  | Le pack reste activé et n'est pas listé. Il devient aussi obligatoire.                                                  |
+| `required`      | true ou false          | false  | Le pack est toujours activé et ne peut pas être désactivé.                                                              |
+| `position`      | `top` ou `bottom`      | -      | Où le pack se place à son activation. Avec `fixedPosition`, où il reste.                                                |
+| `fixedPosition` | true ou false          | false  | Le pack ne peut être ni déplacé ni dépassé. Il devient aussi obligatoire, puisque le jeu ne sauvegarde aucun pack fixe. |
+
+Les packs de RDPL et ceux du jeu restent toujours activés ; `required: false` n'en désactive aucun. Sur 1.12.2, `vanilla` n'accepte que `title`, `description` et `hidden`, puisque le pack du jeu n'est pas un choix listé à cet endroit. Seuls les niveaux `N` et `O` décident de la place des packs de RDPL ; `position` sur `RDPL` ou `RDPL (overriding)` ne fait donc rien et est consigné comme une erreur.
 
 ---
 

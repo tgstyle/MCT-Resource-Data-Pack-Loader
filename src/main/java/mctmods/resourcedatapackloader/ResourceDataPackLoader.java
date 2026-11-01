@@ -134,6 +134,7 @@ import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.loot.KilledName;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.pack.PackListClient;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.recipe.FurnaceBlocking;
 import mctmods.resourcedatapackloader.recipe.FurnaceRecipes;
@@ -339,6 +340,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ProspectTooltip.class);
             MinecraftForge.EVENT_BUS.register(PackTooltips.class);
             MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
+            MinecraftForge.EVENT_BUS.register(PackListClient.class);
             if (ContentItemContainer.baubled()) { PouchKey.register(); }
         }
     }

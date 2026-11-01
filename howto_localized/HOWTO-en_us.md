@@ -29,6 +29,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [The one rule](#the-one-rule)
 - [Organizing packs](#organizing-packs)
 - [Resource packs: who wins](#resource-packs-who-wins)
+  - [The pack list](#the-pack-list)
 
 **How packs work**
 - [How definitions work](#how-definitions-work)
@@ -326,6 +327,43 @@ rdploader/RDPL1O Seasonal       priority and override combined
 ```
 
 Packs without a letter follow the `overrideResourcePacks` config option. `/rdpl list` marks the packs that override. The letter must end the prefix (followed by a space, dash, underscore, or nothing), so `RDPLOverhaul` is a pack named `Overhaul`, not an `O` flag.
+
+### The pack list
+
+A file in `assets/<namespace>/packlist/` decides how the game's resource pack list treats any client resource pack, RDPL's own included. Without one the list behaves as it always has.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+A pack is named by its id: the file name in `resourcepacks`, with or without `file/`, then `RDPL` and `RDPL (overriding)` for RDPL's own, and `vanilla` for the game's own. Packs merge in pack order, so a later pack wins per key and per id, and a later `defaultPacks` replaces an earlier one whole. Changes apply on the next game start.
+
+| File key         | Type   | Default | What it does                                                                                                                                  |
+| ---------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | list   | empty   | Packs turned on the first time the game starts with nothing selected. RDPL remembers it has checked in `rdploader/config/packlist.seen`.      |
+| `reloadFailures` | number | 0       | After this many failed resource reloads in one session, the selection becomes `defaultPacks` instead of nothing. 0 keeps the game's behavior. |
+| `packs`          | object | empty   | Settings per pack id, below.                                                                                                                  |
+
+| Pack key        | Type              | Default | What it does                                                                                         |
+| --------------- | ----------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `title`         | text or lang key  | -       | Replaces the name the list shows.                                                                    |
+| `description`   | text or lang key  | -       | Replaces the description the list shows.                                                             |
+| `compatible`    | true or false     | false   | No incompatible warning, and the game never removes the pack from the selection for its format.      |
+| `hidden`        | true or false     | false   | The pack stays on and is not listed. This also makes it required.                                    |
+| `required`      | true or false     | false   | The pack is always on and cannot be turned off.                                                      |
+| `position`      | `top` or `bottom` | -       | Where the pack lands when it is turned on. With `fixedPosition`, where it stays.                     |
+| `fixedPosition` | true or false     | false   | The pack cannot be moved or passed. This also makes it required, since the game saves no fixed pack. |
+
+RDPL's own packs and the game's own always stay on; `required: false` does not turn one off. On 1.12.2 `vanilla` takes only `title`, `description` and `hidden`, since the game's own pack is not a listed choice there. Where RDPL's own packs sit is decided by the `N` and `O` tiers alone, so `position` on `RDPL` or `RDPL (overriding)` does nothing and is logged as an error.
 
 ---
 

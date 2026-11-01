@@ -29,6 +29,7 @@
 - [단 하나의 규칙](#단-하나의-규칙)
 - [팩 정리하기](#팩-정리하기)
 - [리소스 팩: 우선 적용되는 쪽](#리소스-팩-우선-적용되는-쪽)
+  - [팩 목록](#팩-목록)
 
 **팩의 작동 방식**
 - [정의의 작동 방식](#정의의-작동-방식)
@@ -326,6 +327,43 @@ rdploader/RDPL1O Seasonal       우선순위와 재정의를 함께 지정
 ```
 
 글자가 없는 팩은 `overrideResourcePacks` 설정 옵션을 따릅니다. `/rdpl list`는 재정의하는 팩을 표시합니다. 글자는 접두사의 끝에 와야 하며(뒤에는 공백, 대시, 밑줄이 오거나 아무것도 없어야 함), 따라서 `RDPLOverhaul`은 `O` 플래그가 아니라 `Overhaul`이라는 이름의 팩입니다.
+
+### 팩 목록
+
+`assets/<namespace>/packlist/` 아래의 파일은 게임의 리소스 팩 목록이 클라이언트 리소스 팩을 어떻게 다룰지 정합니다. RDPL 자체 팩을 포함한 모든 클라이언트 리소스 팩이 대상입니다. 파일이 없으면 목록은 예전과 똑같이 동작합니다.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+팩은 ID로 지정합니다. `resourcepacks`의 파일 이름(`file/`은 있어도 되고 없어도 됨)을 쓰고, RDPL 자체 팩은 `RDPL`과 `RDPL (overriding)`, 게임 자체 팩은 `vanilla`입니다. 팩은 팩 순서대로 병합되므로, 뒤에 오는 팩이 키와 ID마다 우선합니다. 뒤에 오는 `defaultPacks`는 앞의 것을 통째로 대체합니다. 변경 사항은 다음 게임 시작 때 적용됩니다.
+
+| 파일 키          | 타입 | 기본값    | 역할                                                                                                                               |
+| ---------------- | ---- | --------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | 목록 | 비어 있음 | 아무것도 선택되지 않은 상태로 게임을 처음 시작할 때 켜지는 팩. RDPL은 `rdploader/config/packlist.seen`에 확인했음을 기록합니다.    |
+| `reloadFailures` | 숫자 | 0         | 한 세션에서 리소스 재로드가 이 횟수만큼 실패하면, 선택이 비는 대신 `defaultPacks`가 됩니다. 0이면 게임의 동작을 그대로 유지합니다. |
+| `packs`          | 객체 | 비어 있음 | 팩 ID별 설정. 아래에서 설명합니다.                                                                                                 |
+
+| 팩 키           | 타입                | 기본값 | 역할                                                                                                     |
+| --------------- | ------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
+| `title`         | 텍스트 또는 언어 키 | -      | 목록에 표시되는 이름을 바꿉니다.                                                                         |
+| `description`   | 텍스트 또는 언어 키 | -      | 목록에 표시되는 설명을 바꿉니다.                                                                         |
+| `compatible`    | true 또는 false     | false  | 호환되지 않는다는 경고를 띄우지 않고, 게임이 형식을 이유로 팩을 선택에서 빼지 않습니다.                  |
+| `hidden`        | true 또는 false     | false  | 팩은 켜진 상태로 유지되며 목록에 나타나지 않습니다. 이 설정은 팩을 필수로도 만듭니다.                    |
+| `required`      | true 또는 false     | false  | 팩이 항상 켜져 있으며 끌 수 없습니다.                                                                    |
+| `position`      | `top` 또는 `bottom` | -      | 켤 때 팩이 놓이는 위치. `fixedPosition`과 함께 쓰면 그 위치에 고정됩니다.                                |
+| `fixedPosition` | true 또는 false     | false  | 팩을 옮기거나 건너뛸 수 없습니다. 게임은 고정된 팩을 저장하지 않으므로 이 설정은 팩을 필수로도 만듭니다. |
+
+RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: false`로도 끌 수 없습니다. 1.12.2에서 `vanilla`는 `title`, `description`, `hidden`만 받습니다. 게임 자체 팩은 그곳에서 목록에서 고를 수 있는 항목이 아니기 때문입니다. RDPL 자체 팩의 위치는 `N`과 `O` 단계만으로 정해지므로, `RDPL` 또는 `RDPL (overriding)`의 `position`은 아무 일도 하지 않으며 오류로 기록됩니다.
 
 ---
 

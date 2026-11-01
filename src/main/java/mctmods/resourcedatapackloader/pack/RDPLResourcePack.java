@@ -24,10 +24,13 @@ import javax.imageio.ImageIO;
 @SideOnly(Side.CLIENT) public final class RDPLResourcePack extends AbstractResourcePack {
     private static final String META = PackManager.PACK_META;
     private static final String ICON = PackManager.PACK_ICON;
+    public static final int PACK_FORMAT = 3;
     private static final String PREFIX = RDPLPack.ASSETS + "/";
-    private static final String DEFAULT_META = "{\"pack\":{\"pack_format\":3,\"description\":\"Files loaded by Resource Data Pack Loader\"}}";
+    private static final String DEFAULT_META = "{\"pack\":{\"pack_format\":" + PACK_FORMAT + ",\"description\":\"Files loaded by Resource Data Pack Loader\"}}";
     private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());
     private final boolean overriding;
+    public static final String NORMAL_NAME = "RDPL";
+    public static final String OVERRIDING_NAME = "RDPL (overriding)";
 
     public RDPLResourcePack(File root, boolean overriding) {
         super(root);
@@ -93,5 +96,5 @@ import javax.imageio.ImageIO;
         throw new FileNotFoundException(ICON);
     }
 
-    @Override @Nonnull public String getPackName() { return overriding ? "RDPL (overriding)" : "RDPL"; }
+    @Override @Nonnull public String getPackName() { return overriding ? OVERRIDING_NAME : NORMAL_NAME; }
 }

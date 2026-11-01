@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.pack.PackListRules;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
 
 import net.minecraft.client.gui.GuiScreenResourcePacks;
@@ -15,8 +16,7 @@ import java.io.IOException;
 
 @SideOnly(Side.CLIENT) public final class PackListEntry extends ResourcePackListEntry {
     private static final ResourceLocation FALLBACK_ICON = ResourceDataPackLoader.id(ResourceDataPackLoader.ICON);
-    private static ResourceLocation normalIcon;
-    private static ResourceLocation overrideIcon;
+    private static ResourceLocation packIcon;
     private final RDPLResourcePack pack;
     private final boolean overriding;
     private final String name;
@@ -26,15 +26,16 @@ import java.io.IOException;
         super(screen);
         this.pack = pack;
         this.overriding = overriding;
-        this.name = pack.getPackName();
-        this.description = I18n.format(overriding ? "rdpl.gui.packList.override" : "rdpl.gui.packList.normal");
+        PackListRules.Rule rule = PackListRules.rule(pack.getPackName());
+        this.name = rule == null || rule.title == null ? I18n.format(overriding ? "rdpl.gui.packList.override.title" : "rdpl.gui.packList.normal.title") : PackListText.shown(rule.title);
+        this.description = rule == null || rule.description == null ? I18n.format(overriding ? "rdpl.gui.packList.override" : "rdpl.gui.packList.normal") : PackListText.shown(rule.description);
     }
 
     @Override @Nonnull protected String getResourcePackName() { return name; }
 
     @Override @Nonnull protected String getResourcePackDescription() { return description; }
 
-    @Override protected int getResourcePackFormat() { return 3; }
+    @Override protected int getResourcePackFormat() { return RDPLResourcePack.PACK_FORMAT; }
 
     @Override protected void bindResourcePackIcon() { mc.getTextureManager().bindTexture(icon()); }
 
@@ -51,12 +52,8 @@ import java.io.IOException;
     @Override public boolean isServerPack() { return overriding; }
 
     private ResourceLocation icon() {
-        if (overriding) {
-            if (overrideIcon == null) { overrideIcon = load(); }
-            return overrideIcon;
-        }
-        if (normalIcon == null) { normalIcon = load(); }
-        return normalIcon;
+        if (packIcon == null) { packIcon = load(); }
+        return packIcon;
     }
 
     private ResourceLocation load() {
