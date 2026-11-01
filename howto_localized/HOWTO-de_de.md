@@ -31,6 +31,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Die eine Regel](#die-eine-regel)
 - [Packs organisieren](#packs-organisieren)
 - [Ressourcenpakete: wer gewinnt](#ressourcenpakete-wer-gewinnt)
+  - [Die Pack-Liste](#die-pack-liste)
 
 **Wie Packs funktionieren**
 - [Wie Definitionen funktionieren](#wie-definitionen-funktionieren)
@@ -339,6 +340,43 @@ rdploader/RDPL1O Seasonal       Priorität und Override kombiniert
 Packs ohne Buchstaben folgen der Config-Option `overrideResourcePacks`. `/rdpl list` markiert die überschreibenden Packs. Der Buchstabe muss das Präfix abschließen (gefolgt von Leerzeichen, Bindestrich, Unterstrich oder nichts), `RDPLOverhaul` ist also ein Pack namens `Overhaul`, kein `O`-Flag.
 
 Dieselben Stufen gelten für Datenpakete. Ein mit `N` markiertes Pack liegt unter den Datenpaketen, die eine Welt in ihrem eigenen `datapacks`-Ordner trägt, und ein mit `O` markiertes darüber.
+
+### Die Pack-Liste
+
+Eine Datei in `assets/<namespace>/packlist/` legt fest, wie die Ressourcenpaketliste des Spiels jedes Client-Ressourcenpaket behandelt, auch die von RDPL. Ohne Datei verhält sich die Liste wie bisher.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+Ein Pack wird über seine ID benannt: der Dateiname in `resourcepacks`, mit oder ohne `file/`, dann `RDPL` und `RDPL (overriding)` für die eigenen Packs von RDPL und `vanilla` für das des Spiels. Packs werden in der Packreihenfolge zusammengeführt, sodass ein späterer Pack pro Schlüssel und pro ID gewinnt und ein späteres `defaultPacks` ein früheres vollständig ersetzt. Änderungen greifen beim nächsten Spielstart.
+
+| Dateischlüssel   | Typ    | Standard | Wirkung                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ---------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | Liste  | leer     | Packs, die beim ersten Start des Spiels mit leerer Auswahl eingeschaltet werden. RDPL merkt sich in `rdploader/config/packlist.seen`, dass es schon nachgesehen hat.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `reloadFailures` | Zahl   | 0        | Nach so vielen fehlgeschlagenen Ressourcen-Neuladungen in einer Sitzung wird die Auswahl zu `defaultPacks` statt leer. 0 behält das Verhalten des Spiels bei. Unter 26.1.2 bringt ein Pack, dessen Core-Shader sich nicht kompilieren lässt, den Client beim Start zum Absturz, bevor eine Ausweichlösung greifen kann; das ist ein Vanilla-Fehler, den 26.2 behoben hat. Ein solches Pack im Bildschirm auszuwählen, stellt das Spiel auf jeder Version wieder her. Scheitern auch die nach einem fehlgeschlagenen Neuladen behaltenen Packs, werden die Regeln, die Packs aktiviert halten, für diese Sitzung angehalten, und das Spiel endet im Titelbildschirm ohne ein kaputtes Pack; die fehlgeschlagenen Neuladungen wiederholen sich bei jedem Neustart, solange das Pack als erforderlich gilt. |
+| `packs`          | Objekt | leer     | Einstellungen je Pack-ID, unten.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+| Pack-Schlüssel  | Typ                       | Standard | Wirkung                                                                                                                          |
+| --------------- | ------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `title`         | Text oder Sprachschlüssel | -        | Ersetzt den Namen, den die Liste zeigt.                                                                                          |
+| `description`   | Text oder Sprachschlüssel | -        | Ersetzt die Beschreibung, die die Liste zeigt.                                                                                   |
+| `compatible`    | true oder false           | false    | Keine Warnung wegen Inkompatibilität; das Spiel entfernt das Pack wegen seines Formats nie aus der Auswahl.                      |
+| `hidden`        | true oder false           | false    | Das Pack bleibt eingeschaltet und wird nicht aufgelistet. Es wird damit auch erforderlich.                                       |
+| `required`      | true oder false           | false    | Das Pack ist immer eingeschaltet und lässt sich nicht ausschalten.                                                               |
+| `position`      | `top` oder `bottom`       | -        | Wohin das Pack beim Einschalten kommt. Mit `fixedPosition` bleibt es dort.                                                       |
+| `fixedPosition` | true oder false           | false    | Das Pack kann nicht verschoben oder übergangen werden. Es wird damit auch erforderlich, da das Spiel kein festes Pack speichert. |
+
+RDPLs eigene Packs und die des Spiels bleiben immer aktiv; `required: false` schaltet keines davon aus. Unter 1.12.2 nimmt `vanilla` nur `title`, `description` und `hidden` an, da das eigene Pack des Spiels dort nicht als Auswahl in der Liste erscheint. Wo RDPLs eigene Packs stehen, bestimmen allein die Stufen `N` und `O`; `position` bei `RDPL` oder `RDPL (overriding)` bewirkt daher nichts und wird als Fehler protokolliert.
 
 ---
 

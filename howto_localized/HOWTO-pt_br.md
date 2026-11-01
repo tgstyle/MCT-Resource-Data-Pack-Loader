@@ -31,6 +31,7 @@ Este guia é para a versão 26.x, que abrange a 26.1.2, a 26.2 e a 26.3; as trê
 - [A única regra](#a-única-regra)
 - [Organizando pacotes](#organizando-pacotes)
 - [Pacotes de recursos: quem vence](#pacotes-de-recursos-quem-vence)
+  - [A lista de pacotes](#a-lista-de-pacotes)
 
 **Como os pacotes funcionam**
 - [Como as definições funcionam](#como-as-definições-funcionam)
@@ -339,6 +340,43 @@ rdploader/RDPL1O Seasonal       priority and override combined
 Pacotes sem letra seguem a opção de configuração `overrideResourcePacks`. `/rdpl list` marca os pacotes que substituem. A letra precisa terminar o prefixo (seguida de espaço, hífen, sublinhado ou nada), então `RDPLOverhaul` é um pacote chamado `Overhaul`, não um sinalizador `O`.
 
 Os mesmos níveis valem para pacotes de dados. Um pacote marcado com `N` fica abaixo dos pacotes de dados que um mundo carrega na própria pasta `datapacks`, e um marcado com `O` fica acima deles.
+
+### A lista de pacotes
+
+Um arquivo em `assets/<namespace>/packlist/` define como a lista de pacotes de recursos do jogo trata cada pacote de recursos do cliente, inclusive os do RDPL. Sem um arquivo, a lista se comporta como sempre se comportou.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+Um pacote é identificado pelo seu id: o nome do arquivo em `resourcepacks`, com ou sem `file/`, depois `RDPL` e `RDPL (overriding)` para os do RDPL, e `vanilla` para o do jogo. Os pacotes são mesclados na ordem dos pacotes, então um pacote posterior prevalece por chave e por id, e um `defaultPacks` posterior substitui o anterior por inteiro. As mudanças valem na próxima vez que o jogo for iniciado.
+
+| Chave do arquivo | Tipo   | Padrão | O que faz                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `defaultPacks`   | lista  | vazio  | Pacotes ativados na primeira vez que o jogo inicia sem nada selecionado. O RDPL registra em `rdploader/config/packlist.seen` que já fez essa verificação.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `reloadFailures` | número | 0      | Depois de tantas falhas no recarregamento de recursos em uma sessão, a seleção passa a ser `defaultPacks` em vez de ficar vazia. 0 mantém o comportamento do jogo. Na 26.1.2, um pack cujo shader principal falha ao compilar derruba o cliente na inicialização, antes que qualquer alternativa possa rodar; é um bug do vanilla que a 26.2 corrigiu. Escolher esse pack na tela recupera o jogo em todas as versões. Se os packs mantidos após um recarregamento com falha também falharem, as regras que os mantêm ligados param naquela sessão, e o jogo termina na tela-título sem nenhum pack quebrado; os recarregamentos com falha se repetem a cada reinício enquanto o pack continuar obrigatório. |
+| `packs`          | objeto | vazio  | Configurações por id de pacote, abaixo.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+| Chave do pacote | Tipo                     | Padrão | O que faz                                                                                                                   |
+| --------------- | ------------------------ | ------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `title`         | texto ou chave de idioma | -      | Substitui o nome que a lista mostra.                                                                                        |
+| `description`   | texto ou chave de idioma | -      | Substitui a descrição que a lista mostra.                                                                                   |
+| `compatible`    | true ou false            | false  | Sem aviso de incompatibilidade, e o jogo nunca tira o pacote da seleção por causa do formato.                               |
+| `hidden`        | true ou false            | false  | O pacote continua ativado e não aparece na lista. Isso também o torna obrigatório.                                          |
+| `required`      | true ou false            | false  | O pacote fica sempre ativado e não pode ser desligado.                                                                      |
+| `position`      | `top` ou `bottom`        | -      | Onde o pacote entra quando é ativado. Com `fixedPosition`, onde ele fica.                                                   |
+| `fixedPosition` | true ou false            | false  | O pacote não pode ser movido nem ultrapassado. Isso também o torna obrigatório, já que o jogo não salva nenhum pacote fixo. |
+
+Os pacotes do RDPL e os do jogo sempre ficam ativados; `required: false` não desliga nenhum deles. Na 1.12.2, `vanilla` aceita apenas `title`, `description` e `hidden`, pois o pacote do jogo não é uma opção listada ali. A posição dos pacotes do RDPL é decidida apenas pelos níveis `N` e `O`, então `position` em `RDPL` ou `RDPL (overriding)` não faz nada e é registrado como erro.
 
 ---
 
