@@ -1,0 +1,30 @@
+package mctmods.resourcedatapackloader.common.rubic.world.interfaces;
+
+import mctmods.resourcedatapackloader.common.util.world.CubePos;
+
+import java.util.function.Predicate;
+import net.minecraft.util.math.BlockPos;
+
+public interface IRubicWorld extends IMinMaxHeight {
+    boolean rdpl$isRubicWorld();
+
+    ICubeProvider rdpl$getCubeCache();
+
+    default boolean rdpl$testForCubes(int minBlockX, int minBlockY, int minBlockZ, int maxBlockX, int maxBlockY, int maxBlockZ, Predicate<ICube> test) {
+        return rdpl$testForCubes(
+                CubePos.fromBlockCoords(minBlockX, minBlockY, minBlockZ),
+                CubePos.fromBlockCoords(maxBlockX, maxBlockY, maxBlockZ),
+                test
+        );
+    }
+
+    boolean rdpl$testForCubes(CubePos start, CubePos end, Predicate<? super ICube> test);
+
+    ICube rdpl$getCubeFromCubeCoords(int cubeX, int cubeY, int cubeZ);
+
+    ICube rdpl$getCubeFromBlockCoords(BlockPos pos);
+
+    boolean rdpl$isBlockColumnLoaded(BlockPos pos);
+
+    int rdpl$getMaxGenerationHeight();
+}

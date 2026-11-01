@@ -1,0 +1,250 @@
+package mctmods.resourcedatapackloader.common.worldgen.placement;
+
+import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.HardnessDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentBedrock;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockFalling;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTTagString;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
+import net.minecraftforge.event.world.ChunkDataEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.relauncher.Side;
+
+public final class ContentRetrogen {
+    public static final String TAG = "rdpl_retrogen";
+    private static final Map<Integer, Deque<Pending>> QUEUES = new HashMap<>();
+    private static final Map<Integer, Map<ChunkPos, Set<String>>> DONE = new HashMap<>();
+    private static List<WorldgenDef> defs = new ArrayList<>();
+    @Nullable private static ContentWorldgen generator;
+    private static int completed;
+    private static int flattened;
+    private static int queued;
+
+    private ContentRetrogen() {}
+
+    public static void setup(List<WorldgenDef> active, @Nullable ContentWorldgen worldgen) {
+        defs = active;
+        generator = worldgen;
+        for (WorldgenDef def : defs) { def.buildToken(Config.worldgen.retrogenKey); }
+        if (wanted()) { ContentLog.LOGGER.info("Retrogen armed: {} vein definition(s), bedrock={}", defs.size(), bedrockWanted()); }
+        else { ContentLog.LOGGER.debug("Retrogen not armed: {} vein definition(s), bedrock={}", defs.size(), bedrockWanted()); }
+    }
+
+    public static String bedrockToken() {
+        return "bedrock:" + ContentBedrock.layers()
+                + (ContentBedrock.roofWanted() ? ":roof" : "")
+                + "#" + Config.worldgen.flatBedrockRetrogenKey;
+    }
+
+    public static boolean retrogenWanted() { return ContentControl.flag(ContentControl.CHUNKS, "retrogen", Config.worldgen.retrogen); }
+
+    private static boolean adoptWanted() { return ContentControl.flag(ContentControl.CHUNKS, "adoptExistingChunks", Config.worldgen.adoptExistingChunks); }
+
+    public static boolean bedrockWanted() { return ContentBedrock.enabled() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen); }
+
+    public static boolean wanted() {
+        if (bedrockWanted() || ContentReplacements.wanted()) { return true; }
+        for (WorldgenDef def : defs) {
+            if (def.retrogen) { return true; }
+        }
+        return false;
+    }
+
+    public static void markGenerated(World world, int chunkX, int chunkZ) {
+        if (world.isRemote) { return; }
+        Set<String> already = done(world.provider.getDimension()).computeIfAbsent(new ChunkPos(chunkX, chunkZ), k -> new HashSet<>());
+        for (WorldgenDef def : defs) { already.add(def.getToken()); }
+        if (ContentBedrock.enabled()) { already.add(bedrockToken()); }
+    }
+
+    private static Map<ChunkPos, Set<String>> done(int dimension) { return DONE.computeIfAbsent(dimension, k -> new HashMap<>()); }
+
+    public static void mark(World world, ChunkPos pos, String token) {
+        if (world.isRemote) { return; }
+        done(world.provider.getDimension()).computeIfAbsent(pos, k -> new HashSet<>()).add(token);
+        world.getChunk(pos.x, pos.z).markDirty();
+    }
+
+    @SubscribeEvent public static void onChunkLoad(ChunkDataEvent.Load event) {
+        if (event.getWorld().isRemote) { return; }
+        int dimension = event.getWorld().provider.getDimension();
+        Set<String> already = read(event.getData());
+        if (adoptWanted() && !hasVeinTokens(already) && !defs.isEmpty()) {
+            for (WorldgenDef def : defs) { already.add(def.getToken()); }
+            ContentLog.LOGGER.debug("Adopted chunk {} as already generated", event.getChunk().getPos());
+        }
+        done(dimension).put(event.getChunk().getPos(), already);
+        ContentLog.LOGGER.debug("Chunk {} loaded with retrogen tokens {}", event.getChunk().getPos(), already);
+        boolean replace = ContentReplacements.wanted() && !already.contains(ContentReplacements.token()) && ContentReplacements.appliesTo(dimension);
+        List<HardnessDef> swaps = ContentHardness.swapsMissing(event.getWorld(), already);
+        if (!replace && swaps.isEmpty() && (!retrogenWanted() || (defs.isEmpty() && !bedrockWanted()))) { return; }
+        List<WorldgenDef> pending = new ArrayList<>();
+        boolean bedrock = false;
+        String bedrockToken = bedrockToken();
+        if (retrogenWanted()) {
+            for (WorldgenDef def : defs) {
+                if (def.retrogen && !already.contains(def.getToken())) { pending.add(def); }
+            }
+            bedrock = bedrockWanted() && !already.contains(bedrockToken) && ContentBedrock.appliesTo(dimension);
+        }
+        if (pending.isEmpty() && !bedrock && !replace && swaps.isEmpty()) {
+            ContentLog.LOGGER.debug("Nothing to do for chunk {}: bedrockToken={} present={} appliesTo={}",
+                    event.getChunk().getPos(), bedrockToken, already.contains(bedrockToken), ContentBedrock.appliesTo(dimension));
+            return;
+        }
+        QUEUES.computeIfAbsent(dimension, k -> new ArrayDeque<>()).add(new Pending(event.getChunk().getPos(), pending, bedrock, replace, swaps));
+        queued++;
+        ContentLog.LOGGER.debug("Queued chunk {} for retrogen: {} vein(s), bedrock={}, replace={}, swaps={}", event.getChunk().getPos(), pending.size(), bedrock, replace, swaps.size());
+    }
+
+    @SubscribeEvent public static void onChunkSave(ChunkDataEvent.Save event) {
+        Map<ChunkPos, Set<String>> byChunk = DONE.get(event.getWorld().provider.getDimension());
+        if (byChunk == null) { return; }
+        Set<String> already = byChunk.get(event.getChunk().getPos());
+        if (already == null || already.isEmpty()) { return; }
+        NBTTagList list = new NBTTagList();
+        for (String name : already) { list.appendTag(new NBTTagString(name)); }
+        event.getData().setTag(TAG, list);
+        if (!event.getChunk().isLoaded()) { byChunk.remove(event.getChunk().getPos()); }
+    }
+
+    @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) {
+        if (event.getWorld().isRemote) { return; }
+        DONE.remove(event.getWorld().provider.getDimension());
+        Deque<Pending> queue = QUEUES.remove(event.getWorld().provider.getDimension());
+        DONE.remove(event.getWorld().provider.getDimension());
+        if (queue != null) { queued -= queue.size(); }
+        if (QUEUES.isEmpty()) { queued = 0; }
+    }
+
+    @SubscribeEvent public static void onWorldTick(TickEvent.WorldTickEvent event) {
+        if (event.side != Side.SERVER || event.phase != TickEvent.Phase.END) { return; }
+        if (queued == 0 || (!retrogenWanted() && !ContentReplacements.wanted() && !ContentHardness.anySwaps())) { return; }
+        Deque<Pending> queue = QUEUES.get(event.world.provider.getDimension());
+        if (queue == null || queue.isEmpty()) { return; }
+        int budget = Math.max(1, Config.worldgen.retrogenChunksPerTick);
+        for (int i = 0; i < budget && !queue.isEmpty(); i++) {
+            run(event.world, queue.poll());
+            queued--;
+        }
+        if (queue.isEmpty() && completed > 0) {
+            Summary.info("retrogen", "Caught up " + completed + " existing chunk(s)"
+                    + (flattened > 0 ? ", flattening bedrock in " + flattened + " of them" : ""));
+            ContentReplacements.report();
+            completed = 0;
+            flattened = 0;
+        }
+    }
+
+    private static void run(World world, Pending asked) {
+        if (!world.isChunkGeneratedAt(asked.pos.x, asked.pos.z)) { return; }
+        world.getChunk(asked.pos.x, asked.pos.z);
+        Pending pending = asked.remaining(done(world.provider.getDimension()).computeIfAbsent(asked.pos, k -> new HashSet<>()));
+        if (pending == null) { return; }
+        boolean falling = BlockFalling.fallInstantly;
+        BlockFalling.fallInstantly = true;
+        try {
+            if (pending.replace) { ContentReplacements.replace(world, pending.pos.x, pending.pos.z); }
+            for (HardnessDef def : pending.swaps) { ContentHardness.swap(world, pending.pos.x, pending.pos.z, def); }
+            if (pending.bedrock) {
+                ContentBedrock.flatten(world, pending.pos.x, pending.pos.z, world.provider.getDimension());
+                flattened++;
+            }
+            ContentWorldgen worldgen = generator;
+            if (!pending.defs.isEmpty() && worldgen != null) { generateVeins(worldgen, world, pending); }
+        }
+        catch (RuntimeException ex) {
+            ContentLog.LOGGER.error("Retrogen failed for chunk {}", pending.pos, ex);
+            return;
+        }
+        finally { BlockFalling.fallInstantly = falling; }
+        Set<String> already = done(world.provider.getDimension()).computeIfAbsent(pending.pos, k -> new HashSet<>());
+        for (WorldgenDef def : pending.defs) { already.add(def.getToken()); }
+        if (pending.bedrock) { already.add(bedrockToken()); }
+        if (pending.replace && settled(world, pending.pos)) { already.add(ContentReplacements.token()); }
+        for (HardnessDef def : pending.swaps) { already.add(ContentHardness.swapToken(def)); }
+        world.getChunk(pending.pos.x, pending.pos.z).markDirty();
+        completed++;
+    }
+
+    private static void generateVeins(ContentWorldgen worldgen, World world, Pending pending) {
+        Random random = ContentSpread.regionRandom(world, pending.pos.x, pending.pos.z);
+        worldgen.generate(random, pending.pos.x, pending.pos.z, world, pending.defs);
+    }
+
+    private static Set<String> read(NBTTagCompound data) {
+        Set<String> already = new HashSet<>();
+        if (!data.hasKey(TAG, 9)) { return already; }
+        NBTTagList list = data.getTagList(TAG, 8);
+        for (int i = 0; i < list.tagCount(); i++) { already.add(list.getStringTagAt(i)); }
+        return already;
+    }
+
+    private static boolean settled(World world, ChunkPos pos) {
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                if (!world.isChunkGeneratedAt(pos.x + x, pos.z + z)) { return false; }
+            }
+        }
+        return true;
+    }
+
+    private static boolean hasVeinTokens(Set<String> already) {
+        for (String token : already) {
+            if (!token.startsWith("bedrock:") && !token.startsWith("replace:") && !token.startsWith("swap:")) { return true; }
+        }
+        return false;
+    }
+
+    private static final class Pending {
+        private final ChunkPos pos;
+        private final List<WorldgenDef> defs;
+        private final boolean bedrock;
+        private final boolean replace;
+        private final List<HardnessDef> swaps;
+
+        private Pending(ChunkPos pos, List<WorldgenDef> defs, boolean bedrock, boolean replace, List<HardnessDef> swaps) {
+            this.pos = pos;
+            this.defs = defs;
+            this.bedrock = bedrock;
+            this.replace = replace;
+            this.swaps = swaps;
+        }
+
+        @Nullable private Pending remaining(Set<String> already) {
+            List<WorldgenDef> left = new ArrayList<>();
+            for (WorldgenDef def : defs) {
+                if (!already.contains(def.getToken())) { left.add(def); }
+            }
+            List<HardnessDef> swapsLeft = new ArrayList<>();
+            for (HardnessDef def : swaps) {
+                if (!already.contains(ContentHardness.swapToken(def))) { swapsLeft.add(def); }
+            }
+            boolean flatten = bedrock && !already.contains(bedrockToken());
+            boolean replacing = replace && !already.contains(ContentReplacements.token());
+            if (left.isEmpty() && swapsLeft.isEmpty() && !flatten && !replacing) { return null; }
+            return new Pending(pos, left, flatten, replacing, swapsLeft);
+        }
+    }
+}

@@ -1,4 +1,4 @@
-# MCT Resource Data Pack Loader
+# Resource Data Pack Loader
 
 **The API that should have been.**
 

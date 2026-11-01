@@ -1,0 +1,60 @@
+package mctmods.resourcedatapackloader.mixin.world.gen.structure;
+
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardKeep;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRails;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.Random;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureStart;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(StructureStart.class) public abstract class MixinStructureStart {
+    @Redirect(method = "generateStructure(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;getBoundingBox()Lnet/minecraft/world/gen/structure/StructureBoundingBox;")) private StructureBoundingBox rdpl$dressedBox(StructureComponent piece) { return BeardRails.dressed(piece); }
+
+    @Inject(method = "updateBoundingBox", at = @At("RETURN")) private void rdpl$dressedStart(CallbackInfo ci) { BeardRails.dress((StructureStart) (Object) this); }
+
+    @Inject(method = "readStructureComponentsFromNBT", at = @At("RETURN")) private void rdpl$dressedOnLoad(World worldIn, NBTTagCompound tagCompound, CallbackInfo ci) {
+        if (tagCompound.hasKey("BB")) { BeardRails.dress((StructureStart) (Object) this); }
+    }
+
+    @Redirect(method = "generateStructure", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;addComponentParts(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Z")) private boolean rdpl$openFrontage(StructureComponent piece, World world, Random rand, StructureBoundingBox clip) {
+        StructureStart self = (StructureStart) (Object) this;
+        ContentBeard.building(self);
+        boolean built;
+        try {
+            if (ContentBeard.wanted()) {
+                ContentBeard.fellFor(self, piece, world, clip);
+                BeardKeep.watch(world, piece, clip);
+            }
+            built = piece.addComponentParts(world, rand, clip);
+            if (!built && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {} told the game it is done while chunk {}, {} was being built, so the game now drops it and no later chunk will build or dress it again", piece.getClass().getSimpleName(), piece.getBoundingBox().minX, piece.getBoundingBox().minZ, clip.minX >> 4, clip.minZ >> 4); }
+            if (ContentBeard.wanted()) { BeardKeep.learn(world); }
+            if (built && ContentBeard.wanted()) { ContentBeard.openAround(self, piece, world, clip); }
+        }
+        finally { ContentBeard.building(null); }
+        return built;
+    }
+
+    @Inject(method = "generateStructure", at = @At("RETURN")) private void rdpl$plaza(World worldIn, Random rand, StructureBoundingBox structurebb, CallbackInfo ci) {
+        StructureStart self = (StructureStart) (Object) this;
+        if (!ContentBeard.wanted() || self.getComponents().isEmpty()) { return; }
+        if (!(self.getComponents().get(0) instanceof StructureVillagePieces.Start)) { return; }
+        ContentBeard.building(self);
+        try {
+            for (StructureComponent well : self.getComponents()) {
+                if (well instanceof StructureVillagePieces.Well) { ContentBeard.wellPlaza(self, well, worldIn, structurebb); }
+            }
+        }
+        finally { ContentBeard.building(null); }
+    }
+}

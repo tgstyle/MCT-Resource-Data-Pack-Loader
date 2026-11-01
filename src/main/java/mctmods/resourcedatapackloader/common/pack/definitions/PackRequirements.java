@@ -1,0 +1,62 @@
+package mctmods.resourcedatapackloader.common.pack.definitions;
+
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+public final class PackRequirements {
+    private static final List<String> FOLDERS = Collections.unmodifiableList(Arrays.asList(
+            PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.BIOMES, PackManager.WORLDGEN,
+            PackManager.DIMENSIONS, PackManager.CELESTIAL, PackManager.WORLDTEMPLATES, PackManager.PATHINTERSECTS, PackManager.STRUCTUREMAPS, PackManager.PORTALFRAMES, PackManager.GATES, PackManager.CARDS, PackManager.DIALOGS, PackManager.POTIONS,
+            PackManager.POTION_TYPES, PackManager.ENCHANTMENTS, PackManager.BREWING, PackManager.VILLAGERS, PackManager.TRADES, PackManager.VILLAGES, PackManager.ENTITIES, PackManager.LANGGATES));
+    private static final Set<String> WANTED = new LinkedHashSet<>();
+    private static boolean scanned;
+
+    private PackRequirements() {}
+
+    public static Set<String> required() {
+        if (!scanned) { scan(); }
+        return Collections.unmodifiableSet(WANTED);
+    }
+
+    private static void scan() {
+        scanned = true;
+        PackManager manager = PackManager.get();
+        if (manager.isEmpty()) { return; }
+        Set<String> found = new LinkedHashSet<>();
+        for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, (namespace, path, contents) -> Json.within("requirements file", namespace + ":" + path, () -> {
+            collect(contents, found);
+            return null;
+        })); }
+        for (String modid : found) {
+            if (manager.provides(modid)) { continue; }
+            WANTED.add(modid);
+        }
+    }
+
+    private static void collect(String contents, Set<String> found) {
+        if (contents == null || !contents.contains("\"requires\"")) { return; }
+        try {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json == null || !json.has("requires")) { return; }
+            JsonElement element = json.get("requires");
+            if (!element.isJsonArray()) { return; }
+            for (JsonElement each : element.getAsJsonArray()) {
+                if (!each.isJsonPrimitive()) { continue; }
+                String modid = Settings.lower(each.getAsString());
+                if (modid.isEmpty() || modid.startsWith("config:") || modid.startsWith("file:")) { continue; }
+                found.add(modid);
+            }
+        }
+        catch (RuntimeException malformed) { ContentLog.LOGGER.debug("Could not read requirements from a pack file: {}", malformed.getMessage()); }
+    }
+}

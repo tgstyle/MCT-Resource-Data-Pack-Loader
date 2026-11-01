@@ -1,0 +1,141 @@
+package mctmods.resourcedatapackloader.common.blocks.plant;
+
+import mctmods.resourcedatapackloader.common.blocks.BlockVariants;
+import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
+import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
+import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGenerator;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.Objects;
+import java.util.Random;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockBush;
+import net.minecraft.block.IGrowable;
+import net.minecraft.block.properties.PropertyInteger;
+import net.minecraft.block.state.BlockStateContainer;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.gen.structure.template.Template;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+@SuppressWarnings("deprecation") public class ContentSaplingBlock extends BlockBush implements IGrowable, IContentBlock, IContentSoil {
+    public static final int MAX_VARIANTS = 1;
+    private static final int GROWTH_FLAGS = 3;
+    private final BlockDef def;
+    private final SaplingDef sapling;
+    private final ContentSoil soil;
+    private final PropertyInteger stage;
+
+    public static ContentSaplingBlock create(BlockDef def, SaplingDef sapling) { return BlockVariants.construct(def, built -> new ContentSaplingBlock(built, sapling)); }
+
+    protected ContentSaplingBlock(BlockDef def, SaplingDef sapling) {
+        super(def.material);
+        this.def = def;
+        this.sapling = sapling;
+        this.soil = new ContentSoil(sapling.soil, def.registryName);
+        this.stage = (PropertyInteger) Objects.requireNonNull(this.blockState.getProperty("stage"));
+        BlockVariant variant = def.at(0);
+        setRegistryName(def.registryName);
+        setTranslationKey(def.registryName + "." + variant.name);
+        if (def.soundType != null) { setSoundType(def.soundType); }
+        setTickRandomly(true);
+        ContentSetup.apply(this, def.creativeTab);
+        ContentSetup.properties(this, def);
+        setDefaultState(this.blockState.getBaseState().withProperty(stage, 0));
+    }
+
+    @Override @Nonnull protected BlockStateContainer createBlockState() {
+        SaplingDef growing = Objects.requireNonNull(Objects.requireNonNull(BlockVariants.def()).sapling);
+        return new BlockStateContainer(this, PropertyInteger.create("stage", 0, Math.max(1, growing.stages) - 1));
+    }
+
+    @Override public BlockDef getDef() { return def; }
+
+    @Override @Nullable public ItemBlock createItem() { return new ItemBlock(this); }
+
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(stage, MathHelper.clamp(meta, 0, stage.getAllowedValues().size() - 1)); }
+
+    @Override public int getMetaFromState(IBlockState state) { return state.getValue(stage); }
+
+    @Override public ContentSoil soil() { return soil; }
+
+    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return ContentSetup.placeable(this, world, pos); }
+
+    @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return soil.sustains(world, pos.down(), this); }
+
+    @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random rand) {
+        if (world.isRemote || ContentGrowSwitch.skips(world, pos, this, rand)) { return; }
+        super.updateTick(world, pos, state, rand);
+        if (!world.isAreaLoaded(pos, 1)) { return; }
+        if (world.getLightFromNeighbors(pos.up()) < sapling.light) { return; }
+        if (rand.nextInt(Math.max(1, sapling.chance)) != 0) { return; }
+        advance(world, pos, state, rand);
+    }
+
+    @Override public boolean canGrow(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, boolean isClient) { return true; }
+
+    @Override public boolean canUseBonemeal(@Nonnull World world, @Nonnull Random rand, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return true; }
+
+    @Override public void grow(@Nonnull World world, @Nonnull Random rand, @Nonnull BlockPos pos, @Nonnull IBlockState state) { advance(world, pos, state, rand); }
+
+    private void advance(World world, BlockPos pos, IBlockState state, Random rand) {
+        int current = state.getValue(stage);
+        if (current < stage.getAllowedValues().size() - 1) {
+            world.setBlockState(pos, state.withProperty(stage, current + 1), 4);
+            return;
+        }
+        generate(world, pos, rand);
+    }
+
+    private void generate(World world, BlockPos pos, Random rand) {
+        if (sapling.usesStructure()) {
+            placeStructure(world, pos, rand);
+            return;
+        }
+        IBlockState log = ContentStates.parse(sapling.log, def.registryName);
+        IBlockState leaves = ContentStates.parse(sapling.leaves, def.registryName);
+        if (log == null || leaves == null) { return; }
+        world.setBlockToAir(pos);
+        ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, sapling.height), log, leaves, soil.blocks());
+        if (!tree.generate(world, rand, pos)) { world.setBlockState(pos, getDefaultState(), 4); }
+    }
+
+    private void placeStructure(World world, BlockPos pos, Random rand) {
+        if (!(world instanceof WorldServer)) { return; }
+        String named = sapling.growsInto(rand);
+        if (named == null || named.isEmpty()) { return; }
+        WorldServer server = (WorldServer) world;
+        MinecraftServer host = server.getMinecraftServer();
+        Template template = server.getStructureTemplateManager().get(host, new ResourceLocation(named));
+        if (template == null) {
+            ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.registryName, named);
+            return;
+        }
+        BlockPos size = template.getSize();
+        BlockPos origin = pos.add(-(size.getX() / 2), 0, -(size.getZ() / 2));
+        world.setBlockToAir(pos);
+        template.addBlocksToWorld(world, origin, new PlacementSettings(), GROWTH_FLAGS);
+    }
+
+    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
+
+    @Override public boolean isOpaqueCube(@Nonnull IBlockState state) { return false; }
+
+    @Override public boolean isFullCube(@Nonnull IBlockState state) { return false; }
+}

@@ -1,47 +1,47 @@
 package mctmods.resourcedatapackloader.core;
 
-import mctmods.resourcedatapackloader.core.util.EarlyConfig;
-import mctmods.resourcedatapackloader.core.util.SplashDark;
-import mctmods.resourcedatapackloader.content.ContentModels;
-import mctmods.resourcedatapackloader.content.ContentRegistry;
-import mctmods.resourcedatapackloader.content.extra.ContentEnchantments;
-import mctmods.resourcedatapackloader.content.extra.ContentPotions;
-import mctmods.resourcedatapackloader.content.extra.ContentSounds;
-import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
-import mctmods.resourcedatapackloader.content.portal.PortalEvents;
-import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
-import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
-import mctmods.resourcedatapackloader.content.worldgen.ContentSeasonTint;
-import mctmods.resourcedatapackloader.content.worldgen.ContentSkyGates;
-import mctmods.resourcedatapackloader.content.worldgen.ContentSnowTint;
+import mctmods.resourcedatapackloader.client.models.ContentModels;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentSnowTint;
+import mctmods.resourcedatapackloader.common.enchantments.ContentEnchantments;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.StrayPacks;
+import mctmods.resourcedatapackloader.common.portals.PortalEvents;
+import mctmods.resourcedatapackloader.common.potions.ContentPotions;
+import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
+import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
+import mctmods.resourcedatapackloader.common.villages.ContentVillageDecor;
+import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
-import mctmods.resourcedatapackloader.pack.PackManager;
-import mctmods.resourcedatapackloader.pack.StrayPacks;
-import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Lang;
-import mctmods.resourcedatapackloader.util.ModJars;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.EarlyConfig;
+import mctmods.resourcedatapackloader.core.util.ModJars;
+import mctmods.resourcedatapackloader.core.util.SplashDark;
+import mctmods.resourcedatapackloader.core.util.text.Lang;
 
-import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
+import java.io.File;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.zip.ZipFile;
 import net.minecraft.launchwrapper.Launch;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.config.Config.Type;
 import net.minecraftforge.common.config.ConfigManager;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import zone.rong.mixinbooter.IEarlyMixinLoader;
-import java.io.File;
-import java.nio.file.Path;
-import java.util.zip.ZipFile;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 @Mod(modid = MCTMixin.MIXIN_ID, name = "RDPL Mixin", version = "1.0", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*") @IFMLLoadingPlugin.Name("RDPLCore") @IFMLLoadingPlugin.MCVersion("1.12.2") @IFMLLoadingPlugin.SortingIndex(1001) public class MCTMixin implements IFMLLoadingPlugin, IEarlyMixinLoader {
     public static final String MIXIN_ID = "resourcedatapackloader_mixin";
@@ -50,9 +50,7 @@ import java.util.Map;
     @Mod.EventHandler public void preInit(FMLPreInitializationEvent event) {
         ConfigManager.sync(MIXIN_ID, Type.INSTANCE);
         Lang.load();
-        if (Config.content.vanillaClients) {
-            LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, enchantments, villager professions, biomes, dimensions, entity variants and tooltips in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates, recipes and trades, still applies");
-        }
+        if (Config.content.vanillaClients) { LOGGER.info("vanillaClients is on: nothing from any pack is registered, so clients without the mod can join. Blocks, items, fluids, materials, sounds, potions, enchantments, villager professions, biomes, dimensions, entity variants and tooltips in packs are all skipped and named below; everything that lives on the server alone, such as ore veins, gates, world templates, recipes and trades, still applies"); }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug);
         LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",
                 Config.packs.rootDirectory, Config.packs.overrideResourcePacks, Config.packs.warnOnCaseMismatch, Config.packs.logContents, Config.packs.traceUnresolvedVariables);

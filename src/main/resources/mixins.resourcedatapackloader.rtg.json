@@ -1,7 +1,7 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.rtg",
+  "package": "mctmods.resourcedatapackloader.mixin.integration.rtg",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [

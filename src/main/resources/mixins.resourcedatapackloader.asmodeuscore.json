@@ -1,16 +1,14 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.asmodeuscore",
+  "package": "mctmods.resourcedatapackloader.mixin.integration.asmodeuscore",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "client": [
     "MixinACGuiCelestialSelectionNest",
-    "MixinACPacketSimpleStationHome",
-    "MixinACPacketSimpleStationLabel",
-    "MixinNewGuiCelestialSelectionAura",
-    "MixinNewGuiCelestialSelectionNest",
+    "MixinACPacketSimple",
+    "MixinNewGuiCelestialSelection",
     "MixinSkyProviderBaseSun",
     "MixinSkyProviderOverworldTextures"
   ],

@@ -1,0 +1,261 @@
+package mctmods.resourcedatapackloader.common.entities.behavior;
+
+import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.entities.ai.SwimmingMoveHelper;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.common.util.ContentAttributes;
+import mctmods.resourcedatapackloader.common.util.entity.AiTasks;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Enums;
+import mctmods.resourcedatapackloader.core.util.Registries;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityAgeable;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.EntityAISwimming;
+import net.minecraft.entity.ai.EntityFlyHelper;
+import net.minecraft.entity.ai.EntityMoveHelper;
+import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
+import net.minecraft.entity.ai.attributes.IAttributeInstance;
+import net.minecraft.entity.monster.EntityCreeper;
+import net.minecraft.entity.monster.EntityGhast;
+import net.minecraft.entity.monster.EntitySlime;
+import net.minecraft.entity.monster.EntityZombie;
+import net.minecraft.entity.passive.EntityRabbit;
+import net.minecraft.entity.passive.EntityVillager;
+import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.pathfinding.PathNavigateClimber;
+import net.minecraft.pathfinding.PathNavigateFlying;
+import net.minecraft.pathfinding.PathNavigateGround;
+import net.minecraft.pathfinding.PathNavigateSwimmer;
+import net.minecraft.pathfinding.PathNodeType;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
+
+public final class ContentEntityApply {
+    private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
+    private static final Set<String> MISSING = new HashSet<>();
+    private static final String ROLLED = "rdplBabyRolled";
+    public static final String YOUNG = "rdplBabyYoung";
+    private static final String DRESSED = "rdplDressed";
+
+    private ContentEntityApply() {}
+
+    public static void apply(Entity entity, EntityVariantDef def) {
+        if (!def.name.isEmpty() && !entity.hasCustomName()) {
+            entity.setCustomNameTag(def.name);
+            entity.setAlwaysRenderNameTag(def.showName);
+        }
+        if (def.silent) { entity.setSilent(true); }
+        if (def.glowing) { entity.setGlowing(true); }
+        if (def.invisible) { entity.setInvisible(true); }
+        if (def.fireproof) { entity.isImmuneToFire = true; }
+        if (def.invulnerable) { entity.setEntityInvulnerable(true); }
+        resize(entity, def.scale);
+        if (!(entity instanceof EntityLivingBase)) { return; }
+        EntityLivingBase alive = (EntityLivingBase) entity;
+        attributes(alive, def);
+        body(alive, def);
+        if (def.absorption > 0.0F) { alive.setAbsorptionAmount(def.absorption); }
+        effects(alive, def.effects, def.registryName);
+        if (!(entity instanceof EntityLiving)) { return; }
+        EntityLiving living = (EntityLiving) entity;
+        if (def.swims) { swimmer(living); }
+        if (def.swoops) { flyer(living); }
+        if (def.walks) { walker(living, def); }
+        if (def.climbs != null) { climber(living, def.climbs); }
+        if (def.amphibious && living.getNavigator() instanceof PathNavigateGround) { ((PathNavigateGround) living.getNavigator()).setCanSwim(true); }
+        if (def.breathesUnderwater || def.swims) { AiTasks.remove(living.tasks, EntityAISwimming.class::isInstance); }
+        ResourceLocation table = ContentEntities.lootTable(living);
+        if (table != null) { living.deathLootTable = table; }
+        if (def.baby > 0.0F && rolledYoung(living, def)) { child(living); }
+        if (living instanceof EntityVillager && !def.profession.isEmpty()) { profession((EntityVillager) living, def); }
+        if (def.persistent) { living.enablePersistence(); }
+        if (def.noAI) { living.setNoAI(true); }
+        if (def.leftHanded) { living.setLeftHanded(true); }
+        living.setCanPickUpLoot(def.picksUpLoot);
+        priorities(living, def);
+        gear(living, def);
+        ContentEntityBehavior.behavior(living, def);
+        ContentTasks.apply(living, def);
+    }
+
+    private static void attributes(EntityLivingBase living, EntityVariantDef def) {
+        NBTTagCompound data = living.getEntityData();
+        boolean first = !data.getBoolean(DRESSED);
+        data.setBoolean(DRESSED, true);
+        AbstractAttributeMap map = living.getAttributeMap();
+        for (Map.Entry<String, Double> entry : def.attributes.entrySet()) {
+            IAttributeInstance instance = ContentAttributes.instance(map, entry.getKey());
+            if (instance == null) {
+                ContentLog.LOGGER.error("Unknown attribute '{}' in {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.registryName, def.base);
+                continue;
+            }
+            instance.setBaseValue(entry.getValue());
+            if (first && instance.getAttribute() == SharedMonsterAttributes.MAX_HEALTH) { living.setHealth(living.getMaxHealth()); }
+        }
+    }
+
+    private static void body(EntityLivingBase alive, EntityVariantDef def) {
+        if (def.hurtResistance >= 0) { alive.maxHurtResistantTime = def.hurtResistance; }
+        if (def.stepHeight >= 0.0F) { alive.stepHeight = def.stepHeight; }
+        if (ContentLog.LOGGER.debugEnabled() && (def.hurtResistance >= 0 || def.stepHeight >= 0.0F || def.climbs != null || def.attackReach > 0.0F || def.knockback >= 0.0F || def.teleports)) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} stands with step height {}, hurt resistance {}, attack reach {}, knockback {}, climbs {}, teleports {}", def.registryName, (int) alive.posX, (int) alive.posY, (int) alive.posZ, alive.stepHeight, alive.maxHurtResistantTime, def.attackReach, def.knockback, def.climbs, def.teleports); }
+        if (!def.ownBlast) { return; }
+        if (alive instanceof EntityCreeper) {
+            ((EntityCreeper) alive).fuseTime = def.explosionFuse;
+            ((EntityCreeper) alive).explosionRadius = (int) def.explosionPower;
+        }
+        else if (alive instanceof EntityGhast) { ((EntityGhast) alive).explosionStrength = (int) def.explosionPower; }
+    }
+
+    private static void climber(EntityLiving living, boolean climbs) {
+        if (climbs && !(living.getNavigator() instanceof PathNavigateClimber)) { living.navigator = new PathNavigateClimber(living, living.world); }
+        else if (!climbs && living.getNavigator() instanceof PathNavigateClimber) { living.navigator = new PathNavigateGround(living, living.world); }
+    }
+
+    private static boolean rolledYoung(EntityLiving living, EntityVariantDef def) {
+        NBTTagCompound held = living.getEntityData();
+        if (!held.hasKey(ROLLED)) {
+            held.setBoolean(ROLLED, true);
+            held.setBoolean(YOUNG, living.world.rand.nextFloat() < def.baby);
+        }
+        return held.getBoolean(YOUNG);
+    }
+
+    private static void child(EntityLiving living) {
+        if (living instanceof EntityZombie) { ((EntityZombie) living).setChild(true); }
+        else if (living instanceof EntityAgeable) { ((EntityAgeable) living).setGrowingAge(-24000); }
+    }
+
+    private static void profession(EntityVillager villager, EntityVariantDef def) {
+        ResourceLocation key = new ResourceLocation(def.profession);
+        VillagerRegistry.VillagerProfession found = Registries.find(ForgeRegistries.VILLAGER_PROFESSIONS, key);
+        if (found == null) {
+            ContentLog.LOGGER.error("Entity variant {} names profession {}, which nothing registers", def.registryName, key);
+            return;
+        }
+        villager.setProfession(found);
+        if (def.career > 0) { villager.careerId = def.career; }
+    }
+
+    public static void remember(Entity entity, EntityVariantDef def) {
+        if (def.width > 0.0F && def.height > 0.0F) {
+            SIZES.put(entity.getClass(), new float[] { def.width, def.height });
+            return;
+        }
+        if (entity instanceof EntitySlime) { return; }
+        SIZES.computeIfAbsent(entity.getClass(), k -> new float[] { entity.width, entity.height });
+    }
+
+    public static void resize(Entity entity, float scale) {
+        float[] base = entity instanceof EntitySlime
+                ? new float[] { 0.51000005F * ((EntitySlime) entity).getSlimeSize(), 0.51000005F * ((EntitySlime) entity).getSlimeSize() }
+                : SIZES.get(entity.getClass());
+        if (base == null) { return; }
+        boolean young = entity instanceof EntityAgeable && ((EntityAgeable) entity).isChild()
+                || entity instanceof EntityZombie && ((EntityZombie) entity).isChild();
+        float factor = young ? scale / 2.0F : scale;
+        float width = base[0] * factor;
+        float height = base[1] * factor;
+        if (entity.width == width && entity.height == height) { return; }
+        AxisAlignedBB before = entity.getEntityBoundingBox();
+        double centerX = (before.minX + before.maxX) / 2.0D;
+        double centerZ = (before.minZ + before.maxZ) / 2.0D;
+        double half = width / 2.0D;
+        entity.width = width;
+        entity.height = height;
+        entity.setEntityBoundingBox(new AxisAlignedBB(centerX - half, before.minY, centerZ - half, centerX + half, before.minY + height, centerZ + half));
+    }
+
+    private static void flyer(EntityLiving living) {
+        AbstractAttributeMap map = living.getAttributeMap();
+        if (map.getAttributeInstanceByName(SharedMonsterAttributes.FLYING_SPEED.getName()) == null) { map.registerAttribute(SharedMonsterAttributes.FLYING_SPEED); }
+        living.navigator = new PathNavigateFlying(living, living.world);
+        living.moveHelper = new EntityFlyHelper(living);
+    }
+
+    private static void walker(EntityLiving living, EntityVariantDef def) {
+        if (!(living instanceof EntityRabbit)) {
+            ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.registryName, def.base);
+            return;
+        }
+        living.moveHelper = new EntityMoveHelper(living);
+    }
+
+    private static void swimmer(EntityLiving living) {
+        living.navigator = new PathNavigateSwimmer(living, living.world);
+        living.moveHelper = new SwimmingMoveHelper(living);
+    }
+
+    public static void amphibious(EntityLiving living) {
+        boolean wet = living.isInWater();
+        boolean swimming = living.getNavigator() instanceof PathNavigateSwimmer;
+        if (wet == swimming) { return; }
+        if (wet) {
+            swimmer(living);
+            return;
+        }
+        PathNavigateGround ground = new PathNavigateGround(living, living.world);
+        ground.setCanSwim(true);
+        living.navigator = ground;
+        living.moveHelper = new EntityMoveHelper(living);
+    }
+
+    static void effects(EntityLivingBase living, Map<String, Integer> effects, ResourceLocation owner) {
+        for (Map.Entry<String, Integer> entry : effects.entrySet()) {
+            ResourceLocation name = new ResourceLocation(entry.getKey());
+            Potion potion = Registries.find(ForgeRegistries.POTIONS, name);
+            if (potion == null) {
+                ContentLog.LOGGER.errorOnce(MISSING, owner + " " + name, "{} wants effect {}, which nothing registers", owner, name);
+                continue;
+            }
+            living.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, entry.getValue(), false, false));
+        }
+    }
+
+    private static void priorities(EntityLiving living, EntityVariantDef def) {
+        for (Map.Entry<String, Float> entry : def.pathPriorities.entrySet()) {
+            PathNodeType type = Enums.byName(PathNodeType.class, entry.getKey());
+            if (type == null) {
+                ContentLog.LOGGER.error("Entity variant {} names path type '{}', which is not one of {}", def.registryName, entry.getKey(), Arrays.toString(PathNodeType.values()));
+                continue;
+            }
+            living.setPathPriority(type, entry.getValue());
+        }
+    }
+
+    private static void gear(EntityLiving living, EntityVariantDef def) {
+        for (Map.Entry<String, String> entry : def.equipment.entrySet()) {
+            EntityEquipmentSlot slot = slot(entry.getKey());
+            if (slot == null) {
+                ContentLog.LOGGER.error("Entity variant {} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", def.registryName, entry.getKey());
+                continue;
+            }
+            ResourceLocation name = new ResourceLocation(entry.getValue());
+            Item item = Registries.find(ForgeRegistries.ITEMS, name);
+            if (item == null) {
+                ContentLog.LOGGER.error("Entity variant {} gives {}, which nothing registers", def.registryName, name);
+                continue;
+            }
+            living.setItemStackToSlot(slot, new ItemStack(item));
+            living.setDropChance(slot, def.dropChance);
+        }
+    }
+
+    @Nullable private static EntityEquipmentSlot slot(String name) { return Enums.byName(EntityEquipmentSlot.class, name); }
+}

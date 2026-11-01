@@ -1,0 +1,141 @@
+package mctmods.resourcedatapackloader.common.rubic;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.rubic.server.chunkio.interfaces.ICubeIO;
+import mctmods.resourcedatapackloader.common.rubic.world.WorldSavedRubicData;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICubeProviderInternal;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldProvider;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldSettings;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.core.network.world.RubicWorldDataMessage;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.ReflectionUtil;
+import mctmods.resourcedatapackloader.core.util.math.IntRange;
+
+import com.google.common.collect.ImmutableList;
+import java.io.IOException;
+import java.util.List;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.WorldServerMulti;
+import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.EntityJoinWorldEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
+import net.minecraftforge.fml.relauncher.Side;
+
+public class RubicEvents {
+    @SubscribeEvent public void onWorldAttachCapabilities(AttachCapabilitiesEvent<World> evt) {
+        if (evt.getObject().isRemote || !(evt.getObject() instanceof WorldServer)) { return; }
+        WorldServer world = (WorldServer) evt.getObject();
+
+        WorldSavedRubicData savedData =
+                (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID);
+        boolean savedRubic = savedData != null && savedData.isRubicWorld;
+        if (savedRubic && Config.content.vanillaClients) { RubicWorldControl.standDownForVanillaClients(); }
+        boolean claimed = RubicWorldControl.claims(world.provider.getDimension());
+        boolean rubicWorldInfo = ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() && claimed && (savedData == null || savedData.isRubicWorld);
+        boolean isRubic = savedRubic || rubicWorldInfo;
+        if (claimed && RubicWorldControl.wanted()) { isRubic = true; }
+
+        boolean recorded = savedData != null || isRubic || ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() || ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false);
+        if (savedData == null) {
+            int minY = RubicWorldControl.minHeight();
+            int maxY = RubicWorldControl.maxHeight();
+            if (world.provider.getDimension() != 0) {
+                WorldSavedRubicData overworld = (WorldSavedRubicData) DimensionManager
+                        .getWorld(0).getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID);
+                if (overworld != null) {
+                    minY = overworld.minHeight;
+                    maxY = overworld.maxHeight;
+                }
+            }
+            savedData = new WorldSavedRubicData(Rubic.DATA_ID,isRubic, minY, maxY);
+        }
+        if (recorded) { savedData.markDirty(); }
+        evt.getObject().getPerWorldStorage().setData(Rubic.DATA_ID, savedData);
+        evt.getObject().getPerWorldStorage().saveAllData();
+
+        if (!isRubic) { return; }
+
+        if (shouldSkipWorld(world)) {
+            ContentLog.LOGGER.info("Skipping world {} with type {} due to potential compatibility issues", evt.getObject(), evt.getObject().getWorldType());
+            return;
+        }
+        ContentLog.LOGGER.info("Initializing world {} with type {}", evt.getObject(), evt.getObject().getWorldType());
+
+        IntRange generationRange = new IntRange(0, ((IRubicWorldProvider) world.provider).rdpl$getOriginalActualHeight());
+
+        int minHeight = savedData.minHeight;
+        int maxHeight = savedData.maxHeight;
+        ((IRubicWorldInternal.IServer) world).rdpl$initRubicWorldServer(new IntRange(minHeight, maxHeight), generationRange);
+    }
+
+    @SubscribeEvent public void onWorldServerTick(TickEvent.WorldTickEvent evt) {
+        WorldServer world = (WorldServer) evt.world;
+        if (evt.phase == TickEvent.Phase.END && ((IRubicWorld) world).rdpl$isRubicWorld() && evt.side == Side.SERVER) { ((IRubicWorldInternal) world).rdpl$tickRubicWorld(); }
+    }
+
+    @SubscribeEvent public void onPlayerJoinWorld(EntityJoinWorldEvent evt) {
+        if (evt.getEntity() instanceof EntityPlayerMP && ((IRubicWorld) evt.getWorld()).rdpl$isRubicWorld()) { RDPLNetwork.sendTo(new RubicWorldDataMessage((WorldServer) evt.getWorld()), (EntityPlayerMP) evt.getEntity()); }
+    }
+
+    @SubscribeEvent public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) { checkClientSupport(event.player); }
+
+    @SubscribeEvent public void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) { checkClientSupport(event.player); }
+
+    private static void checkClientSupport(EntityPlayer playerIn) {
+        if (!(playerIn instanceof EntityPlayerMP)) { return; }
+        EntityPlayerMP player = (EntityPlayerMP) playerIn;
+        if (!((IRubicWorld) player.world).rdpl$isRubicWorld()) { return; }
+        NetHandlerPlayServer connection = player.connection;
+        if (connection == null || connection.netManager == null) { return; }
+        NetworkDispatcher dispatcher = connection.netManager.channel().attr(NetworkDispatcher.FML_DISPATCHER).get();
+        if (dispatcher == null) { return; }
+        if (!dispatcher.getModList().containsKey(ResourceDataPackLoader.MOD_ID)) { connection.disconnect(new TextComponentString("This world requires Resource Data Pack Loader on the client.")); }
+    }
+
+    @SuppressWarnings("unchecked") private final List<Class<?>> allowedServerWorldClasses = ImmutableList.copyOf(new Class[]{
+            WorldServer.class,
+            WorldServerMulti.class,
+            ReflectionUtil.getClassOrDefault("WorldServerOF", Object.class),
+            ReflectionUtil.getClassOrDefault("WorldServerMultiOF", Object.class),
+            ReflectionUtil.getClassOrDefault("net.optifine.override.WorldServerOF", Object.class),
+            ReflectionUtil.getClassOrDefault("net.optifine.override.WorldServerMultiOF", Object.class),
+            ReflectionUtil.getClassOrDefault("com.forgeessentials.multiworld.WorldServerMultiworld", Object.class)
+    });
+
+    @SuppressWarnings("unchecked") private final List<Class<? extends IChunkProvider>> allowedServerChunkProviderClasses = ImmutableList.copyOf(new Class[]{
+            ChunkProviderServer.class
+    });
+
+    private boolean shouldSkipWorld(World world) {
+        return !allowedServerWorldClasses.contains(world.getClass())
+                || !allowedServerChunkProviderClasses.contains(world.getChunkProvider().getClass());
+    }
+
+    @SubscribeEvent public void onWorldUnload(WorldEvent.Unload event) {
+        if (event.getWorld().isRemote || !((IRubicWorld) event.getWorld()).rdpl$isRubicWorld()) { return; }
+        IRubicWorld world = (IRubicWorld) event.getWorld();
+        ICubeIO io = ((ICubeProviderInternal.IServer) world.rdpl$getCubeCache()).getCubeIO();
+        try {
+            io.close();
+        } catch (IOException e) {
+            ContentLog.LOGGER.catching(e);
+        }
+    }
+}

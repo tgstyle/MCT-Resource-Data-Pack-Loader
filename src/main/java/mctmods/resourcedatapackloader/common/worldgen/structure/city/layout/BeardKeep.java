@@ -1,0 +1,243 @@
+package mctmods.resourcedatapackloader.common.worldgen.structure.city.layout;
+
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureMineshaftPieces;
+import net.minecraft.world.gen.structure.StructureStrongholdPieces;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+
+public final class BeardKeep {
+    private static final int REACH = 3;
+    private static final int CROWDED = 400000;
+    private static final Set<Long> HELD = new LinkedHashSet<>();
+    private static final Map<Long, Set<Long>> LAMPS = new HashMap<>();
+    @Nullable private static StructureBoundingBox watched;
+    @Nullable private static String watchedName;
+    private static IBlockState[] before;
+    private static int fromX;
+    private static int fromZ;
+    private static int fromY;
+    private static int acrossZ;
+    private static int upright;
+
+    private BeardKeep() {}
+
+    private static void hold(Set<Long> spots) {
+        if (spots.isEmpty()) { return; }
+        if (HELD.size() + spots.size() > CROWDED) {
+            int shed = 0;
+            Iterator<Long> oldest = HELD.iterator();
+            while (oldest.hasNext() && HELD.size() + spots.size() - shed > CROWDED) {
+                oldest.next();
+                oldest.remove();
+                shed++;
+            }
+            ContentLog.LOGGER.debug("The set of blocks held against clearing reached its limit, so the {} oldest were let go rather than all of them", shed);
+        }
+        HELD.addAll(spots);
+    }
+
+    public static void holdSpot(int x, int y, int z) { hold(Collections.singleton(packed(x, y, z))); }
+
+    public static void watch(World world, StructureComponent piece, StructureBoundingBox clip) {
+        forget();
+        if (!(world instanceof WorldServer)) { return; }
+        StructureBoundingBox box = piece.getBoundingBox();
+        boolean vanilla = settles(piece);
+        int reach = vanilla ? REACH : 16;
+        int leastX = Math.max(box.minX - reach, clip.minX);
+        int mostX = Math.min(box.maxX + reach, clip.maxX);
+        int leastZ = Math.max(box.minZ - reach, clip.minZ);
+        int mostZ = Math.min(box.maxZ + reach, clip.maxZ);
+        if (leastX > mostX || leastZ > mostZ) { return; }
+        int floor;
+        int roof;
+        if (vanilla) {
+            floor = Math.max(0, box.minY - REACH);
+            roof = Math.min(255, box.maxY + REACH);
+        }
+        else {
+            int ground = ground(world, leastX, mostX, leastZ, mostZ);
+            floor = Math.max(0, Math.min(box.minY, ground) - 16);
+            roof = Math.min(world.getActualHeight() - 1, Math.max(box.maxY, ground) + 48);
+        }
+        snapshot(world, leastX, mostX, leastZ, mostZ, floor, roof, box, piece.getClass().getSimpleName());
+    }
+
+    public static void watchArea(World world, StructureBoundingBox area, String name) {
+        forget();
+        if (!(world instanceof WorldServer)) { return; }
+        int floor = Math.max(0, area.minY);
+        int roof = Math.min(world.getActualHeight() - 1, area.maxY);
+        if (area.minX > area.maxX || area.minZ > area.maxZ || floor > roof) { return; }
+        snapshot(world, area.minX, area.maxX, area.minZ, area.maxZ, floor, roof, area, name);
+    }
+
+    private static void forget() {
+        watched = null;
+        watchedName = null;
+        before = null;
+    }
+
+    private static void snapshot(World world, int leastX, int mostX, int leastZ, int mostZ, int floor, int roof, StructureBoundingBox box, String name) {
+        int wide = mostX - leastX + 1;
+        int deep = mostZ - leastZ + 1;
+        int tall = roof - floor + 1;
+        IBlockState[] seen = new IBlockState[wide * deep * tall];
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int index = 0;
+        for (int x = leastX; x <= mostX; x++) {
+            for (int z = leastZ; z <= mostZ; z++) {
+                for (int y = floor; y <= roof; y++) {
+                    at.setPos(x, y, z);
+                    seen[index++] = world.getBlockState(at);
+                }
+            }
+        }
+        watched = box;
+        watchedName = name;
+        before = seen;
+        fromX = leastX;
+        fromZ = leastZ;
+        fromY = floor;
+        acrossZ = deep;
+        upright = tall;
+    }
+
+    private static boolean settles(StructureComponent piece) {
+        Class<?> owner = piece.getClass().getEnclosingClass();
+        return owner == StructureVillagePieces.class || owner == StructureMineshaftPieces.class || owner == StructureStrongholdPieces.class;
+    }
+
+    private static int ground(World world, int leastX, int mostX, int leastZ, int mostZ) {
+        int highest = 0;
+        for (int x = leastX; x <= mostX; x += 4) {
+            for (int z = leastZ; z <= mostZ; z += 4) {
+                int here = world.getChunk(x >> 4, z >> 4).getHeightValue(x & 15, z & 15);
+                if (here > highest) { highest = here; }
+            }
+        }
+        return highest;
+    }
+
+    private static Set<Long> changed(World world) {
+        IBlockState[] seen = before;
+        Set<Long> mine = new HashSet<>();
+        if (seen == null) { return mine; }
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int index = 0;
+        for (int x = fromX; index < seen.length; x++) {
+            for (int z = fromZ; z < fromZ + acrossZ; z++) {
+                for (int y = fromY; y < fromY + upright; y++) {
+                    IBlockState was = seen[index++];
+                    at.setPos(x, y, z);
+                    IBlockState now = world.getBlockState(at);
+                    if (now == was || now.getBlock() == Blocks.AIR || decayCheckOnly(was, now)) { continue; }
+                    mine.add(packed(x, y, z));
+                }
+            }
+        }
+        return mine;
+    }
+
+    private static boolean decayCheckOnly(IBlockState was, IBlockState now) {
+        return was.getBlock() == now.getBlock() && was.getBlock() instanceof BlockLeaves
+                && was.withProperty(BlockLeaves.CHECK_DECAY, now.getValue(BlockLeaves.CHECK_DECAY)) == now;
+    }
+
+    public static void learnLamp(World world) {
+        Set<Long> mine = changed(world);
+        forget();
+        holdLamp(mine);
+    }
+
+    public static void holdLamp(Set<Long> cells) {
+        if (cells.isEmpty()) { return; }
+        hold(cells);
+        for (long cell : cells) { LAMPS.put(column(cell), cells); }
+    }
+
+    public static boolean lampNear(int x, int z) {
+        if (LAMPS.isEmpty()) { return false; }
+        for (int offX = -1; offX <= 1; offX++) {
+            for (int offZ = -1; offZ <= 1; offZ++) {
+                if (LAMPS.containsKey(packed(x + offX, 0, z + offZ))) { return true; }
+            }
+        }
+        return false;
+    }
+
+    @Nullable public static Set<Long> takeLamp(int x, int z) {
+        Set<Long> cells = LAMPS.remove(packed(x, 0, z));
+        if (cells == null) { return null; }
+        for (long cell : cells) {
+            LAMPS.remove(column(cell));
+            HELD.remove(cell);
+        }
+        return cells;
+    }
+
+    public static int[] unpacked(long key) { return new int[] { keyX(key), keyY(key), keyZ(key) }; }
+
+    private static int keyX(long key) { return (int) (key >> 38); }
+
+    private static int keyY(long key) { return (int) ((key >> 26) & 0xFFF); }
+
+    private static int keyZ(long key) { return (int) (key << 38 >> 38); }
+
+    private static long column(long key) { return key & ~((long) 0xFFF << 26); }
+
+    public static void learn(World world) {
+        StructureBoundingBox box = watched;
+        String name = watchedName;
+        Set<Long> mine = changed(world);
+        forget();
+        if (box == null || mine.isEmpty()) { return; }
+        int found = mine.size();
+        hold(mine);
+        if (ContentLog.LOGGER.debugEnabled()) {
+            int outside = 0;
+            int leastY = Integer.MAX_VALUE;
+            int mostY = Integer.MIN_VALUE;
+            int leastZ = Integer.MAX_VALUE;
+            int mostZ = Integer.MIN_VALUE;
+            for (long key : mine) {
+                int y = keyY(key);
+                int z = keyZ(key);
+                int x = keyX(key);
+                if (x < box.minX || x > box.maxX || z < box.minZ || z > box.maxZ) { outside++; }
+                leastY = Math.min(leastY, y);
+                mostY = Math.max(mostY, y);
+                leastZ = Math.min(leastZ, z);
+                mostZ = Math.max(mostZ, z);
+            }
+            ContentLog.LOGGER.debug("Holding {} block(s) that {} at {}, {} laid down against any clearing, {} of them outside its box, reaching z {}..{} and y {}..{}", found, name, box.minX, box.minZ, outside, leastZ, mostZ, leastY, mostY);
+        }
+    }
+
+    public static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (z & 0x3FFFFFF); }
+
+    public static boolean holds(int x, int y, int z) { return HELD.contains(packed(x, y, z)); }
+
+    public static void letGo(int x, int y, int z) { HELD.remove(packed(x, y, z)); }
+
+    @Nullable public static StructureBoundingBox watchingBox() { return watched; }
+
+    @Nullable public static String watchingName() { return watchedName; }
+}

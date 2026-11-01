@@ -1,32 +1,28 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.galacticraft",
-  "plugin": "mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin",
+  "package": "mctmods.resourcedatapackloader.mixin",
+  "plugin": "mctmods.resourcedatapackloader.core.RDPLMixinPlugin",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "MixinBlockVec3",
-    "MixinChunkProviderAsteroids",
-    "MixinContainerRocketInventory",
-    "MixinEntityAutoRocket",
-    "MixinEntityTieredRocket",
-    "MixinTeleportTypeAsteroids",
-    "MixinThreadFindSeal",
-    "MixinTransformerHooks",
-    "MixinTransformerHooksGravity",
-    "MixinWorldProviderExitHeight",
-    "MixinWorldUtilGates",
-    "MixinWorldUtilStationHome"
+    "integration.galacticraft.MixinBlockVec3",
+    "integration.galacticraft.MixinChunkProviderAsteroids",
+    "integration.galacticraft.MixinContainerRocketInventory",
+    "integration.galacticraft.MixinEntityAutoRocket",
+    "integration.galacticraft.MixinEntityTieredRocket",
+    "integration.galacticraft.MixinTeleportTypeAsteroids",
+    "integration.galacticraft.MixinThreadFindSeal",
+    "integration.galacticraft.MixinTransformerHooks",
+    "world.MixinWorldProviderExitHeight",
+    "integration.galacticraft.MixinWorldUtil"
   ],
   "client": [
-    "MixinEntitySpaceshipBase",
-    "MixinEventHandlerClient",
-    "MixinGuiCelestialSelectionNest",
-    "MixinGuiCelestialSelectionStationHome",
-    "MixinPacketSimpleStationHome",
-    "MixinPacketSimpleStationLabel",
-    "MixinTransformerHooksCamera"
+    "integration.galacticraft.MixinEntitySpaceshipBase",
+    "integration.galacticraft.MixinEventHandlerClient",
+    "integration.galacticraft.MixinGuiCelestialSelection",
+    "integration.galacticraft.MixinPacketSimple",
+    "integration.galacticraft.MixinTransformerHooksCamera"
   ],
   "server": []
 }

@@ -1,0 +1,207 @@
+package mctmods.resourcedatapackloader.client.renderer.sky;
+
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserSkyLook;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
+
+import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import net.minecraft.client.resources.IReloadableResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldProvider;
+import net.minecraftforge.client.IRenderHandler;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
+
+@SideOnly(Side.CLIENT) public final class ContentSkyRenderers {
+    private static final IRenderHandler NOTHING = new IRenderHandler() {
+        @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {}
+    };
+    private static final float AURA_ALPHA = 0.5F;
+    private static final FloatBuffer MODELVIEW = BufferUtils.createFloatBuffer(16);
+    private static final int AURA_SEGMENTS = 32;
+    private static final Map<DimensionDef, ContentSkyRenderer> PACK_SKIES = new HashMap<>();
+    private static final Map<DimensionDef, ContentWeatherRenderer> PACK_WEATHER = new HashMap<>();
+    private static final Map<DimensionDef, ContentCloudRenderer> PACK_CLOUDS = new HashMap<>();
+    private static final Map<WorldProvider, IRenderHandler[]> OWN = new WeakHashMap<>();
+
+    private ContentSkyRenderers() {}
+
+    public static void listen() {
+        IResourceManager resources = Minecraft.getMinecraft().getResourceManager();
+        if (resources instanceof IReloadableResourceManager) { ((IReloadableResourceManager) resources).registerReloadListener(reloaded -> SkyOccluder.invalidate()); }
+    }
+
+    public static void reload() {
+        ContentSkyGates.forget();
+        List<ContentSkyRenderer> retired = new ArrayList<>(PACK_SKIES.values());
+        PACK_SKIES.clear();
+        PACK_WEATHER.clear();
+        PACK_CLOUDS.clear();
+        if (retired.isEmpty()) { return; }
+        Minecraft.getMinecraft().addScheduledTask(() -> retired.forEach(ContentSkyRenderer::release));
+    }
+
+    private static boolean drawsWholeSky(DimensionDef def) {
+        if (ContentDimensions.overlay(def.id) == null) { return true; }
+        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size")
+                || def.gives("sky.sun.tilt") || def.gives("sky.sun.roll") || def.gives("sky.sun.spin") || def.gives("sky.moon.tilt") || def.gives("sky.moon.roll") || def.gives("sky.moon.spin");
+    }
+
+    private static boolean fogHidesEndSky(WorldProvider provider, DimensionDef def) { return def.showFog && provider.getDimensionType() == DimensionType.THE_END; }
+
+    public static float sun(World world) {
+        SkyLookDef look = ContentFogSampler.look(world);
+        return look == null ? 1.0F : look.sunBrightness;
+    }
+
+    public static void sunHaze(World world, ResourceLocation texture, float alpha, float size, boolean rawColor) {
+        float[] aura = ContentWindowLook.aura(world, sunHeight());
+        float[] tint = ContentWindowLook.sunTint(world);
+        boolean hazed = aura != null && aura[3] > 0.0F;
+        SkyLookDef look = ContentFogSampler.look(world);
+        float lineAlpha = look == null ? 0.0F : alpha * (look.sunLineColor >>> 24) / 255.0F;
+        boolean lines = look != null && look.sunLineCount > 0 && look.sunLineLength > 0.0F && look.sunLineWidth > 0.0F && lineAlpha > 0.0F;
+        if (hazed || tint != null || lines) {
+            int sourceRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
+            int destRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
+            int sourceAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+            int destAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+            if (hazed || lines) { GL14.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO); }
+            if (hazed) { aura(aura, alpha * aura[3] * AURA_ALPHA, size * (look == null ? ContentParserSkyLook.AURA_SIZE : look.sunAuraSize)); }
+            if (lines) { lines(look, lineAlpha, size); }
+            if (tint != null) {
+                GL11.glBlendFunc(GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_COLOR);
+                color(alpha, alpha, alpha, 1.0F, rawColor);
+                Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
+                quad(size);
+            }
+            GL14.glBlendFuncSeparate(sourceRgb, destRgb, sourceAlpha, destAlpha);
+        }
+        if (tint == null) { color(1.0F, 1.0F, 1.0F, alpha, rawColor); }
+        else { color(tint[0], tint[1], tint[2], alpha, rawColor); }
+    }
+
+    private static float sunHeight() {
+        Entity viewer = Minecraft.getMinecraft().getRenderViewEntity();
+        if (viewer == null) { return 1.0F; }
+        MODELVIEW.clear();
+        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, MODELVIEW);
+        float pitch = (float) Math.toRadians(viewer.prevRotationPitch + (viewer.rotationPitch - viewer.prevRotationPitch) * Minecraft.getMinecraft().getRenderPartialTicks());
+        float x = MODELVIEW.get(4);
+        float y = MODELVIEW.get(5);
+        float z = MODELVIEW.get(6);
+        float length = MathHelper.sqrt(x * x + y * y + z * z);
+        return length == 0.0F ? 1.0F : (y * MathHelper.cos(pitch) + z * MathHelper.sin(pitch)) / length;
+    }
+
+    private static void color(float red, float green, float blue, float alpha, boolean raw) {
+        if (raw) { GL11.glColor4f(red, green, blue, alpha); }
+        else { GlStateManager.color(red, green, blue, alpha); }
+    }
+
+    static void quad(float size) {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        buffer.pos(-size, 100.0D, -size).tex(0.0D, 0.0D).endVertex();
+        buffer.pos(size, 100.0D, -size).tex(1.0D, 0.0D).endVertex();
+        buffer.pos(size, 100.0D, size).tex(1.0D, 1.0D).endVertex();
+        buffer.pos(-size, 100.0D, size).tex(0.0D, 1.0D).endVertex();
+        tessellator.draw();
+    }
+
+    private static void aura(float[] aura, float alpha, float size) {
+        boolean alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        if (alphaTest) { GL11.glDisable(GL11.GL_ALPHA_TEST); }
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
+        buffer.pos(0.0D, 100.0D, 0.0D).color(aura[0], aura[1], aura[2], alpha).endVertex();
+        for (int step = 0; step <= AURA_SEGMENTS; step++) {
+            float at = step * (float) Math.PI * 2.0F / AURA_SEGMENTS;
+            buffer.pos(MathHelper.cos(at) * size, 100.0D, MathHelper.sin(at) * size).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
+        }
+        tessellator.draw();
+        GL11.glShadeModel(GL11.GL_FLAT);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        if (alphaTest) { GL11.glEnable(GL11.GL_ALPHA_TEST); }
+    }
+
+    private static void lines(SkyLookDef look, float alpha, float size) {
+        boolean alphaTest = GL11.glIsEnabled(GL11.GL_ALPHA_TEST);
+        if (alphaTest) { GL11.glDisable(GL11.GL_ALPHA_TEST); }
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glShadeModel(GL11.GL_SMOOTH);
+        float red = Colors.red(look.sunLineColor) / 255.0F;
+        float green = Colors.green(look.sunLineColor) / 255.0F;
+        float blue = Colors.blue(look.sunLineColor) / 255.0F;
+        float half = size * look.sunLineWidth / 2.0F;
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
+        for (int line = 0; line < look.sunLineCount; line++) {
+            float at = line * (float) Math.PI * 2.0F / look.sunLineCount;
+            float dx = MathHelper.cos(at);
+            float dz = MathHelper.sin(at);
+            float near = size * look.sunLineStart / Math.max(Math.abs(dx), Math.abs(dz));
+            float far = near + size * look.sunLineLength;
+            float sideX = -dz * half;
+            float sideZ = dx * half;
+            buffer.pos(dx * near + sideX, 100.0D, dz * near + sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.pos(dx * near - sideX, 100.0D, dz * near - sideZ).color(red, green, blue, alpha).endVertex();
+            buffer.pos(dx * far - sideX, 100.0D, dz * far - sideZ).color(red, green, blue, 0.0F).endVertex();
+            buffer.pos(dx * far + sideX, 100.0D, dz * far + sideZ).color(red, green, blue, 0.0F).endVertex();
+        }
+        tessellator.draw();
+        GL11.glShadeModel(GL11.GL_FLAT);
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        if (alphaTest) { GL11.glEnable(GL11.GL_ALPHA_TEST); }
+    }
+
+    public static float moon(World world) {
+        SkyLookDef look = ContentFogSampler.look(world);
+        return look == null ? 1.0F : look.moonBrightness;
+    }
+
+    public static BufferBuilder bolt(BufferBuilder buffer, float red, float green, float blue, float alpha) {
+        SkyLookDef look = ContentFogSampler.look(Minecraft.getMinecraft().world);
+        if (look == null || look.lightningColor == SkyLookDef.UNSET) { return buffer.color(red, green, blue, alpha); }
+        return buffer.color(Colors.red(look.lightningColor) / 255.0F, Colors.green(look.lightningColor) / 255.0F, Colors.blue(look.lightningColor) / 255.0F, alpha);
+    }
+
+    public static void apply(WorldProvider provider, DimensionDef def) {
+        IRenderHandler[] own = OWN.computeIfAbsent(provider, held -> new IRenderHandler[] {held.getSkyRenderer(), held.getCloudRenderer(), held.getWeatherRenderer()});
+        provider.setSkyRenderer(own[0]);
+        provider.setCloudRenderer(own[1]);
+        provider.setWeatherRenderer(own[2]);
+        if (!def.renderSky || fogHidesEndSky(provider, def)) { provider.setSkyRenderer(NOTHING); }
+        else if (def.traits.sky != null && drawsWholeSky(def)) { provider.setSkyRenderer(PACK_SKIES.computeIfAbsent(def, held -> new ContentSkyRenderer(held.traits.sky, held.traits.moon))); }
+        if (!def.renderClouds) { provider.setCloudRenderer(NOTHING); }
+        else if (def.look != null && def.look.movesClouds()) { provider.setCloudRenderer(PACK_CLOUDS.computeIfAbsent(def, held -> new ContentCloudRenderer(held.look))); }
+        if (!def.renderWeather) { provider.setWeatherRenderer(NOTHING); }
+        else if (def.traits.rain != null) { provider.setWeatherRenderer(PACK_WEATHER.computeIfAbsent(def, held -> new ContentWeatherRenderer(held.traits.rain))); }
+    }
+}

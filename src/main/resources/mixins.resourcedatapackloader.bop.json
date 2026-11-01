@@ -1,20 +1,21 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.bop",
+  "package": "mctmods.resourcedatapackloader.mixin.integration.bop",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "common.MixinBiomeProviderBOPHell",
-    "common.MixinBlockQueryBase",
-    "common.MixinBOPWorldSettings",
-    "common.MixinChunkGeneratorHellBOP",
-    "common.MixinChunkGeneratorOverworldBOP",
-    "common.MixinGeneratorDoubleFlora",
-    "common.MixinGeneratorOreSingle"
+    "MixinBiomeProviderBOPHell",
+    "MixinBlockQueryBase",
+    "MixinBlockPosQuerySustainsPlantType",
+    "MixinBOPWorldSettings",
+    "MixinChunkGeneratorHellBOP",
+    "MixinChunkGeneratorOverworldBOP",
+    "MixinGeneratorDoubleFlora",
+    "MixinGeneratorOreSingle"
   ],
   "client": [
-    "client.MixinWorldTypeBOP"
+    "MixinWorldTypeBOP"
   ],
   "server": []
 }

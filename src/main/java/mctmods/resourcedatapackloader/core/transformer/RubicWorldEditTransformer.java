@@ -43,9 +43,9 @@ import org.objectweb.asm.tree.VarInsnNode;
         list.add(new VarInsnNode(Opcodes.ALOAD, 0));
         list.add(new MethodInsnNode(Opcodes.INVOKEVIRTUAL,
                 "com/sk89q/worldedit/forge/ForgeWorld", "getWorld", "()Lnet/minecraft/world/World;", false));
-        list.add(new TypeInsnNode(Opcodes.CHECKCAST, "mctmods/resourcedatapackloader/content/rubic/world/interfaces/IRubicWorld"));
+        list.add(new TypeInsnNode(Opcodes.CHECKCAST, "mctmods/resourcedatapackloader/common/rubic/world/interfaces/IRubicWorld"));
         list.add(new MethodInsnNode(Opcodes.INVOKEINTERFACE,
-                "mctmods/resourcedatapackloader/content/rubic/world/interfaces/IRubicWorld", "rdpl$getMinHeight", "()I", true));
+                "mctmods/resourcedatapackloader/common/rubic/world/interfaces/IRubicWorld", "rdpl$getMinHeight", "()I", true));
         list.add(new InsnNode(Opcodes.IRETURN));
         list.add(end);
         getMinY.localVariables.clear();

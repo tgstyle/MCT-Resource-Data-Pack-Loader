@@ -1,0 +1,145 @@
+package mctmods.resourcedatapackloader.common.util.messages;
+
+import mctmods.resourcedatapackloader.common.cards.CardFire;
+import mctmods.resourcedatapackloader.common.cards.CardLook;
+import mctmods.resourcedatapackloader.common.cards.CardRules;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.rubic.Rubic;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.network.CardMessage;
+import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
+
+import java.util.Collections;
+import java.util.Map;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.play.server.SPacketTitle;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.event.ClickEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
+
+public final class Says {
+    public static final int CARD_TICKS = 160;
+    private static final int CARD_BACKGROUND = 0x1E2630;
+    private static final ResourceLocation KEY = new ResourceLocation(Rubic.MODID, "saysicon");
+
+    private Says() {}
+
+    public static void tell(EntityPlayerMP player, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        if (!card() || RDPLNetwork.vanilla(player)) {
+            player.sendMessage(marked(said, color));
+            return;
+        }
+        RDPLNetwork.sendTo(new CardMessage("", Collections.singletonList(said), icon(), image(), background(), rgb(color), CARD_TICKS, false, panel(), font()), player);
+    }
+
+    public static void tell(EntityPlayerMP player, String rule, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        if (CardRules.unset(rule)) { tell(player, color, said); }
+        else { CardFire.builtin(rule, player, CardLook.says(said, color, CardLook.CORNER)); }
+    }
+
+    public static void line(ICommandSender sender, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        sender.sendMessage(new TextComponentString(said).setStyle(new Style().setColor(color)));
+    }
+
+    public static void chat(EntityPlayer player, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        player.sendMessage(marked(said, color));
+    }
+
+    public static void options(EntityPlayer player, TextFormatting color, String said, Map<String, String> commands) {
+        ITextComponent line = marked(said, color);
+        for (Map.Entry<String, String> option : commands.entrySet()) { line.appendSibling(new TextComponentString(" [" + option.getKey() + "]").setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, option.getValue())))); }
+        player.sendMessage(line);
+    }
+
+    public static void line(EntityPlayer player, String rule, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        if (CardRules.unset(rule) || !(player instanceof EntityPlayerMP)) { chat(player, color, said); }
+        else { CardFire.builtin(rule, (EntityPlayerMP) player, CardLook.says(said, color, CardLook.CHAT)); }
+    }
+
+    public static void bar(EntityPlayer player, String rule, TextFormatting color, String said) {
+        if (said.isEmpty()) { return; }
+        if (CardRules.unset(rule) || !(player instanceof EntityPlayerMP)) { player.sendStatusMessage(marked(said, color), true); }
+        else { CardFire.builtin(rule, (EntityPlayerMP) player, CardLook.says(said, color, CardLook.BAR)); }
+    }
+
+    public static void title(EntityPlayerMP player, int fadeIn, int stay, int fadeOut, String title, String subtitle, TextFormatting style) {
+        player.connection.sendPacket(new SPacketTitle(fadeIn, stay, fadeOut));
+        if (!subtitle.isEmpty()) { player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.SUBTITLE, marked(subtitle, style))); }
+        player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, title.isEmpty() ? new TextComponentString("") : marked(title, style)));
+    }
+
+    public static void tellAll(TextFormatting color, String said) {
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server == null || said.isEmpty()) { return; }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, color, said); }
+    }
+
+    public static void tellAll(String rule, TextFormatting color, String said) {
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server == null || said.isEmpty()) { return; }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, rule, color, said); }
+    }
+
+    public static ITextComponent marked(String said, TextFormatting color) {
+        ITextComponent all = new TextComponentString("").setStyle(new Style().setColor(color));
+        for (Marks.Run run : Marks.runs(said)) {
+            Style style = new Style();
+            if (run.has(Marks.BOLD)) { style.setBold(true); }
+            if (run.has(Marks.ITALIC)) { style.setItalic(true); }
+            if (run.has(Marks.STRIKE)) { style.setStrikethrough(true); }
+            if (run.has(Marks.LINK)) { style.setUnderlined(true); }
+            if (run.has(Marks.CODE)) { style.setColor(TextFormatting.AQUA); }
+            all.appendSibling(new TextComponentString(run.text).setStyle(style));
+        }
+        return all;
+    }
+
+    public static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard); }
+
+    public static ItemStack icon() {
+        String iconName = text("saysIcon", Config.chunks.saysIcon);
+        return iconName.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(KEY, iconName, 1);
+    }
+
+    public static int background() {
+        String colorName = text("saysColor", Config.chunks.saysColor);
+        return colorName.isEmpty() ? CARD_BACKGROUND : ContentTypes.color(colorName, "saysColor") & 0xFFFFFF;
+    }
+
+    public static String image() { return text("saysImage", Config.chunks.saysImage); }
+
+    public static boolean panel() { return ContentControl.flag(ContentControl.CHUNKS, "saysBackground", Config.chunks.saysBackground); }
+
+    public static String font() { return text("saysFont", Config.chunks.saysFont); }
+
+    private static String text(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
+
+    public static int rgb(TextFormatting color) {
+        switch (color) {
+            case GREEN: return 0x55FF55;
+            case RED: return 0xFF5555;
+            case GOLD: return 0xFFAA00;
+            case AQUA: return 0x55FFFF;
+            case GRAY: return 0xAAAAAA;
+            case WHITE: return 0xFFFFFF;
+            case LIGHT_PURPLE: return 0xFF55FF;
+            case BLUE: return 0x5555FF;
+            default: return 0xFFFF55;
+        }
+    }
+}

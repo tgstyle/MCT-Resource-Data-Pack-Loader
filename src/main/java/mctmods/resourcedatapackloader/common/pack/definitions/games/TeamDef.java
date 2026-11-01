@@ -1,0 +1,94 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.games;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.DownDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemGiveDef;
+
+import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.scoreboard.Team;
+import net.minecraft.util.text.TextFormatting;
+
+public final class TeamDef {
+    public static final String LEAD_NONE = "none";
+    public static final String LEAD_FIRST = "first";
+    public static final String LEAD_TOP_SCORE = "topScore";
+    public static final String LEAD_APPOINTED = "appointed";
+    public static final String LEAD_VOTE = "vote";
+    public static final String LEAD_CLAIM = "claim";
+    public final String name;
+    public final String displayName;
+    public final TextFormatting color;
+    public final String prefix;
+    public final String suffix;
+    public final boolean friendlyFire;
+    public final boolean mobFriendlyFire;
+    public final boolean seeFriendlyInvisibles;
+    public final Team.EnumVisible nameTags;
+    public final Team.EnumVisible deathMessages;
+    public final Team.CollisionRule collision;
+    public final List<String> entities;
+    public final List<String> players;
+    public final int[] spawnBox;
+    public final boolean joinable;
+    public final String lead;
+    public final String leadOn;
+    public final String leadIs;
+    public final String leadSays;
+    public final String leadRuns;
+    public final boolean balance;
+    public final boolean scoreboard;
+    public final int picks;
+    public final List<String> picksFrom;
+    public final List<ItemGiveDef> gives;
+    public final String standIn;
+    @Nullable public final int[] standInAt;
+    @Nullable public final int[] spawnAt;
+    @Nullable public final DownDef down;
+
+    public TeamDef(String name, String displayName, TextFormatting color, String prefix, String suffix,
+                   boolean friendlyFire, boolean mobFriendlyFire, boolean seeFriendlyInvisibles, Team.EnumVisible nameTags,
+                   Team.EnumVisible deathMessages, Team.CollisionRule collision,
+                   List<String> entities, List<String> players, int[] spawnBox, boolean joinable,
+                   String lead, String leadOn, String leadIs, String leadSays, String leadRuns, boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt, @Nullable int[] spawnAt, @Nullable DownDef down) {
+        this.name = name;
+        this.displayName = displayName;
+        this.color = color;
+        this.prefix = prefix;
+        this.suffix = suffix;
+        this.friendlyFire = friendlyFire;
+        this.mobFriendlyFire = mobFriendlyFire;
+        this.seeFriendlyInvisibles = seeFriendlyInvisibles;
+        this.nameTags = nameTags;
+        this.deathMessages = deathMessages;
+        this.collision = collision;
+        this.entities = entities;
+        this.players = players;
+        this.spawnBox = spawnBox;
+        this.joinable = joinable;
+        this.lead = lead;
+        this.leadOn = leadOn;
+        this.leadIs = leadIs;
+        this.leadSays = leadSays;
+        this.leadRuns = leadRuns;
+        this.balance = balance;
+        this.scoreboard = scoreboard;
+        this.picks = picks;
+        this.picksFrom = picksFrom;
+        this.gives = gives;
+        this.standIn = standIn;
+        this.standInAt = standInAt;
+        this.spawnAt = spawnAt;
+        this.down = down;
+    }
+
+    public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }
+
+    public boolean leaderless() { return LEAD_NONE.equals(lead); }
+
+    public boolean holds(double x, double y, double z) {
+        return spawnBox != null
+                && x >= spawnBox[0] && x <= spawnBox[3]
+                && y >= spawnBox[1] && y <= spawnBox[4]
+                && z >= spawnBox[2] && z <= spawnBox[5];
+    }
+}

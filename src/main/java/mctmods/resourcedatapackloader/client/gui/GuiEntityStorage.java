@@ -1,10 +1,11 @@
 package mctmods.resourcedatapackloader.client.gui;
 
-import mctmods.resourcedatapackloader.content.def.StorageDef;
-import mctmods.resourcedatapackloader.content.gui.ContainerEntityStorage;
-import mctmods.resourcedatapackloader.content.gui.ContainerPack;
-import mctmods.resourcedatapackloader.util.Colors;
+import mctmods.resourcedatapackloader.common.gui.ContainerEntityStorage;
+import mctmods.resourcedatapackloader.common.gui.ContainerPack;
+import mctmods.resourcedatapackloader.common.pack.definitions.containers.StorageDef;
+import mctmods.resourcedatapackloader.core.util.math.Colors;
 
+import javax.annotation.Nullable;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
@@ -18,7 +19,6 @@ import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
 import org.lwjgl.opengl.GL11;
-import javax.annotation.Nullable;
 
 public class GuiEntityStorage extends GuiPackContainer {
     private static final int TROUGH = 0xFF373737;

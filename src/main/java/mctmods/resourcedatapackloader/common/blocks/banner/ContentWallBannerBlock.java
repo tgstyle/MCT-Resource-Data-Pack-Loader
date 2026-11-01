@@ -1,0 +1,66 @@
+package mctmods.resourcedatapackloader.common.blocks.banner;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
+import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
+
+import java.util.Random;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockBanner;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.EnumBlockRenderType;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Explosion;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+@SuppressWarnings("deprecation") public class ContentWallBannerBlock extends BlockBanner.BlockBannerHanging implements IContentBlock {
+    public static final String WALL_SUFFIX = "_wall";
+    private final BlockDef def;
+    @Nullable private ContentBannerBlock standing;
+
+    public ContentWallBannerBlock(BlockDef def) {
+        this.def = def;
+        BlockVariant variant = def.at(0);
+        ContentSetup.material(this, def);
+        setRegistryName(new ResourceLocation(def.registryName.getNamespace(), def.registryName.getPath() + WALL_SUFFIX));
+        setTranslationKey(def.registryName + "." + variant.name);
+        ContentSetup.harvest(this, def);
+        if (def.soundType != null) { setSoundType(def.soundType); }
+        ContentSetup.properties(this, def);
+    }
+
+    public void pair(ContentBannerBlock other) { this.standing = other; }
+
+    @Nullable private Item item() { return standing == null ? null : standing.getBannerItem(); }
+
+    @Override public BlockDef getDef() { return def; }
+
+    @Override @Nullable public Item createItem() { return null; }
+
+    @Override @Nonnull public String getLocalizedName() { return BannerParts.name(this); }
+
+    @Override public boolean hasTileEntity(@Nonnull IBlockState state) { return false; }
+
+    @Override @Nonnull public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return EnumBlockRenderType.MODEL; }
+
+    @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) { return BannerParts.dropped(this, item()); }
+
+    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return BannerParts.stack(item()); }
+
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) { BannerParts.drops(drops, item()); }
+
+    @Override public float getExplosionResistance(@Nonnull World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return BannerParts.resistance(def); }
+
+    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
+}

@@ -1,0 +1,24 @@
+package mctmods.resourcedatapackloader.mixin.command;
+
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+
+import net.minecraft.command.CommandClone;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.Group;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.Slice;
+
+@Mixin(CommandClone.class) public class MixinCommandClone {
+    @Group(name = "command_getMinY", min = 2, max = 2) @ModifyConstant(method = "execute", constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO, ordinal = 0), slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;minY:I", opcode = Opcodes.GETFIELD))) private int rdpl$command_getMinY1(int orig, MinecraftServer server, ICommandSender sender, String[] args) { return GenHeights.floor(sender.getEntityWorld(), orig); }
+
+    @Group(name = "command_getMinY") @ModifyConstant(method = "execute", constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO, ordinal = 1), slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;minY:I", opcode = Opcodes.GETFIELD))) private int rdpl$command_getMinY2(int orig, MinecraftServer server, ICommandSender sender, String[] args) { return GenHeights.floor(sender.getEntityWorld(), orig); }
+
+    @Group(name = "command_getMaxY", min = 2, max = 2) @ModifyConstant(method = "execute", constant = @Constant(intValue = 256, ordinal = 0), slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;maxY:I", opcode = Opcodes.GETFIELD))) private int rdpl$command_getMaxY1(int orig, MinecraftServer server, ICommandSender sender, String[] args) { return GenHeights.ceiling(sender.getEntityWorld(), orig); }
+
+    @Group(name = "command_getMaxY") @ModifyConstant(method = "execute", constant = @Constant(intValue = 256, ordinal = 1), slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;maxY:I", opcode = Opcodes.GETFIELD))) private int rdpl$command_getMaxY2(int orig, MinecraftServer server, ICommandSender sender, String[] args) { return GenHeights.ceiling(sender.getEntityWorld(), orig); }
+}

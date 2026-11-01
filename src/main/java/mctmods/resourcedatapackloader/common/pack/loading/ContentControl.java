@@ -1,0 +1,295 @@
+package mctmods.resourcedatapackloader.common.pack.loading;
+
+import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
+import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityMaps;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
+
+public final class ContentControl {
+    public static final String ORES = "ores";
+    public static final String BIOMES = "biomes";
+    public static final String GENERATORS = "generators";
+    public static final String STRUCTURES = "structures";
+    public static final String SPAWNING = "spawning";
+    public static final String BEDROCK = "bedrock";
+    public static final String VOID = "void";
+    public static final String RECIPES = "recipes";
+    public static final String TERRAIN = "terrain";
+    public static final String REPLACEMENTS = "replacements";
+    public static final String VILLAGES = "villages";
+    private static final String LAYOUT = "villageLayout";
+    private static final ThreadLocal<JsonObject> ROAD_KEYS = new ThreadLocal<>();
+    public static final String ENTITIES = "entities";
+    public static final String CHUNKS = "chunks";
+    public static final String BLAST_PLASTER = "blastPlaster";
+    public static final String COMMANDS = "commands";
+    public static final String SERVER = "server";
+    private static final String DEFAULT = "default";
+    private static final String GLOBAL = "global";
+    private static final String OFF = "off";
+    private static final Set<String> WARNED = new LinkedHashSet<>();
+    private static final Set<String> KNOWN = new LinkedHashSet<>(Arrays.asList(
+            "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeWhitelist",
+            "biomeTemperatureCenterY", "biomeTemperatureHeightFactor", "biomeTemperatureScaleMaxY",
+            "blockBiomeDimensions", "blockBiomeDimensionsAreBlacklist", "blockBiomes", "blockFurnaceRecipes",
+            "blockGeneratorDimensions", "blockGeneratorDimensionsAreBlacklist", "blockOres", "blockRecipes",
+            "blockReplacementDimensions", "blockReplacementDimensionsAreBlacklist", "blockReplacementKey",
+            "blockReplacementMaxHeight", "blockReplacementMinHeight", "blockReplacements", "blockWorldGenerators",
+            "blockedFurnaceMods", "blockedGenerators", "blockedRecipeMods", "creatureCap", "dragonFight", "flatBedrock",
+            "flatBedrockBiomeTypes", "flatBedrockBiomes", "flatBedrockBiomesAreBlacklist", "flatBedrockDimensions",
+            "flatBedrockDimensionsAreBlacklist", "flatBedrockFiller", "flatBedrockFillers", "flatBedrockRoof", "flatBedrockRetrogen", "retrogen", "adoptExistingChunks",
+            "furnaceWhitelist", "generatorOptions", "generatorTypeMap", "generatorTypes", "generatorTypesAreBlacklist",
+            "generatorWhitelist", "hurryWritesAbove", "logBlockReplacements", "logBlockedBiomes", "logBlockedGenerators", "logBlockedOres",
+            "logBlockedRecipes", "monsterCap", "neverSlowed", "oreTypes", "oreTypesAreBlacklist", "prospectItems", "prospectItemsAreBlacklist", "prospectWear", "prospectSlow", "prospectDrops", "blockOreDimensions", "blockOreDimensionsAreBlacklist", "oreWhitelist",
+            "pregenAllDimensions", "pregenDimensions", "pregenDimensionsWhenEntered", "pregenKeepLoaded", "pregenMillisPerRound", "pregenOnNewWorld", "pregenPauseAbove",
+            "pregenFinishedSays", "pregenRelightSays", "pregenResume", "pregenRunningSays", "pregenSpectatingSays", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "pregenStoppedSays", "pregenToBorder", "welcomeSays", "saysCard", "saysIcon", "saysColor", "saysImage", "saysBackground", "saysFont", "toasts",
+            "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
+            "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
+            "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
+            "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "locateLevel", "gameLevels",
+            "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice", "threatSays", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
+            "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
+            "verticalCubeLoadDistance", "cubesSentPerTick", "cubeGenMillisPerRound", "cubeGCInterval",
+            "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
+            "undergroundNightMonsterRate", "villageBlocks", "villageDecor", "villageDecorSpacing", "villagePieces", "villagePiecesAreBlacklist",
+            "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
+            "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
+            "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",
+            "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
+            "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathVergeBlock", "villagePathVergeWaterBlock", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailPowerRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth", "villageRailClimb", "villageRailTail", "villageRailLinks", "villageRailLinkLeast", "villageRailLinkMost", "villageRailLinkBridgeMost", "villageRailLinkTunnelMost", "villageRailLinkStation", "villageRailLinkStationLength", "villageRailLinkPlatformWidth", "villageRailLinkPlatformBlock", "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villagePlotsLeast",
+            "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageCitySpacing", "villageBlockSizes", "villageLayout", "biomes", "voidPlatformBlock",
+            "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
+            "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether", "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals", "worldSpawnNpcs", "worldViewDistance", "worldBuildHeight", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
+
+    private ContentControl() {}
+
+    public static void check(@Nullable WorldTemplateDef template) {
+        if (template == null || template.settings == null) { return; }
+        warnUnknown("World template " + template.getKey(), template.settings);
+    }
+
+    public static void warnUnknown(String owner, JsonObject settings) {
+        for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
+            if (!KNOWN.contains(entry.getKey())) { ContentLog.LOGGER.error("{} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", owner, entry.getKey()); }
+        }
+    }
+
+    @Nullable public static JsonObject roadKeys() { return ROAD_KEYS.get(); }
+
+    @Nullable public static JsonObject roadKeys(@Nullable JsonObject keys) {
+        JsonObject was = ROAD_KEYS.get();
+        ROAD_KEYS.set(keys);
+        return was;
+    }
+
+    @Nullable private static JsonElement roadSetting(String group, String key) {
+        JsonObject road = VILLAGES.equals(group) && packDecides(group) ? ROAD_KEYS.get() : null;
+        return road != null && road.has(key) ? road.get(key) : null;
+    }
+
+    public static boolean off(String group) { return OFF.equals(mode(group)); }
+
+    public static boolean packDecides(String group) { return DEFAULT.equals(mode(group)); }
+
+    public static boolean flag(String group, String key, boolean fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive()) { return rejected(key, "true or false", fallback); }
+        return value.getAsBoolean();
+    }
+
+    public static int number(String group, String key, int fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
+        return value.getAsInt();
+    }
+
+    public static float decimal(String group, String key, float fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
+        return value.getAsFloat();
+    }
+
+    private static final Map<String, JsonElement> BIOME_KEYS = new ConcurrentHashMap<>();
+    private static final Set<String> BIOME_WARNED = new LinkedHashSet<>();
+    @Nullable private static JsonObject biomeSettings;
+    @Nullable private static WorldTemplateDef biomesFrom;
+
+    @Nullable private static synchronized JsonObject biomeSections() {
+        WorldTemplateDef template = ContentWorldTemplates.active();
+        if (template != biomesFrom) {
+            biomesFrom = template;
+            BIOME_KEYS.clear();
+            JsonObject settings = template == null ? null : template.settings;
+            JsonElement held = settings == null || !settings.has(BIOMES) ? null : settings.get(BIOMES);
+            if (held != null && !held.isJsonObject()) {
+                ContentLog.LOGGER.errorOnce(BIOME_WARNED, BIOMES, "The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOMES);
+                held = null;
+            }
+            biomeSettings = held == null ? null : held.getAsJsonObject();
+            if (biomeSettings != null) {
+                List<String> named = new ArrayList<>();
+                for (Map.Entry<String, JsonElement> entry : biomeSettings.entrySet()) { named.add(entry.getKey()); }
+                ContentLog.LOGGER.info("Village settings of their own for {} biome(s): {}", named.size(), named);
+            }
+        }
+        return biomeSettings;
+    }
+
+    public static boolean hasBiomeSettings() { return biomeSections() != null; }
+
+    public static Object biomeSettingsMark() { return biomeSections(); }
+
+    public static boolean hasBiomeSection(String named) {
+        JsonObject sections = biomeSections();
+        return sections != null && sections.has(named) && sections.get(named).isJsonObject();
+    }
+
+    @Nullable private static JsonElement biomeSetting(String group, String key, @Nullable String section) {
+        if (section == null || !packDecides(group)) { return null; }
+        String at = section + "/" + key;
+        JsonElement held = BIOME_KEYS.get(at);
+        if (held == null) {
+            JsonObject sections = biomeSections();
+            JsonObject inside = sections != null && sections.has(section) && sections.get(section).isJsonObject() ? sections.getAsJsonObject(section) : null;
+            held = inside != null && inside.has(key) ? inside.get(key) : JsonNull.INSTANCE;
+            BIOME_KEYS.put(at, held);
+        }
+        return held.isJsonNull() ? null : held;
+    }
+
+    public static String text(String group, String key, String fallback, @Nullable String section) {
+        JsonElement value = roadSetting(group, key);
+        if (value == null) { value = biomeSetting(group, key, section); }
+        if (value == null) { return text(group, key, fallback); }
+        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
+        return value.getAsString();
+    }
+
+    public static String text(String group, String key, String fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonPrimitive()) { return rejected(key, "a text value", fallback); }
+        return value.getAsString();
+    }
+
+    public static String[] list(String group, String key, String[] fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonArray()) { return rejected(key, "a list of text values", fallback); }
+        return textArray(value.getAsJsonArray(), key, "a list of text values", fallback);
+    }
+
+    private static String[] textArray(JsonArray array, String key, String expected, String[] fallback) {
+        List<String> found = new ArrayList<>();
+        for (JsonElement entry : array) {
+            if (!entry.isJsonPrimitive()) { return rejected(key, expected, fallback); }
+            found.add(entry.getAsString());
+        }
+        return found.toArray(new String[0]);
+    }
+
+    public static boolean notArray(String group, String key) { return !(setting(group, key) instanceof JsonArray); }
+
+    public static String[] lines(String group, String key, String[] fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (value.isJsonPrimitive()) { return new String[] {value.getAsString()}; }
+        if (!value.isJsonArray()) { return rejected(key, "a text value or a list of them", fallback); }
+        return textArray(value.getAsJsonArray(), key, "a text value or a list of them", fallback);
+    }
+
+    public static int[] numbers(String group, String key, int[] fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonArray()) { return rejected(key, "a list of numbers", fallback); }
+        JsonArray array = value.getAsJsonArray();
+        int[] found = new int[array.size()];
+        for (int i = 0; i < found.length; i++) {
+            JsonElement entry = array.get(i);
+            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isNumber()) { return rejected(key, "a list of numbers", fallback); }
+            found[i] = entry.getAsInt();
+        }
+        return found;
+    }
+
+    private static <T> T rejected(String key, String wanted, T fallback) {
+        ContentLog.LOGGER.errorOnce(WARNED, key, "The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted);
+        return fallback;
+    }
+
+    private static WorldTemplateDef settingsFrom;
+    private static final Map<String, JsonElement> SETTINGS = new HashMap<>();
+
+    @Nullable private static JsonElement setting(String group, String key) {
+        if (!packDecides(group)) { return null; }
+        JsonElement road = roadSetting(group, key);
+        if (road != null) { return road; }
+        if (VILLAGES.equals(group) && !LAYOUT.equals(key)) {
+            JsonElement drawn = ContentCityMaps.setting(key);
+            if (drawn != null) { return drawn; }
+        }
+        WorldTemplateDef template = ContentWorldTemplates.active();
+        if (template == null || template.settings == null) { return null; }
+        if (template != settingsFrom) {
+            SETTINGS.clear();
+            settingsFrom = template;
+        }
+        JsonElement held = SETTINGS.get(key);
+        if (held == null) {
+            JsonObject settings = template.settings;
+            held = settings.has(key) ? settings.get(key) : JsonNull.INSTANCE;
+            SETTINGS.put(key, held);
+        }
+        return held.isJsonNull() ? null : held;
+    }
+
+    private static String mode(String group) {
+        String held = raw(group);
+        String[] known = MODES.get(group);
+        if (known != null && Objects.equals(known[0], held)) { return known[1]; }
+        String value = Settings.lower(held);
+        if (!DEFAULT.equals(value) && !GLOBAL.equals(value) && !OFF.equals(value)) {
+            ContentLog.LOGGER.error("control.{} is '{}', which is not default, global or off, using default", group, value);
+            value = DEFAULT;
+        }
+        MODES.put(group, new String[] {held, value});
+        return value;
+    }
+
+    private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();
+
+    private static String raw(String group) {
+        switch (group) {
+            case ORES: return Config.control.ores;
+            case BIOMES: return Config.control.biomes;
+            case GENERATORS: return Config.control.generators;
+            case STRUCTURES: return Config.control.structures;
+            case SPAWNING: return Config.control.spawning;
+            case BEDROCK: return Config.control.bedrock;
+            case VOID: return Config.control.voidWorld;
+            case RECIPES: return Config.control.recipes;
+            case TERRAIN: return Config.control.terrain;
+            case REPLACEMENTS: return Config.control.replacements;
+            case VILLAGES: return Config.control.villages;
+            case ENTITIES: return Config.control.entities;
+            case CHUNKS: return Config.control.chunks;
+            case BLAST_PLASTER: return Config.control.blastPlaster;
+            case COMMANDS: return Config.control.commands;
+            case SERVER: return Config.control.server;
+            default: return DEFAULT;
+        }
+    }
+}

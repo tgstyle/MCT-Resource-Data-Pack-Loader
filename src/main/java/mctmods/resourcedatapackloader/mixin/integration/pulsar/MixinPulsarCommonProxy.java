@@ -1,0 +1,13 @@
+package mctmods.resourcedatapackloader.mixin.integration.pulsar;
+
+import mctmods.resourcedatapackloader.common.rubic.lighting.PulsarStandDown;
+
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import org.spongepowered.asm.mixin.Dynamic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
+
+@Pseudo @Mixin(targets = "com.sumirelabs.pulsar.proxy.CommonProxy", remap = false) public abstract class MixinPulsarCommonProxy {
+    @Dynamic @SuppressWarnings({"unused", "AddedMixinMembersNamePattern", "MissingUnique"}) public boolean isRealMainWorld(World world) { return world instanceof WorldServer && !PulsarStandDown.holds(world); }
+}

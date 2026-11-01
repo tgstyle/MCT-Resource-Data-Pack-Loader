@@ -1,0 +1,83 @@
+package mctmods.resourcedatapackloader.common.pregen;
+
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.text.Lang;
+
+import java.util.IllegalFormatException;
+import javax.annotation.Nullable;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
+
+public final class ContentPregenProgress {
+    static final Config.Chunks SHIPPED = new Config.Chunks();
+
+    public static String says(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
+
+    static String defaulted(String key, String fallback, String shipped, String langKey, EntityPlayerMP player) {
+        String said = says(key, fallback);
+        if (!said.equals(shipped.trim())) { return said; }
+        return Lang.tr(player, langKey);
+    }
+
+    static String sofar(ContentPregen worker) {
+        if (!worker.lightOnly && worker.made == 0L && worker.done > 0L && worker.order.hasNext()) { return checking(worker); }
+        String wording = worker.lightOnly ? defaulted("pregenRelightSays", Config.chunks.pregenRelightSays, SHIPPED.pregenRelightSays, "rdpl.pregen.relight", null) : defaulted("pregenRunningSays", Config.chunks.pregenRunningSays, SHIPPED.pregenRunningSays, "rdpl.pregen.running", null);
+        if (wording.isEmpty()) { return ""; }
+        long stepped = Math.min(100L, worker.done * 100L / Math.max(1L, worker.order.total()));
+        try { return String.format(wording, worker.order.hasNext() ? stepped : 100L, dimensionName(worker)) + eta(worker); }
+        catch (IllegalFormatException wrong) {
+            ContentLog.LOGGER.error("A pack words the message about land being made as '{}', which is not something a number can be put into, so it is said as it stands", wording, wrong);
+            return wording + eta(worker);
+        }
+    }
+
+    static String checking(ContentPregen worker) {
+        long stepped = Math.min(100L, worker.done * 100L / Math.max(1L, worker.order.total()));
+        long spent = worker.begun == 0L ? 0L : (System.currentTimeMillis() - worker.begun) / 1000L;
+        return Lang.tr("rdpl.pregen.checking", stepped) + Lang.tr("rdpl.pregen.checked", spent / 3600L, spent / 60L % 60L, spent % 60L);
+    }
+
+    static synchronized String eta(ContentPregen worker) {
+        long total = worker.order.total();
+        if (worker.begun == 0L || worker.done <= worker.resumedFrom || worker.done >= total) { return ""; }
+        long metric = worker.lightOnly ? worker.done : worker.made;
+        long now = System.currentTimeMillis();
+        if (worker.etaFigured == 0L || now - worker.etaFigured >= 5000L) {
+            if (worker.etaAt != 0L && now > worker.etaAt && metric > worker.etaMade) {
+                double lately = (metric - worker.etaMade) * 1000.0D / (now - worker.etaAt);
+                worker.etaRate = worker.etaRate == 0.0D ? lately : worker.etaRate * 0.9D + lately * 0.1D;
+            }
+            worker.etaAt = now;
+            worker.etaMade = metric;
+            worker.etaFigured = now;
+            if (worker.etaRate > 0.0D) { worker.etaSeconds = (long) ((total - worker.done) / worker.etaRate); }
+        }
+        if (worker.etaRate <= 0.0D) { return ""; }
+        long left = Math.max(0L, worker.etaSeconds - (now - worker.etaFigured) / 1000L);
+        return Lang.tr("rdpl.pregen.eta", left / 3600L, left / 60L % 60L, left % 60L);
+    }
+
+    static String dimensionName(ContentPregen worker) {
+        WorldServer world = DimensionManager.getWorld(worker.dimension);
+        return world == null ? String.valueOf(worker.dimension) : world.provider.getDimensionType().getName();
+    }
+
+    static String report(ContentPregen worker) { return report(worker, null); }
+
+    static String report(ContentPregen worker, @Nullable ICommandSender reader) {
+        long seconds = Math.max(1L, (System.currentTimeMillis() - worker.started) / 1000L);
+        long rate = (worker.done - worker.resumedFrom) / seconds;
+        boolean rubic = worker.rubicRun;
+        if (worker.lightOnly) {
+            if (rubic) { return Lang.tr(reader, "rdpl.pregen.report.rubiclight", worker.done, worker.order.total(), worker.dimension); }
+            return Lang.tr(reader, "rdpl.pregen.report.light", worker.done, worker.order.total(), worker.dimension, worker.brightened, worker.dark + worker.darkAtEdge, worker.missing,
+                    worker.undressed == 0L ? "" : Lang.tr(reader, "rdpl.pregen.report.undressed", worker.undressed, worker.dressedLate));
+        }
+        if (rubic) { return Lang.tr(reader, "rdpl.pregen.report.rubic", worker.done, worker.order.total(), worker.dimension, worker.made, rate, worker.resident.size(), worker.paused, worker.slice); }
+        return Lang.tr(reader, "rdpl.pregen.report.made", worker.done, worker.order.total(), worker.dimension, worker.made, rate, worker.resident.size(), worker.paused, worker.brightened, worker.dark, worker.darkAtEdge, worker.slice);
+    }
+}

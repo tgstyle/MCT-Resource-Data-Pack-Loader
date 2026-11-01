@@ -1,0 +1,215 @@
+package mctmods.resourcedatapackloader.common.villages;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
+import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
+import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
+import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+
+import java.util.Random;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockCrops;
+import net.minecraft.block.BlockStandingSign;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.init.Blocks;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.tileentity.TileEntitySign;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Rotation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.gen.structure.template.Template;
+import net.minecraft.world.gen.structure.template.TemplateManager;
+
+public class ContentVillagePiece extends StructureVillagePieces.Village {
+    private String plot = "";
+
+    @SuppressWarnings("unused") public ContentVillagePiece() {}
+
+    public int apron() {
+        VillageDef def = plot == null ? null : ContentVillages.byName(plot);
+        return def == null ? 2 : def.apron;
+    }
+
+    public ContentVillagePiece(StructureVillagePieces.Start start, int type, StructureBoundingBox box, EnumFacing facing, VillageDef def) {
+        super(start, type);
+        setCoordBaseMode(facing);
+        this.boundingBox = box;
+        this.plot = def.registryName.toString();
+    }
+
+    public int type() { return structureType; }
+
+    @Override protected void writeStructureToNBT(@Nonnull NBTTagCompound tag) {
+        super.writeStructureToNBT(tag);
+        tag.setString("rdpl_plot", plot);
+    }
+
+    @Override protected void readStructureFromNBT(@Nonnull NBTTagCompound tag, @Nonnull TemplateManager templates) {
+        super.readStructureFromNBT(tag, templates);
+        plot = tag.getString("rdpl_plot");
+    }
+
+    @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox box) {
+        VillageDef def = ContentVillages.byName(plot);
+        if (def == null) { return true; }
+        if (averageGroundLvl < 0) {
+            averageGroundLvl = getAverageGroundLevel(world, box);
+            if (averageGroundLvl < 0) { return true; }
+            boundingBox.offset(0, averageGroundLvl - boundingBox.minY, 0);
+        }
+        if (def.isTemplate()) { template(world, def, box); }
+        else { farm(world, random, def, box); }
+        if (def.villagers > 0) { residents(world, def, box); }
+        if (def.isTemplate() && !def.orderSign.isEmpty()) { orderSign(world, def, box); }
+        return true;
+    }
+
+    private void orderSign(World world, VillageDef def, StructureBoundingBox box) {
+        Rotation rotation = rotation();
+        BlockPos turned = Template.transformedBlockPos(new PlacementSettings().setRotation(rotation), new BlockPos(def.orderX, def.orderY, def.orderZ));
+        StructureMapDef map = ContentStructureMaps.byName(def.structure);
+        BlockPos pos;
+        if (map == null) { pos = turned.add(corner(rotation)); }
+        else {
+            boolean swapped = rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90;
+            BlockPos span = new BlockPos(swapped ? map.cellsDeep * map.cell : map.cellsWide * map.cell, 1, swapped ? map.cellsWide * map.cell : map.cellsDeep * map.cell);
+            pos = new BlockPos(boundingBox.minX + ContentImprint.backX(rotation, span) + turned.getX(), boundingBox.minY + turned.getY(), boundingBox.minZ + ContentImprint.backZ(rotation, span) + turned.getZ());
+        }
+        if (!box.isVecInside(pos)) { return; }
+        world.setBlockState(pos, Blocks.STANDING_SIGN.getDefaultState().withProperty(BlockStandingSign.ROTATION, rotation.ordinal() * 4), 2);
+        TileEntity tile = world.getTileEntity(pos);
+        if (!(tile instanceof TileEntitySign)) { return; }
+        ((TileEntitySign) tile).signText[0] = new TextComponentString(def.orderSign);
+        tile.getTileData().setBoolean(ContentOrders.PLOT_MARK, true);
+        tile.markDirty();
+        ContentOrders.plotSign(world, pos);
+    }
+
+    private void residents(World world, VillageDef def, StructureBoundingBox box) {
+        if (def.villagerEntity.isEmpty()) {
+            spawnVillagers(world, box, def.villagerX, def.villagerY, def.villagerZ, def.villagers);
+            return;
+        }
+        ResourceLocation name = new ResourceLocation(def.villagerEntity);
+        for (int index = 0; index < def.villagers; index++) {
+            int x = getXWithOffset(def.villagerX + index, def.villagerZ);
+            int y = getYWithOffset(def.villagerY);
+            int z = getZWithOffset(def.villagerX + index, def.villagerZ);
+            if (!box.isVecInside(new BlockPos(x, y, z))) { continue; }
+            Entity made = EntityList.createEntityByIDFromName(name, world);
+            if (made == null) {
+                ContentLog.LOGGER.error("Village plot {} wants {} to live in it, which nothing registers", def.registryName, name);
+                return;
+            }
+            made.setLocationAndAngles(x + 0.5D, y, z + 0.5D, 0.0F, 0.0F);
+            if (made instanceof EntityLiving) { ((EntityLiving) made).onInitialSpawn(world.getDifficultyForLocation(new BlockPos(made)), null); }
+            world.spawnEntity(made);
+        }
+    }
+
+    private void farm(World world, Random random, VillageDef def, StructureBoundingBox box) {
+        IBlockState edge = state(def.edge, Blocks.LOG.getDefaultState());
+        IBlockState soil = state(def.soil, Blocks.FARMLAND.getDefaultState());
+        int lastX = def.width - 1;
+        int lastZ = def.depth - 1;
+        fillWithBlocks(world, box, 0, 1, 0, lastX, def.height, lastZ, Blocks.AIR.getDefaultState(), Blocks.AIR.getDefaultState(), false);
+        fillWithBlocks(world, box, 0, 0, 0, 0, 0, lastZ, edge, edge, false);
+        fillWithBlocks(world, box, lastX, 0, 0, lastX, 0, lastZ, edge, edge, false);
+        fillWithBlocks(world, box, 1, 0, 0, lastX - 1, 0, 0, edge, edge, false);
+        fillWithBlocks(world, box, 1, 0, lastZ, lastX - 1, 0, lastZ, edge, edge, false);
+        int row = Math.max(1, def.rowWidth);
+        int step = def.water ? row + 1 : row;
+        for (int x = 1; x < lastX; x++) {
+            boolean channel = def.water && (x - 1) % step == row;
+            if (channel) {
+                fillWithBlocks(world, box, x, 0, 1, x, 0, lastZ - 1, Blocks.WATER.getDefaultState(), Blocks.WATER.getDefaultState(), false);
+                continue;
+            }
+            fillWithBlocks(world, box, x, 0, 1, x, 0, lastZ - 1, soil, soil, false);
+            for (int z = 1; z < lastZ; z++) { setBlockState(world, crop(random, def), x, 1, z, box); }
+        }
+        IBlockState ground = state(def.ground, Blocks.DIRT.getDefaultState());
+        for (int z = 0; z <= lastZ; z++) {
+            for (int x = 0; x <= lastX; x++) {
+                clearCurrentPositionBlocksUpwards(world, x, def.height, z, box);
+                replaceAirAndLiquidDownwards(world, ground, x, -1, z, box);
+            }
+        }
+    }
+
+    private void template(World world, VillageDef def, StructureBoundingBox box) {
+        if (!(world instanceof WorldServer)) { return; }
+        StructureMapDef map = ContentStructureMaps.byName(def.structure);
+        if (map != null) {
+            long seed = MathUtil.mix(world.getSeed(), boundingBox.minX, 2, boundingBox.minZ);
+            ContentStructureMaps.cells(world, map, seed, rotation(), boundingBox.minX, boundingBox.minY - map.ground * map.cell, boundingBox.minZ, box);
+        }
+        else {
+            ResourceLocation name = new ResourceLocation(def.structure);
+            TemplateManager templates = ((WorldServer) world).getStructureTemplateManager();
+            Template template = templates.get(world.getMinecraftServer(), name);
+            if (template == null) {
+                ContentLog.LOGGER.error("Village plot {} asks for template {}, which no pack provides, leaving the ground as it is", def.registryName, name);
+                return;
+            }
+            Rotation rotation = rotation();
+            PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
+            template.addBlocksToWorld(world, corner(rotation), settings);
+            StructureLoot.stock(world, Math.max(box.minX, boundingBox.minX), Math.max(box.minY, boundingBox.minY), Math.max(box.minZ, boundingBox.minZ), Math.min(box.maxX, boundingBox.maxX), Math.min(box.maxY, boundingBox.maxY), Math.min(box.maxZ, boundingBox.maxZ), def.lootTable, new Random(MathUtil.mix(world.getSeed(), boundingBox.minX, 3, boundingBox.minZ) ^ ((long) box.minX << 32 ^ box.minZ)));
+        }
+        boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
+        int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;
+        int depth = (turned ? boundingBox.maxX - boundingBox.minX : boundingBox.maxZ - boundingBox.minZ) + 1;
+        IBlockState ground = state(def.ground, Blocks.DIRT.getDefaultState());
+        for (int z = 0; z < depth; z++) {
+            for (int x = 0; x < width; x++) { replaceAirAndLiquidDownwards(world, ground, x, -1, z, box); }
+        }
+    }
+
+    private BlockPos corner(Rotation rotation) {
+        if (rotation == Rotation.CLOCKWISE_90) { return new BlockPos(boundingBox.maxX, boundingBox.minY, boundingBox.minZ); }
+        if (rotation == Rotation.CLOCKWISE_180) { return new BlockPos(boundingBox.maxX, boundingBox.minY, boundingBox.maxZ); }
+        if (rotation == Rotation.COUNTERCLOCKWISE_90) { return new BlockPos(boundingBox.minX, boundingBox.minY, boundingBox.maxZ); }
+        return new BlockPos(boundingBox.minX, boundingBox.minY, boundingBox.minZ);
+    }
+
+    private Rotation rotation() {
+        EnumFacing facing = getCoordBaseMode();
+        if (facing == EnumFacing.WEST) { return Rotation.CLOCKWISE_90; }
+        if (facing == EnumFacing.NORTH) { return Rotation.CLOCKWISE_180; }
+        if (facing == EnumFacing.EAST) { return Rotation.COUNTERCLOCKWISE_90; }
+        return Rotation.NONE;
+    }
+
+    private IBlockState crop(Random random, VillageDef def) {
+        if (def.crops.isEmpty()) { return Blocks.WHEAT.getDefaultState(); }
+        IBlockState chosen = state(def.crops.get(random.nextInt(def.crops.size())), Blocks.WHEAT.getDefaultState());
+        Block block = chosen.getBlock();
+        if (!(block instanceof BlockCrops)) { return chosen; }
+        return ((BlockCrops) block).withAge(MathHelper.getInt(random, 0, ((BlockCrops) block).getMaxAge()));
+    }
+
+    private static IBlockState state(@Nullable String name, IBlockState fallback) {
+        if (name == null || name.isEmpty()) { return fallback; }
+        IBlockState parsed = ContentStates.parse(name, "a village plot");
+        return parsed == null ? fallback : parsed;
+    }
+}

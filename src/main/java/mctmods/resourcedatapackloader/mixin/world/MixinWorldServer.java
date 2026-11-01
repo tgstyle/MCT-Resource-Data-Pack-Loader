@@ -1,0 +1,344 @@
+package mctmods.resourcedatapackloader.mixin.world;
+
+import mctmods.resourcedatapackloader.common.environment.ContentWeather;
+import mctmods.resourcedatapackloader.common.rubic.lighting.LightingManager;
+import mctmods.resourcedatapackloader.common.rubic.server.CubeGC;
+import mctmods.resourcedatapackloader.common.rubic.server.CubeProviderServer;
+import mctmods.resourcedatapackloader.common.rubic.server.PlayerCubeMap;
+import mctmods.resourcedatapackloader.common.rubic.server.SpawnCubes;
+import mctmods.resourcedatapackloader.common.rubic.server.TickableChunkContainer;
+import mctmods.resourcedatapackloader.common.rubic.world.CubeWorldEntitySpawner;
+import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICubeProviderServer;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldProvider;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldServer;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IWorldEntitySpawner;
+import mctmods.resourcedatapackloader.common.util.ticks.CubeSplitTickList;
+import mctmods.resourcedatapackloader.common.util.ticks.CubeSplitTickSet;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+import static mctmods.resourcedatapackloader.common.util.world.Coords.cubeToMinBlock;
+import mctmods.resourcedatapackloader.common.util.world.CubePos;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.NotRubicWorldException;
+import static mctmods.resourcedatapackloader.core.util.ReflectionUtil.cast;
+import mctmods.resourcedatapackloader.core.util.address.XYZMap;
+import mctmods.resourcedatapackloader.core.util.address.XZMap;
+import mctmods.resourcedatapackloader.core.util.math.IntRange;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.effect.EntityLightningBolt;
+import net.minecraft.entity.passive.EntitySkeletonHorse;
+import net.minecraft.init.Blocks;
+import net.minecraft.server.management.PlayerChunkMap;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.NextTickListEntry;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldEntitySpawner;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(WorldServer.class) public abstract class MixinWorldServer extends MixinWorld implements IRubicWorldInternal.IServer, IRubicWorldServer {
+    @Shadow @Final private TreeSet<NextTickListEntry> pendingTickListEntriesTreeSet;
+    @Shadow @Mutable @Final private List<NextTickListEntry> pendingTickListEntriesThisTick;
+    @Shadow @Mutable @Final private PlayerChunkMap playerChunkMap;
+    @Shadow @Mutable @Final private WorldEntitySpawner entitySpawner;
+    @Shadow @Mutable @Final private Set<NextTickListEntry> pendingTickListEntriesHashSet;
+    @Unique private int rdpl$immediateTickDepth;
+    @Unique private final Long2ObjectOpenHashMap<List<NextTickListEntry>> rdpl$byChunk = new Long2ObjectOpenHashMap<>();
+    @Unique private int rdpl$builtFromCount = -1;
+    @Unique private long rdpl$builtOnTick = -1L;
+    @Unique private Map<Chunk, Set<ICube>> rdpl$forcedChunksCubes;
+    @Unique private XYZMap<ICube> rdpl$forcedCubes;
+    @Unique private XZMap<IColumn> rdpl$forcedColumns;
+    @Unique private CubeGC rdpl$worldChunkGc;
+    @Unique private SpawnCubes rdpl$spawnArea;
+    @Unique private int rdpl$compatGenerationDepth;
+
+    @SuppressWarnings("UnusedAssignment") @WrapOperation(method = "updateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V")) private void rdpl$boundImmediateTicks(Block block, World worldIn, BlockPos pos, IBlockState state, Random rand, Operation<Void> original) {
+        if (rdpl$isRubicWorld() && rdpl$immediateTickDepth >= 32) {
+            scheduledUpdatesAreImmediate = false;
+            try { ((WorldServer) (Object) this).scheduleUpdate(pos, block, 1); }
+            finally { scheduledUpdatesAreImmediate = true; }
+            return;
+        }
+        rdpl$immediateTickDepth++;
+        try { original.call(block, worldIn, pos, state, rand); }
+        finally { rdpl$immediateTickDepth--; }
+    }
+
+    @Inject(method = "getPendingBlockUpdates(Lnet/minecraft/world/gen/structure/StructureBoundingBox;Z)Ljava/util/List;", at = @At("HEAD"), cancellable = true) private void rdpl$answerFromTheIndex(StructureBoundingBox structureBB, boolean remove, CallbackInfoReturnable<List<NextTickListEntry>> cir) {
+        if (remove) {
+            rdpl$builtFromCount = -1;
+            return;
+        }
+        if (pendingTickListEntriesTreeSet.isEmpty() && pendingTickListEntriesThisTick.isEmpty()) {
+            cir.setReturnValue(null);
+            return;
+        }
+        int waiting = pendingTickListEntriesTreeSet.size();
+        long now = ((WorldServer) (Object) this).getTotalWorldTime();
+        if (waiting != rdpl$builtFromCount || now != rdpl$builtOnTick) {
+            rdpl$byChunk.clear();
+            rdpl$gather(pendingTickListEntriesTreeSet);
+            rdpl$builtFromCount = waiting;
+            rdpl$builtOnTick = now;
+        }
+        List<NextTickListEntry> found = null;
+        int buckets = 0;
+        for (int x = structureBB.minX >> 4; x <= structureBB.maxX >> 4; x++) {
+            for (int z = structureBB.minZ >> 4; z <= structureBB.maxZ >> 4; z++) {
+                List<NextTickListEntry> here = rdpl$byChunk.get(ChunkPos.asLong(x, z));
+                if (here == null) { continue; }
+                buckets++;
+                for (NextTickListEntry entry : here) {
+                    if (rdpl$outside(entry, structureBB)) { continue; }
+                    if (found == null) { found = new ArrayList<>(); }
+                    found.add(entry);
+                }
+            }
+        }
+        if (found != null && buckets > 1) { Collections.sort(found); }
+        for (NextTickListEntry entry : pendingTickListEntriesThisTick) {
+            if (rdpl$outside(entry, structureBB)) { continue; }
+            if (found == null) { found = new ArrayList<>(); }
+            found.add(entry);
+        }
+        cir.setReturnValue(found);
+    }
+
+    @Unique private static boolean rdpl$outside(NextTickListEntry entry, StructureBoundingBox structureBB) { return entry.position.getX() < structureBB.minX || entry.position.getX() >= structureBB.maxX || entry.position.getZ() < structureBB.minZ || entry.position.getZ() >= structureBB.maxZ; }
+
+    @Unique private void rdpl$gather(Iterable<NextTickListEntry> entries) {
+        for (NextTickListEntry entry : entries) {
+            long key = ChunkPos.asLong(entry.position.getX() >> 4, entry.position.getZ() >> 4);
+            List<NextTickListEntry> here = rdpl$byChunk.get(key);
+            if (here == null) {
+                here = new ArrayList<>();
+                rdpl$byChunk.put(key, here);
+            }
+            here.add(entry);
+        }
+    }
+
+    @Inject(method = "tickUpdates", at = @At("RETURN")) private void rdpl$forgetAfterTicking(boolean runAllPending, CallbackInfoReturnable<Boolean> cir) { rdpl$builtFromCount = -1; }
+
+    @Shadow protected abstract void playerCheckLight();
+
+    @Shadow public abstract boolean addWeatherEffect(Entity entityIn);
+
+    @Shadow public abstract boolean spawnEntity(Entity entityIn);
+
+    @Shadow protected abstract boolean canAddEntity(Entity entityIn);
+
+    @Override public void rdpl$initRubicWorldServer(@Nonnull IntRange heightRange, @Nonnull IntRange generationRange) {
+        super.rdpl$initRubicWorld(heightRange, generationRange);
+        this.rdpl$isRubicWorld = true;
+        IWorldEntitySpawner spawner = new CubeWorldEntitySpawner();
+        IWorldEntitySpawner.IHandler spawnHandler = cast(entitySpawner);
+        spawnHandler.rdpl$setEntitySpawner(spawner);
+        this.chunkProvider = new CubeProviderServer((WorldServer) (Object) this,
+                Objects.requireNonNull(((IRubicWorldProvider) this.provider).rdpl$createCubeGenerator(), "cube generator for rubic world"));
+        this.playerChunkMap = new PlayerCubeMap((WorldServer) (Object) this);
+        this.rdpl$forcedChunksCubes = new HashMap<>();
+        this.rdpl$forcedCubes = new XYZMap<>(0.75f, 64*1024);
+        this.rdpl$forcedColumns = new XZMap<>(0.75f, 2048);
+        this.pendingTickListEntriesHashSet = new CubeSplitTickSet();
+        this.pendingTickListEntriesThisTick = new CubeSplitTickList();
+        this.rdpl$worldChunkGc = new CubeGC(rdpl$getCubeCache());
+        this.rdpl$lightingManager = new LightingManager((World) (Object) this);
+    }
+
+    @Override public void rdpl$setSpawnArea(@Nonnull SpawnCubes spawn) { this.rdpl$spawnArea = spawn; }
+
+    @Override @Nonnull public SpawnCubes rdpl$getSpawnArea() { return rdpl$spawnArea; }
+
+    @Override @Nonnull public CubeSplitTickSet rdpl$getScheduledTicks() { return (CubeSplitTickSet) pendingTickListEntriesHashSet; }
+
+    @Override @Nonnull public CubeSplitTickList rdpl$getThisTickScheduledTicks() { return (CubeSplitTickList) pendingTickListEntriesThisTick; }
+
+    @Override public void rdpl$tickRubicWorld() {
+        if (!this.rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
+        rdpl$getLightingManager().onTick();
+        if (this.rdpl$spawnArea != null) { this.rdpl$spawnArea.update((World) (Object) this); }
+    }
+
+    @Override @Nonnull public CubeProviderServer rdpl$getCubeCache() {
+        if (!this.rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
+        return (CubeProviderServer) this.chunkProvider;
+    }
+
+    @Override public void rdpl$removeForcedCube(@Nonnull ICube cube) {
+        Set<ICube> forced = rdpl$forcedChunksCubes.get(cube.getColumn());
+        if (forced == null || !forced.remove(cube)) { ContentLog.LOGGER.error("Trying to remove forced cube {}, but it's not forced!", cube.getCoords()); }
+        rdpl$forcedCubes.remove(cube);
+        if (forced != null && forced.isEmpty()) {
+            rdpl$forcedChunksCubes.remove(cube.getColumn());
+            rdpl$forcedColumns.remove(cube.getColumn());
+        }
+    }
+
+    @Override public void rdpl$addForcedCube(@Nonnull ICube cube) {
+        if (!rdpl$forcedChunksCubes.computeIfAbsent(cube.getColumn(), chunk -> new HashSet<>()).add(cube)) { ContentLog.LOGGER.error("Trying to add forced cube {}, but it's already forced!", cube.getCoords()); }
+        rdpl$forcedCubes.put(cube);
+        rdpl$forcedColumns.put(cube.getColumn());
+    }
+
+    @Override @Nonnull public XYZMap<ICube> rdpl$getForcedCubes() { return rdpl$forcedCubes; }
+
+    @Override @Nonnull public XZMap<IColumn> rdpl$getForcedColumns() { return rdpl$forcedColumns; }
+
+    @Override public void rdpl$unloadOldCubes() { rdpl$worldChunkGc.chunkGc(); }
+
+    @Override @Nonnull public ICompatGenerationScope rdpl$doCompatibilityGeneration() {
+        rdpl$compatGenerationDepth++;
+        return () -> rdpl$compatGenerationDepth--;
+    }
+
+    @Override public boolean rdpl$isCompatGenerationScope() { return rdpl$compatGenerationDepth > 0; }
+
+    @Inject(method = "updateBlocks", at = @At("HEAD"), cancellable = true) private void rdpl$updateBlocksRubic(CallbackInfo cbi) {
+        if (!rdpl$isRubicWorld()) { return; }
+        cbi.cancel();
+        this.playerCheckLight();
+        int tickSpeed = this.getGameRules().getInt("randomTickSpeed");
+        boolean raining = this.isRaining();
+        boolean thundering = this.isThundering();
+        this.profiler.startSection("pollingChunks");
+        TickableChunkContainer chunks = ((PlayerCubeMap) this.playerChunkMap).getTickableChunks();
+        for (Chunk chunk : chunks.columns()) { rdpl$tickColumn(raining, thundering, chunk); }
+        this.profiler.endStartSection("pollingCubes");
+        if (tickSpeed > 0) {
+            long worldTime = worldInfo.getWorldTotalTime();
+            for (ICube cube : chunks.forcedCubes()) { rdpl$tickCube(tickSpeed, cube, worldTime); }
+            for (ICube cube : chunks.playerTickableCubes()) {
+                if (cube == null) { break; }
+                rdpl$tickCube(tickSpeed, cube, worldTime);
+            }
+        }
+        this.profiler.endSection();
+    }
+
+    @Unique private void rdpl$tickCube(int tickSpeed, ICube cube, long worldTime) {
+        if (!((Cube) cube).checkAndUpdateTick(worldTime)) { return; }
+        int chunkBlockX = cubeToMinBlock(cube.getX());
+        int chunkBlockZ = cubeToMinBlock(cube.getZ());
+        this.profiler.startSection("tickBlocks");
+        ExtendedBlockStorage ebs = cube.getStorage();
+        if (ebs != Chunk.NULL_BLOCK_STORAGE && ebs.needsRandomTick()) {
+            for (int i = 0; i < tickSpeed; ++i) { rdpl$tickNextBlock(chunkBlockX, chunkBlockZ, ebs); }
+        }
+        this.profiler.endSection();
+    }
+
+    @Unique private void rdpl$tickNextBlock(int chunkBlockX, int chunkBlockZ, ExtendedBlockStorage ebs) {
+        this.updateLCG = this.updateLCG * 3 + 1013904223;
+        int rand = this.updateLCG >> 2;
+        int localX = rand & 15;
+        int localZ = rand >> 8 & 15;
+        int localY = rand >> 16 & 15;
+        IBlockState state = ebs.get(localX, localY, localZ);
+        Block block = state.getBlock();
+        this.profiler.startSection("randomTick");
+        if (block.getTickRandomly()) { block.randomTick((World) (Object) this, new BlockPos(localX + chunkBlockX, localY + ebs.getYLocation(), localZ + chunkBlockZ), state, this.rand); }
+        this.profiler.endSection();
+    }
+
+    @Unique private void rdpl$tickColumn(boolean raining, boolean thundering, Chunk chunk) {
+        int chunkBlockX = chunk.x * 16;
+        int chunkBlockZ = chunk.z * 16;
+        this.profiler.startSection("checkNextLight");
+        chunk.enqueueRelightChecks();
+        this.profiler.endStartSection("tickChunk");
+        chunk.onTick(false);
+        this.profiler.endStartSection("thunder");
+        if (this.provider.canDoLightning(chunk) && raining && thundering && this.rand.nextInt(100000) == 0) {
+            this.updateLCG = this.updateLCG * 3 + 1013904223;
+            int rand = this.updateLCG >> 2;
+            BlockPos strikePos =
+                    this.rdpl$adjustPosToNearbyEntityRubic(new BlockPos(chunkBlockX + (rand & 15), 0, chunkBlockZ + (rand >> 8 & 15)));
+            if (strikePos != null && this.isRainingAt(strikePos)) {
+                DifficultyInstance difficultyinstance = this.getDifficultyForLocation(strikePos);
+                if (this.getGameRules().getBoolean("doMobSpawning")
+                        && this.rand.nextDouble() < (double) difficultyinstance.getAdditionalDifficulty() * 0.01D) {
+                    EntitySkeletonHorse skeletonHorse = new EntitySkeletonHorse((World) (Object) this);
+                    skeletonHorse.setTrap(true);
+                    skeletonHorse.setGrowingAge(0);
+                    skeletonHorse.setPosition(strikePos.getX(), strikePos.getY(), strikePos.getZ());
+                    if (this.canAddEntity(skeletonHorse)) { this.spawnEntity(skeletonHorse); }
+                    this.addWeatherEffect(new EntityLightningBolt((World) (Object) this,
+                            strikePos.getX(), strikePos.getY(), strikePos.getZ(), true));
+                }
+                else {
+                    this.addWeatherEffect(new EntityLightningBolt((World) (Object) this,
+                            strikePos.getX(), strikePos.getY(), strikePos.getZ(), false));
+                }
+            }
+        }
+        this.profiler.endStartSection("iceandsnow");
+        if (this.provider.canDoRainSnowIce(chunk) && this.rand.nextInt(16) == 0) {
+            this.updateLCG = this.updateLCG * 3 + 1013904223;
+            int j2 = this.updateLCG >> 2;
+            BlockPos block = this.getPrecipitationHeight(new BlockPos(chunkBlockX + (j2 & 15), 0, chunkBlockZ + (j2 >> 8 & 15)));
+            BlockPos blockBelow = block.down();
+            if (this.isAreaLoaded(blockBelow, 1)) {
+                if (this.canBlockFreezeNoWater(blockBelow)) { this.setBlockState(blockBelow, Blocks.ICE.getDefaultState()); }
+            }
+            if (raining && isBlockLoaded(block) && this.canSnowAt(block, true)) { this.setBlockState(block, Blocks.SNOW_LAYER.getDefaultState()); }
+            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain() && !ContentWeather.above((World) (Object) this, blockBelow.getY())) { this.getBlockState(blockBelow).getBlock().fillWithRain((World) (Object) this, blockBelow); }
+        }
+        this.profiler.endSection();
+    }
+
+    @Unique @Nullable private BlockPos rdpl$adjustPosToNearbyEntityRubic(BlockPos strikeTarget) {
+        Chunk column = this.rdpl$getCubeCache().getColumn(Coords.blockToCube(strikeTarget.getX()), Coords.blockToCube(strikeTarget.getZ()),
+                ICubeProviderServer.Requirement.GET_CACHED);
+        if (column == null) { return null; }
+        strikeTarget = column.getPrecipitationHeight(strikeTarget);
+        Cube cube = this.rdpl$getCubeCache().getLoadedCube(CubePos.fromBlockCoords(strikeTarget));
+        if (cube == null) { return null; }
+        AxisAlignedBB aabb = (new AxisAlignedBB(strikeTarget)).grow(3.0D);
+        Iterable<EntityLivingBase> setOfLiving = cube.getEntityContainer().getEntitySet().getByClass(EntityLivingBase.class);
+        for (EntityLivingBase entity : setOfLiving) {
+            if (!entity.isEntityAlive()) { continue; }
+            BlockPos entityPos = entity.getPosition();
+            if (entityPos.getY() < column.getHeightValue(Coords.blockToLocal(entityPos.getX()), Coords.blockToLocal(entityPos.getZ()))) { continue; }
+            if (entity.getEntityBoundingBox().intersects(aabb)) { return entityPos; }
+        }
+        return strikeTarget;
+    }
+}

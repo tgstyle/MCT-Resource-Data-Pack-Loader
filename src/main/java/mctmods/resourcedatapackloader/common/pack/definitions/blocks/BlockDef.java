@@ -1,0 +1,127 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.blocks;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayDef;
+
+import java.util.List;
+import java.util.Locale;
+import javax.annotation.Nullable;
+import net.minecraft.block.SoundType;
+import net.minecraft.block.material.MapColor;
+import net.minecraft.block.material.Material;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraftforge.common.EnumPlantType;
+
+public final class BlockDef {
+    public static final int MAX_META = 16;
+    public static final String PARTICLE_NONE = "none";
+    public static final String PARTICLE_FLAME = "flame";
+    public static final String PARTICLE_COLORED = "colored";
+    public final ResourceLocation registryName;
+    public final String type;
+    public final Material material;
+    public final MapColor mapColor;
+    @Nullable public final SoundType soundType;
+    public final String creativeTab;
+    public final String harvestTool;
+    public final int harvestToolLevel;
+    public final boolean silkHarvest;
+    public final int expDropMin;
+    public final int expDropMax;
+    public final float explosionResistanceDivisor;
+    public final BlockVariant[] byMeta;
+    public final List<BlockVariant> visible;
+    public final List<String> requires;
+    public final BlockRenderLayer renderLayer;
+    public final boolean opaque;
+    public final boolean fullCube;
+    public final int lightOpacity;
+    public final float slipperiness;
+    @Nullable public final AxisAlignedBB bounds;
+    public final int flammability;
+    public final int fireSpread;
+    public final String modelBlock;
+    public final int modelMeta;
+    public final boolean itemModelFromFile;
+    public final String torchParticle;
+    public final boolean torchSmoke;
+    public final int torchColor;
+    public final String cropSeed;
+    public final String cropProduce;
+    public final int cropMaxAge;
+    @Nullable public final SaplingDef sapling;
+    @Nullable public final PortalDef portal;
+    @Nullable public final GrowthDef growth;
+    public final List<String> plantTypes;
+    public final List<String> behavesAs;
+    public final String tint;
+    public final String leafSapling;
+    public final int leafSaplingChance;
+    @Nullable public final ResourceLocation opensWith;
+    public final String openSound;
+    @Nullable public final ContainerDef container;
+    @Nullable public final BellDef bell;
+    @Nullable public final PortwayDef portway;
+    public final List<String> spreadsOnto;
+    public final boolean needsOxygen;
+
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell, List<String> spreadsOnto, boolean needsOxygen, @Nullable PortwayDef portway) {
+        this.registryName = registryName;
+        this.type = type;
+        this.material = material;
+        this.mapColor = mapColor;
+        this.soundType = soundType;
+        this.creativeTab = creativeTab;
+        this.harvestTool = harvestTool;
+        this.harvestToolLevel = harvestToolLevel;
+        this.silkHarvest = silkHarvest;
+        this.expDropMin = expDropMin;
+        this.expDropMax = expDropMax;
+        this.explosionResistanceDivisor = explosionResistanceDivisor;
+        this.byMeta = byMeta;
+        this.visible = visible;
+        this.requires = requires;
+        this.renderLayer = renderLayer;
+        this.opaque = opaque;
+        this.fullCube = fullCube;
+        this.lightOpacity = lightOpacity;
+        this.slipperiness = slipperiness;
+        this.bounds = bounds;
+        this.flammability = flammability;
+        this.fireSpread = fireSpread;
+        this.modelBlock = modelBlock;
+        this.modelMeta = modelMeta;
+        this.itemModelFromFile = itemModelFromFile;
+        this.torchParticle = torchParticle;
+        this.torchSmoke = torchSmoke;
+        this.torchColor = torchColor;
+        this.cropSeed = cropSeed;
+        this.cropProduce = cropProduce;
+        this.cropMaxAge = cropMaxAge;
+        this.sapling = sapling;
+        this.portal = portal;
+        this.growth = growth;
+        this.plantTypes = plantTypes;
+        this.behavesAs = behavesAs;
+        this.tint = tint;
+        this.leafSapling = leafSapling;
+        this.leafSaplingChance = leafSaplingChance;
+        this.opensWith = opensWith;
+        this.openSound = openSound;
+        this.container = container;
+        this.bell = bell;
+        this.spreadsOnto = spreadsOnto;
+        this.needsOxygen = needsOxygen;
+        this.portway = portway;
+    }
+
+    public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }
+
+    public boolean sustains(EnumPlantType plant) {
+        if (plant == EnumPlantType.Plains && behavesAs.contains("bush")) { return true; }
+        return plantTypes.contains(plant.name().toLowerCase(Locale.ROOT));
+    }
+}

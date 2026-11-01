@@ -1,0 +1,84 @@
+package mctmods.resourcedatapackloader.common.entities.ai;
+
+import mctmods.resourcedatapackloader.common.raids.ContentRaids;
+
+import javax.annotation.Nullable;
+import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.entity.ai.RandomPositionGenerator;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.village.Village;
+import net.minecraft.village.VillageDoorInfo;
+
+public final class HideIndoorsGoal extends EntityAIBase {
+    private static final int LOOK_EVERY = 20;
+    private static final int SEARCH_SQ = 32 * 32;
+    private static final double ARRIVED_SQ = 2.25D;
+    private static final double SPEED = 0.7D;
+    private static final double FAR_SQ = 256.0D;
+    private final EntityCreature mob;
+    @Nullable private BlockPos inside;
+
+    public HideIndoorsGoal(EntityCreature mob) {
+        this.mob = mob;
+        setMutexBits(1);
+    }
+
+    @Override public boolean shouldExecute() {
+        if (mob.ticksExisted % LOOK_EVERY != 0 || !ContentRaids.hiding(mob)) { return false; }
+        inside = hidingPlace();
+        return inside != null;
+    }
+
+    @Nullable private BlockPos hidingPlace() {
+        BlockPos at = new BlockPos(mob);
+        BlockPos best = null;
+        int bestDistance = SEARCH_SQ;
+        for (Village village : mob.world.getVillageCollection().getVillageList()) {
+            if (!village.isBlockPosWithinSqVillageRadius(at)) { continue; }
+            for (VillageDoorInfo door : village.getVillageDoorInfoList()) {
+                int distance = door.getDistanceToInsideBlockSq(at);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = door.getInsideBlockPos();
+                }
+            }
+        }
+        return best;
+    }
+
+    @Override public boolean shouldContinueExecuting() { return inside != null && ContentRaids.hiding(mob); }
+
+    @Override public void startExecuting() {
+        BlockPos place = inside;
+        if (place == null) { return; }
+        GoalLog.debug(mob, "hides indoors at {}, {}, {}", place.getX(), place.getY(), place.getZ());
+        walkIn(place);
+    }
+
+    private void walkIn(BlockPos place) {
+        Vec3d door = new Vec3d(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D);
+        if (mob.getDistanceSq(place) > FAR_SQ) {
+            Vec3d toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 14, 3, door);
+            if (toward != null) { mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, SPEED); }
+            return;
+        }
+        mob.getNavigator().tryMoveToXYZ(door.x, door.y, door.z, SPEED);
+    }
+
+    @Override public void resetTask() {
+        inside = null;
+        mob.getNavigator().clearPath();
+    }
+
+    @Override public void updateTask() {
+        BlockPos place = inside;
+        if (place == null) { return; }
+        if (mob.getDistanceSq(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D) <= ARRIVED_SQ) {
+            mob.getNavigator().clearPath();
+            return;
+        }
+        if (mob.getNavigator().noPath() && mob.ticksExisted % LOOK_EVERY == 0) { walkIn(place); }
+    }
+}

@@ -1,0 +1,58 @@
+package mctmods.resourcedatapackloader.common.locate;
+
+import mctmods.resourcedatapackloader.common.util.world.SavedData;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
+
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nonnull;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.storage.WorldSavedData;
+
+public class ContentLocate extends WorldSavedData {
+    private static final String NAME = "RDPLLocate";
+    private NBTTagCompound placed = new NBTTagCompound();
+
+    public ContentLocate(String name) { super(name); }
+
+    @Override public void readFromNBT(NBTTagCompound nbt) { placed = nbt.getCompoundTag("Placed"); }
+
+    @Override @Nonnull public NBTTagCompound writeToNBT(NBTTagCompound nbt) {
+        nbt.setTag("Placed", placed);
+        return nbt;
+    }
+
+    private static ContentLocate of(World world) { return SavedData.get(world.getPerWorldStorage(), ContentLocate.class, NAME, ContentLocate::new); }
+
+    public static void record(World world, String name, BlockPos at) {
+        ContentLocate held = of(world);
+        long[] known = Longs.fromInts(held.placed.getIntArray(name));
+        long[] grown = new long[known.length + 1];
+        System.arraycopy(known, 0, grown, 0, known.length);
+        grown[known.length] = at.toLong();
+        held.placed.setIntArray(name, Longs.toInts(grown));
+        held.markDirty();
+    }
+
+    public static List<String> names(World world) { return new ArrayList<>(of(world).placed.getKeySet()); }
+
+    public static BlockPos nearest(World world, String name, BlockPos from) { return nearest(world, name, from, 0.0D); }
+
+    public static BlockPos nearest(World world, String name, BlockPos from, double beyond) {
+        long[] known = Longs.fromInts(of(world).placed.getIntArray(name));
+        BlockPos best = null;
+        double closest = Double.MAX_VALUE;
+        for (long packed : known) {
+            BlockPos at = BlockPos.fromLong(packed);
+            double away = at.distanceSq(from);
+            if (away < beyond * beyond) { continue; }
+            if (away < closest) {
+                closest = away;
+                best = at;
+            }
+        }
+        return best;
+    }
+}

@@ -1,0 +1,182 @@
+package mctmods.resourcedatapackloader.common.rules;
+
+import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
+import mctmods.resourcedatapackloader.common.entities.spawning.ContentSpawnGate;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
+import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiome;
+import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.Summary;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.EnumCreatureType;
+import net.minecraft.entity.monster.IMob;
+import net.minecraft.entity.passive.EntityAnimal;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
+import net.minecraftforge.event.entity.living.LivingSpawnEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.Event;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
+public final class ContentSpawning {
+    private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
+    private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
+    private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
+    public static final String ANIMALS = "animals";
+    public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+            ANIMALS, "bush", "path", "till")));
+    private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
+
+    private ContentSpawning() {}
+
+    public static void resolve() {
+        BY_BEHAVIOR.clear();
+        for (Map.Entry<ResourceLocation, Block> entry : ContentRegistry.registeredBlocks()) {
+            Block block = entry.getValue();
+            if (!(block instanceof IContentBlock)) { continue; }
+            BlockDef def = ((IContentBlock) block).getDef();
+            if (def == null) { continue; }
+            for (String behavior : def.behavesAs) { add(behavior, block); }
+        }
+    }
+
+    public static void applyCaps() {
+        if (ContentControl.off(ContentControl.SPAWNING)) { return; }
+        cap(EnumCreatureType.MONSTER, ContentControl.number(ContentControl.SPAWNING, "monsterCap", Config.worldgen.monsterCap));
+        cap(EnumCreatureType.CREATURE, ContentControl.number(ContentControl.SPAWNING, "creatureCap", Config.worldgen.creatureCap));
+        cap(EnumCreatureType.AMBIENT, ContentControl.number(ContentControl.SPAWNING, "ambientCap", Config.worldgen.ambientCap));
+        cap(EnumCreatureType.WATER_CREATURE, ContentControl.number(ContentControl.SPAWNING, "waterCreatureCap", Config.worldgen.waterCreatureCap));
+    }
+
+    private static void cap(@Nonnull EnumCreatureType type, int wanted) {
+        if (wanted < 0) { return; }
+        int current = type.maxNumberOfCreature;
+        if (current == wanted) { return; }
+        type.maxNumberOfCreature = wanted;
+        Summary.info("mobcaps", "Set the " + type.name().toLowerCase(Locale.ROOT) + " spawn cap to " + wanted + ", was " + current);
+    }
+
+    @SubscribeEvent public static void onPotentialSpawns(WorldEvent.PotentialSpawns event) {
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+        if (world.canSeeSky(pos) && pos.getY() < world.provider.getActualHeight()) { return; }
+        CaveRegionDef region = ContentCaveRegions.regionAt(world, pos.getX(), pos.getY(), pos.getZ());
+        if (region == null || !region.hasSpawns()) { return; }
+        if (!region.keepDefaultSpawns) { event.getList().clear(); }
+        event.getList().addAll(region.spawnsFor(event.getType()));
+    }
+
+    @SubscribeEvent public static void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) {
+        World world = event.getWorld();
+        DimensionDef dimension = ContentDimensions.byId(world.provider.getDimension());
+        if (dimension != null && !dimension.spawning) {
+            deny(event);
+            return;
+        }
+        if (event.getSpawner() == null && (ContentThreat.barred(event.getEntity()) || ContentSpawnGate.barred(event.getEntity()))) {
+            deny(event);
+            return;
+        }
+        BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
+        if (event.getSpawner() == null && ContentSpawnSwitch.overCap(world, event.getEntityLiving(), pos)) {
+            deny(event);
+            return;
+        }
+        if (!(event.getEntity() instanceof IMob)) {
+            if (event.getSpawner() != null) { return; }
+            if (deniedAboveWindow(world, event.getY())) { deny(event); }
+            else if (animalGround(world, event.getEntityLiving(), pos)) { event.setResult(Event.Result.ALLOW); }
+            return;
+        }
+        if (event.getSpawner() == null) {
+            int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight));
+            if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, pos) > lightCap) {
+                deny(event);
+                return;
+            }
+        }
+        float rate = rateFor(world, pos) * ContentThreat.spawnRate(world, pos);
+        if (rate == 1.0F) { return; }
+        if (rate <= 0.0F) {
+            deny(event);
+            return;
+        }
+        if (rate < 1.0F) {
+            if (world.rand.nextFloat() >= rate) { deny(event); }
+            return;
+        }
+        if (world.rand.nextFloat() < rate - 1.0F) { event.setResult(Event.Result.ALLOW); }
+    }
+
+    private static void deny(LivingSpawnEvent.CheckSpawn event) { event.setResult(Event.Result.DENY); }
+
+    private static boolean animalGround(World world, EntityLivingBase entity, BlockPos pos) {
+        if (!(entity instanceof EntityAnimal)) { return false; }
+        IBlockState below = world.getBlockState(pos.down());
+        if (lacks(ANIMALS, below.getBlock())) { return false; }
+        return world.getLight(pos) > 8 && below.canEntitySpawn(entity);
+    }
+
+    private static boolean deniedAboveWindow(World world, float y) {
+        if (SKY_ANIMALS.get(() -> ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals))) { return false; }
+        return GenHeights.rubic(world) && y > world.provider.getActualHeight();
+    }
+
+    private static float rateFor(World world, BlockPos pos) {
+        boolean sky = world.canSeeSky(pos);
+        boolean day = world.isDaytime();
+        float switched = ContentSpawnSwitch.rate(world, pos, sky, day);
+        if (switched >= 0.0F) { return switched; }
+        Biome biome = world.getBiome(pos);
+        if (biome instanceof ContentBiome) {
+            float wanted = ((ContentBiome) biome).monsterRate(sky, day);
+            if (wanted >= 0.0F) { return wanted; }
+        }
+        float[] rates = RATES.get(() -> new float[] {
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceDayMonsterRate", Config.worldgen.surfaceDayMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, "surfaceNightMonsterRate", Config.worldgen.surfaceNightMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundDayMonsterRate", Config.worldgen.undergroundDayMonsterRate),
+                ContentControl.decimal(ContentControl.SPAWNING, "undergroundNightMonsterRate", Config.worldgen.undergroundNightMonsterRate) });
+        if (sky) { return day ? rates[0] : rates[1]; }
+        return day ? rates[2] : rates[3];
+    }
+
+    public static boolean rateControlled() { return !ContentControl.off(ContentControl.SPAWNING); }
+
+    public static boolean lacks(String behavior, Block block) {
+        Set<Block> blocks = BY_BEHAVIOR.get(behavior);
+        return blocks == null || !blocks.contains(block);
+    }
+
+    public static boolean unknown(String behavior) { return !BEHAVIORS.contains(behavior); }
+
+    public static String describe() { return String.join(", ", BEHAVIORS); }
+
+    public static String normalize(String behavior) { return Settings.lower(behavior); }
+
+    private static void add(String behavior, Block block) { BY_BEHAVIOR.computeIfAbsent(behavior, key -> new HashSet<>()).add(block); }
+}

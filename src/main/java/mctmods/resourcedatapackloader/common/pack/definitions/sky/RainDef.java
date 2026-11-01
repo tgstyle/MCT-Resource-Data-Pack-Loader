@@ -1,0 +1,38 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.sky;
+
+import net.minecraft.util.ResourceLocation;
+import javax.annotation.Nullable;
+
+public final class RainDef {
+    public final String particle;
+    public final ResourceLocation sound;
+    public final float volume;
+    public final int interval;
+    public final int color;
+    public final int snowColor;
+    public final int splashColor;
+    public final boolean solid;
+    public final float angle;
+    public final float heading;
+    public final boolean splashUpward;
+    @Nullable public final WindDef wind;
+
+    public RainDef(String particle, ResourceLocation sound, float volume, int interval, int color, int snowColor, int splashColor, boolean solid, float angle, float heading, boolean splashUpward, @Nullable WindDef wind) {
+        this.particle = particle;
+        this.sound = sound;
+        this.volume = volume;
+        this.interval = interval;
+        this.color = color;
+        this.snowColor = snowColor;
+        this.splashColor = splashColor;
+        this.solid = solid;
+        this.angle = angle;
+        this.heading = heading;
+        this.splashUpward = splashUpward;
+        this.wind = wind;
+    }
+
+    public boolean upward() { return angle > 90.0F; }
+
+    public boolean splashless() { return upward() && !splashUpward; }
+}

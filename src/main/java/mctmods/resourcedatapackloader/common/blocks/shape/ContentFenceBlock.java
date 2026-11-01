@@ -1,0 +1,79 @@
+package mctmods.resourcedatapackloader.common.blocks.shape;
+
+import mctmods.resourcedatapackloader.common.blocks.BlockVariants;
+import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
+import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
+import mctmods.resourcedatapackloader.common.blocks.IVariantBlock;
+import mctmods.resourcedatapackloader.common.items.ContentBlockItem;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.types.PropertyVariant;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockFence;
+import net.minecraft.block.state.BlockStateContainer;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemBlock;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.Explosion;
+import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+@SuppressWarnings("deprecation") public class ContentFenceBlock extends BlockFence implements IContentBlock, IVariantBlock {
+    private final BlockDef def;
+    private final PropertyVariant variant;
+
+    public static ContentFenceBlock create(BlockDef def) { return BlockVariants.construct(def, built -> new ContentFenceBlock(built, BlockVariants.property())); }
+
+    protected ContentFenceBlock(BlockDef def, PropertyVariant property) {
+        super(def.material, def.mapColor);
+        this.def = def;
+        this.variant = property;
+        setRegistryName(def.registryName);
+        setTranslationKey(def.registryName.toString());
+        ContentSetup.harvest(this, def);
+        if (def.soundType != null) { setSoundType(def.soundType); }
+        setDefaultSlipperiness(def.slipperiness);
+        ContentSetup.apply(this, def.creativeTab);
+        ContentSetup.properties(this, def);
+        setDefaultState(this.blockState.getBaseState()
+                .withProperty(this.variant, def.at(0).name)
+                .withProperty(NORTH, Boolean.FALSE).withProperty(EAST, Boolean.FALSE)
+                .withProperty(SOUTH, Boolean.FALSE).withProperty(WEST, Boolean.FALSE));
+    }
+
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, BlockVariants.property(), NORTH, EAST, WEST, SOUTH); }
+
+    private BlockDef def() { return def == null ? BlockVariants.def() : def; }
+
+    @Override public BlockDef getDef() { return def(); }
+
+    @Override public PropertyVariant getVariantProperty() { return variant; }
+
+    @Override @Nullable public ItemBlock createItem() { return new ContentBlockItem(this, def); }
+
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
+
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
+
+    @Override public int getMetaFromState(IBlockState state) { return ContentSetup.metaOf(def, state.getValue(variant)); }
+
+    @Override public int damageDropped(@Nonnull IBlockState state) { return getMetaFromState(state); }
+
+    @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).light; }
+
+    @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
+
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
+
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
+
+    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def().renderLayer; }
+}

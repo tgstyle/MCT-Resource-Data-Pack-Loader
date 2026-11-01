@@ -1,11 +1,18 @@
 package mctmods.resourcedatapackloader.client.gui;
 
-import mctmods.resourcedatapackloader.content.def.GateDef;
-import mctmods.resourcedatapackloader.content.def.PortwayMenu;
-import mctmods.resourcedatapackloader.content.gui.ContainerPortway;
-import mctmods.resourcedatapackloader.content.util.Portways;
-import mctmods.resourcedatapackloader.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.common.gui.ContainerPortway;
+import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayMenu;
+import mctmods.resourcedatapackloader.common.portways.Portways;
+import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.init.Items;
@@ -15,13 +22,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.text.TextFormatting;
 import org.lwjgl.input.Keyboard;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class GuiPortway extends GuiPackContainer {
     private static final int FIELD_WIDE = 80;
@@ -93,9 +93,7 @@ public class GuiPortway extends GuiPackContainer {
 
     @Override protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         super.drawGuiContainerForegroundLayer(mouseX, mouseY);
-        if (search != null && search.getText().isEmpty() && !search.isFocused()) {
-            fontRenderer.drawString(I18n.format("rdpl.portway.search"), xSize - 8 - FIELD_WIDE + 4, FIELD_TOP + (FIELD_HIGH - 8) / 2, HINT);
-        }
+        if (search != null && search.getText().isEmpty() && !search.isFocused()) { fontRenderer.drawString(I18n.format("rdpl.portway.search"), xSize - 8 - FIELD_WIDE + 4, FIELD_TOP + (FIELD_HIGH - 8) / 2, HINT); }
     }
 
     @Override protected int titleWidth() { return xSize - 16 - FIELD_WIDE - 4; }

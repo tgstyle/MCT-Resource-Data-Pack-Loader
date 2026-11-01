@@ -1,0 +1,156 @@
+package mctmods.resourcedatapackloader.common.dimension;
+
+import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentInherits;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorlds;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldProvider;
+import net.minecraft.world.biome.Biome;
+import net.minecraftforge.common.DimensionManager;
+
+public final class ContentDimensions {
+    private static final Map<ResourceLocation, DimensionDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Integer, DimensionDef> BY_ID = new LinkedHashMap<>();
+    private static final Map<Integer, DimensionType> TYPES = new LinkedHashMap<>();
+    private static final Map<Integer, DimensionDef> OVERLAYS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, DimensionDef> PENDING = new LinkedHashMap<>();
+    private static final Set<Integer> STATION_TYPES = new HashSet<>();
+    private static boolean loaded;
+    private static boolean parsed;
+
+    private ContentDimensions() {}
+
+    public static void parse() {
+        if (parsed) { return; }
+        parsed = true;
+        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
+        Json.eachInheritedFile(PackManager.DIMENSIONS, "dimension definition", ContentInherits.DIMENSION_IDENTITY, (key, contents) -> {
+            JsonObject json = Json.object(key, contents, "dimension");
+            if (json == null) { return; }
+            DimensionDef def = ContentParserWorlds.dimension(key, json);
+            DEFS.put(key, def);
+            ContentEnvironments.parse(key, contents, def);
+        });
+    }
+
+    public static void load() {
+        if (loaded) { return; }
+        loaded = true;
+        parse();
+        if (!Config.registersToClients() || !Config.content.dimensions) { return; }
+        for (Map.Entry<ResourceLocation, DimensionDef> entry : DEFS.entrySet()) {
+            DimensionDef def = entry.getValue();
+            if (!ContentRegistry.available(def.requires, entry.getKey())) { continue; }
+            if (def.galacticraft == null) { PENDING.put(entry.getKey(), def); }
+            else if (ContentCelestial.orbits(def)) { ContentCelestial.defer(def); }
+            else { ContentLog.LOGGER.error("Dimension {} is a Galacticraft body and Galacticraft is not loaded, so it is not registered", entry.getKey()); }
+        }
+        if (!ContentCelestial.present()) { settle(); }
+    }
+
+    public static void settle() {
+        List<String> registered = new ArrayList<>();
+        List<String> overlaid = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, DimensionDef> entry : PENDING.entrySet()) {
+            DimensionDef def = entry.getValue();
+            if (!BY_ID.containsKey(def.id) && exists(def.id)) {
+                claimExisting(def);
+                overlaid.add(entry.getKey() + " on " + def.id);
+            }
+            else if (register(def, ContentWorldProvider.class)) { registered.add(entry.getKey() + " as " + def.id); }
+        }
+        PENDING.clear();
+        if (!registered.isEmpty()) { Summary.info("dimensions", "Registered " + registered.size() + " dimension(s): " + registered); }
+        if (!overlaid.isEmpty()) { Summary.info("dimensions.existing", "Applied " + overlaid.size() + " dimension file(s) to existing dimensions: " + overlaid); }
+    }
+
+    private static boolean exists(int dimension) { return DimensionManager.isDimensionRegistered(dimension) || ContentCelestial.holds(dimension); }
+
+    private static void claimExisting(DimensionDef def) {
+        BY_ID.put(def.id, def);
+        OVERLAYS.put(def.id, def);
+        if (ContentCelestial.stationType(def.id)) { STATION_TYPES.add(def.id); }
+        if (def.gives("keepLoaded")) { DimensionManager.keepDimensionLoaded(def.id, def.keepLoaded); }
+        if (def.gives("terrain") && !def.gives("terrain.type")) { ContentLog.LOGGER.error("Dimension {} sets terrain options for dimension {}, which already exists, without a terrain type, so it keeps its own generator", def.registryName, def.id); }
+        if (def.gives("suffix")) { ContentLog.LOGGER.error("Dimension {} names suffix '{}' for dimension {}, which already exists, so its save folder stays as it is", def.registryName, def.suffix, def.id); }
+    }
+
+    @Nullable public static DimensionDef overlay(int dimension) { return held(OVERLAYS, dimension); }
+
+    @Nullable public static DimensionDef overlay(World world) { return overlay(world.provider.getDimension()); }
+
+    @Nullable public static DimensionDef of(@Nullable World world) { return world == null ? null : byId(world.provider.getDimension()); }
+
+    @Nullable public static RainDef rain(World world) {
+        DimensionDef def = of(world);
+        return def == null ? null : def.traits.rain;
+    }
+
+    @Nullable private static DimensionDef held(Map<Integer, DimensionDef> defs, int dimension) { return held(defs, dimension, null, false); }
+
+    @Nullable private static DimensionDef held(Map<Integer, DimensionDef> defs, int dimension, @Nullable Biome biome, boolean exact) {
+        DimensionDef def = defs.get(dimension);
+        if (def == null && !STATION_TYPES.isEmpty() && DimensionManager.isDimensionRegistered(dimension)) {
+            int type = DimensionManager.getProviderType(dimension).getId();
+            def = STATION_TYPES.contains(type) ? defs.get(type) : null;
+        }
+        if (def == null) { return null; }
+        return exact ? ContentEnvironments.resolve(def, biome) : ContentEnvironments.resolve(def);
+    }
+
+    public static boolean register(DimensionDef def, Class<? extends WorldProvider> provider) {
+        if (exists(def.id)) {
+            ContentLog.LOGGER.error("Dimension {} wants id {}, which is already registered by something else. Change the id or remove the conflicting mod", def.registryName, def.id);
+            return false;
+        }
+        DimensionType type = DimensionType.register(def.getName(), def.suffix, def.id, provider, def.keepLoaded);
+        TYPES.put(def.id, type);
+        DimensionManager.registerDimension(def.id, type);
+        BY_ID.put(def.id, def);
+        return true;
+    }
+
+    public static void claim(DimensionDef def) { BY_ID.put(def.id, def); }
+
+    @Nullable public static DimensionDef byId(int dimension) { return held(BY_ID, dimension); }
+
+    @Nullable public static DimensionDef byId(int dimension, Biome biome) { return held(BY_ID, dimension, biome, true); }
+
+    public static DimensionType typeFor(int dimension) {
+        DimensionType type = TYPES.get(dimension);
+        return type == null ? DimensionType.OVERWORLD : type;
+    }
+
+    public static Map<ResourceLocation, DimensionDef> available() {
+        Map<ResourceLocation, DimensionDef> out = new LinkedHashMap<>();
+        for (Map.Entry<ResourceLocation, DimensionDef> entry : all().entrySet()) {
+            if (ContentRegistry.available(entry.getValue().requires, entry.getKey())) { out.put(entry.getKey(), entry.getValue()); }
+        }
+        return out;
+    }
+
+    public static Map<ResourceLocation, DimensionDef> all() {
+        parse();
+        return Collections.unmodifiableMap(DEFS);
+    }
+}

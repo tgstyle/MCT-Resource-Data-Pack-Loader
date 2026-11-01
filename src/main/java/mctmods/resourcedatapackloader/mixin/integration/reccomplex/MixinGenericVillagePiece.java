@@ -1,0 +1,24 @@
+package mctmods.resourcedatapackloader.mixin.integration.reccomplex;
+
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import ivorius.reccomplex.world.gen.feature.villages.GenericVillagePiece;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+
+@Mixin(value = GenericVillagePiece.class, remap = false) public abstract class MixinGenericVillagePiece {
+    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;offset(III)V")) private void rdpl$notBelowItsPlot(StructureBoundingBox box, int x, int y, int z) {
+        box.offset(x, y, z);
+        if (!ContentBeard.wanted()) { return; }
+        StructureVillagePieces.Village piece = (StructureVillagePieces.Village) (Object) this;
+        int floor = piece.averageGroundLvl + ContentBeard.plotSeat(piece);
+        if (box.minY == floor) { return; }
+        int moved = floor - box.minY;
+        box.offset(0, moved, 0);
+        ContentLog.LOGGER.debug("A village plot from Recurrent Complex would have settled {} block(s) away from its seat, so it is moved to put its own floor level with the road", moved);
+    }
+}

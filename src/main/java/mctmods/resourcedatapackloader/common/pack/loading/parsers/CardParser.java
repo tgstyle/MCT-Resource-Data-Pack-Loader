@@ -1,0 +1,141 @@
+package mctmods.resourcedatapackloader.common.pack.loading.parsers;
+
+import mctmods.resourcedatapackloader.common.board.ContentDice;
+import mctmods.resourcedatapackloader.common.cards.CardIds;
+import mctmods.resourcedatapackloader.common.cards.CardLook;
+import mctmods.resourcedatapackloader.common.cards.CardPlace;
+import mctmods.resourcedatapackloader.common.cards.CardRule;
+import mctmods.resourcedatapackloader.common.cards.CardWhen;
+import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.common.util.entity.Standing;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.util.ResourceLocation;
+
+public final class CardParser {
+    private static final int MOST_LINES = 16;
+    private static final int TICKS_IN_DAY = (int) DimensionTraitsDef.VANILLA_DAY;
+
+    private CardParser() {}
+
+    @Nullable public static CardRule parse(ResourceLocation id, String contents) {
+        JsonObject json = Json.object(id, contents, "card file");
+        if (json == null) { return null; }
+        String key = id.toString();
+        CardRule rule = new CardRule(key);
+        boolean builtin = CardIds.ALL.contains(key);
+        rule.trigger = builtin ? CardRule.BUILTIN : Settings.lower(Json.getString(json, "trigger", ""));
+        if (!builtin && !CardRule.TRIGGERS.contains(rule.trigger)) {
+            ContentLog.LOGGER.error("Card rule {} has trigger '{}', which is not one of {}, so it is skipped", key, rule.trigger, CardRule.TRIGGERS);
+            return null;
+        }
+        rule.dimension = Json.getString(json, "dimension", "").trim();
+        rule.biomes = Json.strings(json, "biomes");
+        rule.structures = Json.strings(json, "structures");
+        rule.radius = Math.max(1, Json.getInt(json, "radius", CardPlace.NEAR));
+        rule.advancement = Json.getString(json, "advancement", "").trim();
+        rule.item = Json.getString(json, "item", "").trim();
+        rule.entity = Json.getString(json, "entity", "").trim();
+        rule.count = Math.max(1, Json.getInt(json, "count", 1));
+        rule.below = json.has("below") ? Json.getInt(json, "below") : null;
+        rule.above = json.has("above") ? Json.getInt(json, "above") : null;
+        rule.time = Math.floorMod(Json.getInt(json, "time", 0), TICKS_IN_DAY);
+        rule.day = json.has("day") ? Math.max(0L, Json.getInt(json, "day")) : -1L;
+        rule.minutes = Math.max(0, Json.getInt(json, "minutes", 0));
+        rule.objective = Json.getString(json, "objective", "").trim();
+        rule.score = Json.getInt(json, "score", 1);
+        rule.roll = ContentDice.notation(Json.getString(json, "roll", "").trim());
+        rule.order = Json.getString(json, "order", "").trim();
+        rule.exposure = Json.getString(json, "exposure", "").trim();
+        rule.environment = Json.getString(json, "environment", "").trim();
+        rule.portway = Json.getString(json, "portway", "").trim();
+        rule.raid = Json.getString(json, "raid", "").trim();
+        rule.rank = ContentRanks.key(id.getNamespace(), Json.getString(json, "rank", "").trim());
+        rule.network = Json.getString(json, "network", "").trim();
+        rule.reason = Json.getString(json, "reason", "").trim();
+        rule.level = json.has("level") ? Json.getInt(json, "level") : null;
+        rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
+        rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
+        if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when")); }
+        rule.title = json.has("title") ? Json.getString(json, "title") : null;
+        rule.lines = json.has("lines") ? lines(key, json) : null;
+        rule.icon = optional(json, "icon");
+        rule.color = optional(json, "color");
+        rule.image = optional(json, "image");
+        rule.background = json.has("background") ? Json.getBoolean(json, "background") : null;
+        rule.font = optional(json, "font");
+        String owner = "Card rule " + key;
+        rule.style = Json.choice(json, "style", null, owner, CardLook.STYLES);
+        rule.ticks = Math.max(0, Json.getInt(json, "ticks", 0));
+        rule.audience = Json.choice(json, "audience", CardRule.PLAYER, owner, CardRule.AUDIENCES);
+        rule.repeat = Json.choice(json, "repeat", CardRule.ALWAYS, owner, CardRule.REPEATS);
+        rule.cooldown = Math.max(0, Json.getInt(json, "cooldown", 0));
+        rule.runs = Json.getString(json, "runs", "").trim();
+        rule.requires = Json.strings(json, "requires");
+        return missing(rule) ? null : rule;
+    }
+
+    public static CardWhen when(JsonObject json) {
+        CardWhen when = new CardWhen();
+        when.biomes = Json.strings(json, "biomes");
+        when.environments = Json.strings(json, "environments");
+        when.timeFrom = CardPlace.tickOf(json, "timeFrom");
+        when.timeTo = CardPlace.tickOf(json, "timeTo");
+        when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;
+        when.advancement = Json.getString(json, "advancement", "").trim();
+        when.gameMode = Json.getString(json, "gameMode", "").trim();
+        when.portway = Json.getString(json, "portway", "").trim();
+        when.network = Json.getString(json, "network", "").trim();
+        when.standing = Standing.parse(json);
+        return when;
+    }
+
+    private static List<String> lines(String key, JsonObject json) {
+        JsonArray array = Json.getJsonArray(json, "lines");
+        List<String> lines = new ArrayList<>();
+        for (JsonElement element : array) {
+            if (!element.isJsonPrimitive()) {
+                ContentLog.LOGGER.error("Card rule {} has a line that is not text, skipping it", key);
+                continue;
+            }
+            if (lines.size() < MOST_LINES) { lines.add(Json.asString(element, "lines", "")); }
+        }
+        return Collections.unmodifiableList(lines);
+    }
+
+    @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }
+
+    private static boolean missing(CardRule rule) {
+        String needs = needs(rule);
+        if (needs == null) { return false; }
+        ContentLog.LOGGER.error("Card rule {} has trigger {} but no {}, so it is skipped", rule.key, rule.trigger, needs);
+        return true;
+    }
+
+    @Nullable private static String needs(CardRule rule) {
+        if (!CardRule.BUILTIN.equals(rule.trigger) && (rule.lines == null || rule.lines.isEmpty()) && (rule.title == null || rule.title.isEmpty())) { return "title or lines"; }
+        switch (rule.trigger) {
+            case CardRule.DIMENSION_ENTER: return rule.dimension.isEmpty() ? "dimension" : null;
+            case CardRule.BIOME_ENTER: return rule.biomes.isEmpty() ? "biomes" : null;
+            case CardRule.STRUCTURE_ENTER: return rule.structures.isEmpty() ? "structures" : null;
+            case CardRule.ADVANCEMENT: return rule.advancement.isEmpty() ? "advancement" : null;
+            case CardRule.CRAFT:
+            case CardRule.PICKUP: return rule.item.isEmpty() ? "item" : null;
+            case CardRule.KILL: return rule.entity.isEmpty() ? "entity" : null;
+            case CardRule.Y_LEVEL: return rule.below == null && rule.above == null ? "below or above" : null;
+            case CardRule.PLAY_TIME: return rule.minutes <= 0 ? "minutes" : null;
+            case CardRule.SCORE: return rule.objective.isEmpty() ? "objective" : null;
+            default: return null;
+        }
+    }
+}

@@ -1,23 +1,21 @@
 package mctmods.resourcedatapackloader.core;
 
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
-import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
-import mctmods.resourcedatapackloader.pack.PackManager;
 
-import net.minecraft.launchwrapper.Launch;
-import net.minecraftforge.fml.common.Loader;
-import zone.rong.mixinbooter.ILateMixinLoader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
+import net.minecraft.launchwrapper.Launch;
+import net.minecraftforge.fml.common.Loader;
+import zone.rong.mixinbooter.ILateMixinLoader;
 
 @SuppressWarnings("unused") public class MCTLateMixin implements ILateMixinLoader {
     private static Boolean tinkersFix;
     private static Boolean pulsar;
-
     private static final String PREFIX = "mixins.resourcedatapackloader.";
     private static final Map<String, BooleanSupplier> QUEUED = new LinkedHashMap<>();
 

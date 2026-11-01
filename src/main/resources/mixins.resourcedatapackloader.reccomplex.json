@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.reccomplex",
+  "package": "mctmods.resourcedatapackloader.mixin.integration.reccomplex",
   "compatibilityLevel": "JAVA_8",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "target": "@env(DEFAULT)",

@@ -1,0 +1,106 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+
+import com.google.gson.JsonObject;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Rotation;
+
+public final class CityMapDef {
+    public static final int LIMIT = 64;
+    public static final int LIFT = 8;
+
+    public enum Kind { STREET, PLAZA, ALLEY, OPEN, GROW, PLOT, JUNCTION, BULB, ELEVATED }
+
+    public static final class Cell {
+        public final Kind kind;
+        public final List<PickDef> picks;
+        public final int height;
+        @Nullable public final JsonObject settings;
+
+        public Cell(Kind kind, List<PickDef> picks, int height, @Nullable JsonObject settings) {
+            this.settings = settings;
+            this.kind = kind;
+            this.picks = Collections.unmodifiableList(picks);
+            this.height = height;
+        }
+    }
+
+    public final ResourceLocation key;
+    public final int cell;
+    public final Map<Character, Cell> palette;
+    public final String[] rows;
+    public final int cellsWide;
+    public final int cellsDeep;
+    @Nullable public final JsonObject settings;
+
+    public CityMapDef(ResourceLocation key, int cell, Map<Character, Cell> palette, String[] rows, @Nullable JsonObject settings) {
+        this.settings = settings;
+        this.key = key;
+        this.cell = cell;
+        this.palette = Collections.unmodifiableMap(palette);
+        this.rows = rows;
+        int wide = 1;
+        for (String row : rows) { wide = Math.max(wide, row.length()); }
+        this.cellsWide = wide;
+        this.cellsDeep = rows.length;
+    }
+
+    public boolean bulbHinted() {
+        for (Cell held : palette.values()) {
+            if (held.kind == Kind.BULB) { return true; }
+        }
+        return false;
+    }
+
+    @Nullable public JsonObject keysOf(char symbol) {
+        Cell held = palette.get(symbol);
+        return held == null ? null : held.settings;
+    }
+
+    public int heightOf(char symbol) {
+        Cell held = palette.get(symbol);
+        return held == null ? LIFT : held.height;
+    }
+
+    public Kind kindOf(char symbol) {
+        if (symbol == '.') { return Kind.OPEN; }
+        Cell held = palette.get(symbol);
+        return held == null ? Kind.OPEN : held.kind;
+    }
+
+    public Kind[][] turned(Rotation turn) {
+        char[][] marks = turnedMarks(turn);
+        Kind[][] grid = new Kind[marks.length][];
+        for (int z = 0; z < marks.length; z++) {
+            grid[z] = new Kind[marks[z].length];
+            for (int x = 0; x < marks[z].length; x++) { grid[z][x] = kindOf(marks[z][x]); }
+        }
+        return grid;
+    }
+
+    public char[][] turnedMarks(Rotation turn) {
+        char[][] marks = new char[cellsDeep][cellsWide];
+        for (int z = 0; z < cellsDeep; z++) {
+            for (int x = 0; x < cellsWide; x++) { marks[z][x] = x < rows[z].length() ? rows[z].charAt(x) : '.'; }
+        }
+        for (int i = quarters(turn); i > 0; i--) { marks = clockwise(marks); }
+        return marks;
+    }
+
+    private static int quarters(Rotation turn) { return turn == Rotation.CLOCKWISE_90 ? 1 : turn == Rotation.CLOCKWISE_180 ? 2 : turn == Rotation.COUNTERCLOCKWISE_90 ? 3 : 0; }
+
+    private static char[][] clockwise(char[][] grid) {
+        int deep = grid.length;
+        int wide = grid[0].length;
+        char[][] turned = new char[wide][deep];
+        for (int z = 0; z < wide; z++) {
+            for (int x = 0; x < deep; x++) { turned[z][x] = grid[deep - 1 - x][z]; }
+        }
+        return turned;
+    }
+}

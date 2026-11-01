@@ -1,0 +1,442 @@
+package mctmods.resourcedatapackloader.common.hardness;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.carry.ContentCarry;
+import mctmods.resourcedatapackloader.common.gates.GateStorage;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.HardnessDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.entity.Advancements;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentField;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+import static mctmods.resourcedatapackloader.core.util.json.Json.strings;
+import mctmods.resourcedatapackloader.core.util.math.IntRange;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityList;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
+import net.minecraft.scoreboard.Team;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3i;
+import net.minecraft.world.GameType;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.IChunkProvider;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraft.world.gen.IChunkGenerator;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.event.entity.player.AdvancementEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.IWorldGenerator;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
+
+public final class ContentHardness {
+    private static final Map<ResourceLocation, HardnessDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Block, List<HardnessDef>> WHOLE = new IdentityHashMap<>();
+    private static final Map<IBlockState, List<HardnessDef>> EXACT = new IdentityHashMap<>();
+    private static final Map<Block, HardnessDef> DENIED = new IdentityHashMap<>();
+    private static final Map<IBlockState, HardnessDef> DENIED_EXACT = new IdentityHashMap<>();
+    private static final Map<HardnessDef, List<ItemStack>> TOOLS = new IdentityHashMap<>();
+    private static final Map<HardnessDef, IBlockState> BECOMES = new IdentityHashMap<>();
+    private static final int SWAP_FLAGS = BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE;
+    private static long salt;
+    private static boolean loaded;
+    private static boolean anyRolls;
+
+    private ContentHardness() {}
+
+    public static boolean load() {
+        if (loaded) { return !DEFS.isEmpty(); }
+        loaded = true;
+        if (!Config.content.hardness) { return false; }
+        Json.eachFile(PackManager.HARDNESS, "hardness file", (key, contents) -> {
+            HardnessDef def = read(key, contents);
+            if (def != null) { DEFS.put(key, def); }
+        });
+        if (!DEFS.isEmpty()) { Summary.info("hardness", "Loaded " + DEFS.size() + " hardness group(s)"); }
+        return !DEFS.isEmpty();
+    }
+
+    public static void resolve() {
+        WHOLE.clear();
+        EXACT.clear();
+        DENIED.clear();
+        DENIED_EXACT.clear();
+        TOOLS.clear();
+        BECOMES.clear();
+        anyRolls = false;
+        for (HardnessDef def : DEFS.values()) {
+            if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
+            int found = 0;
+            for (BlockMatchDef name : def.except) { found += deny(def, name); }
+            for (BlockMatchDef name : def.blocks) { found += bind(def, name); }
+            if (found == 0) {
+                ContentLog.LOGGER.error("Hardness group {} names no registered block, so it does nothing", def.registryName);
+                continue;
+            }
+            if (def.rolls()) { anyRolls = true; }
+            List<ItemStack> tools = new ArrayList<>();
+            for (String name : def.tools) {
+                ItemStack stack = ContentStacks.parse(def.registryName, name, 1);
+                if (!stack.isEmpty()) { tools.add(stack); }
+            }
+            TOOLS.put(def, tools);
+            if (def.swaps()) {
+                IBlockState target = ContentStates.parse(def.becomes, def.registryName + " becomes");
+                if (target != null) { BECOMES.put(def, target); }
+            }
+        }
+    }
+
+    public static boolean anySwaps() { return !BECOMES.isEmpty(); }
+
+    private static int deny(HardnessDef def, BlockMatchDef name) { return ContentStates.bind(name, def.registryName, "except", held -> DENIED.put(held, def), state -> DENIED_EXACT.put(state, def)); }
+
+    private static int bind(HardnessDef def, BlockMatchDef name) { return ContentStates.bind(name, def.registryName, "blocks", held -> WHOLE.computeIfAbsent(held, any -> new ArrayList<>()).add(def), state -> EXACT.computeIfAbsent(state, any -> new ArrayList<>()).add(def)); }
+
+    public static boolean anyRolls() { return anyRolls; }
+
+    public static Map<Block, List<HardnessDef>> whole() { return WHOLE; }
+
+    public static Map<IBlockState, List<HardnessDef>> exact() { return EXACT; }
+
+    public static boolean idle() { return WHOLE.isEmpty() && EXACT.isEmpty(); }
+
+    @Nullable public static HardnessDef groupFor(@Nullable IBlockState state) { return groupFor(state, null); }
+
+    @Nullable public static HardnessDef groupFor(@Nullable IBlockState state, @Nullable EntityLivingBase who) {
+        if (state == null || idle()) { return null; }
+        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return null; }
+        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return null; }
+        HardnessDef open = null;
+        List<HardnessDef> whole = WHOLE.get(state.getBlock());
+        List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
+        for (int side = 0; side < 2; side++) {
+            List<HardnessDef> defs = side == 0 ? whole : exact;
+            if (defs == null) { continue; }
+            for (HardnessDef def : defs) {
+                if (def.advancement.isEmpty()) {
+                    if (open == null) { open = def; }
+                    continue;
+                }
+                if (who instanceof EntityPlayer && Advancements.has((EntityPlayer) who, def.advancement)) { return def; }
+            }
+        }
+        return open;
+    }
+
+    public static int bucket(HardnessDef def, int x, int y, int z) {
+        if (def.buckets <= 1) { return 0; }
+        if (y < def.minHeight || y > def.maxHeight) { return 0; }
+        float strength = def.field.strength(salt, x, y, z);
+        int bucket = Math.round(strength * (def.buckets - 1));
+        return MathHelper.clamp(bucket, 0, def.buckets - 1);
+    }
+
+    public static float miningAt(@Nullable IBlockState state, @Nullable EntityLivingBase who, int x, int y, int z) {
+        HardnessDef def = groupFor(state, who);
+        if (def == null) { return 1.0F; }
+        return Math.max(0.0001F, def.mining(bucket(def, x, y, z)));
+    }
+
+    public static float blastAt(@Nullable IBlockState state, int x, int y, int z) {
+        HardnessDef def = groupFor(state);
+        if (def == null) { return 1.0F; }
+        return Math.max(0.0F, def.blast(bucket(def, x, y, z)));
+    }
+
+    public static long modelSeed(@Nullable IBlockState state, Vec3i at, long fallback) {
+        HardnessDef def = groupFor(state);
+        if (def == null || def.buckets <= 1) { return fallback; }
+        return ((long) bucket(def, at.getX(), at.getY(), at.getZ())) << 16;
+    }
+
+    public static void salt(long value) { salt = value; }
+
+    public static boolean breaksAway(@Nullable IBlockState state, @Nullable EntityLivingBase who) {
+        HardnessDef def = groupFor(state, who);
+        return def == null || !def.keeps;
+    }
+
+    public static boolean mayBreak(@Nullable EntityLivingBase who, @Nullable IBlockState state, ItemStack held) {
+        HardnessDef def = groupFor(state, who);
+        if (def == null || !def.adventure || who == null || held.isEmpty()) { return false; }
+        List<ItemStack> tools = TOOLS.get(def);
+        if (tools != null && !tools.isEmpty()) {
+            boolean carried = false;
+            for (ItemStack tool : tools) {
+                if (ContentStacks.matches(held, tool.getItem(), tool.getMetadata())) { carried = true; break; }
+            }
+            if (!carried) { return false; }
+        }
+        if (def.teams.isEmpty() && def.players.isEmpty() && def.entities.isEmpty()) { return true; }
+        Team side = who.getTeam();
+        if (side != null && def.teams.contains(side.getName())) { return true; }
+        if (who instanceof EntityPlayer) { return def.players.contains(who.getName()); }
+        ResourceLocation id = EntityList.getKey(who);
+        return id != null && def.entities.contains(id.toString());
+    }
+
+    public static boolean digBarred(EntityLivingBase mob, @Nullable IBlockState state, ItemStack held) {
+        HardnessDef def = groupFor(state, mob);
+        if (def == null || !def.adventure || mob.world.getWorldInfo().getGameType() != GameType.ADVENTURE) { return false; }
+        return !mayBreak(mob, state, held);
+    }
+
+    public static void dig(EntityLivingBase digger, BlockPos pos) { for (ItemStack stack : harvest(digger, pos, 0)) { Block.spawnAsEntity(digger.world, pos, stack); } }
+
+    public static List<ItemStack> harvest(EntityLivingBase digger, BlockPos pos, int fortune) {
+        World world = digger.world;
+        IBlockState state = world.getBlockState(pos);
+        List<ItemStack> kept = new ArrayList<>();
+        if (state.getBlock().isAir(state, world, pos)) { return kept; }
+        int earned = mctmods.resourcedatapackloader.common.entities.ContentEntities.collectsExperience(digger) ? state.getBlock().getExpDrop(state, world, pos, fortune) : 0;
+        NonNullList<ItemStack> drops = NonNullList.create();
+        state.getBlock().getDrops(drops, world, pos, state, fortune);
+        float chance = ForgeEventFactory.fireBlockHarvesting(drops, world, pos, state, fortune, 1.0F, false, null);
+        for (ItemStack drop : drops) {
+            if (!drop.isEmpty() && world.rand.nextFloat() <= chance) { kept.add(drop); }
+        }
+        world.playEvent(2001, pos, Block.getStateId(state));
+        if (breaksAway(state, null)) { world.setBlockToAir(pos); }
+        if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
+        return kept;
+    }
+
+    public static String swapToken(HardnessDef def) { return "swap:" + def.registryName; }
+
+    private static String swapKey(HardnessDef def) { return "hardness:" + def.registryName; }
+
+    public static boolean unlocked(World world, HardnessDef def) { return BECOMES.containsKey(def) && GateStorage.unlockedGlobally(world, swapKey(def)); }
+
+    public static List<HardnessDef> swapsMissing(World world, Set<String> already) {
+        List<HardnessDef> missing = new ArrayList<>();
+        for (HardnessDef def : BECOMES.keySet()) {
+            if (!already.contains(swapToken(def)) && unlocked(world, def)) { missing.add(def); }
+        }
+        return missing;
+    }
+
+    private static boolean outsideGroup(HardnessDef def, IBlockState state) {
+        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return true; }
+        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return true; }
+        List<HardnessDef> whole = WHOLE.get(state.getBlock());
+        if (whole != null && whole.contains(def)) { return false; }
+        List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
+        return exact == null || !exact.contains(def);
+    }
+
+    public static int swap(World world, int chunkX, int chunkZ, HardnessDef def) {
+        IBlockState target = BECOMES.get(def);
+        if (target == null || !world.isChunkGeneratedAt(chunkX, chunkZ)) { return 0; }
+        Chunk chunk = world.getChunk(chunkX, chunkZ);
+        int baseX = chunkX << 4;
+        int baseZ = chunkZ << 4;
+        int swapped = 0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (ExtendedBlockStorage section : chunk.getBlockStorageArray()) {
+            if (section == Chunk.NULL_BLOCK_STORAGE) { continue; }
+            int bottom = section.getYLocation();
+            for (int y = 0; y < 16; y++) {
+                for (int x = 0; x < 16; x++) {
+                    for (int z = 0; z < 16; z++) {
+                        IBlockState found = section.get(x, y, z);
+                        if (found == target || outsideGroup(def, found)) { continue; }
+                        pos.setPos(baseX + x, bottom + y, baseZ + z);
+                        world.setBlockState(pos, target, SWAP_FLAGS);
+                        swapped++;
+                    }
+                }
+            }
+        }
+        return swapped;
+    }
+
+    private static void swapLoaded(MinecraftServer server, HardnessDef def) {
+        int swapped = 0;
+        int chunks = 0;
+        for (WorldServer world : server.worlds) {
+            for (Chunk chunk : new ArrayList<>(world.getChunkProvider().getLoadedChunks())) {
+                swapped += swap(world, chunk.x, chunk.z, def);
+                mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen.mark(world, chunk.getPos(), swapToken(def));
+                chunks++;
+            }
+        }
+        ContentLog.LOGGER.info("Hardness group {} became {} in {} loaded chunk(s), {} block(s) swapped; chunks loaded or made from now on follow", def.registryName, def.becomes, chunks, swapped);
+    }
+
+    @SubscribeEvent public static void onAdvancement(AdvancementEvent event) {
+        if (BECOMES.isEmpty() || !(event.getEntityPlayer() instanceof EntityPlayerMP)) { return; }
+        MinecraftServer server = event.getEntityPlayer().getServer();
+        if (server == null) { return; }
+        String earned = event.getAdvancement().getId().toString();
+        World world = event.getEntityPlayer().world;
+        for (HardnessDef def : BECOMES.keySet()) {
+            if (!def.becomesOn.equals(earned) || unlocked(world, def)) { continue; }
+            GateStorage.unlockGlobally(world, swapKey(def));
+            swapLoaded(server, def);
+        }
+    }
+
+    public static final class Swaps implements IWorldGenerator {
+        @Override public void generate(Random random, int chunkX, int chunkZ, World world, IChunkGenerator generator, IChunkProvider provider) {
+            if (BECOMES.isEmpty() || world.isRemote) { return; }
+            for (HardnessDef def : BECOMES.keySet()) {
+                if (!unlocked(world, def)) { continue; }
+                for (int dx = 0; dx <= 1; dx++) {
+                    for (int dz = 0; dz <= 1; dz++) {
+                        if (!world.isChunkGeneratedAt(chunkX + dx, chunkZ + dz)) { continue; }
+                        swap(world, chunkX + dx, chunkZ + dz, def);
+                        mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen.mark(world, new ChunkPos(chunkX + dx, chunkZ + dz), swapToken(def));
+                    }
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = true) public static void onBreak(BlockEvent.BreakEvent event) {
+        if (ContentCarry.breaking() || ContentCarry.probing() || idle() || event.getWorld().isRemote || !(event.getPlayer() instanceof EntityPlayerMP)) { return; }
+        EntityPlayerMP player = (EntityPlayerMP) event.getPlayer();
+        IBlockState state = event.getState();
+        ItemStack held = player.getHeldItemMainhand();
+        if (event.isCanceled() && player.interactionManager.getGameType() == GameType.ADVENTURE && mayBreak(player, state, held)) { event.setCanceled(false); }
+        if (event.isCanceled() || player.interactionManager.isCreative() || breaksAway(state, player)) { return; }
+        int earned = event.getExpToDrop();
+        event.setCanceled(true);
+        World world = event.getWorld();
+        BlockPos pos = event.getPos();
+        ItemStack before = held.copy();
+        boolean harvests = state.getBlock().canHarvestBlock(world, pos, player);
+        if (!held.isEmpty()) {
+            held.onBlockDestroyed(world, state, pos, player);
+            if (held.isEmpty()) { ForgeEventFactory.onPlayerDestroyItem(player, before, EnumHand.MAIN_HAND); }
+        }
+        if (harvests) {
+            state.getBlock().harvestBlock(world, player, pos, state, world.getTileEntity(pos), before);
+            if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
+        }
+        world.playEvent(player, 2001, pos, Block.getStateId(state));
+    }
+
+    @SubscribeEvent public static void onBreakSpeed(PlayerEvent.BreakSpeed event) {
+        if (idle()) { return; }
+        BlockPos pos = event.getPos();
+        if (pos == null) { return; }
+        float multiplier = miningAt(event.getState(), event.getEntityPlayer(), pos.getX(), pos.getY(), pos.getZ());
+        if (multiplier == 1.0F) { return; }
+        event.setNewSpeed(event.getOriginalSpeed() / multiplier);
+    }
+
+    @SubscribeEvent public static void onLogin(PlayerLoggedInEvent event) {
+        if (!(event.player instanceof EntityPlayerMP)) { return; }
+        RDPLNetwork.sendHardnessSalt((EntityPlayerMP) event.player, salt);
+    }
+
+    @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) {
+        World world = event.getWorld();
+        if (world.isRemote || world.provider.getDimension() != 0) { return; }
+        salt(derive(world.getSeed()));
+    }
+
+    public static long derive(long seed) {
+        long value = seed * MathUtil.GOLDEN_GAMMA;
+        value ^= value >>> 32;
+        value *= -4658895280553007687L;
+        value ^= value >>> 29;
+        return value;
+    }
+
+    @Nullable private static HardnessDef read(ResourceLocation key, String contents) {
+        JsonObject json = Json.object(key, contents, "hardness group");
+        if (json == null) { return null; }
+        List<BlockMatchDef> blocks = ContentParser.matches(key, json, "blocks");
+        if (blocks.isEmpty()) {
+            ContentLog.LOGGER.error("Hardness group {} names no blocks, ignoring it", key);
+            return null;
+        }
+        float[] mining = range(json, "miningTime");
+        float[] blast = range(json, "blastResistance");
+        int buckets = MathHelper.clamp(Json.getInt(json, "buckets", 10), 1, 256);
+        IntRange heights = ContentParser.heights("Hardness group", key, json, 0, 255);
+        JsonObject adventure = Json.getJsonObject(json, "adventure", new JsonObject());
+        JsonObject becomes = Json.getJsonObject(json, "becomes", new JsonObject());
+        return new HardnessDef(key, blocks, ContentParser.matches(key, json, "except"),
+                mining[0], mining[1], blast[0], blast[1], buckets,
+                heights.getMin(), heights.getMax(), strings(json, "requires"), field(json),
+                Json.getBoolean(json, "keeps", false), json.has("adventure"),
+                strings(adventure, "tools"), strings(adventure, "teams"), strings(adventure, "players"), strings(adventure, "entities"),
+                Json.getString(json, "advancement", "").trim(),
+                Json.getString(becomes, "advancement", "").trim(), Json.getString(becomes, "block", "").trim());
+    }
+
+    private static ContentField field(JsonObject json) {
+        if (!json.has("field")) { return new ContentField(ContentField.CHANCES, ContentField.SPREAD); }
+        return fieldFrom(Json.getJsonObject(json, "field"));
+    }
+
+    public static ContentField fieldFrom(JsonObject entry) {
+        if (!"seeded".equals(Json.getString(entry, "type", "speckle"))) { return new ContentField(chances(entry), Json.getFloat(entry, "spread", ContentField.SPREAD)); }
+        return new ContentField(
+                Json.getInt(entry, "cell", ContentField.CELL),
+                Json.getInt(entry, "seeds", ContentField.SEEDS),
+                Json.getFloat(entry, "reach", ContentField.REACH),
+                Json.getInt(entry, "arms", ContentField.ARMS),
+                Json.getFloat(entry, "armReach", ContentField.ARM_REACH));
+    }
+
+    private static int[] chances(JsonObject json) {
+        if (!json.has("chances")) { return ContentField.CHANCES; }
+        JsonArray held = Json.getJsonArray(json, "chances");
+        int[] values = new int[held.size()];
+        for (int index = 0; index < values.length; index++) { values[index] = Math.max(0, Json.asInt(held.get(index), "chances", 0)); }
+        return values;
+    }
+
+    private static float[] range(JsonObject json, String name) {
+        if (!json.has(name)) { return new float[] { 1.0F, 1.0F }; }
+        JsonElement element = json.get(name);
+        if (element.isJsonObject()) {
+            JsonObject entry = element.getAsJsonObject();
+            float least = Json.getFloat(entry, "min", 1.0F);
+            float most = Json.getFloat(entry, "max", 1.0F);
+            return new float[] { Math.min(least, most), Math.max(least, most) };
+        }
+        float value = Json.asFloat(element, name, 1.0F);
+        return new float[] { value, value };
+    }
+}

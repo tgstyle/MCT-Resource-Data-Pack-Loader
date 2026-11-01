@@ -1,0 +1,21 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.entities;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffectDef;
+
+import java.util.List;
+
+public final class ExposureLevelDef {
+    public final String effect;
+    public final float damage;
+    public final int damageInterval;
+    public final List<PotionEffectDef> extras;
+    public final String onEnter;
+
+    public ExposureLevelDef(String effect, float damage, int damageInterval, List<PotionEffectDef> extras, String onEnter) {
+        this.effect = effect;
+        this.damage = damage;
+        this.damageInterval = damageInterval;
+        this.extras = extras;
+        this.onEnter = onEnter;
+    }
+}

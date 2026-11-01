@@ -1,0 +1,513 @@
+package mctmods.resourcedatapackloader.common.pack.loading;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
+import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
+import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluid;
+import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluidBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
+import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
+import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
+import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
+import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
+import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeightDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.DropDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorldgen;
+import mctmods.resourcedatapackloader.common.portals.ContentPortals;
+import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
+import mctmods.resourcedatapackloader.common.types.ContentItemTypes;
+import mctmods.resourcedatapackloader.common.util.ContentMaterials;
+import mctmods.resourcedatapackloader.common.util.ContentOreDict;
+import mctmods.resourcedatapackloader.core.CofhWorldContainer;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.integration.cofh.ContentCofhWorld;
+import mctmods.resourcedatapackloader.core.util.ConfigCore;
+import mctmods.resourcedatapackloader.core.util.ConfigLate;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Registries;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import java.util.*;
+import java.util.function.BiFunction;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.EntityList;
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidRegistry;
+import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.EntityEntry;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.oredict.OreDictionary;
+
+public final class ContentRegistry {
+    private static final Map<ResourceLocation, BlockDef> BLOCK_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, ItemDef> ITEM_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, WorldgenDef> WORLDGEN_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, ExposureDef> EXPOSURE_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, CaveRegionDef> CAVEREGION_DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, Block> BLOCKS_BY_NAME = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, Item> ITEMS_BY_NAME = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, ContentFluidBlock> FLUID_BLOCKS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, BlockDef> DEF_BY_BLOCK = new LinkedHashMap<>();
+    private static final Set<String> WARNED = new HashSet<>();
+    private static boolean loaded;
+
+    private ContentRegistry() {}
+
+    public static Collection<ExposureDef> exposures() { return EXPOSURE_DEFS.values(); }
+
+    public static Collection<CaveRegionDef> caveRegions() { return CAVEREGION_DEFS.values(); }
+
+    public static void resolveItemPotions() {
+        for (ItemDef def : ITEM_DEFS.values()) {
+            for (ItemVariant variant : def.visible) {
+                if (variant.potion == null) { continue; }
+                variant.resolvePotion(potion(def.registryName, variant.name, variant.potion));
+            }
+        }
+    }
+
+    public static void load() {
+        if (loaded) { return; }
+        loaded = true;
+        if (!Config.registersToClients()) { return; }
+        parseAll(PackManager.BLOCKS, "block", ContentParser::block, BLOCK_DEFS);
+        for (Map.Entry<ResourceLocation, DimensionDef> opened : ContentPortals.opening().entrySet()) {
+            ResourceLocation key = ContentPortals.blockName(opened.getKey());
+            if (BLOCK_DEFS.containsKey(key)) { continue; }
+            BlockDef made = ContentParser.block(key, ContentPortals.blockJson(opened.getKey(), opened.getValue()));
+            if (made == null) { continue; }
+            BLOCK_DEFS.put(key, made);
+            ContentPortals.made(key);
+            ContentLog.LOGGER.debug("Dimension {} opens through a frame, so {} is registered to stand inside it", opened.getKey(), key);
+        }
+        parseAll(PackManager.ITEMS, "item", ContentParser::item, ITEM_DEFS);
+        Json.eachFile(PackManager.FLUIDS, "fluid definition", (key, contents) -> {
+            if (ContentOwners.reserved(key)) { return; }
+            FluidDef def = ContentParser.fluid(key, contents);
+            if (def != null) { FLUID_DEFS.put(key, def); }
+        });
+        Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
+            if (ContentOwners.reserved(key)) { return; }
+            if (key.getPath().indexOf('/') >= 0) {
+                ContentLog.LOGGER.error("Worldgen definition {} sits in a subfolder of worldgen, which is not read. Move it to {}:worldgen/{}.json, with a name of its own", key, key.getNamespace(), key.getPath().substring(key.getPath().lastIndexOf('/') + 1));
+                return;
+            }
+            WorldgenDef def = ContentParserWorldgen.worldgen(key, contents);
+            if (def != null) { WORLDGEN_DEFS.put(key, def); }
+        });
+        Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
+            ExposureDef def = ContentParser.exposure(key, contents);
+            if (def != null) { EXPOSURE_DEFS.put(key, def); }
+        });
+        Json.eachFile(PackManager.CAVEREGIONS, "cave region definition", (key, contents) -> {
+            CaveRegionDef def = ContentParserWorldgen.caveRegion(key, contents);
+            if (def != null) { CAVEREGION_DEFS.put(key, def); }
+        });
+        if (ConfigCore.read(ConfigLate.WORLDGEN, "readCofhWorldFiles") && (!Loader.isModLoaded("cofhworld") || CofhWorldContainer.emulated())) {
+            for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
+                if (WORLDGEN_DEFS.containsKey(entry.getKey())) { continue; }
+                try {
+                    WorldgenDef def = Json.within("CoFH World entry", entry.getKey(), () -> ContentParserWorldgen.worldgen(entry.getKey(), entry.getValue()));
+                    if (def != null) { WORLDGEN_DEFS.put(entry.getKey(), def); }
+                }
+                catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in CoFH World entry {}, ignoring it: {}", entry.getKey(), ex.getMessage()); }
+            }
+        }
+        if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !WORLDGEN_DEFS.isEmpty()) { Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid and " + WORLDGEN_DEFS.size() + " worldgen definition(s)"); }
+    }
+
+    private static <T> void parseAll(String folder, String what, BiFunction<ResourceLocation, String, T> parse, Map<ResourceLocation, T> into) {
+        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(folder).entrySet()) {
+            ResourceLocation key = held.getKey();
+            if (ContentOwners.reserved(key)) { continue; }
+            try {
+                T def = Json.within(what + " definition", key, () -> parse.apply(key, held.getValue()));
+                if (def != null) { into.put(key, def); }
+            }
+            catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in {} definition {}, ignoring it: {}", what, key, ex.getMessage()); }
+        }
+    }
+
+    public static boolean available(List<String> requires, ResourceLocation key) {
+        for (String modid : requires) {
+            if (modid.startsWith("config:")) { PackOptions.gating(modid.substring("config:".length())); }
+        }
+        return holds(requires, key);
+    }
+
+    public static boolean holds(List<String> requires, ResourceLocation key) {
+        for (String modid : requires) {
+            if (modid.startsWith("file:")) {
+                String asked = modid.substring("file:".length()).replace('\\', '/');
+                if (asked.contains("..") || asked.startsWith("/") || asked.contains(":")) {
+                    if (WARNED.add(modid)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, whose path must be relative to the game folder, without '..'", modid); }
+                    return false;
+                }
+                java.io.File home = net.minecraft.launchwrapper.Launch.minecraftHome != null ? net.minecraft.launchwrapper.Launch.minecraftHome : new java.io.File(".");
+                if (new java.io.File(home, asked).exists()) { continue; }
+                ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
+                return false;
+            }
+            if (modid.startsWith("config:")) {
+                String asked = modid.substring("config:".length());
+                int split = asked.indexOf(':');
+                Boolean held = split < 0 ? PackOptions.anywhere(asked) : PackOptions.option(asked.substring(0, split), asked.substring(split + 1));
+                if (Boolean.TRUE.equals(held)) { continue; }
+                if (held == null && WARNED.add(modid)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, which no pack option file defines. Check the name against the files in rdploader/config", modid); }
+                ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
+                return false;
+            }
+            if (Loader.isModLoaded(modid) || PackManager.get().provides(modid)) { continue; }
+            if (WARNED.add(modid)) { ContentLog.LOGGER.info("Skipping anything that requires {}, which is neither an installed mod nor a loaded pack. Turn on debug logging to see each one", modid); }
+            ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, modid);
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean wantsBuckets() {
+        load();
+        for (FluidDef def : FLUID_DEFS.values()) {
+            if (def.bucket && available(def.requires, def.registryName)) { return true; }
+        }
+        return false;
+    }
+
+    public static void registerFluids() {
+        load();
+        for (FluidDef def : FLUID_DEFS.values()) {
+            if (!available(def.requires, def.registryName)) { continue; }
+            Fluid fluid = new ContentFluid(def);
+            boolean registered = ContentOwners.as(def.registryName.getNamespace(), () -> {
+                boolean made = FluidRegistry.registerFluid(fluid);
+                if (made && def.bucket) { FluidRegistry.addBucketForFluid(fluid); }
+                return made;
+            });
+            if (registered) {
+                def.resolve(fluid);
+                continue;
+            }
+            Fluid existing = FluidRegistry.getFluid(def.name);
+            ContentLog.LOGGER.warn("A fluid named {} is already registered, {} will use the existing one", def.name, def.registryName);
+            def.resolve(existing);
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerBlocks(RegistryEvent.Register<Block> event) {
+        load();
+        for (Map.Entry<ResourceLocation, BlockDef> entry : BLOCK_DEFS.entrySet()) {
+            ResourceLocation key = entry.getKey();
+            BlockDef def = entry.getValue();
+            if (!available(def.requires, key)) { continue; }
+            ContentOwners.as(key.getNamespace(), () -> {
+                for (Block block : ContentBlockTypes.get(def.type, key).create(def)) {
+                    ResourceLocation name = block.getRegistryName();
+                    if (name == null) {
+                        ContentLog.LOGGER.error("A block made from {} has no registry name, skipping it", key);
+                        continue;
+                    }
+                    if (ForgeRegistries.BLOCKS.containsKey(name)) {
+                        ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack definition", name);
+                        continue;
+                    }
+                    event.getRegistry().register(block);
+                    BLOCKS_BY_NAME.put(name, block);
+                    DEF_BY_BLOCK.put(name, def);
+                }
+            });
+        }
+        for (Map.Entry<ResourceLocation, FluidDef> entry : FLUID_DEFS.entrySet()) {
+            ResourceLocation key = entry.getKey();
+            FluidDef def = entry.getValue();
+            if (!def.createBlock) { continue; }
+            if (!available(def.requires, key)) { continue; }
+            if (def.getResolved() == null) {
+                ContentLog.LOGGER.error("Fluid {} was never registered, its block is skipped", key);
+                continue;
+            }
+            if (ForgeRegistries.BLOCKS.containsKey(key)) {
+                ContentLog.LOGGER.warn("A block named {} is already registered, skipping the pack fluid block", key);
+                continue;
+            }
+            ContentOwners.as(key.getNamespace(), () -> {
+                ContentFluidBlock block = new ContentFluidBlock(def.getResolved(), def);
+                ContentSetup.apply(block, def.creativeTab);
+                ContentSetup.flammable(block, def.fireSpread, def.flammability);
+                event.getRegistry().register(block);
+                FLUID_BLOCKS.put(key, block);
+            });
+        }
+    }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerEntities(RegistryEvent.Register<EntityEntry> event) { ContentEntityTypes.register(event.getRegistry()); }
+
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerItems(RegistryEvent.Register<Item> event) {
+        ContentMaterials.register();
+        for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
+            ResourceLocation key = entry.getKey();
+            if (ForgeRegistries.ITEMS.containsKey(key)) { continue; }
+            Block block = entry.getValue();
+            if (!(block instanceof IContentBlock)) { continue; }
+            ContentOwners.as(key.getNamespace(), () -> {
+                Item blockItem = ((IContentBlock) block).createItem();
+                if (blockItem == null) { return; }
+                blockItem.setRegistryName(key);
+                event.getRegistry().register(blockItem);
+            });
+        }
+        for (Map.Entry<ResourceLocation, ItemDef> entry : ITEM_DEFS.entrySet()) {
+            ResourceLocation key = entry.getKey();
+            if (ForgeRegistries.ITEMS.containsKey(key)) {
+                ContentLog.LOGGER.warn("An item named {} is already registered, skipping the pack definition", key);
+                continue;
+            }
+            ItemDef def = entry.getValue();
+            if (!available(def.requires, key)) { continue; }
+            ContentOwners.as(key.getNamespace(), () -> {
+                for (Item item : ContentItemTypes.get(def.type, key).create(def)) {
+                    event.getRegistry().register(item);
+                    ITEMS_BY_NAME.put(key, item);
+                }
+            });
+        }
+        resolve();
+        resolveCrops();
+        ContentSpawning.resolve();
+        ContentMaterials.resolveRepairItems();
+        registerOreDictionary();
+        ContentOreDict.apply();
+    }
+
+    public static List<WorldgenDef> resolveWorldgen() {
+        List<WorldgenDef> active = new ArrayList<>();
+        for (Map.Entry<ResourceLocation, WorldgenDef> entry : WORLDGEN_DEFS.entrySet()) {
+            WorldgenDef def = entry.getValue();
+            if (!available(def.requires, entry.getKey())) { continue; }
+            if (def.blocks.isEmpty() && !ForgeRegistries.BLOCKS.containsKey(def.block)) {
+                ContentLog.LOGGER.error("Worldgen {} names block {}, which is not registered, skipping it", entry.getKey(), def.block);
+                continue;
+            }
+            Set<Block> targets = new LinkedHashSet<>();
+            Set<IBlockState> exact = new LinkedHashSet<>();
+            for (BlockMatchDef name : def.replaces) {
+                Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
+                if (target == null) {
+                    ContentLog.LOGGER.error("Worldgen {} names replace block {}, which is not registered, leaving it out", entry.getKey(), name.block);
+                    continue;
+                }
+                ContentStates.sort(name, target, targets::add, exact::add, entry.getKey());
+            }
+            if (targets.isEmpty() && exact.isEmpty()) {
+                ContentLog.LOGGER.error("Worldgen {} has no registered block to replace, skipping it", entry.getKey());
+                continue;
+            }
+            Set<Block> nearby = new LinkedHashSet<>();
+            Set<IBlockState> nearbyExact = new LinkedHashSet<>();
+            for (BlockMatchDef name : def.adjacent) {
+                Block target = Registries.find(ForgeRegistries.BLOCKS, name.block);
+                if (target == null) {
+                    ContentLog.LOGGER.error("Worldgen {} names adjacent block {}, which is not registered, leaving it out", entry.getKey(), name.block);
+                    continue;
+                }
+                ContentStates.sort(name, target, nearby::add, nearbyExact::add, entry.getKey());
+            }
+            if (!def.adjacent.isEmpty() && nearby.isEmpty() && nearbyExact.isEmpty()) {
+                ContentLog.LOGGER.error("Worldgen {} has no registered adjacent block, skipping it so it does not generate everywhere", entry.getKey());
+                continue;
+            }
+            Set<Block> surface = new LinkedHashSet<>();
+            if (ShapeDef.DECORATION.equals(def.shape.type) || ShapeDef.TREE.equals(def.shape.type)) {
+                Set<String> unknown = new LinkedHashSet<>();
+                for (String name : def.shape.surface) {
+                    ResourceLocation location = new ResourceLocation(name);
+                    Block target = Registries.find(ForgeRegistries.BLOCKS, location);
+                    if (target == null) {
+                        unknown.add(name);
+                        continue;
+                    }
+                    surface.add(target);
+                }
+                if (!unknown.isEmpty() && !surface.isEmpty()) { ContentLog.LOGGER.error("Worldgen {} names surface block(s) {}, which are not registered, leaving them out", entry.getKey(), unknown); }
+                else if (!unknown.isEmpty()) {
+                    ContentLog.LOGGER.error("Worldgen {} has no registered surface block, skipping it", entry.getKey());
+                    continue;
+                }
+            }
+            List<IBlockState> states = new ArrayList<>();
+            List<Integer> weights = new ArrayList<>();
+            if (def.blocks.isEmpty()) {
+                Block block = ForgeRegistries.BLOCKS.getValue(def.block);
+                if (block == null) { continue; }
+                states.add(ContentStates.of(block, def.meta));
+                weights.add(1);
+            }
+            else {
+                Set<String> missing = new LinkedHashSet<>();
+                for (BlockWeightDef weighted : def.blocks) {
+                    Block block = Registries.find(ForgeRegistries.BLOCKS, weighted.block);
+                    if (block == null) {
+                        missing.add(weighted.block.toString());
+                        continue;
+                    }
+                    states.add(ContentStates.of(block, weighted.meta, weighted.properties, entry.getKey()));
+                    weights.add(weighted.weight);
+                }
+                if (!missing.isEmpty() && !states.isEmpty()) { ContentLog.LOGGER.error("Worldgen {} names {} in its blocks list, which are not registered, leaving them out", entry.getKey(), missing); }
+                else if (!missing.isEmpty()) { ContentLog.LOGGER.error("Worldgen {} names only {} in its blocks list, none of which are registered, skipping it. Add \"requires\" naming the mod so this is expected rather than an error", entry.getKey(), missing); }
+            }
+            if (states.isEmpty()) { continue; }
+            def.resolve(states, weights, targets, exact, nearby, nearbyExact, surface, extra(entry.getKey(), def.shape.outline), extra(entry.getKey(), def.shape.fill));
+            active.add(def);
+        }
+        active.sort(Comparator.comparing(def -> def.registryName.toString()));
+        if (!active.isEmpty()) { Summary.info("worldgen", "Generating " + active.size() + " vein type(s) from packs"); }
+        return active;
+    }
+
+    @Nullable private static IBlockState extra(ResourceLocation key, String name) {
+        if (name.isEmpty()) { return null; }
+        IBlockState state = ContentStates.parse(name, key);
+        if (state == null) { ContentLog.LOGGER.error("Worldgen {} names block {} in its shape, which is not registered, leaving it out", key, name); }
+        return state;
+    }
+
+    private static void resolveCrops() {
+        for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
+            if (entry.getValue() instanceof IContentSoil) {
+                ((IContentSoil) entry.getValue()).soil().resolve();
+                continue;
+            }
+            if (!(entry.getValue() instanceof ContentCropBlock)) { continue; }
+            ContentCropBlock crop = (ContentCropBlock) entry.getValue();
+            BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
+            if (def == null) { continue; }
+            crop.resolve(ContentStacks.parse(def.registryName, def.cropSeed, 1), ContentStacks.parse(def.registryName, def.cropProduce, 1));
+        }
+    }
+
+    private static void resolve() {
+        for (BlockDef def : BLOCK_DEFS.values()) {
+            for (BlockVariant variant : def.visible) {
+                for (DropDef drop : variant.drops) {
+                    ResourceLocation entity = drop.entity;
+                    if (entity != null) {
+                        if (!EntityList.isRegistered(entity)) { ContentLog.LOGGER.error("Drop entity {} for {} '{}' is not registered, that drop is skipped", entity, def.registryName, variant.name); }
+                        continue;
+                    }
+                    if (!ForgeRegistries.ITEMS.containsKey(drop.block)) {
+                        ContentLog.LOGGER.error("Drop {} for {} '{}' is not registered, that drop is skipped", drop.block, def.registryName, variant.name);
+                        continue;
+                    }
+                    drop.resolve(ForgeRegistries.ITEMS.getValue(drop.block));
+                }
+            }
+        }
+        for (ItemDef def : ITEM_DEFS.values()) {
+            if (!def.container.isEmpty()) { def.resolveContainer(ContentStacks.parse(def.registryName, def.container, 1)); }
+            if (def.upgrade != null) { ContentContainerUpgrades.check(def); }
+        }
+        for (Map.Entry<ResourceLocation, ContentFluidBlock> entry : FLUID_BLOCKS.entrySet()) {
+            FluidDef def = FLUID_DEFS.get(entry.getKey());
+            List<PotionEffect> effects = new ArrayList<>();
+            for (String value : def.potions) {
+                PotionEffect effect = potion(def.registryName, def.name, value);
+                if (effect != null) { effects.add(effect); }
+            }
+            entry.getValue().setEffects(effects);
+        }
+    }
+
+    @Nullable private static PotionEffect potion(ResourceLocation key, String name, String value) {
+        String[] parts = value.split(",");
+        if (parts.length < 3) {
+            ContentLog.LOGGER.error("Potion '{}' for {} '{}' needs id, duration and amplifier", value, key, name);
+            return null;
+        }
+        Potion potion = Potion.getPotionFromResourceLocation(parts[0].trim());
+        if (potion == null) {
+            ContentLog.LOGGER.error("Unknown potion '{}' for {} '{}'", parts[0].trim(), key, name);
+            return null;
+        }
+        try {
+            int duration = Integer.parseInt(parts[1].trim());
+            int amplifier = Integer.parseInt(parts[2].trim());
+            boolean ambient = parts.length > 3 && Boolean.parseBoolean(parts[3].trim());
+            return new PotionEffect(potion, duration, amplifier, ambient, false);
+        }
+        catch (NumberFormatException ex) {
+            ContentLog.LOGGER.error("Potion '{}' for {} '{}' has a bad number", value, key, name);
+            return null;
+        }
+    }
+
+    private static void registerOreDictionary() {
+        int count = 0;
+        for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
+            BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
+            if (def == null) { continue; }
+            if (Item.getItemFromBlock(entry.getValue()) == Items.AIR) { continue; }
+            String tree = entry.getValue() instanceof ContentLogBlock ? "logWood" : entry.getValue() instanceof ContentLeavesBlock ? "treeLeaves" : null;
+            for (BlockVariant variant : def.visible) {
+                for (String name : variant.oreDict) {
+                    OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));
+                    count++;
+                }
+                if (tree != null && !variant.oreDict.contains(tree)) {
+                    OreDictionary.registerOre(tree, new ItemStack(entry.getValue(), 1, variant.meta));
+                    count++;
+                }
+            }
+        }
+        for (Map.Entry<ResourceLocation, Item> entry : ITEMS_BY_NAME.entrySet()) {
+            ItemDef def = ITEM_DEFS.get(entry.getKey());
+            for (ItemVariant variant : def.visible) {
+                for (String name : variant.oreDict) {
+                    OreDictionary.registerOre(name, new ItemStack(entry.getValue(), 1, variant.meta));
+                    count++;
+                }
+            }
+        }
+        if (count > 0) { Summary.info("content_oredict", "Registered " + count + " ore dictionary entry/entries from packs"); }
+    }
+
+    public static Set<Map.Entry<ResourceLocation, Block>> registeredBlocks() { return BLOCKS_BY_NAME.entrySet(); }
+
+    public static Set<Map.Entry<ResourceLocation, Item>> registeredItems() { return ITEMS_BY_NAME.entrySet(); }
+
+    public static Set<Map.Entry<ResourceLocation, ContentFluidBlock>> registeredFluidBlocks() { return FLUID_BLOCKS.entrySet(); }
+
+    @Nullable public static FluidDef fluidDef(ResourceLocation key) { return FLUID_DEFS.get(key); }
+
+    @Nullable public static BlockDef blockDef(ResourceLocation key) { return DEF_BY_BLOCK.get(key); }
+
+    @Nullable public static ItemDef itemDef(ResourceLocation key) { return ITEM_DEFS.get(key); }
+}

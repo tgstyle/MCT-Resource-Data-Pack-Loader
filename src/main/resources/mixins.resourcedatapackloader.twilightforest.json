@@ -1,12 +1,13 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.twilightforest",
+  "package": "mctmods.resourcedatapackloader.mixin.integration.twilightforest",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinChunkGeneratorTFBase",
-    "MixinChunkGeneratorTwilightForest"
+    "MixinChunkGeneratorTwilightForest",
+    "MixinChunkGeneratorTwilightVoid"
   ],
   "client": [],
   "server": []

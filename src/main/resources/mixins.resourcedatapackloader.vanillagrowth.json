@@ -1,8 +1,8 @@
 {
   "required": false,
   "minVersion": "0.8",
-  "package": "mctmods.resourcedatapackloader.mixin.vanillagrowth",
-  "plugin": "mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin",
+  "package": "mctmods.resourcedatapackloader.mixin.block",
+  "plugin": "mctmods.resourcedatapackloader.core.RDPLMixinPlugin",
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [

@@ -1,0 +1,171 @@
+package mctmods.resourcedatapackloader.common.worldgen.placement;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.Blocked;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.text.Listing;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+
+public final class ContentReplacements {
+    private static final Blocked REPLACED = new Blocked();
+    private static final Set<String> REPORTED = new HashSet<>();
+    private static final Map<IBlockState, IBlockState> EXACT = new HashMap<>();
+    private static final Map<Block, IBlockState> WHOLE = new LinkedHashMap<>();
+    private static final Map<IBlockState, String> KEYS = new IdentityHashMap<>();
+    private static boolean blacklist;
+    private static boolean logging;
+    private static Set<Integer> dimensions;
+    private static String token;
+    private static boolean wanted;
+    private static int minHeight;
+    private static int maxHeight;
+    private static int chunks;
+
+    private ContentReplacements() {}
+
+    public static boolean wanted() {
+        if (dimensions == null) { load(); }
+        return wanted;
+    }
+
+    public static String token() {
+        if (dimensions == null) { load(); }
+        return token;
+    }
+
+    public static boolean appliesTo(int dimension) {
+        if (dimensions == null) { load(); }
+        if (dimensions.isEmpty()) { return true; }
+        return Listing.allows(dimensions.contains(dimension), blacklist);
+    }
+
+    public static void replace(World world, int chunkX, int chunkZ) {
+        if (dimensions == null) { load(); }
+        if (!wanted) { return; }
+        Chunk chunk = world.getChunk(chunkX, chunkZ);
+        int baseX = chunkX << 4;
+        int baseZ = chunkZ << 4;
+        int replaced = 0;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (ExtendedBlockStorage section : chunk.getBlockStorageArray()) {
+            if (section == Chunk.NULL_BLOCK_STORAGE) { continue; }
+            int bottom = section.getYLocation();
+            if (bottom > maxHeight || bottom + 15 < minHeight) { continue; }
+            for (int y = 0; y < 16; y++) {
+                int worldY = bottom + y;
+                if (worldY < minHeight || worldY > maxHeight) { continue; }
+                for (int x = 0; x < 16; x++) {
+                    for (int z = 0; z < 16; z++) {
+                        IBlockState found = section.get(x, y, z);
+                        IBlockState swap = replacementFor(found);
+                        if (swap == null) { continue; }
+                        pos.setPos(baseX + x, worldY, baseZ + z);
+                        world.setBlockState(pos, swap, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
+                        count(found, swap);
+                        replaced++;
+                    }
+                }
+            }
+        }
+        if (replaced > 0) { chunks++; }
+    }
+
+    public static boolean replaces(World world, IBlockState state, int y) { return wanted() && appliesTo(world.provider.getDimension()) && y >= minHeight && y <= maxHeight && replacementFor(state) != null; }
+
+    public static void report() {
+        if (REPLACED.total() == 0) { return; }
+        Summary.info("replacements", "Replaced " + REPLACED.total() + " block(s) in " + chunks + " chunk(s) that already existed");
+        if (ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements)) {
+            for (Map.Entry<String, Integer> entry : REPLACED.map().entrySet()) { ContentLog.LOGGER.debug("  replaced {} {}", entry.getValue(), entry.getKey()); }
+        }
+    }
+
+    public static void reload() {
+        dimensions = null;
+        EXACT.clear();
+        WHOLE.clear();
+        KEYS.clear();
+        REPORTED.clear();
+        REPLACED.clear();
+        chunks = 0;
+    }
+
+    @Nullable private static IBlockState replacementFor(@Nullable IBlockState found) {
+        if (found == null) { return null; }
+        IBlockState swap = WHOLE.get(found.getBlock());
+        if (swap == null && !EXACT.isEmpty()) { swap = EXACT.get(found); }
+        if (swap == null || swap == found) { return null; }
+        return swap;
+    }
+
+    private static void count(IBlockState found, IBlockState target) {
+        String key = KEYS.computeIfAbsent(found, held -> name(held) + " to " + name(target));
+        REPLACED.count(key);
+        if (!logging) { return; }
+        if (REPORTED.add(key)) { ContentLog.LOGGER.info("Replacing {} in chunks that already exist", key); }
+    }
+
+    private static String name(IBlockState state) {
+        ResourceLocation registry = state.getBlock().getRegistryName();
+        return (registry == null ? "unknown" : registry.toString()) + ":" + state.getBlock().getMetaFromState(state);
+    }
+
+    private static Set<String> sources() {
+        Set<String> names = new TreeSet<>();
+        for (IBlockState state : EXACT.keySet()) { names.add("exact " + name(state)); }
+        for (Block block : WHOLE.keySet()) { names.add("whole " + block.getRegistryName()); }
+        return names;
+    }
+
+    private static void load() {
+        if (ContentControl.off(ContentControl.REPLACEMENTS)) {
+            dimensions = new HashSet<>();
+            token = "replace:off";
+            wanted = false;
+            return;
+        }
+        dimensions = new HashSet<>();
+        for (int dimension : ContentControl.numbers(ContentControl.REPLACEMENTS, "blockReplacementDimensions", Config.worldgen.blockReplacementDimensions)) { dimensions.add(dimension); }
+        minHeight = Math.max(0, ContentControl.number(ContentControl.REPLACEMENTS, "blockReplacementMinHeight", Config.worldgen.blockReplacementMinHeight));
+        maxHeight = Math.min(255, ContentControl.number(ContentControl.REPLACEMENTS, "blockReplacementMaxHeight", Config.worldgen.blockReplacementMaxHeight));
+        maxHeight = Math.max(minHeight, maxHeight);
+        EXACT.clear();
+        WHOLE.clear();
+        for (String entry : ContentControl.list(ContentControl.REPLACEMENTS, "blockReplacements", Config.worldgen.blockReplacements)) {
+            String[] parts = Settings.pair(entry, "blockReplacements", "block=block");
+            if (parts == null) { continue; }
+            String from = parts[0];
+            IBlockState target = ContentStates.parse(parts[1], "blockReplacements entry '" + entry + "'");
+            if (target == null) { continue; }
+            IBlockState found = ContentStates.parse(from, "blockReplacements entry '" + entry + "'");
+            if (found == null) { continue; }
+            if (from.split(":").length < 3) { WHOLE.put(found.getBlock(), target); }
+            else { EXACT.put(found, target); }
+        }
+        blacklist = ContentControl.flag(ContentControl.REPLACEMENTS, "blockReplacementDimensionsAreBlacklist", Config.worldgen.blockReplacementDimensionsAreBlacklist);
+        logging = ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements);
+        wanted = !EXACT.isEmpty() || !WHOLE.isEmpty();
+        token = "replace:" + sources().hashCode() + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey).trim();
+        if (wanted) { Summary.info("replacements.setup", "Replacing " + (EXACT.size() + WHOLE.size()) + " kind(s) of block in chunks that already exist, between y" + minHeight + " and y" + maxHeight); }
+    }
+}

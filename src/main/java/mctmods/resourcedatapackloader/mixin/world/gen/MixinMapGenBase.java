@@ -1,0 +1,78 @@
+package mctmods.resourcedatapackloader.mixin.world.gen;
+
+import mctmods.resourcedatapackloader.common.villages.CityGrid;
+import mctmods.resourcedatapackloader.common.villages.IMapGenVillageHold;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSites;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
+import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.BeardSite;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardSurface;
+import mctmods.resourcedatapackloader.core.util.math.Longs;
+
+import java.util.List;
+import java.util.Random;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.gen.MapGenBase;
+import net.minecraft.world.gen.structure.MapGenStructure;
+import net.minecraft.world.gen.structure.MapGenVillage;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(MapGenBase.class) public abstract class MixinMapGenBase {
+    @Shadow public int range;
+    @Shadow public Random rand;
+    @Shadow public World world;
+
+    @Inject(method = "generate", at = @At("HEAD"), cancellable = true) private void rdpl$skipCarving(World worldIn, int x, int z, ChunkPrimer primer, CallbackInfo ci) {
+        if (ContentStructures.blocks(worldIn, (MapGenBase) (Object) this)) { ci.cancel(); }
+    }
+
+    @Inject(method = "generate", at = @At("HEAD"), cancellable = true) private void rdpl$scanSitesOnly(World worldIn, int x, int z, ChunkPrimer primer, CallbackInfo ci) {
+        if (!(this instanceof IMapGenVillageHold) || IMapGenVillageHold.class.isAssignableFrom(((Object) this).getClass().getSuperclass())) { return; }
+        if (!ContentBeard.wanted()) { return; }
+        ci.cancel();
+        world = worldIn;
+        ((IMapGenVillageHold) this).rdpl$holdDistance();
+        rand.setSeed(worldIn.getSeed());
+        long saltX = rand.nextLong();
+        long saltZ = rand.nextLong();
+        rdpl$visitSites(worldIn, x, z, primer, saltX, saltZ);
+        List<long[]> pinned = ContentStructurePlacement.pins(ContentStructurePlacement.VILLAGES);
+        if (pinned == null) { return; }
+        for (long[] at : pinned) { rdpl$visit(worldIn, (int) at[0] >> 4, (int) at[1] >> 4, x, z, primer, saltX, saltZ); }
+    }
+
+    @Unique private void rdpl$visitSites(World worldIn, int x, int z, ChunkPrimer primer, long saltX, long saltZ) {
+        if (BeardSurface.unreadable(worldIn)) { return; }
+        if (CityGrid.on()) {
+            for (int cellX = CityGrid.cellOf(x - range); cellX <= CityGrid.cellOf(x + range); cellX++) {
+                for (int cellZ = CityGrid.cellOf(z - range); cellZ <= CityGrid.cellOf(z + range); cellZ++) {
+                    long start = CityGrid.startIn(cellX, cellZ);
+                    rdpl$visit(worldIn, Longs.high(start), Longs.low(start), x, z, primer, saltX, saltZ);
+                }
+            }
+            return;
+        }
+        ContentSites known = ContentSites.of(worldIn, MapGenVillage.class.cast(this).distance);
+        int grid = known.spacing();
+        for (int cellX = Math.floorDiv(x - range, grid); cellX <= Math.floorDiv(x + range, grid); cellX++) {
+            for (int cellZ = Math.floorDiv(z - range, grid); cellZ <= Math.floorDiv(z + range, grid); cellZ++) {
+                long chosen = BeardSite.siteFor(worldIn, known, cellX, cellZ, grid);
+                if (chosen == ContentBeard.NO_SITE) { continue; }
+                rdpl$visit(worldIn, Longs.high(chosen), Longs.low(chosen), x, z, primer, saltX, saltZ);
+            }
+        }
+    }
+
+    @Unique private void rdpl$visit(World worldIn, int chunkX, int chunkZ, int x, int z, ChunkPrimer primer, long saltX, long saltZ) {
+        if (Math.abs(chunkX - x) > range || Math.abs(chunkZ - z) > range) { return; }
+        rand.setSeed((long) chunkX * saltX ^ (long) chunkZ * saltZ ^ worldIn.getSeed());
+        MapGenStructure.class.cast(this).recursiveGenerate(worldIn, chunkX, chunkZ, x, z, primer);
+    }
+}

@@ -1,0 +1,106 @@
+package mctmods.resourcedatapackloader.mixin.world.gen.structure;
+
+import mctmods.resourcedatapackloader.common.villages.CityGrowth;
+import mctmods.resourcedatapackloader.common.villages.ContentVillages;
+import mctmods.resourcedatapackloader.common.villages.RailPiece;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.rail.BeardRails;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.road.BeardRoads;
+
+import java.util.List;
+import net.minecraft.block.BlockStairs;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(StructureComponent.class) public abstract class MixinStructureComponent {
+    @Inject(method = "findIntersecting", at = @At("HEAD"), cancellable = true) private static void rdpl$betweenBuildings(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn, CallbackInfoReturnable<StructureComponent> cir) {
+        if (listIn.isEmpty() || !(listIn.get(0) instanceof StructureVillagePieces.Village)) { return; }
+        if (!ContentBeard.spacedLayout()) {
+            if (!CityGrowth.laying()) {
+                for (StructureComponent piece : listIn) {
+                    if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
+                    StructureBoundingBox held = piece.getBoundingBox();
+                    if (held.intersectsWith(boundingboxIn)) {
+                        cir.setReturnValue(piece);
+                        return;
+                    }
+                }
+                cir.setReturnValue(null);
+                return;
+            }
+            for (StructureComponent piece : listIn) {
+                StructureBoundingBox held = piece.boundingBox;
+                if (held == null || !rdpl$flatHit(held, boundingboxIn, 0)) { continue; }
+                if (piece instanceof StructureVillagePieces.Path && rdpl$roadShaped(boundingboxIn) && rdpl$crosses(held, boundingboxIn)) { continue; }
+                if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
+                if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }
+                cir.setReturnValue(piece);
+                return;
+            }
+            cir.setReturnValue(null);
+            return;
+        }
+
+        for (StructureComponent piece : listIn) {
+            StructureBoundingBox held = piece.boundingBox;
+            if (held == null) { continue; }
+            if (BeardRails.buriedUnder(piece, boundingboxIn)) { continue; }
+            if (piece instanceof RailPiece && rdpl$roadShaped(boundingboxIn) && BeardRails.meets(held, boundingboxIn)) { continue; }
+            boolean flush = piece instanceof StructureVillagePieces.Path || piece instanceof StructureVillagePieces.Well || piece instanceof RailPiece;
+            if (rdpl$flatHit(held, boundingboxIn, flush ? 0 : 1)) {
+                cir.setReturnValue(piece);
+                return;
+            }
+        }
+        cir.setReturnValue(null);
+    }
+
+    @Unique private static boolean rdpl$roadShaped(StructureBoundingBox box) {
+        int narrow = Math.min(box.maxX - box.minX, box.maxZ - box.minZ) + 1;
+        int wide = Math.max(box.maxX - box.minX, box.maxZ - box.minZ) + 1;
+        return narrow == 3 || (narrow == BeardRoads.pathFullWidth() && wide > narrow);
+    }
+
+    @Unique private static boolean rdpl$crosses(StructureBoundingBox road, StructureBoundingBox box) {
+        boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+        if (roadAlongX == (box.maxX - box.minX >= box.maxZ - box.minZ)) { return false; }
+        StructureBoundingBox ew = roadAlongX ? road : box;
+        StructureBoundingBox ns = roadAlongX ? box : road;
+        int ewCenter = (ew.minZ + ew.maxZ) / 2;
+        int nsCenter = (ns.minX + ns.maxX) / 2;
+        return (ewCenter >= ns.minZ && ewCenter <= ns.maxZ) || (nsCenter >= ew.minX && nsCenter <= ew.maxX);
+    }
+
+    @Unique private static boolean rdpl$flatHit(StructureBoundingBox held, StructureBoundingBox box, int gap) { return held.maxX >= box.minX - gap && held.minX <= box.maxX + gap && held.maxZ >= box.minZ - gap && held.minZ <= box.maxZ + gap; }
+
+    @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z")) private boolean rdpl$ruledBlocks(World world, BlockPos pos, IBlockState newState, int flags) {
+        if (rdpl$plotPiece()) {
+            StructureComponent self = (StructureComponent) (Object) this;
+            if (newState.getBlock() instanceof BlockStairs && ContentBeard.wanted() && !self.getBoundingBox().isVecInside(pos)) { return true; }
+            if (BeardRails.insideBore(world, pos.getX(), pos.getY(), pos.getZ())) { return true; }
+            IBlockState wanted = ContentVillages.ruled(world, pos, newState);
+            return world.setBlockState(pos, wanted == null ? newState : wanted, flags);
+        }
+        return world.setBlockState(pos, newState, flags);
+    }
+
+    @Redirect(method = {"replaceAirAndLiquidDownwards(Lnet/minecraft/world/World;Lnet/minecraft/block/state/IBlockState;IIILnet/minecraft/world/gen/structure/StructureBoundingBox;)V", "generateChest(Lnet/minecraft/world/World;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/ResourceLocation;Lnet/minecraft/block/state/IBlockState;)Z"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;I)Z")) private boolean rdpl$boredBlocks(World world, BlockPos pos, IBlockState newState, int flags) {
+        if (rdpl$plotPiece() && BeardRails.insideBore(world, pos.getX(), pos.getY(), pos.getZ())) { return true; }
+        return world.setBlockState(pos, newState, flags);
+    }
+
+    @Unique private boolean rdpl$plotPiece() {
+        StructureComponent self = (StructureComponent) (Object) this;
+        return self instanceof StructureVillagePieces.Village && !(self instanceof StructureVillagePieces.Road);
+    }
+}

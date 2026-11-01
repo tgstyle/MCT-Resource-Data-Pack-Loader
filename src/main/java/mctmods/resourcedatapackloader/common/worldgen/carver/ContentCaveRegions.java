@@ -1,0 +1,318 @@
+package mctmods.resourcedatapackloader.common.worldgen.carver;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
+import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
+import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentCascade;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.integration.CompatHandler;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.math.MathUtil;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import javax.annotation.Nullable;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.Rotation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.gen.structure.template.Template;
+
+public final class ContentCaveRegions {
+    private static final int OFFSET = 8;
+    private static final int MEMO_LIMIT = 4096;
+    private static final ThreadLocal<Map<Integer, Map<Long, Object>>> MEMO =ThreadLocal.withInitial(HashMap::new);
+    private static final Object NONE = new Object();
+    private static final Map<Integer, List<CaveRegionDef>> BY_DIMENSION = new HashMap<>();
+    private static final PackGeneration GENERATION = new PackGeneration();
+
+    private ContentCaveRegions() {}
+
+    public static boolean any() { return !ContentRegistry.caveRegions().isEmpty(); }
+
+    public static boolean anyShapesSky() {
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && def.shapesSky()) { return true; }
+        }
+        return false;
+    }
+
+    public static double lowestSkyIslands(double fallback) {
+        double lowest = fallback;
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && !Float.isNaN(def.sky.islands)) { lowest = Math.min(lowest, def.sky.islands); }
+        }
+        return lowest;
+    }
+
+    public static int highestAsked() {
+        int highest = Integer.MIN_VALUE;
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && (def.hasCovers() || def.hasStructures())) { highest = Math.max(highest, def.maxHeight); }
+        }
+        return highest;
+    }
+
+    @Nullable public static CaveRegionDef regionAt(World world, int x, int y, int z) {
+        List<CaveRegionDef> defs = forDimension(world.provider.getDimension());
+        if (defs.isEmpty()) { return null; }
+        int qx = x >> 2;
+        int qy = y >> 2;
+        int qz = z >> 2;
+        long memoKey = ((long) (qx & 0xFFFFFF) << 40) | ((long) (qz & 0xFFFFFF) << 16) | (qy & 0xFFFF);
+        Map<Long, Object> memo = MEMO.get().computeIfAbsent(world.provider.getDimension(), dimension -> new HashMap<>());
+        Object held = memo.get(memoKey);
+        if (held != null) {
+            CaveRegionDef cached = held == NONE ? null : (CaveRegionDef) held;
+            return clampBand(cached, y);
+        }
+        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells));
+        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY));
+        CaveRegionDef found = resolve(world.getSeed(), defs, qx, qy, qz, cellsXZ >> 2, cellsY >> 2);
+        if (memo.size() > MEMO_LIMIT) { memo.clear(); }
+        memo.put(memoKey, found == null ? NONE : found);
+        return clampBand(found, y);
+    }
+
+    @Nullable private static CaveRegionDef clampBand(@Nullable CaveRegionDef def, int y) {
+        if (def == null || y < def.minHeight || y > def.maxHeight) { return null; }
+        return def;
+    }
+
+    @Nullable private static CaveRegionDef resolve(long seed, List<CaveRegionDef> defs, int qx, int qy, int qz, int spanXZ, int spanY) {
+        int cellX = Math.floorDiv(qx, spanXZ);
+        int cellY = Math.floorDiv(qy, spanY);
+        int cellZ = Math.floorDiv(qz, spanXZ);
+        long bestDistance = Long.MAX_VALUE;
+        long bestHash = 0;
+        int bestCenterY = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int cx = cellX + dx;
+                    int cy = cellY + dy;
+                    int cz = cellZ + dz;
+                    long cellHash = MathUtil.mix(seed, cx, cy, cz);
+                    long jx = center(cellHash, 0, cx, spanXZ);
+                    long jy = center(cellHash, 20, cy, spanY);
+                    long jz = center(cellHash, 40, cz, spanXZ);
+                    long offX = jx - qx;
+                    long offY = (jy - qy) * spanXZ / Math.max(1, spanY);
+                    long offZ = jz - qz;
+                    long distance = offX * offX + offY * offY + offZ * offZ;
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestHash = cellHash;
+                        bestCenterY = (int) (jy << 2);
+                    }
+                }
+            }
+        }
+        return regionForCell(bestHash, bestCenterY, defs);
+    }
+
+    private static long center(long cellHash, int shift, int cell, int span) { return cell * (long) span + Math.floorMod(cellHash >>> shift, span); }
+
+    @Nullable private static CaveRegionDef regionForCell(long cellHash, int centerY, List<CaveRegionDef> defs) {
+        int plain = Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight));
+        int total = plain;
+        for (CaveRegionDef def : defs) {
+            if (centerY >= def.minHeight && centerY <= def.maxHeight) { total += def.weight; }
+        }
+        if (total <= 0) { return null; }
+        long roll = Math.floorMod(cellHash >>> 13, total);
+        if (roll < plain) { return null; }
+        roll -= plain;
+        for (CaveRegionDef def : defs) {
+            if (centerY < def.minHeight || centerY > def.maxHeight) { continue; }
+            if (roll < def.weight) { return def; }
+            roll -= def.weight;
+        }
+        return null;
+    }
+
+    public static void placeStructures(World world, int chunkX, int chunkZ) {
+        if (!(world instanceof WorldServer)) { return; }
+        List<CaveRegionDef> defs = forDimension(world.provider.getDimension());
+        boolean any = false;
+        for (CaveRegionDef def : defs) {
+            if (def.hasStructures()) {
+                any = true;
+                break;
+            }
+        }
+        if (!any) { return; }
+        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells));
+        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY));
+        int spanXZ = cellsXZ >> 2;
+        int spanY = cellsY >> 2;
+        int blockX0 = chunkX * 16 + OFFSET;
+        int blockZ0 = chunkZ * 16 + OFFSET;
+        int floor = GenHeights.floor(world, 0);
+        int ceiling = GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT);
+        int cellY0 = Math.floorDiv(Math.floorDiv(floor, 4), spanY);
+        int cellY1 = Math.floorDiv(Math.floorDiv(ceiling - 1, 4), spanY);
+        int qx0 = blockX0 >> 2;
+        int qz0 = blockZ0 >> 2;
+        for (int cellX = Math.floorDiv(qx0 + 3 - (spanXZ - 1), spanXZ); cellX <= Math.floorDiv(qx0 + 3, spanXZ); cellX++) {
+            for (int cellZ = Math.floorDiv(qz0 + 3 - (spanXZ - 1), spanXZ); cellZ <= Math.floorDiv(qz0 + 3, spanXZ); cellZ++) {
+                for (int cellY = cellY0; cellY <= cellY1; cellY++) {
+                    long cellHash = MathUtil.mix(world.getSeed(), cellX, cellY, cellZ);
+                    int wx = (int) (center(cellHash, 0, cellX, spanXZ) << 2);
+                    int wz = (int) (center(cellHash, 40, cellZ, spanXZ) << 2);
+                    if (wx < blockX0 || wx > blockX0 + 15 || wz < blockZ0 || wz > blockZ0 + 15) { continue; }
+                    int centerY = (int) (center(cellHash, 20, cellY, spanY) << 2);
+                    CaveRegionDef region = regionForCell(cellHash, centerY, defs);
+                    if (region == null || !region.hasStructures()) { continue; }
+                    if (region.structureChance < 1.0F && ((cellHash >>> 24) & 0xFFFFF) / (float) (1 << 20) >= region.structureChance) { continue; }
+                    int lowest = Math.max(region.minHeight, floor + 1);
+                    int highest = Math.min(region.maxHeight, ceiling - 1);
+                    int start = Math.max(lowest, Math.min(highest, centerY));
+                    int seat = caveFloor(world, wx, wz, start, lowest, highest);
+                    if (seat == Integer.MIN_VALUE) { continue; }
+                    place((WorldServer) world, region, cellHash, wx, seat, wz);
+                }
+            }
+        }
+    }
+
+    private static int caveFloor(World world, int x, int z, int start, int lowest, int highest) {
+        for (int y = start; y >= lowest; y--) {
+            if (seated(world, x, y, z)) { return y; }
+        }
+        for (int y = start + 1; y <= highest; y++) {
+            if (seated(world, x, y, z)) { return y; }
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    private static boolean seated(World world, int x, int y, int z) {
+        BlockPos at = new BlockPos(x, y, z);
+        if (!world.isBlockLoaded(at) || !world.isAirBlock(at)) { return false; }
+        IBlockState below = world.getBlockState(at.down());
+        return below.getMaterial() != Material.AIR && !below.getMaterial().isLiquid();
+    }
+
+    private static void place(WorldServer world, CaveRegionDef region, long cellHash, int x, int y, int z) {
+        Random random = new Random(cellHash);
+        String named = PickDef.pick(region.structures, random, "");
+        if (named == null || named.isEmpty()) { return; }
+        MinecraftServer host = world.getMinecraftServer();
+        Template loaded = world.getStructureTemplateManager().get(host, new ResourceLocation(named));
+        if (loaded == null) {
+            ContentLog.LOGGER.error("Cave region {} places structure '{}', which could not be loaded, so nothing generates", region.key, named);
+            return;
+        }
+        Rotation rotation = Rotation.values()[random.nextInt(4)];
+        PlacementSettings settings = new PlacementSettings();
+        settings.setRotation(rotation);
+        settings.setRandom(random);
+        BlockPos span = loaded.transformedSize(rotation);
+        int backX = ContentImprint.backX(rotation, span);
+        int backZ = ContentImprint.backZ(rotation, span);
+        BlockPos fitted = new BlockPos(x - span.getX() / 2 + backX, y, z - span.getZ() / 2 + backZ);
+        if (span.getX() > 16 || span.getZ() > 16) {
+            if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return; }
+        }
+        loaded.addBlocksToWorld(world, fitted, settings, 2);
+        StructureLoot.stock(world, x - span.getX() / 2, y, z - span.getZ() / 2, x - span.getX() / 2 + span.getX() - 1, y + span.getY() - 1, z - span.getZ() / 2 + span.getZ() - 1, region.structureLoot, random);
+    }
+
+    public static void decorate(World world, int chunkX, int chunkZ, Random random) {
+        List<CaveRegionDef> defs = forDimension(world.provider.getDimension());
+        if (defs.isEmpty()) { return; }
+        int floor = GenHeights.floor(world, 0);
+        int ceiling = GenHeights.ceiling(world, world.getActualHeight());
+        List<int[]> bands = coverBands(defs, floor + 1, ceiling - 2);
+        if (bands.isEmpty()) { return; }
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (int x = chunkX * 16 + OFFSET; x < chunkX * 16 + OFFSET + 16; x++) {
+            for (int z = chunkZ * 16 + OFFSET; z < chunkZ * 16 + OFFSET + 16; z++) {
+                for (int[] band : bands) {
+                    int lowest = band[0];
+                    int highest = band[1];
+                    IBlockState below = world.getBlockState(pos.setPos(x, lowest - 1, z));
+                    for (int y = lowest; y <= highest + 1; y++) {
+                        IBlockState state = world.getBlockState(pos.setPos(x, y, z));
+                        boolean airNow = state.getMaterial() == Material.AIR;
+                        boolean airBelow = below.getMaterial() == Material.AIR;
+                        if (airNow && !airBelow && y <= highest) { coverFloor(world, random, x, y, z, below); }
+                        else if (!airNow && airBelow && y - 1 >= lowest) { coverCeiling(world, random, x, y, z, state); }
+                        below = state;
+                    }
+                }
+            }
+        }
+    }
+
+    private static List<int[]> coverBands(List<CaveRegionDef> defs, int floor, int ceiling) {
+        List<int[]> bands = new ArrayList<>();
+        for (CaveRegionDef def : defs) {
+            if (!def.hasCovers()) { continue; }
+            int lowest = Math.max(def.minHeight, floor);
+            int highest = Math.min(def.maxHeight, ceiling);
+            if (lowest > highest) { continue; }
+            bands.add(new int[] {lowest, highest});
+        }
+        bands.sort(Comparator.comparingInt(left -> left[0]));
+        List<int[]> merged = new ArrayList<>();
+        for (int[] band : bands) {
+            int[] last = merged.isEmpty() ? null : merged.get(merged.size() - 1);
+            if (last != null && band[0] <= last[1] + 1) { last[1] = Math.max(last[1], band[1]); }
+            else { merged.add(band); }
+        }
+        return merged;
+    }
+
+    private static void coverFloor(World world, Random random, int x, int y, int z, IBlockState under) {
+        CaveRegionDef region = regionAt(world, x, y, z);
+        if (region == null) { return; }
+        IBlockState cover = region.floorState();
+        if (cover == null || region.rejectsCover(under)) { return; }
+        if (random.nextFloat() >= region.floorChance) { return; }
+        BlockPos pos = new BlockPos(x, y, z);
+        if (world.canSeeSky(pos) && y < world.provider.getActualHeight()) { return; }
+        world.setBlockState(pos.down(), cover, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
+    }
+
+    private static void coverCeiling(World world, Random random, int x, int y, int z, IBlockState ceiling) {
+        CaveRegionDef region = regionAt(world, x, y - 1, z);
+        if (region == null) { return; }
+        IBlockState cover = region.ceilingState();
+        if (cover == null || region.rejectsCover(ceiling)) { return; }
+        if (random.nextFloat() >= region.ceilingChance) { return; }
+        BlockPos pos = new BlockPos(x, y - 1, z);
+        if (world.canSeeSky(pos) && y - 1 < world.provider.getActualHeight()) { return; }
+        world.setBlockState(pos.up(), cover, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
+    }
+
+    private static List<CaveRegionDef> forDimension(int dimension) {
+        if (GENERATION.stale()) {
+            BY_DIMENSION.clear();
+            MEMO.get().clear();
+        }
+        List<CaveRegionDef> cached = BY_DIMENSION.get(dimension);
+        if (cached != null) { return cached; }
+        List<CaveRegionDef> active = new ArrayList<>();
+        for (CaveRegionDef def : ContentRegistry.caveRegions()) {
+            if (def.weight > 0 && def.inDimension(dimension)) { active.add(def); }
+        }
+        BY_DIMENSION.put(dimension, active);
+        return active;
+    }
+}

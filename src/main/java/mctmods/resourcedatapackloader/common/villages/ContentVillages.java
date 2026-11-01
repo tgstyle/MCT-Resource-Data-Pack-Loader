@@ -1,0 +1,430 @@
+package mctmods.resourcedatapackloader.common.villages;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorldgen;
+import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
+import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
+import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentBeard;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.IVillageBlock;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.BeardPlots;
+import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+import mctmods.resourcedatapackloader.core.util.text.Listing;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureComponent;
+import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.template.Template;
+import net.minecraftforge.fml.common.registry.VillagerRegistry;
+
+public final class ContentVillages {
+    private static final String AT = "at=";
+    private static final String UNDER = "under=";
+    private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
+    private static final Map<VillageDef, BlockPos> SIZES = new IdentityHashMap<>();
+    @Nullable private static List<VillageDef> bySize;
+    private static final Set<String> GROWN = new HashSet<>();
+    private static final Map<IBlockState, IBlockState> BLOCKS = new HashMap<>();
+    private static final Set<IBlockState> REPLACEMENTS = new HashSet<>();
+    private static final List<VillageRule> RULES = new ArrayList<>();
+    private static final TemplateMemo<Boolean> BLOCKS_READ = new TemplateMemo<>();
+    private static final TemplateMemo<Set<String>> NAMED = new TemplateMemo<>();
+    private static final Map<VillageDef, Boolean> BARRED = new HashMap<>();
+    private static final TemplateMemo<Boolean> BARRED_READ = new TemplateMemo<>();
+    private static final TemplateMemo<Integer> LARGEST = new TemplateMemo<>();
+    private static final WeightedPicks BLOCK_SIZES = new WeightedPicks("villageBlockSizes");
+    private static boolean loaded;
+    private static boolean registered;
+
+    private ContentVillages() {}
+
+    public static boolean load() {
+        if (loaded) { return !DEFS.isEmpty(); }
+        loaded = true;
+        if (!Config.content.villages) { return false; }
+        Json.eachFile(PackManager.VILLAGES, "village file", (key, contents) -> {
+            VillageDef def = ContentParserWorldgen.village(key, contents);
+            if (def == null) { return; }
+            if (missing(def)) {
+                ContentLog.LOGGER.debug("Village plot {} needs {}, which is not here, so it is left out", key, def.requires);
+                return;
+            }
+            DEFS.put(key.toString(), def);
+        });
+        if (!DEFS.isEmpty()) { Summary.info("villages", "Loaded " + DEFS.size() + " village plot(s) from packs"); }
+        return !DEFS.isEmpty();
+    }
+
+    public static void register() {
+        if (registered || DEFS.isEmpty()) { return; }
+        registered = true;
+        VillagePieces.plots();
+        VillagerRegistry.instance().registerVillageCreationHandler(new Handler());
+    }
+
+    public static boolean filtering() {
+        if (ContentControl.off(ContentControl.STRUCTURES)) { return false; }
+        return !names().isEmpty();
+    }
+
+    public static boolean allowed(Class<?> piece) {
+        if (piece == null) { return true; }
+        boolean listed = names().contains(piece.getSimpleName().toLowerCase(Locale.ROOT));
+        if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return !listed; }
+        if (listed) { return true; }
+        return piece.getEnclosingClass() != StructureVillagePieces.class;
+    }
+
+    @Nullable public static VillageDef byName(String name) { return defs().get(name); }
+
+    public static BlockPos plotSize(VillageDef def) { return Handler.plotSize(def); }
+
+    private static Map<String, VillageDef> defs() {
+        load();
+        return DEFS;
+    }
+
+    public static void reload() {
+        DEFS.clear();
+        SIZES.clear();
+        bySize = null;
+        BLOCKS.clear();
+        REPLACEMENTS.clear();
+        RULES.clear();
+        BARRED.clear();
+        BLOCKS_READ.forget();
+        BARRED_READ.forget();
+        LARGEST.forget();
+        NAMED.forget();
+        ContentStates.forget();
+        loaded = false;
+    }
+
+    private static Set<String> names() { return NAMED.get(() -> Settings.lower(ContentControl.list(ContentControl.STRUCTURES, "villagePieces", Config.worldgen.villagePieces))); }
+
+    private static boolean named(ResourceLocation key) { return names().contains(key.toString().toLowerCase(Locale.ROOT)) || names().contains(key.getPath().toLowerCase(Locale.ROOT)); }
+
+    private static boolean missing(VillageDef def) { return !ContentRegistry.available(def.requires, def.registryName); }
+
+    public static int plotsLeast() {
+        int least = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsLeast", Config.worldgen.villagePlotsLeast));
+        int most = plotsMost();
+        return most > 0 ? Math.min(least, most) : least;
+    }
+
+    public static int plotsMost() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePlotsMost", Config.worldgen.villagePlotsMost)); }
+
+    public static int plots(List<StructureComponent> components) {
+        int count = 0;
+        for (StructureComponent piece : components) {
+            if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
+            if (piece instanceof StructureVillagePieces.Road || piece instanceof StructureVillagePieces.Torch || piece instanceof StructureVillagePieces.Well) { continue; }
+            count++;
+        }
+        return count;
+    }
+
+    public static void sizeBlock(World world, StructureVillagePieces.Start start) {
+        if (BLOCK_SIZES.stale()) { BLOCK_SIZES.load(ContentControl.list(ContentControl.VILLAGES, "villageBlockSizes", Config.worldgen.villageBlockSizes)); }
+        if (BLOCK_SIZES.isEmpty() || !(start instanceof IVillageBlock)) { return; }
+        StructureBoundingBox well = start.getBoundingBox();
+        WeightedPicks.Pick chosen = BLOCK_SIZES.pick(SeededRandom.at(world, well.minX, well.minZ));
+        if (chosen == null) { return; }
+        int size;
+        try { size = Integer.parseInt(chosen.name); }
+        catch (NumberFormatException wrong) {
+            ContentLog.LOGGER.error("villageBlockSizes entry '{}' is not a whole number of blocks, so the district at {}, {} keeps the largest plot as its block", chosen.name, well.minX, well.minZ);
+            return;
+        }
+        ((IVillageBlock) start).rdpl$block(Math.max(13, size));
+        ContentLog.LOGGER.debug("The district at {}, {} lays its blocks {} deep", well.minX, well.minZ, Math.max(13, size));
+    }
+
+    public static int blockOf(@Nullable StructureComponent piece) {
+        int held = piece instanceof IVillageBlock ? ((IVillageBlock) piece).rdpl$block() : 0;
+        return held > 0 ? held : largestPlot();
+    }
+
+    private static boolean exceeds(VillageDef def, int block) { return span(def) > block; }
+
+    public static int largestPlot() { return LARGEST.get(ContentVillages::widestPlot); }
+
+    private static int widestPlot() {
+        int widest = 13;
+        boolean filtering = filtering();
+        for (VillageDef def : defs().values()) {
+            if (missing(def) || (filtering && blocked(def))) { continue; }
+            StructureMapDef map = ContentStructureMaps.byName(def.structure);
+            if (map != null) {
+                widest = Math.max(widest, Math.max(map.cellsWide, map.cellsDeep) * map.cell);
+                continue;
+            }
+            widest = Math.max(widest, Math.max(def.width, def.depth));
+        }
+        return widest;
+    }
+
+    @Nullable public static IBlockState swap(IBlockState original) {
+        blocks();
+        if (BLOCKS.isEmpty()) { return null; }
+        IBlockState wanted = BLOCKS.get(original);
+        if (wanted != null) { return wanted; }
+        return BLOCKS.get(original.getBlock().getDefaultState());
+    }
+
+    @Nullable public static IBlockState ruled(World world, BlockPos pos, IBlockState laid) {
+        blocks();
+        IBlockState held = laid;
+        if (!REPLACEMENTS.contains(held)) {
+            IBlockState swapped = swap(held);
+            if (swapped != null) { held = swapped; }
+        }
+        for (VillageRule rule : RULES) {
+            IBlockState wanted = rule.apply(world, pos, held);
+            if (wanted != null) { return wanted; }
+        }
+        return held == laid ? null : held;
+    }
+
+    private static void blocks() {
+        BLOCKS_READ.get(() -> {
+            loadBlocks();
+            return Boolean.TRUE;
+        });
+    }
+
+    private static void loadBlocks() {
+        BLOCKS.clear();
+        REPLACEMENTS.clear();
+        RULES.clear();
+        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "villageBlocks", Config.worldgen.villageBlocks)) {
+            VillageRule rule = rule(entry);
+            if (rule == null) { continue; }
+            if (rule.plain()) {
+                BLOCKS.put(rule.original(), rule.replacement());
+                REPLACEMENTS.add(rule.replacement());
+            }
+            else { RULES.add(rule); }
+        }
+        if (!BLOCKS.isEmpty()) { ContentLog.LOGGER.info("Villages build with {} replaced block(s), whatever any other mod asks for", BLOCKS.size()); }
+        if (!RULES.isEmpty()) { ContentLog.LOGGER.info("Villages weather {} block(s) by rule as their pieces lay them", RULES.size()); }
+    }
+
+    @Nullable private static VillageRule rule(String entry) {
+        String[] fields = entry.split(",");
+        String[] parts = Settings.pair(fields[0], "villageBlocks", "original=replacement");
+        if (parts == null) { return null; }
+        IBlockState from = ContentStates.parse(parts[0], "villageBlocks");
+        IBlockState to = ContentStates.parse(parts[1], "villageBlocks");
+        if (from == null || to == null) { return null; }
+        int chance = VillageRule.ALWAYS;
+        IBlockState at = null;
+        IBlockState under = null;
+        for (int field = 1; field < fields.length; field++) {
+            String said = fields[field].trim();
+            if (said.isEmpty()) { continue; }
+            if (said.startsWith(AT)) {
+                at = ContentStates.parse(said.substring(AT.length()), "villageBlocks");
+                if (at == null) { return null; }
+            }
+            else if (said.startsWith(UNDER)) {
+                under = ContentStates.parse(said.substring(UNDER.length()), "villageBlocks");
+                if (under == null) { return null; }
+            }
+            else {
+                chance = chanceOf(said, entry);
+                if (chance < 0) { return null; }
+            }
+        }
+        return new VillageRule(from, to, chance, at, under);
+    }
+
+    private static int chanceOf(String said, String entry) {
+        int asked;
+        try { asked = Integer.parseInt(said); }
+        catch (NumberFormatException wrong) {
+            ContentLog.LOGGER.error("villageBlocks entry '{}' says '{}', which is neither a chance out of 100 nor an at= or under= block, ignoring the entry", entry, said);
+            return -1;
+        }
+        if (asked >= 1 && asked <= VillageRule.ALWAYS) { return asked; }
+        ContentLog.LOGGER.error("villageBlocks entry '{}' asks for a chance of {}, which is not between 1 and 100, ignoring the entry", entry, asked);
+        return -1;
+    }
+
+    public static boolean blockedTemplate(ResourceLocation template) {
+        if (template == null || !filtering()) { return false; }
+        boolean listed = named(template);
+        if (!ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return false; }
+        return listed;
+    }
+
+    public static boolean blocked(VillageDef def) {
+        BARRED_READ.get(() -> {
+            BARRED.clear();
+            return Boolean.TRUE;
+        });
+        Boolean held = BARRED.get(def);
+        if (held != null) { return held; }
+        boolean listed = false;
+        if (def.isTemplate() && !def.structure.isEmpty()) {
+            ResourceLocation template = new ResourceLocation(def.structure);
+            listed = named(template);
+        }
+        if (!listed) { listed = named(def.registryName); }
+        boolean barred = Listing.blocks(listed, ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist));
+        BARRED.put(def, barred);
+        return barred;
+    }
+
+    private static int span(VillageDef def) {
+        BlockPos size = plotSize(def);
+        return Math.max(size.getX(), size.getZ());
+    }
+
+    @Nullable private static VillageDef pick(Random random, int block) {
+        boolean filtering = filtering();
+        return WeightedPicks.pick(defs().values(), def -> (filtering && blocked(def)) || exceeds(def, block) ? 0 : Math.max(1, def.weight) * span(def), random);
+    }
+
+    @Nullable public static ContentVillagePiece behind(StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, ContentVillagePiece front) {
+        EnumFacing facing = front.getCoordBaseMode();
+        if (facing == null) { return null; }
+        int block = blockOf(start);
+        VillageDef def = pick(random, block);
+        if (def != null) {
+            ContentVillagePiece seated = Handler.seatBehind(start, placed, front, facing, def);
+            if (seated != null) { return seated; }
+        }
+        for (VillageDef held : Handler.bySize()) {
+            if (held == def || (filtering() && blocked(held)) || exceeds(held, block)) { continue; }
+            ContentVillagePiece seated = Handler.seatBehind(start, placed, front, facing, held);
+            if (seated != null) { return seated; }
+        }
+        return null;
+    }
+
+    public static final class Handler implements VillagerRegistry.IVillageCreationHandler {
+        @Override public StructureVillagePieces.PieceWeight getVillagePieceWeight(Random random, int size) {
+            int weight = 0;
+            int least = Integer.MAX_VALUE;
+            int most = 0;
+            for (VillageDef def : defs().values()) {
+                weight += Math.max(1, def.weight);
+                least = Math.min(least, def.leastCount);
+                most = Math.max(most, def.mostCount);
+            }
+            if (least == Integer.MAX_VALUE) { least = 0; }
+
+            return new StructureVillagePieces.PieceWeight(ContentVillagePiece.class, weight, MathHelper.getInt(random, least + size, most + size));
+        }
+
+        @Override public Class<?> getComponentClass() { return ContentVillagePiece.class; }
+
+        private static BlockPos plotSize(VillageDef def) {
+            BlockPos known = SIZES.get(def);
+            if (known != null) { return known; }
+            BlockPos measured = measure(def);
+            if (measured != null) { SIZES.put(def, measured); }
+            return measured != null ? measured : new BlockPos(def.width, def.height, def.depth);
+        }
+
+        private static List<VillageDef> bySize() {
+            if (bySize != null) { return bySize; }
+            List<VillageDef> sorted = new ArrayList<>(defs().values());
+            sorted.sort(Comparator.comparingInt(ContentVillages::span).reversed());
+            bySize = sorted;
+            return sorted;
+        }
+
+        @Nullable private static BlockPos measure(VillageDef def) {
+            BlockPos declared = new BlockPos(def.width, def.height, def.depth);
+            if (!def.isTemplate()) { return declared; }
+            StructureMapDef map = ContentStructureMaps.byName(def.structure);
+            if (map != null) { return new BlockPos(map.cellsWide * map.cell, (map.layers.length - map.ground) * map.cell, map.cellsDeep * map.cell); }
+            World world = ContentBeard.samplerWorld;
+            if (!(world instanceof WorldServer)) { return null; }
+            Template template = ((WorldServer) world).getStructureTemplateManager().get(world.getMinecraftServer(), new ResourceLocation(def.structure));
+            if (template == null) { return declared; }
+            BlockPos size = template.getSize();
+            if (size.getX() <= def.width && size.getY() <= def.height && size.getZ() <= def.depth) { return declared; }
+            if (GROWN.add(def.registryName.toString())) { ContentLog.LOGGER.warn("Village plot {} declares {}x{}x{} but its template {} measures {}x{}x{}, so the plot is grown to fit rather than cutting the template short", def.registryName, def.width, def.height, def.depth, def.structure, size.getX(), size.getY(), size.getZ()); }
+            return new BlockPos(Math.max(def.width, size.getX()), Math.max(def.height, size.getY()), Math.max(def.depth, size.getZ()));
+        }
+
+        @Override public StructureVillagePieces.Village buildComponent(StructureVillagePieces.PieceWeight weight, StructureVillagePieces.Start start, List<StructureComponent> placed, Random random, int x, int y, int z, EnumFacing facing, int type) {
+            int block = blockOf(start);
+            VillageDef def = pick(random, block);
+            if (def == null) { return null; }
+            StructureVillagePieces.Village seated = seat(start, placed, x, y, z, facing, type, def);
+            if (seated != null) { return seated; }
+            for (VillageDef held : bySize()) {
+                if (held == def || (filtering() && blocked(held)) || exceeds(held, block)) { continue; }
+                seated = seat(start, placed, x, y, z, facing, type, held);
+                if (seated != null) { return seated; }
+            }
+            return null;
+        }
+
+        private static StructureBoundingBox behindBox(StructureBoundingBox f, EnumFacing facing, BlockPos size) {
+            boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
+            int dx = alongX ? size.getZ() : size.getX();
+            int dz = alongX ? size.getX() : size.getZ();
+            int minX;
+            int minZ;
+            if (alongX) {
+                minX = facing == EnumFacing.EAST ? f.maxX + 1 : f.minX - dx;
+                minZ = f.minZ + (f.maxZ - f.minZ + 1 - dz) / 2;
+            }
+            else {
+                minZ = facing == EnumFacing.SOUTH ? f.maxZ + 1 : f.minZ - dz;
+                minX = f.minX + (f.maxX - f.minX + 1 - dx) / 2;
+            }
+            return new StructureBoundingBox(minX, f.minY, minZ, minX + dx - 1, f.minY + size.getY() - 1, minZ + dz - 1);
+        }
+
+        @Nullable private static ContentVillagePiece seatBehind(StructureVillagePieces.Start start, List<StructureComponent> placed, ContentVillagePiece front, EnumFacing facing, VillageDef def) {
+            StructureBoundingBox f = front.getBoundingBox();
+            StructureBoundingBox box = behindBox(f, facing, plotSize(def));
+            if (BeardPlots.collides(placed, box)) { return null; }
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Village plot {} is laid behind the plot at {}, {} from template {}", def.registryName, f.minX, f.minZ, def.isTemplate() ? def.structure : "none, it is a farm"); }
+            return new ContentVillagePiece(start, front.type(), box, facing.getOpposite(), def);
+        }
+
+        @Nullable private static StructureVillagePieces.Village seat(StructureVillagePieces.Start start, List<StructureComponent> placed, int x, int y, int z, EnumFacing facing, int type, VillageDef def) {
+            BlockPos size = plotSize(def);
+            StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x, y, z, 0, 0, 0, size.getX(), size.getY(), size.getZ(), facing);
+            if (BeardPlots.collides(placed, box)) { return null; }
+            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Village plot {} is laid from template {}", def.registryName, def.isTemplate() ? def.structure : "none, it is a farm"); }
+            return new ContentVillagePiece(start, type, box, facing, def);
+        }
+    }
+}

@@ -1,0 +1,238 @@
+package mctmods.resourcedatapackloader.common.potions;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.BrewingDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffectDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionTypeDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.AttributeDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentOwners;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+import static mctmods.resourcedatapackloader.core.util.json.Json.strings;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
+import net.minecraft.potion.Potion;
+import net.minecraft.potion.PotionEffect;
+import net.minecraft.potion.PotionHelper;
+import net.minecraft.potion.PotionType;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
+import net.minecraftforge.event.RegistryEvent;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+
+public final class ContentPotions {
+    private static final Map<ResourceLocation, PotionDef> POTIONS = new LinkedHashMap<>();
+    private static final Map<ResourceLocation, PotionTypeDef> TYPES = new LinkedHashMap<>();
+    private static final List<BrewingDef> BREWING = new ArrayList<>();
+    private static boolean loaded;
+
+    private ContentPotions() {}
+
+    public static boolean load() {
+        if (loaded) { return wanted(); }
+        loaded = true;
+        if (!Config.registersToClients() || !Config.content.potions) { return false; }
+        Json.eachFile(PackManager.POTIONS, "potion file", (key, contents) -> {
+            if (!ContentOwners.reserved(key)) { readPotion(key, contents); }
+        });
+        Json.eachFile(PackManager.POTION_TYPES, "potion type file", (key, contents) -> {
+            if (!ContentOwners.reserved(key)) { readType(key, contents); }
+        });
+        if (Config.content.brewing) {
+            Json.eachFile(PackManager.BREWING, "brewing file", (key, contents) -> {
+                if (!ContentOwners.reserved(key)) { readBrewing(key, contents); }
+            });
+        }
+        if (!POTIONS.isEmpty()) { Summary.info("potions", "Loaded " + POTIONS.size() + " potion effect(s) from packs"); }
+        if (!TYPES.isEmpty()) { Summary.info("potion_types", "Loaded " + TYPES.size() + " potion type(s) from packs"); }
+        if (!BREWING.isEmpty()) { Summary.info("brewing", "Loaded " + BREWING.size() + " brewing recipe(s) from packs"); }
+        return wanted();
+    }
+
+    public static boolean wanted() { return !POTIONS.isEmpty() || !TYPES.isEmpty() || !BREWING.isEmpty(); }
+
+    private static void readPotion(ResourceLocation key, String contents) {
+        JsonObject json = Json.object(key, contents, "potion file");
+        if (json == null) { return; }
+        List<AttributeDef> attributes = new ArrayList<>();
+        if (json.has("attributes")) {
+            for (JsonElement element : Json.getJsonArray(json, "attributes")) {
+                if (!element.isJsonObject()) {
+                    ContentLog.LOGGER.error("An attribute in {} is not an object, skipping it", key);
+                    continue;
+                }
+                JsonObject entry = element.getAsJsonObject();
+                String uuid = Json.getString(entry, "uuid", "");
+                if (uuid.isEmpty()) {
+                    ContentLog.LOGGER.error("An attribute in {} has no uuid, skipping it. Generate one once and keep it, because it identifies the modifier", key);
+                    continue;
+                }
+                attributes.add(new AttributeDef(Json.getString(entry, "attribute", ""), uuid,
+                        Json.getFloat(entry, "amount", 0.0F),
+                        Json.getInt(entry, "operation", 0)));
+            }
+        }
+        JsonObject icon = Json.getJsonObject(json, "icon", new JsonObject());
+        POTIONS.put(key, new PotionDef(key,
+                Json.getString(json, "name", "effect." + key.getNamespace() + "." + key.getPath()),
+                Json.getBoolean(json, "badEffect", false),
+                Json.getBoolean(json, "beneficial", false),
+                ContentTypes.color(Json.getString(json, "color", "FFFFFF"), key.toString()),
+                Json.getInt(icon, "x", 0),
+                Json.getInt(icon, "y", 0),
+                Json.getString(json, "iconTexture", json.has("icon") ? "" : ResourceDataPackLoader.MOD_ID + ":" + ResourceDataPackLoader.ICON),
+                Json.getBoolean(json, "instant", false),
+                Json.getFloat(json, "effectiveness", 0.5F),
+                Collections.unmodifiableList(attributes),
+                strings(json, "requires")));
+    }
+
+    private static void readType(ResourceLocation key, String contents) {
+        JsonObject json = Json.object(key, contents, "potion type file");
+        if (json == null) { return; }
+        List<PotionEffectDef> effects = ContentParser.effects(key, Json.getJsonArray(json, "effects"), 3600, true);
+        if (effects.isEmpty()) {
+            ContentLog.LOGGER.error("Potion type {} has no usable effects, ignoring it", key);
+            return;
+        }
+        TYPES.put(key, new PotionTypeDef(key,
+                Json.getString(json, "baseName", key.getNamespace() + "." + key.getPath()),
+                Collections.unmodifiableList(effects),
+                strings(json, "requires")));
+    }
+
+    private static void readBrewing(ResourceLocation key, String contents) {
+        JsonObject json = Json.object(key, contents, "brewing file");
+        if (json == null) { return; }
+        for (JsonElement element : Json.getJsonArray(json, "brewing")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            BrewingDef def = new BrewingDef(key,
+                    Json.getString(entry, "from", ""),
+                    Json.getString(entry, "to", ""),
+                    Json.getString(entry, "ingredient", ""),
+                    Json.getString(entry, "input", ""),
+                    Json.getString(entry, "output", ""),
+                    strings(entry, "requires"));
+            if (def.ingredient.isEmpty()) {
+                ContentLog.LOGGER.error("A brewing recipe in {} has no ingredient, skipping it", key);
+                continue;
+            }
+            if (!def.isMix() && (def.input.isEmpty() || def.output.isEmpty())) {
+                ContentLog.LOGGER.error("A brewing recipe in {} needs either from and to, or input and output, skipping it", key);
+                continue;
+            }
+            BREWING.add(def);
+        }
+    }
+
+    @SubscribeEvent public static void registerPotions(RegistryEvent.Register<Potion> event) {
+        int count = 0;
+        for (PotionDef def : POTIONS.values()) {
+            if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
+            if (ForgeRegistries.POTIONS.containsKey(def.registryName)) {
+                ContentLog.LOGGER.debug("Potion {} is already registered, leaving it alone", def.registryName);
+                continue;
+            }
+            ContentOwners.as(def.registryName.getNamespace(), () -> event.getRegistry().register(new ContentPotion(def)));
+            count++;
+        }
+        if (count > 0) { Summary.info("content_potions", "Registered " + count + " potion effect(s) from packs"); }
+    }
+
+    @SubscribeEvent public static void registerPotionTypes(RegistryEvent.Register<PotionType> event) {
+        int count = 0;
+        for (PotionTypeDef def : TYPES.values()) {
+            if (!ContentRegistry.available(def.requires, def.registryName)) { continue; }
+            if (ForgeRegistries.POTION_TYPES.containsKey(def.registryName)) {
+                ContentLog.LOGGER.debug("Potion type {} is already registered, leaving it alone", def.registryName);
+                continue;
+            }
+            List<PotionEffect> effects = new ArrayList<>();
+            for (PotionEffectDef entry : def.effects) {
+                Potion potion = Potion.getPotionFromResourceLocation(entry.potion);
+                if (potion == null) {
+                    ContentLog.LOGGER.error("Potion type {} names potion '{}', which is not registered, skipping that effect", def.registryName, entry.potion);
+                    continue;
+                }
+                effects.add(new PotionEffect(potion, entry.duration, entry.amplifier, entry.ambient, entry.showParticles));
+            }
+            if (effects.isEmpty()) {
+                ContentLog.LOGGER.error("Potion type {} has no effect whose potion exists, skipping it", def.registryName);
+                continue;
+            }
+            ContentOwners.as(def.registryName.getNamespace(), () -> {
+                PotionType type = new PotionType(def.baseName, effects.toArray(new PotionEffect[0]));
+                type.setRegistryName(def.registryName);
+                event.getRegistry().register(type);
+            });
+            count++;
+        }
+        if (count > 0) { Summary.info("content_potion_types", "Registered " + count + " potion type(s) from packs"); }
+    }
+
+    public static void registerContainers() {
+        int count = 0;
+        for (Map.Entry<ResourceLocation, Item> entry : ContentRegistry.registeredItems()) {
+            if (!(entry.getValue() instanceof ContentPotionItem)) { continue; }
+            PotionHelper.addContainer((ContentPotionItem) entry.getValue());
+            count++;
+        }
+        if (count > 0) { Summary.info("content_potion_containers", "Registered " + count + " potion container item(s) from packs"); }
+    }
+
+    public static void applyBrewing() {
+        int count = 0;
+        for (BrewingDef def : BREWING) {
+            if (!ContentRegistry.available(def.requires, def.key)) { continue; }
+            ItemStack ingredient = ContentStacks.parse(def.key, def.ingredient, 1);
+            if (ingredient.isEmpty()) { continue; }
+            if (def.isMix()) {
+                PotionType from = type(def.key, def.from);
+                PotionType to = type(def.key, def.to);
+                if (from == null || to == null) { continue; }
+                PotionHelper.addMix(from, Ingredient.fromStacks(ingredient), to);
+                count++;
+                continue;
+            }
+            ItemStack input = ContentStacks.parse(def.key, def.input, 1);
+            ItemStack output = ContentStacks.parse(def.key, def.output, 1);
+            if (input.isEmpty() || output.isEmpty()) { continue; }
+            BrewingRecipeRegistry.addRecipe(input, ingredient, output);
+            count++;
+        }
+        if (count > 0) { Summary.info("content_brewing", "Added " + count + " brewing recipe(s) from packs"); }
+    }
+
+    @Nullable private static PotionType type(ResourceLocation key, String name) {
+        ResourceLocation location = new ResourceLocation(name);
+        if (!ForgeRegistries.POTION_TYPES.containsKey(location)) {
+            ContentLog.LOGGER.error("Brewing recipe in {} names potion type '{}', which is not registered, skipping it", key, name);
+            return null;
+        }
+        return ForgeRegistries.POTION_TYPES.getValue(location);
+    }
+}

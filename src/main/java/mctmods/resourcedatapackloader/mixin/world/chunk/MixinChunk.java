@@ -1,0 +1,578 @@
+package mctmods.resourcedatapackloader.mixin.world.chunk;
+
+import mctmods.resourcedatapackloader.common.rubic.world.ClientHeightMap;
+import mctmods.resourcedatapackloader.common.rubic.world.ColumnState;
+import mctmods.resourcedatapackloader.common.rubic.world.ServerHeightMap;
+import mctmods.resourcedatapackloader.common.rubic.world.StagingHeightMap;
+import mctmods.resourcedatapackloader.common.rubic.world.column.ColumnTileEntityMap;
+import mctmods.resourcedatapackloader.common.rubic.world.column.CubeMap;
+import mctmods.resourcedatapackloader.common.rubic.world.cube.BlankCube;
+import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInternal;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IHeightMap;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IMinMaxHeight;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.common.util.world.Coords;
+import static mctmods.resourcedatapackloader.common.util.world.Coords.blockToCube;
+import static mctmods.resourcedatapackloader.common.util.world.Coords.blockToLocal;
+
+import com.google.common.base.Predicate;
+import com.llamalad7.mixinextras.sugar.Local;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.Entity;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.ClassInheritanceMultiMap;
+import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.World;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkPrimer;
+import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.ChunkEvent.Load;
+import net.minecraftforge.event.world.ChunkEvent.Unload;
+import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Implements;
+import org.spongepowered.asm.mixin.Interface;
+import org.spongepowered.asm.mixin.Intrinsic;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(value = Chunk.class, priority = 999) @Implements({@Interface(iface = IColumn.class, prefix = "chunk$"), @Interface(iface = IColumnInternal.class, prefix = "chunk_internal$")}) public abstract class MixinChunk {
+    @Shadow @Final private ExtendedBlockStorage[] storageArrays;
+    @Shadow @Final public static ExtendedBlockStorage NULL_BLOCK_STORAGE;
+    @Shadow @Final public int x;
+    @Shadow @Final public int z;
+    @Shadow @Final @Mutable private Map<BlockPos, TileEntity> tileEntities;
+    @Shadow @Final private int[] heightMap;
+    @Shadow @Final private int[] precipitationHeightMap;
+    @Shadow @Final private World world;
+    @Shadow private boolean loaded;
+    @Shadow private boolean ticked;
+    @Shadow private boolean isLightPopulated;
+    @Shadow private boolean dirty;
+    @Unique private CubeMap rdpl$cubeMap;
+    @Unique private IHeightMap rdpl$opacityIndex;
+    @Unique private Cube rdpl$cachedCube;
+    @Unique private StagingHeightMap rdpl$stagingHeightMap;
+    @Unique private boolean rdpl$isColumn = false;
+    @Unique private boolean rdpl$pregenDone;
+    @Unique private ChunkPrimer rdpl$compatGenerationPrimer;
+    @Unique private boolean rdpl$compatArraysFilled;
+    @Unique private int rdpl$floorCube = Integer.MIN_VALUE;
+    @Unique private int rdpl$ceilingCube;
+
+    @Shadow public abstract byte[] getBiomeArray();
+
+    @Shadow protected abstract void relightBlock(int x, int y, int z);
+
+    @Unique @SuppressWarnings("unchecked") public <T extends World & IRubicWorldInternal> T rdpl$getRubicWorld() { return (T) this.world; }
+
+    @Unique private boolean rdpl$compatGenerating() { return rdpl$compatGenerationPrimer != null; }
+
+    @Unique private void rdpl$fillCompatArrays() {
+        rdpl$compatArraysFilled = true;
+        boolean skylight = world.provider.hasSkyLight();
+        for (int y = 0; y < 256; y++) {
+            for (int localZ = 0; localZ < 16; localZ++) {
+                for (int localX = 0; localX < 16; localX++) {
+                    IBlockState state = rdpl$compatGenerationPrimer.getBlockState(localX, y, localZ);
+                    if (state.getMaterial() == Material.AIR) { continue; }
+                    if (storageArrays[y >> 4] == NULL_BLOCK_STORAGE) { storageArrays[y >> 4] = new ExtendedBlockStorage(y >> 4 << 4, skylight); }
+                    storageArrays[y >> 4].set(localX, y & 15, localZ, state);
+                }
+            }
+        }
+    }
+
+    @Unique @Nullable private ExtendedBlockStorage rdpl$getEBS(int index) {
+        if (rdpl$compatGenerating()) {
+            if (!rdpl$compatArraysFilled) { rdpl$fillCompatArrays(); }
+            return index >= 0 && index < 16 ? storageArrays[index] : NULL_BLOCK_STORAGE;
+        }
+        if (rdpl$floorCube == Integer.MIN_VALUE) {
+            rdpl$floorCube = blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight());
+            rdpl$ceilingCube = blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight());
+        }
+        if (index < rdpl$floorCube || index >= rdpl$ceilingCube) { return NULL_BLOCK_STORAGE; }
+        if (!rdpl$isColumn) { return storageArrays[index - rdpl$floorCube]; }
+        if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == index) { return rdpl$cachedCube.getStorage(); }
+        Cube cube = rdpl$cubeMap.get(index);
+        if (cube == null) { cube = rdpl$getRubicWorld().rdpl$getCubeCache().getCube(this.x, index, this.z); }
+        if (!(cube instanceof BlankCube)) { rdpl$cachedCube = cube; }
+        return cube.getStorage();
+    }
+
+    @Unique private void rdpl$setEBS(int index, ExtendedBlockStorage ebs) {
+        if (rdpl$compatGenerating()) {
+            if (!rdpl$compatArraysFilled) { rdpl$fillCompatArrays(); }
+            if (index >= 0 && index < 16) { storageArrays[index] = ebs; }
+            return;
+        }
+        if (!rdpl$isColumn) {
+            storageArrays[index - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())] = ebs;
+            return;
+        }
+        if (index < blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()) || index >= blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight())) { return; }
+        if (index >= 0 && index < 16) { storageArrays[index] = ebs; }
+        if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == index) {
+            rdpl$cachedCube.setStorage(ebs);
+            return;
+        }
+        Cube loaded = rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(this.x, index, this.z);
+        if (loaded == null) { return; }
+        if (loaded.getStorage() == null) { loaded.setStorage(ebs); }
+        else {
+            throw new IllegalStateException(String.format(
+                    "Attempted to set a Cube ExtendedBlockStorage that already exists. "
+                            + "This is not supported. "
+                            + "CubePos(%d, %d, %d), loadedCube(%s), loadedCubeStorage(%s)",
+                    this.x, index, this.z,
+                    loaded, loaded.getStorage()));
+        }
+    }
+
+    @Inject(method = "<init>(Lnet/minecraft/world/World;II)V", at = @At(value = "RETURN")) private void rdpl$rubicChunkColumn_construct(World worldIn, int x, int z, CallbackInfo cbi) {
+        if (worldIn == null) { return; }
+        if (!((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return; }
+        this.rdpl$isColumn = true;
+        this.rdpl$cubeMap = new CubeMap();
+        if (worldIn.isRemote) { this.rdpl$opacityIndex = new ClientHeightMap((Chunk) (Object) this, heightMap); }
+        else { this.rdpl$opacityIndex = new ServerHeightMap(heightMap); }
+        this.rdpl$stagingHeightMap = new StagingHeightMap();
+        this.tileEntities = new ColumnTileEntityMap((IColumn) this);
+        Arrays.fill(getBiomeArray(), (byte) -1);
+    }
+
+    @Redirect(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/ChunkPrimer;II)V", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=get", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;")) private ExtendedBlockStorage rdpl$init_getStorage(ExtendedBlockStorage[] ebs, int y) { return ebs[y - (this.rdpl$isColumn ? 0 : Coords.blockToCube(((IMinMaxHeight) world).rdpl$getMinHeight()))]; }
+
+    @Redirect(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/ChunkPrimer;II)V", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=set", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;")) private void rdpl$getBlockState_getMaxHeight(ExtendedBlockStorage[] ebs, int y, ExtendedBlockStorage val) { ebs[y - (this.rdpl$isColumn ? 0 : Coords.blockToCube(((IMinMaxHeight) world).rdpl$getMinHeight()))] = val; }
+
+    @ModifyConstant(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/world/chunk/ChunkPrimer;II)V", constant = @Constant(intValue = 16, ordinal = 0), require = 1) private int rdpl$getInitChunkLoopEnd(int _16, World worldIn, ChunkPrimer primer, int x, int z) {
+        if (((IRubicWorldInternal.IServer) worldIn).rdpl$isCompatGenerationScope()) {
+            this.rdpl$compatGenerationPrimer = primer;
+            return -1;
+        }
+        return _16;
+    }
+
+    @Inject(method = "getTopFilledSegment", at = @At(value = "HEAD"), cancellable = true) private void rdpl$getTopFilledSegment_Rubic(CallbackInfoReturnable<Integer> cbi) {
+        if (!rdpl$isColumn || rdpl$compatGenerating()) { return; }
+        int blockY = Coords.NO_HEIGHT;
+        for (int localX = 0; localX < Cube.SIZE; localX++) {
+            for (int localZ = 0; localZ < Cube.SIZE; localZ++) {
+                int y = this.rdpl$opacityIndex.getTopBlockY(localX, localZ);
+                if (y > blockY) { blockY = y; }
+            }
+        }
+        if (blockY < rdpl$getRubicWorld().rdpl$getMinHeight()) {
+            int ret = Coords.cubeToMinBlock(Coords.blockToCube(this.rdpl$getRubicWorld().provider.getAverageGroundLevel()));
+            cbi.setReturnValue(ret);
+            return;
+        }
+        int ret = Coords.cubeToMinBlock(Coords.blockToCube(blockY));
+        cbi.setReturnValue(ret);
+    }
+
+    @Inject(method = "generateSkylightMap", at = @At(value = "HEAD"), cancellable = true) private void rdpl$generateSkylightMap_Rubic_Replace(CallbackInfo cbi) {
+        if (rdpl$isColumn) { cbi.cancel(); }
+    }
+
+    @Nullable @Redirect(method = "generateSkylightMap", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=get")) private ExtendedBlockStorage rdpl$generateSkylightMapRedirectEBSAccess(ExtendedBlockStorage[] array, int index) { return rdpl$getEBS(index); }
+
+    @Inject(method = "propagateSkylightOcclusion", at = @At(value = "HEAD"), cancellable = true) private void rdpl$propagateSkylightOcclusion_Rubic_Replace(int x, int z, CallbackInfo cbi) {
+        if (rdpl$isColumn) { cbi.cancel(); }
+    }
+
+    @ModifyVariable(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;set(IIILnet/minecraft/block/state/IBlockState;)V"), name = "flag") private boolean rdpl$setBlockStateInjectGenerateSkylightMapVanilla(boolean flag) {
+        if (!rdpl$isColumn) { return flag; }
+        return false;
+    }
+
+    @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;relightBlock(III)V")) private void rdpl$setBlockState_Rubic_relightBlockReplace(Chunk chunk, int x, int y, int z,
+                                                         @Local(name = "j") int j, @Local(name = "i1") int i1) {
+        if (!rdpl$isColumn) { relightBlock(x, y, z); }
+        else if (!rdpl$compatGenerating() && ((IColumn) this).getCube(blockToCube(j)).isInitialLightingDone()) {
+            if (i1 == j + 1) { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, x, getHeightValue(x, z), j, z); }
+            else { rdpl$getRubicWorld().rdpl$getLightingManager().doOnBlockSetLightUpdates((Chunk) (Object) this, x, i1, j, z); }
+        }
+    }
+
+    @Redirect(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;getLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;)I"), expect = 0, require = 0) private int rdpl$setBlockState_Rubic_noGetLightFor(Chunk instance, EnumSkyBlock type, BlockPos pos) {
+        if (!rdpl$isColumn) { return instance.getLightFor(type, pos); }
+        return 0;
+    }
+
+    @Redirect(method = "getBlockLightOpacity(III)I", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean rdpl$getBlockLightOpacity_isChunkLoadedCubeRedirect(Chunk chunk, int x, int y, int z) {
+        if (!rdpl$isColumn) { return loaded; }
+        return ColumnState.cubeLoadedAt(this, y);
+    }
+
+    @SuppressWarnings("InvalidInjectorMethodSignature") @ModifyConstant(method = "getBlockState(III)Lnet/minecraft/block/state/IBlockState;", constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO), require = 1) private int rdpl$getBlockState_getMinHeight(int zero) { return rdpl$isColumn ? Integer.MIN_VALUE : rdpl$getRubicWorld().rdpl$getMinHeight(); }
+
+    @SuppressWarnings("InvalidInjectorMethodSignature") @Redirect(method = "getBlockState(III)Lnet/minecraft/block/state/IBlockState;", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=length", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;")) private int rdpl$getBlockState_getMaxHeight(ExtendedBlockStorage[] ebs) { return rdpl$isColumn ? Integer.MAX_VALUE : (ebs.length - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())); }
+
+    @SuppressWarnings("InvalidInjectorMethodSignature") @Redirect(method = "getBlockState(III)Lnet/minecraft/block/state/IBlockState;", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=get", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;")) private ExtendedBlockStorage rdpl$getBlockState_getStorage(ExtendedBlockStorage[] ebs, int y) { return rdpl$getEBS(y); }
+
+    @Inject(method = "setBlockState", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;set(IIILnet/minecraft/block/state/IBlockState;)V", shift = At.Shift.AFTER)) private void rdpl$onEBSSet_setBlockState_setOpacity(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir) {
+        if (!rdpl$isColumn || rdpl$compatGenerating()) { return; }
+        this.dirty = true;
+        if (((IColumn) this).getCube(blockToCube(pos.getY())).isSurfaceTracked()) {
+            rdpl$opacityIndex.onOpacityChange(blockToLocal(pos.getX()), pos.getY(), blockToLocal(pos.getZ()), state.getLightOpacity(world, pos));
+            rdpl$getRubicWorld().rdpl$getLightingManager().onHeightUpdate(pos);
+        }
+        else { rdpl$stagingHeightMap.onOpacityChange(blockToLocal(pos.getX()), pos.getY(), blockToLocal(pos.getZ()), state.getLightOpacity(world, pos)); }
+    }
+
+    @Redirect(method = "setBlockState", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=get")) private ExtendedBlockStorage rdpl$setBlockState_Rubic_EBSGetRedirect(ExtendedBlockStorage[] array, int index) { return rdpl$getEBS(index); }
+
+    @Redirect(method = "setBlockState", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=set")) private void rdpl$setBlockState_Rubic_EBSSetRedirect(ExtendedBlockStorage[] array, int index, ExtendedBlockStorage val) { rdpl$setEBS(index, val); }
+
+    @Inject(method = "setBlockState", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=set"), cancellable = true) private void rdpl$setBlockState_Rubic_EBSSetInject(BlockPos pos, IBlockState state, CallbackInfoReturnable<IBlockState> cir) {
+        if (rdpl$isColumn && !rdpl$compatGenerating() && rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(blockToCube(pos.getX()), blockToCube(pos.getY()), blockToCube(pos.getZ())) == null) { cir.setReturnValue(null); }
+    }
+
+    @Redirect(method = "setBlockState", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;dirty:Z", opcode = Opcodes.PUTFIELD)) private void rdpl$setIsModifiedFromSetBlockState_Field(Chunk chunk, boolean isModifiedIn, BlockPos pos, IBlockState state) {
+        if (rdpl$isColumn && !rdpl$compatGenerating()) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
+        else { dirty = isModifiedIn; }
+    }
+
+    @Inject(method = "getLightSubtracted", at = @At("HEAD")) private void rdpl$onGetLightSubtracted(BlockPos pos, int amount, CallbackInfoReturnable<Integer> cir) {
+        if (!rdpl$isColumn) { return; }
+        rdpl$getRubicWorld().rdpl$getLightingManager().onGetLightSubtracted();
+    }
+
+    @Redirect(method = "setLightFor", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=get")) @Nullable private ExtendedBlockStorage rdpl$setLightFor_Rubic_EBSGetRedirect(ExtendedBlockStorage[] array, int index) { return rdpl$getEBS(index); }
+
+    @Redirect(method = "setLightFor", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=set")) private void rdpl$setLightFor_Rubic_EBSSetRedirect(ExtendedBlockStorage[] array, int index, ExtendedBlockStorage ebs) { rdpl$setEBS(index, ebs); }
+
+    @Redirect(method = "setLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;generateSkylightMap()V")) private void rdpl$setLightFor_Rubic_noSkylightMap(Chunk chunk) {
+        if (!rdpl$isColumn) { chunk.generateSkylightMap(); }
+    }
+
+    @Redirect(method = "setLightFor", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;dirty:Z", opcode = Opcodes.PUTFIELD)) private void rdpl$setIsModifiedFromSetLightFor_Field(Chunk chunk, boolean isModifiedIn, EnumSkyBlock type, BlockPos pos, int value) {
+        if (rdpl$isColumn && !rdpl$compatGenerating()) { rdpl$getRubicWorld().rdpl$getCubeFromBlockCoords(pos).markDirty(); }
+        else { dirty = isModifiedIn; }
+    }
+
+    @Nullable @Redirect(method = "getLightSubtracted", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=get")) private ExtendedBlockStorage rdpl$getLightSubtracted_Rubic_EBSGetRedirect(ExtendedBlockStorage[] array, int index) { return rdpl$getEBS(index); }
+
+    @SuppressWarnings("unchecked") @Inject(method = "getEntityLists", at = @At("HEAD"), cancellable = true) private void rdpl$entitiesFromCubes(CallbackInfoReturnable<ClassInheritanceMultiMap<Entity>[]> cir) {
+        if (!rdpl$isColumn) { return; }
+        Collection<Cube> cubes = rdpl$cubeMap.all();
+        ClassInheritanceMultiMap<Entity>[] lists = new ClassInheritanceMultiMap[cubes.size()];
+        int at = 0;
+        for (Cube cube : cubes) { lists[at++] = cube.getEntitySet(); }
+        cir.setReturnValue(lists);
+    }
+
+    @Inject(method = "onLoad", at = @At("HEAD"), cancellable = true) private void rdpl$onChunkLoad_Rubic(CallbackInfo cbi) {
+        if (!rdpl$isColumn) { return; }
+        cbi.cancel();
+        this.loaded = true;
+        for (Cube cube : rdpl$cubeMap) { cube.onLoad(); }
+        MinecraftForge.EVENT_BUS.post(new Load((Chunk) (Object) this));
+    }
+
+    @Inject(method = "onUnload", at = @At("HEAD"), cancellable = true) private void rdpl$onChunkUnload_Rubic(CallbackInfo cbi) {
+        if (!rdpl$isColumn) { return; }
+        cbi.cancel();
+        this.loaded = false;
+        for (Cube cube : rdpl$cubeMap) { cube.onUnload(); }
+        MinecraftForge.EVENT_BUS.post(new Unload((Chunk) (Object) this));
+    }
+
+    @Inject(method = "getPrecipitationHeight", at = @At(value = "HEAD"), cancellable = true) private void rdpl$getPrecipitationHeight_Rubic_Replace(BlockPos pos, CallbackInfoReturnable<BlockPos> cbi) {
+        if (!rdpl$isColumn) { return; }
+        int localX = blockToLocal(pos.getX());
+        int localZ = blockToLocal(pos.getZ());
+        int held = precipitationHeightMap[localX | localZ << 4];
+        if (held == -999) {
+            held = rdpl$findPrecipitationHeight(localX, pos.getY(), localZ);
+            precipitationHeightMap[localX | localZ << 4] = held;
+        }
+        cbi.setReturnValue(new BlockPos(pos.getX(), held, pos.getZ()));
+    }
+
+    @Unique private int rdpl$findPrecipitationHeight(int localX, int blockY, int localZ) {
+        int lightTop = ((IColumn) this).getHeightValue(localX, blockY, localZ);
+        int highest = Integer.MIN_VALUE;
+        for (Cube cube : rdpl$cubeMap) {
+            if (cube.getY() > highest) { highest = cube.getY(); }
+        }
+        if (highest == Integer.MIN_VALUE) { return lightTop; }
+        for (Cube cube : rdpl$cubeMap.cubes(highest, blockToCube(lightTop))) {
+            ExtendedBlockStorage storage = cube.getStorage();
+            if (storage == null || storage.isEmpty()) { continue; }
+            for (int y = 15; y >= 0; y--) {
+                int worldY = Coords.cubeToMinBlock(cube.getY()) + y;
+                if (worldY < lightTop) { return lightTop; }
+                Material material = storage.get(localX, y, localZ).getMaterial();
+                if (material.blocksMovement() || material.isLiquid()) { return worldY + 1; }
+            }
+        }
+        return lightTop;
+    }
+
+    @Inject(method = "onTick", at = @At(value = "RETURN")) private void rdpl$onTick_Rubic_TickCubes(boolean skipRecheckGaps, CallbackInfo cbi) {
+        if (!rdpl$isColumn) { return; }
+        this.ticked = true;
+        this.isLightPopulated = true;
+    }
+
+    /**
+     * @author tgstyle
+     * @reason Scan emptiness through the cube-backed storage lookup across the full rubic height range.
+     */
+    @Overwrite public boolean isEmptyBetween(int startY, int endY) {
+        if (startY < rdpl$getRubicWorld().rdpl$getMinHeight()) { startY = rdpl$getRubicWorld().rdpl$getMinHeight(); }
+        if (endY >= rdpl$getRubicWorld().rdpl$getMaxHeight()) { endY = rdpl$getRubicWorld().rdpl$getMaxHeight() - 1; }
+        for (int i = startY; i <= endY; i += Cube.SIZE) {
+            ExtendedBlockStorage extendedblockstorage = rdpl$getEBS(blockToCube(i));
+            if (extendedblockstorage != NULL_BLOCK_STORAGE && extendedblockstorage != null && !extendedblockstorage.isEmpty()) { return false; }
+        }
+        return true;
+    }
+
+    @Inject(method = "setStorageArrays", at = @At(value = "HEAD")) private void rdpl$setStorageArrays_Rubic_NotSupported(ExtendedBlockStorage[] newStorageArrays, CallbackInfo cbi) {
+        if (rdpl$isColumn) { throw new UnsupportedOperationException("setting storage arrays is not supported with rubic"); }
+    }
+
+    @Inject(method = "enqueueRelightChecks", at = @At(value = "HEAD"), cancellable = true) private void rdpl$enqueueRelightChecks_Rubic(CallbackInfo cbi) {
+        if (!rdpl$isColumn) { return; }
+        cbi.cancel();
+    }
+
+    @ModifyConstant(method = "<init>(Lnet/minecraft/world/World;II)V", constant = @Constant(intValue = 16), slice = @Slice(to = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.PUTFIELD)), allow = 1, require = 1) private int rdpl$modifySectionArrayLength(int sixteen, World worldIn, int x, int z) {
+        if (worldIn == null) { return sixteen; }
+        if (!((IRubicWorld) worldIn).rdpl$isRubicWorld()) {
+            IMinMaxHeight y = (IMinMaxHeight) worldIn;
+            return Coords.blockToCube(y.rdpl$getMaxHeight()) - Coords.blockToCube(y.rdpl$getMinHeight());
+        }
+        return sixteen;
+    }
+
+    public int chunk_internal$getTopYWithStaging(int localX, int localZ) {
+        if (!rdpl$isColumn) { return heightMap[localZ << 4 | localX] - 1; }
+        return Math.max(rdpl$opacityIndex.getTopBlockY(localX, localZ), rdpl$stagingHeightMap.getTopBlockY(localX, localZ));
+    }
+
+    /**
+     * @author tgstyle
+     * @reason Answer from the opacity index with staged cubes included instead of the vanilla height map.
+     */
+    @Overwrite public int getHeightValue(int localX, int localZ) { return rdpl$topBlockY(localX, localZ) + 1; }
+
+    @Unique private int rdpl$topBlockY(int localX, int localZ) {
+        int top = chunk_internal$getTopYWithStaging(localX, localZ);
+        return top == Coords.NO_HEIGHT ? rdpl$getRubicWorld().rdpl$getMinHeight() - 1 : top;
+    }
+
+    @Intrinsic public int chunk$getHeightValue(int localX, int localZ) { return rdpl$topBlockY(localX, localZ) + 1; }
+
+    public int chunk$getHeightValue(int localX, int blockY, int localZ) { return rdpl$topBlockY(localX, localZ) + 1; }
+
+    public boolean chunk_internal$isRubicColumn() { return rdpl$isColumn; }
+
+    public boolean chunk_internal$pregenDone() { return rdpl$pregenDone; }
+
+    public void chunk_internal$markPregenDone() { rdpl$pregenDone = true; }
+
+    public ChunkPrimer chunk_internal$getCompatGenerationPrimer() { return rdpl$compatGenerationPrimer; }
+
+    @Nullable public ExtendedBlockStorage chunk_internal$getStorageForCube(int cubeY) { return rdpl$getEBS(cubeY); }
+
+    public void chunk_internal$setStorageForCube(int cubeY, ExtendedBlockStorage storage) { rdpl$setEBS(cubeY, storage); }
+
+    public void chunk_internal$syncCompatGenerationWrites() {
+        if (!rdpl$compatArraysFilled) { return; }
+        for (int section = 0; section < 16; section++) {
+            ExtendedBlockStorage storage = storageArrays[section];
+            if (storage == null || storage == NULL_BLOCK_STORAGE) { continue; }
+            for (int localY = 0; localY < 16; localY++) {
+                for (int localZ = 0; localZ < 16; localZ++) {
+                    for (int localX = 0; localX < 16; localX++) {
+                        int y = (section << 4) + localY;
+                        IBlockState held = storage.get(localX, localY, localZ);
+                        if (rdpl$compatGenerationPrimer.getBlockState(localX, y, localZ) != held) { rdpl$compatGenerationPrimer.setBlockState(localX, y, localZ, held); }
+                    }
+                }
+            }
+        }
+        rdpl$compatArraysFilled = false;
+    }
+
+    public void chunk_internal$removeFromStagingHeightmap(ICube cube) { rdpl$stagingHeightMap.removeStagedCube(cube); }
+
+    public void chunk_internal$addToStagingHeightmap(ICube cube) { rdpl$stagingHeightMap.addStagedCube(cube); }
+
+    @Unique private void rdpl$invalidateCachedCube() { rdpl$cachedCube = null; }
+
+    public ICube chunk$getLoadedCube(int cubeY) {
+        if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == cubeY) { return rdpl$cachedCube; }
+        return rdpl$getRubicWorld().rdpl$getCubeCache().getLoadedCube(x, cubeY, z);
+    }
+
+    @Nonnull public ICube chunk$getCube(int cubeY) {
+        if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == cubeY) { return rdpl$cachedCube; }
+        return rdpl$getRubicWorld().rdpl$getCubeCache().getCube(x, cubeY, z);
+    }
+
+    public void chunk$addCube(@Nonnull ICube cube) {
+        this.rdpl$cubeMap.put((Cube) cube);
+        Arrays.fill(precipitationHeightMap, -999);
+    }
+
+    public ICube chunk$removeCube(int cubeY) {
+        if (rdpl$cachedCube != null && rdpl$cachedCube.getY() == cubeY) { rdpl$invalidateCachedCube(); }
+        Arrays.fill(precipitationHeightMap, -999);
+        return this.rdpl$cubeMap.remove(cubeY);
+    }
+
+    public boolean chunk$hasLoadedCubes() { return !rdpl$cubeMap.isEmpty(); }
+
+    public boolean chunk$shouldTick() {
+        for (Cube cube : rdpl$cubeMap) {
+            if (cube.getTickets().shouldTick()) { return true; }
+        }
+        return false;
+    }
+
+    @Nonnull public IHeightMap chunk$getOpacityIndex() { return this.rdpl$opacityIndex; }
+
+    @Nonnull public Collection<? extends ICube> chunk$getLoadedCubes() { return this.rdpl$cubeMap.all(); }
+
+    @Nonnull public Iterable<? extends ICube> chunk$getLoadedCubes(int startY, int endY) { return this.rdpl$cubeMap.cubes(startY, endY); }
+
+    public void chunk$preCacheCube(@Nonnull ICube cube) { this.rdpl$cachedCube = (Cube) cube; }
+
+    @Intrinsic public int chunk$getX() { return x; }
+
+    @Intrinsic public int chunk$getZ() { return z; }
+
+    @Unique private boolean rdpl$isColumn() { return ((IColumnInternal) this).isRubicColumn(); }
+
+    @Unique private int rdpl$clampCubeY(int cubeY) { return MathHelper.clamp(cubeY, blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()), blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight())); }
+
+    @Unique @SuppressWarnings("unchecked") private Iterable<Cube> rdpl$loadedCubes(int startY, int endY) { return (Iterable<Cube>) ((IColumn) this).getLoadedCubes(startY, endY); }
+
+    @ModifyConstant(method = "addEntity", constant = @Constant(expandZeroConditions = Constant.Condition.LESS_THAN_ZERO, intValue = 0), slice = @Slice(from = @At(value = "INVOKE:LAST", target = "Lnet/minecraft/util/math/MathHelper;floor(D)I"), to = @At(value = "FIELD:FIRST", target = "Lnet/minecraft/world/chunk/Chunk;entityLists:[Lnet/minecraft/util/ClassInheritanceMultiMap;", opcode = Opcodes.GETFIELD)), require = 1) private int rdpl$addEntity_getMinY(int zero) { return blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()); }
+
+    @Redirect(method = "addEntity", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=length", target = "Lnet/minecraft/world/chunk/Chunk;entityLists:[Lnet/minecraft/util/ClassInheritanceMultiMap;"), require = 2) private int rdpl$addEntity_getMaxHeight(ClassInheritanceMultiMap<?>[] entityLists) { return rdpl$isColumn() ? blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight()) : (entityLists.length - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())); }
+
+    @Redirect(method = "addEntity", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=get", target = "Lnet/minecraft/world/chunk/Chunk;entityLists:[Lnet/minecraft/util/ClassInheritanceMultiMap;"), require = 1) private ClassInheritanceMultiMap<?> rdpl$addEntity_getEntityList(ClassInheritanceMultiMap<?>[] entityLists, int idx, Entity entityIn) {
+        if (!rdpl$isColumn()) { return entityLists[idx - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())]; }
+        ((Cube) ((IColumn) this).getCube(idx)).getEntityContainer().addEntity(entityIn);
+        return null;
+    }
+
+    @Redirect(method = "addEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ClassInheritanceMultiMap;add(Ljava/lang/Object;)Z"), require = 1) private boolean rdpl$addEntity_getEntityList(ClassInheritanceMultiMap<Object> obj, Object p_add_1_) {
+        if (!rdpl$isColumn()) { return obj.add(p_add_1_); }
+        assert obj == null;
+        return true;
+    }
+
+    @ModifyConstant(method = "removeEntityAtIndex", constant = @Constant(expandZeroConditions = Constant.Condition.LESS_THAN_ZERO, intValue = 0), require = 2, slice = @Slice(from = @At("HEAD"), to = @At(value = "INVOKE", target = "Lnet/minecraft/util/ClassInheritanceMultiMap;remove(Ljava/lang/Object;)Z"))) private int rdpl$removeEntityAtIndex_getMinY(int zero) { return blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight()); }
+
+    @Redirect(method = "removeEntityAtIndex", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=length", target = "Lnet/minecraft/world/chunk/Chunk;entityLists:[Lnet/minecraft/util/ClassInheritanceMultiMap;"), require = 2) private int rdpl$removeEntityAtIndex_getMaxHeight(ClassInheritanceMultiMap<?>[] entityLists) { return rdpl$isColumn() ? blockToCube(rdpl$getRubicWorld().rdpl$getMaxHeight()) : (entityLists.length - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())); }
+
+    @Redirect(method = "removeEntityAtIndex", at = @At(value = "FIELD", opcode = Opcodes.GETFIELD, args = "array=get", target = "Lnet/minecraft/world/chunk/Chunk;entityLists:[Lnet/minecraft/util/ClassInheritanceMultiMap;"), require = 1) private ClassInheritanceMultiMap<?> rdpl$removeEntityAtIndex_getEntityList(ClassInheritanceMultiMap<?>[] entityLists, int idx, Entity entityIn,
+                                                                          int index) {
+        if (!rdpl$isColumn()) { return entityLists[idx - Coords.blockToCube(rdpl$getRubicWorld().rdpl$getMinHeight())]; }
+        ((Cube) ((IColumn) this).getCube(idx)).getEntityContainer().remove(entityIn);
+        return null;
+    }
+
+    @Redirect(method = "removeEntityAtIndex", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ClassInheritanceMultiMap;remove(Ljava/lang/Object;)Z"), require = 1) private boolean rdpl$removeEntityAtIndex_getEntityList(ClassInheritanceMultiMap<Object> obj, Object p_remove_1_) {
+        if (!rdpl$isColumn()) { return obj.remove(p_remove_1_); }
+        assert obj == null;
+        return true;
+    }
+
+    @Inject(method = "getTileEntity", at = @At("HEAD"), cancellable = true) private void rdpl$getTileEntity_CompatTemplate(BlockPos pos, Chunk.EnumCreateEntityType creationMode, CallbackInfoReturnable<TileEntity> cir) {
+        if (ColumnState.compatGenerating(this)) { cir.setReturnValue(null); }
+    }
+
+    @Inject(method = "addTileEntity(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/tileentity/TileEntity;)V", at = @At("HEAD"), cancellable = true) private void rdpl$addTileEntity_CompatTemplate(BlockPos pos, TileEntity tileEntityIn, CallbackInfo cbi) {
+        if (ColumnState.compatGenerating(this)) { cbi.cancel(); }
+    }
+
+    @Redirect(method = "addTileEntity(Lnet/minecraft/tileentity/TileEntity;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean rdpl$addTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, TileEntity tileEntityIn) {
+        if (!rdpl$isColumn()) { return loaded; }
+        return ColumnState.cubeLoadedAt(this, tileEntityIn.getPos().getY());
+    }
+
+    @Redirect(method = "removeTileEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean rdpl$removeTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, BlockPos pos) {
+        if (!rdpl$isColumn()) { return loaded; }
+        return ColumnState.cubeLoadedAt(this, pos.getY());
+    }
+
+    @Inject(method = "getEntitiesWithinAABBForEntity", at = @At("HEAD"), cancellable = true) private void rdpl$getEntitiesWithinAABBForEntity_Rubic(@Nullable Entity entityIn, AxisAlignedBB aabb,
+                                                                                                                                               List<Entity> listToFill, Predicate<? super Entity> filter, CallbackInfo cbi) {
+        if (!rdpl$isColumn()) { return; }
+        cbi.cancel();
+        int minY = MathHelper.floor((aabb.minY - World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
+        int maxY = MathHelper.floor((aabb.maxY + World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
+        minY = rdpl$clampCubeY(minY);
+        maxY = rdpl$clampCubeY(maxY);
+        for (Cube cube : rdpl$loadedCubes(minY, maxY)) {
+            if (cube.getEntityContainer().getEntitySet().isEmpty()) { continue; }
+            for (Entity entity : cube.getEntityContainer().getEntitySet()) {
+                if (!entity.getEntityBoundingBox().intersects(aabb) || entity == entityIn) { continue; }
+                if (filter == null || filter.apply(entity)) { listToFill.add(entity); }
+                Entity[] parts = entity.getParts();
+                if (parts != null) {
+                    for (Entity part : parts) {
+                        if (part != entityIn && part.getEntityBoundingBox().intersects(aabb)
+                                && (filter == null || filter.apply(part))) { listToFill.add(part); }
+                    }
+                }
+            }
+        }
+    }
+
+    @Inject(method = "getEntitiesOfTypeWithinAABB", at = @At("HEAD"), cancellable = true) private <T extends Entity> void rdpl$getEntitiesOfTypeWithinAAAB_Rubic(Class<? extends T> entityClass,
+                                                                                                                                                            AxisAlignedBB aabb, List<T> listToFill, Predicate<? super T> filter, CallbackInfo cbi) {
+        if (!rdpl$isColumn()) { return; }
+        cbi.cancel();
+        int minY = MathHelper.floor((aabb.minY - World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
+        int maxY = MathHelper.floor((aabb.maxY + World.MAX_ENTITY_RADIUS) / Cube.SIZE_D);
+        minY = rdpl$clampCubeY(minY);
+        maxY = rdpl$clampCubeY(maxY);
+        for (Cube cube : rdpl$loadedCubes(minY, maxY)) {
+            for (T t : cube.getEntityContainer().getEntitySet().getByClass(entityClass)) {
+                if (t.getEntityBoundingBox().intersects(aabb) && (filter == null || filter.apply(t))) { listToFill.add(t); }
+            }
+        }
+    }
+
+    @Redirect(method = "removeInvalidTileEntity", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;loaded:Z", opcode = Opcodes.GETFIELD)) private boolean rdpl$removeInvalidTileEntity_isChunkLoadedCubeRedirect(Chunk chunk, BlockPos pos) {
+        if (!rdpl$isColumn()) { return loaded; }
+        return ColumnState.cubeLoadedAt(this, pos.getY());
+    }
+}

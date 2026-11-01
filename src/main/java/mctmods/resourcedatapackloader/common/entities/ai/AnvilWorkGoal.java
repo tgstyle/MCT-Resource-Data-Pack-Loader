@@ -1,0 +1,83 @@
+package mctmods.resourcedatapackloader.common.entities.ai;
+
+import mctmods.resourcedatapackloader.common.anvils.ContentAnvils;
+import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.AnvilDef;
+import mctmods.resourcedatapackloader.common.util.entity.Walking;
+
+import javax.annotation.Nullable;
+import net.minecraft.entity.EntityCreature;
+import net.minecraft.entity.ai.EntityAIBase;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.math.BlockPos;
+
+public final class AnvilWorkGoal extends EntityAIBase {
+    private static final int LOOK_EVERY = 100;
+    private static final int REACH = 16;
+    private static final int RISE = 4;
+    private static final double USE_DISTANCE_SQ = 9.0D;
+    private static final int GIVE_UP = 600;
+    private final EntityCreature mob;
+    @Nullable private BlockPos anvil;
+    @Nullable private AnvilDef work;
+    private int walked;
+
+    public AnvilWorkGoal(EntityCreature mob) {
+        this.mob = mob;
+        setMutexBits(3);
+    }
+
+    @Override public boolean shouldExecute() {
+        if (mob.ticksExisted % LOOK_EVERY != 0) { return false; }
+        work = ContentAnvils.affordable(mob, ContentMobExperience.level(mob));
+        if (work == null) { return false; }
+        anvil = nearestAnvil();
+        return anvil != null;
+    }
+
+    @Nullable private BlockPos nearestAnvil() {
+        BlockPos feet = new BlockPos(mob);
+        BlockPos best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (BlockPos.MutableBlockPos at : BlockPos.getAllInBoxMutable(feet.add(-REACH, -RISE, -REACH), feet.add(REACH, RISE, REACH))) {
+            if (mob.world.getBlockState(at).getBlock() != Blocks.ANVIL) { continue; }
+            double distance = at.distanceSq(feet);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = at.toImmutable();
+            }
+        }
+        return best;
+    }
+
+    @Override public boolean shouldContinueExecuting() { return anvil != null && walked < GIVE_UP && mob.world.getBlockState(anvil).getBlock() == Blocks.ANVIL; }
+
+    @Override public void startExecuting() {
+        walked = 0;
+        if (anvil == null || work == null) { return; }
+        GoalLog.debug(mob, "can pay for {} and heads for the anvil at {}, {}, {}", work.registryName, anvil.getX(), anvil.getY(), anvil.getZ());
+        walkTo(anvil);
+    }
+
+    private void walkTo(BlockPos at) { Walking.toBlock(mob, at, Walking.pace(mob)); }
+
+    @Override public void resetTask() {
+        anvil = null;
+        work = null;
+        mob.getNavigator().clearPath();
+    }
+
+    @Override public void updateTask() {
+        BlockPos at = anvil;
+        AnvilDef task = work;
+        if (at == null || task == null) { return; }
+        walked++;
+        BlockBreak.look(mob, at);
+        if (mob.getDistanceSq(at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D) <= USE_DISTANCE_SQ) {
+            ContentAnvils.work(mob, task, at);
+            anvil = null;
+            return;
+        }
+        if (mob.getNavigator().noPath() && walked % 20 == 0) { walkTo(at); }
+    }
+}

@@ -1,0 +1,147 @@
+package mctmods.resourcedatapackloader.common.util;
+
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.loot.Stacks;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.lang.reflect.Field;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.oredict.OreDictionary;
+
+public final class ContentOreDict {
+    private static boolean applied;
+
+    private ContentOreDict() {}
+
+    public static void apply() {
+        if (applied) { return; }
+        applied = true;
+        if (!Config.content.oreDictionary) { return; }
+        int[] count = new int[2];
+        Json.eachFile(PackManager.OREDICT, "ore dictionary file", (key, contents) -> read(key, contents, count));
+        if (count[0] > 0) { Summary.info("oredict_extra", "Added " + count[0] + " extra ore dictionary entry/entries"); }
+        if (count[1] > 0) { Summary.info("oredict_removed", "Removed " + count[1] + " ore dictionary entry/entries"); }
+    }
+
+    private static void read(ResourceLocation key, String contents, int[] count) {
+        JsonObject json = Json.object(key, contents, "ore dictionary file");
+        if (json == null) { return; }
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            String name = entry.getKey();
+            if (name.startsWith("_")) { continue; }
+            if (!entry.getValue().isJsonArray()) {
+                ContentLog.LOGGER.error("Ore dictionary name '{}' in {} is not an array, skipping it", name, key);
+                continue;
+            }
+            if (name.startsWith("-")) {
+                remove(key, name.substring(1), entry.getValue().getAsJsonArray(), count);
+                continue;
+            }
+            for (JsonElement element : entry.getValue().getAsJsonArray()) {
+                ItemStack stack = ContentStacks.parse(key, element.getAsString(), 1);
+                if (stack.isEmpty()) { continue; }
+                OreDictionary.registerOre(name, stack);
+                count[0]++;
+            }
+        }
+    }
+
+    private static void remove(ResourceLocation key, String name, JsonArray items, int[] count) {
+        if (!OreDictionary.doesOreNameExist(name)) {
+            ContentLog.LOGGER.error("Ore dictionary name '{}' in {} does not exist, so there is nothing to remove from it", name, key);
+            return;
+        }
+        int id = OreDictionary.getOreID(name);
+        List<ItemStack> registered;
+        Map<Integer, List<Integer>> stackToId;
+        try {
+            registered = idToStack().get(id);
+            stackToId = stackToId();
+        }
+        catch (ReflectiveOperationException | RuntimeException ex) {
+            ContentLog.LOGGER.error("The ore dictionary's tables could not be reached, so nothing is removed from '{}'", name, ex);
+            return;
+        }
+        for (JsonElement element : items) {
+            String wanted = element.getAsString().trim();
+            if ("*".equals(wanted)) {
+                for (ItemStack held : registered) { unlink(stackToId, held, id); }
+                count[1] += registered.size();
+                registered.clear();
+                continue;
+            }
+            ItemStack stack = ContentStacks.parse(key, wanted, 1);
+            if (stack.isEmpty()) { continue; }
+            boolean found = false;
+            for (Iterator<ItemStack> each = registered.iterator(); each.hasNext();) {
+                ItemStack held = each.next();
+                if (!Stacks.matches(stack, held)) { continue; }
+                if (held.getItemDamage() == OreDictionary.WILDCARD_VALUE && stack.getItemDamage() != OreDictionary.WILDCARD_VALUE) { ContentLog.LOGGER.info("Ore dictionary name '{}' carries {} for every metadata, so {} in {} removes the whole entry", name, held.getItem().getRegistryName(), wanted, key); }
+                unlink(stackToId, held, id);
+                each.remove();
+                count[1]++;
+                found = true;
+            }
+            if (!found) { ContentLog.LOGGER.error("Ore dictionary name '{}' in {} does not carry {}, so there is nothing to remove", name, key, wanted); }
+        }
+    }
+
+    public static int strip(Predicate<ItemStack> doomed, Set<String> emptied) {
+        List<List<ItemStack>> table;
+        Map<Integer, List<Integer>> stackToId;
+        try {
+            table = idToStack();
+            stackToId = stackToId();
+        }
+        catch (ReflectiveOperationException | RuntimeException ex) {
+            ContentLog.LOGGER.error("The ore dictionary's tables could not be reached, so disabled items keep their ore dictionary names", ex);
+            return 0;
+        }
+        int count = 0;
+        for (String name : OreDictionary.getOreNames()) {
+            int id = OreDictionary.getOreID(name);
+            boolean all = emptied.contains(name);
+            for (Iterator<ItemStack> each = table.get(id).iterator(); each.hasNext();) {
+                ItemStack held = each.next();
+                if (!all && !doomed.test(held)) { continue; }
+                unlink(stackToId, held, id);
+                each.remove();
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private static void unlink(Map<Integer, List<Integer>> stackToId, ItemStack held, int id) {
+        int hash = Item.REGISTRY.getIDForObject(held.getItem());
+        if (held.getItemDamage() != OreDictionary.WILDCARD_VALUE) { hash |= ((held.getItemDamage() + 1) << 16); }
+        List<Integer> ids = stackToId.get(hash);
+        if (ids != null) { ids.remove(Integer.valueOf(id)); }
+    }
+
+    @SuppressWarnings("unchecked") private static List<List<ItemStack>> idToStack() throws ReflectiveOperationException {
+        Field field = OreDictionary.class.getDeclaredField("idToStack");
+        field.setAccessible(true);
+        return (List<List<ItemStack>>) field.get(null);
+    }
+
+    @SuppressWarnings("unchecked") private static Map<Integer, List<Integer>> stackToId() throws ReflectiveOperationException {
+        Field field = OreDictionary.class.getDeclaredField("stackToId");
+        field.setAccessible(true);
+        return (Map<Integer, List<Integer>>) field.get(null);
+    }
+}

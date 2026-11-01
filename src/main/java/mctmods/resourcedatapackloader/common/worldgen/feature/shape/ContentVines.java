@@ -1,0 +1,72 @@
+package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
+
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentVineBlock;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
+import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
+
+import java.util.List;
+import java.util.Random;
+import javax.annotation.Nullable;
+import net.minecraft.block.BlockVine;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+
+public final class ContentVines implements IContentShape {
+    private final ContentPlacer placer;
+    private final AmountDef count;
+    private final AmountDef drop;
+    private final int scatterX;
+    private final int scatterY;
+    private final int scatterZ;
+
+    public ContentVines(ContentPlacer placer, AmountDef count, ShapeDef shape) {
+        this.placer = placer;
+        this.count = count;
+        this.drop = shape.stack;
+        this.scatterX = shape.scatterX;
+        this.scatterY = shape.scatterY;
+        this.scatterZ = shape.scatterZ;
+    }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
+
+    @Override public boolean generate(World world, Random random, BlockPos origin) {
+        boolean placed = false;
+        int attempts = count.pick(random);
+        for (int attempt = 0; attempt < attempts; attempt++) {
+            BlockPos start = origin.add(ContentPlacer.scatter(random, scatterX), ContentPlacer.scatter(random, scatterY), ContentPlacer.scatter(random, scatterZ));
+            if (!world.isBlockLoaded(start) || !world.isAirBlock(start)) { continue; }
+            EnumFacing wall = wallBeside(world, start);
+            if (wall == null) { continue; }
+            IBlockState state = placer.choose(random);
+            if (!(state.getBlock() instanceof BlockVine)) { continue; }
+            IBlockState attached = state.withProperty(BlockVine.getPropertyFor(wall), Boolean.TRUE);
+            int length = drop.pick(random);
+            BlockPos at = start;
+            for (int step = 0; step < length; step++) {
+                if (!world.isAirBlock(at) || !attachable(world, at.offset(wall), wall.getOpposite())) { break; }
+                world.setBlockState(at, attached, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
+                placed = true;
+                at = at.down();
+            }
+        }
+        return placed;
+    }
+
+    @Nullable private static EnumFacing wallBeside(World world, BlockPos pos) {
+        for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) {
+            if (attachable(world, pos.offset(facing), facing.getOpposite())) { return facing; }
+        }
+        return null;
+    }
+
+    private static boolean attachable(World world, BlockPos pos, EnumFacing face) {
+        if (!world.isBlockLoaded(pos)) { return false; }
+        return ContentVineBlock.attachable(world, pos, face);
+    }
+}
