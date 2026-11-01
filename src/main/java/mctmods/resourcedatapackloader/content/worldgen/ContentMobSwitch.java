@@ -47,7 +47,7 @@ public final class ContentMobSwitch {
 
     private ContentMobSwitch() {}
 
-    @Nullable static MobSwitchDef parse(String owner, String name, @Nullable JsonElement element) {
+    @Nullable public static MobSwitchDef parse(String owner, String name, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives mobs that is not an object, ignoring it", owner);

@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-final class CityAlleys {
+public final class CityAlleys {
     public static final int ALLEY_LEAST = 16;
     public static final int ALLEY_APART = 12;
     private static final int ALLEY_SHORTEST = 14;
@@ -39,7 +39,7 @@ final class CityAlleys {
 
     private static int chance() { return Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villagePathAlleyChance", Config.worldgen.villagePathAlleyChance()), 0, 100); }
 
-    static void idleAlleys(List<Plot> plots, List<Line> alongX, List<Line> alongZ) {
+    public static void idleAlleys(List<Plot> plots, List<Line> alongX, List<Line> alongZ) {
         int most = ContentVillages.plotsMost();
         if (most <= 0 || plots.size() < most) { return; }
         for (List<Line> lines : List.of(alongX, alongZ)) {
@@ -47,7 +47,7 @@ final class CityAlleys {
         }
     }
 
-    static void alleys(RandomSource roll, int originX, int originZ, int size, Line row, Line column, List<Line> alongX, List<Line> alongZ, List<Rail> rails, int block) {
+    public static void alleys(RandomSource roll, int originX, int originZ, int size, Line row, Line column, List<Line> alongX, List<Line> alongZ, List<Rail> rails, int block) {
         int chance = chance();
         int least = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathMinimumWidth", Config.worldgen.villagePathMinimumWidth()));
         if (chance <= 0 || ALLEY_WIDTH < least) { return; }
@@ -98,13 +98,13 @@ final class CityAlleys {
         return true;
     }
 
-    static int branchAt(int cross) {
+    public static int branchAt(int cross) {
         int size = CityPlan.district();
         int full = CityPlan.fullWidth();
         return Mth.clamp(Math.floorMod(cross + full / 2 + size / 2, size) - full / 2, 0, size - full);
     }
 
-    static boolean branches(long seed, Town town, List<Rail> rails, int band, boolean alongX) {
+    public static boolean branches(long seed, Town town, List<Rail> rails, int band, boolean alongX) {
         int at = CityPlan.windowOf(band, !alongX) + branchAt(town.crossAcross(alongX));
         long hash = CityPlan.spacing() == 1 ? seed : town.hash();
         return Math.floorMod(Hashes.mix(hash ^ BRANCH_SALT, band, alongX ? 1 : 0, 0), BRANCH_ODDS) > 0 && offRail(rails, alongX, at, at + CityPlan.fullWidth() - 1, 0);

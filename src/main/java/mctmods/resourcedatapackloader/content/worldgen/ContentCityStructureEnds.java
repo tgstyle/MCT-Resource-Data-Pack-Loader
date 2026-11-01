@@ -117,7 +117,7 @@ public final class ContentCityStructureEnds {
         return null;
     }
 
-    static void stand(CityPlan plan, CityPlan.Line line, List<BoundingBox> standing, List<BoundingBox> ways) {
+    public static void stand(CityPlan plan, CityPlan.Line line, List<BoundingBox> standing, List<BoundingBox> ways) {
         for (CityPlan.Plot plot : plan.plots()) { standing.add(plot.box()); }
         for (CityPlan.Line other : CityLines.of(plan)) {
             if (other.equals(line)) { continue; }
@@ -133,7 +133,7 @@ public final class ContentCityStructureEnds {
         }
     }
 
-    static BoundingBox court(CityPlan.Line line, int end, int dir, int radius, int stem) { return CityCulDeSacs.courtLine(line, end, dir, radius, stem).box(); }
+    public static BoundingBox court(CityPlan.Line line, int end, int dir, int radius, int stem) { return CityCulDeSacs.courtLine(line, end, dir, radius, stem).box(); }
 
     private static boolean crossed(List<BoundingBox> ways, BoundingBox court) {
         for (BoundingBox way : ways) {

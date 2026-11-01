@@ -107,7 +107,7 @@ public final class CityLinks {
 
     static int platformReach(boolean buried) { return stations() && !buried ? platformWidth() + 1 : 0; }
 
-    static int linkReach() { return on() && carriedUnderground() ? platformReach(false) : 0; }
+    public static int linkReach() { return on() && carriedUnderground() ? platformReach(false) : 0; }
 
     static int ramp() { return ContentCity.subwayDepth() * ContentCity.railClimb(true); }
 
@@ -300,7 +300,7 @@ public final class CityLinks {
         return new CityRails.Laid(rail, start, profile, Arrays.copyOfRange(graded.bridged(), first, last), tunnel, Arrays.copyOfRange(bored, first, last), crossed, frames, null, List.of(), List.of());
     }
 
-    @Nullable static CityRails.Bed trunkBed(CityGround ground, CityPlan.Rail rail) {
+    @Nullable public static CityRails.Bed trunkBed(CityGround ground, CityPlan.Rail rail) {
         Surveyed found = surveyed(ground, rail);
         if (found == null) { return null; }
         return new CityRails.Bed(rail.from(), Arrays.copyOfRange(found.graded().profile(), found.first(), found.last()), Arrays.copyOfRange(found.bored(), found.first(), found.last()));
@@ -308,7 +308,7 @@ public final class CityLinks {
 
     private static boolean[] bored(Trunk trunk, Graded graded) { return trunk.buried() ? new boolean[graded.profile().length] : CityGrade.roofed(graded.profile(), graded.floor(), graded.bridged(), ContentCity.railTunnelDepth()); }
 
-    static int pin(CityGround ground, CityPlan.Rail rail, int rowLeast, int[] profile, boolean[] fixed, int climb) {
+    public static int pin(CityGround ground, CityPlan.Rail rail, int rowLeast, int[] profile, boolean[] fixed, int climb) {
         int[] ends = ends(rail);
         int pinned = 0;
         boolean[] band = new boolean[profile.length];
@@ -332,7 +332,7 @@ public final class CityLinks {
         return pinned;
     }
 
-    @Nullable static int[] climbOut(int[] ends) {
+    @Nullable public static int[] climbOut(int[] ends) {
         if (ends.length < END || buried(ends, 0)) { return null; }
         int dir = ends[0];
         return new int[] {ends[1] - dir * (pinRows(false) - 1) - dir * ramp(), dir};
@@ -348,7 +348,7 @@ public final class CityLinks {
         return -1;
     }
 
-    static boolean opens(@Nullable int[] packed, int[] ends, int row) {
+    public static boolean opens(@Nullable int[] packed, int[] ends, int row) {
         if (packed == null) { return fromEnd(ends, row, true, true) >= 0; }
         Trunk trunk = Trunk.of(packed);
         if (trunk.buried()) { return false; }

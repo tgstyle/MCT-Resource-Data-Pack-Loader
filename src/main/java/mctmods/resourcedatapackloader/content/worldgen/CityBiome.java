@@ -47,7 +47,7 @@ public final class CityBiome {
 
     @Nullable private static String at(WorldGenLevel level, int x, int z) { return sectionFor(surface(level, x, z)); }
 
-    static Holder<Biome> surface(WorldGenLevel level, int x, int z) {
+    public static Holder<Biome> surface(WorldGenLevel level, int x, int z) {
         BlockPos.MutableBlockPos at = LOOKUP.get();
         at.set(x, level.getLevel().getChunkSource().getGenerator().getSeaLevel(), z);
         return level.getBiome(at);

@@ -23,7 +23,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class ContentOptionOres {
+public final class ContentOptionOres {
     private static final int MAX_SIZE = 64;
     private static final int MAX_COUNT = 256;
     private static final String DUNGEONS = "dungeonChance";
@@ -59,7 +59,7 @@ final class ContentOptionOres {
         String highKey() { return key + (centered ? "Spread" : "MaxHeight"); }
     }
 
-    static boolean ignores(String key) {
+    public static boolean ignores(String key) {
         if (DUNGEONS.equals(key) || LAVA_LAKES.equals(key) || WATER_LAKES.equals(key)) { return false; }
         for (Ore ore : ORES) {
             if (ore.sizeKey().equals(key) || ore.countKey().equals(key) || ore.lowKey().equals(key) || ore.highKey().equals(key)) { return false; }
@@ -67,9 +67,9 @@ final class ContentOptionOres {
         return true;
     }
 
-    static void generate(@Nullable JsonObject options) { tune(Level.OVERWORLD.location(), options); }
+    public static void generate(@Nullable JsonObject options) { tune(Level.OVERWORLD.location(), options); }
 
-    static void dimension(ResourceLocation key, @Nullable JsonObject options) {
+    public static void dimension(ResourceLocation key, @Nullable JsonObject options) {
         if (tune(key, options)) { ContentLog.LOGGER.info("Dimension {} places its own ores, dungeons and lakes from the generatorOptions lines above", key); }
     }
 

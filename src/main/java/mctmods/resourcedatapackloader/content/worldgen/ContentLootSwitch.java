@@ -44,7 +44,7 @@ public final class ContentLootSwitch extends LootModifier {
 
     @Override @Nonnull public MapCodec<? extends IGlobalLootModifier> codec() { return CODEC; }
 
-    @Nullable static Map<ResourceLocation, ResourceLocation> parse(String owner, @Nullable JsonElement element) {
+    @Nullable public static Map<ResourceLocation, ResourceLocation> parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives loot that is not an object of loot table ids, ignoring it", owner);
@@ -62,12 +62,12 @@ public final class ContentLootSwitch extends LootModifier {
         return swaps;
     }
 
-    @Nullable static ResourceLocation id(String text) {
+    @Nullable public static ResourceLocation id(String text) {
         String lowered = Settings.lower(text);
         return lowered.isEmpty() ? null : ResourceLocation.tryParse(lowered.indexOf(':') < 0 ? "minecraft:" + lowered : lowered);
     }
 
-    static void start(MinecraftServer server, Collection<Map<ResourceLocation, ResourceLocation>> maps) {
+    public static void start(MinecraftServer server, Collection<Map<ResourceLocation, ResourceLocation>> maps) {
         Set<ResourceLocation> missing = new HashSet<>();
         for (Map<ResourceLocation, ResourceLocation> swaps : maps) {
             for (Map.Entry<ResourceLocation, ResourceLocation> swap : swaps.entrySet()) {
@@ -77,7 +77,7 @@ public final class ContentLootSwitch extends LootModifier {
         }
     }
 
-    static void startMaps(MinecraftServer server, Collection<StructureMapDef> maps) {
+    public static void startMaps(MinecraftServer server, Collection<StructureMapDef> maps) {
         Set<ResourceLocation> missing = new HashSet<>();
         for (StructureMapDef def : maps) {
             if (def.loot() != null && absent(server, def.loot(), missing)) { ContentLog.LOGGER.error("Structure map {} gives loot {}, which names no loot table, so the chests it fills drop nothing", def.key(), def.loot()); }

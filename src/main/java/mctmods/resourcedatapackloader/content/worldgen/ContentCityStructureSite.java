@@ -30,7 +30,7 @@ public final class ContentCityStructureSite {
 
     private ContentCityStructureSite() {}
 
-    static ContentCityStructure.District district(GenerationContext context, CityGround ground, CityPlan plan) {
+    public static ContentCityStructure.District district(GenerationContext context, CityGround ground, CityPlan plan) {
         CityPlan own = settled(context, ground, plan);
         return cached(ContentCityStructure.DISTRICTS, own, () -> survey(context, ground, own));
     }
@@ -113,7 +113,7 @@ public final class ContentCityStructureSite {
         return new Grading(levels, run, rails, claims, wells, ContentCityStructureGrade.decks(context, plan, wells, levels));
     }
 
-    static CityPlan settled(GenerationContext context, CityGround ground, CityPlan plan) {
+    public static CityPlan settled(GenerationContext context, CityGround ground, CityPlan plan) {
         CityPlan held = plan.settled();
         if (held != null) { return held; }
         Map<CityPlan.Line, CityPlan.Line> reached = new HashMap<>();
@@ -378,9 +378,9 @@ public final class ContentCityStructureSite {
         return count + 1;
     }
 
-    static List<CityPlan> around(CityGround ground, CityPlan plan, CityPlan.Plot placed) { return plansOver(ground, plan, placed.fromX() - KEEP_REACH, placed.toX() + KEEP_REACH, placed.fromZ() - KEEP_REACH, placed.toZ() + KEEP_REACH); }
+    public static List<CityPlan> around(CityGround ground, CityPlan plan, CityPlan.Plot placed) { return plansOver(ground, plan, placed.fromX() - KEEP_REACH, placed.toX() + KEEP_REACH, placed.fromZ() - KEEP_REACH, placed.toZ() + KEEP_REACH); }
 
-    static List<CityPlan> plansOver(CityGround ground, CityPlan plan, int minX, int maxX, int minZ, int maxZ) {
+    public static List<CityPlan> plansOver(CityGround ground, CityPlan plan, int minX, int maxX, int minZ, int maxZ) {
         List<CityPlan> found = new ArrayList<>();
         for (int districtX = CityPlan.districtOf(minX, true); districtX <= CityPlan.districtOf(maxX, true); districtX++) {
             for (int districtZ = CityPlan.districtOf(minZ, false); districtZ <= CityPlan.districtOf(maxZ, false); districtZ++) {
@@ -392,7 +392,7 @@ public final class ContentCityStructureSite {
         return found;
     }
 
-    static int[] keepAround(List<CityPlan> plans, CityPlan.Plot placed, List<ContentCityStructure.Well> wells) {
+    public static int[] keepAround(List<CityPlan> plans, CityPlan.Plot placed, List<ContentCityStructure.Well> wells) {
         IntList boxes = new IntArrayList();
         for (CityPlan plan : plans) { keepFrom(plan, placed, boxes); }
         keepWells(placed, wells, boxes);
@@ -422,7 +422,7 @@ public final class ContentCityStructureSite {
         }
     }
 
-    static int[] roadsAround(List<CityPlan> plans, CityPlan.Plot placed) {
+    public static int[] roadsAround(List<CityPlan> plans, CityPlan.Plot placed) {
         IntList boxes = new IntArrayList();
         for (CityPlan plan : plans) {
             for (CityPlan.Line line : CityLines.of(plan)) {

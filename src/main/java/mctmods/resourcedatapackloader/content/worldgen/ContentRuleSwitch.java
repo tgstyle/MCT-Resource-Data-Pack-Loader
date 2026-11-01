@@ -29,7 +29,7 @@ public final class ContentRuleSwitch {
 
     private ContentRuleSwitch() {}
 
-    @Nullable static RuleSwitchDef parse(String owner, @Nullable JsonElement element, boolean local, boolean precipitation) {
+    @Nullable public static RuleSwitchDef parse(String owner, @Nullable JsonElement element, boolean local, boolean precipitation) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives rules that is not an object, ignoring it", owner);

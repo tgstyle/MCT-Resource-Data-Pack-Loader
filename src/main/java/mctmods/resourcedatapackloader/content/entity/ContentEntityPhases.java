@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
-final class ContentEntityPhases {
+public final class ContentEntityPhases {
     private static final Map<UUID, State> STATES = new HashMap<>();
 
     private static final class State {
@@ -37,9 +37,9 @@ final class ContentEntityPhases {
 
     private ContentEntityPhases() {}
 
-    static void join(Entity entity) { STATES.put(entity.getUUID(), new State()); }
+    public static void join(Entity entity) { STATES.put(entity.getUUID(), new State()); }
 
-    static void drop(Entity entity) { STATES.remove(entity.getUUID()); }
+    public static void drop(Entity entity) { STATES.remove(entity.getUUID()); }
 
     @Nullable static BossBarDef bar(LivingEntity living, EntityVariantDef def) {
         State state = STATES.get(living.getUUID());
@@ -48,7 +48,7 @@ final class ContentEntityPhases {
         return phased == null ? def.bossBar() : phased;
     }
 
-    static void tick(Mob mob, EntityVariantDef def) {
+    public static void tick(Mob mob, EntityVariantDef def) {
         State state = STATES.get(mob.getUUID());
         if (state == null) { return; }
         if (!mob.isAlive()) {

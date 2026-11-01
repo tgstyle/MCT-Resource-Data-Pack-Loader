@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Locale;
 import javax.annotation.Nullable;
 
-final class ContentEntityWatch {
+public final class ContentEntityWatch {
     private static final Long2LongOpenHashMap WAS_AT = new Long2LongOpenHashMap();
     private static final Long2LongOpenHashMap TICKED = new Long2LongOpenHashMap();
     private static final Long2LongOpenHashMap GAPS = new Long2LongOpenHashMap();
@@ -34,7 +34,7 @@ final class ContentEntityWatch {
 
     private ContentEntityWatch() {}
 
-    static void tally(@Nullable MinecraftServer server) {
+    public static void tally(@Nullable MinecraftServer server) {
         if (server == null) { return; }
         for (ServerLevel level : server.getAllLevels()) {
             StringBuilder where = new StringBuilder();

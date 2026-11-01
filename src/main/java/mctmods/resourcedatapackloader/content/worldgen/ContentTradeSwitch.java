@@ -54,7 +54,7 @@ public final class ContentTradeSwitch {
 
     private ContentTradeSwitch() {}
 
-    @Nullable static TradeSwitchDef parse(ResourceLocation key, String owner, String set, @Nullable JsonElement element) {
+    @Nullable public static TradeSwitchDef parse(ResourceLocation key, String owner, String set, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonArray()) {
             ContentLog.LOGGER.error("{} gives trades that is not a list, ignoring it", owner);
@@ -72,7 +72,7 @@ public final class ContentTradeSwitch {
         return new TradeSwitchDef(set, element.toString().hashCode(), List.copyOf(trades));
     }
 
-    static void start(Collection<TradeSwitchDef> defs) {
+    public static void start(Collection<TradeSwitchDef> defs) {
         forget();
         for (TradeSwitchDef def : defs) {
             STAMPS.put(def.set(), def.stamp());
@@ -117,7 +117,7 @@ public final class ContentTradeSwitch {
         return now.offers;
     }
 
-    static void closeTrades(ServerLevel level) {
+    public static void closeTrades(ServerLevel level) {
         for (ServerPlayer player : level.players()) {
             if (player.containerMenu instanceof MerchantMenu) { player.closeContainer(); }
         }

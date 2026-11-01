@@ -24,7 +24,7 @@ import javax.annotation.Nonnull;
 
 public final class ContentCityBulbPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityBulbPiece::new;
-    static final int VERGE = 6;
+    public static final int VERGE = 6;
     private static final String LEVEL = "Level";
     private static final String REACH = "Reach";
     private static final String PAVING = "Paving";

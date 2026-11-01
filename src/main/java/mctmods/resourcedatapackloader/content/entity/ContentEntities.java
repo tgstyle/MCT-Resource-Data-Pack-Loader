@@ -66,7 +66,7 @@ import javax.annotation.Nullable;
 
 public final class ContentEntities {
     static final Map<ResourceLocation, EntityVariantDef> DEFS = new LinkedHashMap<>();
-    static final Map<EntityType<?>, EntityVariantDef> BY_TYPE = new IdentityHashMap<>();
+    public static final Map<EntityType<?>, EntityVariantDef> BY_TYPE = new IdentityHashMap<>();
     static final Map<EntityType<?>, EntityType<?>> BASES = new IdentityHashMap<>();
     static final Map<ResourceLocation, EntityType<?>> TYPES = new LinkedHashMap<>();
     @Nullable static EntityType<ReturningThrow> returningThrow;
@@ -100,7 +100,7 @@ public final class ContentEntities {
             Map.entry("player", List.of("minecraft:player_attack")), Map.entry("generic", List.of("minecraft:generic")));
     private static final int ENGAGE_EVERY = 100;
     private static int engageWatch;
-    static final Map<String, Integer> FELL_TO = new LinkedHashMap<>();
+    public static final Map<String, Integer> FELL_TO = new LinkedHashMap<>();
     @Nullable private static LivingEntity struck;
     private static long struckAt;
     @Nullable private static EntityVariantDef struckBy;

@@ -16,13 +16,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-final class CityCulDeSacs {
-    enum Hold { STREET, LANE, PLOT, FIXED }
+public final class CityCulDeSacs {
+    public enum Hold { STREET, LANE, PLOT, FIXED }
 
-    record Held(int minX, int minZ, int maxX, int maxZ, Hold hold, boolean alongX) {
+    public record Held(int minX, int minZ, int maxX, int maxZ, Hold hold, boolean alongX) {
         static Held ofPlot(Plot plot) { return new Held(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), Hold.PLOT, true); }
 
-        static Held ofBox(BoundingBox box, Hold hold) { return new Held(box.minX(), box.minZ(), box.maxX(), box.maxZ(), hold, true); }
+        public static Held ofBox(BoundingBox box, Hold hold) { return new Held(box.minX(), box.minZ(), box.maxX(), box.maxZ(), hold, true); }
 
         static Held ofWell(BoundingBox well) { return ofBox(well, Hold.FIXED); }
 
@@ -30,14 +30,14 @@ final class CityCulDeSacs {
 
         BoundingBox box() { return new BoundingBox(minX, 0, minZ, maxX, 0, maxZ); }
 
-        boolean meets(int fromX, int fromZ, int toX, int toZ) { return box().intersects(fromX, fromZ, toX, toZ); }
+        public boolean meets(int fromX, int fromZ, int toX, int toZ) { return box().intersects(fromX, fromZ, toX, toZ); }
     }
 
-    record StreetGrade(int start, int[] profile, boolean[] bored) {}
+    public record StreetGrade(int start, int[] profile, boolean[] bored) {}
 
     private CityCulDeSacs() {}
 
-    static boolean steep(CityGround ground, Line tie, List<Line> roads) {
+    public static boolean steep(CityGround ground, Line tie, List<Line> roads) {
         if (ContentCity.tunnelDepth() <= 0) { return false; }
         List<Line> with = new ArrayList<>(roads);
         with.add(tie);
@@ -50,7 +50,7 @@ final class CityCulDeSacs {
 
     static Held held(Line line) { return line.alongX() ? new Held(line.from(), line.at(), line.to(), line.last(), line.alley() ? Hold.LANE : Hold.STREET, true) : new Held(line.at(), line.from(), line.last(), line.to(), line.alley() ? Hold.LANE : Hold.STREET, false); }
 
-    static boolean crossesHill(CityGround ground, Map<Line, StreetGrade> grades, List<Line> roads, Held box) {
+    public static boolean crossesHill(CityGround ground, Map<Line, StreetGrade> grades, List<Line> roads, Held box) {
         if (ContentCity.tunnelDepth() <= 0) { return false; }
         for (Line road : roads) {
             boolean alongX = road.alongX();
@@ -65,7 +65,7 @@ final class CityCulDeSacs {
         return false;
     }
 
-    static StreetGrade streetGrade(CityGround ground, Line line, List<Line> lines) {
+    public static StreetGrade streetGrade(CityGround ground, Line line, List<Line> lines) {
         int start = line.from();
         int[] profile = new int[line.to() - line.from() + 1];
         boolean[] held = new boolean[profile.length];
@@ -130,9 +130,9 @@ final class CityCulDeSacs {
         return new Court(street, low, 0, 0);
     }
 
-    static Held courtBox(Line street, int end, int dir, int radius, int stem) { return held(courtLine(street, end, dir, radius, stem)); }
+    public static Held courtBox(Line street, int end, int dir, int radius, int stem) { return held(courtLine(street, end, dir, radius, stem)); }
 
-    static Line courtLine(Line street, int end, int dir, int radius, int stem) {
+    public static Line courtLine(Line street, int end, int dir, int radius, int stem) {
         int near = end + dir;
         int far = end + dir * (stem + 2 * radius + 1);
         return Line.met(street.middle() - radius, 2 * radius + 1, street.alongX(), Math.min(near, far), Math.max(near, far));

@@ -52,7 +52,7 @@ public final class ContentDeepCaves {
         return true;
     }
 
-    static void deepen(JsonObject settings, ResourceLocation owner, int floor, ContentOptionNoise.Shifted shifted) {
+    public static void deepen(JsonObject settings, ResourceLocation owner, int floor, ContentOptionNoise.Shifted shifted) {
         JsonObject router = Json.getJsonObject(settings, "noise_router", null);
         JsonObject noodle = GameData.json(WorldgenFiles.id(FOLDER, ResourceLocation.parse(VANILLA_NOODLE)));
         JsonObject spaghetti = GameData.json(WorldgenFiles.id(FOLDER, ResourceLocation.parse(VANILLA_SPAGHETTI)));

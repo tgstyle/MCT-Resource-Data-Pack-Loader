@@ -23,17 +23,17 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
-final class CityPlanPlots {
-    static final int GAP = 1;
-    static final int SETBACK = 1;
+public final class CityPlanPlots {
+    public static final int GAP = 1;
+    public static final int SETBACK = 1;
     static final long BLOCK_SALT = CityPlan.SALT ^ 0xB10C5L;
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
-    static final class Tally {
+    public static final class Tally {
         private final int limit;
         private int fronts;
 
-        Tally(int limit) { this.limit = limit; }
+        public Tally(int limit) { this.limit = limit; }
 
         boolean full() { return fronts >= limit; }
 
@@ -60,7 +60,7 @@ final class CityPlanPlots {
 
     private CityPlanPlots() {}
 
-    static int townBlock(long seed, CityPlan.Town town) { return districtBlock(RandomSource.create(seed ^ BLOCK_SALT ^ town.hash())); }
+    public static int townBlock(long seed, CityPlan.Town town) { return districtBlock(RandomSource.create(seed ^ BLOCK_SALT ^ town.hash())); }
 
     static int districtBlock(RandomSource roll) {
         List<PickDef> picks = new ArrayList<>();
@@ -93,7 +93,7 @@ final class CityPlanPlots {
         }
     }
 
-    static List<VillageDef> choices(int block, String type) {
+    public static List<VillageDef> choices(int block, String type) {
         List<VillageDef> found = new ArrayList<>();
         for (VillageDef def : ContentVillages.allowed()) {
             if (Math.max(def.width(), def.depth()) > block || ContentVillages.vanillaHouse(def) && !def.structure().contains("village/" + type + "/")) { continue; }
@@ -102,7 +102,7 @@ final class CityPlanPlots {
         return found;
     }
 
-    static boolean backRow() { return ContentControl.flag(ContentControl.VILLAGES, "villagePlotsBackRow", Config.worldgen.villagePlotsBackRow()); }
+    public static boolean backRow() { return ContentControl.flag(ContentControl.VILLAGES, "villagePlotsBackRow", Config.worldgen.villagePlotsBackRow()); }
 
     static List<Plot> radialPlots(RandomSource roll, List<VillageDef> choices, Tally tally, int originX, int originZ, int size, Line row, Line column, List<Line> alongX, List<Line> alongZ, List<Rail> rails, List<Junction> plazas) {
         List<Plot> found = new ArrayList<>();
@@ -176,7 +176,7 @@ final class CityPlanPlots {
         return area;
     }
 
-    static int backRows(RandomSource roll, List<VillageDef> choices, List<Plot> found, List<Rail> rails, List<Line> lines, List<Junction> plazas, List<Plot> fronts, int fromX, int toX, int fromZ, int toZ, int most) {
+    public static int backRows(RandomSource roll, List<VillageDef> choices, List<Plot> found, List<Rail> rails, List<Line> lines, List<Junction> plazas, List<Plot> fronts, int fromX, int toX, int fromZ, int toZ, int most) {
         List<VillageDef> packs = choices.stream().filter(def -> !ContentVillages.vanillaHouse(def)).toList();
         if (packs.isEmpty()) { return 0; }
         int seated = 0;
@@ -354,7 +354,7 @@ final class CityPlanPlots {
         return true;
     }
 
-    static void flank(RandomSource roll, List<VillageDef> choices, Tally tally, List<Plot> found, List<Rail> rails, List<Line> lines, List<Junction> plazas, Line way, int block, int most) {
+    public static void flank(RandomSource roll, List<VillageDef> choices, Tally tally, List<Plot> found, List<Rail> rails, List<Line> lines, List<Junction> plazas, Line way, int block, int most) {
         int deep = block + SETBACK;
         int length = way.to() - way.from() + 1;
         for (boolean lower : new boolean[] {false, true}) {
@@ -383,7 +383,7 @@ final class CityPlanPlots {
         }
     }
 
-    static List<Plot> mapPlots(long seed, CityMapDef map, char[][] marks, CityMapDef.Kind[][] grid, int originX, int originZ, List<Line> alongX, List<Line> alongZ) {
+    public static List<Plot> mapPlots(long seed, CityMapDef map, char[][] marks, CityMapDef.Kind[][] grid, int originX, int originZ, List<Line> alongX, List<Line> alongZ) {
         List<Plot> found = new ArrayList<>();
         int cell = map.cell();
         int deep = grid.length;

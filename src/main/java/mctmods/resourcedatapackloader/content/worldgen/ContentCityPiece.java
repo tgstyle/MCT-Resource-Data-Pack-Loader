@@ -106,7 +106,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
 
     private int pavedMost() { return pavedLeast() + width - 1; }
 
-    BoundingBox paved() {
+    public BoundingBox paved() {
         BoundingBox held = getBoundingBox();
         return alongX ? new BoundingBox(held.minX(), held.minY(), pavedLeast(), held.maxX(), held.maxY(), pavedMost()) : new BoundingBox(pavedLeast(), held.minY(), held.minZ(), pavedMost(), held.maxY(), held.maxZ());
     }
@@ -126,12 +126,12 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         if (pinned) { tag.putBoolean(PINNED, true); }
     }
 
-    boolean tunnelNear(BlockPos at) {
+    public boolean tunnelNear(BlockPos at) {
         BoundingBox held = getBoundingBox();
         return bored && at.getX() >= held.minX() - 1 && at.getX() <= held.maxX() + 1 && at.getZ() >= held.minZ() - 1 && at.getZ() <= held.maxZ() + 1;
     }
 
-    boolean runsIntoTunnel(int x, int y, int z) {
+    public boolean runsIntoTunnel(int x, int y, int z) {
         BoundingBox held = getBoundingBox();
         return bored && y >= level - 1 && x >= held.minX() && x <= held.maxX() && z >= held.minZ() && z <= held.maxZ();
     }

@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class CityMapDistricts {
+public final class CityMapDistricts {
     private static final int TRIES = 32;
     private static final int TIE_REACH = 112;
     private static final int JOIN = 4;
@@ -24,13 +24,13 @@ final class CityMapDistricts {
     private static final int GROW_STEP = 7;
     private static final Grown NONE = new Grown(List.of(), Map.of(), List.of());
 
-    record Grown(List<CityPlan.Line> ties, Map<Long, CityPlan> districts, List<CityPlan.Plot> plots) {}
+    public record Grown(List<CityPlan.Line> ties, Map<Long, CityPlan> districts, List<CityPlan.Plot> plots) {}
 
     private record Standing(CityGround ground, CityPlan.Town town, List<CityPlan.Line> roads, List<BoundingBox> pieces, List<BoundingBox> drawn, List<BoundingBox> wells, List<CityPlan.Rail> rails, Map<Long, CityPlan> districts, List<CityPlan.Line> ties, int[] refused, List<BoundingBox> others) {}
 
     private CityMapDistricts() {}
 
-    static Grown grow(CityGround ground, CityPlan.Town town, List<CityPlan.Line> lines, List<BoundingBox> pieces, List<CityPlan.Rail> rails, int built, List<BoundingBox> others) {
+    public static Grown grow(CityGround ground, CityPlan.Town town, List<CityPlan.Line> lines, List<BoundingBox> pieces, List<CityPlan.Rail> rails, int built, List<BoundingBox> others) {
         int least = ContentVillages.plotsLeast();
         if (least <= 0 || built >= least) { return NONE; }
         List<BoundingBox> drawn = new ArrayList<>(pieces);
@@ -343,7 +343,7 @@ final class CityMapDistricts {
         return false;
     }
 
-    static List<BoundingBox> others(CityGround ground, CityMapDef map, int cityX, int cityZ, CityPlan.Town town) {
+    public static List<BoundingBox> others(CityGround ground, CityMapDef map, int cityX, int cityZ, CityPlan.Town town) {
         List<BoundingBox> found = new ArrayList<>();
         int spacing = CityPlan.spacing();
         if (spacing <= 1) { return found; }

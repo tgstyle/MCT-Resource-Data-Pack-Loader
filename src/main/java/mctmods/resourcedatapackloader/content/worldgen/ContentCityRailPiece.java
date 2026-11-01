@@ -54,8 +54,8 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
     private static final String TRUNK = "RdplTrunk";
     private static final String LINK_ENDS = "RdplLinkEnds";
     private static final String RISE = "Rise";
-    static final int RISE_LOW = 1;
-    static final int RISE_HIGH = 2;
+    public static final int RISE_LOW = 1;
+    public static final int RISE_HIGH = 2;
     private final int level;
     private final int middle;
     private final boolean alongX;
@@ -133,7 +133,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     @Override @Nullable public BoundingBox stood() { return bored || crossed ? null : getBoundingBox(); }
 
-    boolean subway() { return subway; }
+    public boolean subway() { return subway; }
 
     @Override @Nullable public BoundingBox owned() {
         BoundingBox held = getBoundingBox();
@@ -443,7 +443,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         return laid;
     }
 
-    static BlockState shaped(BlockState laid, RailShape wanted, boolean alongX) {
+    public static BlockState shaped(BlockState laid, RailShape wanted, boolean alongX) {
         if (laid.hasProperty(BlockStateProperties.RAIL_SHAPE) && BlockStateProperties.RAIL_SHAPE.getPossibleValues().contains(wanted)) { return laid.setValue(BlockStateProperties.RAIL_SHAPE, wanted); }
         if (laid.hasProperty(BlockStateProperties.RAIL_SHAPE_STRAIGHT) && BlockStateProperties.RAIL_SHAPE_STRAIGHT.getPossibleValues().contains(wanted)) { return laid.setValue(BlockStateProperties.RAIL_SHAPE_STRAIGHT, wanted); }
         return oriented(laid, alongX);

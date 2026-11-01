@@ -25,8 +25,8 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class CityPlotGround {
-    static final int BRIDGE_GAP = 6;
-    static final int RING = 2;
+    public static final int BRIDGE_GAP = 6;
+    public static final int RING = 2;
     private static final int FACING_GAP = 2;
     private static final int BRIDGE_STEP = 2;
     private static final int BRIDGE_HIGH = 12;
@@ -38,8 +38,8 @@ public final class CityPlotGround {
     static final int ROAD_BESIDE = 1;
     private static final int VERGE_WET = 8;
     private static final int FOOTING_REACH = 8;
-    static final int FILL_UNDER = 8;
-    static final int PILING_REACH = 24;
+    public static final int FILL_UNDER = 8;
+    public static final int PILING_REACH = 24;
 
     private CityPlotGround() {}
 
@@ -49,18 +49,18 @@ public final class CityPlotGround {
 
     static boolean clearable(BlockState state) { return !state.isAir() && (opening(state) || (state.canBeReplaced() && state.getFluidState().isEmpty())); }
 
-    static boolean cuts(WorldGenLevel level, BlockPos at, BlockState over) {
+    public static boolean cuts(WorldGenLevel level, BlockPos at, BlockState over) {
         if (terrain(over) || over.is(Blocks.DIRT_PATH) || over.is(Blocks.SANDSTONE) || over.is(BlockTags.LOGS)) { return true; }
         return (over.getBlock() instanceof LeavesBlock || !solid(over)) && ContentCityTrees.clears(level, at, over);
     }
 
-    @SuppressWarnings("deprecation") static boolean solid(BlockState state) { return state.isSolid(); }
+    @SuppressWarnings("deprecation") public static boolean solid(BlockState state) { return state.isSolid(); }
 
-    static boolean liquid(BlockState state) { return !state.getFluidState().isEmpty(); }
+    public static boolean liquid(BlockState state) { return !state.getFluidState().isEmpty(); }
 
     private static boolean open(BlockState state) { return state.isAir() || liquid(state); }
 
-    static int belowLoose(WorldGenLevel level, int x, int z, int from, int floor, BlockPos.MutableBlockPos at) {
+    public static int belowLoose(WorldGenLevel level, int x, int z, int from, int floor, BlockPos.MutableBlockPos at) {
         int y = from;
         while (y >= floor && level.getBlockState(at.set(x, y, z)).getBlock() instanceof FallingBlock) { y--; }
         return y;
@@ -87,7 +87,7 @@ public final class CityPlotGround {
 
     static boolean inside(BoundingBox held, int x, int z) { return x >= held.minX() && x <= held.maxX() && z >= held.minZ() && z <= held.maxZ(); }
 
-    static BlockState groundFor(WorldGenLevel level, int x, int z) {
+    public static BlockState groundFor(WorldGenLevel level, int x, int z) {
         Holder<Biome> biome = CityBiome.surface(level, x, z);
         ContentBiomes.Soil soil = ContentBiomes.soil(biome);
         if (soil != null) { return groundFor(soil.top().defaultBlockState(), soil.filler().defaultBlockState()); }
@@ -112,7 +112,7 @@ public final class CityPlotGround {
         return sandTop ? ground : Blocks.DIRT.defaultBlockState();
     }
 
-    static BlockState pathForGround(WorldGenLevel level, int x, int z, BlockState path, BlockState support, boolean earthy) {
+    public static BlockState pathForGround(WorldGenLevel level, int x, int z, BlockState path, BlockState support, boolean earthy) {
         BlockState ground = groundFor(level, x, z);
         if (ground.is(Blocks.SAND)) { return ContentCityBlocks.swapped(Blocks.SANDSTONE.defaultBlockState()); }
         if (ground.is(Blocks.TERRACOTTA)) { return ContentCityBlocks.swapped(Blocks.TERRACOTTA.defaultBlockState()); }
@@ -120,17 +120,17 @@ public final class CityPlotGround {
         return earthy || support.is(Blocks.CLAY) ? path : support;
     }
 
-    static boolean earthy(BlockState held) { return held.isAir() || held.is(Blocks.GRASS_BLOCK) || held.is(Blocks.DIRT) || held.is(Blocks.COARSE_DIRT) || held.is(Blocks.PODZOL) || held.is(Blocks.MYCELIUM) || held.is(Blocks.DIRT_PATH) || decoration(held) || !solid(held); }
+    public static boolean earthy(BlockState held) { return held.isAir() || held.is(Blocks.GRASS_BLOCK) || held.is(Blocks.DIRT) || held.is(Blocks.COARSE_DIRT) || held.is(Blocks.PODZOL) || held.is(Blocks.MYCELIUM) || held.is(Blocks.DIRT_PATH) || decoration(held) || !solid(held); }
 
-    static boolean decoration(BlockState state) { return state.is(BlockTags.CRYSTAL_SOUND_BLOCKS) || state.is(Blocks.CALCITE) || state.is(Blocks.SMOOTH_BASALT) || state.is(Blocks.MOSSY_COBBLESTONE); }
+    public static boolean decoration(BlockState state) { return state.is(BlockTags.CRYSTAL_SOUND_BLOCKS) || state.is(Blocks.CALCITE) || state.is(Blocks.SMOOTH_BASALT) || state.is(Blocks.MOSSY_COBBLESTONE); }
 
-    static boolean inTheWay(BlockState held, BlockState road, BlockState support, BlockState deck) {
+    public static boolean inTheWay(BlockState held, BlockState road, BlockState support, BlockState deck) {
         if (!solid(held) || held.instrument() == NoteBlockInstrument.BASS || held.is(BlockTags.LEAVES) || terrain(held) || decoration(held) || held.is(Blocks.DRIPSTONE_BLOCK) || held.is(Blocks.POINTED_DRIPSTONE)) { return false; }
         if (held.is(road.getBlock()) || held.is(support.getBlock()) || held.is(deck.getBlock())) { return false; }
         return !held.is(Blocks.DIRT_PATH) && !held.is(BlockTags.PLANKS) && !held.is(Blocks.SANDSTONE) && !held.is(Blocks.RED_SANDSTONE) && !held.is(BlockTags.TERRACOTTA);
     }
 
-    static BlockState exposed(WorldGenLevel level, BlockPos.MutableBlockPos at, BlockState laid) {
+    public static BlockState exposed(WorldGenLevel level, BlockPos.MutableBlockPos at, BlockState laid) {
         if (!laid.is(Blocks.DIRT)) { return laid; }
         BlockState over = level.getBlockState(at.above());
         return solid(over) ? laid : Blocks.GRASS_BLOCK.defaultBlockState();
@@ -148,9 +148,9 @@ public final class CityPlotGround {
         return asked == null ? exposed(level, at, groundFor(level, x, z)) : asked.pick(level.getSeed(), x, y, z);
     }
 
-    static void fillUnder(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { fillDown(level, box, x, from, z, floor, groundFor(level, x, z)); }
+    public static void fillUnder(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { fillDown(level, box, x, from, z, floor, groundFor(level, x, z)); }
 
-    static void raise(WorldGenLevel level, BoundingBox box, BlockPos.MutableBlockPos at, BlockState rail, int height, int x, int deckY, int z) {
+    public static void raise(WorldGenLevel level, BoundingBox box, BlockPos.MutableBlockPos at, BlockState rail, int height, int x, int deckY, int z) {
         for (int up = 1; up <= height; up++) {
             at.set(x, deckY + up, z);
             if (!box.isInside(at) || solid(level.getBlockState(at))) { break; }
@@ -158,7 +158,7 @@ public final class CityPlotGround {
         }
     }
 
-    static int piling(WorldGenLevel level, int x, int z, int from, BlockState support, int roof, BlockPos.MutableBlockPos at) {
+    public static int piling(WorldGenLevel level, int x, int z, int from, BlockState support, int roof, BlockPos.MutableBlockPos at) {
         int laid = 0;
         for (int y = from; y >= from - PILING_REACH && y > level.getMinBuildHeight() && y > roof; y--) {
             at.set(x, y, z);
@@ -186,7 +186,7 @@ public final class CityPlotGround {
         return loose;
     }
 
-    static void pier(WorldGenLevel level, BoundingBox box, int x, int from, int z, int floor, int bed, BlockState ground) {
+    public static void pier(WorldGenLevel level, BoundingBox box, int x, int from, int z, int floor, int bed, BlockState ground) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int y = from; y >= floor; y--) {
             at.set(x, y, z);
@@ -197,9 +197,9 @@ public final class CityPlotGround {
         }
     }
 
-    static void wallFoot(WorldGenLevel level, BoundingBox box, List<CityRails.Laid> bores, int x, int z, int from, BlockState lining) { pier(level, box, x, from, z, CityRails.boreRoof(bores, x, z) + 1, Integer.MAX_VALUE, lining); }
+    public static void wallFoot(WorldGenLevel level, BoundingBox box, List<CityRails.Laid> bores, int x, int z, int from, BlockState lining) { pier(level, box, x, from, z, CityRails.boreRoof(bores, x, z) + 1, Integer.MAX_VALUE, lining); }
 
-    static int fillBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { return fillBank(level, box, x, z, from, floor, false); }
+    public static int fillBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { return fillBank(level, box, x, z, from, floor, false); }
 
     private static int fillBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor, boolean field) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -232,14 +232,14 @@ public final class CityPlotGround {
         return fillBank(level, box, x, z, from, Math.max(floor, roof + 1 + FOOTING_REACH), field);
     }
 
-    static boolean covered(List<BoundingBox> others, int x, int z) {
+    public static boolean covered(List<BoundingBox> others, int x, int z) {
         for (BoundingBox other : others) {
             if (inside(other, x, z)) { return true; }
         }
         return false;
     }
 
-    static int bridge(WorldGenLevel level, BoundingBox held, int seat, BoundingBox near, int nearSeat, BoundingBox box, List<BoundingBox> others, List<BoundingBox> streets) {
+    public static int bridge(WorldGenLevel level, BoundingBox held, int seat, BoundingBox near, int nearSeat, BoundingBox box, List<BoundingBox> others, List<BoundingBox> streets) {
         if (Math.abs(seat - nearSeat) > BRIDGE_STEP) { return 0; }
         int[] strip = facingStrip(held, near);
         if (strip == null) { return 0; }
@@ -293,7 +293,7 @@ public final class CityPlotGround {
 
     private static boolean notOverhang(BlockState state) { return !state.is(BlockTags.LEAVES) || ContentCityTrees.persistent(state); }
 
-    static void vergeFill(WorldGenLevel level, BoundingBox box, List<BoundingBox> others, List<CityRails.Laid> bores, int x, int z, int grade, BlockPos.MutableBlockPos at) {
+    public static void vergeFill(WorldGenLevel level, BoundingBox box, List<BoundingBox> others, List<CityRails.Laid> bores, int x, int z, int grade, BlockPos.MutableBlockPos at) {
         if (!box.isInside(at.set(x, grade, z)) || covered(others, x, z)) { return; }
         if (solid(level.getBlockState(at))) {
             BlockState below = level.getBlockState(at.set(x, grade - 1, z));
@@ -307,7 +307,7 @@ public final class CityPlotGround {
         else { fillBank(level, box, bores, x, z, grade, grade - 5, false); }
     }
 
-    static int wetBed(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z, int grade) {
+    public static int wetBed(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z, int grade) {
         boolean wet = false;
         for (int y = grade; y >= grade - VERGE_WET; y--) {
             BlockState stood = level.getBlockState(at.set(x, y, z));
@@ -317,7 +317,7 @@ public final class CityPlotGround {
         return Integer.MIN_VALUE;
     }
 
-    static int cutBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int roof) {
+    public static int cutBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int roof) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int cut = 0;
         for (int y = from; y <= roof; y++) {
@@ -503,7 +503,7 @@ public final class CityPlotGround {
         return banked + cut;
     }
 
-    static boolean nearRoad(int[] roads, int x, int z, int reach) {
+    public static boolean nearRoad(int[] roads, int x, int z, int reach) {
         for (int at = 0; at + 3 < roads.length; at += 4) {
             if (x >= roads[at] - reach && x <= roads[at + 2] + reach && z >= roads[at + 1] - reach && z <= roads[at + 3] + reach) { return true; }
         }

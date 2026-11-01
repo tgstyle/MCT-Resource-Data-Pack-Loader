@@ -70,7 +70,7 @@ public final class ContentWorldShape {
             "amplified", new String[] { "amplified", "amplified" }, "flat", new String[] { "flat", "overworld" }, "superflat", new String[] { "flat", "overworld" },
             "customized", new String[] { "normal", "overworld" }, "default_1_1", new String[] { "normal", "overworld" });
     private static final Set<String> OPTION_KEYS = Set.of("seaLevel", "useLavaOceans", "oceanFluid", "fixedBiome");
-    static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
+    public static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
     private static final Set<ResourceKey<NoiseGeneratorSettings>> OVERWORLD_NOISE = Set.of(NoiseGeneratorSettings.OVERWORLD, NoiseGeneratorSettings.LARGE_BIOMES, NoiseGeneratorSettings.AMPLIFIED);
     private static final Set<ResourceLocation> SHAPED_OVERWORLD_NOISE = new HashSet<>();
@@ -316,7 +316,7 @@ public final class ContentWorldShape {
         return generator;
     }
 
-    static void empty(JsonObject settings) {
+    public static void empty(JsonObject settings) {
         JsonObject air = new JsonObject();
         air.addProperty("Name", "minecraft:air");
         settings.add("default_block", air);
@@ -398,7 +398,7 @@ public final class ContentWorldShape {
         sequence.asList().add(1, WorldgenJson.condition(gradient, WorldgenJson.block(shape.deepStone())));
     }
 
-    @Nullable static Block block(String name, String key) {
+    @Nullable public static Block block(String name, String key) {
         Block found = Registered.block(name);
         if (found == null) { ContentLog.LOGGER.errorOnce(WARNED, "block|" + key + ":" + name, "{} names block '{}', which is not registered, so it does nothing", key, name); }
         return found;
@@ -523,7 +523,7 @@ public final class ContentWorldShape {
 
     public static void overworldNoise(ResourceLocation settings) { SHAPED_OVERWORLD_NOISE.add(settings); }
 
-    static boolean madeHere(ServerLevel level) {
+    public static boolean madeHere(ServerLevel level) {
         ResourceKey<?> type = level.dimensionTypeRegistration().unwrapKey().orElse(null);
         if (type != null && MADE.contains(type.location())) { return true; }
         ChunkGenerator generator = level.getChunkSource().getGenerator();

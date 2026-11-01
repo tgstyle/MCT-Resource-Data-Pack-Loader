@@ -50,7 +50,7 @@ public final class ContentImprint implements IContentShape {
 
     public boolean pinned() { return shape.pinnedAt() != null; }
 
-    static void forget() { HOLDS.clear(); }
+    public static void forget() { HOLDS.clear(); }
 
     private List<ResourceLocation> templates() {
         List<String> names = new ArrayList<>();

@@ -57,7 +57,7 @@ public final class ContentCityWellPiece extends StructurePiece {
         tag.putBoolean(FIRST, first);
     }
 
-    boolean crowned() { return !first; }
+    public boolean crowned() { return !first; }
 
     private void set(WorldGenLevel world, BoundingBox box, int localX, int localY, int localZ, BlockState state) {
         BlockPos at = new BlockPos(boundingBox.minX() + localX, level - RIM + localY, boundingBox.minZ() + localZ);

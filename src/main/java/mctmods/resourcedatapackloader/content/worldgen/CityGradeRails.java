@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import net.minecraft.util.Mth;
 
-final class CityGradeRails {
+public final class CityGradeRails {
     private CityGradeRails() {}
 
     static double[] filled(int[] ground, int sea) {
@@ -74,7 +74,7 @@ final class CityGradeRails {
         return upper;
     }
 
-    static void rein(int[] profile, boolean[] fixed) {
+    public static void rein(int[] profile, boolean[] fixed) {
         for (int at = 1; at < profile.length; at++) {
             if (fixed[at]) { continue; }
             profile[at] = Mth.clamp(profile[at], profile[at - 1] - 1, profile[at - 1] + 1);

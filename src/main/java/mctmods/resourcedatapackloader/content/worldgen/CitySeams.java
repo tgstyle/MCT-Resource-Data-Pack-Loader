@@ -24,14 +24,14 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
-final class CitySeams {
-    static final Map<List<Long>, Seam> TIES = new ConcurrentHashMap<>();
+public final class CitySeams {
+    public static final Map<List<Long>, Seam> TIES = new ConcurrentHashMap<>();
     private static final long SEAM_SALT = 0x5EA3E5L;
     private static final Seam NONE = new Seam(List.of(), List.of());
 
     record Leg(int districtX, int districtZ, Line line) {}
 
-    record Seam(List<Leg> legs, List<Reach> reached) {}
+    public record Seam(List<Leg> legs, List<Reach> reached) {}
 
     record Reach(long town, Line line, int end) {}
 
@@ -41,7 +41,7 @@ final class CitySeams {
 
     private CitySeams() {}
 
-    static List<Line> through(CityGround ground, List<Town> towns, int districtX, int districtZ) {
+    public static List<Line> through(CityGround ground, List<Town> towns, int districtX, int districtZ) {
         List<Line> found = new ArrayList<>();
         if (CityPlan.spacing() <= 1) { return found; }
         for (int first = 0; first < towns.size(); first++) {
@@ -379,7 +379,7 @@ final class CitySeams {
         return null;
     }
 
-    static boolean facesNeighbor(CityGround ground, @Nullable Town town, boolean alongX, int end, int dir, int row) {
+    public static boolean facesNeighbor(CityGround ground, @Nullable Town town, boolean alongX, int end, int dir, int row) {
         if (town == null || CityPlan.spacing() <= 1) { return false; }
         int reach = CityGrowth.march();
         for (Town site : sites(ground, town)) {

@@ -14,11 +14,11 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.util.GsonHelper;
 
-final class CrossJson {
+public final class CrossJson {
     static final String ITEM = "item";
     static final String ID = "id";
     static final String NBT = "nbt";
-    static final String COMPONENTS = "components";
+    public static final String COMPONENTS = "components";
     static final String TYPE = "type";
     private static final String RESULT = "result";
     private static final String COUNT = "count";
@@ -35,7 +35,7 @@ final class CrossJson {
 
     private CrossJson() {}
 
-    static String tag(String id, @Nullable String registry, String file, Crossed pack) {
+    public static String tag(String id, @Nullable String registry, String file, Crossed pack) {
         String converted = CrossIds.tag(registry, id, pack.to());
         if (!converted.contains(CrossIds.BOTH)) { return converted; }
         String kept = CrossIds.COMMON + id.substring(id.indexOf(':'));
@@ -43,7 +43,7 @@ final class CrossJson {
         return kept;
     }
 
-    static String id(String id, String file, Crossed pack) {
+    public static String id(String id, String file, Crossed pack) {
         String converted = CrossIds.id(id, pack.to());
         if (CrossIds.missing(converted, pack.to())) { pack.note("'" + file + "' names " + converted + ", which " + pack.to().title() + " does not have; it is kept as written, so replace it by hand"); }
         return converted;
@@ -71,7 +71,7 @@ final class CrossJson {
         return new JsonPrimitive(id(text, file, pack));
     }
 
-    static void replace(JsonObject held, JsonObject walked) {
+    public static void replace(JsonObject held, JsonObject walked) {
         for (String key : new ArrayList<>(held.keySet())) { held.remove(key); }
         walked.entrySet().forEach(entry -> held.add(entry.getKey(), entry.getValue()));
     }

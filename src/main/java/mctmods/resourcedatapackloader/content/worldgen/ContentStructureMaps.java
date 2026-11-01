@@ -226,7 +226,7 @@ public final class ContentStructureMaps {
         return loot;
     }
 
-    static Collection<StructureMapDef> defs() { return DEFS.values(); }
+    public static Collection<StructureMapDef> defs() { return DEFS.values(); }
 
     static PickDef weighted(String written) {
         String text = Settings.lower(written);

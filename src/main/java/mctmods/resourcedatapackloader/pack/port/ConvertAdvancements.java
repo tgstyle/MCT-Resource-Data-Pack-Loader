@@ -7,10 +7,10 @@ import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Map;
 
-final class ConvertAdvancements {
+public final class ConvertAdvancements {
     private ConvertAdvancements() {}
 
-    static String advancement(JsonObject json, Ported pack) {
+    public static String advancement(JsonObject json, Ported pack) {
         if (GsonHelper.isObjectNode(json, "display")) {
             JsonObject display = json.getAsJsonObject("display");
             if (GsonHelper.isObjectNode(display, "icon")) {

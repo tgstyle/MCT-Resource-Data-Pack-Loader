@@ -16,7 +16,7 @@ import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
-final class Down {
+public final class Down {
     private static final String GAMERULE = "gamerule ";
     private static final String FIRE = "fire_spread_radius_around_player";
     private static final Set<String> INVERTED = Set.of("elytra_movement_check", "player_movement_check", "raids");
@@ -46,7 +46,7 @@ final class Down {
         return out;
     }
 
-    static void data(JsonObject json, Port.Kind kind, String path, String file, Consumer<String> note) {
+    public static void data(JsonObject json, Port.Kind kind, String path, String file, Consumer<String> note) {
         switch (kind) {
             case RECIPE -> DownRecipes.recipe(json, file, note);
             case LOOT -> DownLoot.loot(json, file, note);
@@ -69,7 +69,7 @@ final class Down {
         CrossJson.replace(json, DownFixes.names(json).getAsJsonObject());
     }
 
-    static String function(String contents, String file, Consumer<String> note) {
+    public static String function(String contents, String file, Consumer<String> note) {
         String[] lines = contents.split("\n", -1);
         List<String> out = new ArrayList<>();
         boolean changed = false;

@@ -46,13 +46,13 @@ public final class Crossed extends PortBase<Crossed.Source> {
         this.lined = from == Port.Line.V26_3;
     }
 
-    record Source(Path real, String file, Port.Kind kind, boolean same) implements IServed {}
+    public record Source(Path real, String file, Port.Kind kind, boolean same) implements IServed {}
 
     private record Target(String namespace, String path) {}
 
     private record Definition(String namespace, String modelPath, Path real) {}
 
-    Port.Line to() { return to == null ? Port.Line.running() : to; }
+    public Port.Line to() { return to == null ? Port.Line.running() : to; }
 
     @Override public String origin() { return from.title(); }
 
@@ -154,7 +154,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
         }
     }
 
-    @Override byte[] convert(Source source, String namespace, String path) throws IOException {
+    @Override public byte[] convert(Source source, String namespace, String path) throws IOException {
         byte[] original = Files.readAllBytes(source.real());
         String contents = new String(original, StandardCharsets.UTF_8);
         try {

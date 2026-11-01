@@ -26,9 +26,9 @@ public final class SpawnProgress {
         startedAt = Util.getMillis();
     }
 
-    static void queued(int count) { QUEUED.addAndGet(count); }
+    public static void queued(int count) { QUEUED.addAndGet(count); }
 
-    static void sited() { SITED.incrementAndGet(); }
+    public static void sited() { SITED.incrementAndGet(); }
 
     public static void spawnPreparing() {
         int queued = QUEUED.get();

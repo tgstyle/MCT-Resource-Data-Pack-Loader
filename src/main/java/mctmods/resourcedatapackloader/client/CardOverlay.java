@@ -29,9 +29,9 @@ public final class CardOverlay {
     private static final int PAD = 5;
     private static final int STRIPE = 3;
     private static final int ICON = 16;
-    static final int LINE = 10;
+    public static final int LINE = 10;
     private static final int LEAST_WIDTH = 96;
-    static final int LINE_COLOR = 0xE8E8E8;
+    public static final int LINE_COLOR = 0xE8E8E8;
     private static final List<Card> CARDS = new ArrayList<>();
 
     private CardOverlay() {}
@@ -152,12 +152,12 @@ public final class CardOverlay {
         Crisp.lower(graphics);
     }
 
-    static void panel(GuiGraphics graphics, int left, int top, int width, int height, int background, float alpha) {
+    public static void panel(GuiGraphics graphics, int left, int top, int width, int height, int background, float alpha) {
         graphics.fill(left - 1, top - 1, left + width + 1, top + height + 1, withAlpha(darker(background), alpha));
         graphics.fill(left, top, left + width, top + height, withAlpha(background, 0.85F * alpha));
     }
 
-    static int withAlpha(int rgb, float alpha) { return (Math.round(Mth.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
+    public static int withAlpha(int rgb, float alpha) { return (Math.round(Mth.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }
 
     static int darker(int rgb) { return FastColor.ARGB32.color(0, FastColor.ARGB32.red(rgb) / 2, FastColor.ARGB32.green(rgb) / 2, FastColor.ARGB32.blue(rgb) / 2); }
 }

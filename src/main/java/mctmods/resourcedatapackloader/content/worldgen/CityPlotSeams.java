@@ -98,7 +98,7 @@ public final class CityPlotSeams {
 
     static boolean laid(WorldGenLevel level, int x, int y, int z) { return level instanceof IPieceLaid pieces && pieces.rdpl$laid(x, y, z); }
 
-    static void unheld(WorldGenLevel level, Runnable ground) {
+    public static void unheld(WorldGenLevel level, Runnable ground) {
         if (!(level instanceof IPieceLaid pieces)) {
             ground.run();
             return;

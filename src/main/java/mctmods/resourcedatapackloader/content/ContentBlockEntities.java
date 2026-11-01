@@ -12,10 +12,10 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-final class ContentBlockEntities {
+public final class ContentBlockEntities {
     private ContentBlockEntities() {}
 
-    static <T extends BlockEntity> void typeFor(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper, ResourceLocation id, Class<?> marker, BlockEntityType.BlockEntitySupplier<T> factory, Held<BlockEntityType<T>> held, String kind) {
+    public static <T extends BlockEntity> void typeFor(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper, ResourceLocation id, Class<?> marker, BlockEntityType.BlockEntitySupplier<T> factory, Held<BlockEntityType<T>> held, String kind) {
         List<Block> blocks = new ArrayList<>();
         for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
             if (marker.isInstance(entry.block())) { blocks.add(entry.block()); }
