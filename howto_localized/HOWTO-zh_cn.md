@@ -31,6 +31,7 @@
 - [唯一的规则](#唯一的规则)
 - [组织资源包](#组织资源包)
 - [资源包：谁优先](#资源包谁优先)
+  - [资源包列表](#资源包列表)
 
 **资源包如何工作**
 - [定义如何工作](#定义如何工作)
@@ -339,6 +340,43 @@ rdploader/RDPL1O Seasonal       priority and override combined
 没有字母的资源包遵循 `overrideResourcePacks` 配置选项。`/rdpl list` 会标出那些进行覆盖的资源包。该字母必须是前缀的结尾（其后跟空格、连字符、下划线，或什么都没有），所以 `RDPLOverhaul` 是一个名为 `Overhaul` 的资源包，而不是带 `O` 标记的。
 
 同样的层级也适用于数据包。标有 `N` 的资源包位于世界自己 `datapacks` 文件夹中携带的数据包之下，标有 `O` 的则位于其上。
+
+### 资源包列表
+
+`assets/<namespace>/packlist/` 下的文件决定游戏的资源包列表如何处理每个客户端资源包，包括 RDPL 自带的资源包。没有这个文件时，列表的行为与以前一样。
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+资源包用其 ID 标识：即 `resourcepacks` 中的文件名（可带或不带 `file/`），RDPL 自带的资源包为 `RDPL` 和 `RDPL (overriding)`，游戏自带的为 `vanilla`。资源包按资源包顺序合并，因此靠后的资源包会按每个键和每个 ID 覆盖前面的设置；靠后的 `defaultPacks` 会整体替换前面的。更改会在下次启动游戏时生效。
+
+| 文件键           | 类型 | 默认值 | 作用                                                                                                                                                                                                                                                                                    |
+| ---------------- | ---- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | 列表 | 空     | 游戏首次启动且没有选中任何资源包时启用的资源包。RDPL 会在 `rdploader/config/packlist.seen` 中记录它已经检查过。                                                                                                                                                                         |
+| `reloadFailures` | 数字 | 0      | 一次会话中资源重载失败达到此次数后，选择会变为 `defaultPacks`，而不是空。0 表示保持游戏的行为。如果重载失败后保留的资源包也失败，那么让这些资源包保持开启的规则会在本次会话中停止，游戏会在标题界面结束，且不会留下损坏的资源包；只要该资源包仍为必需，重载失败会在每次重启时重复出现。 |
+| `packs`          | 对象 | 空     | 按资源包 ID 设置的选项，见下文。                                                                                                                                                                                                                                                        |
+
+| 资源包键        | 类型              | 默认值 | 作用                                                                     |
+| --------------- | ----------------- | ------ | ------------------------------------------------------------------------ |
+| `title`         | 文本或语言键      | -      | 替换列表中显示的名称。                                                   |
+| `description`   | 文本或语言键      | -      | 替换列表中显示的描述。                                                   |
+| `compatible`    | true 或 false     | false  | 不显示不兼容警告，游戏也不会因格式原因把该资源包从选择中移除。           |
+| `hidden`        | true 或 false     | false  | 资源包保持启用且不在列表中显示。这同时使其成为必需项。                   |
+| `required`      | true 或 false     | false  | 资源包始终启用，无法关闭。                                               |
+| `position`      | `top` 或 `bottom` | -      | 启用时资源包所处的位置。与 `fixedPosition` 同用时，表示它所固定的位置。  |
+| `fixedPosition` | true 或 false     | false  | 资源包不能移动或越过。由于游戏不保存固定的资源包，这同时使其成为必需项。 |
+
+RDPL 自带的资源包和游戏自带的资源包始终保持启用；`required: false` 无法关闭其中任何一个。在 1.12.2 上，`vanilla` 只接受 `title`、`description` 和 `hidden`，因为游戏自带的资源包在那里不是列表中可选的项目。RDPL 自带资源包的位置只由 `N` 和 `O` 层级决定，因此 `RDPL` 或 `RDPL (overriding)` 上的 `position` 不起作用，并会作为错误记入日志。
 
 ---
 

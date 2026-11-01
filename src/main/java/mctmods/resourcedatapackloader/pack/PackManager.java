@@ -57,6 +57,7 @@ public final class PackManager {
     public static final String WORLDGEN = "worldgen";
     public static final String DIMENSIONS = "dimensions";
     public static final String WORLDTEMPLATES = "worldtemplates";
+    public static final String PACKLIST = "packlist";
     public static final String PATHINTERSECTS = "pathintersects";
     public static final String CITYMAPS = "citymaps";
     public static final String STRUCTUREMAPS = "structuremaps";
