@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 public final class Port {
     private static final String LANG_SUFFIX = ".lang";
     private static final String SOUNDS = "sounds";
-    private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "langgates", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
+    private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "langgates", "packlist", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
     private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
     private static final int LAST_1_20_FORMAT = 26;
     private static final int FIRST_1_21_FORMAT = 41;

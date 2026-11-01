@@ -31,6 +31,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Jediné pravidlo](#jediné-pravidlo)
 - [Organizace balíčků](#organizace-balíčků)
 - [Balíčky zdrojů: který vyhraje](#balíčky-zdrojů-který-vyhraje)
+  - [Seznam balíčků](#seznam-balíčků)
 
 **Jak fungují balíčky**
 - [Jak fungují definice](#jak-fungují-definice)
@@ -339,6 +340,43 @@ rdploader/RDPL1O Seasonal       priorita a přepis dohromady
 Balíčky bez písmene se řídí volbou konfigurace `overrideResourcePacks`. `/rdpl list` označí balíčky, které přepisují. Písmeno musí ukončovat předponu (následuje mezera, pomlčka, podtržítko nebo nic), takže `RDPLOverhaul` je balíček pojmenovaný `Overhaul`, ne příznak `O`.
 
 Stejné úrovně platí pro datové balíčky. Balíček označený `N` leží pod datovými balíčky, které svět nese ve vlastní složce `datapacks`, a ten označený `O` leží nad nimi.
+
+### Seznam balíčků
+
+Soubor v `assets/<namespace>/packlist/` určuje, jak seznam balíčků zdrojů ve hře zachází s každým klientským balíčkem zdrojů, včetně těch od RDPL. Bez něj se seznam chová jako dřív.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+Balíček se pojmenuje svým ID: názvem souboru v `resourcepacks`, s `file/` nebo bez něj, dále `RDPL` a `RDPL (overriding)` pro balíčky RDPL a `vanilla` pro balíček hry. Balíčky se slučují v pořadí balíčků, takže pozdější balíček vyhrává u každého klíče i ID a pozdější `defaultPacks` nahradí dřívější celý. Změny se projeví při dalším spuštění hry.
+
+| Klíč souboru     | Typ    | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ---------------- | ------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | seznam | prázdný | Balíčky zapnuté při prvním spuštění hry, když není nic vybráno. RDPL si pamatuje, že už kontrolovalo, v `rdploader/config/packlist.seen`.                                                                                                                                                                                                                                                                        |
+| `reloadFailures` | číslo  | 0       | Po tolika neúspěšných přenačteních zdrojů v jedné relaci se výběr změní na `defaultPacks` místo prázdného. 0 zachovává chování hry. Pokud selžou i balíčky ponechané po neúspěšném přenačtení, pravidla, která balíčky drží zapnuté, se pro danou relaci zastaví a hra skončí na titulní obrazovce bez rozbitého balíčku; neúspěšná přenačtení se opakují při každém restartu, dokud balíček zůstává vyžadovaný. |
+| `packs`          | objekt | prázdný | Nastavení podle ID balíčku, níže.                                                                                                                                                                                                                                                                                                                                                                                |
+
+| Klíč balíčku    | Typ                   | Výchozí | Co dělá                                                                                                |
+| --------------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------ |
+| `title`         | text nebo klíč jazyka | -       | Nahradí název, který seznam zobrazuje.                                                                 |
+| `description`   | text nebo klíč jazyka | -       | Nahradí popis, který seznam zobrazuje.                                                                 |
+| `compatible`    | true nebo false       | false   | Žádné varování o nekompatibilitě a hra balíček kvůli formátu nikdy nevyřadí z výběru.                  |
+| `hidden`        | true nebo false       | false   | Balíček zůstane zapnutý a v seznamu se nezobrazí. Zároveň je vyžadován.                                |
+| `required`      | true nebo false       | false   | Balíček je vždy zapnutý a nejde vypnout.                                                               |
+| `position`      | `top` nebo `bottom`   | -       | Kam balíček po zapnutí skončí. S `fixedPosition` tam zůstane.                                          |
+| `fixedPosition` | true nebo false       | false   | Balíček nejde přesunout ani přeskočit. Zároveň je vyžadován, protože hra neukládá žádný pevný balíček. |
+
+Balíčky RDPL a balíčky hry zůstávají vždy zapnuté; `required: false` žádný z nich nevypne. Na 1.12.2 přijímá `vanilla` jen `title`, `description` a `hidden`, protože vlastní balíček hry se v seznamu nenabízí k výběru. O umístění vlastních balíčků RDPL rozhodují samotné úrovně `N` a `O`, takže `position` u `RDPL` nebo `RDPL (overriding)` nedělá nic a zaloguje se jako chyba.
 
 ---
 

@@ -31,6 +31,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [La única regla](#la-única-regla)
 - [Organizar los packs](#organizar-los-packs)
 - [Packs de recursos: quién gana](#packs-de-recursos-quién-gana)
+  - [La lista de packs](#la-lista-de-packs)
 
 **Cómo funcionan los packs**
 - [Cómo funcionan las definiciones](#cómo-funcionan-las-definiciones)
@@ -339,6 +340,43 @@ rdploader/RDPL1O Seasonal       priority and override combined
 Los packs sin letra siguen la opción de configuración `overrideResourcePacks`. `/rdpl list` marca los packs que sobrescriben. La letra debe cerrar el prefijo (seguida de un espacio, guion, guion bajo o nada), así que `RDPLOverhaul` es un pack llamado `Overhaul`, no un indicador `O`.
 
 Los mismos niveles valen para los packs de datos. Un pack marcado con `N` queda por debajo de los packs de datos que un mundo lleva en su propia carpeta `datapacks`, y uno marcado con `O` queda por encima.
+
+### La lista de packs
+
+Un archivo en `assets/<namespace>/packlist/` decide cómo trata la lista de packs de recursos del juego a cada pack de recursos del cliente, incluidos los de RDPL. Sin archivo, la lista se comporta como siempre.
+
+```json
+{
+  "defaultPacks": ["Faithful.zip"],
+  "reloadFailures": 2,
+  "packs": {
+    "Faithful.zip": { "title": "Faithful", "description": "Shipped with this pack", "compatible": true, "position": "bottom" },
+    "Branding.zip": { "hidden": true },
+    "Core.zip": { "required": true, "fixedPosition": true, "position": "top" },
+    "RDPL": { "title": "My Pack Content" }
+  }
+}
+```
+
+Un pack se nombra por su id: el nombre del archivo en `resourcepacks`, con o sin `file/`; después `RDPL` y `RDPL (overriding)` para los de RDPL, y `vanilla` para el del juego. Los packs se combinan en el orden de los packs, así que un pack posterior gana por clave y por id, y un `defaultPacks` posterior reemplaza por completo al anterior. Los cambios se aplican al siguiente inicio del juego.
+
+| Clave de archivo | Tipo   | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ---------------- | ------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultPacks`   | lista  | vacío       | Packs activados la primera vez que el juego arranca sin nada seleccionado. RDPL recuerda en `rdploader/config/packlist.seen` que ya lo ha comprobado.                                                                                                                                                                                                                                                                                                                      |
+| `reloadFailures` | número | 0           | Tras este número de recargas de recursos fallidas en una sesión, la selección pasa a ser `defaultPacks` en lugar de nada. 0 mantiene el comportamiento del juego. Si también fallan los packs que se conservan tras una recarga fallida, las reglas que los mantienen activos se detienen durante esa sesión y el juego termina en la pantalla de título sin ningún pack roto; las recargas fallidas se repiten en cada reinicio mientras el pack siga siendo obligatorio. |
+| `packs`          | objeto | vacío       | Ajustes por id de pack, más abajo.                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+| Clave de pack   | Tipo                    | Por defecto | Qué hace                                                                                                           |
+| --------------- | ----------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| `title`         | texto o clave de idioma | -           | Reemplaza el nombre que muestra la lista.                                                                          |
+| `description`   | texto o clave de idioma | -           | Reemplaza la descripción que muestra la lista.                                                                     |
+| `compatible`    | true o false            | false       | Sin aviso de incompatibilidad, y el juego nunca quita el pack de la selección por su formato.                      |
+| `hidden`        | true o false            | false       | El pack queda activado y no aparece en la lista. Esto también lo hace obligatorio.                                 |
+| `required`      | true o false            | false       | El pack siempre está activado y no se puede desactivar.                                                            |
+| `position`      | `top` o `bottom`        | -           | Dónde cae el pack al activarlo. Con `fixedPosition`, donde se queda.                                               |
+| `fixedPosition` | true o false            | false       | El pack no se puede mover ni saltar. Esto también lo hace obligatorio, ya que el juego no guarda ningún pack fijo. |
+
+Los packs propios de RDPL y los del juego siempre quedan activados; `required: false` no desactiva ninguno. En 1.12.2, `vanilla` solo admite `title`, `description` y `hidden`, porque el pack del juego no es una opción de la lista allí. El lugar de los packs propios de RDPL lo deciden solo los niveles `N` y `O`, así que `position` en `RDPL` o `RDPL (overriding)` no hace nada y se registra como error.
 
 ---
 
