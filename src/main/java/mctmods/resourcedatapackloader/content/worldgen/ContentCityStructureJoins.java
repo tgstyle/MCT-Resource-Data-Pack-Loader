@@ -13,7 +13,7 @@ import net.minecraft.world.level.levelgen.structure.Structure.GenerationContext;
 public final class ContentCityStructureJoins {
     private ContentCityStructureJoins() {}
 
-    static void raiseJunctions(GenerationContext context, CityPlan plan, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells) {
+    public static void raiseJunctions(GenerationContext context, CityPlan plan, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells) {
         Map<CityPlan.Junction, Integer> first = new HashMap<>(levels);
         List<CityPlan.Line> lines = CityLines.of(plan);
         int passes = 0;
@@ -85,9 +85,9 @@ public final class ContentCityStructureJoins {
         return Mth.clamp(grade, low, high);
     }
 
-    static boolean wetSquare(CityGround ground, CityPlan.Junction junction, List<ContentCityStructure.Well> wells) { return ContentCityStructurePlaza.plazaOf(wells, junction) == null && wetCross(ground, junction); }
+    public static boolean wetSquare(CityGround ground, CityPlan.Junction junction, List<ContentCityStructure.Well> wells) { return ContentCityStructurePlaza.plazaOf(wells, junction) == null && wetCross(ground, junction); }
 
-    static boolean wetCross(CityGround ground, CityPlan.Junction junction) {
+    public static boolean wetCross(CityGround ground, CityPlan.Junction junction) {
         CityPlan.Line row = junction.alongX();
         CityPlan.Line column = junction.alongZ();
         if (row.alley() || column.alley()) { return false; }

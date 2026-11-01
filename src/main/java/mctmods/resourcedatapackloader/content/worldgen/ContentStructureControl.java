@@ -271,7 +271,7 @@ public final class ContentStructureControl {
         }
     }
 
-    static void warnNoBiome(Object name) { ContentLog.LOGGER.warn("Biome settings for {} leave no biome at all, so the vanilla list is left alone", name); }
+    public static void warnNoBiome(Object name) { ContentLog.LOGGER.warn("Biome settings for {} leave no biome at all, so the vanilla list is left alone", name); }
 
     private static JsonElement filtered(JsonElement original, JsonElement listed, boolean blacklist, Set<String> ids) {
         JsonObject kept = composite("and", original.deepCopy(), listed.deepCopy());
@@ -423,7 +423,7 @@ public final class ContentStructureControl {
         return or;
     }
 
-    static boolean blacklisted(String structure) {
+    public static boolean blacklisted(String structure) {
         String wanted = Settings.lower(structure);
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureBiomesAreBlacklist", Config.worldgen.structureBiomesAreBlacklist())) {
             String[] parts = split(entry, "structureBiomesAreBlacklist");
@@ -433,7 +433,7 @@ public final class ContentStructureControl {
         return false;
     }
 
-    @Nullable static String[] split(String entry, String key) {
+    @Nullable public static String[] split(String entry, String key) {
         String[] sides = Settings.filled(entry);
         if (sides == null) {
             ContentLog.LOGGER.error("{} entry '{}' is not written as structure=value", key, entry);
@@ -479,7 +479,7 @@ public final class ContentStructureControl {
         return out;
     }
 
-    static List<ResourceLocation> structures(String name) {
+    public static List<ResourceLocation> structures(String name) {
         String wanted = Settings.lower(name);
         List<ResourceLocation> out = new ArrayList<>();
         ResourceLocation id = wanted.contains(":") ? ResourceLocation.tryParse(wanted) : ResourceLocation.withDefaultNamespace(wanted);

@@ -182,7 +182,7 @@ public final class ContentAffixes {
         return null;
     }
 
-    static boolean socket(AnvilUpdateEvent event) {
+    public static boolean socket(AnvilUpdateEvent event) {
         ItemStack left = event.getLeft();
         ItemStack right = event.getRight();
         if (GEMS.isEmpty() || left.isEmpty() || right.isEmpty()) { return false; }

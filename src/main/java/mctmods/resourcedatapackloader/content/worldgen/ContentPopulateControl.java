@@ -53,7 +53,7 @@ public final class ContentPopulateControl {
 
     public static boolean readsOption(String key) { return OPTIONS.containsKey(key); }
 
-    static List<String> names() {
+    public static List<String> names() {
         List<String> out = new ArrayList<>(FEATURES.keySet());
         out.addAll(CARVERS.keySet());
         out.add(ContentSpawning.ANIMALS);

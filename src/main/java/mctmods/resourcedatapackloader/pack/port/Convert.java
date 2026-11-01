@@ -22,7 +22,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
-final class Convert {
+public final class Convert {
     private static final Set<String> BLOCK_KEYS = Set.of("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "middle", "budding", "crystal", "bell", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock", "fromBlock", "toBlock");
     private static final Set<String> ITEM_KEYS = Set.of("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "immuneItems", "ignitedBy", "saysIcon", "outputs", "with");
     private static final Set<String> ENTITY_KEYS = Set.of("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes", "picksFrom", "mob", "mobs");
@@ -40,16 +40,16 @@ final class Convert {
     static final String WILDCARD = ":*";
     private static final String AT_BLOCK = "at=";
     private static final String UNDER_BLOCK = "under=";
-    static final String GAME_LOOP = "gameLoopFunction";
-    static final String FLAT = "flat";
-    static final int FLAT_FLOOR = ContentWorldShape.VANILLA_MIN;
+    public static final String GAME_LOOP = "gameLoopFunction";
+    public static final String FLAT = "flat";
+    public static final int FLAT_FLOOR = ContentWorldShape.VANILLA_MIN;
     private static final List<String> FLAT_TYPES = List.of(FLAT, "superflat");
 
     private Convert() {}
 
     enum Context { NONE, BLOCK, ITEM, ENTITY, BIOME, DIMENSION }
 
-    static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
+    public static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
         Map<String, String> renamed = pack.renamedIn(namespace, folder, file);
         if (!renamed.isEmpty() && GsonHelper.isObjectNode(json, "variants")) {
             JsonObject variants = json.getAsJsonObject("variants");
@@ -136,12 +136,12 @@ final class Convert {
 
     static boolean flat(JsonObject settings) { return GsonHelper.isValidPrimitive(settings, "worldType") && FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString())); }
 
-    static int flatShift(JsonObject settings) {
+    public static int flatShift(JsonObject settings) {
         if (!flat(settings)) { return 0; }
         return GsonHelper.isNumberValue(settings, "worldMinHeight") ? settings.get("worldMinHeight").getAsInt() : FLAT_FLOOR;
     }
 
-    static String shiftY(String written, int shift) {
+    public static String shiftY(String written, int shift) {
         String trimmed = written.trim();
         if (shift == 0 || trimmed.isEmpty()) { return written; }
         try { return String.valueOf(Integer.parseInt(trimmed) + shift); }

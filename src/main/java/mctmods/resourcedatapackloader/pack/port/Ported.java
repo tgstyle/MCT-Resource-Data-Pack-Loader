@@ -59,7 +59,7 @@ public final class Ported extends PortBase<Ported.Source> {
 
     private record Variants(String main, Map<Integer, String> byMeta) {}
 
-    record Source(Path real, Port.Kind kind) implements IServed {}
+    public record Source(Path real, Port.Kind kind) implements IServed {}
 
     private record Banner(String name, String property, List<String> values, String layer) {}
 
@@ -481,7 +481,7 @@ public final class Ported extends PortBase<Ported.Source> {
         return false;
     }
 
-    @Override byte[] convert(Source source, String namespace, String path) throws IOException {
+    @Override public byte[] convert(Source source, String namespace, String path) throws IOException {
         String contents = Files.readString(source.real(), StandardCharsets.UTF_8);
         try {
             String out = switch (source.kind()) {

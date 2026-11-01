@@ -37,10 +37,10 @@ import javax.annotation.Nullable;
 public final class ContentCityStructure extends Structure {
     public static final Codec<ContentCityStructure> CODEC = RecordCodecBuilder.create(instance -> instance.group(settingsCodec(instance)).apply(instance, ContentCityStructure::new));
     public static final StructureType<ContentCityStructure> TYPE = () -> CODEC;
-    static final long SALT = 0x51A3C7E9B1D0F42BL;
+    public static final long SALT = 0x51A3C7E9B1D0F42BL;
     private static final int COURT_DIG = 4;
     private static final int COURT_FILL = 2;
-    static final int FRONT_REACH = 3;
+    public static final int FRONT_REACH = 3;
     static final Map<CityPlan, District> DISTRICTS = Collections.synchronizedMap(new WeakHashMap<>());
 
     public ContentCityStructure(StructureSettings settings) { super(settings); }
@@ -60,19 +60,19 @@ public final class ContentCityStructure extends Structure {
         return Optional.of(new GenerationStub(origin, builder -> pieces(context, ground, plan, builder)));
     }
 
-    record Graded(int start, int[] profile, int[] ground, boolean[] held, boolean[] pinned, boolean[] mine, boolean[] bridged, boolean[] bored) {}
+    public record Graded(int start, int[] profile, int[] ground, boolean[] held, boolean[] pinned, boolean[] mine, boolean[] bridged, boolean[] bored) {}
 
-    record Laid(int start, int[] profile, int[] grade, boolean[] paved, boolean[] bridged, boolean[] bored, boolean[] roofed, boolean[] mine) {}
+    public record Laid(int start, int[] profile, int[] grade, boolean[] paved, boolean[] bridged, boolean[] bored, boolean[] roofed, boolean[] mine) {}
 
-    record Bulb(ContentCityBulbPiece.Court court, CityPlan.Line line, BoundingBox box) {}
+    public record Bulb(ContentCityBulbPiece.Court court, CityPlan.Line line, BoundingBox box) {}
 
-    record Seated(List<StructurePiece> pieces, BoundingBox box, Set<Long> doors, CityPlan.Plot plot, int level) {}
+    public record Seated(List<StructurePiece> pieces, BoundingBox box, Set<Long> doors, CityPlan.Plot plot, int level) {}
 
-    record Street(int start, int[] grade, boolean[] bored) {}
+    public record Street(int start, int[] grade, boolean[] bored) {}
 
-    record District(Map<CityPlan.Line, Street> streets, List<Well> wells, List<BoundingBox> claims) {}
+    public record District(Map<CityPlan.Line, Street> streets, List<Well> wells, List<BoundingBox> claims) {}
 
-    record Well(@Nullable ResourceLocation template, int tall, BoundingBox box, int level, CityPlan.Junction middle) {}
+    public record Well(@Nullable ResourceLocation template, int tall, BoundingBox box, int level, CityPlan.Junction middle) {}
 
     private static void pieces(GenerationContext context, CityGround ground, CityPlan plan, StructurePiecesBuilder builder) {
         ContentCityStructureSite.Grading grading = ContentCityStructureSite.grading(context, ground, plan);
@@ -148,7 +148,7 @@ public final class ContentCityStructure extends Structure {
         for (Map.Entry<CityPlan.Line, int[]> held : profiles.entrySet()) { ContentCityStructureLamps.verges(held.getKey(), plan, held.getValue(), laid.get(held.getKey()), seated, plazas, doors, builder); }
     }
 
-    static void aprons(CityGround ground, CityPlan plan, Map<CityPlan.Junction, Integer> levels, List<BoundingBox> wells) {
+    public static void aprons(CityGround ground, CityPlan plan, Map<CityPlan.Junction, Integer> levels, List<BoundingBox> wells) {
         List<CityPlan.Line> lines = CityLines.of(plan);
         for (CityPlan.Line line : lines) {
             List<CityPlan.Line> met = new ArrayList<>(plan.crossing(line));
@@ -174,7 +174,7 @@ public final class ContentCityStructure extends Structure {
         }
     }
 
-    static boolean steep(CityGround ground, int discX, int discZ, int radius, int level) {
+    public static boolean steep(CityGround ground, int discX, int discZ, int radius, int level) {
         int reach = radius + ContentCityBulbPiece.VERGE;
         for (int z = discZ - reach; z <= discZ + reach; z += 2) {
             for (int x = discX - reach; x <= discX + reach; x += 2) {
@@ -186,7 +186,7 @@ public final class ContentCityStructure extends Structure {
         return false;
     }
 
-    static boolean dry(CityGround ground, int fromX, int fromZ, int discX, int discZ, int radius) {
+    public static boolean dry(CityGround ground, int fromX, int fromZ, int discX, int discZ, int radius) {
         for (int z = fromZ; z <= discZ + radius; z += 2) {
             for (int x = fromX; x <= discX + radius; x += 2) {
                 if ((x - discX) * (x - discX) + (z - discZ) * (z - discZ) > radius * radius + radius) { continue; }

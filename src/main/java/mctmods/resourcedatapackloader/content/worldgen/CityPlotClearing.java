@@ -10,7 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 
 public final class CityPlotClearing {
-    static final int OPEN_LEAST = 12;
+    public static final int OPEN_LEAST = 12;
     private static final int DOOR_STEPS = 5;
     private static final int DOOR_HEIGHT = 3;
     private static final int DOORSTEP_REACH = 2;

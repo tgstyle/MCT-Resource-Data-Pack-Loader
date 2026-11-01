@@ -12,13 +12,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-final class ContentEntityBars {
+public final class ContentEntityBars {
     private static final long EVERY = 10L;
     private static final Map<UUID, ServerBossEvent> HELD = new HashMap<>();
 
     private ContentEntityBars() {}
 
-    static void tick(LivingEntity living, EntityVariantDef def) {
+    public static void tick(LivingEntity living, EntityVariantDef def) {
         BossBarDef spec = ContentEntityPhases.bar(living, def);
         if (spec == null || !(living.level() instanceof ServerLevel level)) { return; }
         if (!living.isAlive()) {
@@ -36,7 +36,7 @@ final class ContentEntityBars {
         BossBars.sync(bar, BossBars.near(level, living.getX(), living.getY(), living.getZ(), def.tracking().range()));
     }
 
-    static void drop(Entity entity) {
+    public static void drop(Entity entity) {
         ServerBossEvent bar = HELD.remove(entity.getUUID());
         if (bar != null) { BossBars.clear(bar); }
     }

@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class CardFont {
+public final class CardFont {
     static final String RDPL = "resourcedatapackloader:rdpl";
     static final String RDPL_ITALIC = "resourcedatapackloader:rdpl_italic";
     static final String RDPL_BOLD = "resourcedatapackloader:rdpl_bold";
@@ -23,9 +23,9 @@ final class CardFont {
 
     private CardFont() {}
 
-    record Face(ResourceLocation plain, @Nullable ResourceLocation bold) {}
+    public record Face(ResourceLocation plain, @Nullable ResourceLocation bold) {}
 
-    static Face of(String name) {
+    public static Face of(String name) {
         String asked = named(name);
         ResourceLocation plain = find(asked);
         if (plain != null) {
@@ -37,7 +37,7 @@ final class CardFont {
         return new Face(Style.DEFAULT_FONT, null);
     }
 
-    static Face runic() { return of(RUNIC); }
+    public static Face runic() { return of(RUNIC); }
 
     private static String named(String name) {
         if (name.isEmpty()) { return RDPL; }

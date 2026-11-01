@@ -222,7 +222,7 @@ public final class ContentBiomes {
         return made == null ? null : made.def();
     }
 
-    static int craterReach() { return craterReach; }
+    public static int craterReach() { return craterReach; }
 
     @Nullable public static String villageKind(ResourceLocation key) {
         BiomeDef def = def(key);

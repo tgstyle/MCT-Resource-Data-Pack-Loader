@@ -47,7 +47,7 @@ public final class ContentBedrock {
 
     static void forget() { RULES.forget(); }
 
-    static void flattenBedrock(JsonObject settings, String dimension) {
+    public static void flattenBedrock(JsonObject settings, String dimension) {
         if (!bedrockBiomeTypes().isEmpty()) {
             ContentLog.LOGGER.debug("flatBedrockBiomeTypes is set, so the bedrock of {} is flattened chunk by chunk instead of in its noise settings", dimension);
             return;
@@ -82,7 +82,7 @@ public final class ContentBedrock {
         ContentLog.LOGGER.debug("Flattened the bedrock of {} to {} layer(s){}", dimension, layers, roofWanted() ? " including the roof" : "");
     }
 
-    static boolean bedrockAsked() {
+    public static boolean bedrockAsked() {
         if (ContentControl.off(ContentControl.BEDROCK)) { return false; }
         return ContentControl.flag(ContentControl.BEDROCK, "flatBedrock", Config.worldgen.flatBedrock());
     }
@@ -93,16 +93,16 @@ public final class ContentBedrock {
         Summary.info("bedrock", "Flattening bedrock to " + layers() + " layer(s) in " + (dimensions.isEmpty() ? "every dimension" : "dimension(s) " + dimensions));
     }
 
-    static boolean bedrockApplies(String dimension) {
+    public static boolean bedrockApplies(String dimension) {
         if (!bedrockAsked()) { return false; }
         return DimensionValues.listed(dimension, bedrockDimensions(), dimensionsAreBlacklist());
     }
 
-    static boolean dimensionsAreBlacklist() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist()); }
+    public static boolean dimensionsAreBlacklist() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist()); }
 
     static int layers() { return Mth.clamp(ContentControl.number(ContentControl.BEDROCK, "bedrockLayers", Config.worldgen.bedrockLayers()), 1, ContentWorldShape.MAX_LAYERS); }
 
-    static List<String> bedrockDimensions() { return ContentControl.list(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions()); }
+    public static List<String> bedrockDimensions() { return ContentControl.list(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions()); }
 
     private static boolean biomesAreBlacklist() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockBiomesAreBlacklist", Config.worldgen.flatBedrockBiomesAreBlacklist()); }
 
@@ -151,11 +151,11 @@ public final class ContentBedrock {
         return named != null ? named : rules.configured();
     }
 
-    static String bedrockToken() { return "bedrock:" + layers() + (roofWanted() ? ":roof" : "") + "#" + Config.worldgen.flatBedrockRetrogenKey(); }
+    public static String bedrockToken() { return "bedrock:" + layers() + (roofWanted() ? ":roof" : "") + "#" + Config.worldgen.flatBedrockRetrogenKey(); }
 
-    static boolean bedrockRetrogen() { return bedrockAsked() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen()); }
+    public static boolean bedrockRetrogen() { return bedrockAsked() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen()); }
 
-    static boolean flattens(ServerLevel level) { return bedrockApplies(level.dimension().location().toString()); }
+    public static boolean flattens(ServerLevel level) { return bedrockApplies(level.dimension().location().toString()); }
 
     public static void flattenChunk(WorldGenLevel level, ChunkPos at) {
         ServerLevel server = level.getLevel();

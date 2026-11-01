@@ -79,7 +79,7 @@ public final class Ids {
 
     public record Block(String name, Map<String, String> properties) {}
 
-    static int current() { return SharedConstants.getCurrentVersion().getDataVersion().getVersion(); }
+    public static int current() { return SharedConstants.getCurrentVersion().getDataVersion().getVersion(); }
 
     public static boolean isModded(String name) { return !name.startsWith(IdNames.MINECRAFT) && name.indexOf(':') >= 0; }
 
@@ -148,7 +148,7 @@ public final class Ids {
         catch (RuntimeException failed) { return null; }
     }
 
-    static CompoundTag legacyStack(String id, @Nullable CompoundTag tag) {
+    public static CompoundTag legacyStack(String id, @Nullable CompoundTag tag) {
         CompoundTag stack = new CompoundTag();
         stack.putString("id", id);
         stack.putByte("Count", (byte) 1);

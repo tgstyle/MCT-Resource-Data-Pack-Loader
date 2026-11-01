@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 public final class ContentCityStructurePaving {
     private ContentCityStructurePaving() {}
 
-    static int[] lay(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, Map<Integer, Integer> decks, Map<CityPlan.Line, int[]> seats, Map<CityPlan.Line, ContentCityStructure.Laid> laid, List<ContentCityStructure.Bulb> bulbs, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
+    public static int[] lay(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, Map<Integer, Integer> decks, Map<CityPlan.Line, int[]> seats, Map<CityPlan.Line, ContentCityStructure.Laid> laid, List<ContentCityStructure.Bulb> bulbs, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
         ContentCityStructure.Graded graded = ContentCityStructureGrade.joined(context, plan, line, levels, run, rails, wells);
         int start = graded.start();
         int[] profile = graded.profile();
@@ -63,7 +63,7 @@ public final class ContentCityStructurePaving {
         return profile;
     }
 
-    static void overpasses(CityPlan plan, Map<CityPlan.Line, ContentCityStructure.Laid> laid, StructurePiecesBuilder builder) {
+    public static void overpasses(CityPlan plan, Map<CityPlan.Line, ContentCityStructure.Laid> laid, StructurePiecesBuilder builder) {
         for (CityPlan.Junction junction : plan.junctions()) {
             CityPlan.Line row = junction.alongX();
             CityPlan.Line column = junction.alongZ();
@@ -139,7 +139,7 @@ public final class ContentCityStructurePaving {
         return rows;
     }
 
-    static boolean decked(@Nullable ContentCityStructure.Laid held, int least, int most) {
+    public static boolean decked(@Nullable ContentCityStructure.Laid held, int least, int most) {
         if (held == null) { return false; }
         for (int row = least; row <= most; row++) {
             int at = row - held.start();

@@ -9,10 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
-final class PackReport {
+public final class PackReport {
     private PackReport() {}
 
-    static void warnAboutDisabledFeatures(List<RDPLPack> packs) {
+    public static void warnAboutDisabledFeatures(List<RDPLPack> packs) {
         if (packs.isEmpty()) { return; }
         List<String[]> off = new ArrayList<>();
         clientSide(off, !Config.content.loadOff(), "content.load", PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS);
@@ -68,7 +68,7 @@ final class PackReport {
         if (!skipped.isEmpty()) { ContentLog.LOGGER.warn("Pack '{}' provides {} {} file(s), skipped because content.vanillaClients is on{}: {}", pack.getName(), skipped.size(), folder, why, String.join(", ", skipped)); }
     }
 
-    static void report(List<RDPLPack> packs, @Nullable Path root) {
+    public static void report(List<RDPLPack> packs, @Nullable Path root) {
         if (packs.isEmpty()) {
             ContentLog.LOGGER.info("No packs found in {}", root);
             return;

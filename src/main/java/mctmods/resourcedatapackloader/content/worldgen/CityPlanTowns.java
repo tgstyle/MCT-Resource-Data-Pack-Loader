@@ -26,7 +26,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
-final class CityPlanTowns {
+public final class CityPlanTowns {
     static final Map<List<Long>, Optional<CityPlan>> PLANS = new ConcurrentHashMap<>();
     private static final int NEAR_DISTRICTS = 2;
     private static final int SHORT_LEAST = 7;
@@ -153,7 +153,7 @@ final class CityPlanTowns {
         return met;
     }
 
-    static boolean laysStreet(CityGround ground, Town town, List<Rail> mine, Function<Rail, CityRails.Bed> beds, int districtX, int districtZ, boolean alongX, int center) {
+    public static boolean laysStreet(CityGround ground, Town town, List<Rail> mine, Function<Rail, CityRails.Bed> beds, int districtX, int districtZ, boolean alongX, int center) {
         CityPlan raw = raw(ground, districtX, districtZ);
         if (raw == null || raw.town() == null || raw.town().key() != town.key()) { return false; }
         CityPlan plan = shortOfLinks(raw.withRails(withLinks(ground, raw, town, mine, districtX, districtZ)).clearOfRails(ground, beds), beds);
@@ -232,12 +232,12 @@ final class CityPlanTowns {
         return townAt(ground, center, spacing);
     }
 
-    @Nullable static Town townAt(CityGround ground, int[] center, int spacing) {
+    @Nullable public static Town townAt(CityGround ground, int[] center, int spacing) {
         City city = CityGrowth.city(ground, center, spacing);
         return city.districts().isEmpty() ? null : town(ground, city);
     }
 
-    @Nullable static CityPlan raw(CityGround ground, int districtX, int districtZ) {
+    @Nullable public static CityPlan raw(CityGround ground, int districtX, int districtZ) {
         long held = CityPlan.packed(districtX, districtZ);
         Optional<CityPlan> found = RAW.get(held);
         if (found != null) { return found.orElse(null); }
@@ -325,7 +325,7 @@ final class CityPlanTowns {
         return plan.pulledBack(capped);
     }
 
-    @Nullable static CityPlan plan(CityGround ground, int districtX, int districtZ, @Nullable int[] city) {
+    @Nullable public static CityPlan plan(CityGround ground, int districtX, int districtZ, @Nullable int[] city) {
         List<Long> held = city == null ? List.of(CityPlan.packed(districtX, districtZ)) : List.of(CityPlan.packed(districtX, districtZ), CityPlan.packed(city[0], city[1]));
         return Capped.held(PLANS, CityPlan.HELD, "district plan", held, () -> build(ground, districtX, districtZ, city)).orElse(null);
     }
@@ -373,13 +373,13 @@ final class CityPlanTowns {
 
     static int blockAt(long seed, int districtX, int districtZ) { return CityPlanPlots.districtBlock(SeededRandom.at(seed ^ CityPlanPlots.BLOCK_SALT, districtX, districtZ)); }
 
-    static Town protoTown(CityGround ground, int centerX, int centerZ) {
+    public static Town protoTown(CityGround ground, int centerX, int centerZ) {
         int[] cross = CityDistricts.crossOf(centerX, centerZ);
         int[] well = CityDistricts.plazaCenter(centerX, centerZ, cross);
         return new Town(CityPlan.packed(centerX, centerZ), SeededRandom.keyed(ground.seed(), centerX, centerZ), SeededRandom.salt(centerX, centerZ), well[0], well[1], 0, 0, 0, 0, List.of(), cross[0], cross[1]);
     }
 
-    static List<Rail> across(List<Rail> placed, int windowX, int windowZ) {
+    public static List<Rail> across(List<Rail> placed, int windowX, int windowZ) {
         int size = CityPlan.district();
         List<Rail> found = new ArrayList<>();
         for (Rail rail : placed) {

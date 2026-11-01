@@ -164,7 +164,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         return mouths;
     }
 
-    @Nullable static String unreachable(Vec3i size, int level, int top, int row, int near, int way, int middle, boolean alongX, int bedHalf) {
+    @Nullable public static String unreachable(Vec3i size, int level, int top, int row, int near, int way, int middle, boolean alongX, int bedHalf) {
         if (top == Integer.MIN_VALUE) { return "no ground stands over its stair head"; }
         if (top - level < ContentCityStairsPiece.CLIMB_LEAST) { return "the street stands only " + (top - level) + " block(s) over the platform"; }
         Shaft shaft = Shaft.of(size.getY(), level, top);

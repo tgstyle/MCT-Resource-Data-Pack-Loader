@@ -3,12 +3,12 @@ package mctmods.resourcedatapackloader.pack.port;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-final class FunctionLines {
+public final class FunctionLines {
     private FunctionLines() {}
 
-    record Result(String text, int changed, int kept) {}
+    public record Result(String text, int changed, int kept) {}
 
-    static Result convert(String contents, String file, UnaryOperator<String> command, Consumer<String> note) {
+    public static Result convert(String contents, String file, UnaryOperator<String> command, Consumer<String> note) {
         String[] lines = contents.split("\r?\n", -1);
         StringBuilder out = new StringBuilder();
         int changed = 0;

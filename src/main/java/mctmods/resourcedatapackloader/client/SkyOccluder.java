@@ -48,7 +48,7 @@ public final class SkyOccluder {
         this.spins = pose.spins();
     }
 
-    static void invalidate() { ++generation; }
+    public static void invalidate() { ++generation; }
 
     static int current() { return generation; }
 

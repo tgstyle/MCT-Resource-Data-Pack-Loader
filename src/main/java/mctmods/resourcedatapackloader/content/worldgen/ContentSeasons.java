@@ -26,7 +26,7 @@ public final class ContentSeasons {
 
     private ContentSeasons() {}
 
-    static void parse(ResourceLocation key, JsonObject json) {
+    public static void parse(ResourceLocation key, JsonObject json) {
         if (!json.has(SEASONS)) { return; }
         String owner = "Dimension " + key + " seasons";
         if (ContentEnvironments.names(key).isEmpty()) {
@@ -130,7 +130,7 @@ public final class ContentSeasons {
         }
     }
 
-    static void forget() {
+    public static void forget() {
         APPLIED.clear();
         ticks = 0;
     }

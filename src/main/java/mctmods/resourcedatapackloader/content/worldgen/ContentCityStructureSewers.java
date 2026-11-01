@@ -14,7 +14,7 @@ import java.util.Map;
 public final class ContentCityStructureSewers {
     private ContentCityStructureSewers() {}
 
-    static void sewers(CityPlan plan, CityPlan.Line line, int bottom, int start, int[] profile, boolean[] mine, boolean[] bridged, List<ContentCityStructure.Well> wells, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
+    public static void sewers(CityPlan plan, CityPlan.Line line, int bottom, int start, int[] profile, boolean[] mine, boolean[] bridged, List<ContentCityStructure.Well> wells, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
         int[] around = wellBoxes(wells);
         int[] rows = sewerRows(plan, line, wells);
         int cramped = 0;
@@ -45,7 +45,7 @@ public final class ContentCityStructureSewers {
         if (cramped > 0) { ContentLog.LOGGER.debug("The sewer under the {} at {} leaves {} row(s) undug where it would not fit between y {}, the world floor plus its lining, and the street", line.alley() ? "alley" : "street", line.at(), cramped, bottom + ContentCitySewerPiece.FLOOR_LEAST); }
     }
 
-    static void joins(CityPlan plan, int bottom, Map<CityPlan.Line, ContentCityStructure.Laid> laid, List<ContentCityStructure.Well> wells, StructurePiecesBuilder builder) {
+    public static void joins(CityPlan plan, int bottom, Map<CityPlan.Line, ContentCityStructure.Laid> laid, List<ContentCityStructure.Well> wells, StructurePiecesBuilder builder) {
         int[] around = wellBoxes(wells);
         for (CityPlan.Line line : CityLines.of(plan)) { joins(plan, line, bottom, laid, sewerRows(plan, line, wells), around, builder); }
     }

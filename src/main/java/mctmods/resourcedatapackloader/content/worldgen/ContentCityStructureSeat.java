@@ -50,7 +50,7 @@ public final class ContentCityStructureSeat {
         pieces.add(new ContentMapSignPiece(new BlockPos(placed.fromX() + ContentImprint.backX(turn, span) + turned.getX(), level + turned.getY(), placed.fromZ() + ContentImprint.backZ(turn, span) + turned.getZ()), def.key().toString(), turn));
     }
 
-    @Nullable static ContentCityStructure.Seated seat(GenerationContext context, CityGround ground, CityPlan plan, CityPlan.Plot plot, Map<CityPlan.Line, ContentCityStructure.Laid> streets, List<ContentCityStructure.Well> wells) {
+    @Nullable public static ContentCityStructure.Seated seat(GenerationContext context, CityGround ground, CityPlan plan, CityPlan.Plot plot, Map<CityPlan.Line, ContentCityStructure.Laid> streets, List<ContentCityStructure.Well> wells) {
         ContentCityStructure.District district = ContentCityStructureSite.district(context, ground, plan);
         CityPlan.Plot placed = placed(context, ground, plan, district, plot);
         if (placed == null) { return null; }
@@ -158,7 +158,7 @@ public final class ContentCityStructureSeat {
 
     private static int groundAverage(CityGround ground, CityPlan.Plot placed) { return groundAverage(ground, placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ()); }
 
-    static int groundAverage(CityGround ground, int fromX, int fromZ, int toX, int toZ) {
+    public static int groundAverage(CityGround ground, int fromX, int fromZ, int toX, int toZ) {
         long total = 0;
         int count = 0;
         for (int x = fromX; x <= toX; x++) {
@@ -240,7 +240,7 @@ public final class ContentCityStructureSeat {
         return total;
     }
 
-    @Nullable static CityPlan.Plot placed(GenerationContext context, CityGround ground, CityPlan plan, ContentCityStructure.District district, CityPlan.Plot plot) {
+    @Nullable public static CityPlan.Plot placed(GenerationContext context, CityGround ground, CityPlan plan, ContentCityStructure.District district, CityPlan.Plot plot) {
         if (!plan.emits((plot.fromX() + plot.toX()) / 2, (plot.fromZ() + plot.toZ()) / 2)) { return null; }
         ContentCityStructure.Street street = district.streets().get(plot.street());
         if (street == null) { return null; }

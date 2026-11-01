@@ -296,7 +296,7 @@ public final class ContentDimensions {
         return CLOUDS.at(dimension, ContentControl.lines(ContentControl.TERRAIN, "cloudHeight", Config.worldgen.cloudHeight()));
     }
 
-    @Nullable static Integer height(String value) {
+    @Nullable public static Integer height(String value) {
         try { return Integer.parseInt(value); }
         catch (NumberFormatException wrong) { return null; }
     }

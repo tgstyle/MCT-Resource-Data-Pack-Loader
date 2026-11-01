@@ -11,8 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import javax.annotation.Nullable;
 
-final class PackReadme {
-    static final String README = "readme.txt";
+public final class PackReadme {
+    public static final String README = "readme.txt";
     private static final String README_BASE = "/assets/resourcedatapackloader/readme";
     private static final String README_FALLBACK = README_BASE + "_en_us.txt";
 
@@ -39,7 +39,7 @@ final class PackReadme {
         return "";
     }
 
-    @Nullable static String readmeText() {
+    @Nullable public static String readmeText() {
         String source = readmeSource();
         try (InputStream stream = PackManager.class.getResourceAsStream(source)) {
             if (stream == null) { return null; }

@@ -25,10 +25,10 @@ public final class CityPlan {
     public static final int WELL_HALF = 3;
     private static int district = DISTRICT_LEAST;
     private static final int VANILLA_WIDTH = 3;
-    static final long SALT = 0x1F0D3F5B7C9E1A37L;
+    public static final long SALT = 0x1F0D3F5B7C9E1A37L;
     private static final int MOUTH = 4;
     private static final Map<Long, Optional<CityPlan>> RAILED = new ConcurrentHashMap<>();
-    static final int HELD = 1024;
+    public static final int HELD = 1024;
 
     public enum End { MET, BARE, COURT }
 
@@ -39,11 +39,11 @@ public final class CityPlan {
 
         public BoundingBox box() { return strip(alongX, at, last(), from, to); }
 
-        static Line met(int at, int width, boolean alongX, int from, int to) { return new Line(at, width, false, alongX, from, to, End.MET, End.MET); }
+        public static Line met(int at, int width, boolean alongX, int from, int to) { return new Line(at, width, false, alongX, from, to, End.MET, End.MET); }
 
-        Line ending(End low, End high) { return new Line(at, width, alley, alongX, from, to, low, high, keys, lifts); }
+        public Line ending(End low, End high) { return new Line(at, width, alley, alongX, from, to, low, high, keys, lifts); }
 
-        Line reaching(int low, int high) { return new Line(at, width, alley, alongX, low, high, endsLow, endsHigh, keys, lifts); }
+        public Line reaching(int low, int high) { return new Line(at, width, alley, alongX, low, high, endsLow, endsHigh, keys, lifts); }
 
         public int last() { return at + width - 1; }
 
@@ -131,7 +131,7 @@ public final class CityPlan {
     @Nullable private volatile CityPlan settled;
     @Nullable private volatile Map<Junction, Integer> aproned;
 
-    CityPlan(int originX, int originZ, List<Line> alongX, List<Line> alongZ, List<Plot> plots, List<Rail> rails, int windowX, int windowZ, boolean mapped, List<Junction> plazas, List<Lift> lifts, String type, @Nullable Town town) {
+    public CityPlan(int originX, int originZ, List<Line> alongX, List<Line> alongZ, List<Plot> plots, List<Rail> rails, int windowX, int windowZ, boolean mapped, List<Junction> plazas, List<Lift> lifts, String type, @Nullable Town town) {
         this.town = town;
         this.type = type;
         this.lifts = lifts;
@@ -153,7 +153,7 @@ public final class CityPlan {
 
     CityPlan withRails(List<Rail> held) { return new CityPlan(originX, originZ, alongX, alongZ, plots, held, windowX, windowZ, mapped, plazas, lifts, type, town); }
 
-    CityPlan pulledBack(Map<Line, Line> pulled) {
+    public CityPlan pulledBack(Map<Line, Line> pulled) {
         if (pulled.isEmpty()) { return this; }
         List<Plot> fronted = new ArrayList<>();
         for (Plot plot : plots) { fronted.add(new Plot(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), pulled.getOrDefault(plot.street(), plot.street()), plot.lower(), plot.def(), plot.back())); }
@@ -169,9 +169,9 @@ public final class CityPlan {
         return List.copyOf(found);
     }
 
-    @Nullable CityPlan settled() { return settled; }
+    @Nullable public CityPlan settled() { return settled; }
 
-    synchronized CityPlan settle(CityPlan made) {
+    public synchronized CityPlan settle(CityPlan made) {
         if (settled == null) {
             made.settled = made;
             settled = made;
@@ -203,7 +203,7 @@ public final class CityPlan {
         return found;
     }
 
-    void apron(CityGround ground, Line line, int start, int[] profile) {
+    public void apron(CityGround ground, Line line, int start, int[] profile) {
         boolean[] held = new boolean[profile.length];
         List<BoundingBox> wells = new ArrayList<>();
         for (BoundingBox box : wellBoxes()) { if (emits(box)) { wells.add(box); } }
@@ -246,7 +246,7 @@ public final class CityPlan {
         return junctionLevel(ground, junction, profiles);
     }
 
-    static boolean inPlaza(List<BoundingBox> wells, Junction junction) {
+    public static boolean inPlaza(List<BoundingBox> wells, Junction junction) {
         for (BoundingBox box : wells) { if (inPlaza(box, junction)) { return true; } }
         return false;
     }
@@ -256,28 +256,28 @@ public final class CityPlan {
         return null;
     }
 
-    static int mouthReach(Line line) { return MOUTH + extraWidthOf(line); }
+    public static int mouthReach(Line line) { return MOUTH + extraWidthOf(line); }
 
-    static int mouthReach() { return MOUTH + extraWidth(); }
+    public static int mouthReach() { return MOUTH + extraWidth(); }
 
-    @Nullable static int[] mouth(Line line, Line other, int start, int span) {
+    @Nullable public static int[] mouth(Line line, Line other, int start, int span) {
         int reach = mouthReach(line);
         boolean high = line.from() < other.at() && line.to() - other.last() <= reach;
         if (high == (line.to() > other.last() && other.at() - line.from() <= reach)) { return null; }
         return new int[] {Math.max(start, high ? other.at() - reach - 1 : other.last() + 1), Math.min(start + span - 1, high ? other.at() - 1 : other.last() + reach + 1)};
     }
 
-    static boolean inPlaza(BoundingBox box, Junction junction) {
+    public static boolean inPlaza(BoundingBox box, Junction junction) {
         int reach = plazaReach();
         return box.maxX() + reach >= junction.fromX() && box.minX() - reach <= junction.toX() && box.maxZ() + reach >= junction.fromZ() && box.minZ() - reach <= junction.toZ();
     }
 
-    static boolean nearMouth(Line line, BoundingBox box, int from, int to) {
+    public static boolean nearMouth(Line line, BoundingBox box, int from, int to) {
         int reach = plazaReach();
         return !offWell(line, box, reach) && to >= CityLines.least(line, box) - reach && from <= CityLines.most(line, box) + reach;
     }
 
-    static void clampToWell(Line line, int start, int[] profile, boolean[] held, BoundingBox box, int level) {
+    public static void clampToWell(Line line, int start, int[] profile, boolean[] held, BoundingBox box, int level) {
         int reach = plazaReach();
         if (offWell(line, box, reach)) { return; }
         int from = Math.max(start, CityLines.least(line, box) - reach);
@@ -291,7 +291,7 @@ public final class CityPlan {
 
     private static boolean offWell(Line line, BoundingBox box, int reach) { return line.last() < (line.alongX() ? box.minZ() : box.minX()) - reach || line.at() > (line.alongX() ? box.maxZ() : box.maxX()) + reach; }
 
-    static int wellGround(CityGround ground, int x, int z) {
+    public static int wellGround(CityGround ground, int x, int z) {
         int lowest = Integer.MAX_VALUE;
         for (int dz = 0; dz < ContentCityWellPiece.SIZE; dz++) {
             for (int dx = 0; dx < ContentCityWellPiece.SIZE; dx++) { lowest = Math.min(lowest, ground.surface(x + dx, z + dz)); }
@@ -305,7 +305,7 @@ public final class CityPlan {
 
     public int windowZ() { return windowZ; }
 
-    boolean mapped() { return mapped; }
+    public boolean mapped() { return mapped; }
 
     public int spanStart(Line line) {
         if (!mapped) { return line.alongX() ? originX : originZ; }
@@ -430,12 +430,12 @@ public final class CityPlan {
         return false;
     }
 
-    static int junctionLevel(CityGround ground, Junction junction, Map<Line, int[]> profiles) {
+    public static int junctionLevel(CityGround ground, Junction junction, Map<Line, int[]> profiles) {
         Line setter = setter(junction);
         return apronLevel(ground, setter, setter.equals(junction.alongX()) ? junction.alongZ() : junction.alongX(), profiles.computeIfAbsent(setter, line -> apronProfile(ground, line)));
     }
 
-    static Line setter(Junction junction) {
+    public static Line setter(Junction junction) {
         Line row = junction.alongX();
         Line column = junction.alongZ();
         boolean rowEnds = endsOn(row, column);
@@ -476,7 +476,7 @@ public final class CityPlan {
         return level == Integer.MIN_VALUE ? ground.sea() : level;
     }
 
-    static boolean underwater(CityGround ground, Line line, int row) {
+    public static boolean underwater(CityGround ground, Line line, int row) {
         int wet = 0;
         for (int across = line.at(); across <= line.last(); across++) {
             if (ground.floor(line.alongX() ? row : across, line.alongX() ? across : row) < ground.sea() - 1) { wet++; }
@@ -484,11 +484,11 @@ public final class CityPlan {
         return wet * 2 >= line.width();
     }
 
-    static long packed(int x, int z) { return Longs.pack(x, z); }
+    public static long packed(int x, int z) { return Longs.pack(x, z); }
 
     CityPlan keeping(List<Plot> kept) { return new CityPlan(originX, originZ, alongX, alongZ, List.copyOf(kept), rails, windowX, windowZ, mapped, plazas, lifts, type, town); }
 
-    CityPlan grownFrom(Town held, List<Line> ties) {
+    public CityPlan grownFrom(Town held, List<Line> ties) {
         List<Line> rows = new ArrayList<>(alongX);
         List<Line> columns = new ArrayList<>(alongZ);
         for (Line tie : ties) { (tie.alongX() ? rows : columns).add(tie); }
@@ -510,24 +510,24 @@ public final class CityPlan {
 
     public static int railWidth(boolean sub) { return ContentCity.railBed(sub) + ContentCity.railShoulderWidth(sub) * 2; }
 
-    record Court(Line street, boolean low, int room, int stem) {
-        int end() { return low ? street.from() : street.to(); }
+    public record Court(Line street, boolean low, int room, int stem) {
+        public int end() { return low ? street.from() : street.to(); }
 
-        int dir() { return low ? -1 : 1; }
+        public int dir() { return low ? -1 : 1; }
 
-        Line line() { return CityCulDeSacs.courtLine(street, end(), dir(), room, stem); }
+        public Line line() { return CityCulDeSacs.courtLine(street, end(), dir(), room, stem); }
 
         boolean meets(int fromX, int fromZ, int toX, int toZ) { return room > 0 && CityCulDeSacs.courtBox(street, end(), dir(), room, stem).meets(fromX, fromZ, toX, toZ); }
 
-        boolean serves(Line line) { return line.alongX() == street.alongX() && line.at() == street.at() && line.width() == street.width() && line.from() >= street.from() && line.to() <= street.to(); }
+        public boolean serves(Line line) { return line.alongX() == street.alongX() && line.at() == street.at() && line.width() == street.width() && line.from() >= street.from() && line.to() <= street.to(); }
     }
 
-    @Nullable static Court plannedCourt(CityPlan plan, Line line, boolean low) {
+    @Nullable public static Court plannedCourt(CityPlan plan, Line line, boolean low) {
         for (Court court : plannedCourts(plan)) { if (court.low() == low && court.serves(line)) { return court; } }
         return null;
     }
 
-    static List<Court> plannedCourts(CityPlan plan) {
+    public static List<Court> plannedCourts(CityPlan plan) {
         if (!plan.mapped || plan.town == null) { return List.of(); }
         Growth growth = CityGrowth.MAP_GROWTH.get(plan.town.key());
         return growth == null ? List.of() : growth.courts();
@@ -543,13 +543,13 @@ public final class CityPlan {
 
     public static int flatRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathFlatRun", Config.worldgen.villagePathFlatRun())); }
 
-    static int fullWidthFor(@Nullable JsonObject keys) { return keys == null ? fullWidth() : ContentControl.onRoad(keys, CityPlan::fullWidth); }
+    public static int fullWidthFor(@Nullable JsonObject keys) { return keys == null ? fullWidth() : ContentControl.onRoad(keys, CityPlan::fullWidth); }
 
-    static int fullWidth() { return VANILLA_WIDTH + extraWidth() * 2 + lineWidth() * 2 + walkWidth() * 2; }
+    public static int fullWidth() { return VANILLA_WIDTH + extraWidth() * 2 + lineWidth() * 2 + walkWidth() * 2; }
 
     public static int extraWidthOf(Line line) { return ContentControl.onRoad(line.keys(), CityPlan::extraWidth); }
 
-    static int extraWidth() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathExtraWidth", Config.worldgen.villagePathExtraWidth())); }
+    public static int extraWidth() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathExtraWidth", Config.worldgen.villagePathExtraWidth())); }
 
     public static int lineWidth() { return ContentCity.lineBlock().isEmpty() ? 0 : 1; }
 
@@ -582,9 +582,9 @@ public final class CityPlan {
 
     public static int district() { return district; }
 
-    static int districtOf(int at, boolean alongX) { return Math.floorDiv(at - CityDistricts.offset(alongX), district); }
+    public static int districtOf(int at, boolean alongX) { return Math.floorDiv(at - CityDistricts.offset(alongX), district); }
 
-    static int windowOf(int index, boolean alongX) { return index * district + CityDistricts.offset(alongX); }
+    public static int windowOf(int index, boolean alongX) { return index * district + CityDistricts.offset(alongX); }
 
     public static int chunks() { return district / 16; }
 }

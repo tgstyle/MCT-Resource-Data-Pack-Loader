@@ -29,27 +29,27 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
-final class CityGrowth {
-    static final Map<Long, City> CITIES = new ConcurrentHashMap<>();
+public final class CityGrowth {
+    public static final Map<Long, City> CITIES = new ConcurrentHashMap<>();
     private static final int RELIEF = 6;
     private static final int MARCH = 112;
     private static final int PER_MARCH = 96;
-    static final int BLOCK_LEAST = 13;
-    static final int FEWEST_PIECES = 2;
-    static final Map<Long, Growth> MAP_GROWTH = new ConcurrentHashMap<>();
-    static final Map<Long, Boolean> MAP_SMALL = new ConcurrentHashMap<>();
+    public static final int BLOCK_LEAST = 13;
+    public static final int FEWEST_PIECES = 2;
+    public static final Map<Long, Growth> MAP_GROWTH = new ConcurrentHashMap<>();
+    public static final Map<Long, Boolean> MAP_SMALL = new ConcurrentHashMap<>();
 
-    record City(int centerX, int centerZ, Set<Long> districts) {
-        boolean has(int districtX, int districtZ) { return districts.contains(CityPlan.packed(districtX, districtZ)); }
+    public record City(int centerX, int centerZ, Set<Long> districts) {
+        public boolean has(int districtX, int districtZ) { return districts.contains(CityPlan.packed(districtX, districtZ)); }
     }
 
-    record Growth(List<Line> alleys, List<Plot> plots, List<Court> courts, List<Line> ties, Map<Long, CityPlan> districts, int districtPlots) {}
+    public record Growth(List<Line> alleys, List<Plot> plots, List<Court> courts, List<Line> ties, Map<Long, CityPlan> districts, int districtPlots) {}
 
     private CityGrowth() {}
 
-    static int pieces(int plots, int wells) { return plots + wells; }
+    public static int pieces(int plots, int wells) { return plots + wells; }
 
-    static City city(CityGround ground, int[] center, int spacing) { return Capped.held(CITIES, CityPlan.HELD, "city", CityPlan.packed(center[0], center[1]), () -> grow(ground, center[0], center[1], spacing)); }
+    public static City city(CityGround ground, int[] center, int spacing) { return Capped.held(CITIES, CityPlan.HELD, "city", CityPlan.packed(center[0], center[1]), () -> grow(ground, center[0], center[1], spacing)); }
 
     private static City grow(CityGround ground, int centerX, int centerZ, int spacing) {
         int least = ContentVillages.plotsLeast();
@@ -106,7 +106,7 @@ final class CityGrowth {
         return new City(centerX, centerZ, held);
     }
 
-    static int march() {
+    public static int march() {
         int least = ContentVillages.plotsLeast();
         int wide = Math.max(BLOCK_LEAST, ContentVillages.largestPlot());
         double filled = (double) least / PER_MARCH * ((double) (wide * wide) / (BLOCK_LEAST * BLOCK_LEAST));
@@ -124,7 +124,7 @@ final class CityGrowth {
         return null;
     }
 
-    static boolean rough(CityGround ground, int x, int z) {
+    public static boolean rough(CityGround ground, int x, int z) {
         int reach = CityPlan.plazaReach();
         int sea = ground.sea();
         int lowest = Integer.MAX_VALUE;
@@ -173,7 +173,7 @@ final class CityGrowth {
         return null;
     }
 
-    static boolean tooSmall(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered, Town town) {
+    public static boolean tooSmall(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered, Town town) {
         Boolean known = MAP_SMALL.get(town.key());
         if (known != null) { return known; }
         Growth growth = mapGrowth(ground, map, cityX, cityZ, centered, town);

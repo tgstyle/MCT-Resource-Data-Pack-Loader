@@ -23,14 +23,14 @@ import java.util.Map;
 public final class ContentCityStructurePlaza {
     private ContentCityStructurePlaza() {}
 
-    @Nullable static ContentCityStructure.Well wellAt(List<ContentCityStructure.Well> wells, CityPlan.Junction junction) {
+    @Nullable public static ContentCityStructure.Well wellAt(List<ContentCityStructure.Well> wells, CityPlan.Junction junction) {
         for (ContentCityStructure.Well well : wells) {
             if (well.middle().equals(junction)) { return well; }
         }
         return null;
     }
 
-    static List<ContentCityStructure.Well> wells(GenerationContext context, CityGround ground, CityPlan plan, Map<CityPlan.Junction, Integer> levels) {
+    public static List<ContentCityStructure.Well> wells(GenerationContext context, CityGround ground, CityPlan plan, Map<CityPlan.Junction, Integer> levels) {
         List<ContentCityStructure.Well> found = new ArrayList<>();
         if (plan.plazas().isEmpty()) { ContentLog.LOGGER.debug("The district at {}, {} has no plaza: its streets run one way only", plan.originX(), plan.originZ()); }
         boolean lone = plan.plazas().stream().filter(held -> emitted(plan, held)).count() == 1;
@@ -63,14 +63,14 @@ public final class ContentCityStructurePlaza {
 
     static boolean emitted(CityPlan plan, CityPlan.Junction middle) { return plan.emits(wellX(middle), wellZ(middle)); }
 
-    static void plazaLevels(List<ContentCityStructure.Well> wells, Map<CityPlan.Junction, Integer> levels) {
+    public static void plazaLevels(List<ContentCityStructure.Well> wells, Map<CityPlan.Junction, Integer> levels) {
         for (Map.Entry<CityPlan.Junction, Integer> crossing : levels.entrySet()) {
             ContentCityStructure.Well well = plazaOf(wells, crossing.getKey());
             if (well != null) { crossing.setValue(well.level()); }
         }
     }
 
-    static List<BoundingBox> boxes(List<ContentCityStructure.Well> wells) { return wells.stream().map(ContentCityStructure.Well::box).toList(); }
+    public static List<BoundingBox> boxes(List<ContentCityStructure.Well> wells) { return wells.stream().map(ContentCityStructure.Well::box).toList(); }
 
     @Nullable static ContentCityStructure.Well plazaOf(List<ContentCityStructure.Well> wells, CityPlan.Junction junction) {
         for (ContentCityStructure.Well well : wells) {
@@ -79,21 +79,21 @@ public final class ContentCityStructurePlaza {
         return null;
     }
 
-    @Nullable static ContentCityStructure.Well mouthPlaza(CityPlan.Line line, List<ContentCityStructure.Well> wells, int from, int to) {
+    @Nullable public static ContentCityStructure.Well mouthPlaza(CityPlan.Line line, List<ContentCityStructure.Well> wells, int from, int to) {
         for (ContentCityStructure.Well well : wells) {
             if (CityPlan.nearMouth(line, well.box(), from, to)) { return well; }
         }
         return null;
     }
 
-    static int[] footprints(List<BoundingBox> claims, List<ContentCityStructure.Seated> seated) {
+    public static int[] footprints(List<BoundingBox> claims, List<ContentCityStructure.Seated> seated) {
         IntList boxes = new IntArrayList();
         for (BoundingBox claim : claims) { CityBoxes.add(boxes, claim); }
         for (ContentCityStructure.Seated held : seated) { CityBoxes.add(boxes, held.box()); }
         return boxes.toIntArray();
     }
 
-    static int[] streetsOver(ContentCityStructure.Well well, Map<CityPlan.Line, ContentCityStructure.Laid> laid) {
+    public static int[] streetsOver(ContentCityStructure.Well well, Map<CityPlan.Line, ContentCityStructure.Laid> laid) {
         int reach = ContentCitySewerLoopPiece.LOOP + ContentCity.sewerWidth() / 2;
         BoundingBox box = well.box();
         IntList found = new IntArrayList();
@@ -113,7 +113,7 @@ public final class ContentCityStructurePlaza {
         return found.toIntArray();
     }
 
-    static List<ContentCityStructure.Well> near(GenerationContext context, CityGround ground, CityPlan plan) {
+    public static List<ContentCityStructure.Well> near(GenerationContext context, CityGround ground, CityPlan plan) {
         int size = CityPlan.district();
         int reach = CityPlan.plazaReach() + ContentCityPlazaPiece.MOUTH_MOST + ContentCityWellPiece.SIZE;
         List<ContentCityStructure.Well> found = new ArrayList<>();
@@ -128,7 +128,7 @@ public final class ContentCityStructurePlaza {
         return found;
     }
 
-    static void plaza(GenerationContext context, CityGround ground, CityPlan plan, ContentCityStructure.Well well, boolean first, int[] footprints, int[] stations, int[] streets, StructurePiecesBuilder builder) {
+    public static void plaza(GenerationContext context, CityGround ground, CityPlan plan, ContentCityStructure.Well well, boolean first, int[] footprints, int[] stations, int[] streets, StructurePiecesBuilder builder) {
         BoundingBox box = well.box();
         int middleX = well.middle().alongZ().middle();
         int middleZ = well.middle().alongX().middle();

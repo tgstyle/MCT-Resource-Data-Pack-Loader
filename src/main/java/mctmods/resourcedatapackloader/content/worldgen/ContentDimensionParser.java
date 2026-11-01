@@ -62,7 +62,7 @@ public final class ContentDimensionParser {
 
     private ContentDimensionParser() {}
 
-    static void drawn(ResourceLocation key, JsonObject json) {
+    public static void drawn(ResourceLocation key, JsonObject json) {
         String owner = "Dimension " + key;
         for (String member : Json.getJsonObject(json, "sky", new JsonObject()).keySet()) {
             if (!ContentEnvironments.FIXED.contains(member)) { VanillaClients.clientDrawn(owner, "sky." + member); }
@@ -74,7 +74,7 @@ public final class ContentDimensionParser {
         }
     }
 
-    static DimensionDef parse(ResourceLocation key, JsonObject json) {
+    public static DimensionDef parse(ResourceLocation key, JsonObject json) {
         JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());
         JsonObject biomes = Json.getJsonObject(json, "biomes", new JsonObject());
         JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
@@ -340,7 +340,7 @@ public final class ContentDimensionParser {
         return Map.copyOf(found);
     }
 
-    static void rules(ResourceLocation key, JsonObject set, Map<String, String> into) {
+    public static void rules(ResourceLocation key, JsonObject set, Map<String, String> into) {
         for (Map.Entry<String, JsonElement> rule : set.entrySet()) {
             if (!rule.getValue().isJsonPrimitive()) {
                 ContentLog.LOGGER.error("Dimension {} sets game rule '{}' to something that is not a value, ignoring it", key, rule.getKey());

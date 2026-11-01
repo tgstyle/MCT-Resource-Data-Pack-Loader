@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import net.minecraft.util.GsonHelper;
 
-final class DownAssets {
+public final class DownAssets {
     private static final String ITEM_MODELS = "models/item/";
     private static final String ITEMS = "items/";
     private static final String MCMETA = ".mcmeta";
@@ -49,7 +49,7 @@ final class DownAssets {
         if (translucent && !json.has("render_type")) { json.addProperty("render_type", "minecraft:translucent"); }
     }
 
-    @Nullable static String modelPath(String path) {
+    @Nullable public static String modelPath(String path) {
         if (!path.startsWith(ITEMS) || !path.endsWith(PackManager.JSON_SUFFIX)) { return null; }
         String rest = path.substring(ITEMS.length());
         return rest.length() == PackManager.JSON_SUFFIX.length() || rest.indexOf('/') >= 0 ? null : ITEM_MODELS + rest;
@@ -57,7 +57,7 @@ final class DownAssets {
 
     private static String selfModel(String namespace, String modelPath) { return namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - PackManager.JSON_SUFFIX.length()); }
 
-    @Nullable static JsonObject made(String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
+    @Nullable public static JsonObject made(String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
         String self = selfModel(namespace, modelPath);
         List<Case> cases = cases(definition, self, file, note);
         if (cases.isEmpty() || cases.get(0).model().equals(self)) { return null; }
@@ -67,7 +67,7 @@ final class DownAssets {
         return model;
     }
 
-    static void attach(JsonObject model, String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
+    public static void attach(JsonObject model, String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
         if (model.has("overrides")) { return; }
         String self = selfModel(namespace, modelPath);
         overrides(model, cases(definition, self, file, note));
@@ -152,7 +152,7 @@ final class DownAssets {
 
     private static void lost(String file, String what, Consumer<String> note) { note.accept("'" + file + "' switches its model on '" + what + "', which item model overrides have no twin for, so that switch is left out"); }
 
-    @Nullable static String moved(String path) {
+    @Nullable public static String moved(String path) {
         boolean meta = path.endsWith(MCMETA);
         String image = meta ? path.substring(0, path.length() - MCMETA.length()) : path;
         String out = MOVED.get(image);

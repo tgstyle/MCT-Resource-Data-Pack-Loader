@@ -44,7 +44,7 @@ public record ContentOptionFeatures() implements BiomeModifier {
         boolean any() { return !copies.isEmpty() || !dropped.isEmpty() || !added.isEmpty(); }
     }
 
-    static boolean active() { return tuned.containsKey(WORLD); }
+    public static boolean active() { return tuned.containsKey(WORLD); }
 
     static void publish(ResourceLocation owner, Map<String, Holder<PlacedFeature>> made, Set<String> silenced, Map<String, Holder<PlacedFeature>> extra) {
         Map<ResourceLocation, Tuned> next = WORLD.equals(owner) ? new LinkedHashMap<>() : new LinkedHashMap<>(tuned);
@@ -79,7 +79,7 @@ public record ContentOptionFeatures() implements BiomeModifier {
                 .orElse(null);
     }
 
-    static Set<PlacedFeature> refused(ServerLevel level) {
+    public static Set<PlacedFeature> refused(ServerLevel level) {
         Set<PlacedFeature> out = Collections.newSetFromMap(new IdentityHashMap<>());
         ResourceLocation here = level.dimension() != Level.OVERWORLD ? level.dimension().location() : ContentWorldShape.madeHere(level) ? WORLD : null;
         Registry<PlacedFeature> placed = level.registryAccess().registryOrThrow(Registries.PLACED_FEATURE);

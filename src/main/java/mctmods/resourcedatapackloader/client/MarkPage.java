@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nullable;
 
-final class MarkPage {
+public final class MarkPage {
     private static final int LINE = 12;
     private static final int INDENT = 12;
     private static final int GAP = 4;
@@ -59,7 +59,7 @@ final class MarkPage {
         }
     }
 
-    MarkPage(Font font, List<String> written, int widest) {
+    public MarkPage(Font font, List<String> written, int widest) {
         this.font = font;
         this.face = CardFont.of("");
         this.widest = widest;
@@ -67,9 +67,9 @@ final class MarkPage {
         for (Row row : rows) { height += row.height; }
     }
 
-    float height() { return height; }
+    public float height() { return height; }
 
-    float last() { return rows.isEmpty() ? LINE : rows.get(rows.size() - 1).height; }
+    public float last() { return rows.isEmpty() ? LINE : rows.get(rows.size() - 1).height; }
 
     private void lay(MarkLines.Line line) {
         switch (line.kind) {
@@ -135,7 +135,7 @@ final class MarkPage {
         return false;
     }
 
-    void draw(GuiGraphics graphics, int screenWidth, int screenHeight, float top, float scale, boolean centered) {
+    public void draw(GuiGraphics graphics, int screenWidth, int screenHeight, float top, float scale, boolean centered) {
         float y = top;
         float block = (screenWidth - widest * scale) / 2.0F;
         for (Row row : rows) {

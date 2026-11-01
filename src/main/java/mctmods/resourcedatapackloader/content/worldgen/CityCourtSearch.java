@@ -6,20 +6,20 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import javax.annotation.Nullable;
 
-final class CityCourtSearch {
-    static final int[] STEMS = { 1, 4, 7 };
+public final class CityCourtSearch {
+    public static final int[] STEMS = { 1, 4, 7 };
 
-    enum Verdict { SEATED, WET, CUT, FULL }
+    public enum Verdict { SEATED, WET, CUT, FULL }
 
-    record Seat(Verdict verdict, int radius, int stem, @Nullable BoundingBox box) {}
+    public record Seat(Verdict verdict, int radius, int stem, @Nullable BoundingBox box) {}
 
-    interface ICrowded { boolean at(int x, int z, int radius); }
+    public interface ICrowded { boolean at(int x, int z, int radius); }
 
-    interface IBlocked { boolean at(int x, int z, int radius, BoundingBox box); }
+    public interface IBlocked { boolean at(int x, int z, int radius, BoundingBox box); }
 
     private CityCourtSearch() {}
 
-    static Seat seat(CityGround ground, Line line, boolean low, int level, @Nullable ICrowded heartCrowded, IBlocked blocked) {
+    public static Seat seat(CityGround ground, Line line, boolean low, int level, @Nullable ICrowded heartCrowded, IBlocked blocked) {
         int end = low ? line.from() : line.to();
         int dir = low ? -1 : 1;
         int least = (line.width() + 1) / 2 + 1;
@@ -44,7 +44,7 @@ final class CityCourtSearch {
         return new Seat(cut ? Verdict.CUT : Verdict.FULL, 0, 0, null);
     }
 
-    static boolean crowds(int minX, int minZ, int maxX, int maxZ, int discX, int discZ, int radius) {
+    public static boolean crowds(int minX, int minZ, int maxX, int maxZ, int discX, int discZ, int radius) {
         int nearX = Mth.clamp(discX, minX, maxX) - discX;
         int nearZ = Mth.clamp(discZ, minZ, maxZ) - discZ;
         return nearX * nearX + nearZ * nearZ <= (radius + 1) * (radius + 1);

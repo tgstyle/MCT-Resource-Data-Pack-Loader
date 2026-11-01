@@ -33,7 +33,7 @@ import java.util.List;
 
 public final class ContentCityPlazaPiece extends StructurePiece implements PieceBeardifierModifier {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPlazaPiece::new;
-    static final int MOUTH_MOST = 4;
+    public static final int MOUTH_MOST = 4;
     private static final int TAPER_MOST = 3;
     private static final String LEVEL = "Level";
     private static final String WELL = "Well";
@@ -98,7 +98,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         tag.putInt(ARMS, arms);
     }
 
-    BoundingBox reached() {
+    public BoundingBox reached() {
         int ring = paved + walk;
         return new BoundingBox(well[0] - ring, level, well[1] - ring, well[2] + ring, level, well[3] + ring);
     }

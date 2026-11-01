@@ -33,7 +33,7 @@ public final class GeneratedResources {
 
     public static Set<String> namespaces(PackType type) { return Collections.unmodifiableSet(new LinkedHashSet<>(HELD.get(type).keySet())); }
 
-    static String head(String prefix) { return prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/"; }
+    public static String head(String prefix) { return prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/"; }
 
     public static void list(PackType type, String namespace, String prefix, Consumer<String> out) {
         Map<String, byte[]> paths = HELD.get(type).get(namespace);

@@ -28,14 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class CityLayout {
+public final class CityLayout {
     private static final long MAP_SALT = 0x3A9F00D5L;
     private static final int COURT_ODDS = 4;
     private static final int PIER_LEAST = 8;
     private static final int PIER_ROLL = 17;
     private static final int SHORE_REACH = 64;
-    static final Map<Long, Optional<Town>> MAP_TOWNS = new ConcurrentHashMap<>();
-    static final Map<Long, List<BoundingBox>> MAP_WELLS = new ConcurrentHashMap<>();
+    public static final Map<Long, Optional<Town>> MAP_TOWNS = new ConcurrentHashMap<>();
+    public static final Map<Long, List<BoundingBox>> MAP_WELLS = new ConcurrentHashMap<>();
     private static final int VILLAGE_START = 2;
 
     record Drawing(CityMapDef map, CityMapDef.Kind[][] grid, char[][] marks, int[][] groups, int originX, int originZ, boolean hinted, boolean[][] rows, boolean[][] columns) {
@@ -57,7 +57,7 @@ final class CityLayout {
 
     private CityLayout() {}
 
-    @Nullable static CityPlan mapped(CityGround ground, int districtX, int districtZ, CityMapDef map) {
+    @Nullable public static CityPlan mapped(CityGround ground, int districtX, int districtZ, CityMapDef map) {
         int spacing = CityPlan.spacing();
         if (spacing <= 0) { return null; }
         int reachX = (map.blocksWide() + CityPlan.district() - 1) / CityPlan.district() + 1 + pinSlack(map);
@@ -76,7 +76,7 @@ final class CityLayout {
         return null;
     }
 
-    static boolean elsewhere(CityGround ground, int cityX, int cityZ) {
+    public static boolean elsewhere(CityGround ground, int cityX, int cityZ) {
         int[] held = CityDistricts.center(ground, cityX, cityZ);
         return held == null || held[0] != cityX || held[1] != cityZ;
     }
@@ -130,7 +130,7 @@ final class CityLayout {
         return new CityPlan(originX, originZ, List.copyOf(alongX), List.copyOf(alongZ), List.copyOf(found), List.copyOf(rails), windowX, windowZ, true, plazas, List.copyOf(lifts), type, town);
     }
 
-    @Nullable static Town mapTown(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered) {
+    @Nullable public static Town mapTown(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered) {
         long held = CityPlan.packed(cityX, cityZ);
         Optional<Town> known = MAP_TOWNS.get(held);
         if (known != null) { return known.orElse(null); }
@@ -171,7 +171,7 @@ final class CityLayout {
         return made;
     }
 
-    static List<BoundingBox> mapWells(Town town) { return MAP_WELLS.getOrDefault(town.key(), List.of()); }
+    public static List<BoundingBox> mapWells(Town town) { return MAP_WELLS.getOrDefault(town.key(), List.of()); }
 
     static Rotation turnOf(long seed, int cityX, int cityZ) { return Turns.ALL[Math.floorMod(Hashes.mix(seed, startChunk(cityX, cityZ, 0) * 16 + VILLAGE_START, 7, startChunk(cityX, cityZ, 1) * 16 + VILLAGE_START), Turns.ALL.length)]; }
 
@@ -206,7 +206,7 @@ final class CityLayout {
         return found;
     }
 
-    static int pinSlack(CityMapDef map) { return CityDistricts.pinnedAt().isEmpty() ? 0 : (Math.max(map.blocksWide(), map.blocksDeep()) + CityPlan.district() - 1) / CityPlan.district() + 1; }
+    public static int pinSlack(CityMapDef map) { return CityDistricts.pinnedAt().isEmpty() ? 0 : (Math.max(map.blocksWide(), map.blocksDeep()) + CityPlan.district() - 1) / CityPlan.district() + 1; }
 
     static List<Junction> mapPlazas(CityMapDef map, CityMapDef.Kind[][] grid, int originX, int originZ, List<Line> rows, List<Line> columns, int full) {
         List<Junction> found = new ArrayList<>();
@@ -464,7 +464,7 @@ final class CityLayout {
 
     private static boolean bare(CityMapDef.Kind kind) { return !carries(kind); }
 
-    static boolean carries(CityMapDef.Kind kind) { return kind == CityMapDef.Kind.PLAZA || streetLike(kind); }
+    public static boolean carries(CityMapDef.Kind kind) { return kind == CityMapDef.Kind.PLAZA || streetLike(kind); }
 
     private static boolean streetLike(CityMapDef.Kind kind) { return kind == CityMapDef.Kind.STREET || kind == CityMapDef.Kind.JUNCTION || kind == CityMapDef.Kind.BULB || kind == CityMapDef.Kind.ELEVATED; }
 }

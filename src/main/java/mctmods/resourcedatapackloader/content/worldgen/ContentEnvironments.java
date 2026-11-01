@@ -47,7 +47,7 @@ public final class ContentEnvironments {
     public static final String DEFAULT = "default";
     private static final String ENVIRONMENTS = "environments";
     private static final List<String> BLOCKS = List.of("sky", "ambience");
-    static final List<String> FIXED = List.of("hasSkyLight", "surfaceWorld", "respawn", "respawnDimension", "spawning", "nether", "beds", "waterVaporizes", "groundLevel", "movementFactor", "fixedTime", "ambientLight");
+    public static final List<String> FIXED = List.of("hasSkyLight", "surfaceWorld", "respawn", "respawnDimension", "spawning", "nether", "beds", "waterVaporizes", "groundLevel", "movementFactor", "fixedTime", "ambientLight");
     private static final String BIOMES = "biomes";
     private static final String SPAWNING = "spawning";
     private static final String GROWTH = "growth";
@@ -190,29 +190,29 @@ public final class ContentEnvironments {
         return sets == null ? null : sets.get(active.get(0));
     }
 
-    static RuleSwitchDef wide(ResourceLocation dimension) {
+    public static RuleSwitchDef wide(ResourceLocation dimension) {
         DimensionDef set = whole(dimension);
         RuleSwitchDef held = set == null ? null : RULESETS.get(set);
         return held == null ? RuleSwitchDef.NONE : held;
     }
 
-    static RuleSwitchDef rules(ServerLevel level, BlockPos pos) { return chosen(level, pos, RULESETS, RuleSwitchDef.NONE); }
+    public static RuleSwitchDef rules(ServerLevel level, BlockPos pos) { return chosen(level, pos, RULESETS, RuleSwitchDef.NONE); }
 
-    static SpawnSwitchDef spawning(ServerLevel level, BlockPos pos) { return chosen(level, pos, SPAWNS, SpawnSwitchDef.NONE); }
+    public static SpawnSwitchDef spawning(ServerLevel level, BlockPos pos) { return chosen(level, pos, SPAWNS, SpawnSwitchDef.NONE); }
 
-    static GrowSwitchDef growth(ServerLevel level, BlockPos pos) { return chosen(level, pos, GROWS, GrowSwitchDef.NONE); }
+    public static GrowSwitchDef growth(ServerLevel level, BlockPos pos) { return chosen(level, pos, GROWS, GrowSwitchDef.NONE); }
 
-    static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
+    public static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
 
-    static RaidSwitchDef raids(ServerLevel level, BlockPos pos) { return chosen(level, pos, RAIDLINES, RaidSwitchDef.NONE); }
+    public static RaidSwitchDef raids(ServerLevel level, BlockPos pos) { return chosen(level, pos, RAIDLINES, RaidSwitchDef.NONE); }
 
-    static Map<ResourceLocation, ResourceLocation> loot(ServerLevel level, BlockPos pos) { return chosen(level, pos, LOOTS, Map.of()); }
+    public static Map<ResourceLocation, ResourceLocation> loot(ServerLevel level, BlockPos pos) { return chosen(level, pos, LOOTS, Map.of()); }
 
-    static TradeSwitchDef trades(ServerLevel level, BlockPos pos) { return chosen(level, pos, TRADELINES, TradeSwitchDef.NONE); }
+    public static TradeSwitchDef trades(ServerLevel level, BlockPos pos) { return chosen(level, pos, TRADELINES, TradeSwitchDef.NONE); }
 
     static Collection<MobSwitchDef> mobDefs() { return MOBLINES.values(); }
 
-    static List<SpawnSwitchDef> spawnings(ResourceLocation dimension) {
+    public static List<SpawnSwitchDef> spawnings(ResourceLocation dimension) {
         List<String> active = ACTIVE.get(dimension);
         Map<String, DimensionDef> sets = active == null ? null : SETS.get(dimension);
         if (sets == null) { return List.of(); }
@@ -221,13 +221,13 @@ public final class ContentEnvironments {
         return regions;
     }
 
-    static Collection<SpawnSwitchDef> spawnDefs() { return SPAWNS.values(); }
+    public static Collection<SpawnSwitchDef> spawnDefs() { return SPAWNS.values(); }
 
     public static Set<ResourceLocation> dimensions() { return Collections.unmodifiableSet(SETS.keySet()); }
 
     public static Set<String> names(ResourceLocation dimension) { return SETS.getOrDefault(dimension, Map.of()).keySet(); }
 
-    static boolean local(ResourceLocation dimension, String name) {
+    public static boolean local(ResourceLocation dimension, String name) {
         DimensionDef set = SETS.getOrDefault(dimension, Map.of()).get(name);
         return set != null && PLACES.containsKey(set);
     }
@@ -246,13 +246,13 @@ public final class ContentEnvironments {
         announce(server, dimension, before);
     }
 
-    static void announce(MinecraftServer server, ResourceLocation dimension, List<String> before) {
+    public static void announce(MinecraftServer server, ResourceLocation dimension, List<String> before) {
         List<String> entered = new ArrayList<>(active(dimension));
         entered.removeAll(before);
         if (!entered.isEmpty()) { CardEvents.environmentChanged(server, dimension, entered); }
     }
 
-    static void change(MinecraftServer server, ResourceLocation dimension, String name, boolean on) {
+    public static void change(MinecraftServer server, ResourceLocation dimension, String name, boolean on) {
         List<String> now = new ArrayList<>(active(dimension));
         if (local(dimension, name)) {
             now.remove(name);

@@ -80,7 +80,7 @@ public final class ContentGenerated {
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
 
-    static void cropLoot() {
+    public static void cropLoot() {
         for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
             if (!(entry.block() instanceof ContentCropBlock)) { continue; }
             String path = lootPath(entry.id().getPath());

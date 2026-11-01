@@ -21,28 +21,28 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class CityDistricts {
+public final class CityDistricts {
     private static final int SITE_MARGIN = 4;
     private static final int SITE_SAMPLES = 10;
     private static final int SITE_STEP = 8;
     private static final int SITE_TOLERANCE = 10;
     private static final String VILLAGES = "villages";
-    static final Map<Long, Optional<int[]>> SITES = new ConcurrentHashMap<>();
-    static final Map<Long, Optional<int[]>> PLACES = new ConcurrentHashMap<>();
-    static final Set<Long> SHIFTED = ConcurrentHashMap.newKeySet();
-    @Nullable static volatile Map<Long, int[]> pinnedAt;
-    @Nullable static volatile int[] offset;
+    public static final Map<Long, Optional<int[]>> SITES = new ConcurrentHashMap<>();
+    public static final Map<Long, Optional<int[]>> PLACES = new ConcurrentHashMap<>();
+    public static final Set<Long> SHIFTED = ConcurrentHashMap.newKeySet();
+    @Nullable public static volatile Map<Long, int[]> pinnedAt;
+    @Nullable public static volatile int[] offset;
 
     private CityDistricts() {}
 
     public static int separation() { return villageNumber("structureSeparation"); }
 
-    static int[] plazaCenter(int districtX, int districtZ, int[] cross) {
+    public static int[] plazaCenter(int districtX, int districtZ, int[] cross) {
         int half = CityPlan.fullWidth() / 2;
         return new int[] {CityPlan.windowOf(districtX, true) + cross[0] + half, CityPlan.windowOf(districtZ, false) + cross[1] + half};
     }
 
-    static int[] crossOf(int districtX, int districtZ) {
+    public static int[] crossOf(int districtX, int districtZ) {
         int[] pin = pinnedAt().get(CityPlan.packed(districtX, districtZ));
         int standard = crossAt();
         if (pin == null) { return new int[] {standard, standard}; }
@@ -55,7 +55,7 @@ final class CityDistricts {
         return cross;
     }
 
-    static int offset(boolean alongX) {
+    public static int offset(boolean alongX) {
         int[] held = offset;
         if (held == null) {
             held = gridOffset();
@@ -84,7 +84,7 @@ final class CityDistricts {
         return pinnedAt;
     }
 
-    static List<int[]> around(CityGround ground, int regionX, int regionZ, int spacing) {
+    public static List<int[]> around(CityGround ground, int regionX, int regionZ, int spacing) {
         List<int[]> found = new ArrayList<>();
         for (int aroundX = -1; aroundX <= 1; aroundX++) {
             for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
@@ -95,7 +95,7 @@ final class CityDistricts {
         return found;
     }
 
-    @Nullable static int[] center(CityGround ground, int districtX, int districtZ) {
+    @Nullable public static int[] center(CityGround ground, int districtX, int districtZ) {
         int spacing = CityPlan.spacing();
         int regionX = Math.floorDiv(districtX, spacing);
         int regionZ = Math.floorDiv(districtZ, spacing);
@@ -122,7 +122,7 @@ final class CityDistricts {
         return wells;
     }
 
-    static int pinsIn(int regionX, int regionZ) {
+    public static int pinsIn(int regionX, int regionZ) {
         int spacing = Math.max(1, CityPlan.spacing());
         for (String named : List.of(ContentCity.STRUCTURE, VILLAGES)) {
             int held = 0;
@@ -189,7 +189,7 @@ final class CityDistricts {
         return made.orElse(null);
     }
 
-    static void siteAhead(CityGround ground, List<int[]> districts) {
+    public static void siteAhead(CityGround ground, List<int[]> districts) {
         int spacing = CityPlan.spacing();
         if (spacing <= 1 || districts.isEmpty() || villagesPinned()) { return; }
         CityMapDef map = ContentCity.layout();
@@ -274,7 +274,7 @@ final class CityDistricts {
         return highest - lowest;
     }
 
-    static int villageNumber(String key) {
+    public static int villageNumber(String key) {
         int found = 0;
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, key, key.equals("structureSpacing") ? Config.worldgen.structureSpacing() : key.equals("structureSeparation") ? Config.worldgen.structureSeparation() : Config.worldgen.structureMinDistanceFromSpawn())) {
             String[] sides = Settings.filled(entry);

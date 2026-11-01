@@ -37,7 +37,7 @@ public final class ContentSpawnSwitch {
 
     private ContentSpawnSwitch() {}
 
-    @Nullable static SpawnSwitchDef parse(String owner, JsonElement element) {
+    @Nullable public static SpawnSwitchDef parse(String owner, JsonElement element) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives spawning that is not an object, ignoring it", owner);
             return null;
