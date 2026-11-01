@@ -1,0 +1,70 @@
+package mctmods.resourcedatapackloader.common.portways;
+
+import mctmods.resourcedatapackloader.common.util.world.SavedTypes;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+
+public final class ContentPortwayGlobal extends SavedData {
+    private static final String NAME = "rdpl_portway_global";
+    private static final String STOPS = "stops";
+    private static final SavedDataType<ContentPortwayGlobal> TYPE = SavedTypes.of(NAME, ContentPortwayGlobal::new, ContentPortwayGlobal::read, ContentPortwayGlobal::write);
+    private final List<PortwayStop> stops = new ArrayList<>();
+
+    public static ContentPortwayGlobal get(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
+
+    private static ContentPortwayGlobal read(CompoundTag compound) {
+        ContentPortwayGlobal data = new ContentPortwayGlobal();
+        ListTag tags = compound.getListOrEmpty(STOPS);
+        for (int index = 0; index < tags.size(); index++) {
+            PortwayStop stop = PortwayStop.read(tags.getCompoundOrEmpty(index));
+            if (stop != null) { data.stops.add(stop); }
+        }
+        return data;
+    }
+
+    private CompoundTag write() {
+        CompoundTag compound = new CompoundTag();
+        ListTag tags = new ListTag();
+        for (PortwayStop stop : stops) { tags.add(stop.write()); }
+        compound.put(STOPS, tags);
+        return compound;
+    }
+
+    public List<PortwayStop> stops() { return List.copyOf(stops); }
+
+    public boolean contains(PortwayStop stop) {
+        for (PortwayStop held : stops) {
+            if (held.same(stop)) { return true; }
+        }
+        return false;
+    }
+
+    public void put(PortwayStop stop) {
+        for (int index = 0; index < stops.size(); index++) {
+            if (!stops.get(index).same(stop)) { continue; }
+            if (stops.get(index).differs(stop)) {
+                stops.set(index, stop.keeping(stops.get(index)));
+                setDirty();
+            }
+            return;
+        }
+        stops.add(stop.fresh());
+        setDirty();
+    }
+
+    public void remove(ResourceKey<Level> dimension, BlockPos pos) { remove(Set.of(new PortwayStop.Key(dimension, pos))); }
+
+    public void remove(Set<PortwayStop.Key> lost) {
+        if (stops.removeIf(stop -> lost.contains(stop.key()))) { setDirty(); }
+    }
+}

@@ -1,0 +1,20 @@
+package mctmods.resourcedatapackloader.mixin.world.level.storage;
+
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
+
+import net.minecraft.world.level.LevelSettings;
+import net.minecraft.world.level.storage.PrimaryLevelData;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(PrimaryLevelData.class) public abstract class PrimaryLevelDataMixin {
+    @Shadow private LevelSettings settings;
+
+    @Inject(method = "<init>(Lnet/minecraft/world/level/LevelSettings;Lnet/minecraft/world/level/storage/PrimaryLevelData$SpecialWorldProperty;Lcom/mojang/serialization/Lifecycle;)V", at = @At("RETURN")) private void rdpl$packWorld(CallbackInfo ci) {
+        if (((PrimaryLevelData) (Object) this).isDebugWorld()) { return; }
+        settings = ContentTerrain.newWorld(settings);
+    }
+}

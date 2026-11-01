@@ -1,0 +1,80 @@
+package mctmods.resourcedatapackloader.mixin.world.level.levelgen;
+
+import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
+import mctmods.resourcedatapackloader.common.worldgen.carver.ContentDeepCaves;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateControl;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.CityDeckBeard;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCraters;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentVoidWorld;
+import mctmods.resourcedatapackloader.common.worldgen.surface.IMarkedNoise;
+import mctmods.resourcedatapackloader.common.worldgen.surface.IRegionAquifer;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import java.util.Set;
+import net.minecraft.core.Holder;
+import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.Aquifer;
+import net.minecraft.world.level.levelgen.Beardifier;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseChunk;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.NoiseSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.carver.WorldCarver;
+import net.minecraft.world.level.levelgen.material.rule.MaterialRule;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(NoiseBasedChunkGenerator.class) public abstract class NoiseBasedChunkGeneratorMixin {
+    @Inject(method = "createFluidPicker", at = @At("HEAD"), cancellable = true) private static void rdpl$deepLava(NoiseGeneratorSettings settings, CallbackInfoReturnable<Aquifer.FluidPicker> cir) {
+        Aquifer.FluidPicker picker = ContentDeepCaves.fluidPicker(settings);
+        if (picker != null) { cir.setReturnValue(picker); }
+    }
+
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$markFill(ChunkAccess chunk, StructureManager structureManager, Blender blender, RandomState randomState, NoiseSettings noiseSettings, CallbackInfoReturnable<NoiseChunk> cir, @Local(name = "beardifier") Beardifier beardifier) { ((IMarkedNoise) cir.getReturnValue()).rdpl$mark(ContentVoidWorld.voidEmpties(structureManager), beardifier instanceof CityDeckBeard city ? city : null, structureManager.level instanceof WorldGenLevel level ? level : null); }
+
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$regionWater(CallbackInfoReturnable<NoiseChunk> cir) {
+        ChunkGenerator generator = (ChunkGenerator) (Object) this;
+        if (cir.getReturnValue().aquifer() instanceof IRegionAquifer aquifer && ContentCaveRegions.pinsWater(generator.getBiomeSource())) { aquifer.rdpl$pinRegions(generator.getBiomeSource(), generator.getSeaLevel()); }
+    }
+
+    @Inject(method = "doFill", at = @At("HEAD"), cancellable = true) private void rdpl$voidFill(NoiseChunk noiseChunk, ChunkAccess chunk, CallbackInfo ci) { if (((IMarkedNoise) noiseChunk).rdpl$voided()) { ci.cancel(); } }
+
+    @Inject(method = "buildSurface", at = @At("HEAD"), cancellable = true) private void rdpl$surface(ChunkAccess protoChunk, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, Set<Holder<Biome>> possibleBiomes, MaterialRule materialRule, CallbackInfo ci) {
+        IMarkedNoise marked = (IMarkedNoise) noiseChunk;
+        WorldGenLevel level = marked.rdpl$level();
+        if (marked.rdpl$voided()) { ci.cancel(); }
+        else if (level != null) { ContentCraters.carve(level, protoChunk); }
+    }
+
+    @Inject(method = "buildSurface", at = @At("RETURN")) private void rdpl$surfaced(ChunkAccess protoChunk, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, Set<Holder<Biome>> possibleBiomes, MaterialRule materialRule, CallbackInfo ci) { ContentCraters.surfaced(); }
+
+    @Inject(method = "generateCarvers", at = @At("HEAD"), cancellable = true) private void rdpl$voidCarvers(ChunkAccess chunk, Blender blender, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, WorldGenRegion carverBiomeRegion, MaterialRule materialRule, CallbackInfo ci) { if (((IMarkedNoise) noiseChunk).rdpl$voided()) { ci.cancel(); } }
+
+    @WrapOperation(method = "doFill", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/Aquifer;computeSubstance(IIID)Lnet/minecraft/world/level/block/state/BlockState;")) private BlockState rdpl$dryCityCut(Aquifer aquifer, int x, int y, int z, double density, Operation<BlockState> original, @Local(argsOnly = true, name = "noiseChunk") NoiseChunk noiseChunk) {
+        BlockState held = original.call(aquifer, x, y, z, density);
+        if (held == null || held.getFluidState().isEmpty() || !(aquifer instanceof Aquifer.NoiseBasedAquifer)) { return held; }
+        CityDeckBeard city = ((IMarkedNoise) noiseChunk).rdpl$city();
+        return city != null && city.dug(x, y, z, density) ? Blocks.AIR.defaultBlockState() : held;
+    }
+
+    @Redirect(method = "generateCarvers", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/carver/WorldCarver;isStartChunk(Lnet/minecraft/util/RandomSource;)Z")) private boolean rdpl$carves(WorldCarver carver, RandomSource random) { return ContentPopulateControl.carves((ChunkGenerator) (Object) this, carver) && carver.isStartChunk(random); }
+
+    @Inject(method = "spawnOriginalMobs", at = @At("HEAD"), cancellable = true) private void rdpl$animals(WorldGenRegion worldGenRegion, CallbackInfo ci) { if (ContentPopulateControl.refusesAnimals((ChunkGenerator) (Object) this)) { ci.cancel(); } }
+}

@@ -1,0 +1,158 @@
+package mctmods.resourcedatapackloader.common.worldgen.structure;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCity;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCityStructure;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityGround;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityPlan;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityPlanTowns;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
+import net.minecraft.core.Registry;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.levelgen.structure.Structure;
+
+public final class ContentStructureMost {
+    private static final String KEY = "structureMost";
+    private static final String VILLAGES = "villages";
+    private static final Identifier CITY = ResourceDataPackLoader.id(ContentCity.STRUCTURE);
+    private static final List<String> RAW = new ArrayList<>();
+    @Nullable private static Map<Identifier, Integer> caps;
+    private static int most = -1;
+    private static final Set<Identifier> SILENCED = ConcurrentHashMap.newKeySet();
+
+    private ContentStructureMost() {}
+
+    static void load(List<String> entries, List<String> touched) {
+        synchronized (RAW) {
+            RAW.clear();
+            RAW.addAll(entries);
+            caps = null;
+            most = -1;
+            SILENCED.clear();
+        }
+        for (String entry : entries) {
+            String[] parts = ContentStructureControl.split(entry, KEY);
+            if (parts != null && villages(parts[0])) { touched.add(parts[0].trim() + " at most " + parts[1].trim()); }
+        }
+    }
+
+    private static boolean villages(String name) {
+        String named = Settings.lower(name);
+        return VILLAGES.equals(named) || ContentCity.STRUCTURE.equals(named);
+    }
+
+    private static Map<Identifier, Integer> caps() {
+        synchronized (RAW) {
+            if (caps != null) { return caps; }
+            Map<Identifier, Integer> made = new LinkedHashMap<>();
+            int most = most();
+            if (most > 0) {
+                for (Identifier id : ContentStructureControl.structures(VILLAGES)) { made.put(id, most); }
+            }
+            caps = made;
+            return made;
+        }
+    }
+
+    public static boolean refuses(Structure structure, StructureManager manager, RegistryAccess registries, ChunkPos chunk) {
+        if (RAW.isEmpty() && ContentDimensions.allStructuresOn()) { return false; }
+        ServerLevel level = level(manager);
+        if (level == null) { return false; }
+        if (ContentDimensions.structuresOff(level)) {
+            if (SILENCED.add(level.dimension().identifier())) { ContentLog.LOGGER.debug("Dimension {} allows no structures, so none is founded there (first refused at chunk {})", level.dimension().identifier(), chunk); }
+            return true;
+        }
+        if (RAW.isEmpty()) { return false; }
+        if (structure instanceof ContentCityStructure) { return cityRefused(level, chunk); }
+        Registry<Structure> registry = registries.lookupOrThrow(Registries.STRUCTURE);
+        Identifier id = registry.getKey(structure);
+        Integer most = id == null ? null : caps().get(id);
+        if (most == null || ContentStructurePins.pinned(chunk)) { return false; }
+        int founded = villagesFounded(level);
+        if (founded < most) { return false; }
+        ContentLog.LOGGER.debug("Villages and cities have been founded {} time(s) in {}, their structureMost, so chunk {} founds no {}", founded, level.dimension().identifier(), chunk, id);
+        return true;
+    }
+
+    private static int most() {
+        synchronized (RAW) {
+            if (most >= 0) { return most; }
+            int parsed = 0;
+            for (String entry : RAW) {
+                String[] parts = ContentStructureControl.split(entry, KEY);
+                if (parts == null || !villages(parts[0])) { continue; }
+                try {
+                    int value = Integer.parseInt(parts[1].trim());
+                    if (value > 0) { parsed = value; }
+                }
+                catch (NumberFormatException ex) { ContentLog.LOGGER.error("{} entry '{}' does not end in a number, ignoring it", KEY, entry); }
+            }
+            most = parsed;
+            return parsed;
+        }
+    }
+
+    private static int villagesFounded(ServerLevel level) { return ContentStructureCounts.total(level, caps().keySet()) + ContentStructureCounts.count(level, CITY); }
+
+    @Nullable private static Identifier cityMarker(ServerLevel level, ChunkPos chunk) {
+        int[] center = CityPlanTowns.cityCenter(CityGround.of(level), CityPlan.districtOf(chunk.getMinBlockX(), true), CityPlan.districtOf(chunk.getMinBlockZ(), false));
+        return center == null ? null : Identifier.fromNamespaceAndPath(CITY.getNamespace(), CITY.getPath() + "/" + center[0] + "_" + center[1]);
+    }
+
+    private static boolean cityRefused(ServerLevel level, ChunkPos chunk) {
+        if (mayFound(level, chunk)) { return false; }
+        ContentLog.LOGGER.debug("{} villages and cities have been founded in {}, the most structureMost allows, so the city at chunk {} is not", villagesFounded(level), level.dimension().identifier(), chunk);
+        return true;
+    }
+
+    public static boolean mayFound(ServerLevel level, ChunkPos chunk) {
+        int cap = most();
+        if (cap <= 0 || ContentStructurePins.pinned(chunk)) { return true; }
+        Identifier marker = cityMarker(level, chunk);
+        if (marker == null || ContentStructureCounts.count(level, marker) > 0) { return true; }
+        return villagesFounded(level) < cap;
+    }
+
+    public static void founded(Structure structure, StructureManager manager, RegistryAccess registries, ChunkPos chunk) {
+        if (RAW.isEmpty()) { return; }
+        if (structure instanceof ContentCityStructure) {
+            ServerLevel level = level(manager);
+            Identifier marker = level == null || most() <= 0 ? null : cityMarker(level, chunk);
+            if (marker != null && ContentStructureCounts.count(level, marker) == 0) {
+                ContentStructureCounts.add(level, marker);
+                ContentStructureCounts.add(level, CITY);
+            }
+            return;
+        }
+        Registry<Structure> registry = registries.lookupOrThrow(Registries.STRUCTURE);
+        Identifier id = registry.getKey(structure);
+        Integer most = id == null ? null : caps().get(id);
+        if (most == null) { return; }
+        ServerLevel level = level(manager);
+        if (level == null) { return; }
+        ContentStructureCounts.add(level, id);
+        ContentLog.LOGGER.debug("Structure {} founded at chunk {}, village {} of at most {} in {}", id, chunk, villagesFounded(level), most, level.dimension().identifier());
+    }
+
+    @Nullable private static ServerLevel level(StructureManager manager) {
+        LevelAccessor held = manager.level;
+        return held instanceof ServerLevelAccessor accessor ? accessor.getLevel() : null;
+    }
+}

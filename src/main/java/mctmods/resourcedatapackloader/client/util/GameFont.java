@@ -1,0 +1,56 @@
+package mctmods.resourcedatapackloader.client.util;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
+import net.minecraft.client.gui.font.providers.GlyphProviderDefinition;
+import net.minecraft.client.gui.font.providers.ProviderReferenceDefinition;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+
+public final class GameFont {
+    private static final Identifier ASCII = Identifier.withDefaultNamespace("textures/font/ascii.png");
+    private static final Identifier RDPL = Identifier.parse(CardFont.RDPL);
+    private static final Identifier ITALIC = Identifier.parse(CardFont.RDPL_ITALIC);
+    private static final Identifier BOLD = Identifier.parse(CardFont.RDPL_BOLD);
+    private static final String VANILLA = "vanilla";
+    private static final Map<Identifier, Identifier> SLANTS = new ConcurrentHashMap<>();
+    private static volatile boolean yields;
+
+    private GameFont() {}
+
+    @Nullable public static Identifier styled(Style style) {
+        FontDescription font = style.getFont();
+        if (!FontDescription.DEFAULT.equals(font)) { return font instanceof FontDescription.Resource(Identifier id) && style.isItalic() && !style.isBold() ? SLANTS.get(id) : null; }
+        if (yields) { return null; }
+        if (style.isBold()) { return BOLD; }
+        return style.isItalic() ? ITALIC : null;
+    }
+
+    public static void slants(Identifier plain, Identifier italic) { SLANTS.put(plain, italic); }
+
+    public static void pick(ResourceManager resources) {
+        SLANTS.clear();
+        Optional<Resource> sheet = resources.getResource(ASCII);
+        String from = sheet.map(Resource::sourcePackId).orElse(VANILLA);
+        yields = !VANILLA.equals(from);
+        if (yields) { ContentLog.LOGGER.info("The game's font is {} from {}, so the RDPL font stands aside", ASCII, from); }
+        else { ContentLog.LOGGER.info("The game's font is {} from {}", RDPL, ResourceDataPackLoader.MOD_ID); }
+    }
+
+    public static List<GlyphProviderDefinition.Conditional> providers(List<GlyphProviderDefinition.Conditional> providers) {
+        if (!yields) { return providers; }
+        List<GlyphProviderDefinition.Conditional> kept = new ArrayList<>(providers.size());
+        for (GlyphProviderDefinition.Conditional provider : providers) { if (!(provider.definition() instanceof ProviderReferenceDefinition(Identifier id) && RDPL.equals(id))) { kept.add(provider); } }
+        return kept;
+    }
+}

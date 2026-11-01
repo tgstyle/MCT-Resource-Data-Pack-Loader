@@ -1,10 +1,10 @@
 {
     "required": false,
     "minVersion": "0.8.5",
-    "package": "mctmods.rdpldev.mixin",
+    "package": "mctmods.rdpldev.mixin.integration.rdpldev",
     "compatibilityLevel": "JAVA_25",
     "client": [
-        "MixinLocationModule"
+        "LocationModuleMixin"
     ],
     "injectors": {
         "defaultRequire": 0

@@ -1,0 +1,37 @@
+package mctmods.resourcedatapackloader.client.util;
+
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.ChatComponent;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
+import javax.annotation.Nullable;
+
+public final class ClientCompat {
+    private ClientCompat() {}
+
+    @Nullable public static Screen screen(Minecraft mc) { return mc.screen; }
+
+    public static void setScreen(Minecraft mc, @Nullable Screen screen) { mc.setScreen(screen); }
+
+    public static boolean hudHidden(Minecraft mc) { return mc.options.hideGui; }
+
+    public static int leftHeight(Minecraft mc) { return mc.gui.leftHeight; }
+
+    public static void addLeftHeight(Minecraft mc, int amount) { mc.gui.leftHeight += amount; }
+
+    public static ChatComponent chat(Minecraft mc) { return mc.gui.getChat(); }
+
+    public static RenderType cutoutBlockSheet() { return Sheets.cutoutBlockSheet(); }
+
+    public static RenderTarget mainTarget(Minecraft mc) { return mc.getMainRenderTarget(); }
+
+    public static boolean depthZeroToOne() { return RenderSystem.getDevice().isZZeroToOne(); }
+
+    public static void allChanged(Minecraft mc) { mc.levelRenderer.allChanged(); }
+
+    public static PreparableReloadListener levelListener(Minecraft mc) { return mc.levelRenderer; }
+}

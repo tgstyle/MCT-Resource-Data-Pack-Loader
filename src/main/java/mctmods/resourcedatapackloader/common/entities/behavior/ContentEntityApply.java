@@ -1,0 +1,239 @@
+package mctmods.resourcedatapackloader.common.entities.behavior;
+
+import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.entities.ai.SwimmingMoveControl;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
+import mctmods.resourcedatapackloader.common.util.ContentAttributes;
+import mctmods.resourcedatapackloader.common.util.ContentEffects;
+import mctmods.resourcedatapackloader.core.util.Compat;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Enums;
+import mctmods.resourcedatapackloader.core.util.LineCompat;
+import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
+import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.animal.rabbit.Rabbit;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Ghast;
+import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.pathfinder.PathType;
+
+public final class ContentEntityApply {
+    public static final String DRESSED = "rdplDressed";
+    private static final String ROLLED = "rdplBabyRolled";
+    private static final Set<String> MISSING = new HashSet<>();
+    public static final String YOUNG = "rdplBabyYoung";
+    private static final Map<String, String> CACTUS_PATHS = Map.of("danger_cactus", "DANGER_OTHER", "damage_cactus", "DAMAGE_OTHER");
+
+    private ContentEntityApply() {}
+
+    public static void dress(Entity entity, EntityVariantDef def) {
+        CompoundTag data = entity.getPersistentData();
+        boolean first = !data.getBooleanOr(DRESSED, false);
+        data.putBoolean(DRESSED, true);
+        if (first && !def.name().isEmpty() && !entity.hasCustomName()) {
+            entity.setCustomName(Component.literal(def.name()));
+            entity.setCustomNameVisible(def.showName());
+        }
+        if (def.flags().silent()) { entity.setSilent(true); }
+        if (def.flags().glowing()) { entity.setGlowingTag(true); }
+        if (def.flags().invisible()) { entity.setInvisible(true); }
+        if (def.flags().invulnerable()) { LineCompat.makeInvulnerable(entity); }
+        if (!(entity instanceof LivingEntity living)) { return; }
+        if (first) {
+            if (def.absorption() > 0.0F) { living.setAbsorptionAmount(def.absorption()); }
+            effects(living, def.effects(), def.key());
+        }
+        attributes(living, def, first);
+        AttributeInstance stride = living.getAttribute(Attributes.STEP_HEIGHT);
+        if (stride != null && def.physics().stepHeight() >= 0.0F) { stride.setBaseValue(def.physics().stepHeight()); }
+        stands(living, def);
+        AttributeInstance size = living.getAttribute(Attributes.SCALE);
+        if (size != null && def.scale() != 1.0F) { size.setBaseValue(def.scale()); }
+        if (!(entity instanceof Mob mob)) { return; }
+        if (first) {
+            gear(mob, def);
+            if (def.baby() > 0.0F && rolledYoung(mob, def)) { child(mob); }
+            if (mob instanceof Villager villager && !def.profession().isEmpty()) { profession(villager, def); }
+        }
+        if (def.flags().persistent()) { mob.setPersistenceRequired(); }
+        if (def.flags().noAI()) { mob.setNoAi(true); }
+        if (def.flags().leftHanded()) { mob.setLeftHanded(true); }
+        mob.setCanPickUpLoot(def.flags().picksUpLoot());
+        if (def.physics().climbs() != null) { climber(mob, def.physics().climbs()); }
+        if (def.combat().ownBlast()) { blast(mob, def.combat()); }
+        navigation(mob, def);
+        priorities(mob, def);
+        ContentEntityBehavior.behavior(mob, def);
+        ContentTasks.apply(mob, def);
+    }
+
+    private static void stands(LivingEntity living, EntityVariantDef def) {
+        EntityVariantDef.Physics physics = def.physics();
+        EntityVariantDef.Combat combat = def.combat();
+        if (ContentLog.LOGGER.debugEnabled() && (physics.hurtResistance() >= 0 || physics.stepHeight() >= 0.0F || physics.climbs() != null || combat.attackReach() > 0.0F || combat.knockback() >= 0.0F || physics.teleports())) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} stands with step height {}, hurt resistance {}, attack reach {}, knockback {}, climbs {}, teleports {}", def.key(), living.getBlockX(), living.getBlockY(), living.getBlockZ(), living.maxUpStep(), ContentEntities.hurtResistance(living, 20), combat.attackReach(), combat.knockback(), physics.climbs(), physics.teleports()); }
+    }
+
+    private static void attributes(LivingEntity mob, EntityVariantDef def, boolean first) {
+        for (Map.Entry<String, Double> entry : def.attributes().entrySet()) {
+            AttributeInstance instance = ContentAttributes.instance(mob, entry.getKey(), def.key());
+            if (instance == null) {
+                if (ContentAttributes.lookup(entry.getKey()) != null) { ContentLog.LOGGER.error("Unknown attribute '{}' in {}, which {} does not carry either, skipping that modifier", entry.getKey(), def.key(), def.base()); }
+                continue;
+            }
+            instance.setBaseValue(entry.getValue());
+            if (first && instance.getAttribute().equals(Attributes.MAX_HEALTH)) { mob.setHealth((float) (double) entry.getValue()); }
+        }
+    }
+
+    static void effects(LivingEntity mob, Map<String, Integer> effects, Identifier owner) {
+        for (Map.Entry<String, Integer> entry : effects.entrySet()) {
+            Holder<MobEffect> effect = ContentEffects.find(entry.getKey());
+            if (effect == null) {
+                ContentLog.LOGGER.errorOnce(MISSING, owner + " " + entry.getKey(), "{} wants effect {}, which nothing registers", owner, entry.getKey());
+                continue;
+            }
+            mob.addEffect(new MobEffectInstance(effect, MobEffectInstance.INFINITE_DURATION, entry.getValue(), false, false));
+        }
+    }
+
+    private static void gear(Mob mob, EntityVariantDef def) {
+        for (Map.Entry<String, String> entry : def.equipment().entrySet()) {
+            EquipmentSlot slot = slot(entry.getKey());
+            if (slot == null) {
+                ContentLog.LOGGER.error("Entity variant {} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", def.key(), entry.getKey());
+                continue;
+            }
+            Item item = ContentStacks.item(Identifier.tryParse(entry.getValue()));
+            if (item == null) {
+                ContentLog.LOGGER.error("Entity variant {} gives {}, which nothing registers", def.key(), entry.getValue());
+                continue;
+            }
+            mob.setItemSlot(slot, new ItemStack(item));
+            mob.setDropChance(slot, def.dropChance());
+        }
+    }
+
+    @Nullable private static EquipmentSlot slot(String name) { return Enums.byName(EquipmentSlot.class, name); }
+
+    private static boolean rolledYoung(Mob mob, EntityVariantDef def) {
+        CompoundTag held = mob.getPersistentData();
+        if (!held.contains(ROLLED)) {
+            held.putBoolean(ROLLED, true);
+            held.putBoolean(YOUNG, mob.getRandom().nextFloat() < def.baby());
+        }
+        return held.getBooleanOr(YOUNG, false);
+    }
+
+    private static void child(Mob mob) {
+        if (mob instanceof Zombie zombie) { zombie.setBaby(true); }
+        else if (mob instanceof AgeableMob ageable) { ageable.setAge(AgeableMob.BABY_START_AGE); }
+    }
+
+    private static void profession(Villager villager, EntityVariantDef def) {
+        Identifier key = Identifier.tryParse(def.profession());
+        VillagerProfession found = Registered.find(BuiltInRegistries.VILLAGER_PROFESSION, key);
+        if (found == null) {
+            ContentLog.LOGGER.error("Entity variant {} names profession {}, which nothing registers", def.key(), def.profession());
+            return;
+        }
+        villager.setVillagerData(villager.getVillagerData().withProfession(BuiltInRegistries.VILLAGER_PROFESSION.wrapAsHolder(found)));
+        ContentVillagers.keepsJob(villager);
+        if (def.career() > 0) { ContentLog.LOGGER.debug("Entity variant {} names career {}, which this line has no use for", def.key(), def.career()); }
+    }
+
+    private static void priorities(Mob mob, EntityVariantDef def) {
+        for (Map.Entry<String, Float> entry : def.pathPriorities().entrySet()) {
+            String named = CACTUS_PATHS.getOrDefault(entry.getKey().toLowerCase(Locale.ROOT), entry.getKey());
+            PathType type = Enums.byName(PathType.class, named);
+            if (type == null) {
+                ContentLog.LOGGER.error("Entity variant {} names path type '{}', which is not one of {}", def.key(), entry.getKey(), Arrays.toString(PathType.values()));
+                continue;
+            }
+            mob.setPathfindingMalus(type, entry.getValue());
+        }
+    }
+
+    private static void blast(Mob mob, EntityVariantDef.Combat combat) {
+        if (mob instanceof Creeper creeper) {
+            creeper.maxSwell = combat.explosionFuse();
+            creeper.explosionRadius = (int) combat.explosionPower();
+        }
+        else if (mob instanceof Ghast ghast) { ghast.explosionPower = (int) combat.explosionPower(); }
+    }
+
+    private static void climber(Mob mob, boolean climbs) {
+        if (climbs && !(mob.getNavigation() instanceof WallClimberNavigation)) { mob.navigation = new WallClimberNavigation(mob, mob.level()); }
+        else if (!climbs && mob.getNavigation() instanceof WallClimberNavigation) { mob.navigation = new GroundPathNavigation(mob, mob.level()); }
+    }
+
+    private static void walker(Mob mob, EntityVariantDef def) {
+        if (!(mob instanceof Rabbit)) {
+            ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.key(), def.base());
+            return;
+        }
+        mob.moveControl = Compat.moveControl(mob);
+    }
+
+    private static void navigation(Mob mob, EntityVariantDef def) {
+        if (def.physics().swims()) {
+            swimmer(mob);
+            mob.setPathfindingMalus(PathType.WATER, 0.0F);
+        }
+        else if (def.physics().amphibious() && mob.getNavigation() instanceof GroundPathNavigation ground) { ground.setCanFloat(true); }
+        if (def.combat().swoops()) {
+            mob.navigation = new FlyingPathNavigation(mob, mob.level());
+            mob.moveControl = Compat.swoopMoveControl(mob);
+        }
+        if (def.physics().walks()) { walker(mob, def); }
+        if (def.physics().breathesUnderwater() || def.physics().swims()) { ContentTasks.drop(mob.goalSelector, FloatGoal.class); }
+    }
+
+    private static void swimmer(Mob mob) {
+        mob.navigation = new WaterBoundPathNavigation(mob, mob.level());
+        mob.moveControl = new SwimmingMoveControl(mob);
+    }
+
+    public static void amphibious(Mob mob) {
+        boolean wet = mob.isInWater();
+        if (wet == mob.getNavigation() instanceof WaterBoundPathNavigation) { return; }
+        if (wet) {
+            swimmer(mob);
+            return;
+        }
+        GroundPathNavigation ground = new GroundPathNavigation(mob, mob.level());
+        ground.setCanFloat(true);
+        mob.navigation = ground;
+        mob.moveControl = Compat.moveControl(mob);
+    }
+}

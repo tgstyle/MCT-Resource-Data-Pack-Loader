@@ -1,0 +1,44 @@
+package mctmods.resourcedatapackloader.common.items;
+
+import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
+import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
+
+import java.util.function.Supplier;
+import javax.annotation.Nonnull;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+
+public final class ContentContainerItem extends Item {
+    private final ContainerDef container;
+
+    public ContentContainerItem(ContainerDef container, Properties properties) {
+        super(properties.stacksTo(1));
+        this.container = container;
+    }
+
+    @Override @Nonnull public InteractionResult use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
+        ItemStack held = player.getItemInHand(hand);
+        if (level.isClientSide() || !(player instanceof ServerPlayer server)) { return InteractionResult.SUCCESS; }
+        open(server, held, () -> server.getItemInHand(hand), -1);
+        return InteractionResult.CONSUME;
+    }
+
+    public void open(ServerPlayer player, ItemStack held, Supplier<ItemStack> source, int worn) {
+        ContentPouchInventory inventory = new ContentPouchInventory(held, container);
+        MenuProvider provider = new MenuProvider() {
+            @Override @Nonnull public Component getDisplayName() { return held.getHoverName(); }
+
+            @Override @Nonnull public AbstractContainerMenu createMenu(int id, @Nonnull Inventory bag, @Nonnull Player opening) { return new ContentContainerMenu(id, bag, inventory, container, held, source, worn); }
+        };
+        player.openMenu(provider, extra -> ContentContainerMenu.write(extra, container, worn));
+    }
+}

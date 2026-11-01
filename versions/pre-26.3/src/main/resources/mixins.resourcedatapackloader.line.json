@@ -1,18 +1,18 @@
 {
     "required": true,
     "minVersion": "0.8.5",
-    "package": "mctmods.resourcedatapackloader.mixin.rdpl",
+    "package": "mctmods.resourcedatapackloader.mixin.world",
     "compatibilityLevel": "JAVA_25",
     "mixinextras": {
         "minVersion": "0.5.3"
     },
     "mixins": [
-        "common.MixinAquifer",
-        "common.MixinEnvironmentAttributeSystem",
-        "common.MixinLevelStorageSource",
-        "common.MixinPlacedFeature",
-        "common.MixinServerClockAdvance",
-        "common.MixinSurfaceRulesContext"
+        "level.levelgen.AquiferMixin",
+        "attribute.EnvironmentAttributeSystemMixin",
+        "level.storage.LevelStorageSourceMixin",
+        "level.levelgen.placement.PlacedFeatureMixin",
+        "clock.ServerClockAdvanceMixin",
+        "level.levelgen.SurfaceRulesContextMixin"
     ],
     "injectors": {
         "defaultRequire": 1

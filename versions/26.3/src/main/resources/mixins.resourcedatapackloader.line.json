@@ -1,18 +1,19 @@
 {
     "required": true,
     "minVersion": "0.8.5",
-    "package": "mctmods.resourcedatapackloader.mixin.rdpl",
+    "package": "mctmods.resourcedatapackloader.mixin",
     "compatibilityLevel": "JAVA_25",
     "mixinextras": {
         "minVersion": "0.5.3"
     },
     "mixins": [
-        "common.MixinRecipeLoadTask",
-        "common.MixinAdvancementLoadTask",
-        "common.MixinNoiseChunk",
-        "common.MixinFeaturePlacer",
-        "common.MixinMaterialRuleContext",
-        "common.MixinEnvironmentAttributeSystem"
+        "resources.ResourceManagerRegistryLoadTaskMixin",
+        "world.level.levelgen.NoiseChunkMixin",
+        "world.level.levelgen.placement.FeaturePlacerMixin",
+        "world.level.levelgen.material.MaterialRuleContextMixin",
+        "world.attribute.EnvironmentAttributeSystemMixin",
+        "world.level.levelgen.AquiferMixin",
+        "world.clock.ServerClockTicksMixin"
     ],
     "injectors": {
         "defaultRequire": 1

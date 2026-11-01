@@ -1,0 +1,52 @@
+package mctmods.resourcedatapackloader.mixin.world.level.levelgen;
+
+import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
+import mctmods.resourcedatapackloader.common.worldgen.carver.ContentDeepCaves;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateControl;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCraters;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentVoidWorld;
+import mctmods.resourcedatapackloader.common.worldgen.surface.IRegionAquifer;
+
+import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.levelgen.Aquifer;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.NoiseChunk;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(NoiseBasedChunkGenerator.class) public abstract class NoiseBasedChunkGeneratorMixin {
+    @Inject(method = "createFluidPicker", at = @At("HEAD"), cancellable = true) private static void rdpl$deepLava(NoiseGeneratorSettings settings, CallbackInfoReturnable<Aquifer.FluidPicker> cir) {
+        Aquifer.FluidPicker picker = ContentDeepCaves.fluidPicker(settings);
+        if (picker != null) { cir.setReturnValue(picker); }
+    }
+
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$regionWater(CallbackInfoReturnable<NoiseChunk> cir) {
+        ChunkGenerator generator = (ChunkGenerator) (Object) this;
+        if (cir.getReturnValue().aquifer() instanceof IRegionAquifer aquifer && ContentCaveRegions.pinsWater(generator.getBiomeSource())) { aquifer.rdpl$pinRegions(generator.getBiomeSource(), generator.getSeaLevel()); }
+    }
+
+    @Inject(method = "doFill", at = @At("HEAD"), cancellable = true) private void rdpl$voidFill(Blender blender, StructureManager structureManager, RandomState randomState, ChunkAccess centerChunk, int cellMinY, int cellCountY, CallbackInfoReturnable<ChunkAccess> cir) { if (ContentVoidWorld.voidEmpties(structureManager)) { cir.setReturnValue(centerChunk); } }
+
+    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("HEAD"), cancellable = true) private void rdpl$surface(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess protoChunk, CallbackInfo ci) {
+        if (ContentVoidWorld.voidEmpties(structureManager)) { ci.cancel(); }
+        else { ContentCraters.carve(region, protoChunk); }
+    }
+
+    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("RETURN")) private void rdpl$surfaced(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess protoChunk, CallbackInfo ci) { ContentCraters.surfaced(); }
+
+    @Redirect(method = "applyCarvers", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/carver/ConfiguredWorldCarver;isStartChunk(Lnet/minecraft/util/RandomSource;)Z")) private boolean rdpl$carves(ConfiguredWorldCarver<?> carver, RandomSource random) { return ContentPopulateControl.carves((ChunkGenerator) (Object) this, carver) && carver.isStartChunk(random); }
+
+    @Inject(method = "spawnOriginalMobs", at = @At("HEAD"), cancellable = true) private void rdpl$animals(WorldGenRegion worldGenRegion, CallbackInfo ci) { if (ContentPopulateControl.refusesAnimals((ChunkGenerator) (Object) this)) { ci.cancel(); } }
+}

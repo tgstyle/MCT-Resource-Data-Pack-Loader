@@ -1,0 +1,58 @@
+package mctmods.resourcedatapackloader.mixin.world.entity;
+
+import mctmods.resourcedatapackloader.common.board.ContentBoards;
+import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.animal.squid.Squid;
+import net.minecraft.world.entity.item.FallingBlockEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle;
+import net.minecraft.world.level.storage.ValueInput;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(Entity.class) public abstract class EntityMixin {
+    @Inject(method = "getGravity", at = @At("RETURN"), cancellable = true) private void rdpl$worldGravity(CallbackInfoReturnable<Double> cir) {
+        double base = cir.getReturnValueD();
+        Entity self = (Entity) (Object) this;
+        if (base != 0.0D && rdpl$scaled(self)) {
+            double factor = self instanceof AbstractArrow ? ContentPhysics.arrowGravity(self.level()) : ContentPhysics.gravity(self.level());
+            if (factor != 1.0D) { cir.setReturnValue(base * factor); }
+        }
+    }
+
+    @Unique private static boolean rdpl$scaled(Entity self) {
+        if (self instanceof Squid || self instanceof AbstractThrownPotion || self instanceof ThrownExperienceBottle) { return false; }
+        if (self instanceof LivingEntity living) { return ContentPhysics.openAir(living); }
+        return self instanceof ItemEntity || self instanceof ExperienceOrb || self instanceof PrimedTnt || self instanceof FallingBlockEntity || self instanceof AbstractArrow || self instanceof ThrowableProjectile;
+    }
+
+    @Inject(method = "load", at = @At("TAIL")) private void rdpl$legacyForgeData(ValueInput input, CallbackInfo ci) {
+        CompoundTag forge = input.read("ForgeData", CompoundTag.CODEC).orElseGet(CompoundTag::new);
+        if (forge.isEmpty()) { return; }
+        CompoundTag data = ((Entity) (Object) this).getPersistentData();
+        for (String key : forge.keySet()) {
+            Tag held = forge.get(key);
+            if (held != null && !data.contains(key)) { data.put(key, held.copy()); }
+        }
+    }
+
+    @Inject(method = "igniteForTicks", at = @At("HEAD"), cancellable = true) private void rdpl$noFireFromBlows(int numberOfTicks, CallbackInfo ci) {
+        Entity self = (Entity) (Object) this;
+        if (ContentEntities.struckFireless(self) || ContentBoards.piece(self)) { ci.cancel(); }
+    }
+}

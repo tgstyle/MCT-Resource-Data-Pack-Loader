@@ -1,0 +1,38 @@
+package mctmods.resourcedatapackloader.common.util.entity;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+
+public final class PlayerPersisted {
+    private PlayerPersisted() {}
+
+    public static CompoundTag of(Entity entity, String key) {
+        CompoundTag data = entity.getPersistentData();
+        if (data.getCompound(Player.PERSISTED_NBT_TAG).isEmpty()) { data.put(Player.PERSISTED_NBT_TAG, new CompoundTag()); }
+        CompoundTag persisted = data.getCompoundOrEmpty(Player.PERSISTED_NBT_TAG);
+        Tag loose = data.get(key);
+        if (loose == null) { return persisted; }
+        if (!persisted.contains(key)) { persisted.put(key, loose); }
+        data.remove(key);
+        return persisted;
+    }
+
+    public static CompoundTag read(Entity entity, String key) { return of(entity, key).getCompoundOrEmpty(key); }
+
+    public static CompoundTag section(Entity entity, String key) {
+        CompoundTag persisted = of(entity, key);
+        if (persisted.getCompound(key).isEmpty()) { persisted.put(key, new CompoundTag()); }
+        return persisted.getCompoundOrEmpty(key);
+    }
+
+    public static int tally(Entity entity, String section, String key) {
+        CompoundTag tally = section(entity, section);
+        int now = tally.getIntOr(key, 0) + 1;
+        tally.putInt(key, now);
+        return now;
+    }
+
+    public static void clearTally(Entity entity, String section, String key) { section(entity, section).remove(key); }
+}

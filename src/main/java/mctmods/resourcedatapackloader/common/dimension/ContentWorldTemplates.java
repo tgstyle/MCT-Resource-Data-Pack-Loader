@@ -1,0 +1,124 @@
+package mctmods.resourcedatapackloader.common.dimension;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
+import net.minecraft.resources.Identifier;
+
+public final class ContentWorldTemplates {
+    private static final String AUTO = "auto";
+    private static final String BUILT_IN = "rdpl";
+    public static final List<String> ROLE_ORDER = List.of("ocean", "river", "beach", "mushroom", "swamp", "hills", "mountain", "jungle", "forest", "savanna", "sandy", "mesa", "snowy", "wasteland", "plains", "water");
+    private static final List<String> ROLES = List.of("ocean", "river", "water", "beach", "mushroom", "swamp", "hills", "mountain", "jungle", "forest", "savanna", "sandy", "mesa", "snowy", "wasteland", "plains", "nether", "end");
+    private static final Map<Identifier, WorldTemplateDef> DEFS = new LinkedHashMap<>();
+    @Nullable private static WorldTemplateDef active;
+
+    private ContentWorldTemplates() {}
+
+    public static void load() {
+        DEFS.clear();
+        active = null;
+        if (Config.content.loadOff()) { return; }
+        for (WorldTemplateDef def : builtins()) { DEFS.put(def.key(), def); }
+        Json.eachFile(PackManager.WORLDTEMPLATES, "world template", (key, contents) -> {
+            WorldTemplateDef def = parse(key, contents);
+            if (def != null) { DEFS.put(key, def); }
+        });
+        active = select();
+        ContentControl.check(active);
+        if (active != null) { Summary.info("worldtemplate", "Using world template " + active.key() + " (" + active.name() + ") for its settings"); }
+    }
+
+    @Nullable public static WorldTemplateDef active() { return active; }
+
+    @Nullable private static WorldTemplateDef parse(Identifier key, String contents) {
+        JsonObject json = Json.object(key, contents, "world template");
+        if (json == null) { return null; }
+        JsonObject settings = json.has("settings") ? Json.getJsonObject(json, "settings") : null;
+        return new WorldTemplateDef(key, Json.getString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), Json.getString(json, "fallback", Json.getString(json, "default", WorldTemplateDef.VOID)).trim(), roles(key, json), switches(json), Json.strings(json, "dimensions"));
+    }
+
+    private static Map<String, String> roles(Identifier key, JsonObject json) {
+        Map<String, String> out = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> role : Json.getJsonObject(json, "roles", new JsonObject()).entrySet()) {
+            String name = Settings.lower(role.getKey());
+            if (!ROLES.contains(name)) {
+                ContentLog.LOGGER.error("World template {} names role '{}', which is not one of {}, ignoring it", key, role.getKey(), String.join(", ", ROLES));
+                continue;
+            }
+            if (!role.getValue().isJsonPrimitive()) {
+                ContentLog.LOGGER.error("World template {} sets role '{}' to something that is not a biome name, ignoring it", key, role.getKey());
+                continue;
+            }
+            out.put(name, role.getValue().getAsString().trim());
+        }
+        return Collections.unmodifiableMap(out);
+    }
+
+    private static Map<String, Boolean> switches(JsonObject json) {
+        if (!json.has("structures")) { return Map.of(); }
+        Map<String, Boolean> out = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "structures").entrySet()) {
+            if (entry.getValue().isJsonPrimitive()) { out.put(Settings.lower(entry.getKey()),entry.getValue().getAsBoolean()); }
+        }
+        return Map.copyOf(out);
+    }
+
+    @Nullable private static WorldTemplateDef select() {
+        String wanted = Config.worldgen.worldTemplate().trim();
+        if (wanted.isEmpty()) { return null; }
+        List<WorldTemplateDef> usable = new ArrayList<>();
+        for (Map.Entry<Identifier, WorldTemplateDef> entry : DEFS.entrySet()) {
+            if (ContentRegistry.available(entry.getValue().requires(), entry.getKey())) { usable.add(entry.getValue()); }
+        }
+        for (WorldTemplateDef def : usable) {
+            if (def.key().toString().equalsIgnoreCase(wanted) || def.key().getPath().equalsIgnoreCase(wanted)) { return def; }
+        }
+        if (AUTO.equalsIgnoreCase(wanted)) {
+            WorldTemplateDef chosen = null;
+            List<Identifier> fromPacks = new ArrayList<>();
+            for (WorldTemplateDef def : usable) {
+                if (BUILT_IN.equals(def.key().getNamespace())) { continue; }
+                fromPacks.add(def.key());
+                chosen = def;
+            }
+            if (fromPacks.size() > 1) { ContentLog.LOGGER.error("{} world templates are loaded and only one can be active: {}. '{}' is the one in force and the rest do nothing, settings and all. Put every setting in ONE template, and use its 'dimensions' list to say which dimensions it fills", fromPacks.size(), fromPacks, chosen.key()); }
+            return chosen;
+        }
+        ContentLog.LOGGER.error("worldTemplate is '{}' but nothing defines it. Known templates: {}", wanted, DEFS.keySet());
+        return null;
+    }
+
+    private static List<WorldTemplateDef> builtins() {
+        Map<String, String> vanilla = new LinkedHashMap<>();
+        vanilla.put("ocean", "minecraft:ocean");
+        vanilla.put("river", "minecraft:river");
+        vanilla.put("beach", "minecraft:beach");
+        vanilla.put("mushroom", "minecraft:mushroom_fields");
+        vanilla.put("swamp", "minecraft:swamp");
+        vanilla.put("hills", "minecraft:windswept_hills");
+        vanilla.put("mountain", "minecraft:windswept_hills");
+        Map<String, String> water = new LinkedHashMap<>();
+        water.put("river", "minecraft:river");
+        water.put("beach", "minecraft:beach");
+        return List.of(built("void", "Void", WorldTemplateDef.VOID, Map.of()), built("vanilla", "Vanilla shoreline", "minecraft:plains", vanilla), built("ocean", "Ocean world", "minecraft:ocean", water),
+                built("plains", "Plains world", "minecraft:plains", Map.of()), built("desert", "Desert world", "minecraft:desert", Map.of()));
+    }
+
+    private static WorldTemplateDef built(String path, String name, String fallback, Map<String, String> roles) { return new WorldTemplateDef(Identifier.fromNamespaceAndPath(BUILT_IN, path), name, null, List.of(), fallback, Collections.unmodifiableMap(roles), Map.of(), List.of()); }
+}

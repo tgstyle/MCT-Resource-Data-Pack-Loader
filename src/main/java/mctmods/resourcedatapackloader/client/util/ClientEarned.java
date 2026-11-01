@@ -1,0 +1,23 @@
+package mctmods.resourcedatapackloader.client.util;
+
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientAdvancements;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.resources.Identifier;
+
+public final class ClientEarned {
+    private ClientEarned() {}
+
+    public static boolean has(String name) {
+        ClientPacketListener connection = Minecraft.getInstance().getConnection();
+        Identifier id = Identifier.tryParse(name);
+        if (connection == null || id == null) { return false; }
+        ClientAdvancements manager = connection.getAdvancements();
+        AdvancementHolder advancement = manager.get(id);
+        if (advancement == null) { return false; }
+        AdvancementProgress progress = manager.progress.get(advancement);
+        return progress != null && progress.isDone();
+    }
+}

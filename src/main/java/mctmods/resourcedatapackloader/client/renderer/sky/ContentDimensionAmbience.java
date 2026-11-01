@@ -1,0 +1,104 @@
+package mctmods.resourcedatapackloader.client.renderer.sky;
+
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.AmbienceDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
+
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
+import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.Music;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.attribute.AmbientAdditionsSettings;
+import net.minecraft.world.attribute.AmbientParticle;
+import net.minecraft.world.attribute.AmbientSounds;
+import net.minecraft.world.attribute.BackgroundMusic;
+import net.minecraft.world.attribute.EnvironmentAttribute;
+import net.minecraft.world.attribute.EnvironmentAttributeMap;
+import net.minecraft.world.attribute.EnvironmentAttributeSystem;
+import net.minecraft.world.attribute.EnvironmentAttributes;
+import net.minecraft.world.level.Level;
+
+public final class ContentDimensionAmbience {
+    private static final int OPAQUE = 0xFF000000;
+    private static final Map<AmbienceDef, Layers> LAYERS = new IdentityHashMap<>();
+
+    private ContentDimensionAmbience() {}
+
+    public static void layers(EnvironmentAttributeSystem.Builder builder, Level level) {
+        if (!ContentEnvironments.names(level.dimension().identifier()).isEmpty()) {
+            builder.addTimeBasedLayer(EnvironmentAttributes.BACKGROUND_MUSIC, (music, _) -> fixed(level, EnvironmentAttributes.BACKGROUND_MUSIC, music));
+            builder.addTimeBasedLayer(EnvironmentAttributes.AMBIENT_PARTICLES, (particles, _) -> fixed(level, EnvironmentAttributes.AMBIENT_PARTICLES, particles));
+            builder.addTimeBasedLayer(EnvironmentAttributes.AMBIENT_SOUNDS, (sounds, _) -> {
+                Layers layers = layers(ContentDimensions.def(level));
+                return layers == null ? sounds : layers.sounds(sounds);
+            });
+            return;
+        }
+        Layers layers = layers(ContentDimensions.def(level));
+        if (layers == null) { return; }
+        builder.addConstantLayer(layers.fixed);
+        if (layers.loop != null || !layers.additions.isEmpty()) { builder.addConstantLayer(EnvironmentAttributes.AMBIENT_SOUNDS, layers::sounds); }
+    }
+
+    @Nullable private static Layers layers(@Nullable DimensionDef def) {
+        AmbienceDef ambience = def == null ? null : def.traits().ambience();
+        return ambience == null ? null : LAYERS.computeIfAbsent(ambience, held -> new Layers(def.key(), held));
+    }
+
+    private static <V> V fixed(Level level, EnvironmentAttribute<V> attribute, V value) {
+        Layers layers = layers(ContentDimensions.def(level));
+        return layers == null ? value : layers.fixed.applyModifier(attribute, value);
+    }
+
+    @Nullable private static Holder<SoundEvent> sound(@Nullable Identifier name) {
+        if (name == null) { return null; }
+        Holder<SoundEvent> registered = ContentSounds.holder(name);
+        return registered == null ? Holder.direct(SoundEvent.createVariableRangeEvent(name)) : registered;
+    }
+
+    @Nullable private static ParticleOptions options(Identifier dimension, AmbienceDef ambience) {
+        ParticleType<?> type = Registered.find(BuiltInRegistries.PARTICLE_TYPE, ambience.particle());
+        boolean colored = ambience.particleColor() != AmbienceDef.NO_COLOR;
+        if (type == ParticleTypes.DUST) { return colored ? new DustParticleOptions(ambience.particleColor(), 1.0F) : DustParticleOptions.REDSTONE; }
+        if (type == ParticleTypes.ENTITY_EFFECT) { return ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, OPAQUE | (colored ? ambience.particleColor() : 0)); }
+        if (type instanceof SimpleParticleType simple) { return simple; }
+        ContentLog.LOGGER.error("Dimension {} names the ambience particle {}, which is not a particle the game shows without settings of its own, so it shows none", dimension, ambience.particle());
+        return null;
+    }
+
+    private static final class Layers {
+        private final EnvironmentAttributeMap fixed;
+        @Nullable private final Holder<SoundEvent> loop;
+        private final List<AmbientAdditionsSettings> additions;
+
+        private Layers(Identifier dimension, AmbienceDef ambience) {
+            EnvironmentAttributeMap.Builder map = EnvironmentAttributeMap.builder();
+            Holder<SoundEvent> track = sound(ambience.music());
+            if (track != null) { map.set(EnvironmentAttributes.BACKGROUND_MUSIC, new BackgroundMusic(new Music(track, ambience.musicMinDelay(), ambience.musicMaxDelay(), true))); }
+            ParticleOptions options = ambience.shows() ? options(dimension, ambience) : null;
+            if (options != null) { map.set(EnvironmentAttributes.AMBIENT_PARTICLES, AmbientParticle.of(options, ambience.particleChance())); }
+            fixed = map.build();
+            loop = sound(ambience.loopSound());
+            Holder<SoundEvent> addition = ambience.sounds() ? sound(ambience.ambientSound()) : null;
+            additions = addition == null ? List.of() : List.of(new AmbientAdditionsSettings(addition, ambience.soundChance()));
+        }
+
+        private AmbientSounds sounds(AmbientSounds base) { return new AmbientSounds(loop == null ? base.loop() : Optional.of(loop), base.mood(), additions.isEmpty() ? base.additions() : additions); }
+    }
+}

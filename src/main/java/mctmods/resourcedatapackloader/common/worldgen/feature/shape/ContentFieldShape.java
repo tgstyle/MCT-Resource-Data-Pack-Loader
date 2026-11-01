@@ -1,0 +1,64 @@
+package mctmods.resourcedatapackloader.common.worldgen.feature.shape;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
+import mctmods.resourcedatapackloader.common.util.worldgen.SeededRandom;
+import mctmods.resourcedatapackloader.common.worldgen.feature.IContentChunkShape;
+import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
+import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentPalette;
+import mctmods.resourcedatapackloader.core.util.math.Hashes;
+
+import java.util.List;
+import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.state.BlockState;
+
+public final class ContentFieldShape implements IContentChunkShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
+    private final ContentField field;
+    private final float threshold;
+    private final int minHeight;
+    private final int maxHeight;
+    private final int fade;
+    private final int salt;
+
+    public ContentFieldShape(ContentField field, ShapeDef shape, int minHeight, int maxHeight, Identifier key) {
+        this.field = field;
+        this.threshold = shape.threshold();
+        this.minHeight = minHeight;
+        this.maxHeight = maxHeight;
+        this.fade = shape.fade();
+        this.salt = key.toString().hashCode();
+    }
+
+    @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) { return false; }
+
+    @Override public void generateChunk(ContentPlacer placer, ChunkPos chunk, Predicate<BlockPos> valid) {
+        int lowest = Math.max(placer.floorY(), minHeight);
+        int highest = Math.min(placer.ceilingY() - 1, maxHeight);
+        if (highest < lowest) { return; }
+        long seed = placer.level().getSeed() ^ salt;
+        RandomSource random = SeededRandom.at(seed, chunk.x(), chunk.z());
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int x = chunk.getMinBlockX(); x <= chunk.getMaxBlockX(); x++) {
+            for (int z = chunk.getMinBlockZ(); z <= chunk.getMaxBlockZ(); z++) {
+                for (int y = lowest; y <= highest; y++) {
+                    if (field.strength(seed, x, y, z) < threshold) { continue; }
+                    if (fade > 0) {
+                        int above = maxHeight - y;
+                        if (above < fade && hash01(seed, x, y, z) >= (above + 1) / (float) fade) { continue; }
+                    }
+                    at.set(x, y, z);
+                    if (!valid.test(at)) { continue; }
+                    placer.place(random, x, y, z);
+                }
+            }
+        }
+    }
+
+    private static float hash01(long seed, int x, int y, int z) { return Hashes.unit(Hashes.scramble(seed ^ Hashes.GOLDEN ^ Hashes.cell(x, y, z))); }
+}

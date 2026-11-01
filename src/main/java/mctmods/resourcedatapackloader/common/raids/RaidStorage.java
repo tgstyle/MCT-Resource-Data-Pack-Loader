@@ -1,0 +1,69 @@
+package mctmods.resourcedatapackloader.common.raids;
+
+import mctmods.resourcedatapackloader.common.util.world.SavedTypes;
+
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+
+public final class RaidStorage extends SavedData {
+    public static final String NAME = "rdpl_raids";
+    private static final String RAIDS = "Raids";
+    private static final SavedDataType<RaidStorage> TYPE = SavedTypes.of(NAME, RaidStorage::new, RaidStorage::read, RaidStorage::write);
+    private final List<ActiveRaid> raids = new ArrayList<>();
+
+    public static RaidStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }
+
+    private static RaidStorage read(CompoundTag tag) {
+        RaidStorage held = new RaidStorage();
+        for (Tag element : tag.getListOrEmpty(RAIDS)) {
+            CompoundTag one = (CompoundTag) element;
+            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(Identifier.tryParse(one.getStringOr("Raid", ""))));
+            if (raid != null) { held.raids.add(raid); }
+        }
+        return held;
+    }
+
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
+        ListTag list = new ListTag();
+        for (ActiveRaid raid : raids) {
+            if (!raid.stopped()) { list.add(raid.write()); }
+        }
+        tag.put(RAIDS, list);
+        return tag;
+    }
+
+    public boolean raided(BlockPos center, int within) {
+        for (ActiveRaid raid : raids) {
+            if (!raid.stopped() && raid.center().distSqr(center) <= (double) within * within) { return true; }
+        }
+        return false;
+    }
+
+    public boolean underway(BlockPos at) {
+        for (ActiveRaid raid : raids) {
+            if (raid.underway(at)) { return true; }
+        }
+        return false;
+    }
+
+    public void add(ActiveRaid raid) {
+        raids.add(raid);
+        setDirty();
+    }
+
+    public void tick(ServerLevel level) {
+        if (raids.isEmpty()) { return; }
+        for (ActiveRaid raid : new ArrayList<>(raids)) { raid.tick(level); }
+        raids.removeIf(ActiveRaid::stopped);
+        setDirty();
+    }
+}

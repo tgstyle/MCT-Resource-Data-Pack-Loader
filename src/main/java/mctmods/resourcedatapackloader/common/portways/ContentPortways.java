@@ -1,0 +1,20 @@
+package mctmods.resourcedatapackloader.common.portways;
+
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortwayBlock;
+import mctmods.resourcedatapackloader.common.blocks.portal.logic.ContentPortwayBlockEntity;
+import mctmods.resourcedatapackloader.core.registration.ContentBlockEntities;
+import mctmods.resourcedatapackloader.core.util.concurrent.Held;
+
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.neoforged.neoforge.registries.RegisterEvent;
+
+public final class ContentPortways {
+    public static final Identifier ID = ResourceDataPackLoader.id("portway");
+    public static final Held<BlockEntityType<ContentPortwayBlockEntity>> TYPE = new Held<>("pack portway block entity type");
+
+    private ContentPortways() {}
+
+    public static void register(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper) { ContentBlockEntities.typeFor(helper, ID, ContentPortwayBlock.class, ContentPortwayBlockEntity::new, TYPE, "portway"); }
+}

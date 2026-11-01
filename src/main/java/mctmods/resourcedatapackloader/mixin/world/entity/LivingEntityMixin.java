@@ -1,0 +1,77 @@
+package mctmods.resourcedatapackloader.mixin.world.entity;
+
+import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForgeMod;
+import net.neoforged.neoforge.fluids.FluidType;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(LivingEntity.class) public abstract class LivingEntityMixin {
+    @Shadow protected abstract SoundEvent getHurtSound(DamageSource source);
+    @Shadow protected abstract SoundEvent getDeathSound();
+
+    @Unique private EntityVariantDef rdpl$def() { return ContentEntities.def((LivingEntity) (Object) this); }
+
+    @Redirect(method = "playHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;")) private SoundEvent rdpl$hurtSound(LivingEntity self, DamageSource source) { return ContentEntities.sound(self, ContentEntities.HURT, () -> getHurtSound(source)); }
+
+    @Redirect(method = { "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", "handleEntityEvent(B)V" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeathSound()Lnet/minecraft/sounds/SoundEvent;")) private SoundEvent rdpl$deathSound(LivingEntity self) { return ContentEntities.sound(self, ContentEntities.DEATH, this::getDeathSound); }
+
+    @WrapWithCondition(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false)) private boolean rdpl$namedDeathLog(Logger logger, String format, Object entity, Object message) { return rdpl$def() == null; }
+
+    @Inject(method = "getSoundVolume()F", at = @At("RETURN"), cancellable = true) private void rdpl$soundVolume(CallbackInfoReturnable<Float> cir) {
+        EntityVariantDef def = rdpl$def();
+        if (def != null && def.sounds().volume() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().volume()); }
+    }
+
+    @Inject(method = "getVoicePitch()F", at = @At("RETURN"), cancellable = true) private void rdpl$voicePitch(CallbackInfoReturnable<Float> cir) {
+        EntityVariantDef def = rdpl$def();
+        if (def != null && def.sounds().pitch() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().pitch()); }
+    }
+
+    @Inject(method = "getWaterSlowDown()F", at = @At("RETURN"), cancellable = true) private void rdpl$waterSlowDown(CallbackInfoReturnable<Float> cir) {
+        EntityVariantDef def = rdpl$def();
+        if (def != null) { cir.setReturnValue(def.physics().waterSlowdown()); }
+    }
+
+    @Inject(method = "getRiddenInput(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;", at = @At("RETURN"), cancellable = true) private void rdpl$riddenInput(Player controller, Vec3 selfInput, CallbackInfoReturnable<Vec3> cir) {
+        if (!ContentEntities.steerable((LivingEntity) (Object) this)) { return; }
+        float forward = controller.zza;
+        if (forward <= 0.0F) { forward *= 0.25F; }
+        cir.setReturnValue(new Vec3(controller.xxa * 0.5F, 0.0D, forward));
+    }
+
+    @Inject(method = "getRiddenSpeed(Lnet/minecraft/world/entity/player/Player;)F", at = @At("RETURN"), cancellable = true) private void rdpl$riddenSpeed(Player controller, CallbackInfoReturnable<Float> cir) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        if (ContentEntities.steerable(self)) { cir.setReturnValue((float) self.getAttributeValue(Attributes.MOVEMENT_SPEED)); }
+    }
+
+    @Inject(method = "onClimbable()Z", at = @At("RETURN"), cancellable = true) private void rdpl$climbs(CallbackInfoReturnable<Boolean> cir) {
+        LivingEntity self = (LivingEntity) (Object) this;
+        Boolean wanted = ContentEntities.climbs(self);
+        if (wanted != null) { cir.setReturnValue(wanted && (cir.getReturnValueZ() || self.horizontalCollision)); }
+    }
+
+    @Redirect(method = "aiStep()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;jumpInFluid(Lnet/neoforged/neoforge/fluids/FluidType;)V", remap = false)) private void rdpl$sink(LivingEntity self, FluidType type) {
+        if (type == NeoForgeMod.WATER_TYPE.value() && ContentEntities.sinks(self)) { return; }
+        self.jumpInFluid(type);
+    }
+
+    @ModifyConstant(method = "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", constant = @Constant(floatValue = 10.0F, ordinal = 0)) private float rdpl$halfWay(float was) { return ContentEntities.hurtResistance((LivingEntity) (Object) this, 20) / 2.0F; }
+}

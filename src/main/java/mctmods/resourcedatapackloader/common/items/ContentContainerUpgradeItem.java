@@ -1,0 +1,32 @@
+package mctmods.resourcedatapackloader.common.items;
+
+import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
+import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerUpgradeDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.util.ContentEffects;
+
+import javax.annotation.Nonnull;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+
+public final class ContentContainerUpgradeItem extends Item {
+    private final ItemDef def;
+    private final ContainerUpgradeDef upgrade;
+
+    public ContentContainerUpgradeItem(ItemDef def, Properties properties) {
+        super(properties);
+        this.def = def;
+        this.upgrade = def.upgrade() == null ? ContainerUpgradeDef.PLAIN : def.upgrade();
+    }
+
+    @Override @Nonnull public InteractionResult onItemUseFirst(@Nonnull ItemStack stack, @Nonnull UseOnContext context) {
+        InteractionResult result = ContentContainerUpgrades.use(upgrade, this, context);
+        if (result != InteractionResult.SUCCESS || context.getLevel().isClientSide() || !(context.getPlayer() instanceof ServerPlayer player)) { return result; }
+        ContentEffects.cooldown(player, stack, def.cooldown());
+        if (upgrade.consume() && !player.getAbilities().instabuild) { stack.shrink(1); }
+        return result;
+    }
+}
