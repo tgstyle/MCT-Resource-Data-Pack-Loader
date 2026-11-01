@@ -1,0 +1,396 @@
+package mctmods.resourcedatapackloader.common.entities.orders;
+
+import mctmods.resourcedatapackloader.common.carry.ContentCarry;
+import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.OrderDef;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.entity.Scores;
+import mctmods.resourcedatapackloader.common.util.world.TileScan;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Enums;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.StandingSignBlock;
+import net.minecraft.world.level.block.WallSignBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Team;
+import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
+
+public final class ContentOrders {
+    public static final String PLOT_MARK = "rdplPlotOrder";
+    private static final String BOSS = "rdplBoss";
+    private static final String TEAM = "team:";
+    private static final String TAG = "tag:";
+    private static final int SIGN_WAIT = 2400;
+    private static final int CHECK = 20;
+    private static final Map<String, OrderDef> DEFS = new LinkedHashMap<>();
+    private static final Map<ResourceKey<Level>, Map<BlockPos, Pending>> PENDING = new ConcurrentHashMap<>();
+    private static String stockName = "Stock";
+    private static String hire = "";
+    private static int spawnCap = 1;
+    private static boolean anyGrouped;
+    @Nullable private static ItemStack hireStack;
+
+    private ContentOrders() {}
+
+    public static boolean load() {
+        DEFS.clear();
+        OrderItems.forget();
+        anyGrouped = false;
+        stockName = "Stock";
+        hire = "";
+        spawnCap = 1;
+        hireStack = null;
+        Json.eachFile(PackManager.ORDERS, "order file", ContentOrders::read);
+        if (!DEFS.isEmpty()) { Summary.info("orders", "Loaded " + DEFS.size() + " work order(s)"); }
+        return !DEFS.isEmpty();
+    }
+
+    private static void read(ResourceLocation key, String contents) {
+        JsonObject json = Json.object(key, contents, "order file");
+        if (json == null) { return; }
+        if (json.has("stockName")) { stockName = Json.getString(json, "stockName").trim(); }
+        if (json.has("hire")) { hire = Json.getString(json, "hire").trim(); }
+        if (json.has("spawnCap")) { spawnCap = Math.max(0, Json.getInt(json, "spawnCap")); }
+        if (!json.has("orders")) { return; }
+        JsonArray list = Json.getJsonArray(json, "orders");
+        for (int i = 0; i < list.size(); i++) {
+            String name = key + "#" + i;
+            OrderDef def = list.get(i).isJsonObject() ? order(name, list.get(i).getAsJsonObject()) : null;
+            if (def == null) { continue; }
+            DEFS.put(name, def);
+            for (String taker : def.takers()) { anyGrouped |= grouped(taker); }
+        }
+    }
+
+    @Nullable private static OrderDef order(String name, JsonObject json) {
+        String named = Json.getString(json, "job", "");
+        OrderDef.Job job = Enums.byName(OrderDef.Job.class, named);
+        if (job == null) {
+            ContentLog.LOGGER.error("Order {} asks for the job '{}', which is not gather, mine, farm or haul, ignoring it", name, named);
+            return null;
+        }
+        String blocks = Json.getString(json, "blocks", "").trim();
+        if (blocks.isEmpty() && job != OrderDef.Job.FARM) {
+            ContentLog.LOGGER.error("Order {} names no item tag under blocks, and only a farm order works without one, ignoring it", name);
+            return null;
+        }
+        ResourceLocation tag = blocks.isEmpty() ? null : Registered.tagId(blocks);
+        if (!blocks.isEmpty() && tag == null) {
+            ContentLog.LOGGER.error("Order {} names '{}' under blocks, which is not an item tag id, ignoring it", name, blocks);
+            return null;
+        }
+        List<String> takers = Json.strings(json, "takers");
+        if (takers.isEmpty()) {
+            ContentLog.LOGGER.error("Order {} names no takers, so no worker could ever take it, ignoring it", name);
+            return null;
+        }
+        String deliver = Json.getString(json, "deliver", "chest");
+        if (!"chest".equalsIgnoreCase(deliver) && !"self".equalsIgnoreCase(deliver)) { ContentLog.LOGGER.error("Order {} delivers to '{}', which is not chest or self, so it delivers to the chest", name, deliver); }
+        List<Integer> byTier = new ArrayList<>();
+        if (json.has("areaByTier")) {
+            for (JsonElement radius : Json.getJsonArray(json, "areaByTier")) { byTier.add(Math.max(1, radius.getAsInt())); }
+        }
+        TagKey<Item> items = tag == null ? null : TagKey.create(Registries.ITEM, tag);
+        return new OrderDef(name, job, items, Math.max(1, Json.getInt(json, "area", 16)), List.copyOf(byTier), "self".equalsIgnoreCase(deliver), Math.max(1, Json.getInt(json, "limit", 64)),
+                Math.max(0, Json.getInt(json, "standing", 0)), Math.max(1, Json.getInt(json, "workers", 1)), Json.getInt(json, "priority", 0), takers,
+                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim(),
+                Json.getString(json, "wins", "").trim(), Json.getInt(json, "points", 0), Json.getString(json, "loot", "").trim());
+    }
+
+    @Nullable static OrderDef def(String name) { return DEFS.get(name); }
+
+    static int spawnCap() { return spawnCap; }
+
+    static boolean grouped(String taker) {
+        String lower = taker.toLowerCase(Locale.ROOT);
+        return lower.startsWith(TEAM) || lower.startsWith(TAG);
+    }
+
+    public static boolean wants(EntityVariantDef variant) {
+        if (DEFS.isEmpty()) { return false; }
+        if (anyGrouped) { return true; }
+        for (OrderDef def : DEFS.values()) {
+            for (String taker : def.takers()) {
+                if (taker.equalsIgnoreCase(variant.key().toString())) { return true; }
+            }
+        }
+        return false;
+    }
+
+    private static boolean takes(OrderDef def, Mob mob) {
+        EntityVariantDef variant = ContentEntities.def(mob);
+        Team side = mob.getTeam();
+        for (String taker : def.takers()) {
+            String lower = taker.toLowerCase(Locale.ROOT);
+            if (lower.startsWith(TEAM)) {
+                if (side != null && side.getName().equalsIgnoreCase(taker.substring(TEAM.length()))) { return true; }
+                continue;
+            }
+            if (lower.startsWith(TAG)) {
+                for (String tag : mob.getTags()) {
+                    if (tag.equalsIgnoreCase(taker.substring(TAG.length()))) { return true; }
+                }
+                continue;
+            }
+            if (variant != null && taker.equalsIgnoreCase(variant.key().toString())) { return true; }
+        }
+        return false;
+    }
+
+    static boolean serves(Mob mob, WorkOrder order) {
+        if (!takes(order.def, mob)) { return false; }
+        Team side = mob.getTeam();
+        if (!order.team.isEmpty()) { return side != null && side.getName().equals(order.team); }
+        UUID boss = boss(mob);
+        if (boss != null) { return boss.equals(order.owner); }
+        return side == null;
+    }
+
+    @Nullable static UUID boss(Mob mob) {
+        String kept = mob.getPersistentData().getString(BOSS);
+        if (kept.isEmpty()) { return null; }
+        try { return UUID.fromString(kept); }
+        catch (IllegalArgumentException ex) { return null; }
+    }
+
+    static void bind(Mob mob, UUID player) {
+        mob.getPersistentData().putString(BOSS, player.toString());
+        mob.setPersistenceRequired();
+    }
+
+    private static boolean free(Mob mob) { return boss(mob) == null && mob.getTeam() == null; }
+
+    static boolean isOrderChest(ServerLevel level, BlockPos pos) { return OrderBoard.of(level).hasChest(pos); }
+
+    private static boolean isChest(Level level, @Nullable BlockEntity tile) { return tile instanceof RandomizableContainerBlockEntity && OrderItems.handler(level, tile.getBlockPos()) != null; }
+
+    public static void onLevelTick(LevelTickEvent.Post event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
+        OrderBoard.of(level).tick(level);
+        if (level.getGameTime() % CHECK == 0) { signs(level); }
+    }
+
+    public static void onPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof Player player)) { return; }
+        BlockPos pos = event.getPos();
+        Block placed = event.getPlacedBlock().getBlock();
+        if (placed instanceof StandingSignBlock || placed instanceof WallSignBlock) {
+            PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(player.getUUID(), level.getGameTime() + SIGN_WAIT));
+            return;
+        }
+        BlockEntity tile = level.getBlockEntity(pos);
+        if (stockName.isEmpty() || !isChest(level, tile)) { return; }
+        Component custom = ((RandomizableContainerBlockEntity) tile).getCustomName();
+        if (custom == null || !stockName.equalsIgnoreCase(custom.getString().trim())) { return; }
+        OrderDef haul = null;
+        for (OrderDef def : DEFS.values()) {
+            if (def.job() == OrderDef.Job.HAUL) {
+                haul = def;
+                break;
+            }
+        }
+        if (haul == null) {
+            ContentLog.LOGGER.error("{} placed a chest named {} at {}, {}, {}, but no pack has a haul order, so nothing keeps it stocked", player.getName().getString(), stockName, pos.getX(), pos.getY(), pos.getZ());
+            return;
+        }
+        OrderBoard.of(level).open(level, haul, pos, null, player, true);
+    }
+
+    public static void onBreak(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof ServerLevel level && !ContentCarry.probing()) { OrderBoard.of(level).cancelAt(event.getPos()); } }
+
+    private static void signs(ServerLevel level) {
+        Map<BlockPos, Pending> waiting = PENDING.get(level.dimension());
+        if (waiting == null || waiting.isEmpty()) { return; }
+        long now = level.getGameTime();
+        for (BlockPos pos : new ArrayList<>(waiting.keySet())) {
+            Pending pending = waiting.get(pos);
+            if (pending == null) { continue; }
+            if (now > pending.until() || !level.isLoaded(pos)) {
+                waiting.remove(pos);
+                continue;
+            }
+            if (!(level.getBlockEntity(pos) instanceof SignBlockEntity sign)) {
+                waiting.remove(pos);
+                continue;
+            }
+            String word = sign.getFrontText().getMessage(0, false).getString().trim();
+            if (word.isEmpty()) { continue; }
+            waiting.remove(pos);
+            OrderDef def = bySign(word);
+            if (pending.player() == null) {
+                plotOrder(level, sign, def, word);
+                continue;
+            }
+            Player by = level.getPlayerByUUID(pending.player());
+            BlockPos chest = def == null || by == null ? null : beside(level, pos);
+            if (chest != null) { OrderBoard.of(level).open(level, def, chest, pos, by, false); }
+        }
+    }
+
+    private static void plotOrder(ServerLevel level, SignBlockEntity sign, @Nullable OrderDef def, String word) {
+        BlockPos pos = sign.getBlockPos();
+        if (def == null) { ContentLog.LOGGER.error("Village plot sign at {}, {}, {} names the order word '{}', which no order has", pos.getX(), pos.getY(), pos.getZ(), word); }
+        else {
+            BlockPos chest = beside(level, pos);
+            if (chest == null) { ContentLog.LOGGER.error("Village plot sign at {}, {}, {} names the order word '{}', but no chest is below it or beside it, so the order stays closed", pos.getX(), pos.getY(), pos.getZ(), word); }
+            else { OrderBoard.of(level).open(level, def, chest, pos, null, false); }
+        }
+        if (!sign.getPersistentData().contains(PLOT_MARK)) { return; }
+        sign.getPersistentData().remove(PLOT_MARK);
+        sign.setChanged();
+    }
+
+    public static void plotSign(ServerLevel level, BlockPos pos) {
+        if (DEFS.isEmpty()) { return; }
+        PENDING.computeIfAbsent(level.dimension(), dimension -> new ConcurrentHashMap<>()).put(pos.immutable(), new Pending(null, level.getGameTime() + SIGN_WAIT));
+    }
+
+    public static void onChunkLoad(ChunkEvent.Load event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
+        ChunkAccess chunk = event.getChunk();
+        for (BlockPos pos : new ArrayList<>(chunk.getBlockEntitiesPos())) {
+            if (!(chunk.getBlockState(pos).getBlock() instanceof StandingSignBlock) || !(chunk.getBlockEntity(pos) instanceof SignBlockEntity sign) || !sign.getPersistentData().getBoolean(PLOT_MARK)) { continue; }
+            plotSign(level, pos);
+        }
+    }
+
+    @Nullable private static OrderDef bySign(String word) {
+        for (OrderDef def : DEFS.values()) {
+            if (!def.sign().isEmpty() && def.sign().equalsIgnoreCase(word)) { return def; }
+        }
+        return null;
+    }
+
+    @Nullable private static BlockPos beside(ServerLevel level, BlockPos sign) {
+        List<BlockPos> near = new ArrayList<>();
+        BlockState state = level.getBlockState(sign);
+        if (state.getBlock() instanceof WallSignBlock) { near.add(sign.relative(state.getValue(WallSignBlock.FACING).getOpposite())); }
+        near.add(sign.below());
+        for (Direction side : Direction.Plane.HORIZONTAL) { near.add(sign.relative(side)); }
+        for (BlockPos pos : near) {
+            if (isChest(level, level.getBlockEntity(pos))) { return pos; }
+        }
+        return null;
+    }
+
+    public static void onInteract(PlayerInteractEvent.EntityInteract event) {
+        if (event.getHand() != InteractionHand.MAIN_HAND || !(event.getLevel() instanceof ServerLevel level) || !(event.getTarget() instanceof PathfinderMob mob)) { return; }
+        Player player = event.getEntity();
+        ItemStack held = player.getMainHandItem();
+        EntityVariantDef variant = ContentEntities.def(mob);
+        if (player.isShiftKeyDown() || held.isEmpty() || variant == null || !wants(variant)) { return; }
+        boolean done = hired(player, mob, held) || handedTool(level, player, mob, held);
+        if (!done) { return; }
+        event.setCanceled(true);
+        event.setCancellationResult(InteractionResult.SUCCESS);
+    }
+
+    private static boolean hired(Player player, Mob mob, ItemStack held) {
+        ItemStack wanted = hireStack();
+        if (wanted.isEmpty() || !ContentStacks.matches(held, wanted) || !free(mob)) { return false; }
+        enlist(player, mob);
+        if (!player.getAbilities().instabuild) { held.shrink(1); }
+        ContentLog.LOGGER.info("{} hired {} at {}, {}, {}", player.getName().getString(), mob.getName().getString(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ());
+        return true;
+    }
+
+    private static ItemStack hireStack() {
+        if (hireStack == null) { hireStack = hire.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(ResourceLocation.fromNamespaceAndPath("rdpl", PackManager.ORDERS), hire, 1); }
+        return hireStack;
+    }
+
+    private static void enlist(Player player, Mob mob) {
+        PlayerTeam side = teamOf(player);
+        if (side != null) { Scores.join(mob, side); }
+        else { bind(mob, player.getUUID()); }
+    }
+
+    @Nullable static PlayerTeam teamOf(Player player) { return Scores.teamOf(player); }
+
+    private static boolean handedTool(ServerLevel level, Player player, Mob mob, ItemStack held) {
+        OrderDef def = null;
+        for (OrderDef one : DEFS.values()) {
+            if (OrderItems.isKind(held, one.tool()) && takes(one, mob)) {
+                def = one;
+                break;
+            }
+        }
+        if (def == null) { return false; }
+        Team side = mob.getTeam();
+        PlayerTeam theirs = teamOf(player);
+        if (side != null && (theirs == null || !side.getName().equals(theirs.getName()))) { return false; }
+        UUID boss = boss(mob);
+        if (side == null && boss != null && !boss.equals(player.getUUID())) { return false; }
+        BlockPos chest = nearestChest(level, mob.blockPosition(), def.widest());
+        if (chest == null) { return false; }
+        if (free(mob)) { enlist(player, mob); }
+        ItemStack old = mob.getMainHandItem();
+        mob.setItemSlot(EquipmentSlot.MAINHAND, held.copy());
+        mob.setDropChance(EquipmentSlot.MAINHAND, 2.0F);
+        if (!player.getAbilities().instabuild) { player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY); }
+        if (!old.isEmpty() && !player.getInventory().add(old)) { player.drop(old, false); }
+        OrderBoard board = OrderBoard.of(level);
+        WorkOrder order = board.open(level, def, chest, null, player, false);
+        OrderBoard.release(mob, board.byId(mob.getPersistentData().getInt(OrderBoard.ORDER)));
+        board.lease(mob, order, level.getGameTime());
+        ContentLog.LOGGER.info("{} handed {} a {} and the job {}, anchored to the chest at {}, {}, {}", player.getName().getString(), mob.getName().getString(), def.tool(), def.name(), chest.getX(), chest.getY(), chest.getZ());
+        return true;
+    }
+
+    @Nullable private static BlockPos nearestChest(ServerLevel level, BlockPos from, int radius) {
+        BlockPos[] best = {null};
+        double[] bestDistance = {Double.MAX_VALUE};
+        TileScan.within(level, from, radius, tile -> {
+            double distance = tile.getBlockPos().distSqr(from);
+            if (distance > (double) radius * radius || distance >= bestDistance[0] || !isChest(level, tile)) { return true; }
+            best[0] = tile.getBlockPos();
+            bestDistance[0] = distance;
+            return true;
+        });
+        return best[0];
+    }
+
+    private record Pending(@Nullable UUID player, long until) {}
+}

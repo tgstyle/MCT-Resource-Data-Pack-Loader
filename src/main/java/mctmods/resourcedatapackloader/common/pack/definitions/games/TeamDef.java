@@ -1,0 +1,29 @@
+package mctmods.resourcedatapackloader.common.pack.definitions.games;
+
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.DownDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemGiveDef;
+
+import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.scores.Team;
+
+public record TeamDef(String name, String displayName, ChatFormatting color, String prefix, String suffix, boolean friendlyFire, boolean mobFriendlyFire,
+                      boolean seeFriendlyInvisibles, Team.Visibility nameTags, Team.Visibility deathMessages, Team.CollisionRule collision, List<String> entities,
+                      List<String> players, @Nullable int[] spawnBox, boolean joinable, String lead, String leadOn, String leadIs, String leadSays, String leadRuns,
+                      boolean balance, boolean scoreboard, int picks, List<String> picksFrom, List<ItemGiveDef> gives, String standIn, @Nullable int[] standInAt,
+                      @Nullable int[] spawnAt, @Nullable DownDef down) {
+    public static final String NONE = "none";
+    public static final String FIRST = "first";
+    public static final String TOP_SCORE = "topScore";
+    public static final String APPOINTED = "appointed";
+    public static final String VOTE = "vote";
+    public static final String CLAIM = "claim";
+    public static final String PLAYERS = "players";
+
+    public boolean leaderless() { return NONE.equals(lead); }
+
+    public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }
+
+    public boolean holds(double x, double y, double z) { return spawnBox != null && x >= spawnBox[0] && x <= spawnBox[3] && y >= spawnBox[1] && y <= spawnBox[4] && z >= spawnBox[2] && z <= spawnBox[5]; }
+}

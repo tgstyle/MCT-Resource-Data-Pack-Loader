@@ -1,0 +1,141 @@
+package mctmods.resourcedatapackloader.common.types;
+
+import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.generated.ContentFormats;
+import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
+import mctmods.resourcedatapackloader.common.items.ContentContainerUpgradeItem;
+import mctmods.resourcedatapackloader.common.items.ContentDrinkItem;
+import mctmods.resourcedatapackloader.common.items.ContentFoodItem;
+import mctmods.resourcedatapackloader.common.items.ContentLocatorItem;
+import mctmods.resourcedatapackloader.common.items.ContentPortwayItem;
+import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.items.ContentRollItem;
+import mctmods.resourcedatapackloader.common.items.ContentSleepingBagItem;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
+import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayItemDef;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.ContentEffects;
+import mctmods.resourcedatapackloader.common.util.ContentMaterials;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.DiggerItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemNameBlockItem;
+import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.component.Unbreakable;
+import net.minecraft.world.level.block.Block;
+
+public final class ContentItemTypes {
+    public static final String BASIC = "basic";
+    public static final String FOOD = "food";
+    public static final String DRINK = "drink";
+    public static final String TOOL = "tool";
+    public static final String ARMOR = "armor";
+    public static final String SEED = "seed";
+    public static final String POTION = "potion";
+    public static final String POTION_BOTTLE = "potion_bottle";
+    public static final String CONTAINER = "container";
+    public static final String CONTAINER_UPGRADE = "container_upgrade";
+    public static final String PORTWAY = "portway";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, CONTAINER_UPGRADE, PORTWAY);
+    private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0);
+    private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, ResourceLocation.parse(ContentFormats.MINEABLE_SWORD));
+    private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
+            "leggings", ArmorItem.Type.LEGGINGS, "legs", ArmorItem.Type.LEGGINGS, "boots", ArmorItem.Type.BOOTS, "feet", ArmorItem.Type.BOOTS);
+
+    private ContentItemTypes() {}
+
+    @Nullable public static Item create(ItemDef def, ItemVariant variant) {
+        String type = def.type();
+        if (!KNOWN.contains(type)) {
+            ContentLog.LOGGER.error("Unknown item type '{}' in {}, treating it as '{}'. Known types are {}", type, def.key(), BASIC, KNOWN);
+            type = BASIC;
+        }
+        Item.Properties properties = new Item.Properties().stacksTo(variant.maxSize()).rarity(ContentTypes.rarity(variant.rarity(), variant.id()));
+        return switch (type) {
+            case FOOD -> {
+                MobEffectInstance effect = ContentEffects.parse(variant.id(), variant.potion());
+                yield new ContentFoodItem(def, effect, properties.food(food(def, variant, effect)));
+            }
+            case DRINK, POTION -> new ContentDrinkItem(def, variant, properties);
+            case POTION_BOTTLE -> new ContentPotionItem(def, variant.id(), properties.stacksTo(1));
+            case TOOL -> tool(def, variant, properties.stacksTo(1));
+            case ARMOR -> armor(def, variant, properties.stacksTo(1));
+            case SEED -> seed(def, variant, properties);
+            case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
+            case CONTAINER_UPGRADE -> new ContentContainerUpgradeItem(def, properties);
+            case PORTWAY -> portway(def, properties);
+            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
+        };
+    }
+
+    private static Item portway(ItemDef def, Item.Properties properties) {
+        PortwayItemDef held = def.portway() == null ? PortwayItemDef.PLAIN : def.portway();
+        return new ContentPortwayItem(held, held.bind() ? properties.stacksTo(1) : properties);
+    }
+
+    private static FoodProperties food(ItemDef def, ItemVariant variant, @Nullable MobEffectInstance effect) {
+        FoodProperties.Builder builder = new FoodProperties.Builder().nutrition(variant.healAmount()).saturationModifier(variant.saturation());
+        if (def.alwaysEdible()) { builder = builder.alwaysEdible(); }
+        if (effect != null) { builder = builder.effect(() -> ContentEffects.copy(effect), 1.0F); }
+        return builder.build();
+    }
+
+    @Nullable private static Item tool(ItemDef def, ItemVariant variant, Item.Properties properties) {
+        MaterialDef material = ContentRegistry.material(def.material(), variant.id());
+        if (material == null) { return null; }
+        Tier tier = ContentMaterials.tier(material);
+        Item.Properties lasting = lasting(properties, tier.getUses());
+        return switch (def.toolClass()) {
+            case "pickaxe" -> new PickaxeItem(tier, lasting.attributes(PickaxeItem.createAttributes(tier, 1.0F, speed(def, -2.8F))));
+            case "axe" -> new AxeItem(tier, lasting.attributes(AxeItem.createAttributes(tier, 6.0F, speed(def, -3.2F))));
+            case "shovel" -> new ShovelItem(tier, lasting.attributes(ShovelItem.createAttributes(tier, 1.5F, speed(def, -3.0F))));
+            case "sword" -> new DiggerItem(tier, SWORD_MINEABLE, lasting.attributes(DiggerItem.createAttributes(tier, 3.0F, speed(def, -2.4F))));
+            default -> {
+                ContentLog.LOGGER.error("Unknown toolClass '{}' in {}, the item is skipped. Known classes are pickaxe, axe, shovel and sword", def.toolClass(), variant.id());
+                yield null;
+            }
+        };
+    }
+
+    private static float speed(ItemDef def, float fallback) { return Float.isNaN(def.attackSpeed()) ? fallback : def.attackSpeed(); }
+
+    @Nullable private static Item armor(ItemDef def, ItemVariant variant, Item.Properties properties) {
+        MaterialDef material = ContentRegistry.material(def.material(), variant.id());
+        ArmorItem.Type slot = SLOTS.get(def.slot());
+        if (material == null) { return null; }
+        if (slot == null) {
+            ContentLog.LOGGER.error("Unknown armor slot '{}' in {}, the item is skipped. Known slots are {}", def.slot(), variant.id(), SLOTS.keySet());
+            return null;
+        }
+        int uses = slot.getDurability(material.durability() / 10);
+        return new ArmorItem(ContentMaterials.armor(material), slot, lasting(properties, uses).durability(uses));
+    }
+
+    private static Item.Properties lasting(Item.Properties properties, int uses) { return uses > 0 ? properties : properties.component(DataComponents.UNBREAKABLE, new Unbreakable(false)); }
+
+    @Nullable private static Item seed(ItemDef def, ItemVariant variant, Item.Properties properties) {
+        Block crop = ContentStates.registered(def.crop());
+        if (crop == null) {
+            ContentLog.LOGGER.error("Seed {} plants '{}', which is not a registered block, the item is skipped", variant.id(), def.crop());
+            return null;
+        }
+        return new ItemNameBlockItem(crop, properties);
+    }
+}

@@ -1,0 +1,83 @@
+package mctmods.resourcedatapackloader.mixin.client.renderer;
+
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionEffects;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyExtras;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentSunHaze;
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.environment.ContentWeather;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import javax.annotation.Nullable;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import org.joml.Matrix4f;
+import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(LevelRenderer.class) public abstract class LevelRendererMixin {
+    @Shadow @Nullable private ClientLevel level;
+
+    @Redirect(method = "renderClouds", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;getCloudHeight()F")) private float rdpl$cloudHeightAsked(DimensionSpecialEffects effects) {
+        float own = effects.getCloudHeight();
+        if (level == null || Float.isNaN(own) || effects instanceof ContentDimensionEffects content && content.drawsLayer()) { return own; }
+        Integer asked = ContentDimensions.cloudHeight(level.dimension().location().toString());
+        return asked != null ? asked : own;
+    }
+
+    @Unique private boolean rdpl$aboveCeiling() {
+        Entity view = Minecraft.getInstance().getCameraEntity();
+        return view != null && ContentWeather.above(view.level(), view.getBlockY());
+    }
+
+    @Inject(method = "renderSnowAndRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherRender(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
+
+    @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
+
+    @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderColor(FFFF)V", ordinal = 2), index = 3) private float rdpl$dimSun(float alpha) { return alpha * ContentDimensionEffects.sun(level); }
+
+    @Inject(method = "renderSky", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;SUN_LOCATION:Lnet/minecraft/resources/ResourceLocation;", opcode = Opcodes.GETSTATIC)) private void rdpl$sunAura(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { if (level != null) { Matrix4f pose = ContentSunHaze.sunPose(level, frustumMatrix, partialTick); float alpha = RenderSystem.getShaderColor()[3]; ContentSunHaze.aura(level, pose, alpha, DimensionTraitsDef.VANILLA_SUN, frustumMatrix); ContentSunHaze.lines(level, pose, alpha, DimensionTraitsDef.VANILLA_SUN); } }
+
+    @WrapOperation(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/BufferUploader;drawWithShader(Lcom/mojang/blaze3d/vertex/MeshData;)V", ordinal = 1)) private void rdpl$sunTint(MeshData meshData, Operation<Void> original, @Local(argsOnly = true, ordinal = 0) Matrix4f frustumMatrix, @Local(argsOnly = true) float partialTick) {
+        if (level == null) { original.call(meshData); }
+        else { ContentSunHaze.sun(level, ContentSunHaze.sunPose(level, frustumMatrix, partialTick), RenderSystem.getShaderColor()[3], DimensionTraitsDef.VANILLA_SUN, () -> original.call(meshData)); }
+    }
+
+    @Redirect(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 1)) private void rdpl$tintStars(VertexBuffer buffer, Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {
+        if (level == null || ContentStars.keepsVanilla(level)) {
+            buffer.drawWithShader(modelViewMatrix, projectionMatrix, shader);
+            return;
+        }
+        ContentStars.VANILLA.draw(level, RenderSystem.getShaderColor()[3], modelViewMatrix, projectionMatrix, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false), 0.0F);
+    }
+
+    @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V")) private void rdpl$skybox(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { ContentSkyExtras.backdrop(level, frustumMatrix, partialTick); }
+
+    @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;defaultBlendFunc()V", shift = At.Shift.AFTER)) private void rdpl$skyOverlay(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { ContentSkyExtras.overlay(level, frustumMatrix, partialTick); }
+
+    @ModifyExpressionValue(method = "renderSky", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;SUN_LOCATION:Lnet/minecraft/resources/ResourceLocation;", opcode = Opcodes.GETSTATIC)) private ResourceLocation rdpl$sunTexture(ResourceLocation original) { return ContentDimensionEffects.sunTexture(level, original); }
+
+    @ModifyExpressionValue(method = "renderSky", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;MOON_LOCATION:Lnet/minecraft/resources/ResourceLocation;", opcode = Opcodes.GETSTATIC)) private ResourceLocation rdpl$moonTexture(ResourceLocation original) { return ContentDimensionEffects.moonTexture(level, original); }
+
+    @Inject(method = "renderSky", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;MOON_LOCATION:Lnet/minecraft/resources/ResourceLocation;", opcode = Opcodes.GETSTATIC)) private void rdpl$dimMoon(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { if (level != null) { RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, (1.0F - level.getRainLevel(partialTick)) * ContentDimensionEffects.moon(level)); } }
+}

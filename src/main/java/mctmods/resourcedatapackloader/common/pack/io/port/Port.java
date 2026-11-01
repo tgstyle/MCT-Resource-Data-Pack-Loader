@@ -1,0 +1,196 @@
+package mctmods.resourcedatapackloader.common.pack.io.port;
+
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Set;
+import javax.annotation.Nullable;
+import net.minecraft.SharedConstants;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.util.GsonHelper;
+
+public final class Port {
+    private static final String LANG_SUFFIX = ".lang";
+    private static final String SOUNDS = "sounds";
+    private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "langgates", "packlist", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
+    private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
+    private static final int LAST_1_20_FORMAT = 26;
+    private static final int FIRST_1_21_FORMAT = 41;
+    private static final int LAST_1_21_DATA_FORMAT = 48;
+    private static final int LAST_1_21_RESOURCE_FORMAT = 34;
+    private static final int LAST_26_2_DATA_FORMAT = 107;
+    private static final int LAST_26_2_RESOURCE_FORMAT = 88;
+    public static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "curioslots", "gamerules", "entities", "potions", "potion_types", "enchantments", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "affixes", "gems", "enchanting", "ranks", "exposures", "overrides", "teams", "scoring", "raids", "dice", "games", "worldintro", "cards", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "recipe_locks", "spawn_locks", "loot_injections", "dialogs", "harvests", "tooltips", "orders", "veins", "diets", "carries");
+
+    private Port() {}
+
+    public enum Kind { RAW, DEFINITION, LANG, MODEL, BLOCKSTATE, RECIPE, LOOT, ADVANCEMENT, FUNCTION, OREDICT, PIXELMAP, DROPPED }
+
+    public record Mapped(PackType type, String path, Kind kind) {}
+
+    public enum Line {
+        V1_20("1.20.1"), V1_21("1.21.1"), V26("26.x"), V26_3("26.3");
+
+        private final String name;
+
+        Line(String name) { this.name = name; }
+
+        public String title() { return name; }
+
+        public static Line running() { return SharedConstants.getCurrentVersion().getName().startsWith("1.21") ? V1_21 : V1_20; }
+    }
+
+    @Nullable public static String singular(String path) { return swapped(path, 0); }
+
+    @Nullable public static String plural(String path) { return swapped(path, 1); }
+
+    @Nullable private static String swapped(String path, int from) {
+        for (String[] pair : FOLDERS) {
+            if (path.startsWith(pair[from])) { return pair[1 - from] + path.substring(pair[from].length()); }
+        }
+        return null;
+    }
+
+    @Nullable public static Line foreign(Path root) {
+        Line line = line(root);
+        return line == null || line == Line.running() ? null : line;
+    }
+
+    @Nullable private static Line line(Path root) {
+        Path data = root.resolve(RDPLPack.DATA);
+        int plural = 0;
+        int singular = 0;
+        if (Files.isDirectory(data)) {
+            try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(data)) {
+                for (Path namespace : namespaces) {
+                    for (String[] pair : FOLDERS) {
+                        if (Files.isDirectory(namespace.resolve(folder(pair[0])))) { plural++; }
+                        if (Files.isDirectory(namespace.resolve(folder(pair[1])))) { singular++; }
+                    }
+                }
+            }
+            catch (IOException ignored) { }
+        }
+        JsonObject pack = packSection(root);
+        int format = pack == null ? 0 : GsonHelper.isValidPrimitive(pack, "pack_format") ? pack.get("pack_format").getAsInt() : 0;
+        boolean ranged = pack != null && (pack.has("min_format") || pack.has("max_format"));
+        if (plural > 0 && singular == 0) { return Line.V1_20; }
+        boolean hasData = Files.isDirectory(data);
+        if (singular > 0 && plural == 0) { return ranged || format > LAST_1_21_DATA_FORMAT ? modern(pack, format, true) : Line.V1_21; }
+        if (ranged) { return modern(pack, format, hasData); }
+        if (format > 0 && format <= LAST_1_20_FORMAT) { return Line.V1_20; }
+        if (!hasData) { return format > LAST_1_21_RESOURCE_FORMAT ? modern(pack, format, false) : null; }
+        return format > LAST_1_21_DATA_FORMAT ? modern(pack, format, true) : format >= FIRST_1_21_FORMAT ? Line.V1_21 : null;
+    }
+
+    private static Line modern(@Nullable JsonObject pack, int format, boolean data) {
+        int max = pack != null && pack.has("max_format") ? major(pack.get("max_format")) : format;
+        return max > (data ? LAST_26_2_DATA_FORMAT : LAST_26_2_RESOURCE_FORMAT) ? Line.V26_3 : Line.V26;
+    }
+
+    private static int major(JsonElement value) {
+        JsonElement held = value.isJsonArray() && !value.getAsJsonArray().isEmpty() ? value.getAsJsonArray().get(0) : value;
+        return held.isJsonPrimitive() && held.getAsJsonPrimitive().isNumber() ? held.getAsInt() : 0;
+    }
+
+    private static String folder(String prefix) { return prefix.substring(0, prefix.length() - 1); }
+
+    @Nullable private static JsonObject packSection(Path root) {
+        Path meta = root.resolve(PackManager.PACK_META);
+        if (!Files.isRegularFile(meta)) { return null; }
+        try {
+            JsonObject json = JsonParser.parseString(Files.readString(meta, StandardCharsets.UTF_8)).getAsJsonObject();
+            return GsonHelper.isObjectNode(json, "pack") ? json.getAsJsonObject("pack") : null;
+        }
+        catch (IOException | RuntimeException ignored) { return null; }
+    }
+
+    public static boolean legacy(Path root) {
+        Path assets = root.resolve(RDPLPack.ASSETS);
+        if (!Files.isDirectory(assets)) { return false; }
+        JsonObject pack = packSection(root);
+        try { if (pack != null && pack.has("pack_format") && pack.get("pack_format").getAsInt() <= 3) { return true; } }
+        catch (RuntimeException ignored) { }
+        try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(assets)) {
+            for (Path namespace : namespaces) {
+                if (!Files.isDirectory(namespace)) { continue; }
+                try (DirectoryStream<Path> folders = Files.newDirectoryStream(namespace)) {
+                    for (Path folder : folders) {
+                        String name = folder.getFileName().toString().replace("/", "");
+                        if (Files.isDirectory(folder) && DEFINITION_FOLDERS.contains(name) && !Files.isDirectory(root.resolve(RDPLPack.DATA))) { return true; }
+                        if (Files.isDirectory(folder) && "lang".equals(name) && hasLangFile(folder)) { return true; }
+                        if (Files.isDirectory(folder) && PackManager.LANGGATES.equals(name) && hasGateLangFile(folder)) { return true; }
+                    }
+                }
+            }
+        }
+        catch (IOException ignored) { }
+        return false;
+    }
+
+    private static boolean hasGateLangFile(Path gates) throws IOException {
+        try (DirectoryStream<Path> folders = Files.newDirectoryStream(gates)) {
+            for (Path folder : folders) { if (Files.isDirectory(folder) && hasLangFile(folder)) { return true; } }
+        }
+        return false;
+    }
+
+    private static boolean hasLangFile(Path lang) throws IOException {
+        try (DirectoryStream<Path> files = Files.newDirectoryStream(lang)) {
+            for (Path file : files) { if (file.getFileName().toString().replace("/", "").toLowerCase(Locale.ROOT).endsWith(LANG_SUFFIX)) { return true; } }
+        }
+        return false;
+    }
+
+    public static Mapped map(String path) {
+        int slash = path.indexOf('/');
+        String head = slash < 0 ? path : path.substring(0, slash);
+        if (slash > 0 && SOUNDS.equals(head) && !path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW); }
+        if (slash < 0 || CLIENT_FOLDERS.contains(head)) { return client(path); }
+        Mapped mapped = data(path, head);
+        String folder = singular(mapped.path());
+        return folder == null ? mapped : new Mapped(mapped.type(), folder, mapped.kind());
+    }
+
+    public static boolean unchanged(String path) {
+        Mapped mapped = map(path);
+        return mapped.kind() == Kind.RAW && mapped.type() == PackType.CLIENT_RESOURCES && mapped.path().equals(path);
+    }
+
+    private static Mapped client(String path) {
+        if ((path.startsWith("lang/") || path.startsWith(PackManager.LANGGATES + "/")) && path.toLowerCase(Locale.ROOT).endsWith(LANG_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path.substring(0, path.length() - LANG_SUFFIX.length()) + PackManager.JSON_SUFFIX, Kind.LANG); }
+        if (path.startsWith("textures/blocks/") || path.startsWith("textures/items/")) {
+            String moved = path.startsWith("textures/blocks/") ? "textures/block/" + path.substring("textures/blocks/".length()) : "textures/item/" + path.substring("textures/items/".length());
+            return new Mapped(PackType.CLIENT_RESOURCES, moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.PIXELMAP : Kind.RAW);
+        }
+        if (path.startsWith("textures/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.PIXELMAP); }
+        if (path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX)) {
+            String[] parts = path.split("/");
+            if (parts.length == 4 && "item".equals(parts[1])) { return new Mapped(PackType.CLIENT_RESOURCES, "models/item/" + parts[3], Kind.MODEL); }
+            return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.MODEL);
+        }
+        if (path.startsWith("blockstates/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.BLOCKSTATE); }
+        return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW);
+    }
+
+    private static Mapped data(String path, String head) {
+        return switch (head) {
+            case "recipes" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.RECIPE : Kind.RAW);
+            case "loot_tables", "loot_injections" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW);
+            case "advancements" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.ADVANCEMENT : Kind.RAW);
+            case "functions" -> new Mapped(PackType.SERVER_DATA, path, Kind.FUNCTION);
+            case "oredict" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.OREDICT : Kind.DROPPED);
+            case "structures", "tags" -> new Mapped(PackType.SERVER_DATA, path, Kind.RAW);
+            default -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.DEFINITION : Kind.RAW);
+        };
+    }
+}

@@ -1,0 +1,350 @@
+package mctmods.resourcedatapackloader.common.exposures;
+
+import mctmods.resourcedatapackloader.common.cards.CardEvents;
+import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffectDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureLevelDef;
+import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
+import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.util.ContentEffects;
+import mctmods.resourcedatapackloader.common.util.dimension.ExposurePlaces;
+import mctmods.resourcedatapackloader.common.util.dimension.ExposureSpread;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.locale.Language;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.scores.PlayerTeam;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.tick.PlayerTickEvent;
+
+public final class ContentExposures {
+    private static final String[] BYPASSES = { "bypasses_armor", "bypasses_effects", "bypasses_enchantments" };
+    private static final String TIMER = "RDPLExposure";
+    private static final Map<ExposureDef, Map<Block, Integer>> BLOCK_LEVELS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Map<Item, Integer>> ITEM_LEVELS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Set<Item>> IMMUNE_ITEMS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, List<Holder<MobEffect>>> MARKERS = new IdentityHashMap<>();
+    private static final Map<PotionEffectDef, Holder<MobEffect>> EXTRAS = new IdentityHashMap<>();
+    private static final Map<ExposureDef, Holder<MobEffect>> IMMUNITIES = new IdentityHashMap<>();
+
+    private ContentExposures() {}
+
+    public static boolean enabled() { return !ContentRegistry.exposures().isEmpty(); }
+
+    public static boolean spreads() {
+        for (ExposureDef def : ContentRegistry.exposures()) {
+            if (def.spreads()) { return true; }
+        }
+        return false;
+    }
+
+    public static void onPlayerTick(PlayerTickEvent.Post event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
+        for (ExposureDef def : ContentRegistry.exposures()) { tick(def, player); }
+    }
+
+    public static void onMobTick(EntityTickEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity living) || living instanceof Player || living.level().isClientSide()) { return; }
+        for (ExposureDef def : ContentRegistry.exposures()) {
+            if (def.spreads()) { tickMob(def, living); }
+        }
+    }
+
+    private static void tick(ExposureDef def, ServerPlayer player) {
+        if (def.skipsCreative() && (player.isCreative() || player.isSpectator())) {
+            applyLevel(def, player, 0);
+            CardEvents.exposureLevel(player, def, 0);
+            return;
+        }
+        if (player.tickCount % def.scanInterval() == 0) {
+            int reached = scan(def, player);
+            applyLevel(def, player, reached);
+            CardEvents.exposureLevel(player, def, reached);
+            spreadFrom(def, player, reached);
+        }
+        damageTick(def, player);
+    }
+
+    private static void tickMob(ExposureDef def, LivingEntity mob) {
+        boolean catches = ExposureSpread.catches(def, mob);
+        if (!catches && ExposureSpread.carrierLevel(def, mob) <= 0) { return; }
+        if (mob.tickCount % def.scanInterval() == 0) {
+            int reached = catches && !immune(def, mob) ? Math.min(def.levels().size(), ExposureSpread.caughtLevel(def, mob)) : 0;
+            if (catches) { applyLevel(def, mob, reached); }
+            spreadFrom(def, mob, reached);
+        }
+        if (catches) { damageTick(def, mob); }
+    }
+
+    private static void spreadFrom(ExposureDef def, LivingEntity living, int reached) {
+        if (!def.spreads()) { return; }
+        int spreading = Math.max(ExposureSpread.carrierLevel(def, living), def.contagious() ? reached : 0);
+        ExposureSpread.spread(def, living, Math.min(def.levels().size(), spreading));
+    }
+
+    private static int scan(ExposureDef def, ServerPlayer player) {
+        if (immune(def, player)) { return 0; }
+        int most = def.levels().size();
+        ServerLevel level = player.serverLevel();
+        int reached = Math.max(def.dimensions().getOrDefault(level.dimension().location(), 0), scanItems(def, player, most));
+        reached = Math.max(reached, Math.max(ExposureSpread.weatherLevel(def, player), ExposureSpread.caughtLevel(def, player)));
+        reached = Math.max(reached, ExposurePlaces.level(def, player));
+        if (reached >= most) { return most; }
+        return Math.max(reached, scanWorld(def, player, level, most));
+    }
+
+    private static boolean immune(ExposureDef def, LivingEntity living) {
+        if (!def.immunity().isEmpty()) {
+            Holder<MobEffect> immune = immunity(def);
+            if (immune != null && living.hasEffect(immune)) { return true; }
+        }
+        return wearsImmune(def, living) || onImmuneTeam(def, living);
+    }
+
+    private static boolean wearsImmune(ExposureDef def, LivingEntity living) {
+        if (def.immuneItems().isEmpty()) { return false; }
+        Set<Item> immune = immuneItems(def);
+        for (EquipmentSlot slot : EquipmentSlot.values()) {
+            if (slot == EquipmentSlot.BODY) { continue; }
+            ItemStack stack = living.getItemBySlot(slot);
+            if (!stack.isEmpty() && immune.contains(stack.getItem())) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean onImmuneTeam(ExposureDef def, LivingEntity living) {
+        if (def.immuneTeams().isEmpty()) { return false; }
+        MinecraftServer server = living.level().getServer();
+        if (server == null) { return false; }
+        PlayerTeam team = ContentTeams.teamOf(server, ContentTeams.memberName(living));
+        return team != null && def.immuneTeams().contains(team.getName());
+    }
+
+    @Nullable private static Holder<MobEffect> immunity(ExposureDef def) { return cachedEffect(IMMUNITIES, def, def.immunity(), def, "immunity"); }
+
+    private static int scanItems(ExposureDef def, ServerPlayer player, int most) {
+        Map<Item, Integer> levels = itemLevels(def);
+        if (levels.isEmpty()) { return 0; }
+        int reached = scanList(levels, player.getInventory().items, 0, most);
+        if (reached >= most) { return reached; }
+        reached = scanList(levels, player.getInventory().offhand, reached, most);
+        if (reached >= most) { return reached; }
+        return scanList(levels, player.getInventory().armor, reached, most);
+    }
+
+    private static int scanList(Map<Item, Integer> levels, List<ItemStack> list, int reached, int most) {
+        for (ItemStack stack : list) {
+            if (stack.isEmpty()) { continue; }
+            Integer found = levels.get(stack.getItem());
+            if (found != null && found > reached) { reached = found; }
+            if (reached >= most) { return reached; }
+        }
+        return reached;
+    }
+
+    private static int scanWorld(ExposureDef def, ServerPlayer player, ServerLevel level, int most) {
+        Map<Block, Integer> levels = blockLevels(def);
+        int radius = def.range();
+        if (levels.isEmpty() || radius <= 0) { return 0; }
+        int radiusSq = radius * radius;
+        int centerX = Mth.floor(player.getX());
+        int centerY = Mth.floor(player.getY());
+        int centerZ = Mth.floor(player.getZ());
+        int lowest = Math.max(level.getMinBuildHeight(), centerY - radius);
+        int highest = Math.min(level.getMaxBuildHeight() - 1, centerY + radius);
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int reached = 0;
+        int sources = 0;
+        for (int chunkX = centerX - radius >> 4; chunkX <= centerX + radius >> 4; chunkX++) {
+            for (int chunkZ = centerZ - radius >> 4; chunkZ <= centerZ + radius >> 4; chunkZ++) {
+                LevelChunk chunk = level.getChunkSource().getChunkNow(chunkX, chunkZ);
+                if (chunk == null) { continue; }
+                int fromX = Math.max(centerX - radius, chunkX << 4);
+                int toX = Math.min(centerX + radius, (chunkX << 4) + 15);
+                int fromZ = Math.max(centerZ - radius, chunkZ << 4);
+                int toZ = Math.min(centerZ + radius, (chunkZ << 4) + 15);
+                for (int y = lowest; y <= highest; y++) {
+                    int offY = (y - centerY) * (y - centerY);
+                    for (int x = fromX; x <= toX; x++) {
+                        int offX = (x - centerX) * (x - centerX);
+                        for (int z = fromZ; z <= toZ; z++) {
+                            int offZ = (z - centerZ) * (z - centerZ);
+                            if (offX + offY + offZ > radiusSq) { continue; }
+                            Integer found = levels.get(chunk.getBlockState(at.set(x, y, z)).getBlock());
+                            if (found == null || found <= 0) { continue; }
+                            if (found > reached) { reached = found; }
+                            if (reached >= most) { return most; }
+                            sources++;
+                        }
+                    }
+                }
+            }
+        }
+        if (reached > 0 && reached < most && def.sourcesForNextLevel() > 0 && sources >= def.sourcesForNextLevel()) { return reached + 1; }
+        return reached;
+    }
+
+    private static void applyLevel(ExposureDef def, LivingEntity living, int reached) {
+        int duration = def.scanInterval() * 2 + 20;
+        List<Holder<MobEffect>> markers = markers(def);
+        for (int index = 0; index < markers.size(); index++) {
+            Holder<MobEffect> marker = markers.get(index);
+            if (index + 1 == reached || marker == null) { continue; }
+            living.removeEffect(marker);
+        }
+        if (reached <= 0) { return; }
+        ExposureLevelDef entry = def.levels().get(reached - 1);
+        Holder<MobEffect> marker = markers.get(reached - 1);
+        if (marker == null) { return; }
+        living.addEffect(new MobEffectInstance(marker, duration, 0, false, true));
+        for (PotionEffectDef extra : entry.extras()) {
+            Holder<MobEffect> effect = extraEffect(extra, def);
+            if (effect == null) { continue; }
+            living.addEffect(new MobEffectInstance(effect, extra.duration() > 0 ? extra.duration() : duration, extra.amplifier(), extra.ambient(), extra.showParticles()));
+        }
+    }
+
+    private static void damageTick(ExposureDef def, LivingEntity living) {
+        ExposureLevelDef active = null;
+        List<Holder<MobEffect>> markers = markers(def);
+        for (int index = 0; index < markers.size(); index++) {
+            Holder<MobEffect> marker = markers.get(index);
+            if (marker != null && living.hasEffect(marker)) { active = def.levels().get(index); }
+        }
+        CompoundTag data = living.getPersistentData();
+        String tag = TIMER + def.name();
+        if (active != null && active.damage() > 0.0F && active.damageInterval() > 0) {
+            int timer = data.getInt(tag) + 1;
+            if (timer >= active.damageInterval()) {
+                timer = 0;
+                living.hurt(source(def, living, (ServerLevel) living.level()), active.damage());
+            }
+            data.putInt(tag, timer);
+        }
+        else if (data.contains(tag)) { data.putInt(tag, 0); }
+    }
+
+    private static List<Holder<MobEffect>> markers(ExposureDef def) {
+        return MARKERS.computeIfAbsent(def, held -> {
+            List<Holder<MobEffect>> markers = new ArrayList<>();
+            for (int index = 0; index < held.levels().size(); index++) { markers.add(effect(held.levels().get(index).effect(), held, "level " + (index + 1))); }
+            return markers;
+        });
+    }
+
+    @Nullable private static Holder<MobEffect> extraEffect(PotionEffectDef extra, ExposureDef def) { return cachedEffect(EXTRAS, extra, extra.potion(), def, "extra effect"); }
+
+    @Nullable private static <K> Holder<MobEffect> cachedEffect(Map<K, Holder<MobEffect>> cache, K key, String name, ExposureDef def, String what) {
+        if (cache.containsKey(key)) { return cache.get(key); }
+        Holder<MobEffect> found = effect(name, def, what);
+        cache.put(key, found);
+        return found;
+    }
+
+    @Nullable private static Holder<MobEffect> effect(String name, ExposureDef def, String what) {
+        Holder<MobEffect> found = ContentEffects.find(name);
+        if (found == null) { ContentLog.LOGGER.error("Exposure {} names effect {} as its {}, which nothing registers, so that part does nothing", def.key(), name, what); }
+        return found;
+    }
+
+    private static DamageSource source(ExposureDef def, LivingEntity living, ServerLevel level) {
+        ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, def.key());
+        Holder<DamageType> type = level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(key).orElse(null);
+        return type == null ? living.damageSources().magic() : new ExposureDamage(type);
+    }
+
+    private static Map<Block, Integer> blockLevels(ExposureDef def) { return BLOCK_LEVELS.computeIfAbsent(def, held -> resolved(held, held.blocks(), BuiltInRegistries.BLOCK, "block")); }
+
+    private static Map<Item, Integer> itemLevels(ExposureDef def) { return ITEM_LEVELS.computeIfAbsent(def, held -> resolved(held, held.items(), BuiltInRegistries.ITEM, "item")); }
+
+    private static Set<Item> immuneItems(ExposureDef def) {
+        return IMMUNE_ITEMS.computeIfAbsent(def, held -> {
+            Set<Item> items = Collections.newSetFromMap(new IdentityHashMap<>());
+            for (ResourceLocation name : held.immuneItems()) {
+                Item item = Registered.find(BuiltInRegistries.ITEM, name);
+                if (item == null) { ContentLog.LOGGER.error("Exposure {} names immune item {}, which is not registered, so it is ignored", held.key(), name); }
+                else { items.add(item); }
+            }
+            return items;
+        });
+    }
+
+    private static <T> Map<T, Integer> resolved(ExposureDef def, Map<ResourceLocation, Integer> named, Registry<T> registry, String kind) {
+        Map<T, Integer> levels = new IdentityHashMap<>();
+        for (Map.Entry<ResourceLocation, Integer> entry : named.entrySet()) {
+            T found = Registered.find(registry, entry.getKey());
+            if (found == null) { ContentLog.LOGGER.error("Exposure {} names {} {}, which is not registered, so it is ignored", def.key(), kind, entry.getKey()); }
+            else { levels.put(found, entry.getValue()); }
+        }
+        return levels;
+    }
+
+    public static void generate() {
+        if (!enabled()) { return; }
+        JsonArray names = new JsonArray();
+        for (ExposureDef def : ContentRegistry.exposures()) {
+            JsonObject type = new JsonObject();
+            type.addProperty("message_id", "rdpl." + def.name());
+            type.addProperty("exhaustion", 0.0F);
+            type.addProperty("scaling", "never");
+            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "damage_type/" + def.key().getPath() + PackManager.JSON_SUFFIX, type.toString());
+            names.add(def.key().toString());
+        }
+        for (String tag : BYPASSES) {
+            JsonObject values = new JsonObject();
+            values.addProperty("replace", false);
+            values.add("values", names);
+            GeneratedResources.put(PackType.SERVER_DATA, "minecraft", "tags/damage_type/" + tag + PackManager.JSON_SUFFIX, values.toString());
+        }
+        Summary.info("exposures.generated", "Generated " + names.size() + " damage type(s) from exposures");
+    }
+
+    private static final class ExposureDamage extends DamageSource {
+        private ExposureDamage(Holder<DamageType> type) { super(type); }
+
+        @Override @Nonnull public Component getLocalizedDeathMessage(@Nonnull LivingEntity victim) {
+            String message = "death.attack." + type().msgId();
+            LivingEntity killer = victim.getKillCredit();
+            if (killer != null && Language.getInstance().has(message + ".player")) { return Component.translatable(message + ".player", victim.getDisplayName(), killer.getDisplayName()); }
+            return Component.translatable(message, victim.getDisplayName());
+        }
+    }
+}

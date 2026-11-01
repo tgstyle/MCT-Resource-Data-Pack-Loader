@@ -1,0 +1,87 @@
+package mctmods.resourcedatapackloader.common.fuels;
+
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
+import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Summary;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.util.ArrayList;
+import java.util.List;
+import javax.annotation.Nullable;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.event.furnace.FurnaceFuelBurnTimeEvent;
+
+public final class ContentFuels {
+    private static final String FUELS = "fuels";
+    private static final String ORE_DICT = "oreDict";
+    private static final String TAG = "tag";
+    private static final List<Entry> ENTRIES = new ArrayList<>();
+    private static final PackGeneration GENERATION = new PackGeneration();
+
+    private ContentFuels() {}
+
+    public static boolean noneLoaded() {
+        if (!GENERATION.stale()) { return ENTRIES.isEmpty(); }
+        ENTRIES.clear();
+        if (!Config.content.fuels()) { return true; }
+        Json.eachFile(PackManager.FUELS, "fuel file", ContentFuels::read);
+        if (!ENTRIES.isEmpty()) { Summary.info("fuels", "Loaded " + ENTRIES.size() + " fuel entry/entries"); }
+        return ENTRIES.isEmpty();
+    }
+
+    private static void read(ResourceLocation key, String contents) {
+        JsonObject json = Json.object(key, contents, "fuel file");
+        if (json == null) { return; }
+        for (JsonElement element : Json.getJsonArray(json, FUELS)) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            int burnTime = Json.getInt(entry, "burnTime", 0);
+            if (burnTime <= 0) {
+                ContentLog.LOGGER.error("A fuel in {} has no positive burnTime, skipping it", key);
+                continue;
+            }
+            if (entry.has(ORE_DICT)) { ContentLog.LOGGER.warn("A fuel in {} uses '{}', which this line does not read. Name an item tag under '{}' instead, such as c:ingots/copper or forge:ingots/copper", key, ORE_DICT, TAG); }
+            String tag = Json.getString(entry, TAG, "").trim();
+            if (!tag.isEmpty()) {
+                ResourceLocation name = ResourceLocation.tryParse(tag);
+                if (name == null) {
+                    ContentLog.LOGGER.error("A fuel in {} names tag '{}', which is not a valid tag id, skipping it", key, tag);
+                    continue;
+                }
+                ENTRIES.add(new Entry(null, TagKey.create(Registries.ITEM, name), burnTime));
+                continue;
+            }
+            Item item = ContentStacks.find(key, Json.getString(entry, "item", ""));
+            if (item == null) { continue; }
+            ENTRIES.add(new Entry(item, null, burnTime));
+        }
+    }
+
+    public static void onFuelBurnTime(FurnaceFuelBurnTimeEvent event) {
+        if (noneLoaded()) { return; }
+        ItemStack fuel = event.getItemStack();
+        if (fuel.isEmpty()) { return; }
+        for (Entry entry : ENTRIES) {
+            if (entry.matches(fuel)) {
+                event.setBurnTime(entry.burnTime());
+                return;
+            }
+        }
+    }
+
+    private record Entry(@Nullable Item item, @Nullable TagKey<Item> tag, int burnTime) {
+        private boolean matches(ItemStack fuel) { return tag != null ? fuel.is(tag) : fuel.is(item); }
+    }
+}

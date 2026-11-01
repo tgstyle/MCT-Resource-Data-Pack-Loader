@@ -1,0 +1,80 @@
+package mctmods.resourcedatapackloader.common.pack.definitions;
+
+import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.json.Json;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import java.nio.file.Path;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLPaths;
+
+public final class PackRequirements {
+    public static final String REQUIRES = "requires";
+    public static final String CONFIG_GATE = "config:";
+    public static final String FILE_GATE = "file:";
+    private static final List<String> FOLDERS = List.of(
+            PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.BIOMES, PackManager.WORLDGEN,
+            PackManager.DIMENSIONS, PackManager.WORLDTEMPLATES, PackManager.PATHINTERSECTS, PackManager.STRUCTUREMAPS, PackManager.PORTALFRAMES, PackManager.GATES, PackManager.CARDS, PackManager.DIALOGS, PackManager.POTIONS,
+            PackManager.POTION_TYPES, PackManager.ENCHANTMENTS, PackManager.BREWING, PackManager.VILLAGERS, PackManager.TRADES, PackManager.VILLAGES, PackManager.ENTITIES);
+    private static final Set<String> WANTED = new LinkedHashSet<>();
+    private static boolean scanned;
+
+    private PackRequirements() {}
+
+    public static Set<String> required() {
+        if (!scanned) { scan(); }
+        return Collections.unmodifiableSet(WANTED);
+    }
+
+    public static boolean modLoaded(String modid) { return ModList.get().isLoaded(modid); }
+
+    public static Path gameDirectory() { return FMLPaths.GAMEDIR.get(); }
+
+    private static void scan() {
+        scanned = true;
+        PackManager manager = PackManager.get();
+        if (manager.isEmpty()) { return; }
+        Set<String> found = new LinkedHashSet<>();
+        for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, (namespace, path, contents) -> Json.within("requirements file", namespace + ":" + path, () -> {
+            collect(contents, found);
+            return null;
+        })); }
+        manager.forEachAssets(PackManager.LANGGATES, PackManager.JSON, (namespace, path, contents) -> {
+            if (path.toLowerCase(Locale.ROOT).endsWith("/gate")) {
+                Json.within("requirements file", namespace + ":" + PackManager.LANGGATES + "/" + path, () -> {
+                    collect(contents, found);
+                    return null;
+                });
+            }
+        });
+        for (String modid : found) {
+            if (modLoaded(modid) || manager.provides(modid)) { continue; }
+            WANTED.add(modid);
+        }
+    }
+
+    private static void collect(String contents, Set<String> found) {
+        if (!contents.contains("\"" + REQUIRES + "\"")) { return; }
+        try {
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
+            if (json == null || !json.has(REQUIRES)) { return; }
+            JsonElement element = json.get(REQUIRES);
+            if (!element.isJsonArray()) { return; }
+            for (JsonElement each : element.getAsJsonArray()) {
+                if (!each.isJsonPrimitive()) { continue; }
+                String modid = Settings.lower(each.getAsString());
+                if (modid.isEmpty() || modid.startsWith(CONFIG_GATE) || modid.startsWith(FILE_GATE)) { continue; }
+                found.add(modid);
+            }
+        }
+        catch (RuntimeException malformed) { ContentLog.LOGGER.debug("Could not read requirements from a pack file: {}", malformed.getMessage()); }
+    }
+}

@@ -1,0 +1,28 @@
+package mctmods.resourcedatapackloader.common.util.dimension;
+
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
+import java.util.Objects;
+import java.util.Set;
+import javax.annotation.Nullable;
+
+public final class Travel {
+    private Travel() {}
+
+    public static boolean to(Entity entity, ServerLevel level, double x, double y, double z, float yaw, float pitch) { return move(entity, level, x, y, z, yaw, pitch) != null; }
+
+    @Nullable public static Entity move(Entity entity, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
+        boolean crossing = entity.level() != level;
+        entity.teleportTo(level, x, y, z, Set.of(), yaw, pitch);
+        Entity moved = entity;
+        if (crossing) { moved = Objects.requireNonNullElse(level.getEntity(entity.getUUID()), entity); }
+        if (moved.level() != level) { return null; }
+        moved.resetFallDistance();
+        moved.setDeltaMovement(Vec3.ZERO);
+        moved.setYHeadRot(yaw);
+        if (moved instanceof LivingEntity living) { living.yBodyRot = yaw; }
+        return moved;
+    }
+}
