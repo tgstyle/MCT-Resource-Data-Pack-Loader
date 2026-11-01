@@ -83,7 +83,7 @@ public final class ContentCitySewerPiece extends StructurePiece {
 
     static int floorAt(int street) { return street - ContentCity.sewerDepth(); }
 
-    static boolean cramped(int bottom, int street) {
+    public static boolean cramped(int bottom, int street) {
         int floor = floorAt(street);
         return floor < bottom + FLOOR_LEAST || floor + ContentCity.sewerHeight() + CLEAR_UNDER >= street;
     }

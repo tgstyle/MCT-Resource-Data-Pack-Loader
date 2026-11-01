@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-final class CityEnds {
+public final class CityEnds {
     private static final int ATTACH_GAP = 8;
     private static final int MERGE_ROWS = 3;
 
@@ -36,9 +36,9 @@ final class CityEnds {
 
     private CityEnds() {}
 
-    static int attachGap() { return Math.max(ATTACH_GAP, CityPlan.fullWidth() + 2); }
+    public static int attachGap() { return Math.max(ATTACH_GAP, CityPlan.fullWidth() + 2); }
 
-    static void closeEnds(CityGround ground, @Nullable Town town, List<Line> rows, List<Line> columns, boolean hinted, boolean told) {
+    public static void closeEnds(CityGround ground, @Nullable Town town, List<Line> rows, List<Line> columns, boolean hinted, boolean told) {
         long seed = ground.seed();
         List<BoundingBox> wells = town == null ? List.of() : CityLayout.mapWells(town);
         List<Rail> rails = town == null ? List.of() : CityRails.placed(seed, town);
@@ -272,7 +272,7 @@ final class CityEnds {
         closing.say("The dead end at {}, {} and the offset street at {}, {} tie through a cross street at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), avenue.minX(), avenue.minZ());
     }
 
-    static boolean metBeyond(List<Line> lines, Line line, boolean alongX, int beyond, int acrossLo, int acrossHi) {
+    public static boolean metBeyond(List<Line> lines, Line line, boolean alongX, int beyond, int acrossLo, int acrossHi) {
         for (Line other : lines) {
             if (other.equals(line) || other.alley()) { continue; }
             BoundingBox met = other.box();
@@ -310,7 +310,7 @@ final class CityEnds {
         return null;
     }
 
-    static boolean stubHeld(CityGround ground, Town town, Town neighbor, Line street, BoundingBox strip) {
+    public static boolean stubHeld(CityGround ground, Town town, Town neighbor, Line street, BoundingBox strip) {
         long seed = ground.seed();
         List<Line> rows = new ArrayList<>();
         List<Line> columns = new ArrayList<>();

@@ -44,7 +44,7 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
 
     @Override @Nonnull public MapCodec<? extends IGlobalLootModifier> codec() { return CODEC; }
 
-    @Nullable static Map<Identifier, Identifier> parse(String owner, JsonElement element) {
+    @Nullable public static Map<Identifier, Identifier> parse(String owner, JsonElement element) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives loot that is not an object of loot table to loot table, ignoring it", owner);
             return null;
@@ -74,7 +74,7 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
         return swaps;
     }
 
-    @Nullable static Identifier id(String text) {
+    @Nullable public static Identifier id(String text) {
         String lowered = Settings.lower(text);
         return lowered.isEmpty() ? null : Identifier.tryParse(lowered);
     }
@@ -93,7 +93,7 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
 
     private static LootTable table(MinecraftServer server, Identifier id) { return server.reloadableRegistries().getLootTable(ResourceKey.create(Registries.LOOT_TABLE, id)); }
 
-    static void start(MinecraftServer server, Collection<Map<Identifier, Identifier>> maps) {
+    public static void start(MinecraftServer server, Collection<Map<Identifier, Identifier>> maps) {
         Set<Identifier> checked = new LinkedHashSet<>();
         for (Map<Identifier, Identifier> swaps : maps) {
             for (Map.Entry<Identifier, Identifier> entry : swaps.entrySet()) {
@@ -103,7 +103,7 @@ public final class ContentLootSwitch extends LineCompat.Modifier {
         }
     }
 
-    static void startMaps(MinecraftServer server, Collection<StructureMapDef> maps) {
+    public static void startMaps(MinecraftServer server, Collection<StructureMapDef> maps) {
         Set<Identifier> checked = new LinkedHashSet<>();
         for (StructureMapDef def : maps) {
             if (def.loot() != null && absent(server, checked, def.loot())) { ContentLog.LOGGER.error("Structure map {} gives loot {}, which names no loot table, so the chests it fills drop nothing", def.key(), def.loot()); }

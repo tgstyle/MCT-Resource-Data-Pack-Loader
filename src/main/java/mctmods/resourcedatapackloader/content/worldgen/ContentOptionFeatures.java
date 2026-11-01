@@ -46,7 +46,7 @@ public record ContentOptionFeatures() implements LineCompat.IBiomeEdit {
         boolean any() { return !copies.isEmpty() || !dropped.isEmpty() || !added.isEmpty(); }
     }
 
-    static boolean active() { return tuned.containsKey(WORLD); }
+    public static boolean active() { return tuned.containsKey(WORLD); }
 
     static void publish(Identifier owner, Map<String, Holder<PlacedFeature>> made, Set<String> silenced, Map<String, Holder<PlacedFeature>> extra) {
         Map<Identifier, Tuned> next = WORLD.equals(owner) ? new LinkedHashMap<>() : new LinkedHashMap<>(tuned);
@@ -81,7 +81,7 @@ public record ContentOptionFeatures() implements LineCompat.IBiomeEdit {
                 .orElse(null);
     }
 
-    static Set<PlacedFeature> refused(ServerLevel level) {
+    public static Set<PlacedFeature> refused(ServerLevel level) {
         Set<PlacedFeature> out = Collections.newSetFromMap(new IdentityHashMap<>());
         Identifier here = level.dimension() != Level.OVERWORLD ? level.dimension().identifier() : ContentWorldShape.madeHere(level) ? WORLD : null;
         Registry<PlacedFeature> placed = level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE);

@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class ContentGeneratedItems {
-    static final Identifier BANNER_RENDERER = ResourceDataPackLoader.id("banner");
+public final class ContentGeneratedItems {
+    public static final Identifier BANNER_RENDERER = ResourceDataPackLoader.id("banner");
     private static final int POTION_DEFAULT = -13083194;
     private static final double BANNER_SCALE = 0.6666667;
     private static final String[][] ARMOR_LAYERS = {{"humanoid", "_layer_1"}, {"humanoid_leggings", "_layer_2"}};
@@ -98,7 +98,7 @@ final class ContentGeneratedItems {
         return layers;
     }
 
-    static int blockTintLayers(Identifier block) {
+    public static int blockTintLayers(Identifier block) {
         JsonObject states = assetJson(block.getNamespace(), "blockstates/" + block.getPath() + PackManager.JSON_SUFFIX);
         if (states == null) { return tintLayers(block.withPrefix("block/")); }
         Set<Identifier> models = new HashSet<>();

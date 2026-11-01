@@ -11,7 +11,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-final class ConvertLoot {
+public final class ConvertLoot {
     private static final String KILLED_BY_PLAYER = "minecraft:killed_by_player";
     private static final String ENTITY_PROPERTIES = "minecraft:entity_properties";
     private static final String SET_ATTRIBUTES = "minecraft:set_attributes";
@@ -20,7 +20,7 @@ final class ConvertLoot {
 
     private ConvertLoot() {}
 
-    static String loot(JsonObject json, String namespace, Ported pack) {
+    public static String loot(JsonObject json, String namespace, Ported pack) {
         if (GsonHelper.isValidPrimitive(json, "target")) { lootTable(json, "target", pack); }
         lootWalk(json, namespace, pack);
         return Ported.GSON.toJson(json);

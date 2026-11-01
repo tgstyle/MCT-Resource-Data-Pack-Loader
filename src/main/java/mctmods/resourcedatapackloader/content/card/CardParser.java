@@ -22,7 +22,7 @@ public final class CardParser {
 
     private CardParser() {}
 
-    @Nullable static CardRule parse(Identifier id, String contents) {
+    @Nullable public static CardRule parse(Identifier id, String contents) {
         JsonObject json = Json.object(id, contents, "card file");
         if (json == null) { return null; }
         String key = id.toString();

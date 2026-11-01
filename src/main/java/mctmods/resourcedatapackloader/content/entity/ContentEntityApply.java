@@ -46,16 +46,16 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class ContentEntityApply {
-    static final String DRESSED = "rdplDressed";
+public final class ContentEntityApply {
+    public static final String DRESSED = "rdplDressed";
     private static final String ROLLED = "rdplBabyRolled";
     private static final Set<String> MISSING = new HashSet<>();
-    static final String YOUNG = "rdplBabyYoung";
+    public static final String YOUNG = "rdplBabyYoung";
     private static final Map<String, String> CACTUS_PATHS = Map.of("danger_cactus", "DANGER_OTHER", "damage_cactus", "DAMAGE_OTHER");
 
     private ContentEntityApply() {}
 
-    static void dress(Entity entity, EntityVariantDef def) {
+    public static void dress(Entity entity, EntityVariantDef def) {
         CompoundTag data = entity.getPersistentData();
         boolean first = !data.getBooleanOr(DRESSED, false);
         data.putBoolean(DRESSED, true);
@@ -226,7 +226,7 @@ final class ContentEntityApply {
         mob.moveControl = new SwimmingMoveControl(mob);
     }
 
-    static void amphibious(Mob mob) {
+    public static void amphibious(Mob mob) {
         boolean wet = mob.isInWater();
         if (wet == mob.getNavigation() instanceof WaterBoundPathNavigation) { return; }
         if (wet) {

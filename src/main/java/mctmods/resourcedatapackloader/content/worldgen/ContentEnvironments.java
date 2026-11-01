@@ -47,7 +47,7 @@ public final class ContentEnvironments {
     public static final String DEFAULT = "default";
     private static final String ENVIRONMENTS = "environments";
     private static final List<String> BLOCKS = List.of("sky", "ambience");
-    static final List<String> FIXED = List.of("hasSkyLight", "surfaceWorld", "respawn", "respawnDimension", "spawning", "nether", "beds", "waterVaporizes", "groundLevel", "movementFactor", "fixedTime", "ambientLight");
+    public static final List<String> FIXED = List.of("hasSkyLight", "surfaceWorld", "respawn", "respawnDimension", "spawning", "nether", "beds", "waterVaporizes", "groundLevel", "movementFactor", "fixedTime", "ambientLight");
     private static final String BIOMES = "biomes";
     private static final String SPAWNING = "spawning";
     private static final String GROWTH = "growth";
@@ -195,26 +195,26 @@ public final class ContentEnvironments {
         return sets == null ? null : sets.get(active.getFirst());
     }
 
-    static RuleSwitchDef wide(Identifier dimension) {
+    public static RuleSwitchDef wide(Identifier dimension) {
         DimensionDef whole = whole(dimension);
         return whole == null ? RuleSwitchDef.NONE : RULESETS.getOrDefault(whole, RuleSwitchDef.NONE);
     }
 
-    static SpawnSwitchDef spawning(ServerLevel level, BlockPos pos) { return chosen(level, pos, SPAWNS, SpawnSwitchDef.NONE); }
+    public static SpawnSwitchDef spawning(ServerLevel level, BlockPos pos) { return chosen(level, pos, SPAWNS, SpawnSwitchDef.NONE); }
 
-    static GrowSwitchDef growth(ServerLevel level, BlockPos pos) { return chosen(level, pos, GROWS, GrowSwitchDef.NONE); }
+    public static GrowSwitchDef growth(ServerLevel level, BlockPos pos) { return chosen(level, pos, GROWS, GrowSwitchDef.NONE); }
 
-    static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
+    public static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
 
-    static Map<Identifier, Identifier> loot(ServerLevel level, BlockPos pos) { return chosen(level, pos, LOOTS, Map.of()); }
+    public static Map<Identifier, Identifier> loot(ServerLevel level, BlockPos pos) { return chosen(level, pos, LOOTS, Map.of()); }
 
-    static TradeSwitchDef trades(ServerLevel level, BlockPos pos) { return chosen(level, pos, TRADELINES, TradeSwitchDef.NONE); }
+    public static TradeSwitchDef trades(ServerLevel level, BlockPos pos) { return chosen(level, pos, TRADELINES, TradeSwitchDef.NONE); }
 
-    static RuleSwitchDef rules(ServerLevel level, BlockPos pos) { return chosen(level, pos, RULESETS, RuleSwitchDef.NONE); }
+    public static RuleSwitchDef rules(ServerLevel level, BlockPos pos) { return chosen(level, pos, RULESETS, RuleSwitchDef.NONE); }
 
-    static RaidSwitchDef raids(ServerLevel level, BlockPos pos) { return chosen(level, pos, RAIDLINES, RaidSwitchDef.NONE); }
+    public static RaidSwitchDef raids(ServerLevel level, BlockPos pos) { return chosen(level, pos, RAIDLINES, RaidSwitchDef.NONE); }
 
-    static List<SpawnSwitchDef> spawnings(Identifier dimension) {
+    public static List<SpawnSwitchDef> spawnings(Identifier dimension) {
         List<String> active = ACTIVE.get(dimension);
         Map<String, DimensionDef> sets = active == null ? null : SETS.get(dimension);
         if (sets == null) { return List.of(); }
@@ -232,7 +232,7 @@ public final class ContentEnvironments {
 
     public static Set<String> names(Identifier dimension) { return SETS.getOrDefault(dimension, Map.of()).keySet(); }
 
-    static boolean local(Identifier dimension, String name) {
+    public static boolean local(Identifier dimension, String name) {
         DimensionDef set = SETS.getOrDefault(dimension, Map.of()).get(name);
         return set != null && PLACES.containsKey(set);
     }
@@ -245,13 +245,13 @@ public final class ContentEnvironments {
         announce(server, dimension, before);
     }
 
-    static void announce(MinecraftServer server, Identifier dimension, List<String> before) {
+    public static void announce(MinecraftServer server, Identifier dimension, List<String> before) {
         List<String> entered = new ArrayList<>(active(dimension));
         entered.removeAll(before);
         if (!entered.isEmpty()) { CardEvents.environmentChanged(server, dimension, entered); }
     }
 
-    static void change(MinecraftServer server, Identifier dimension, String name, boolean on) {
+    public static void change(MinecraftServer server, Identifier dimension, String name, boolean on) {
         List<String> now = new ArrayList<>(active(dimension));
         if (local(dimension, name)) {
             now.remove(name);

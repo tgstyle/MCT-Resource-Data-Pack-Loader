@@ -34,7 +34,7 @@ public final class ContentGrowSwitch {
 
     private ContentGrowSwitch() {}
 
-    @Nullable static GrowSwitchDef parse(String owner, JsonElement element) {
+    @Nullable public static GrowSwitchDef parse(String owner, JsonElement element) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives growth that is not an object, ignoring it", owner);
             return null;
@@ -125,7 +125,7 @@ public final class ContentGrowSwitch {
         return steps == 0;
     }
 
-    static void forget() {
+    public static void forget() {
         PENDING.clear();
         draining = false;
     }

@@ -20,7 +20,7 @@ import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.UnaryOperator;
 
-final class ContentOptionNoise {
+public final class ContentOptionNoise {
     private static final String BIOME_SIZE = "biomeSize";
     private static final String DENSITY = "worldgen/density_function";
     private static final String NOISE = "worldgen/noise";
@@ -50,15 +50,15 @@ final class ContentOptionNoise {
         this.shape = shape;
     }
 
-    record Shifted(int offset, Map<String, String> copies) {
-        static final Shifted NONE = new Shifted(0, Map.of());
+    public record Shifted(int offset, Map<String, String> copies) {
+        public static final Shifted NONE = new Shifted(0, Map.of());
 
-        String route(String vanilla) { return copies.getOrDefault(vanilla, vanilla); }
+        public String route(String vanilla) { return copies.getOrDefault(vanilla, vanilla); }
     }
 
-    static boolean ignores(String key) { return !BIOME_SIZE.equals(key) && !LegacyTerrainShape.reads(key); }
+    public static boolean ignores(String key) { return !BIOME_SIZE.equals(key) && !LegacyTerrainShape.reads(key); }
 
-    static boolean shapes() {
+    public static boolean shapes() {
         LegacyTerrainShape shape = legacy();
         return biomeSize().isPresent() || shape.any() || shape.riverOctaves() != 0;
     }
@@ -70,7 +70,7 @@ final class ContentOptionNoise {
         return options == null ? OptionalInt.empty() : ContentTerrain.optionNumber(options, BIOME_SIZE);
     }
 
-    static Shifted apply(JsonObject settings, Identifier owner, boolean large, int maxY) {
+    public static Shifted apply(JsonObject settings, Identifier owner, boolean large, int maxY) {
         int offset = ContentTerrain.terrainOffset();
         if (offset != 0 && (offset < 0 || (offset & 15) != 0 || ContentWorldShape.VANILLA_MAX + offset > maxY)) {
             ContentLog.LOGGER.error("terrainOffset is {}, which must be a multiple of 16 and leave the vanilla top {} plus the offset under worldMaxHeight {}, so the terrain is not shifted", offset, ContentWorldShape.VANILLA_MAX, maxY);
@@ -89,7 +89,7 @@ final class ContentOptionNoise {
         return new Shifted(offset, Map.copyOf(shifter.copied));
     }
 
-    static Shifted dimension(JsonObject settings, Identifier owner, JsonObject options) {
+    public static Shifted dimension(JsonObject settings, Identifier owner, JsonObject options) {
         LegacyTerrainShape shape = LegacyTerrainShape.of(options).terrain();
         if (!shape.any()) { return Shifted.NONE; }
         ContentOptionNoise shifter = new ContentOptionNoise(owner, 0, 0, shape);

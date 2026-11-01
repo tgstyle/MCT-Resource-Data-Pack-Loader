@@ -61,7 +61,7 @@ public final class SkyOccluder {
         return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
     }
 
-    static void invalidate() { ++generation; }
+    public static void invalidate() { ++generation; }
 
     static int current() { return generation; }
 

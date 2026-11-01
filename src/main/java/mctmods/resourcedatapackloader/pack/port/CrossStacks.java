@@ -24,13 +24,13 @@ import java.util.List;
 import java.util.TreeSet;
 import javax.annotation.Nullable;
 
-final class CrossStacks {
+public final class CrossStacks {
     private static final String ID = "id";
     private static final String DISPLAY = "display";
 
     private CrossStacks() {}
 
-    static CompoundTag parse(String snbt) {
+    public static CompoundTag parse(String snbt) {
         try { return TagParser.parseCompoundFully(snbt); }
         catch (CommandSyntaxException failed) { throw new Commands.Kept("'" + snbt + "' is not valid NBT"); }
     }
@@ -41,7 +41,7 @@ final class CrossStacks {
         return tag instanceof CompoundTag held ? held : new CompoundTag();
     }
 
-    static JsonElement json(Tag tag) { return new Dynamic<>(NbtOps.INSTANCE, tag).convert(JsonOps.INSTANCE).getValue(); }
+    public static JsonElement json(Tag tag) { return new Dynamic<>(NbtOps.INSTANCE, tag).convert(JsonOps.INSTANCE).getValue(); }
 
     static CompoundTag up(String id, @Nullable CompoundTag tag) {
         return upStack(Ids.legacyStack(id, tag != null && !tag.isEmpty() ? tag : null));
@@ -54,7 +54,7 @@ final class CrossStacks {
 
     static CompoundTag components(CompoundTag stack) { return stack.getCompound(CrossJson.COMPONENTS).isPresent() ? stack.getCompoundOrEmpty(CrossJson.COMPONENTS) : new CompoundTag(); }
 
-    static String upCommand(String id, @Nullable String snbt) {
+    public static String upCommand(String id, @Nullable String snbt) {
         CompoundTag stack = up(id, snbt == null ? null : parse(snbt));
         CompoundTag components = components(stack);
         String named = stack.getStringOr(ID, "").isEmpty() ? id : stack.getStringOr(ID, "");
@@ -64,7 +64,7 @@ final class CrossStacks {
         return named + "[" + String.join(",", pairs) + "]";
     }
 
-    static String downCommand(String id, String bracketed, List<String> lost) {
+    public static String downCommand(String id, String bracketed, List<String> lost) {
         CompoundTag components = new CompoundTag();
         for (String part : Snbt.split(bracketed.substring(1, bracketed.length() - 1), ',')) {
             String trimmed = part.trim();
@@ -146,7 +146,7 @@ final class CrossStacks {
         return json(components) instanceof JsonObject held ? held : new JsonObject();
     }
 
-    static Tag walk(Tag tag, Port.Line to, List<String> lost) {
+    public static Tag walk(Tag tag, Port.Line to, List<String> lost) {
         if (tag instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) { list.set(i, walk(list.get(i), to, lost)); }
             return list;
@@ -171,7 +171,7 @@ final class CrossStacks {
         return held;
     }
 
-    static boolean stacks(Tag tag, Port.Line from) {
+    public static boolean stacks(Tag tag, Port.Line from) {
         if (tag instanceof ListTag list) {
             for (Tag inner : list) {
                 if (stacks(inner, from)) { return true; }

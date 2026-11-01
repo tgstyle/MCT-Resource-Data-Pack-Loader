@@ -40,7 +40,7 @@ public final class ContentCityStructureLamps {
         return template;
     }
 
-    static void lamps(GenerationContext context, CityPlan plan, CityPlan.Line line, @Nullable ContentCityStructure.Laid laid, Collection<CityRails.Laid> tracks, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
+    public static void lamps(GenerationContext context, CityPlan plan, CityPlan.Line line, @Nullable ContentCityStructure.Laid laid, Collection<CityRails.Laid> tracks, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
         if (laid == null) { return; }
         CityCross cross = CityCross.of(line);
         Identifier template = lampTemplate(context);
@@ -118,7 +118,7 @@ public final class ContentCityStructureLamps {
         return true;
     }
 
-    static void bulbLamps(GenerationContext context, CityPlan plan, ContentCityStructure.Bulb bulb, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
+    public static void bulbLamps(GenerationContext context, CityPlan plan, ContentCityStructure.Bulb bulb, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
         Identifier template = lampTemplate(context);
         if (lampless(template)) { return; }
         ContentCityBulbPiece.Court court = bulb.court();
@@ -172,7 +172,7 @@ public final class ContentCityStructureLamps {
         return false;
     }
 
-    static void verges(CityPlan.Line line, CityPlan plan, int[] profile, @Nullable ContentCityStructure.Laid laid, List<ContentCityStructure.Seated> seated, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
+    public static void verges(CityPlan.Line line, CityPlan plan, int[] profile, @Nullable ContentCityStructure.Laid laid, List<ContentCityStructure.Seated> seated, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
         if (ContentCity.decorNames().isEmpty()) { return; }
         CityCross cross = CityCross.of(line);
         int verge = cross.curb() + 1;

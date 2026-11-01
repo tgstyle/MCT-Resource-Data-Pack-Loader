@@ -98,7 +98,7 @@ public final class ContentCityStructureGrade {
         if (lifted > 0) { ContentLog.LOGGER.debug("Raised {} row(s) of the street at {} onto the deck its city map draws there", lifted, line.at()); }
     }
 
-    static void clearRows(boolean[] flags, int start, int low, int high) { for (int row = Math.max(low, start); row <= high && row < start + flags.length; row++) { flags[row - start] = false; } }
+    public static void clearRows(boolean[] flags, int start, int low, int high) { for (int row = Math.max(low, start); row <= high && row < start + flags.length; row++) { flags[row - start] = false; } }
 
     static boolean[] lifted(CityPlan plan, CityPlan.Line line, ContentCityStructure.Graded graded, Map<Integer, Integer> decks) {
         boolean[] decked = new boolean[graded.profile().length];
@@ -106,16 +106,16 @@ public final class ContentCityStructureGrade {
         return decked;
     }
 
-    static void settle(ContentCityStructure.Graded graded, boolean[] decked) {
+    public static void settle(ContentCityStructure.Graded graded, boolean[] decked) {
         for (int at = 0; at < decked.length; at++) { graded.held()[at] |= decked[at]; }
         ramp(graded);
     }
 
     static void ramp(ContentCityStructure.Graded graded) { CityGrade.rampSteps(graded.profile(), graded.held(), graded.pinned()); }
 
-    record Shaped(int[] grade, boolean[] decked) {}
+    public record Shaped(int[] grade, boolean[] decked) {}
 
-    static Shaped shaped(CityPlan plan, CityPlan.Line line, ContentCityStructure.Graded graded, Map<Integer, Integer> decks) {
+    public static Shaped shaped(CityPlan plan, CityPlan.Line line, ContentCityStructure.Graded graded, Map<Integer, Integer> decks) {
         ramp(graded);
         int[] grade = graded.profile().clone();
         return new Shaped(grade, lifted(plan, line, graded, decks));
@@ -126,9 +126,9 @@ public final class ContentCityStructureGrade {
         settle(graded, lifted(plan, line, graded, decks));
     }
 
-    static ContentCityStructure.Graded graded(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, boolean squaresFree) { return grade(context, plan, line, levels, run, rails, wells, squaresFree, false); }
+    public static ContentCityStructure.Graded graded(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, boolean squaresFree) { return grade(context, plan, line, levels, run, rails, wells, squaresFree, false); }
 
-    static ContentCityStructure.Graded joined(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells) { return grade(context, plan, line, levels, run, rails, wells, false, true); }
+    public static ContentCityStructure.Graded joined(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells) { return grade(context, plan, line, levels, run, rails, wells, false, true); }
 
     private static void seams(GenerationContext context, CityGround ground, CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] held) {
         int reach = CityPlan.mouthReach(line);
@@ -322,7 +322,7 @@ public final class ContentCityStructureGrade {
         return new ContentCityStructure.Graded(start, profile, ground, capped, pinned, mine, bridged, bored);
     }
 
-    static int underfoot(CityGround ground, CityPlan.Line line, int row) {
+    public static int underfoot(CityGround ground, CityPlan.Line line, int row) {
         int[] taken = new int[line.width()];
         int count = 0;
         for (int across = line.at(); across <= line.last(); across++) {

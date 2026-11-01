@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 public final class ContentCityStructureStations {
     private ContentCityStructureStations() {}
 
-    static int[] stations(Collection<CityRails.Laid> tracks) {
+    public static int[] stations(Collection<CityRails.Laid> tracks) {
         IntList boxes = new IntArrayList();
         for (CityRails.Laid track : tracks) {
             if (!track.rail().subway()) { continue; }
@@ -25,14 +25,14 @@ public final class ContentCityStructureStations {
         return boxes.toIntArray();
     }
 
-    static boolean claimed(List<BoundingBox> claims, CityPlan.Plot plot) {
+    public static boolean claimed(List<BoundingBox> claims, CityPlan.Plot plot) {
         for (BoundingBox claim : claims) {
             if (plot.meets(claim.minX(), claim.minZ(), claim.maxX(), claim.maxZ())) { return true; }
         }
         return false;
     }
 
-    static void layRail(CityPlan plan, CityRails.Laid track, boolean crossings, StructurePiecesBuilder builder) {
+    public static void layRail(CityPlan plan, CityRails.Laid track, boolean crossings, StructurePiecesBuilder builder) {
         CityPlan.Rail rail = track.rail();
         int window = plan.railWindow(rail);
         int start = track.start();
@@ -66,7 +66,7 @@ public final class ContentCityStructureStations {
         return rail.alongX() ? new BoundingBox(row - 1, 0, near - 1, row + run + 1, 0, near + wide) : new BoundingBox(near - 1, 0, row - 1, near + wide, 0, row + run + 1);
     }
 
-    static void claim(CityRails.Laid track, List<BoundingBox> claims) {
+    public static void claim(CityRails.Laid track, List<BoundingBox> claims) {
         CityPlan.Rail rail = track.rail();
         int start = track.start();
         int rows = track.profile().length;
@@ -96,7 +96,7 @@ public final class ContentCityStructureStations {
         return row < window || row >= window + CityPlan.district();
     }
 
-    static void chambers(CityPlan plan, CityRails.Laid track, StructurePiecesBuilder builder) {
+    public static void chambers(CityPlan plan, CityRails.Laid track, StructurePiecesBuilder builder) {
         CityPlan.Rail rail = track.rail();
         int half = ContentCity.stationLength() / 2;
         int bedHalf = ContentCity.railBedHalf(true);
@@ -114,7 +114,7 @@ public final class ContentCityStructureStations {
         }
     }
 
-    static void heads(CityGround ground, CityPlan plan, CityRails.Laid track, Map<CityPlan.Line, ContentCityStructure.Laid> streets, StructurePiecesBuilder builder) {
+    public static void heads(CityGround ground, CityPlan plan, CityRails.Laid track, Map<CityPlan.Line, ContentCityStructure.Laid> streets, StructurePiecesBuilder builder) {
         CityPlan.Rail rail = track.rail();
         int bedHalf = ContentCity.railBedHalf(true);
         Vec3i built = ContentCity.stationSpan();

@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import net.minecraft.util.GsonHelper;
 
-final class ModernAssets {
+public final class ModernAssets {
     private static final String ITEM_MODELS = "models/item/";
     private static final String MCMETA = ".mcmeta";
     private static final String TYPE = "type";
@@ -35,18 +35,18 @@ final class ModernAssets {
 
     private ModernAssets() {}
 
-    static void model(JsonObject json) {
+    public static void model(JsonObject json) {
         JsonElement layer = json.remove("render_type");
         if (layer != null && layer.isJsonPrimitive() && TRANSLUCENT.contains(layer.getAsString()) && GsonHelper.isObjectNode(json, "textures")) { ContentGeneratedModels.forceTranslucent(json.getAsJsonObject("textures")); }
     }
 
-    @Nullable static String definitionPath(String path) {
+    @Nullable public static String definitionPath(String path) {
         if (!path.startsWith(ITEM_MODELS) || !path.endsWith(PackManager.JSON_SUFFIX)) { return null; }
         String rest = path.substring(ITEM_MODELS.length(), path.length() - PackManager.JSON_SUFFIX.length());
         return rest.isEmpty() || rest.indexOf('/') >= 0 ? null : "items/" + rest + PackManager.JSON_SUFFIX;
     }
 
-    @Nullable static JsonObject definition(String namespace, String path, @Nullable JsonObject model, String file, Consumer<String> note) {
+    @Nullable public static JsonObject definition(String namespace, String path, @Nullable JsonObject model, String file, Consumer<String> note) {
         if (model == null || !model.has("overrides") || !model.get("overrides").isJsonArray() || model.getAsJsonArray("overrides").isEmpty()) { return null; }
         JsonObject base = plain(namespace + ":item/" + path.substring(ITEM_MODELS.length(), path.length() - PackManager.JSON_SUFFIX.length()));
         JsonObject current = base;
@@ -119,7 +119,7 @@ final class ModernAssets {
         return out;
     }
 
-    @Nullable static String moved(String path) {
+    @Nullable public static String moved(String path) {
         boolean meta = path.endsWith(MCMETA);
         String image = meta ? path.substring(0, path.length() - MCMETA.length()) : path;
         String out = MOVED.get(image);

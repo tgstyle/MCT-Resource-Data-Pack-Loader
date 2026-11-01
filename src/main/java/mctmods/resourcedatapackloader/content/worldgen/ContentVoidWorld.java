@@ -26,16 +26,16 @@ public final class ContentVoidWorld {
 
     public static boolean voidEmpties(StructureManager structures) { return structures.level instanceof WorldGenLevel level && voidApplies(level.getLevel()); }
 
-    static boolean voidAsked() {
+    public static boolean voidAsked() {
         if (ContentControl.off(ContentControl.VOID)) { return false; }
         return ContentWorldShape.blockedToVoid || ContentControl.flag(ContentControl.VOID, "voidWorld", Config.worldgen.voidWorld());
     }
 
-    static List<String> voidDimensions() { return ContentControl.list(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions()); }
+    public static List<String> voidDimensions() { return ContentControl.list(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions()); }
 
-    static boolean voidBlacklist() { return ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist()); }
+    public static boolean voidBlacklist() { return ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist()); }
 
-    static boolean voidApplies(String dimension) { return voidApplies(dimension, voidAsked(), voidDimensions(), voidBlacklist()); }
+    public static boolean voidApplies(String dimension) { return voidApplies(dimension, voidAsked(), voidDimensions(), voidBlacklist()); }
 
     static boolean voidApplies(String dimension, boolean asked, List<String> wanted, boolean blacklist) {
         if (!asked) { return false; }

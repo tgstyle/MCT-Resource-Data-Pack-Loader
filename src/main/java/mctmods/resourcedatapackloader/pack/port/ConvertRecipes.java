@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-final class ConvertRecipes {
+public final class ConvertRecipes {
     private static final int WILDCARD_DATA = 32767;
     private static final String LEGACY_CONDITIONS = "conditions";
     private static final String CONDITIONS = "neoforge:conditions";
@@ -22,7 +22,7 @@ final class ConvertRecipes {
 
     private ConvertRecipes() {}
 
-    static String recipe(JsonObject json, String namespace, Ported pack) {
+    public static String recipe(JsonObject json, String namespace, Ported pack) {
         if (GsonHelper.isValidPrimitive(json, "type")) {
             String type = json.get("type").getAsString();
             String mapped = switch (type) {
@@ -156,7 +156,7 @@ final class ConvertRecipes {
         held.addProperty("item", Convert.itemName(item + (data > 0 ? ":" + data : ""), pack));
     }
 
-    static Map<String, JsonObject> oreDict(JsonObject json, Ported pack) {
+    public static Map<String, JsonObject> oreDict(JsonObject json, Ported pack) {
         Map<String, JsonObject> tags = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String ore = entry.getKey();

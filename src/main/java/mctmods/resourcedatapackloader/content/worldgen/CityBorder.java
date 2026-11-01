@@ -26,12 +26,12 @@ public final class CityBorder {
 
     public static void forget() { held = null; }
 
-    static boolean live() {
+    public static boolean live() {
         Held known = held;
         return known != null && known.on(ServerLifecycleHooks.getCurrentServer());
     }
 
-    static boolean beyond(int x, int z) {
+    public static boolean beyond(int x, int z) {
         Held known = held;
         return known != null && (x < known.minX() || x >= known.maxX() || z < known.minZ() || z >= known.maxZ());
     }

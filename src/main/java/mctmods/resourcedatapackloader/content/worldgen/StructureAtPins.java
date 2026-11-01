@@ -9,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-final class StructureAtPins {
+public final class StructureAtPins {
     private static volatile Parsed last = new Parsed(null, Map.of());
 
     private StructureAtPins() {}
@@ -34,7 +34,7 @@ final class StructureAtPins {
         return pins;
     }
 
-    static List<int[]> of(String named) { return all().getOrDefault(named, List.of()); }
+    public static List<int[]> of(String named) { return all().getOrDefault(named, List.of()); }
 
     private record Parsed(List<String> entries, Map<String, List<int[]>> pins) {}
 }

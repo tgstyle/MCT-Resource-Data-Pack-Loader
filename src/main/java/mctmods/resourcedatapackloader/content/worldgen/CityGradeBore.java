@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-final class CityGradeBore {
+public final class CityGradeBore {
     private CityGradeBore() {}
 
     static int[] cutLine(int[] profile, int from, int to, boolean openLow, boolean openHigh) {
@@ -56,7 +56,7 @@ final class CityGradeBore {
         return false;
     }
 
-    static int[] openEnds(int[] ground, int start, CityPlan.Line line) {
+    public static int[] openEnds(int[] ground, int start, CityPlan.Line line) {
         int[] held = ground.clone();
         for (int at = 0; at < held.length; at++) {
             int row = start + at;

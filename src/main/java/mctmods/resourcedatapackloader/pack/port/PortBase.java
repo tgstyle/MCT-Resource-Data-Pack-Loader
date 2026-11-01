@@ -29,38 +29,38 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
-abstract class PortBase<S extends PortBase.IServed> implements IPackPort {
-    interface IServed {
+public abstract class PortBase<S extends PortBase.IServed> implements IPackPort {
+    public interface IServed {
         Path real();
 
         Port.Kind kind();
     }
 
-    final Map<PackType, Map<String, Map<String, S>>> exposed = new EnumMap<>(PackType.class);
+    public final Map<PackType, Map<String, Map<String, S>>> exposed = new EnumMap<>(PackType.class);
 
-    final String name;
-    final Path root;
-    final Map<String, byte[]> cache = new ConcurrentHashMap<>();
+    public final String name;
+    public final Path root;
+    public final Map<String, byte[]> cache = new ConcurrentHashMap<>();
     final Set<String> notes = new LinkedHashSet<>();
-    boolean reported;
-    int rewritten;
+    public boolean reported;
+    public int rewritten;
 
-    PortBase(String name, Path root) {
+    public PortBase(String name, Path root) {
         this.name = name;
         this.root = root;
     }
 
     public final void note(String said) { if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); } }
 
-    final void listNotes() {
+    public final void listNotes() {
         List<String> said = new ArrayList<>(notes);
         for (int i = 0; i < Math.min(said.size(), 40); i++) { ContentLog.LOGGER.info("  {}", said.get(i)); }
         if (said.size() > 40) { ContentLog.LOGGER.info("  ... and {} more", said.size() - 40); }
     }
 
-    static JsonObject packOf(@Nullable JsonObject old) { return old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject(); }
+    public static JsonObject packOf(@Nullable JsonObject old) { return old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject(); }
 
-    final void writeMeta(ZipOutputStream out, String prefix, JsonObject pack) throws IOException {
+    public final void writeMeta(ZipOutputStream out, String prefix, JsonObject pack) throws IOException {
         if (!pack.has("description")) { pack.addProperty("description", name); }
         JsonObject meta = new JsonObject();
         meta.add("pack", pack);
@@ -69,13 +69,13 @@ abstract class PortBase<S extends PortBase.IServed> implements IPackPort {
         out.closeEntry();
     }
 
-    final FunctionLines.Result function(String contents, String path, String target, UnaryOperator<String> command) {
+    public final FunctionLines.Result function(String contents, String path, String target, UnaryOperator<String> command) {
         FunctionLines.Result result = FunctionLines.convert(contents, path, command, this::note);
         if (result.changed() > 0 || result.kept() > 0) { note("'" + path + "' is a " + origin() + " function: " + result.changed() + " command(s) rewritten for " + target + ", " + result.kept() + " turned into comments"); }
         return result;
     }
 
-    abstract byte[] convert(S source, String namespace, String path) throws IOException;
+    public abstract byte[] convert(S source, String namespace, String path) throws IOException;
 
     @Override @Nullable public final InputStream open(PackType type, String namespace, String path) throws IOException {
         S source = exposed.getOrDefault(type, Map.of()).getOrDefault(namespace, Map.of()).get(path);
@@ -90,7 +90,7 @@ abstract class PortBase<S extends PortBase.IServed> implements IPackPort {
         return new ByteArrayInputStream(held);
     }
 
-    final void expose(PackType type, String namespace, String path, S source) { exposed.computeIfAbsent(type, _ -> new LinkedHashMap<>()).computeIfAbsent(namespace, _ -> new LinkedHashMap<>()).putIfAbsent(path, source); }
+    public final void expose(PackType type, String namespace, String path, S source) { exposed.computeIfAbsent(type, _ -> new LinkedHashMap<>()).computeIfAbsent(namespace, _ -> new LinkedHashMap<>()).putIfAbsent(path, source); }
 
     @Override public final Map<PackType, Map<String, Set<String>>> exposed() {
         Map<PackType, Map<String, Set<String>>> out = new EnumMap<>(PackType.class);
@@ -102,7 +102,7 @@ abstract class PortBase<S extends PortBase.IServed> implements IPackPort {
         return out;
     }
 
-    @Nullable static JsonObject readJson(Path file) {
+    @Nullable public static JsonObject readJson(Path file) {
         try {
             JsonElement held = JsonParser.parseString(Files.readString(file, StandardCharsets.UTF_8));
             return held.isJsonObject() ? held.getAsJsonObject() : null;

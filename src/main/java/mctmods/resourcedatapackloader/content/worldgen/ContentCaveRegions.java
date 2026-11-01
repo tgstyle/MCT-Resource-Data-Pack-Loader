@@ -320,7 +320,7 @@ public final class ContentCaveRegions {
         return def;
     }
 
-    static long center(long cellHash, int shift, int cell, int span) { return cell * (long) span + Math.floorMod(cellHash >>> shift, span); }
+    public static long center(long cellHash, int shift, int cell, int span) { return cell * (long) span + Math.floorMod(cellHash >>> shift, span); }
 
     @Nullable private static CaveRegionDef resolve(long seed, List<CaveRegionDef> defs, int qx, int qy, int qz, int spanXZ, int spanY) {
         int cellX = Math.floorDiv(qx, spanXZ);
@@ -354,9 +354,9 @@ public final class ContentCaveRegions {
         return regionForCell(bestHash, bestCenterY, defs);
     }
 
-    static int spanXZ() { return Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells())) >> 2; }
+    public static int spanXZ() { return Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells())) >> 2; }
 
-    static int spanY() { return Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY())) >> 2; }
+    public static int spanY() { return Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY())) >> 2; }
 
     private static int plainWeight() { return Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight())); }
 
@@ -378,7 +378,7 @@ public final class ContentCaveRegions {
         return null;
     }
 
-    static JsonObject unreachable() {
+    public static JsonObject unreachable() {
         JsonObject point = new JsonObject();
         for (String parameter : new String[] {"temperature", "humidity", "continentalness", "erosion", "depth", "weirdness"}) { point.add(parameter, WorldgenJson.range(UNREACHABLE, UNREACHABLE)); }
         point.addProperty("offset", 1.0F);

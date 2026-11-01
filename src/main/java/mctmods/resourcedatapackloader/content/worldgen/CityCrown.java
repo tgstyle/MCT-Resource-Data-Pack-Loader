@@ -54,7 +54,7 @@ public final class CityCrown {
         private int spot(int x, int z) { return (x - minX) * 16 + (z - minZ); }
     }
 
-    static List<StructureStart> cities(StructureManager manager, ChunkPos chunk) { return LineCompat.starts(manager, chunk, structure -> structure instanceof ContentCityStructure); }
+    public static List<StructureStart> cities(StructureManager manager, ChunkPos chunk) { return LineCompat.starts(manager, chunk, structure -> structure instanceof ContentCityStructure); }
 
     static boolean settling(StructurePiece piece) { return piece instanceof ContentCityPlotPiece plot ? plot.settled() : piece instanceof ContentCityFarmPiece || piece instanceof ContentMapPiece || piece instanceof ContentCityWellPiece well && well.crowned(); }
 
@@ -71,7 +71,7 @@ public final class CityCrown {
         return true;
     }
 
-    static BoundingBox clip(WorldGenLevel level, ChunkPos chunk) { return new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ()); }
+    public static BoundingBox clip(WorldGenLevel level, ChunkPos chunk) { return new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ()); }
 
     public static void born(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
         BORN.remove();

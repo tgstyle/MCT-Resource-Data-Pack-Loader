@@ -17,7 +17,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class CrossCommands {
+public final class CrossCommands {
     private static final Set<String> NEW_COMMANDS = Set.of("random", "tick", "transfer", "return");
     private static final Pattern NAMESPACED = Pattern.compile("(?<![a-z0-9_.#/-])((?:minecraft|forge|neoforge):[a-z0-9_./-]+)");
     private static final Pattern TAG = Pattern.compile("#((?:forge|c|neoforge|minecraft):[a-z0-9_./-]+)");
@@ -27,7 +27,7 @@ final class CrossCommands {
 
     private CrossCommands() {}
 
-    static String function(String contents, String file, Crossed pack) {
+    public static String function(String contents, String file, Crossed pack) {
         FunctionLines.Result result = pack.function(contents, file, pack.to().title(), line -> {
             if (line.startsWith("$") && pack.to() == Port.Line.V1_20) { throw new Commands.Kept("function macros are new in 1.20.2"); }
             return command(line, file, pack);

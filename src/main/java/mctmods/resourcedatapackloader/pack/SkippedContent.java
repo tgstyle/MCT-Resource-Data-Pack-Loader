@@ -20,8 +20,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-final class SkippedContent {
-    static final List<String> FOLDERS = List.of(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.VILLAGERS, PackManager.ENTITIES, PackManager.EXPOSURES, PackManager.TOOLTIPS);
+public final class SkippedContent {
+    public static final List<String> FOLDERS = List.of(PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.MATERIALS, PackManager.TABS, PackManager.SOUNDS, PackManager.POTIONS, PackManager.POTION_TYPES, PackManager.VILLAGERS, PackManager.ENTITIES, PackManager.EXPOSURES, PackManager.TOOLTIPS);
     static final List<String> WITHHELD_FOLDERS = List.of("advancement", "recipe", "loot_table");
     private static final Map<String, Boolean> VERDICTS = new ConcurrentHashMap<>();
     private static volatile int generation = -1;
@@ -74,7 +74,7 @@ final class SkippedContent {
         return String.join(", ", hits);
     }
 
-    static boolean withheld(PackType type, String namespace, String path, boolean overriding) {
+    public static boolean withheld(PackType type, String namespace, String path, boolean overriding) {
         if (type != PackType.SERVER_DATA || !Config.content.vanillaClients() || WITHHELD_FOLDERS.stream().noneMatch(folder -> path.startsWith(folder + "/")) || !path.endsWith(PackManager.JSON_SUFFIX)) { return false; }
         Set<String> skipped = ids();
         if (skipped.isEmpty()) { return false; }
@@ -95,7 +95,7 @@ final class SkippedContent {
         }
     }
 
-    static void report(RDPLPack pack) {
+    public static void report(RDPLPack pack) {
         Set<String> skipped = ids();
         if (skipped.isEmpty()) { return; }
         List<String> files = new ArrayList<>();

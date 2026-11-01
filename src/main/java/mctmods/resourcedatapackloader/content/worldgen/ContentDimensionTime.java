@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
-final class ContentDimensionTime {
+public final class ContentDimensionTime {
     private static final String OVERWORLD_CLOCK = "minecraft:overworld";
     private static final String IN_OVERWORLD = "#minecraft:in_overworld";
     private static final String TRACKS = "tracks";
@@ -34,7 +34,7 @@ final class ContentDimensionTime {
 
     static void reset() { FIXED.clear(); }
 
-    static long fixedTime(Holder<WorldClock> clock) {
+    public static long fixedTime(Holder<WorldClock> clock) {
         if (FIXED.isEmpty()) { return -1L; }
         return clock.unwrapKey().map(key -> FIXED.getOrDefault(key.identifier(), -1L)).orElse(-1L);
     }

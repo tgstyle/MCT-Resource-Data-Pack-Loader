@@ -72,10 +72,10 @@ public final class Commands {
 
     private Commands() {}
 
-    static final class Kept extends RuntimeException {
+    public static final class Kept extends RuntimeException {
         @Serial private static final long serialVersionUID = 1L;
 
-        Kept(String why) { super(why, null, false, false); }
+        public Kept(String why) { super(why, null, false, false); }
     }
 
     public static String function(String contents, String path, Ported pack) {
@@ -187,7 +187,7 @@ public final class Commands {
         return entityId(namespaced(named), pack);
     }
 
-    static String entityId(String id, Ported pack) { return pack.owns(id) ? id : Ids.entity(id); }
+    public static String entityId(String id, Ported pack) { return pack.owns(id) ? id : Ids.entity(id); }
 
     static Map<String, String> pairs(String text, Function<String, String> message) {
         Map<String, String> out = new LinkedHashMap<>();
@@ -322,7 +322,7 @@ public final class Commands {
         return "enchant " + CommandSelectors.target(args[1], pack) + " " + enchantment + (args.length > 3 ? " " + number(args[3]) : "");
     }
 
-    static String sound(String given) {
+    public static String sound(String given) {
         String name = given.trim();
         String namespace = "";
         if (name.startsWith(MINECRAFT)) {
@@ -362,7 +362,7 @@ public final class Commands {
         return out.toString();
     }
 
-    static String particleId(String given) {
+    public static String particleId(String given) {
         String simple = PARTICLES.get(given.trim());
         return simple == null ? given : MINECRAFT + simple;
     }
@@ -448,7 +448,7 @@ public final class Commands {
         return "gamerule " + rule.getKey() + (args.length > 2 ? " " + rule.getValue() : "");
     }
 
-    @Nullable static Map.Entry<String, String> modernRule(String name, @Nullable String value) {
+    @Nullable public static Map.Entry<String, String> modernRule(String name, @Nullable String value) {
         for (String probe : value != null ? List.of(value) : List.of("true", "0")) {
             for (Map.Entry<String, String> rule : GameRuleNames.modernize(Map.of(name, probe)).entrySet()) {
                 if (GameRuleNames.rule(rule.getKey()) != null) { return rule; }

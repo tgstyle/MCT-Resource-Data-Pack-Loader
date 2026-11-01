@@ -35,7 +35,7 @@ public final class ContentRuleSwitch {
 
     private ContentRuleSwitch() {}
 
-    @Nullable static RuleSwitchDef parse(String owner, JsonElement element, boolean local, boolean precipitation) {
+    @Nullable public static RuleSwitchDef parse(String owner, JsonElement element, boolean local, boolean precipitation) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives rules that is not an object, ignoring it", owner);
             return null;
@@ -117,13 +117,13 @@ public final class ContentRuleSwitch {
         return def == null ? DimensionTraitsDef.VANILLA_DAY : def.traits().dayLength();
     }
 
-    static long stretch(Level level, long ticks, long period) {
+    public static long stretch(Level level, long ticks, long period) {
         long length = ruledLength(level, ContentDimensions.def(level));
         if (length < 0L || length == period) { return ticks; }
         return Math.floorDiv(ticks, length) * period + Math.floorMod(ticks, length) * period / length;
     }
 
-    static float scale(Level level, long period) {
+    public static float scale(Level level, long period) {
         long length = ruledLength(level, ContentDimensions.def(level));
         return length < 0L ? 1.0F : (float) period / length;
     }

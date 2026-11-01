@@ -27,7 +27,7 @@ public final class CityBergs {
     private static final int REACH = 32;
     private static final int TOUCH = 1;
     private static final int MELT_Y = 63;
-    static final int TEMPERATURE_SEA = 63;
+    public static final int TEMPERATURE_SEA = 63;
     private final WorldGenLevel level;
     private final LineCompat.IBergNoise noise;
     private final BiomeManager biomes;

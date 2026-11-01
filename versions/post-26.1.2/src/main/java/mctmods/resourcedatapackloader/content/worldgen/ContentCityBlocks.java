@@ -140,7 +140,7 @@ public final class ContentCityBlocks implements StructureProcessor {
 
     private static boolean differs(BlockState held, ContentStates.Spec wanted) { return wanted.exact() ? held != wanted.state() : !held.is(wanted.state().getBlock()); }
 
-    static BlockState swapped(BlockState laid) {
+    public static BlockState swapped(BlockState laid) {
         readRules();
         Rule found = null;
         for (Rule rule : RULES) {

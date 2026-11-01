@@ -148,9 +148,9 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         return bridged;
     }
 
-    boolean settled() { return !plot.isEmpty() && ContentVillages.byKey(plot) != null; }
+    public boolean settled() { return !plot.isEmpty() && ContentVillages.byKey(plot) != null; }
 
-    int[] roads() { return roads; }
+    public int[] roads() { return roads; }
 
     public void ringBeyond(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         BoundingBox held = getBoundingBox();

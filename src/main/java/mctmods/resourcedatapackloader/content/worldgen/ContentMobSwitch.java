@@ -46,7 +46,7 @@ public final class ContentMobSwitch {
 
     private ContentMobSwitch() {}
 
-    @Nullable static MobSwitchDef parse(String owner, String name, JsonElement element) {
+    @Nullable public static MobSwitchDef parse(String owner, String name, JsonElement element) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives mobs that is not an object, ignoring it", owner);
             return null;
@@ -180,7 +180,7 @@ public final class ContentMobSwitch {
         mob.getPersistentData().remove(RECORD);
     }
 
-    static void settleAll(ServerLevel level) {
+    public static void settleAll(ServerLevel level) {
         List<Entity> loaded = new ArrayList<>();
         level.getAllEntities().forEach(loaded::add);
         for (Entity entity : loaded) {
@@ -188,7 +188,7 @@ public final class ContentMobSwitch {
         }
     }
 
-    static void start(MinecraftServer server, Collection<MobSwitchDef> defs) {
+    public static void start(MinecraftServer server, Collection<MobSwitchDef> defs) {
         for (MobSwitchDef def : defs) {
             for (Identifier id : def.ids) {
                 if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) { ContentLog.LOGGER.error("{} changes the entity '{}', which does not exist", def.owner, id); }
@@ -201,5 +201,5 @@ public final class ContentMobSwitch {
         for (ServerLevel level : server.getAllLevels()) { settleAll(level); }
     }
 
-    static void forget() { ready = false; }
+    public static void forget() { ready = false; }
 }

@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-final class ConvertAssets {
+public final class ConvertAssets {
     private static final Pattern LANG_TILE = Pattern.compile("^(tile|item)\\.([a-z0-9_]+)[:.]([a-z0-9_./-]+?)(?:\\.([a-z0-9_]+))?\\.(name|locked)$");
     private static final Pattern LANG_ENTITY = Pattern.compile("^entity\\.([a-z0-9_]+)\\.([a-z0-9_]+)\\.name$");
     private static final Pattern LANG_FLUID = Pattern.compile("^fluid\\.(?:([a-z0-9_]+)\\.)?([a-z0-9_]+)$");
@@ -29,7 +29,7 @@ final class ConvertAssets {
 
     private ConvertAssets() {}
 
-    static String lang(String contents, Ported pack) {
+    public static String lang(String contents, Ported pack) {
         Map<String, String> out = new LinkedHashMap<>();
         for (String line : contents.split("\r?\n")) {
             String trimmed = line.trim();
@@ -85,7 +85,7 @@ final class ConvertAssets {
         return List.of(key);
     }
 
-    static String texturePath(String path) {
+    public static String texturePath(String path) {
         String namespace = IdNames.namespace(path);
         String rest = IdNames.path(path);
         if (rest.startsWith("blocks/")) { rest = "block/" + rest.substring("blocks/".length()); }
@@ -96,7 +96,7 @@ final class ConvertAssets {
         return namespace + ":" + rest;
     }
 
-    static String model(JsonObject json, Ported pack) {
+    public static String model(JsonObject json, Ported pack) {
         if (GsonHelper.isObjectNode(json, "textures")) {
             JsonObject textures = json.getAsJsonObject("textures");
             for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
@@ -126,7 +126,7 @@ final class ConvertAssets {
         return Ported.GSON.toJson(json);
     }
 
-    static String pixelMap(JsonObject json, Ported pack) {
+    public static String pixelMap(JsonObject json, Ported pack) {
         Convert.renamed(json, "extends", ConvertAssets::texturePath, pack);
         return Ported.GSON.toJson(json);
     }

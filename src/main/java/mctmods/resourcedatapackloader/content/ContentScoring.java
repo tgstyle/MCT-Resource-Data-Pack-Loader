@@ -67,7 +67,7 @@ public final class ContentScoring {
     private static final Map<String, Integer> DEATHS = new LinkedHashMap<>();
     private static final Map<String, Integer> OWN = new LinkedHashMap<>();
     private static final Map<UUID, Integer> SETTLING = new LinkedHashMap<>();
-    static final Map<String, GameType> OUT = new LinkedHashMap<>();
+    public static final Map<String, GameType> OUT = new LinkedHashMap<>();
     private static final Set<String> IN_PLAY = new LinkedHashSet<>();
     private static final int OPENS_IN = 5;
     private static final int SETTLE_TICKS = 3;
@@ -180,7 +180,7 @@ public final class ContentScoring {
         watch(level.getServer(), def, Scores.score(board, side, objective));
     }
 
-    @Nullable static String sideOf(ServerLevel level, Entity who) {
+    @Nullable public static String sideOf(ServerLevel level, Entity who) {
         PlayerTeam team = ContentTeams.teamOf(level.getServer(), ContentTeams.memberName(who));
         if (team != null) { return team.getName(); }
         if (who instanceof Player) { return null; }
@@ -232,7 +232,7 @@ public final class ContentScoring {
         finish(server, def, "score", null);
     }
 
-    static void finish(MinecraftServer server, ScoreDef def, String why, @Nullable String winner) {
+    public static void finish(MinecraftServer server, ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name())) { return; }
         ContentScoringBar.over(def);
         ContentDowned.clear(server);

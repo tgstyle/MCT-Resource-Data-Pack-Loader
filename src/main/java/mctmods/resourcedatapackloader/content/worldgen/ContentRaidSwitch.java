@@ -24,7 +24,7 @@ public final class ContentRaidSwitch {
 
     private ContentRaidSwitch() {}
 
-    @Nullable static RaidSwitchDef parse(String owner, JsonElement element) {
+    @Nullable public static RaidSwitchDef parse(String owner, JsonElement element) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives raids that is not an object of every, start, waves and points keys, ignoring it", owner);
             return null;
@@ -112,7 +112,7 @@ public final class ContentRaidSwitch {
         }
     }
 
-    static void check(Collection<RaidSwitchDef> defs) {
+    public static void check(Collection<RaidSwitchDef> defs) {
         for (RaidSwitchDef def : defs) {
             for (Identifier id : def.start) {
                 if (ContentRaids.def(id) == null) { ContentLog.LOGGER.error("{} names the raid {} in raids.start, which no raid file provides, so its clock never starts it", def.owner, id); }

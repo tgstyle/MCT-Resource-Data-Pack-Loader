@@ -53,7 +53,7 @@ public final class GeneratedResources {
         return Collections.unmodifiableSet(namespaces);
     }
 
-    static String head(String prefix) { return prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/"; }
+    public static String head(String prefix) { return prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/"; }
 
     public static void list(PackType type, String namespace, String prefix, Consumer<String> out) {
         Set<String> paths = new LinkedHashSet<>();

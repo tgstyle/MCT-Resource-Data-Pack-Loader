@@ -48,7 +48,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
-final class ContentEntityBehavior {
+public final class ContentEntityBehavior {
     private static final List<String> PLAYER_ONLY = List.of("minecraft:player");
     private static final String HOME_X = "rdplHomeX";
     private static final String HOME_Y = "rdplHomeY";
@@ -140,7 +140,7 @@ final class ContentEntityBehavior {
 
     private static boolean ownStrike(Mob mob, EntityVariantDef def) { return !(mob instanceof Monster) && declaresAttackDamage(def); }
 
-    static boolean declaresAttackDamage(EntityVariantDef def) {
+    public static boolean declaresAttackDamage(EntityVariantDef def) {
         for (String name : def.attributes().keySet()) {
             if (ContentAttributes.find(name, def.key()) == Attributes.ATTACK_DAMAGE) { return true; }
         }

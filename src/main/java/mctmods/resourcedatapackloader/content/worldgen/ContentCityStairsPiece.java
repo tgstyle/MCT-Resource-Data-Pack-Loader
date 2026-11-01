@@ -100,7 +100,7 @@ public final class ContentCityStairsPiece extends StructurePiece implements Cont
 
     @Override public int fellFloor() { return top - 1; }
 
-    static int wall(int near, int way) { return way > 0 ? near - 1 : near + WIDE; }
+    public static int wall(int near, int way) { return way > 0 ? near - 1 : near + WIDE; }
 
     static int approach(WorldGenLevel level, BoundingBox box, int top, int row, int near, int way, int edge, int deck, boolean alongX) {
         CityPalette linings = CityPalette.of(ContentCity.railTunnelBlock(true), Blocks.AIR.defaultBlockState());
@@ -138,9 +138,9 @@ public final class ContentCityStairsPiece extends StructurePiece implements Cont
         return bench(level, box, alongX, from, middle + way * (bedHalf + (ContentCity.platformWidth() + 1) / 2), floor + 2, awayFrom(alongX, way), at);
     }
 
-    static Direction awayFrom(boolean alongX, int way) { return alongX ? (way > 0 ? Direction.SOUTH : Direction.NORTH) : (way > 0 ? Direction.EAST : Direction.WEST); }
+    public static Direction awayFrom(boolean alongX, int way) { return alongX ? (way > 0 ? Direction.SOUTH : Direction.NORTH) : (way > 0 ? Direction.EAST : Direction.WEST); }
 
-    static int bench(WorldGenLevel level, BoundingBox box, boolean alongX, int from, int across, int y, Direction facing, BlockPos.MutableBlockPos at) {
+    public static int bench(WorldGenLevel level, BoundingBox box, boolean alongX, int from, int across, int y, Direction facing, BlockPos.MutableBlockPos at) {
         int span = ContentCity.benchLength();
         BlockState seat = CityPalette.state(ContentCity.benchBlock());
         if (span < 2 || seat == null) { return 0; }

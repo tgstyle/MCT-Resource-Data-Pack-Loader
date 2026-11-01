@@ -18,13 +18,13 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-final class CrossIds {
+public final class CrossIds {
     static final int DATA_1_20 = 3465;
     static final String FORGE = "forge";
     static final String NEOFORGE = "neoforge";
     static final String COMMON = "c";
     static final String BOTH = "+";
-    static final String ITEM_REGISTRY = "item";
+    public static final String ITEM_REGISTRY = "item";
     private static final String TABLE = "/assets/resourcedatapackloader/port/forge_tags.txt";
     private static final List<String> REGISTRIES = List.of(WorldgenFiles.BIOME, "entity_type", "block", "item", "fluid");
     private static final Map<String, String> RENAMED = Map.ofEntries(
@@ -60,7 +60,7 @@ final class CrossIds {
         return out;
     }
 
-    static String id(String id, Port.Line to) {
+    public static String id(String id, Port.Line to) {
         if (to == Port.Line.V1_21) {
             String renamed = RENAMED.get(id);
             return renamed != null ? renamed : loader(id, FORGE, NEOFORGE);
@@ -91,7 +91,7 @@ final class CrossIds {
         return null;
     }
 
-    static String tag(@Nullable String registry, String id, Port.Line to) {
+    public static String tag(@Nullable String registry, String id, Port.Line to) {
         load();
         int colon = id.indexOf(':');
         if (colon < 0) { return id; }

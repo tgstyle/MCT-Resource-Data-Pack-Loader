@@ -16,20 +16,20 @@ public final class ContentStructurePins {
 
     private ContentStructurePins() {}
 
-    static void hold(List<List<Integer>> pins) {
+    public static void hold(List<List<Integer>> pins) {
         for (List<Integer> pin : pins) {
             if (pin.size() == 2) { PINNED.add(chunkOf(pin).pack()); }
         }
     }
 
-    static boolean pinnedAt(List<List<Integer>> pins, int x, int z) {
+    public static boolean pinnedAt(List<List<Integer>> pins, int x, int z) {
         for (List<Integer> pin : pins) {
             if (pin.size() == 2 && pin.get(0) >> 4 == x && pin.get(1) >> 4 == z) { return true; }
         }
         return false;
     }
 
-    @Nullable static ChunkPos pinnedRegion(List<List<Integer>> pins, int spacing, int regionX, int regionZ) {
+    @Nullable public static ChunkPos pinnedRegion(List<List<Integer>> pins, int spacing, int regionX, int regionZ) {
         for (List<Integer> pin : pins) {
             if (pin.size() != 2) { continue; }
             ChunkPos chunk = chunkOf(pin);
@@ -38,7 +38,7 @@ public final class ContentStructurePins {
         return null;
     }
 
-    static boolean farFromSpawn(int minDistanceFromSpawn, List<Integer> spawn, int x, int z) {
+    public static boolean farFromSpawn(int minDistanceFromSpawn, List<Integer> spawn, int x, int z) {
         if (minDistanceFromSpawn <= 0) { return true; }
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         ServerLevel overworld = server == null ? null : server.getLevel(Level.OVERWORLD);
@@ -46,7 +46,7 @@ public final class ContentStructurePins {
         return farFrom(from, minDistanceFromSpawn, x * 16 + 8, z * 16 + 8);
     }
 
-    static boolean farFrom(BlockPos spawn, int least, int centerX, int centerZ) {
+    public static boolean farFrom(BlockPos spawn, int least, int centerX, int centerZ) {
         double offX = centerX - spawn.getX();
         double offZ = centerZ - spawn.getZ();
         return offX * offX + offZ * offZ >= (double) least * least;

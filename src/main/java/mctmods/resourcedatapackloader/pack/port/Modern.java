@@ -12,14 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-final class Modern {
+public final class Modern {
     private static final String GAMERULE = "gamerule ";
 
     private Modern() {}
 
-    static boolean active() { return Port.Line.running().ordinal() >= Port.Line.V26.ordinal(); }
+    public static boolean active() { return Port.Line.running().ordinal() >= Port.Line.V26.ordinal(); }
 
-    static void data(JsonObject json, Port.Kind kind, String path, String file, boolean stacks, Consumer<String> note) {
+    public static void data(JsonObject json, Port.Kind kind, String path, String file, boolean stacks, Consumer<String> note) {
         switch (kind) {
             case RECIPE -> ModernRecipes.recipe(json, file, stacks, note);
             case LOOT -> ModernLoot.loot(json, file, stacks, note);
@@ -41,7 +41,7 @@ final class Modern {
         ModernFixes.replace(json, ModernFixes.names(json).getAsJsonObject());
     }
 
-    static String ported(Port.Kind kind, String contents, String path, Consumer<String> note) {
+    public static String ported(Port.Kind kind, String contents, String path, Consumer<String> note) {
         boolean lined = Port.Line.V26.acrossSplit();
         ILineNote said = s -> note.accept("'" + path + "' " + s);
         if (kind == Port.Kind.FUNCTION) {
@@ -61,7 +61,7 @@ final class Modern {
         return Ported.GSON.toJson(lined ? LinePort.data(json, LinePort.path(path), said) : json);
     }
 
-    static String function(String contents, String file, Consumer<String> note) {
+    public static String function(String contents, String file, Consumer<String> note) {
         String[] lines = contents.split("\n", -1);
         boolean changed = false;
         for (int i = 0; i < lines.length; i++) {

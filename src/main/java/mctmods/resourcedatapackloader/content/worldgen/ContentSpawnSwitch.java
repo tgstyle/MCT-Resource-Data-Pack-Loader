@@ -38,7 +38,7 @@ public final class ContentSpawnSwitch {
 
     private ContentSpawnSwitch() {}
 
-    @Nullable static SpawnSwitchDef parse(String owner, JsonElement element) {
+    @Nullable public static SpawnSwitchDef parse(String owner, JsonElement element) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("{} gives spawning that is not an object, ignoring it", owner);
             return null;
@@ -85,7 +85,7 @@ public final class ContentSpawnSwitch {
         return Double.isFinite(value) ? value : null;
     }
 
-    static void checkWeights(Collection<SpawnSwitchDef> defs) {
+    public static void checkWeights(Collection<SpawnSwitchDef> defs) {
         for (SpawnSwitchDef def : defs) {
             for (Identifier id : def.weights.keySet()) {
                 if (!BuiltInRegistries.ENTITY_TYPE.containsKey(id)) { ContentLog.LOGGER.error("{} weighs the entity '{}', which does not exist", def.owner, id); }
@@ -177,7 +177,7 @@ public final class ContentSpawnSwitch {
         }
     }
 
-    static void forget() {
+    public static void forget() {
         heldState = null;
         heldLevel = null;
         scope = -1;
