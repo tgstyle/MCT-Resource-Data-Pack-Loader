@@ -4529,7 +4529,8 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Establecer cualquiera de `sun`, `moon`, `bodies` o `stars` cambia el cielo de va
 
 Sin `bodies` se conservan la luna de vanilla y sus fases. Con `bodies`, la lista es todo lo que hay además del sol, así que una lista vacía es un cielo sin luna.
 
+Un cuerpo puede esperar a la investigación. Asígnale `gate`, el nombre de una [puerta](#puertas), y se mantiene fuera del cielo del jugador hasta que esa puerta esté abierta para él. La puerta no necesita `dimension`. Una lista que da un entorno reemplaza la lista de la dimensión, con sus puertas y todo.
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Sin `bodies` se conservan la luna de vanilla y sus fases. Con `bodies`, la lista
 | `bodies[].roll`        | no          | decimal, grados             | `0`                | Gira su imagen alrededor de su propio centro, en el sentido de las agujas del reloj                                                                                                                                                                                                                                                                 |
 | `bodies[].spin`        | no          | decimal, grados por segundo | `0`                | Sigue girando la imagen, se suma a `roll`. Un valor negativo la gira al revés                                                                                                                                                                                                                                                                       |
 | `bodies[].followsTime` | no          | booleano                    | `true`             | Desactivado, queda quieto en el cielo en lugar de girar con el sol                                                                                                                                                                                                                                                                                  |
+| `bodies[].gate`        | no          | nombre de puerta            | ninguno            | Oculta el cuerpo a cada jugador hasta que esta puerta esté abierta para él. Un nombre que ninguna puerta tiene muestra el cuerpo y registra un error                                                                                                                                                                                                |
 | `stars.count`          | no          | entero                      | `1500`             | Cuántas estrellas                                                                                                                                                                                                                                                                                                                                   |
 | `stars.size`           | no          | decimal                     | `0.15`             | La estrella más pequeña; la mayor es dos tercios más grande                                                                                                                                                                                                                                                                                         |
 
@@ -5221,6 +5225,8 @@ Romper cualquier bloque del marco apaga el portal, como en vanilla.
 *portales y puertas*
 
 `<namespace>/gates/*.json`
+
+Una puerta sin `dimension` también puede ocultar un [cuerpo celeste](#el-renderizador-del-cielo), a través de la clave `gate` del cuerpo.
 
 La ruta del archivo es el nombre de registro de la puerta, que luego un portal nombra en `gate`.
 

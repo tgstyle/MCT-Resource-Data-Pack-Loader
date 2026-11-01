@@ -4529,7 +4529,8 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Definir qualquer um entre `sun`, `moon`, `bodies` ou `stars` troca o céu vanill
 
 Sem `bodies`, a lua vanilla e suas fases permanecem. Com `bodies`, a lista é tudo além do sol, então uma lista vazia é um céu sem lua.
 
+Um corpo pode esperar pela pesquisa. Dê a ele `gate`, o nome de uma [passagem](#passagens), e ele fica fora do céu do jogador até que essa passagem esteja aberta para ele. A passagem não precisa de `dimension`. Uma lista que um ambiente dá substitui a lista da dimensão, passagens e tudo.
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Sem `bodies`, a lua vanilla e suas fases permanecem. Com `bodies`, a lista é tu
 | `bodies[].roll`        | não         | float, graus             | `0`              | Gira a imagem em torno do próprio centro, no sentido horário                                                                                                                                                                                                                                             |
 | `bodies[].spin`        | não         | float, graus por segundo | `0`              | Continua girando a imagem, somado a `roll`. Negativo gira ao contrário                                                                                                                                                                                                                                   |
 | `bodies[].followsTime` | não         | booleano                 | `true`           | Desligado, ele fica parado no céu em vez de girar junto com o sol                                                                                                                                                                                                                                        |
+| `bodies[].gate`        | não         | nome de passagem         | nenhum           | Esconde o corpo de cada jogador até que esta passagem esteja aberta para ele. Um nome que nenhuma passagem tem mostra o corpo e registra um erro                                                                                                                                                         |
 | `stars.count`          | não         | int                      | `1500`           | Quantas estrelas                                                                                                                                                                                                                                                                                         |
 | `stars.size`           | não         | float                    | `0.15`           | A menor estrela; a maior é dois terços maior ainda                                                                                                                                                                                                                                                       |
 
@@ -5221,6 +5225,8 @@ Quebrar qualquer bloco da moldura apaga o portal, como no vanilla.
 *portais e passagens*
 
 `<namespace>/gates/*.json`
+
+Uma passagem sem `dimension` também pode esconder um [corpo celeste](#o-renderizador-do-céu), pela chave `gate` do corpo.
 
 O caminho do arquivo é o nome de registro da passagem, que um portal então cita em `gate`.
 

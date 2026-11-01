@@ -4529,7 +4529,8 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 
 `bodies`가 없으면 바닐라 달과 그 위상이 그대로 남습니다. `bodies`가 있으면 목록이 태양을 제외한 모든 천체이므로, 빈 목록은 달 없는 하늘이 됩니다.
 
+천체는 연구를 기다릴 수 있습니다. `gate`에 [게이트](#게이트)의 이름을 주면, 그 게이트가 플레이어에게 열릴 때까지 해당 플레이어의 하늘에 나타나지 않습니다. 게이트에는 `dimension`이 필요 없습니다. 환경이 주는 목록은 차원의 목록을 게이트까지 포함해 대체합니다.
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 | `bodies[].roll`        | 아니요 | 소수, 도       | `0`         | 그림을 그 중심을 축으로 시계 방향으로 돌립니다                                                                                                                                                                                                                          |
 | `bodies[].spin`        | 아니요 | 소수, 초당 도  | `0`         | 그림을 계속 돌립니다. `roll`에 더해집니다. 음수면 반대로 돕니다                                                                                                                                                                                                         |
 | `bodies[].followsTime` | 아니요 | 불리언         | `true`      | 끄면 태양과 함께 돌지 않고 하늘에 가만히 걸려 있습니다                                                                                                                                                                                                                  |
+| `bodies[].gate`        | 아니요 | 게이트 이름    | 없음        | 이 게이트가 그 플레이어에게 열릴 때까지 각 플레이어에게서 천체를 숨깁니다. 어떤 게이트에도 없는 이름은 천체를 표시하고 오류를 기록합니다                                                                                                                                |
 | `stars.count`          | 아니요 | 정수           | `1500`      | 별의 수                                                                                                                                                                                                                                                                 |
 | `stars.size`           | 아니요 | 소수           | `0.15`      | 가장 작은 별. 가장 큰 별은 그보다 3분의 2만큼 더 큽니다                                                                                                                                                                                                                 |
 
@@ -5221,6 +5225,8 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 *포털과 게이트*
 
 `<namespace>/gates/*.json`
+
+`dimension`이 없는 게이트는 천체의 `gate` 키를 통해 [하늘의 천체](#하늘-렌더러)를 가릴 수도 있습니다.
 
 파일의 경로가 곧 게이트의 레지스트리 이름이며, 포털이 `gate`에서 이 이름을 지정합니다.
 

@@ -4529,7 +4529,8 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Définir l'un de `sun`, `moon`, `bodies` ou `stars` remplace le ciel vanilla par
 
 Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste contient tout ce qui n'est pas le soleil : une liste vide donne donc un ciel sans lune.
 
+Un corps peut attendre la recherche. Donnez-lui `gate`, le nom d'un [passage](#passages), et il reste hors du ciel du joueur tant que ce passage ne lui est pas ouvert. Le passage n'a pas besoin de `dimension`. Une liste donnée par un environnement remplace celle de la dimension, passages compris.
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste co
 | `bodies[].roll`        | non    | flottant, degrés             | `0`               | Fait tourner son image autour de son propre centre, dans le sens des aiguilles d'une montre                                                                                                                                                                                                                                                  |
 | `bodies[].spin`        | non    | flottant, degrés par seconde | `0`               | Continue de faire tourner l'image, s'ajoute à `roll`. Une valeur négative la fait tourner dans l'autre sens                                                                                                                                                                                                                                  |
 | `bodies[].followsTime` | non    | booléen                      | `true`            | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil                                                                                                                                                                                                                                                                  |
+| `bodies[].gate`        | non    | nom de passage               | aucun             | Masque le corps à chaque joueur tant que ce passage ne lui est pas ouvert. Un nom qu'aucun passage ne porte affiche le corps et consigne une erreur                                                                                                                                                                                          |
 | `stars.count`          | non    | entier                       | `1500`            | Combien d'étoiles                                                                                                                                                                                                                                                                                                                            |
 | `stars.size`           | non    | flottant                     | `0.15`            | La plus petite étoile ; la plus grande est encore deux tiers plus grosse                                                                                                                                                                                                                                                                     |
 
@@ -5221,6 +5225,8 @@ Casser n'importe quel bloc du cadre éteint le portail, comme dans vanilla.
 *portails et passages*
 
 `<namespace>/gates/*.json`
+
+Un passage sans `dimension` peut aussi masquer un [corps céleste](#le-moteur-de-rendu-du-ciel), par la clé `gate` du corps.
 
 Le chemin du fichier est le nom de registre du passage, qu'un portail nomme ensuite dans `gate`.
 

@@ -31,6 +31,7 @@ public final class SkyOccluder {
     private int loaded;
     private int width;
     private int height;
+    private String gate;
 
     SkyOccluder(float tilt, float size, SkyPoseDef pose, boolean moon, boolean fixed, Identifier[] textures, int columns, int rows) {
         this.tilt = tilt;
@@ -45,11 +46,17 @@ public final class SkyOccluder {
         this.rows = rows;
     }
 
+    SkyOccluder gated(String gate) {
+        this.gate = gate;
+        return this;
+    }
+
     void turn(float angle) { this.angle = angle; }
 
     boolean fixed() { return fixed; }
 
     boolean sweeps(double x, double reach) {
+        if (ContentSkyGates.hides(gate)) { return false; }
         double gap = Math.abs(Math.asin(Mth.clamp(x, -1.0D, 1.0D)) - Math.asin(-Math.sin(tilt)));
         return gap <= Math.atan((size + reach + MARGIN) * Math.sqrt(2.0D) / RADIUS);
     }
@@ -59,6 +66,7 @@ public final class SkyOccluder {
     static int current() { return generation; }
 
     boolean covers(double x, double y, double z, double reach) {
+        if (ContentSkyGates.hides(gate)) { return false; }
         double y1 = y * Math.cos(angle) + z * Math.sin(angle);
         double z1 = z * Math.cos(angle) - y * Math.sin(angle);
         double x2 = x * Math.cos(tilt) + y1 * Math.sin(tilt);

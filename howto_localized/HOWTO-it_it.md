@@ -4529,7 +4529,8 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Impostare uno qualsiasi tra `sun`, `moon`, `bodies` o `stars` sostituisce il cie
 
 Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco comprende tutto tranne il sole, quindi un elenco vuoto è un cielo senza luna.
 
+Un corpo può attendere la ricerca. Dagli `gate`, il nome di un [varco](#varchi), e resta fuori dal cielo del giocatore finché quel varco non è aperto per lui. Il varco non richiede `dimension`. Un elenco dato da un ambiente sostituisce quello della dimensione, varchi compresi.
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco com
 | `bodies[].roll`        | no           | decimale, gradi            | `0`             | Ruota la sua immagine attorno al proprio centro, in senso orario                                                                                                                                                                                                                                                       |
 | `bodies[].spin`        | no           | decimale, gradi al secondo | `0`             | Continua a far girare l'immagine, si somma a `roll`. Un valore negativo la fa girare al contrario                                                                                                                                                                                                                      |
 | `bodies[].followsTime` | no           | booleano                   | `true`          | Se disattivato, resta fermo nel cielo invece di girare con il sole                                                                                                                                                                                                                                                     |
+| `bodies[].gate`        | no           | nome di varco              | nessuno         | Nasconde il corpo a ogni giocatore finché questo varco non è aperto per lui. Un nome che nessun varco ha mostra il corpo e registra un errore                                                                                                                                                                          |
 | `stars.count`          | no           | intero                     | `1500`          | Quante stelle                                                                                                                                                                                                                                                                                                          |
 | `stars.size`           | no           | decimale                   | `0.15`          | La stella più piccola; la più grande è due terzi più grande ancora                                                                                                                                                                                                                                                     |
 
@@ -5221,6 +5225,8 @@ Rompere un qualsiasi blocco del telaio spegne il portale, come in vanilla.
 *portali e varchi*
 
 `<namespace>/gates/*.json`
+
+Un varco senza `dimension` può anche nascondere un [corpo celeste](#il-renderer-del-cielo), tramite la chiave `gate` del corpo.
 
 Il percorso del file è il nome di registro del varco, che un portale poi indica in `gate`.
 

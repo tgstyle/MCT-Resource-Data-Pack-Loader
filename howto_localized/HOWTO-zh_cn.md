@@ -4529,7 +4529,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 没有 `bodies` 时，原版的月亮及其月相保持不变。有了 `bodies`，该列表就是太阳之外的一切，因此空列表就是没有月亮的天空。
 
+天体可以等待研究解锁。给它设置 `gate`，即一个[闸门](#闸门)的名称，在该闸门为玩家打开之前，它不会出现在玩家的天空中。闸门不需要 `dimension`。环境给出的列表会替换维度的列表，闸门也一并替换。
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `bodies[].roll`        | 否   | 浮点数，单位为度    | `0`         | 让它的图片绕自己的中心顺时针旋转                                                                                                                                                                       |
 | `bodies[].spin`        | 否   | 浮点数，单位为度/秒 | `0`         | 让图片持续转动，与 `roll` 相加。负值则反向转动                                                                                                                                                         |
 | `bodies[].followsTime` | 否   | 布尔值              | `true`      | 关闭后，它静止悬挂在天空中，而不随太阳一同转动                                                                                                                                                         |
+| `bodies[].gate`        | 否   | 闸门名称            | 无          | 在这扇闸门为该玩家打开之前，对每位玩家隐藏此天体。没有任何闸门使用的名称会显示此天体并记录错误                                                                                                         |
 | `stars.count`          | 否   | 整数                | `1500`      | 有多少颗星星                                                                                                                                                                                           |
 | `stars.size`           | 否   | 浮点数              | `0.15`      | 最小的星星；最大的再大出三分之二                                                                                                                                                                       |
 
@@ -5221,6 +5225,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 *传送门与闸门*
 
 `<namespace>/gates/*.json`
+
+没有 `dimension` 的闸门也可以通过天体的 `gate` 键隐藏[天空中的天体](#天空渲染器)。
 
 文件路径就是闸门的注册名，传送门方块随后在 `gate` 中引用它。
 

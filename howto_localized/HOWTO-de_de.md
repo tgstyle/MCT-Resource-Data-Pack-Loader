@@ -4529,7 +4529,8 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Sobald `sun`, `moon`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanill
 
 Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Liste alles außer der Sonne, eine leere Liste ist also ein Himmel ohne Mond.
 
+Ein Körper kann auf die Forschung warten. Gib ihm `gate`, den Namen eines [Tores](#tore), und er bleibt aus dem Himmel eines Spielers, bis dieses Tor für ihn geöffnet ist. Das Tor braucht keine `dimension`. Eine Liste, die eine Umgebung angibt, ersetzt die Liste der Dimension, Tore eingeschlossen.
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 | `bodies[].roll`        | nein    | float, Grad             | `0`               | Dreht sein Bild im Uhrzeigersinn um seine eigene Mitte                                                                                                                                                                                                                                                                |
 | `bodies[].spin`        | nein    | float, Grad pro Sekunde | `0`               | Dreht das Bild weiter, zu `roll` addiert. Negativ dreht es andersherum                                                                                                                                                                                                                                                |
 | `bodies[].followsTime` | nein    | boolean                 | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                                                                                                                                          |
+| `bodies[].gate`        | nein    | Tor-Name                | keines            | Blendet den Körper für jeden Spieler aus, bis dieses Tor für ihn geöffnet ist. Ein Name, den kein Tor hat, zeigt den Körper und protokolliert einen Fehler                                                                                                                                                            |
 | `stars.count`          | nein    | int                     | `1500`            | Wie viele Sterne                                                                                                                                                                                                                                                                                                      |
 | `stars.size`           | nein    | float                   | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                                                                                                                                           |
 
@@ -5221,6 +5225,8 @@ Bricht ein Block des Rahmens weg, geht das Portal aus, wie in Vanilla.
 *portale und tore*
 
 `<namespace>/gates/*.json`
+
+Ein Tor ohne `dimension` kann auch einen [Himmelskörper](#der-himmelsrenderer) verbergen, über den Schlüssel `gate` des Körpers.
 
 Der Pfad der Datei ist der Registry-Name des Tors, das ein Portal dann in `gate` nennt.
 

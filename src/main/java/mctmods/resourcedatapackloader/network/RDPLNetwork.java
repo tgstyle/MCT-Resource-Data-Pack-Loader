@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.network;
 import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.ContentSeasonTint;
+import mctmods.resourcedatapackloader.client.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.HeartsHud;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.TalkScreen;
@@ -46,6 +47,7 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageToasts.TYPE, MessageToasts.CODEC, (message, _) -> Toasts.show(message.kinds()));
         registrar.playToClient(MessageAnvilCosts.TYPE, MessageAnvilCosts.CODEC, (message, _) -> AnvilCosts.show(message.cap(), ints(message.paid()), ints(message.lapis()), message.opening()));
         registrar.playToClient(MessageHeartColors.TYPE, MessageHeartColors.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { HeartsHud.show(ints(message.colors())); } });
+        registrar.playToClient(MessageGates.TYPE, MessageGates.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ContentSkyGates.receive(message.open()); } });
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } });
         registrar.playToClient(MessageIntroLandMade.TYPE, MessageIntroLandMade.CODEC, (_, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WorldIntroScreen.landMade(); } });
         registrar.playToClient(MessageEnvironments.TYPE, MessageEnvironments.CODEC, (message, context) -> {
@@ -88,6 +90,8 @@ public final class RDPLNetwork {
     public static void sendAnvilCosts(ServerPlayer player) { send(player, new MessageAnvilCosts(AnvilCosts.servedCap(), boxed(AnvilCosts.servedPaid()), boxed(AnvilCosts.servedLapis()), AnvilCosts.servedOpening())); }
 
     public static void sendHeartColors(ServerPlayer player) { send(player, new MessageHeartColors(boxed(ContentHearts.colors()))); }
+
+    public static void sendGates(ServerPlayer player, List<String> open) { send(player, new MessageGates(open)); }
 
     private static List<Integer> boxed(int[] values) { return Arrays.stream(values).boxed().toList(); }
 

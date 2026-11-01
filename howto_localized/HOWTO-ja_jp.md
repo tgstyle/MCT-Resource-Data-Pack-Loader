@@ -4529,7 +4529,8 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 
 `bodies` がなければ、バニラの月とその満ち欠けが残ります。`bodies` があると、そのリストが太陽以外のすべてになるので、空のリストは月のない空になります。
 
+天体は研究を待つこともできます。`gate` に[ゲート](#ゲート)の名前を指定すると、そのゲートがプレイヤーに対して開くまで、そのプレイヤーの空には現れません。ゲートには `dimension` は不要です。環境が与える一覧は、ディメンションの一覧をゲートごと置き換えます。
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 | `bodies[].roll`        | いいえ | 小数、度          | `0`          | 画像を、その中心を軸に時計回りに回します                                                                                                                                                                                                                         |
 | `bodies[].spin`        | いいえ | 小数、度/秒       | `0`          | 画像を回し続けます。`roll` に加算されます。負の値で逆回りです                                                                                                                                                                                                    |
 | `bodies[].followsTime` | いいえ | 真偽値            | `true`       | オフにすると、太陽とともに回らず空に静止します                                                                                                                                                                                                                   |
+| `bodies[].gate`        | いいえ | ゲート名          | なし         | このゲートがプレイヤーに対して開くまで、各プレイヤーからこの天体を隠します。どのゲートにもない名前は天体を表示し、エラーをログに記録します                                                                                                                       |
 | `stars.count`          | いいえ | 整数              | `1500`       | 星の数                                                                                                                                                                                                                                                           |
 | `stars.size`           | いいえ | 小数              | `0.15`       | 最も小さい星。最も大きい星は、そこからさらに3分の2大きくなります                                                                                                                                                                                                 |
 
@@ -5221,6 +5225,8 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 *ポータルとゲート*
 
 `<namespace>/gates/*.json`
+
+`dimension` のないゲートは、天体の `gate` キーを通じて[空の天体](#空のレンダラー)を隠すこともできます。
 
 ファイルのパスがそのままゲートのレジストリ名になり、ポータル側は `gate` でこれを指定します。
 

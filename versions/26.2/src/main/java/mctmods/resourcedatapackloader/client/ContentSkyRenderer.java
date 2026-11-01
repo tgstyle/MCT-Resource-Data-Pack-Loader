@@ -77,7 +77,7 @@ public final class ContentSkyRenderer {
             if (moonSize > 0.0F) { bodies.add(moonTexture == null ? new SkyOccluder((float) Math.toRadians(moonTilt), moonSize, moonPose, true, false, MOONS, 1, 1) : new SkyOccluder((float) Math.toRadians(moonTilt), moonSize, moonPose, true, false, new Identifier[] {moonTexture}, 4, 2)); }
         }
         else {
-            for (DimensionTraitsDef.Body body : sky.bodies()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), body.pose(), false, !body.followsTime(), new Identifier[] {body.texture()}, 1, 1)); }
+            for (DimensionTraitsDef.Body body : sky.bodies()) { bodies.add(new SkyOccluder((float) Math.toRadians(body.tilt()), body.size(), body.pose(), false, !body.followsTime(), new Identifier[] {body.texture()}, 1, 1).gated(body.gate())); }
         }
         return bodies.toArray(new SkyOccluder[0]);
     }
@@ -122,6 +122,7 @@ public final class ContentSkyRenderer {
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
+                if (ContentSkyGates.hides(body.gate())) { continue; }
                 poseStack.pushPose();
                 if (body.followsTime()) { poseStack.mulPose(Axis.XP.rotation(sunAngle)); }
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));

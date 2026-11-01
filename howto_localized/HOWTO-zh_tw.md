@@ -4529,7 +4529,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
-      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false },
+      { "texture": "mypack:textures/environment/mars.png", "size": 8, "angle": 90, "tilt": -15, "gate": "research_mars" }
     ],
     "stars": { "count": 6000, "size": 0.12 }
   },
@@ -4653,6 +4654,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 
 沒有 `bodies` 時，保留原版的月亮及其月相。有 `bodies` 時，清單就是太陽以外的所有天體，因此空清單就是沒有月亮的天空。
 
+天體可以等待研究解鎖。給它設定 `gate`，也就是一個[閘門](#閘門)的名稱，在該閘門為玩家開啟之前，它不會出現在玩家的天空中。閘門不需要 `dimension`。環境給出的清單會取代維度的清單，閘門也一併取代。
+
 ```json
 {
   "sky": {
@@ -4693,6 +4696,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `bodies[].roll`        | 否   | 小數，單位為度    | `0`         | 讓它的圖片繞自己的中心順時針旋轉                                                                                                                                                                       |
 | `bodies[].spin`        | 否   | 小數，單位為度/秒 | `0`         | 讓圖片持續轉動，與 `roll` 相加。負值則反向轉動                                                                                                                                                         |
 | `bodies[].followsTime` | 否   | 布林值            | `true`      | 關閉時，它靜止懸掛在天空中，而不隨太陽轉動                                                                                                                                                             |
+| `bodies[].gate`        | 否   | 閘門名稱          | 無          | 在這座閘門為該玩家開啟之前，對每位玩家隱藏此天體。沒有任何閘門使用的名稱會顯示此天體並記錄錯誤                                                                                                         |
 | `stars.count`          | 否   | 整數              | `1500`      | 星星的數量                                                                                                                                                                                             |
 | `stars.size`           | 否   | 浮點數            | `0.15`      | 最小的星星；最大的比它再大三分之二                                                                                                                                                                     |
 
@@ -5221,6 +5225,8 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 *傳送門與閘門*
 
 `<namespace>/gates/*.json`
+
+沒有 `dimension` 的閘門也可以透過天體的 `gate` 鍵隱藏[天空中的天體](#天空渲染器)。
 
 檔案路徑即閘門的註冊名稱，傳送門隨後在 `gate` 中引用它。
 
