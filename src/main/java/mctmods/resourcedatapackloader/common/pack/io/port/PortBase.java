@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.pack.io.port;
 import mctmods.resourcedatapackloader.common.pack.io.port.commands.FunctionLines;
 import static mctmods.resourcedatapackloader.common.pack.loading.RDPLPack.key;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.google.gson.JsonElement;
@@ -38,14 +39,16 @@ public abstract class PortBase<S extends PortBase.IServed> implements IPackPort 
     public final Map<PackType, Map<String, Map<String, S>>> exposed = new EnumMap<>(PackType.class);
     public final String name;
     public final Path root;
+    protected final PackPaths places;
     public final Map<String, byte[]> cache = new ConcurrentHashMap<>();
     final Set<String> notes = new LinkedHashSet<>();
     public boolean reported;
     public int rewritten;
 
-    public PortBase(String name, Path root) {
+    public PortBase(String name, Path root, PackPaths places) {
         this.name = name;
         this.root = root;
+        this.places = places;
     }
 
     public final void note(String said) { if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); } }

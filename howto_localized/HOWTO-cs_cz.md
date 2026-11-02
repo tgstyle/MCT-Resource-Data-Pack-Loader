@@ -30,6 +30,7 @@ Tento průvodce platí pro build 26.x, tedy pro 26.1.2, 26.2 a 26.3; všechny t�
 - [Čtení tabulek](#čtení-tabulek)
 - [Jediné pravidlo](#jediné-pravidlo)
 - [Organizace balíčků](#organizace-balíčků)
+  - [Složky v závorkách](#složky-v-závorkách)
 - [Balíčky zdrojů: který vyhraje](#balíčky-zdrojů-který-vyhraje)
   - [Seznam balíčků](#seznam-balíčků)
 
@@ -324,6 +325,23 @@ Na velikosti písmen nezáleží; mezera, pomlčka nebo podtržítko za číslem
 **Balíčky se převádějí mezi verzemi.** Načtení balíčku napsaného pro jinou řadu ho při prvním načtení převede stejným způsobem a zapíše, co se změnilo, do jeho vlastní složky `versions/<version>/`, jak je uvedeno výše; děje se to automaticky při načtení, včetně načtení, které spustí `/rdpl reload` nebo `/rdplserver reload`, nikdy vlastním příkazem. Každá dvojice verzí se převádí oběma směry, takže balíček pro 1.12.2, 1.20.1, 1.21.1 nebo 26.x se načte na kterékoli z ostatních. Balíček pro 26.3 se načte i na každé řadě, na starších se čte přes formát 26.2, a starší balíček se načte na 26.3. Co jedna strana má a druhá neumí pojmout, se zahodí a log každé zahození jmenuje: při převodu z 26.3 dolů mimo jiné ladicí funkce hustoty, vlastní vyloučení a úroveň povrchu akvifer v balíčku a příkazy, které 26.2 nemá; při převodu nahoru na 26.3 `depth` a `offset` spawn targetu a klíče žil rudy v noise routeru. [Klíče, které se nepřenesly](#klíče-které-se-nepřenesly) je uvádí všechny.
 
 `pack.mcmeta` v kořeni zipu je vítaný, ale není potřeba: mód předkládá hře každý balíček pod jedním vlastním záznamem, s formátem balíčku, který hra očekává, takže balíček nikdy nezastará kvůli číslu formátu. Dej vedle něj `pack.png`, aby záznam složky dostal ikonu. Bez ní záznam ukazuje ikonu RDPL.
+
+### Složky v závorkách
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Složka pojmenovaná v závorkách řadí soubory, aniž změní jejich id. Z cesty id nebo vyhledávání se vynechá na libovolné cestě pod `assets/` nebo `data/`, a to i nad jmenným prostorem.
+
+| Případ                                   | Co se stane                                                                                                                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `(ores)`                                 | Vynechá se z cesty                                                                                                                                                                                                 |
+| `(ores`, `a(b)`, `()`, `(a)(b)`          | Obyčejná složka, která zůstane v cestě, s jedním varováním v logu; id, která závorky nepřipouštějí, soubor zahodí                                                                                                  |
+| Soubor se jménem `(ruby).json`           | Počítají se jen složky, takže jméno zůstane                                                                                                                                                                        |
+| Dva soubory, které skončí na jedné cestě | Do logu se zapíše chyba a zůstane první. Soubory se řadí podle zapsané cesty a `(` se řadí před číslice, písmena, `_`, `-` a `.`, takže `blocks/(ores)/x.json` má přednost před `blocks/x.json` a `(a)` před `(b)` |
+| Balíček bez `pack_format`                | Jeho formát se načte z názvů složek, takže složky, které formát ukazují, nechte bez závorek                                                                                                                        |
 
 ## Balíčky zdrojů: který vyhraje
 

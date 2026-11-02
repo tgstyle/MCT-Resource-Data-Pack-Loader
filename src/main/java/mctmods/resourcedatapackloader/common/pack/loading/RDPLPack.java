@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiConsumer;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import net.minecraft.server.packs.PackType;
 
@@ -44,11 +43,13 @@ public final class RDPLPack {
     private final Set<String> fromOwn = new HashSet<>();
     @Nullable private final Port.Line crossRoot;
     @Nullable private final IPackPort ported;
+    private final PackPaths places;
     private int fileCount;
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) { this(name, priority, overriding, root, owned, null); }
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Set<String> ownedNamespaces) {
+        this.places = new PackPaths(name);
         this.name = name;
         this.priority = priority;
         this.overriding = overriding;
@@ -60,7 +61,7 @@ public final class RDPLPack {
         Port.Line foreign = ownedNamespaces == null && !legacy ? Port.foreign(root) : null;
         this.legacyRoot = own != null && legacy;
         this.crossRoot = own != null ? foreign : null;
-        this.ported = own != null ? null : legacy ? new Ported(name, root) : foreign != null ? new Crossed(name, root, foreign) : null;
+        this.ported = own != null ? null : legacy ? new Ported(name, root, places) : foreign != null ? new Crossed(name, root, foreign, places) : null;
         buildIndex();
         if (ported != null) { ported.report(); }
     }
@@ -107,9 +108,8 @@ public final class RDPLPack {
         }
     }
 
-    private boolean ownsNamespace(Path dir) {
+    private boolean ownsNamespace(String namespace) {
         if (ownedNamespaces == null) { return true; }
-        String namespace = trimSeparator(dir.getFileName().toString());
         if (ownedNamespaces.contains(namespace)) { return true; }
         ContentLog.LOGGER.warn("Mod pack '{}' ships files under the namespace '{}', which it does not declare in its mods.toml, so they are ignored. A mod may only supply content for its own namespace; anything else belongs in a pack under the pack folder", name, namespace);
         return false;
@@ -118,20 +118,21 @@ public final class RDPLPack {
     private void indexHome(PackType type, Path base, boolean versioned) {
         Path home = base.resolve(type.getDirectory());
         if (!Files.isDirectory(home)) { return; }
-        try (Stream<Path> stream = Files.list(home)) { stream.sorted().filter(Files::isDirectory).filter(this::ownsNamespace).forEach(dir -> indexNamespace(type, dir, versioned)); }
+        try {
+            for (Map.Entry<String, List<Path>> held : PackPaths.namespaces(home).entrySet()) { if (ownsNamespace(held.getKey())) { indexNamespace(type, held.getKey(), held.getValue(), home.resolve(held.getKey()), versioned); } }
+        }
         catch (IOException | UncheckedIOException ex) {
             ContentLog.LOGGER.error("Pack '{}': could not list namespaces under {}", name, type.getDirectory(), ex);
         }
     }
 
-    private void indexNamespace(PackType type, Path dir, boolean versioned) {
-        String namespace = trimSeparator(dir.getFileName().toString());
+    private void indexNamespace(PackType type, String namespace, List<Path> dirs, Path home, boolean versioned) {
         Set<String> paths = new LinkedHashSet<>();
         boolean carriedOnly = legacyRoot && !versioned && type == PackType.CLIENT_RESOURCES;
         Port.Line superseded = !versioned && type == PackType.SERVER_DATA ? crossRoot : null;
         int nested = 0;
-        try (Stream<Path> stream = Files.walk(dir)) {
-            for (String path : (Iterable<String>) stream.sorted().filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
+        try {
+            for (String path : places.walk(dirs, home)) {
                 if (path.startsWith(PackManager.ROOT_DIRECTORY + "/")) { nested++; }
                 else if ((!carriedOnly || Port.unchanged(path)) && (superseded == null || Crossed.keepsPlace(namespace, path, superseded))) { paths.add(path); }
             }
@@ -156,26 +157,12 @@ public final class RDPLPack {
 
     public static String key(PackType type, String namespace, String path) { return type.getDirectory() + "/" + namespace + "/" + path; }
 
-    private static String relative(Path dir, Path file) {
-        String base = dir.toString().replace('\\', '/');
-        if (!base.endsWith("/")) { base = base + "/"; }
-        String path = file.toString().replace('\\', '/');
-        if (path.startsWith(base)) { return path.substring(base.length()); }
-        return trimLeadingSeparator(dir.relativize(file).toString().replace('\\', '/'));
-    }
-
-    private static String trimLeadingSeparator(String path) {
-        int start = 0;
-        while (start < path.length() && path.charAt(start) == '/') { start++; }
-        return start == 0 ? path : path.substring(start);
-    }
-
     private static String trimSeparator(String raw) {
         if (raw.endsWith("/") || raw.endsWith("\\")) { return raw.substring(0, raw.length() - 1); }
         return raw;
     }
 
-    private Path locate(PackType type, String namespace, String path) { return (own != null && fromOwn.contains(key(type, namespace, path)) ? own : root).resolve(type.getDirectory()).resolve(namespace).resolve(path); }
+    private Path locate(PackType type, String namespace, String path) { return places.real((own != null && fromOwn.contains(key(type, namespace, path)) ? own : root).resolve(type.getDirectory()).resolve(namespace).resolve(path)); }
 
     public InputStream open(PackType type, String namespace, String path) throws IOException {
         if (ported != null) {

@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.modern.ModernAssets;
 import static mctmods.resourcedatapackloader.common.pack.loading.RDPLPack.key;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackMeta;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.ILineNote;
@@ -40,8 +41,8 @@ public final class Crossed extends PortBase<Crossed.Source> {
     private final boolean lined;
     private int moved;
 
-    public Crossed(String name, Path root, Port.Line from) {
-        super(name, root);
+    public Crossed(String name, Path root, Port.Line from, PackPaths places) {
+        super(name, root, places);
         this.from = from;
         this.to = step(from);
         this.modern = Modern.active() && from.ordinal() < Port.Line.V26.ordinal();
@@ -114,14 +115,14 @@ public final class Crossed extends PortBase<Crossed.Source> {
             String exposed = lined ? LinePort.path(target.path()) : target.path();
             boolean same = target.namespace().equals(namespace) && exposed.equals(path);
             if (!same) { moved++; }
-            expose(type, target.namespace(), exposed, new Source(home.resolve(path), RDPLPack.DATA + "/" + namespace + "/" + path, kind(target.path()), same, target.path()));
+            expose(type, target.namespace(), exposed, new Source(places.real(home.resolve(path)), RDPLPack.DATA + "/" + namespace + "/" + path, kind(target.path()), same, target.path()));
         }
     }
 
     private void assets(Path home, String namespace, List<String> realPaths) {
         String base = RDPLPack.ASSETS + "/" + namespace + "/";
         for (String path : realPaths) {
-            Path real = home.resolve(path);
+            Path real = places.real(home.resolve(path));
             boolean model = path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX);
             String exposedPath = lined ? LinePort.assetPath(path) : path;
             if (!exposedPath.equals(path)) { moved++; }

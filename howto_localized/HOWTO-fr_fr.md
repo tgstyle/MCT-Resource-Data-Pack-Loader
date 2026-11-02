@@ -30,6 +30,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 - [Lire les tableaux](#lire-les-tableaux)
 - [La règle unique](#la-règle-unique)
 - [Organiser les packs](#organiser-les-packs)
+  - [Dossiers entre parenthèses](#dossiers-entre-parenthèses)
 - [Packs de ressources : qui l'emporte](#packs-de-ressources--qui-lemporte)
   - [La liste des packs](#la-liste-des-packs)
 
@@ -324,6 +325,23 @@ Insensible à la casse ; une espace, un tiret ou un tiret bas après le nombre e
 **Les packs se convertissent d'une version à l'autre.** Charger un pack écrit pour une autre ligne le convertit la première fois, de la même manière, en écrivant ce qui a changé dans son propre dossier `versions/<version>/` comme ci-dessus ; cela se produit automatiquement au chargement, y compris celui que déclenche un `/rdpl reload` ou un `/rdplserver reload`, jamais par une commande à part. Chaque paire de versions se convertit dans les deux sens, donc un pack 1.12.2, 1.20.1, 1.21.1 ou 26.x se charge sur toutes les autres. Un pack 26.3 se charge aussi sur chaque ligne, lu selon le format 26.2 sur les plus anciennes, et un pack plus ancien se charge sur 26.3. Ce qu'un côté possède et que l'autre ne peut pas contenir est abandonné, et le journal nomme chaque abandon : en descendant depuis 26.3, entre autres, les fonctions de densité de débogage, l'exclusion d'aquifère et le niveau de surface propres à un pack, et les commandes que la 26.2 n'a pas ; en montant vers 26.3, le `depth` et le `offset` d'une cible d'apparition et les clés de filons de minerai du routeur de bruit. [Clés non reprises](#clés-non-reprises) les énumère toutes.
 
 Un `pack.mcmeta` à la racine du zip est bienvenu mais pas nécessaire : le mod présente chaque pack au jeu sous une entrée qui lui est propre, avec le format de pack attendu par le jeu, de sorte qu'un pack ne devient jamais obsolète à cause d'un numéro de format. Placez un `pack.png` à côté pour donner une icône à l'entrée du dossier. Sans lui, l'entrée affiche l'icône de RDPL.
+
+### Dossiers entre parenthèses
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Un dossier dont le nom est entre parenthèses trie les fichiers sans changer leurs ids. Il est retiré du chemin de l'id ou de recherche, sur tout chemin situé sous `assets/` ou `data/`, et même au-dessus de l'espace de noms.
+
+| Cas                                          | Ce qui se passe                                                                                                                                                                                                                                     |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                                     | Retiré du chemin                                                                                                                                                                                                                                    |
+| `(ores`, `a(b)`, `()`, `(a)(b)`              | Un dossier normal qui reste dans le chemin, avec un seul avertissement dans le journal ; les ids qui n'admettent pas les parenthèses font perdre le fichier                                                                                         |
+| Un fichier nommé `(ruby).json`               | Seuls les dossiers comptent, donc le nom reste                                                                                                                                                                                                      |
+| Deux fichiers qui tombent sur un même chemin | Une erreur est journalisée et le premier est conservé. Les fichiers sont triés selon leur chemin écrit, et `(` passe avant les chiffres, les lettres, `_`, `-` et `.`, donc `blocks/(ores)/x.json` l'emporte sur `blocks/x.json` et `(a)` sur `(b)` |
+| Un pack sans `pack_format`                   | Son format est lu dans les noms de dossiers ; gardez donc hors des parenthèses les dossiers qui indiquent son format                                                                                                                                |
 
 ## Packs de ressources : qui l'emporte
 
