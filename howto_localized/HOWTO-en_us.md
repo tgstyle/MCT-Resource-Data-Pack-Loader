@@ -28,6 +28,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Reading the tables](#reading-the-tables)
 - [The one rule](#the-one-rule)
 - [Organizing packs](#organizing-packs)
+  - [Parenthesized folders](#parenthesized-folders)
 - [Resource packs: who wins](#resource-packs-who-wins)
   - [The pack list](#the-pack-list)
 
@@ -313,6 +314,23 @@ Case-insensitive; a space, dash or underscore after the number is optional; the 
 **One zip for every version.** A zip may carry a `versions/<version>/` folder for each Minecraft version it serves: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/`, and on 26.x the exact version it runs, `versions/26.1.2/`, `versions/26.2/` or `versions/26.3/`. Each is laid out like the root of a pack for that version, `pack.mcmeta` included. A file under the running version's folder is read in place of the root file it stands for, at the path this version reads: on 1.20.1, a 1.12.2 root's `assets/mypack/blocks/ruby_ore.json` is replaced by `versions/1.20.1/data/mypack/blocks/ruby_ore.json`, and its `assets/mypack/textures/blocks/ruby_ore.png` by `versions/1.20.1/assets/mypack/textures/block/ruby_ore.png`; on 1.21.1 and 26.x the vanilla data folders take their singular names, so a root `recipes/` file is replaced by one under `recipe/`. The root is shared by every version, and another version's folder is never read. Once the running version's folder is there, whether the port wrote it or the pack's author did, the root is no longer converted: root files this version reads as they are, such as sounds, still load, and every root file written for another line that would have to be moved or rewritten is skipped, so what replaces it goes in the version folder. Put what every version reads alike at the root and only what differs into a version folder, and one zip loads on all four.
 
 **Packs convert between versions.** Loading a pack written for a different line converts it the first time, the same way, writing what changed into its own `versions/<version>/` folder as above; this happens automatically at load — including the load a `/rdpl reload` or `/rdplserver reload` triggers — never through a command of its own. Every pair of versions converts both ways, so a 1.12.2, 1.20.1, 1.21.1 or 26.x pack loads on any of the others. A 26.3 pack loads on every line too, read through the 26.2 format on the older ones, and an older pack loads on 26.3. What one side has and the other cannot hold is dropped, and the log names each drop: going down from 26.3, among others, debug density functions, a pack's own aquifer exclusion and surface level, and commands 26.2 does not have; going up to 26.3, a spawn target's `depth` and `offset` and the noise router's ore vein keys. On 1.12.2 a modern pack's vanilla worldgen, such as its biomes, features and noise settings, and its `neoforge` folder are left out as well, since 1.12.2 has no twin for either.
+
+### Parenthesized folders
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+A folder named in parentheses sorts files without changing their ids. It is left out of the id or lookup path, on any path below `assets/` and above the namespace too.
+
+| Case                            | What happens                                                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                        | Left out of the path                                                                                                                                                                                      |
+| `(ores`, `a(b)`, `()`, `(a)(b)` | A normal folder that stays in the path, with one warning in the log; ids that do not allow parentheses drop the file                                                                                      |
+| A file named `(ruby).json`      | Only folders count, so the name stays                                                                                                                                                                     |
+| Two files that land on one path | An error is logged and the first is kept. Files sort by their written path, and `(` sorts before digits, letters, `_`, `-` and `.`, so `blocks/(ores)/x.json` beats `blocks/x.json` and `(a)` beats `(b)` |
+| A pack with no `pack_format`    | Its format is read from its folder names, so keep the folders that show its format outside parentheses                                                                                                    |
 
 ## Resource packs: who wins
 

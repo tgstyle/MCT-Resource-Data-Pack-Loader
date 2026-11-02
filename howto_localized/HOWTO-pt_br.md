@@ -28,6 +28,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Lendo as tabelas](#lendo-as-tabelas)
 - [A única regra](#a-única-regra)
 - [Organizando pacotes](#organizando-pacotes)
+  - [Pastas entre parênteses](#pastas-entre-parênteses)
 - [Pacotes de recursos: quem vence](#pacotes-de-recursos-quem-vence)
   - [A lista de pacotes](#a-lista-de-pacotes)
 
@@ -313,6 +314,23 @@ Sem diferenciar maiúsculas de minúsculas; um espaço, hífen ou sublinhado dep
 **Um zip para todas as versões.** Um zip pode conter uma pasta `versions/<version>/` para cada versão do Minecraft que ele atende: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` e, na 26.x, a versão exata em que roda, `versions/26.1.2/`, `versions/26.2/` ou `versions/26.3/`. Cada uma é organizada como a raiz de um pacote para aquela versão, `pack.mcmeta` incluído. Um arquivo na pasta da versão em execução é lido no lugar do arquivo da raiz que ele representa, no caminho que esta versão lê: na 1.20.1, `assets/mypack/blocks/ruby_ore.json` de uma raiz 1.12.2 é substituído por `versions/1.20.1/data/mypack/blocks/ruby_ore.json`, e o seu `assets/mypack/textures/blocks/ruby_ore.png` por `versions/1.20.1/assets/mypack/textures/block/ruby_ore.png`; na 1.21.1 e na 26.x as pastas de dados do vanilla recebem nomes no singular, então um arquivo `recipes/` da raiz é substituído por um em `recipe/`. A raiz é compartilhada por todas as versões, e a pasta de outra versão nunca é lida. Depois que a pasta da versão em execução existe, escrita pela conversão ou pelo autor do pacote, a raiz deixa de ser convertida: os arquivos da raiz que esta versão lê como estão, como os sons, continuam carregando, e todo arquivo da raiz escrito para outra versão que precisaria ser movido ou reescrito é ignorado, então o que o substitui vai na pasta da versão. Coloque na raiz o que todas as versões leem do mesmo jeito e, em uma pasta de versão, apenas o que difere, e um zip carrega nas quatro.
 
 **Os pacotes são convertidos entre versões.** Carregar um pacote escrito para outra linha o converte na primeira vez, da mesma forma, gravando o que mudou em sua própria pasta `versions/<version>/` como acima; isso acontece automaticamente no carregamento, inclusive no carregamento que um `/rdpl reload` ou `/rdplserver reload` dispara, nunca por um comando próprio. Todo par de versões converte nos dois sentidos, então um pacote 1.12.2, 1.20.1, 1.21.1 ou 26.x carrega em qualquer uma das outras. Um pacote 26.3 também carrega em todas as linhas, lido pelo formato 26.2 nas mais antigas, e um pacote mais antigo carrega na 26.3. O que um lado tem e o outro não consegue guardar é descartado, e o log nomeia cada descarte: ao descer da 26.3, entre outros, funções de densidade de depuração, a exclusão de aquífero e o nível de superfície próprios de um pacote e comandos que a 26.2 não tem; ao subir para a 26.3, a `depth` e o `offset` de um alvo de spawn e as chaves de veio de minério do roteador de ruído. Na 1.12.2, a worldgen vanilla de um pacote moderno, como seus biomas, características e configurações de ruído, e sua pasta `neoforge` também ficam de fora, já que a 1.12.2 não tem equivalente para nenhum dos dois.
+
+### Pastas entre parênteses
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Uma pasta com nome entre parênteses ordena os arquivos sem mudar os ids deles. Ela sai do caminho do id ou da busca em qualquer caminho abaixo de `assets/`, e também acima do namespace.
+
+| Caso                                    | O que acontece                                                                                                                                                                                                                 |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `(ores)`                                | Sai do caminho                                                                                                                                                                                                                 |
+| `(ores`, `a(b)`, `()`, `(a)(b)`         | Uma pasta comum que continua no caminho, com um aviso no log; ids que não aceitam parênteses descartam o arquivo                                                                                                               |
+| Um arquivo chamado `(ruby).json`        | Só as pastas contam, então o nome permanece                                                                                                                                                                                    |
+| Dois arquivos que caem no mesmo caminho | Um erro é registrado no log e o primeiro é mantido. Os arquivos são ordenados pelo caminho escrito, e `(` vem antes de dígitos, letras, `_`, `-` e `.`, então `blocks/(ores)/x.json` vence `blocks/x.json` e `(a)` vence `(b)` |
+| Um pacote sem `pack_format`             | O formato é lido dos nomes das pastas, então mantenha fora dos parênteses as pastas que mostram o formato dele                                                                                                                 |
 
 ## Pacotes de recursos: quem vence
 

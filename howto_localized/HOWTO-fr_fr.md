@@ -28,6 +28,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Lire les tableaux](#lire-les-tableaux)
 - [La règle unique](#la-règle-unique)
 - [Organiser les packs](#organiser-les-packs)
+  - [Dossiers entre parenthèses](#dossiers-entre-parenthèses)
 - [Packs de ressources : qui l'emporte](#packs-de-ressources--qui-lemporte)
   - [La liste des packs](#la-liste-des-packs)
 
@@ -313,6 +314,23 @@ Insensible à la casse ; une espace, un tiret ou un tiret bas après le nombre e
 **Un seul zip pour toutes les versions.** Un zip peut contenir un dossier `versions/<version>/` pour chaque version de Minecraft qu'il prend en charge : `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/`, et pour 26.x la version exacte qui s'exécute, `versions/26.1.2/`, `versions/26.2/` ou `versions/26.3/`. Chacun est organisé comme la racine d'un pack pour cette version, `pack.mcmeta` compris. Un fichier situé sous le dossier de la version en cours est lu à la place du fichier racine qu'il remplace, au chemin que lit cette version : sur 1.20.1, `assets/mypack/blocks/ruby_ore.json` d'une racine 1.12.2 est remplacé par `versions/1.20.1/data/mypack/blocks/ruby_ore.json`, et son `assets/mypack/textures/blocks/ruby_ore.png` par `versions/1.20.1/assets/mypack/textures/block/ruby_ore.png` ; sur 1.21.1 et 26.x, les dossiers de données vanilla prennent leur forme au singulier, donc un fichier `recipes/` à la racine est remplacé par un fichier sous `recipe/`. La racine est partagée par toutes les versions, et le dossier d'une autre version n'est jamais lu. Une fois le dossier de la version en cours présent, que le portage l'ait écrit ou que l'auteur du pack l'ait fait, la racine n'est plus convertie : les fichiers racine que cette version lit tels quels, comme les sons, restent chargés, et tout fichier racine prévu pour une autre version qu'il faudrait déplacer ou réécrire est ignoré, si bien que son remplaçant va dans le dossier de version. Placez à la racine ce que toutes les versions lisent de la même façon et uniquement ce qui diffère dans un dossier de version, et un seul zip se charge sur les quatre.
 
 **Les packs se convertissent d'une version à l'autre.** Charger un pack écrit pour une autre ligne le convertit la première fois, de la même manière, en écrivant ce qui a changé dans son propre dossier `versions/<version>/` comme ci-dessus ; cela se produit automatiquement au chargement, y compris celui que déclenche un `/rdpl reload` ou un `/rdplserver reload`, jamais par une commande dédiée. Chaque paire de versions se convertit dans les deux sens, si bien qu'un pack 1.12.2, 1.20.1, 1.21.1 ou 26.x se charge sur n'importe laquelle des autres. Un pack 26.3 se charge lui aussi sur toutes les lignes, lu selon le format 26.2 sur les plus anciennes, et un pack plus ancien se charge sur 26.3. Ce qu'un côté possède et que l'autre ne peut pas contenir est abandonné, et le journal nomme chaque abandon : en descendant depuis 26.3, entre autres, les fonctions de densité de débogage, l'exclusion d'aquifère propre à un pack et le niveau de surface, ainsi que les commandes que la 26.2 n'a pas ; en montant vers 26.3, le `depth` et le `offset` d'une cible d'apparition et les clés de filon de minerai du routeur de bruit. Sur 1.12.2, la worldgen vanilla d'un pack moderne, comme ses biomes, ses features et ses réglages de bruit, ainsi que son dossier `neoforge`, sont eux aussi écartés, car la 1.12.2 n'a pas d'équivalent pour l'un comme pour l'autre.
+
+### Dossiers entre parenthèses
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Un dossier dont le nom est entre parenthèses trie les fichiers sans changer leurs ids. Il est retiré du chemin de l'id ou de recherche, sur tout chemin situé sous `assets/`, et même au-dessus de l'espace de noms.
+
+| Cas                                          | Ce qui se passe                                                                                                                                                                                                                                     |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                                     | Retiré du chemin                                                                                                                                                                                                                                    |
+| `(ores`, `a(b)`, `()`, `(a)(b)`              | Un dossier normal qui reste dans le chemin, avec un seul avertissement dans le journal ; les ids qui n'admettent pas les parenthèses font perdre le fichier                                                                                         |
+| Un fichier nommé `(ruby).json`               | Seuls les dossiers comptent, donc le nom reste                                                                                                                                                                                                      |
+| Deux fichiers qui tombent sur un même chemin | Une erreur est journalisée et le premier est conservé. Les fichiers sont triés selon leur chemin écrit, et `(` passe avant les chiffres, les lettres, `_`, `-` et `.`, donc `blocks/(ores)/x.json` l'emporte sur `blocks/x.json` et `(a)` sur `(b)` |
+| Un pack sans `pack_format`                   | Son format est lu dans les noms de dossiers ; gardez donc hors des parenthèses les dossiers qui indiquent son format                                                                                                                                |
 
 ## Packs de ressources : qui l'emporte
 

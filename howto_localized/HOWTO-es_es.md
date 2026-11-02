@@ -28,6 +28,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 - [Cómo leer las tablas](#cómo-leer-las-tablas)
 - [La única regla](#la-única-regla)
 - [Organizar los packs](#organizar-los-packs)
+  - [Carpetas entre paréntesis](#carpetas-entre-paréntesis)
 - [Packs de recursos: quién gana](#packs-de-recursos-quién-gana)
   - [La lista de packs](#la-lista-de-packs)
 
@@ -313,6 +314,23 @@ No distingue mayúsculas de minúsculas; un espacio, guion o guion bajo tras el 
 **Un zip para todas las versiones.** Un zip puede llevar una carpeta `versions/<version>/` por cada versión de Minecraft a la que sirve: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` y, en 26.x, la versión exacta en la que se ejecuta, `versions/26.1.2/`, `versions/26.2/` o `versions/26.3/`. Cada una se organiza como la raíz de un pack para esa versión, `pack.mcmeta` incluido. Un archivo bajo la carpeta de la versión en ejecución se lee en lugar del archivo de la raíz que sustituye, en la ruta que lee esta versión: en 1.20.1, `assets/mypack/blocks/ruby_ore.json` de una raíz 1.12.2 se sustituye por `versions/1.20.1/data/mypack/blocks/ruby_ore.json`, y su `assets/mypack/textures/blocks/ruby_ore.png` por `versions/1.20.1/assets/mypack/textures/block/ruby_ore.png`; en 1.21.1 y 26.x, las carpetas de datos de vanilla usan nombres en singular, así que un archivo `recipes/` en la raíz se sustituye por uno bajo `recipe/`. La raíz es común a todas las versiones, y la carpeta de otra versión nunca se lee. Una vez que existe la carpeta de la versión en ejecución, ya la haya escrito la conversión o el autor del pack, la raíz deja de convertirse: los archivos de la raíz que esta versión lee tal cual, como los sonidos, siguen cargándose, y todo archivo de la raíz escrito para otra versión que habría que mover o reescribir se omite, así que su sustituto va en la carpeta de la versión. Pon en la raíz lo que todas las versiones leen igual y en una carpeta de versión solo lo que difiere, y un único zip se cargará en las cuatro.
 
 **Los packs se convierten entre versiones.** Al cargar un pack escrito para otra línea, se convierte la primera vez, de la misma manera, escribiendo lo que cambió en su propia carpeta `versions/<version>/` como se ha descrito; esto ocurre automáticamente al cargar, incluida la carga que provoca un `/rdpl reload` o `/rdplserver reload`, nunca mediante un comando propio. Cada par de versiones se convierte en ambos sentidos, así que un pack de 1.12.2, 1.20.1, 1.21.1 o 26.x se carga en cualquiera de las otras. Un pack de 26.3 también se carga en todas las líneas, leído mediante el formato de 26.2 en las más antiguas, y un pack más antiguo se carga en 26.3. Lo que un lado tiene y el otro no puede contener se descarta, y el registro nombra cada descarte: al bajar desde 26.3, entre otras cosas, las funciones de densidad de depuración, la exclusión de acuífero y el nivel de superficie propios de un pack, y los comandos que 26.2 no tiene; al subir a 26.3, el `depth` y el `offset` de un objetivo de aparición y las claves de veta de mineral del router de ruido. En 1.12.2, el worldgen de vanilla de un pack moderno, como sus biomas, características y ajustes de ruido, y su carpeta `neoforge` también se dejan fuera, ya que 1.12.2 no tiene equivalente para ninguno de los dos.
+
+### Carpetas entre paréntesis
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Una carpeta entre paréntesis ordena los archivos sin cambiar sus ids. Se omite de la ruta del id o de búsqueda en cualquier ruta por debajo de `assets/` y también por encima del namespace.
+
+| Caso                                   | Qué ocurre                                                                                                                                                                                                                              |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                               | Se omite de la ruta                                                                                                                                                                                                                     |
+| `(ores`, `a(b)`, `()`, `(a)(b)`        | Una carpeta normal que se queda en la ruta, con una advertencia en el log; los ids que no admiten paréntesis descartan el archivo                                                                                                       |
+| Un archivo llamado `(ruby).json`       | Solo cuentan las carpetas, así que el nombre se conserva                                                                                                                                                                                |
+| Dos archivos que caen en la misma ruta | Se registra un error y se conserva el primero. Los archivos se ordenan por la ruta escrita, y `(` va antes que cifras, letras, `_`, `-` y `.`, así que `blocks/(ores)/x.json` tiene prioridad sobre `blocks/x.json` y `(a)` sobre `(b)` |
+| Un pack sin `pack_format`              | Su formato se lee de los nombres de las carpetas, así que las carpetas que muestran su formato van sin paréntesis                                                                                                                       |
 
 ## Packs de recursos: quién gana
 

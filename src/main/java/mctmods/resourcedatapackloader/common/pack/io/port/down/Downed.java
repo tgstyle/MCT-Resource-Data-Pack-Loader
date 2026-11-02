@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.LinePort;
 import mctmods.resourcedatapackloader.common.pack.io.port.Port;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ported;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.core.util.ILineNote;
 import mctmods.resourcedatapackloader.core.util.json.JsonTree;
@@ -26,21 +27,23 @@ public final class Downed {
     private static final int LAST_26_2_RESOURCE_FORMAT = 88;
     private final Path root;
     private final boolean lined;
+    private final PackPaths places;
     private final Map<String, String[]> definitions = new HashMap<>();
 
-    private Downed(Path root, boolean lined) {
+    private Downed(Path root, boolean lined, PackPaths places) {
         this.root = root;
         this.lined = lined;
+        this.places = places;
     }
 
-    @Nullable public static Downed of(Path root) {
+    @Nullable public static Downed of(Path root, PackPaths places) {
         JsonObject meta = Ported.readJson(root.resolve(PackManager.PACK_META));
         JsonObject pack = meta != null && meta.has("pack") && meta.get("pack").isJsonObject() ? meta.getAsJsonObject("pack") : new JsonObject();
         boolean data = Files.isDirectory(root.resolve(Port.DATA));
         int format = pack.has("pack_format") ? major(pack.get("pack_format")) : 0;
         if (!pack.has("min_format") && !pack.has("max_format") && format <= (data ? LAST_1_21_DATA_FORMAT : LAST_1_21_RESOURCE_FORMAT)) { return null; }
         int max = pack.has("max_format") ? major(pack.get("max_format")) : format;
-        return new Downed(root, max > (data ? LAST_26_2_DATA_FORMAT : LAST_26_2_RESOURCE_FORMAT));
+        return new Downed(root, max > (data ? LAST_26_2_DATA_FORMAT : LAST_26_2_RESOURCE_FORMAT), places);
     }
 
     private static int major(JsonElement value) {
@@ -57,16 +60,16 @@ public final class Downed {
         Path home = root.resolve(RDPLPack.ASSETS).resolve(namespace);
         String base = RDPLPack.ASSETS + "/" + namespace + "/";
         String alias = DownAssets.moved(path);
-        if (alias != null && !Files.exists(home.resolve(alias))) { pack.alias(namespace, alias, home.resolve(written), base + written, null); }
+        if (alias != null && !Files.exists(places.real(home.resolve(alias)))) { pack.alias(namespace, alias, places.real(home.resolve(written)), base + written, null); }
         String modelPath = DownAssets.modelPath(path);
         if (modelPath == null) { return path; }
-        if (Files.isRegularFile(home.resolve(modelPath))) {
+        if (Files.isRegularFile(places.real(home.resolve(modelPath)))) {
             definitions.put(base + modelPath, new String[] {namespace, modelPath, written});
             return null;
         }
-        JsonObject made = DownAssets.made(namespace, modelPath, Ported.readJson(home.resolve(written)), base + written, pack::note);
+        JsonObject made = DownAssets.made(namespace, modelPath, Ported.readJson(places.real(home.resolve(written))), base + written, pack::note);
         if (made == null) { return path; }
-        pack.alias(namespace, modelPath, home.resolve(written), base + written, Ported.GSON.toJson(made).getBytes(StandardCharsets.UTF_8));
+        pack.alias(namespace, modelPath, places.real(home.resolve(written)), base + written, Ported.GSON.toJson(made).getBytes(StandardCharsets.UTF_8));
         pack.note("'" + base + written + "' is an item definition, which 1.12.2 does not read, so it became the item model " + namespace + ":" + modelPath);
         return null;
     }
@@ -97,7 +100,7 @@ public final class Downed {
             if (json.isJsonObject() && (!asset || kind == Port.Kind.MODEL)) {
                 Down.data(json.getAsJsonObject(), kind, from, pack::note);
                 String[] definition = kind == Port.Kind.MODEL ? definitions.get(from) : null;
-                if (definition != null) { DownAssets.attach(json.getAsJsonObject(), definition[0], definition[1], Ported.readJson(root.resolve(RDPLPack.ASSETS).resolve(definition[0]).resolve(definition[2])), from, pack::note); }
+                if (definition != null) { DownAssets.attach(json.getAsJsonObject(), definition[0], definition[1], Ported.readJson(places.real(root.resolve(RDPLPack.ASSETS).resolve(definition[0]).resolve(definition[2]))), from, pack::note); }
             }
             return json.equals(before) ? raw : Ported.GSON.toJson(json).getBytes(StandardCharsets.UTF_8);
         }
@@ -121,7 +124,7 @@ public final class Downed {
 
             @Override @Nullable public JsonElement carried(String folder, String id) {
                 int colon = id.indexOf(':');
-                Path file = root.resolve(Port.DATA).resolve(colon < 0 ? "minecraft" : id.substring(0, colon)).resolve(folder).resolve(id.substring(colon + 1) + PackManager.JSON_SUFFIX);
+                Path file = places.real(root.resolve(Port.DATA).resolve(colon < 0 ? "minecraft" : id.substring(0, colon)).resolve(folder).resolve(id.substring(colon + 1) + PackManager.JSON_SUFFIX));
                 if (!Files.isRegularFile(file)) { return null; }
                 try { return new JsonParser().parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)); }
                 catch (IOException | RuntimeException unreadable) { return null; }

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.convert.ConvertLoot;
 import mctmods.resourcedatapackloader.common.pack.io.port.convert.ConvertRecipes;
 import mctmods.resourcedatapackloader.common.pack.io.port.down.Downed;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -57,6 +58,7 @@ public final class Ported {
     private static final int DIMENSION_SPAN = 9000;
     private final String name;
     private final Path root;
+    private final PackPaths places;
     @Nullable private final Downed down;
     private final Set<String> namespaces = new LinkedHashSet<>();
     private final Map<String, Own> ownBlocks = new HashMap<>();
@@ -80,10 +82,11 @@ public final class Ported {
     private int dropped;
     private int failed;
 
-    public Ported(String name, Path root) {
+    public Ported(String name, Path root, PackPaths places) {
         this.name = name;
         this.root = root;
-        this.down = Downed.of(root);
+        this.places = places;
+        this.down = Downed.of(root, places);
     }
 
     public static final class Own {
@@ -152,7 +155,7 @@ public final class Ported {
                         drop(from, mapped.why);
                         break;
                     case ITEM_TAG: {
-                        JsonObject json = readJson(home.resolve(path));
+                        JsonObject json = readJson(places.real(home.resolve(path)));
                         if (json == null) {
                             fail(from, "it is not a JSON object");
                             break;
@@ -162,7 +165,7 @@ public final class Ported {
                         break;
                     }
                     case FUNCTION_TAG: {
-                        JsonObject json = readJson(home.resolve(path));
+                        JsonObject json = readJson(places.real(home.resolve(path)));
                         String tag = PackManager.stripJson(path, path.lastIndexOf('/') + 1);
                         if (json != null && JsonUtils.isJsonArray(json, "values")) {
                             for (JsonElement value : json.getAsJsonArray("values")) {
@@ -173,11 +176,11 @@ public final class Ported {
                         break;
                     }
                     case RECIPE:
-                        recipe(ns, path, mapped, home.resolve(path), from);
+                        recipe(ns, path, mapped, places.real(home.resolve(path)), from);
                         break;
                     default: {
                         String target = overrideTarget(mapped.path, from);
-                        expose(ns, target, new Source(home.resolve(path), mapped.kind, from, null));
+                        expose(ns, target, new Source(places.real(home.resolve(path)), mapped.kind, from, null));
                         movedLine(from, ns, target);
                     }
                 }
@@ -196,7 +199,7 @@ public final class Ported {
         String path = down == null ? written : down.asset(this, namespace, written);
         if (path == null) { return; }
         Port.Mapped mapped = Port.assets(path);
-        Path real = root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(written);
+        Path real = places.real(root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(written));
         String from = "assets/" + namespace + "/" + written;
         switch (mapped.kind) {
             case DROPPED:
@@ -274,7 +277,7 @@ public final class Ported {
             boolean items = path.startsWith(ITEMS + "/") && path.endsWith(PackManager.JSON_SUFFIX);
             if (blocks || items) {
                 namespaces.add(namespace);
-                JsonObject json = readJson(home.resolve(path));
+                JsonObject json = readJson(places.real(home.resolve(path)));
                 if (json == null) { continue; }
                 String folder = blocks ? BLOCKS : ITEMS;
                 String file = PackManager.stripJson(path, folder.length() + 1);
@@ -292,9 +295,9 @@ public final class Ported {
                 }
             }
             else if (path.startsWith("fluids/") && path.endsWith(PackManager.JSON_SUFFIX)) { ownFluids.add(namespace + ":" + PackManager.stripJson(path, "fluids/".length())); }
-            else if (path.startsWith("dimensions/") && path.endsWith(PackManager.JSON_SUFFIX)) { dimension(namespace, path, readJson(home.resolve(path))); }
+            else if (path.startsWith("dimensions/") && path.endsWith(PackManager.JSON_SUFFIX)) { dimension(namespace, path, readJson(places.real(home.resolve(path)))); }
             else if (path.startsWith("worldtemplates/") && path.endsWith(PackManager.JSON_SUFFIX)) {
-                JsonObject json = readJson(home.resolve(path));
+                JsonObject json = readJson(places.real(home.resolve(path)));
                 templateShifts.add(json != null && json.has("settings") && json.get("settings").isJsonObject() ? Convert.flatShift(json.getAsJsonObject("settings")) : 0);
             }
         }
@@ -574,5 +577,5 @@ public final class Ported {
         note("written into " + prefix + ", " + written + " file(s) 1.12.2 reads differently; the rest is read from the root as it is");
     }
 
-    private boolean carried(String namespace, String path, Source source) { return source.made == null && source.kind == Port.Kind.RAW && Port.unchanged(path) && root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(path).equals(source.real); }
+    private boolean carried(String namespace, String path, Source source) { return source.made == null && source.kind == Port.Kind.RAW && Port.unchanged(path) && places.real(root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(path)).equals(source.real); }
 }

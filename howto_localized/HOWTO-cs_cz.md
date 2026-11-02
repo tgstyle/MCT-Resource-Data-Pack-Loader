@@ -28,6 +28,7 @@
 - [Čtení tabulek](#čtení-tabulek)
 - [Jediné pravidlo](#jediné-pravidlo)
 - [Organizace balíčků](#organizace-balíčků)
+  - [Složky v závorkách](#složky-v-závorkách)
 - [Balíčky zdrojů: který vyhraje](#balíčky-zdrojů-který-vyhraje)
   - [Seznam balíčků](#seznam-balíčků)
 
@@ -313,6 +314,23 @@ Na velikosti písmen nezáleží; mezera, pomlčka nebo podtržítko za číslem
 **Jeden zip pro každou verzi.** Zip může obsahovat složku `versions/<version>/` pro každou verzi Minecraftu, kterou obsluhuje: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` a u 26.x přesnou verzi, na které běží, `versions/26.1.2/`, `versions/26.2/` nebo `versions/26.3/`. Každá je rozložená jako kořen balíčku pro danou verzi, včetně `pack.mcmeta`. Soubor ve složce běžící verze se čte místo souboru z kořene, který nahrazuje, na cestě, kterou tato verze čte: na 1.20.1 se kořenový soubor `assets/mypack/blocks/ruby_ore.json` z 1.12.2 nahrazuje souborem `versions/1.20.1/data/mypack/blocks/ruby_ore.json` a jeho `assets/mypack/textures/blocks/ruby_ore.png` souborem `versions/1.20.1/assets/mypack/textures/block/ruby_ore.png`; na 1.21.1 a 26.x mají vanilla datové složky názvy v jednotném čísle, takže kořenový soubor v `recipes/` je nahrazen souborem ve složce `recipe/`. Kořen sdílejí všechny verze a složka jiné verze se nikdy nečte. Ať už složku běžící verze napsal port, nebo autor balíčku, kořen se od té chvíle nepřevádí: kořenové soubory, které tato verze čte beze změny, například zvuky, se nadále načítají, a každý kořenový soubor napsaný pro jinou řadu, který by musel být přesunut nebo přepsán, se přeskočí, takže to, co ho nahrazuje, musí být ve složce verze. Co všechny verze čtou stejně, dej do kořene a jen to, co se liší, do složky verze, a jeden zip se načte na všech čtyřech.
 
 **Balíčky se převádějí mezi verzemi.** Načtení balíčku napsaného pro jinou řadu ho při prvním načtení převede stejným způsobem a to, co se změnilo, zapíše do jeho vlastní složky `versions/<version>/` jak je uvedeno výše; děje se to automaticky při načtení, včetně načtení, které spustí `/rdpl reload` nebo `/rdplserver reload`, nikdy samostatným příkazem. Každá dvojice verzí se převádí oběma směry, takže balíček pro 1.12.2, 1.20.1, 1.21.1 nebo 26.x se načte na kterékoli z ostatních. Balíček pro 26.3 se načte i na každé řadě, na starších se čte přes formát 26.2, a starší balíček se načte na 26.3. Co jedna strana má a druhá neumí pojmout, se zahodí a log každé zahození pojmenuje: při přechodu z 26.3 dolů mimo jiné ladicí funkce hustoty, vlastní vyloučení aquiferu balíčku a úroveň povrchu a příkazy, které 26.2 nemá; při přechodu nahoru na 26.3 `depth` a `offset` cíle spawnu a klíče rudných žil šumového routeru. Na 1.12.2 se z moderního balíčku vynechá také vanilla worldgen, například jeho biomy, prvky a nastavení šumu, i jeho složka `neoforge`, protože 1.12.2 pro žádný z nich nemá protějšek.
+
+### Složky v závorkách
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Složka pojmenovaná v závorkách řadí soubory, aniž změní jejich id. Z cesty id nebo vyhledávání se vynechá na libovolné cestě pod `assets/`, a to i nad jmenným prostorem.
+
+| Případ                                   | Co se stane                                                                                                                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `(ores)`                                 | Vynechá se z cesty                                                                                                                                                                                                 |
+| `(ores`, `a(b)`, `()`, `(a)(b)`          | Obyčejná složka, která zůstane v cestě, s jedním varováním v logu; id, která závorky nepřipouštějí, soubor zahodí                                                                                                  |
+| Soubor se jménem `(ruby).json`           | Počítají se jen složky, takže jméno zůstane                                                                                                                                                                        |
+| Dva soubory, které skončí na jedné cestě | Do logu se zapíše chyba a zůstane první. Soubory se řadí podle zapsané cesty a `(` se řadí před číslice, písmena, `_`, `-` a `.`, takže `blocks/(ores)/x.json` má přednost před `blocks/x.json` a `(a)` před `(b)` |
+| Balíček bez `pack_format`                | Jeho formát se načte z názvů složek, takže složky, které formát ukazují, nechte bez závorek                                                                                                                        |
 
 ## Balíčky zdrojů: který vyhraje
 
