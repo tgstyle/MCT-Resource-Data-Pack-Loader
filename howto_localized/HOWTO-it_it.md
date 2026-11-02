@@ -30,6 +30,7 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 - [Come leggere le tabelle](#come-leggere-le-tabelle)
 - [L'unica regola](#lunica-regola)
 - [Organizzare i pack](#organizzare-i-pack)
+  - [Cartelle tra parentesi](#cartelle-tra-parentesi)
 - [Resource pack: chi vince](#resource-pack-chi-vince)
   - [La lista dei pack](#la-lista-dei-pack)
 
@@ -324,6 +325,23 @@ Senza distinzione tra maiuscole e minuscole; uno spazio, un trattino o un tratti
 **I pack si convertono tra versioni.** Caricare un pack scritto per un'altra linea lo converte la prima volta, allo stesso modo, scrivendo ciò che è cambiato nella sua cartella `versions/<version>/` come sopra; questo avviene automaticamente al caricamento, compreso quello che `/rdpl reload` o `/rdplserver reload` fa scattare, mai tramite un comando apposito. Ogni coppia di versioni si converte in entrambe le direzioni, quindi un pack 1.12.2, 1.20.1, 1.21.1 o 26.x si carica su qualsiasi altra. Ciò che un lato ha e l'altro non può contenere viene scartato, e il log nomina ogni scarto. [Chiavi non riportate](#chiavi-non-riportate) elenca ciò che un pack 1.12.2 può scrivere e questa versione non legge.
 
 Un `pack.mcmeta` nella radice dello zip è gradito ma non necessario: la mod presenta ogni pack al gioco con una voce propria, con il formato di pack che il gioco si aspetta, quindi un pack non diventa mai obsoleto per un numero di formato. Metti accanto un `pack.png` per dare un'icona alla voce della cartella. Senza, la voce mostra l'icona RDPL.
+
+### Cartelle tra parentesi
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Una cartella tra parentesi ordina i file senza cambiarne gli id. Viene esclusa dal percorso dell'id o di ricerca, su qualsiasi percorso sotto `assets/` o `data/` e anche sopra il namespace.
+
+| Caso                                         | Cosa succede                                                                                                                                                                                                                        |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                                     | Esclusa dal percorso                                                                                                                                                                                                                |
+| `(ores`, `a(b)`, `()`, `(a)(b)`              | Una cartella normale che resta nel percorso, con un avviso nel log; gli id che non ammettono parentesi fanno scartare il file                                                                                                       |
+| Un file chiamato `(ruby).json`               | Contano solo le cartelle, quindi il nome resta                                                                                                                                                                                      |
+| Due file che finiscono sullo stesso percorso | Nel log viene registrato un errore e si tiene il primo. I file sono ordinati per percorso scritto, e `(` precede cifre, lettere, `_`, `-` e `.`, quindi `blocks/(ores)/x.json` ha la precedenza su `blocks/x.json` e `(a)` su `(b)` |
+| Un pack senza `pack_format`                  | Il suo formato si legge dai nomi delle cartelle, quindi le cartelle che ne indicano il formato vanno lasciate senza parentesi                                                                                                       |
 
 ## Resource pack: chi vince
 

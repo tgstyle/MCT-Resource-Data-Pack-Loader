@@ -10,6 +10,7 @@ import static mctmods.resourcedatapackloader.common.pack.loading.RDPLPack.key;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackMeta;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -60,7 +61,7 @@ public final class Ported extends PortBase<Ported.Source> {
     private int moved;
     private int dropped;
 
-    public Ported(String name, Path root) { super(name, root); }
+    public Ported(String name, Path root, PackPaths places) { super(name, root, places); }
 
     private record Variants(String main, Map<Integer, String> byMeta) {}
 
@@ -151,7 +152,7 @@ public final class Ported extends PortBase<Ported.Source> {
         }
         for (String path : realPaths) {
             Port.Mapped mapped = Port.map(path);
-            Path real = home.resolve(path);
+            Path real = places.real(home.resolve(path));
             switch (mapped.kind()) {
                 case DROPPED -> {
                     dropped++;
@@ -280,7 +281,7 @@ public final class Ported extends PortBase<Ported.Source> {
     }
 
     private void dimensionId(Path home, String namespace, String path) {
-        JsonObject json = readJson(home.resolve(path));
+        JsonObject json = readJson(places.real(home.resolve(path)));
         if (json == null) { return; }
         if (!GsonHelper.isNumberValue(json, "id")) { return; }
         String named = namespace + ":" + PackManager.stripJson(path, "dimensions/".length());
@@ -289,7 +290,7 @@ public final class Ported extends PortBase<Ported.Source> {
     }
 
     private void dimensionFloor(Path home, String namespace, String path) {
-        JsonObject json = readJson(home.resolve(path));
+        JsonObject json = readJson(places.real(home.resolve(path)));
         JsonObject terrain = json != null && json.has("terrain") && json.get("terrain").isJsonObject() ? json.getAsJsonObject("terrain") : new JsonObject();
         if (!GsonHelper.isValidPrimitive(terrain, "type") || !Convert.FLAT.equalsIgnoreCase(terrain.get("type").getAsString().trim())) { return; }
         boolean floored = GsonHelper.isNumberValue(terrain, "minHeight");
@@ -297,7 +298,7 @@ public final class Ported extends PortBase<Ported.Source> {
     }
 
     private void templateFloor(Path home, String path) {
-        JsonObject json = readJson(home.resolve(path));
+        JsonObject json = readJson(places.real(home.resolve(path)));
         templateFloors.add(json != null && json.has("settings") && json.get("settings").isJsonObject() ? Convert.flatShift(json.getAsJsonObject("settings")) : 0);
     }
 
@@ -324,7 +325,7 @@ public final class Ported extends PortBase<Ported.Source> {
 
     private void learn(Path home, String namespace, String path, String folder, Map<String, Variants> files, Map<String, String> variants) {
         String file = PackManager.stripJson(path, folder.length() + 1);
-        JsonObject json = readJson(home.resolve(path));
+        JsonObject json = readJson(places.real(home.resolve(path)));
         if (json == null || !json.has("variants") || !json.get("variants").isJsonObject()) { return; }
         Map<Integer, String> byMeta = new LinkedHashMap<>();
         String main = null;
@@ -457,7 +458,7 @@ public final class Ported extends PortBase<Ported.Source> {
         if (!GsonHelper.isValidPrimitive(entry, "model")) { return; }
         String model = entry.get("model").getAsString();
         String rest = IdNames.path(model);
-        JsonObject json = readJson(home.resolve("models/block/" + rest + PackManager.JSON_SUFFIX));
+        JsonObject json = readJson(places.real(home.resolve("models/block/" + rest + PackManager.JSON_SUFFIX)));
         if (json != null) { gather(json, textures); }
     }
 
@@ -476,11 +477,11 @@ public final class Ported extends PortBase<Ported.Source> {
         String png = legacy + ".png";
         String map = legacy + ".png.json";
         if (realPaths.contains(png)) {
-            expose(PackType.CLIENT_RESOURCES, namespace, exposedPath + ".png", new Source(home.resolve(png), Port.Kind.RAW));
+            expose(PackType.CLIENT_RESOURCES, namespace, exposedPath + ".png", new Source(places.real(home.resolve(png)), Port.Kind.RAW));
             return true;
         }
         if (realPaths.contains(map)) {
-            expose(PackType.CLIENT_RESOURCES, namespace, exposedPath + ".png.json", new Source(home.resolve(map), Port.Kind.PIXELMAP));
+            expose(PackType.CLIENT_RESOURCES, namespace, exposedPath + ".png.json", new Source(places.real(home.resolve(map)), Port.Kind.PIXELMAP));
             return true;
         }
         return false;

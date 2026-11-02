@@ -30,6 +30,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Die Tabellen lesen](#die-tabellen-lesen)
 - [Die eine Regel](#die-eine-regel)
 - [Packs organisieren](#packs-organisieren)
+  - [Ordner in Klammern](#ordner-in-klammern)
 - [Ressourcenpakete: wer gewinnt](#ressourcenpakete-wer-gewinnt)
   - [Die Pack-Liste](#die-pack-liste)
 
@@ -324,6 +325,23 @@ Groß-/Kleinschreibung ist egal; ein Leerzeichen, Bindestrich oder Unterstrich n
 **Packs wandeln sich zwischen Versionen um.** Ein Pack, das für eine andere Linie geschrieben ist, wird beim ersten Laden auf dieselbe Art umgewandelt und das Geänderte in seinen eigenen Ordner `versions/<version>/` geschrieben, wie oben; das läuft automatisch beim Laden ab – auch bei dem Laden, das `/rdpl reload` oder `/rdplserver reload` auslöst – nie über einen eigenen Befehl. Jedes Versionspaar wandelt sich in beide Richtungen um, sodass ein 1.12.2-, 1.20.1-, 1.21.1- oder 26.x-Pack auf jeder der anderen lädt. Was die eine Seite hat und die andere nicht fassen kann, fällt weg, und das Log nennt jeden Wegfall. [Schlüssel, die nicht übernommen wurden](#schlüssel-die-nicht-übernommen-wurden) führt auf, was ein Pack für 1.12.2 schreiben kann und diese Version nicht liest.
 
 Eine `pack.mcmeta` in der Wurzel des Zips ist willkommen, aber nicht nötig: Der Mod stellt jedes Pack dem Spiel unter einem einzigen eigenen Eintrag vor, mit dem Pack-Format, das das Spiel erwartet, sodass ein Pack nie an einer Formatnummer veraltet. Leg eine `pack.png` daneben, um dem Eintrag des Ordners ein Symbol zu geben. Ohne eine zeigt der Eintrag das RDPL-Symbol.
+
+### Ordner in Klammern
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Ein Ordner in Klammern sortiert Dateien, ohne deren IDs zu ändern. Er wird aus dem ID- oder Suchpfad herausgelassen, auf jedem Pfad unterhalb von `assets/` oder `data/` und auch oberhalb des Namespace.
+
+| Fall                                        | Was passiert                                                                                                                                                                                                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                                    | Wird aus dem Pfad entfernt                                                                                                                                                                                                                               |
+| `(ores`, `a(b)`, `()`, `(a)(b)`             | Ein normaler Ordner, der im Pfad bleibt, mit einer Warnung im Log; IDs, die keine Klammern erlauben, verwerfen die Datei                                                                                                                                 |
+| Eine Datei namens `(ruby).json`             | Nur Ordner zählen, also bleibt der Name erhalten                                                                                                                                                                                                         |
+| Zwei Dateien, die auf demselben Pfad landen | Im Log steht ein Fehler, und die erste bleibt erhalten. Dateien werden nach ihrem geschriebenen Pfad sortiert, und `(` kommt vor Ziffern, Buchstaben, `_`, `-` und `.`, daher hat `blocks/(ores)/x.json` Vorrang vor `blocks/x.json` und `(a)` vor `(b)` |
+| Ein Pack ohne `pack_format`                 | Sein Format wird aus den Ordnernamen gelesen, daher bleiben Ordner, die das Format zeigen, außerhalb der Klammern                                                                                                                                        |
 
 ## Ressourcenpakete: wer gewinnt
 

@@ -30,6 +30,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Cómo leer las tablas](#cómo-leer-las-tablas)
 - [La única regla](#la-única-regla)
 - [Organizar los packs](#organizar-los-packs)
+  - [Carpetas entre paréntesis](#carpetas-entre-paréntesis)
 - [Packs de recursos: quién gana](#packs-de-recursos-quién-gana)
   - [La lista de packs](#la-lista-de-packs)
 
@@ -324,6 +325,23 @@ No distingue mayúsculas de minúsculas; un espacio, guion o guion bajo tras el 
 **Los packs se convierten entre versiones.** Al cargar un pack escrito para otra línea, se convierte la primera vez, de la misma manera, escribiendo lo que cambió en su propia carpeta `versions/<version>/` como se ha descrito; esto ocurre automáticamente al cargar, incluida la carga que desencadena un `/rdpl reload` o `/rdplserver reload`, nunca mediante un comando propio. Cada pareja de versiones se convierte en ambos sentidos, de modo que un pack de 1.12.2, 1.20.1, 1.21.1 o 26.x se carga en cualquiera de las otras. Lo que un lado tiene y el otro no puede contener se descarta, y el log nombra cada descarte. [Claves que no se mantuvieron](#claves-que-no-se-mantuvieron) enumera lo que un pack de 1.12.2 puede escribir y esta versión no lee.
 
 Un `pack.mcmeta` en la raíz del zip es bienvenido pero no necesario: el mod presenta cada pack al juego bajo una entrada propia, con el formato de pack que el juego espera, de modo que un pack nunca queda obsoleto por un número de formato. Pon un `pack.png` a su lado para dar un icono a la entrada de la carpeta. Sin él, la entrada muestra el icono de RDPL.
+
+### Carpetas entre paréntesis
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Una carpeta entre paréntesis ordena los archivos sin cambiar sus ids. Se omite de la ruta del id o de búsqueda en cualquier ruta por debajo de `assets/` o `data/` y también por encima del namespace.
+
+| Caso                                   | Qué ocurre                                                                                                                                                                                                                              |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `(ores)`                               | Se omite de la ruta                                                                                                                                                                                                                     |
+| `(ores`, `a(b)`, `()`, `(a)(b)`        | Una carpeta normal que se queda en la ruta, con una advertencia en el log; los ids que no admiten paréntesis descartan el archivo                                                                                                       |
+| Un archivo llamado `(ruby).json`       | Solo cuentan las carpetas, así que el nombre se conserva                                                                                                                                                                                |
+| Dos archivos que caen en la misma ruta | Se registra un error y se conserva el primero. Los archivos se ordenan por la ruta escrita, y `(` va antes que cifras, letras, `_`, `-` y `.`, así que `blocks/(ores)/x.json` tiene prioridad sobre `blocks/x.json` y `(a)` sobre `(b)` |
+| Un pack sin `pack_format`              | Su formato se lee de los nombres de las carpetas, así que las carpetas que muestran su formato van sin paréntesis                                                                                                                       |
 
 ## Packs de recursos: quién gana
 

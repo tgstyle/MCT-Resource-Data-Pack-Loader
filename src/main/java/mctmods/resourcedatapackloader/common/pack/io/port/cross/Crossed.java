@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.io.port.down.DownAssets;
 import static mctmods.resourcedatapackloader.common.pack.loading.RDPLPack.key;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackMeta;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.PackPaths;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.ILineNote;
@@ -44,8 +45,8 @@ public final class Crossed extends PortBase<Crossed.Source> {
     private final Map<String, Definition> definitions = new HashMap<>();
     private int moved;
 
-    public Crossed(String name, Path root, Port.Line from) {
-        super(name, root);
+    public Crossed(String name, Path root, Port.Line from, PackPaths places) {
+        super(name, root, places);
         this.from = from;
         this.to = step(from);
         this.down = from == Port.Line.V26 || from == Port.Line.V26_3;
@@ -121,7 +122,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
             Target target = to == null ? new Target(namespace, renamed) : target(namespace, renamed, from, this);
             boolean same = target.namespace().equals(namespace) && target.path().equals(path);
             if (!same) { moved++; }
-            expose(type, target.namespace(), target.path(), new Source(home.resolve(path), RDPLPack.DATA + "/" + namespace + "/" + path, kind(target.path()), same));
+            expose(type, target.namespace(), target.path(), new Source(places.real(home.resolve(path)), RDPLPack.DATA + "/" + namespace + "/" + path, kind(target.path()), same));
         }
     }
 
@@ -129,7 +130,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
         String base = RDPLPack.ASSETS + "/" + namespace + "/";
         Set<String> present = new HashSet<>(realPaths);
         for (String written : realPaths) {
-            Path real = home.resolve(written);
+            Path real = places.real(home.resolve(written));
             String path = lined ? LinePort.assetPath(written) : written;
             boolean model = path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX);
             boolean same = path.equals(written);
