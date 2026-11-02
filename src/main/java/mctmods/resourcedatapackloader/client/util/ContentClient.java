@@ -33,12 +33,18 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import com.mojang.blaze3d.shaders.FogShape;
+import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -68,6 +74,7 @@ import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtension
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.model.DynamicFluidContainerModel;
+import org.joml.Vector3f;
 
 public final class ContentClient {
     private static final int WHITE = 0xFFFFFF;
@@ -158,6 +165,12 @@ public final class ContentClient {
                 @Override @Nonnull public ResourceLocation getFlowingTexture() { return made.def.flowing(); }
 
                 @Override public int getTintColor() { return made.def.tint(); }
+
+                @Override public ResourceLocation getRenderOverlayTexture(@Nonnull Minecraft mc) { Boolean drown = made.def.behavior().creatures().drown(); return (drown == null ? made.def.waterMaterial() : drown) ? ResourceLocation.withDefaultNamespace("textures/misc/underwater.png") : null; }
+
+                @Override @Nonnull public Vector3f modifyFogColor(@Nonnull Camera camera, float partialTick, @Nonnull ClientLevel level, int renderDistance, float darkenWorldAmount, @Nonnull Vector3f fluidFogColor) { return new Vector3f(FastColor.ARGB32.red(made.def.color()) / 255.0F, FastColor.ARGB32.green(made.def.color()) / 255.0F, FastColor.ARGB32.blue(made.def.color()) / 255.0F); }
+
+                @Override public void modifyFogRender(@Nonnull Camera camera, @Nonnull FogRenderer.FogMode mode, float renderDistance, float partialTick, float nearDistance, float farDistance, @Nonnull FogShape shape) { RenderSystem.setShaderFogStart(0.0F); RenderSystem.setShaderFogEnd(made.def.lavaMaterial() ? 1.25F : 20.0F); }
             }, made.type);
         }
         List<Item> banners = new ArrayList<>();

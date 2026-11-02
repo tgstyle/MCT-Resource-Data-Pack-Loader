@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import mctmods.resourcedatapackloader.common.items.ContentBucketItem;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidBehaviorDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
@@ -51,8 +52,10 @@ public final class ContentFluids {
         }
     }
 
+    static int quantaReach(int quanta) { return (quanta < 1 || quanta > MOST_QUANTA ? LEGACY_QUANTA : quanta) - 1; }
+
     private static int dropOff(int quanta) {
-        int reach = (quanta < 1 || quanta > MOST_QUANTA ? LEGACY_QUANTA : quanta) - 1;
+        int reach = quantaReach(quanta);
         int best = 1;
         for (int drop = 2; drop <= SOURCE_AMOUNT; drop++) {
             if (Math.abs(reach(drop) - reach) < Math.abs(reach(best) - reach)) { best = drop; }
@@ -100,11 +103,15 @@ public final class ContentFluids {
         Made(FluidDef def) {
             this.def = def;
             this.type = new ContentFluidType(def);
-            BaseFlowingFluid.Properties properties = new BaseFlowingFluid.Properties(() -> type, this::getStill, this::getFlowing).levelDecreasePerBlock(dropOff(def.quantaPerBlock())).tickRate(Math.max(1, def.viscosity() / TICKS_PER_VISCOSITY));
+            FluidBehaviorDef behavior = def.behavior();
+            int spread = behavior.maxSpread();
+            int ticks = behavior.flowTicks() > 0 ? behavior.flowTicks() : Math.max(1, def.viscosity() / TICKS_PER_VISCOSITY);
+            BaseFlowingFluid.Properties properties = new BaseFlowingFluid.Properties(() -> type, this::getStill, this::getFlowing).levelDecreasePerBlock(spread > 0 ? 1 : dropOff(def.quantaPerBlock())).tickRate(ticks);
+            if (spread > 0) { properties = properties.slopeFindDistance(Math.max(1, (spread + 1) / 2)); }
             if (def.createBlock()) { properties = properties.block(this::getBlock); }
             if (def.bucket()) { properties = properties.bucket(this::getBucket); }
-            this.still = def.density() < 0 ? new ContentRisingFluid.Source(properties) : new BaseFlowingFluid.Source(properties);
-            this.flowing = def.density() < 0 ? new ContentRisingFluid.Flowing(properties) : new BaseFlowingFluid.Flowing(properties);
+            this.still = def.density() < 0 ? new ContentRisingFluid.Source(properties, def) : new ContentFlowingFluid.Source(properties, def);
+            this.flowing = def.density() < 0 ? new ContentRisingFluid.Flowing(properties, def) : new ContentFlowingFluid.Flowing(properties, def);
             this.block = def.createBlock() ? new ContentLiquidBlock(def, still, blockProperties(def)) : null;
             this.bucket = def.bucket() ? new ContentBucketItem(still, type, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
         }

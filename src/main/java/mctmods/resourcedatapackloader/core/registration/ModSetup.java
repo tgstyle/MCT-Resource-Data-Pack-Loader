@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
+import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
@@ -354,6 +356,11 @@ public class ModSetup {
         modBus.addListener(RDPLNetwork::register);
         if (ContentExposures.enabled()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
         if (ContentExposures.spreads()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
+        if (VanillaFluidRules.wanted()) { NeoForge.EVENT_BUS.addListener(VanillaFluidRules::onNeighborNotify); }
+        if (FluidReactionQueue.wanted()) {
+            NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onTick);
+            NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onUnload);
+        }
         if (ContentCaveRegions.ambient()) { NeoForge.EVENT_BUS.addListener(ContentCaveAmbience::onPlayerTick); }
         NeoForge.EVENT_BUS.addListener(ContentSpawning::onPlacementCheck);
         NeoForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);
@@ -434,6 +441,7 @@ public class ModSetup {
         PackFinder.ensureScanned();
         PackManager.get().warnAboutDisabledFeatures();
         event.enqueueWork(ContentRegistry::resolveStacks);
+        event.enqueueWork(ContentRegistry::resolveFluidReactions);
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.applyAliases();
@@ -467,7 +475,7 @@ public class ModSetup {
 
     private static void onAddReloadListeners(AddReloadListenerEvent event) { event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
-    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); } }
+    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); VanillaFluidRules.tagsUpdated(); } }
 
     private static void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 

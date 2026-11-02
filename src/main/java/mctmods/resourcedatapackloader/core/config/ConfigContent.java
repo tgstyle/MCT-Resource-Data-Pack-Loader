@@ -26,6 +26,10 @@ public final class ConfigContent {
     private final ModConfigSpec.ConfigValue<String> hoeTillsInto;
     private final ModConfigSpec.IntValue caneMaxHeight;
     private final ModConfigSpec.IntValue cactusMaxHeight;
+    private final ModConfigSpec.BooleanValue fluidRules;
+    private final ModConfigSpec.IntValue fluidReactionsPerChunk;
+    private final ModConfigSpec.IntValue fluidReactionsPerDimension;
+    private final ModConfigSpec.IntValue fluidWatched;
 
     ConfigContent(ModConfigSpec.Builder builder) {
         builder.comment("Blocks, items, fluids and everything else packs define").push("content");
@@ -52,6 +56,10 @@ public final class ConfigContent {
         hoeTillsInto = builder.comment("What a hoe turns those blocks into. Empty uses farmland").define("hoeTillsInto", "");
         caneMaxHeight = builder.comment("How tall vanilla sugar cane grows. Vanilla is 3. Pack defined cane blocks use their own growth section and ignore this [Default=3]").defineInRange("caneMaxHeight", 3, 1, 255);
         cactusMaxHeight = builder.comment("The same for vanilla cactus [Default=3]").defineInRange("cactusMaxHeight", 3, 1, 255);
+        fluidRules = builder.comment("Read fluid_rules/*.json files, which attach reactions to water and lava [Default=true]").define("fluidRules", true);
+        fluidReactionsPerChunk = builder.comment("Reaction points a fluid may spend per chunk per tick. A block change costs 1, a function 4, an explosion 16. A check over the budget is tried again on the next tick [Default=16]").defineInRange("fluidReactionsPerChunk", 16, 1, 100000);
+        fluidReactionsPerDimension = builder.comment("Reaction points all fluids may spend per dimension per tick [Default=256]").defineInRange("fluidReactionsPerDimension", 256, 1, 1000000);
+        fluidWatched = builder.comment("Most fluid contacts kept on watch per dimension, for reactions held back by the budget or set to recheck on an interval [Default=4096]").defineInRange("fluidWatched", 4096, 1, 1000000);
         builder.pop();
     }
 
@@ -96,6 +104,14 @@ public final class ConfigContent {
     public boolean hoeTilling() { return Config.loaded() ? hoeTilling.get() : ConfigCore.flag("content.hoeTilling", true); }
 
     public String hoeTillsInto() { return Config.loaded() ? hoeTillsInto.get() : ConfigCore.text("content.hoeTillsInto", ""); }
+
+    public boolean fluidRules() { return Config.loaded() ? fluidRules.get() : ConfigCore.flag("content.fluidRules", true); }
+
+    public int fluidReactionsPerChunk() { return Config.loaded() ? fluidReactionsPerChunk.get() : ConfigCore.number("content.fluidReactionsPerChunk", 16); }
+
+    public int fluidReactionsPerDimension() { return Config.loaded() ? fluidReactionsPerDimension.get() : ConfigCore.number("content.fluidReactionsPerDimension", 256); }
+
+    public int fluidWatched() { return Config.loaded() ? fluidWatched.get() : ConfigCore.number("content.fluidWatched", 4096); }
 
     public int caneMaxHeight() { return Config.loaded() ? caneMaxHeight.get() : 3; }
 
