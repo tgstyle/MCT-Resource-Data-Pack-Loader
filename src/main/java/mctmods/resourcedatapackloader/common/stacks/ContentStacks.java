@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.stacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -14,6 +15,13 @@ public final class ContentStacks {
     private ContentStacks() {}
 
     public static boolean matches(ItemStack stack, Item item, int meta) { return !stack.isEmpty() && stack.getItem() == item && (meta == OreDictionary.WILDCARD_VALUE || item.isDamageable() || stack.getMetadata() == meta); }
+
+    public static boolean inOres(List<ItemStack> ores, ItemStack stack) {
+        for (ItemStack member : ores) {
+            if (OreDictionary.itemMatches(member, stack, false)) { return true; }
+        }
+        return false;
+    }
 
     public static ItemStack parse(ResourceLocation key, String value, int count) {
         if (value == null || value.isEmpty()) { return ItemStack.EMPTY; }

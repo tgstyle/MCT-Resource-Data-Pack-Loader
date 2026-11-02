@@ -85,7 +85,7 @@ public final class ContentFuels {
         }
 
         private boolean matches(ItemStack fuel) {
-            if (ores != null) { return OreDictionary.containsMatch(false, ores, fuel); }
+            if (ores != null) { return ContentStacks.inOres(ores, fuel); }
             return Stacks.matches(stack, fuel);
         }
     }

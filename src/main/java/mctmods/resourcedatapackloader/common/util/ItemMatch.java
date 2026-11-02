@@ -47,7 +47,7 @@ public final class ItemMatch {
     public boolean matches(ItemStack stack) {
         if (stack.isEmpty()) { return false; }
         if (rank == ANY_RANK) { return true; }
-        if (rank == TAG_RANK) { return OreDictionary.containsMatch(false, OreDictionary.getOres(ore, false), stack); }
+        if (rank == TAG_RANK) { return ContentStacks.inOres(OreDictionary.getOres(ore, false), stack); }
         return ContentStacks.matches(stack, item.getItem(), item.getMetadata());
     }
 

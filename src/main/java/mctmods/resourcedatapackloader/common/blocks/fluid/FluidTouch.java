@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.io.port.Ids;
+import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.ArrayList;
@@ -58,9 +59,7 @@ public final class FluidTouch {
         if (item == Items.AIR) { return false; }
         ItemStack stack = new ItemStack(item, 1, block.damageDropped(state));
         for (String ore : ores) {
-            for (ItemStack member : OreDictionary.getOres(ore, false)) {
-                if (OreDictionary.itemMatches(member, stack, false)) { return true; }
-            }
+            if (ContentStacks.inOres(OreDictionary.getOres(ore, false), stack)) { return true; }
         }
         return false;
     }

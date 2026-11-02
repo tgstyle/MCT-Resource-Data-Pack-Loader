@@ -58,7 +58,7 @@ public final class FilterDef {
         public boolean matches(ItemStack held) {
             if (oreDict.isEmpty()) { return ContentStacks.matches(held, stack().getItem(), stack().getItemDamage()); }
             if (ores == null) { ores = OreDictionary.getOres(oreDict); }
-            return OreDictionary.containsMatch(false, ores, held);
+            return ContentStacks.inOres(ores, held);
         }
 
         public int held(Iterable<ItemStack> stacks) {
