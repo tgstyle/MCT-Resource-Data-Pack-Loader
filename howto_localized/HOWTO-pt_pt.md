@@ -30,6 +30,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Ler as tabelas](#ler-as-tabelas)
 - [A única regra](#a-única-regra)
 - [Organizar pacotes](#organizar-pacotes)
+  - [Pastas entre parênteses](#pastas-entre-parênteses)
 - [Pacotes de recursos: quem ganha](#pacotes-de-recursos-quem-ganha)
   - [A lista de pacotes](#a-lista-de-pacotes)
 
@@ -324,6 +325,23 @@ Não diferencia maiúsculas de minúsculas; um espaço, hífen ou sublinhado a s
 **Os pacotes convertem-se entre versões.** Carregar um pacote escrito para outra linha converte-o da primeira vez, da mesma forma, escrevendo o que mudou na sua própria pasta `versions/<version>/` como acima; isto acontece automaticamente no carregamento, incluindo o carregamento que um `/rdpl reload` ou um `/rdplserver reload` desencadeia, nunca por um comando próprio. Todos os pares de versões convertem nos dois sentidos, por isso um pacote da 1.12.2, 1.20.1, 1.21.1 ou 26.x carrega em qualquer uma das outras. Um pacote da 26.3 carrega também em todas as linhas, lido pelo formato da 26.2 nas mais antigas, e um pacote mais antigo carrega na 26.3. O que um lado tem e o outro não consegue guardar é descartado, e o registo nomeia cada descarte: ao descer da 26.3, entre outros, as funções de densidade de depuração, a exclusão de aquíferos e o nível de superfície próprios de um pacote e os comandos que a 26.2 não tem; ao subir para a 26.3, o `depth` e o `offset` de um alvo de spawn e as chaves de filões de minério do noise router. [Chaves que não foram mantidas](#chaves-que-não-foram-mantidas) lista-os a todos.
 
 Um `pack.mcmeta` na raiz do zip é bem-vindo mas não é necessário: o mod apresenta cada pacote ao jogo sob uma entrada própria, com o formato de pacote que o jogo espera, por isso um pacote nunca fica desatualizado por causa de um número de formato. Coloca um `pack.png` ao lado dele para dar um ícone à entrada da pasta. Sem ele, a entrada mostra o ícone do RDPL.
+
+### Pastas entre parênteses
+
+```
+assets/mypack/blocks/(ores)/ruby_ore.json    registers mypack:ruby_ore
+assets/mypack/textures/(ores)/ruby.png       is found as textures/ruby.png
+```
+
+Uma pasta com o nome entre parênteses ordena os ficheiros sem alterar os ids. É retirada do caminho do id ou da pesquisa em qualquer caminho abaixo de `assets/` ou `data/`, e também acima do namespace.
+
+| Caso                                     | O que acontece                                                                                                                                                                                                                       |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `(ores)`                                 | Retirada do caminho                                                                                                                                                                                                                  |
+| `(ores`, `a(b)`, `()`, `(a)(b)`          | Uma pasta normal que fica no caminho, com um aviso no log; os ids que não admitem parênteses deitam fora o ficheiro                                                                                                                  |
+| Um ficheiro chamado `(ruby).json`        | Só contam as pastas, por isso o nome fica                                                                                                                                                                                            |
+| Dois ficheiros que caem no mesmo caminho | É registado um erro e fica o primeiro. Os ficheiros ordenam-se pelo caminho escrito, e `(` vem antes de algarismos, letras, `_`, `-` e `.`, por isso `blocks/(ores)/x.json` tem prioridade sobre `blocks/x.json` e `(a)` sobre `(b)` |
+| Um pacote sem `pack_format`              | O formato lê-se dos nomes das pastas, por isso as pastas que mostram o formato ficam fora dos parênteses                                                                                                                             |
 
 ## Pacotes de recursos: quem ganha
 
