@@ -32,10 +32,42 @@ public final class Functions {
         if (function != null) { server.getFunctionManager().execute(function, new As(player, server)); }
     }
 
+    public static void runAt(World world, BlockPos pos, String named, String asking) {
+        MinecraftServer server = world.getMinecraftServer();
+        FunctionObject function = server == null ? null : find(server, named, asking);
+        if (function != null) { server.getFunctionManager().execute(function, new At(world, pos, server)); }
+    }
+
     @Nullable private static FunctionObject find(MinecraftServer server, String named, String asking) {
         FunctionObject function = server.getFunctionManager().getFunction(new ResourceLocation(named));
         if (function == null) { ContentLog.LOGGER.error("{} asks to run the function {}, which no pack provides, so nothing is run", asking, named); }
         return function;
+    }
+
+    private static final class At implements ICommandSender {
+        private final World world;
+        private final BlockPos pos;
+        private final MinecraftServer server;
+
+        private At(World world, BlockPos pos, MinecraftServer server) {
+            this.world = world;
+            this.pos = pos;
+            this.server = server;
+        }
+
+        @Override @Nonnull public String getName() { return "Functions"; }
+
+        @Override public void sendMessage(@Nonnull ITextComponent component) {}
+
+        @Override public boolean canUseCommand(int permLevel, @Nonnull String commandName) { return permLevel <= LEVEL; }
+
+        @Override @Nonnull public BlockPos getPosition() { return pos; }
+
+        @Override @Nonnull public Vec3d getPositionVector() { return new Vec3d(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D); }
+
+        @Override @Nonnull public World getEntityWorld() { return world; }
+
+        @Override public MinecraftServer getServer() { return server; }
     }
 
     private static final class As implements ICommandSender {

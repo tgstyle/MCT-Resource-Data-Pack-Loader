@@ -26,9 +26,10 @@ public final class FluidDef {
     public final int quantaPerBlock;
     public final List<String> potions;
     public final List<String> requires;
+    public final FluidBehaviorDef behavior;
     @Nullable private Fluid resolved;
 
-    public FluidDef(ResourceLocation registryName, String name, int color, ResourceLocation still, ResourceLocation flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket, boolean createBlock, Material material, String creativeTab, int flammability, int fireSpread, int quantaPerBlock, List<String> potions, List<String> requires) {
+    public FluidDef(ResourceLocation registryName, String name, int color, ResourceLocation still, ResourceLocation flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket, boolean createBlock, Material material, String creativeTab, int flammability, int fireSpread, int quantaPerBlock, List<String> potions, List<String> requires, FluidBehaviorDef behavior) {
         this.registryName = registryName;
         this.name = name;
         this.color = color;
@@ -48,6 +49,7 @@ public final class FluidDef {
         this.quantaPerBlock = quantaPerBlock;
         this.potions = potions;
         this.requires = requires;
+        this.behavior = behavior;
     }
 
     public void resolve(Fluid fluid) { this.resolved = fluid; }

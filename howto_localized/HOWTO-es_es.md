@@ -156,6 +156,7 @@ Todas las rutas de esta guía se escriben desde `assets/` en adelante, así que 
 | `<namespace>/blocks/*.json`                                                                     | Definiciones de bloques. [Bloques](#bloques)                                                                                                                                                                                     |
 | `<namespace>/items/*.json`                                                                      | Definiciones de ítems. [Ítems](#ítems)                                                                                                                                                                                           |
 | `<namespace>/fluids/*.json`                                                                     | Fluidos, con un bloque y un cubo. [Fluidos](#fluidos)                                                                                                                                                                            |
+| `<namespace>/fluid_rules/*.json`                                                                | Reacciones sobre agua y lava de vanilla. [Reglas para agua y lava](#reglas-para-agua-y-lava)                                                                                                                                     |
 | `<namespace>/materials/*.json`                                                                  | Materiales de herramientas y armaduras. [Materiales, pestañas, sonidos, diccionario de minerales](#materiales-pestañas-sonidos-diccionario-de-minerales)                                                                         |
 | `<namespace>/tabs/*.json`                                                                       | Pestañas creativas. [Materiales, pestañas, sonidos, diccionario de minerales](#materiales-pestañas-sonidos-diccionario-de-minerales)                                                                                             |
 | `<namespace>/sounds/*.json`                                                                     | Eventos de sonido. [Materiales, pestañas, sonidos, diccionario de minerales](#materiales-pestañas-sonidos-diccionario-de-minerales)                                                                                              |
@@ -2065,6 +2066,147 @@ La ruta del archivo es el nombre de registro del fluido, a menos que `name` lo a
 | `creativeTab` | no          | nombre de pestaña                                   | ninguno                       | La pestaña en la que aparece el cubo                                                                                                                                                                                                                                                                   |
 | `block`       | no          | objeto                                              |                               | El bloque del fluido. `material` (`water`), `flammability` (`0`), `fireSpread` (`0`), `quantaPerBlock` (`0`), `potions` (ninguno, una lista de efectos que se aplican a todo lo que esté dentro, cada uno escrito `potion,duration,amplifier` con una cuarta parte opcional `true` para uno ambiental) |
 | `requires`    | no          | lista de ids de mods o espacios de nombres de packs | ninguno                       | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                  |
+
+### Flujo
+
+Las claves de flujo van en `block`, junto a `material`. Una clave omitida conserva el valor propio del fluido, así que un fluido sin ninguna de ellas fluye como hoy.
+
+```json
+{
+  "name": "acid",
+  "block": {
+    "material": "lava",
+    "flowTicks": 10,
+    "spread": 5,
+    "infinite": false,
+    "byDimension": [
+      { "dimensions": ["minecraft:the_nether"], "flowTicks": 4, "spread": 7, "infinite": true }
+    ]
+  }
+}
+```
+
+| Clave         | Obligatorio | Valor          | Por defecto            | Qué hace                                                                                                                                                                            |
+| ------------- | ----------- | -------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flowTicks`   | no          | int, 1 o más   | desde `viscosity`      | Ticks entre pasos de flujo. Tiene prioridad sobre `viscosity`, solo para el flujo                                                                                                   |
+| `spread`      | no          | int, 1 a 15    | desde `quantaPerBlock` | Bloques que una fuente alcanza hacia los lados. Tiene prioridad sobre `quantaPerBlock`. Las versiones modernas se detienen en 7 y registran una advertencia                         |
+| `infinite`    | no          | boolean        | `false`                | Dos fuentes junto a un bloque que fluye, con sólido o una fuente más allá, crean una fuente nueva                                                                                   |
+| `byDimension` | no          | lista de filas | ninguna                | Gana la primera fila cuyas `dimensions` coincidan. Cada fila necesita `dimensions` y puede definir `flowTicks`, `spread` e `infinite`. Una clave omitida vuelve al valor del fluido |
+
+### Criaturas
+
+Las claves de criaturas van en `block.creatures` y afectan a las entidades vivas dentro del fluido. Una clave omitida conserva lo que el material del fluido hace hoy.
+
+```json
+{
+  "block": {
+    "creatures": { "damage": 2.0, "damageEvery": 20, "damageType": "magic", "fireSeconds": 0, "drown": true, "swim": true, "push": 0.007, "drag": 0.6 }
+  }
+}
+```
+
+| Clave         | Obligatorio | Valor          | Por defecto                                   | Qué hace                                                                                                                                                                                                                                                                |
+| ------------- | ----------- | -------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `damage`      | no          | float          | ninguno, 4 en lava                            | Daño en cada tick de `damageEvery`. En un material de lava, definir `damage` o `fireSeconds` desactiva la quemadura de lava integrada, así que solo estas claves deciden                                                                                                |
+| `damageEvery` | no          | int, 1 o más   | `20`                                          | Ticks entre golpes, contados con el contador de ticks de la entidad                                                                                                                                                                                                     |
+| `damageType`  | no          | string         | `generic`                                     | `lava`, `in_fire`, `on_fire`, `drown`, `magic`, `wither`, `hot_floor` o `generic`. En 1.12.2, cualquier otro nombre crea una fuente de daño con ese nombre. Las versiones modernas aceptan un id de tipo de daño, y un id desconocido registra un error y usa `generic` |
+| `fireSeconds` | no          | int, 0 o más   | `0`, o 15 en lava                             | Prende fuego a la entidad durante estos segundos. Las entidades inmunes al fuego lo omiten                                                                                                                                                                              |
+| `drown`       | no          | boolean        | `true` en agua, si no `false`                 | El aire se agota con la cabeza en el fluido. La barra de aire se muestra                                                                                                                                                                                                |
+| `swim`        | no          | boolean        | `true` en agua, si no `false`                 | Movimiento de nado. También apaga el fuego y borra la distancia de caída, como hace el agua                                                                                                                                                                             |
+| `push`        | no          | float, 0 o más | el empuje del agua en agua, si no desactivado | Empuja a la entidad por la corriente con esta escala. `0` desactiva                                                                                                                                                                                                     |
+| `drag`        | no          | float, 0 a 1   | ninguno                                       | Multiplica el movimiento de la entidad en cada tick. `0.6` da una lentitud parecida a la lava en cualquier línea                                                                                                                                                        |
+
+### Objetos soltados
+
+Las claves de objetos van en `block.items` y afectan a los objetos soltados que están en el fluido. Una clave omitida conserva lo que el material del fluido hace hoy.
+
+```json
+{
+  "block": {
+    "items": { "burn": false, "dissolve": 0.02, "immune": ["minecraft:gold_ingot"], "drift": 0.02, "buoyancy": 0.05 }
+  }
+}
+```
+
+| Clave      | Obligatorio | Valor                  | Por defecto                   | Qué hace                                                                                                            |
+| ---------- | ----------- | ---------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `burn`     | no          | boolean                | `true` en lava, si no `false` | Daño por quemadura hasta que el objeto se destruye                                                                  |
+| `dissolve` | no          | float, 0 a 1           | `0`                           | Probabilidad por comprobación de que el objeto se destruya. Una comprobación en cada tick en que el objeto se mueve |
+| `immune`   | no          | lista de ids de objeto | ninguno                       | Objetos que no se queman ni se disuelven. La deriva y la flotación siguen moviéndolos                               |
+| `drift`    | no          | float                  | ninguno                       | Empuje extra a lo largo de la corriente. Un fluido quieto no tiene corriente, así que la deriva no hace nada allí   |
+| `buoyancy` | no          | float                  | ninguno                       | Se suma al movimiento hacia arriba en cada tick. `0.05` vence a la gravedad                                         |
+
+En 26.1.2, un objeto soltado se hunde en un fluido cuando no hay claves definidas. Véase Notas por versión.
+
+### Reacciones
+
+Las reacciones van en `block.reactions` como una lista de reglas. Una regla busca un bloque o fluido que toque el fluido, y cambia algo cuando lo encuentra. Las reglas se prueban en orden de lista, y como máximo una regla se activa por comprobación. Una regla que falla su `chance` deja probar a la siguiente.
+
+```json
+{
+  "block": {
+    "reactions": [
+      { "touching": "minecraft:water", "source": "minecraft:obsidian", "flowing": "minecraft:cobblestone", "sound": "minecraft:block.lava.extinguish", "particles": "minecraft:large_smoke" },
+      { "touching": "minecraft:dirt", "becomes": "minecraft:coarse_dirt" },
+      { "touching": "minecraft:tnt", "explosion": { "power": 4, "fire": false, "grief": true, "at": "touching" }, "source": "minecraft:air", "flowing": "minecraft:air" },
+      { "touching": ["#minecraft:logs", "minecraft:hay_block"], "becomes": "minecraft:air", "chance": 0.1, "interval": 200, "drops": false }
+    ]
+  }
+}
+```
+
+Los ids de bloque de estos ejemplos son nombres modernos.
+
+| Clave       | Obligatorio | Valor                                                   | Por defecto | Qué hace                                                                                                                                                                                                               |
+| ----------- | ----------- | ------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `touching`  | sí          | id de bloque, id de fluido, `#tag` o una lista de estos | ninguno     | El bloque o fluido que busca la regla. Un id de fluido coincide con su fuente y con sus bloques que fluyen. Una entrada que no nombra nada registra un error, y una regla sin entrada útil se descarta                 |
+| `faces`     | no          | lista de `down`, `up`, `north`, `south`, `west`, `east` | las seis    | Qué caras del fluido cuentan. Se usa la primera coincidencia en ese orden                                                                                                                                              |
+| `chance`    | no          | float, 0 a 1                                            | `1`         | Se tira en cada comprobación. Un fallo deja probar a la siguiente regla                                                                                                                                                |
+| `interval`  | no          | int, 20 o más                                           | desactivado | Vuelve a comprobar un contacto estable cada tantos ticks. Sin él, un charco quieto no reacciona; véanse las notas de abajo                                                                                             |
+| `becomes`   | no          | estado de bloque                                        | ninguno     | En qué se convierte el bloque tocado                                                                                                                                                                                   |
+| `drops`     | no          | boolean                                                 | `false`     | El bloque tocado suelta sus objetos cuando `becomes` lo reemplaza                                                                                                                                                      |
+| `source`    | no          | estado de bloque                                        | ninguno     | En qué se convierte este punto cuando es una fuente. `minecraft:air` consume el fluido                                                                                                                                 |
+| `flowing`   | no          | estado de bloque                                        | ninguno     | En qué se convierte este punto cuando fluye                                                                                                                                                                            |
+| `explosion` | no          | objeto                                                  | ninguno     | Una explosión. `power` (un float mayor que 0, obligatorio), `fire` (`false`), `grief` (`true`), `at` (`touching` o `self`, por defecto `touching`). Con `grief` desactivado daña a las entidades y no destruye bloques |
+| `sound`     | no          | id de sonido                                            | ninguno     | Se reproduce en el punto                                                                                                                                                                                               |
+| `particles` | no          | nombre de partícula                                     | ninguno     | Lo envía el servidor en el punto                                                                                                                                                                                       |
+| `function`  | no          | id de función                                           | ninguno     | Se ejecuta en el punto, en su dimensión, con nivel de permiso 2, sin salida                                                                                                                                            |
+
+Una regla sin ninguno de `becomes`, `source`, `flowing`, `explosion`, `sound`, `particles` o `function` se descarta con un error.
+
+Un charco quieto no reacciona salvo que una regla defina `interval`. Sin él, una regla se comprueba cuando el fluido fluye, se coloca o cambia un vecino, lo que basta para un bloque puesto junto a un charco. Con `interval`, el servidor encuentra los contactos estables mediante tick aleatorio y los mantiene en una lista de vigilancia, revisando cada uno cada `interval` ticks hasta que desaparece el contacto. Un contacto que ya existe al cargar el mundo se encuentra en unos 1365 ticks (68 segundos) de media. Los ticks aleatorios necesitan a un jugador cerca, y un `randomTickSpeed` de 0 detiene la búsqueda. La lista de vigilancia no se guarda, así que la búsqueda vuelve a empezar tras un reinicio.
+
+Las reacciones consumen un presupuesto que se reinicia en cada tick: 16 puntos por chunk y 256 por dimensión por defecto, ambos definidos en la configuración. Un cambio de bloque cuesta 1, una función 4 y una explosión 16. Una comprobación por encima del presupuesto se vuelve a intentar en el siguiente tick. Una reacción cuyo coste supera todo el presupuesto se ejecuta sola en un chunk que aún no ha gastado nada. Cuando la lista de vigilancia está llena, con su valor por defecto de 4096 por dimensión, la comprobación se descarta y se registra una advertencia por sesión. La configuración puede subir o bajar estos límites.
+
+Los nombres que empiezan por `#` son tags. En versiones modernas coinciden con un tag de bloque, como `#minecraft:logs`. 1.12.2 no tiene tags de bloque, así que allí `#` lee un nombre del diccionario de minerales, y una pequeña tabla asocia los tags de vanilla que lo tienen, como `#minecraft:logs` con `logWood`. Un `#` desconocido registra un error y no coincide con nada.
+
+### Reglas para agua y lava
+
+`<namespace>/fluid_rules/*.json`
+
+Un archivo aquí asocia reacciones al agua o la lava de vanilla, sin mixin. Su clave `fluid` nombra el fluido, `minecraft:water` o `minecraft:lava`, y `reactions` acepta la misma lista que la tabla de Reacciones de arriba. Una regla sobre un fluido de vanilla no tiene `interval`, ya que RDPL no tiene un temporizador que pueda usar en esos fluidos. Una regla se activa cuando se produce un contacto o cambia, y la mezcla propia de agua y lava de vanilla se ejecuta primero, algo que un pack no puede detener.
+
+```json
+{
+  "fluid": "minecraft:water",
+  "reactions": [
+    { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
+  ]
+}
+```
+
+Un fluido de pack no necesita este archivo para sus propios contactos. Sus `reactions` ya nombran el fluido de vanilla con el que se encuentra.
+
+Estas reglas funcionan con `vanillaClients`. Son solo estado del servidor, así que un cliente normal no necesita nada del pack. Una regla que nombra un bloque que el servidor no registra se descarta con su error.
+
+### Notas por versión
+
+- **Alcance.** 1.12.2 acepta un `spread` de hasta 15. Las versiones modernas se detienen en 7 y registran una advertencia, ya que su nivel de fluido solo guarda 8 cantidades.
+- **Objetos en la lava.** En 1.12.2, un objeto soltado en un fluido de material lava se quema y rebota con el sonido de quemadura. En versiones modernas no rebota.
+- **Objetos que se hunden.** En 1.12.2 y 26.1.2, un objeto soltado se hunde en un fluido cuando no hay claves definidas. En 1.20.1, 1.21.1 y 26.2 flota despacio. `buoyancy` hace que todas las líneas sean iguales.
+- **Claves de movimiento.** El mod aplica `drag`, `drift` y `buoyancy` en cada línea, no el código de fluidos del juego. `push` también en 1.12.2, y define la corriente del fluido en versiones modernas. Un cliente con otro pack da tirones, como ocurre con cualquier contenido que no coincida.
+- **Fluidos de lava y movimiento.** En 1.12.2, un fluido de lava mueve a las criaturas con la física de la lava, o como en tierra una vez que tiene una clave de criatura o de objeto que reemplaza su quemadura. En versiones modernas, las criaturas se mueven en cualquier fluido que no sea agua con la física del agua.
+- **Vista dentro del fluido.** Con la cabeza en un fluido, un material de lava empaña la vista a un bloque aproximadamente, y cualquier otro material a unos 20. La superposición submarina se dibuja cuando `drown` está activo, o en un material de agua cuando se omite `drown`.
 
 ## Materiales, pestañas, sonidos, diccionario de minerales
 
@@ -10591,15 +10733,19 @@ Pequeños cambios en el comportamiento de vanilla, cada uno activable en la cate
 
 Otras opciones están en la categoría `content` y no en `tweaks`:
 
-| Opción              | Por defecto | Qué hace                                                                                           |
-| ------------------- | ----------- | -------------------------------------------------------------------------------------------------- |
-| `cactusMaxHeight`   | `3`         | Qué altura alcanza el cactus de vanilla                                                            |
-| `caneMaxHeight`     | `3`         | Qué altura alcanza la caña de azúcar de vanilla                                                    |
-| `shovelPaths`       | activado    | Una pala convierte en camino los bloques marcados con `behavesAs` path, y agacharse revierte uno   |
-| `shovelPathBecomes` | vacío       | En qué convierte una pala esos bloques, como nombre de bloque. Vacío usa el camino de hierba       |
-| `shovelPathReverts` | vacío       | En qué vuelve a convertir un camino una pala al agacharse, como nombre de bloque. Vacío usa tierra |
-| `hoeTilling`        | activado    | Una azada ara los bloques marcados con `behavesAs` till                                            |
-| `hoeTillsInto`      | vacío       | En qué convierte una azada esos bloques, como nombre de bloque. Vacío usa tierra de cultivo        |
+| Opción                       | Por defecto | Qué hace                                                                                                                               |
+| ---------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `cactusMaxHeight`            | `3`         | Qué altura alcanza el cactus de vanilla                                                                                                |
+| `caneMaxHeight`              | `3`         | Qué altura alcanza la caña de azúcar de vanilla                                                                                        |
+| `fluidRules`                 | activado    | Lee `fluid_rules/*.json`, que asocian reacciones al agua y la lava de vanilla                                                          |
+| `fluidReactionsPerChunk`     | `16`        | Puntos de reacción que un chunk puede gastar por tick. Un cambio de bloque cuesta 1, una función 4 y una explosión 16                  |
+| `fluidReactionsPerDimension` | `256`       | Puntos de reacción que una dimensión puede gastar por tick, entre todos sus chunks                                                     |
+| `fluidWatched`               | `4096`      | Máximo de contactos de fluido en vigilancia por dimensión, para reacciones que el presupuesto retiene o que se revisan en un intervalo |
+| `shovelPaths`                | activado    | Una pala convierte en camino los bloques marcados con `behavesAs` path, y agacharse revierte uno                                       |
+| `shovelPathBecomes`          | vacío       | En qué convierte una pala esos bloques, como nombre de bloque. Vacío usa el camino de hierba                                           |
+| `shovelPathReverts`          | vacío       | En qué vuelve a convertir un camino una pala al agacharse, como nombre de bloque. Vacío usa tierra                                     |
+| `hoeTilling`                 | activado    | Una azada ara los bloques marcados con `behavesAs` till                                                                                |
+| `hoeTillsInto`               | vacío       | En qué convierte una azada esos bloques, como nombre de bloque. Vacío usa tierra de cultivo                                            |
 
 Otras dos están en otras categorías:
 

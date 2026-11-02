@@ -71,6 +71,10 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("Register the biomes described by biomes/*.json in packs and place them into world generation. Requires a restart [Default=true]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean biomes = true;
         @net.minecraftforge.common.config.Config.Comment("Register the village plots described by villages/*.json in packs so villages can build them. Requires a restart [Default=true]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean villages = true;
         @net.minecraftforge.common.config.Config.Comment("Register the entity variants described by entities/*.json in packs. Requires a restart [Default=true]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean entities = true;
+        @net.minecraftforge.common.config.Config.Comment("Read fluid_rules/*.json files, which attach reactions to water and lava. Requires a restart [Default=true]") @net.minecraftforge.common.config.Config.RequiresMcRestart public boolean fluidRules = true;
+        @net.minecraftforge.common.config.Config.Comment("Reaction points a fluid may spend per chunk per tick. A block change costs 1, a function 4, an explosion 16. A check over the budget is tried again on the next tick [Default=16]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 100000) public int fluidReactionsPerChunk = 16;
+        @net.minecraftforge.common.config.Config.Comment("Reaction points all fluids may spend per dimension per tick [Default=256]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1000000) public int fluidReactionsPerDimension = 256;
+        @net.minecraftforge.common.config.Config.Comment("Most fluid contacts kept on watch per dimension, for reactions held back by the budget or set to recheck on an interval [Default=4096]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1000000) public int fluidWatched = 4096;
     }
 
     public static class Recipes {

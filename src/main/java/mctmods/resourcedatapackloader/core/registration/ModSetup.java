@@ -12,6 +12,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
 import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
 import mctmods.resourcedatapackloader.common.blocks.bell.logic.TileEntityPackBell;
 import mctmods.resourcedatapackloader.common.blocks.container.logic.TileEntityPackContainer;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
+import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.blocks.portal.logic.TileEntityPortway;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
@@ -206,6 +208,9 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.register(ContentSpawnSwitch.class);
         }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
+        VanillaFluidRules.load();
+        if (VanillaFluidRules.wanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
+        if (FluidReactionQueue.wanted()) { MinecraftForge.EVENT_BUS.register(FluidReactionQueue.class); }
         if (ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(ContentCaveAmbience.class); }
         MinecraftForge.EVENT_BUS.register(ContentProspect.class);
         if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
@@ -303,6 +308,8 @@ public class ModSetup {
         ContentPortals.bind();
         ContentCelestial.loadComplete();
         ContentRanks.verify();
+        ContentRegistry.resolveFluidReactions();
+        VanillaFluidRules.resolve();
     }
 
     public static void beforeServerStart(MinecraftServer server) {

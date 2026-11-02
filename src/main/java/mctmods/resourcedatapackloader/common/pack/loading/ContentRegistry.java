@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluid;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluidBlock;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactions;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
@@ -18,6 +19,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVarian
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockWeightDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.DropDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidReactionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
@@ -398,6 +400,12 @@ public final class ContentRegistry {
         IBlockState state = ContentStates.parse(name, key);
         if (state == null) { ContentLog.LOGGER.error("Worldgen {} names block {} in its shape, which is not registered, leaving it out", key, name); }
         return state;
+    }
+
+    public static void resolveFluidReactions() {
+        for (FluidDef def : FLUID_DEFS.values()) {
+            for (FluidReactionDef rule : def.behavior.reactions) { FluidReactions.resolve(rule, def.registryName); }
+        }
     }
 
     private static void resolveCrops() {

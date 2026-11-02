@@ -375,7 +375,7 @@ public final class ContentParser {
                 Json.getInt(block, "flammability", 0),
                 Json.getInt(block, "fireSpread", 0),
                 Json.getInt(block, "quantaPerBlock", 0),
-                strings(block, "potions"), strings(json, "requires"));
+                strings(block, "potions"), strings(json, "requires"), ContentParserFluids.behavior(key, block));
     }
 
     @Nullable public static ExposureDef exposure(ResourceLocation key, String contents) {

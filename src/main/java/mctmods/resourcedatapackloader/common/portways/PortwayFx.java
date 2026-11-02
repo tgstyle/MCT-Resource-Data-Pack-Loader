@@ -41,7 +41,7 @@ public final class PortwayFx {
         if (name.isEmpty() || !(world instanceof WorldServer)) { return; }
         EnumParticleTypes type = EnumParticleTypes.getByName(name.startsWith(PREFIX) ? name.substring(PREFIX.length()) : name);
         if (type == null) {
-            if (UNKNOWN.add(name)) { ContentLog.LOGGER.error("Portway particle '{}' is not a particle name, so it shows nothing", name); }
+            if (UNKNOWN.add(name)) { ContentLog.LOGGER.error("Particle '{}' is not a particle name, so it shows nothing", name); }
             return;
         }
         ((WorldServer) world).spawnParticle(type, x, y, z, PARTICLES, SPREAD, SPREAD, SPREAD, 0.0D);
