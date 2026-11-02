@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.pack.loading;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactions;
+import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
 import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
@@ -13,6 +15,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.DropDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidReactionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.ExposureDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
@@ -69,6 +72,7 @@ public final class ContentRegistry {
     public static void load() {
         if (loaded) { return; }
         loaded = true;
+        VanillaFluidRules.load();
         if (Config.contentOff()) { return; }
         Json.eachFile(PackManager.EXPOSURES, "exposure definition", (key, contents) -> {
             ExposureDef def = ContentParser.exposure(key, contents);
@@ -238,6 +242,13 @@ public final class ContentRegistry {
             else { ContentLog.LOGGER.error("{} names soil {}, which is not registered, leaving it out", owner, name); }
         }
         return resolved;
+    }
+
+    public static void resolveFluidReactions() {
+        for (FluidDef def : FLUID_DEFS.values()) {
+            for (FluidReactionDef rule : def.behavior().reactions()) { FluidReactions.resolve(rule, def.key()); }
+        }
+        VanillaFluidRules.resolve();
     }
 
     public static void resolveStacks() {

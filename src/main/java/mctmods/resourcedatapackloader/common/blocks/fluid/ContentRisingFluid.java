@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import com.google.common.collect.Maps;
 import com.mojang.datafixers.util.Pair;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
+
 import it.unimi.dsi.fastutil.shorts.Short2BooleanMap;
 import it.unimi.dsi.fastutil.shorts.Short2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectMap;
@@ -17,15 +19,14 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.fluids.ForgeFlowingFluid;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
-@SuppressWarnings("deprecation") public abstract class ContentRisingFluid extends ForgeFlowingFluid {
+@SuppressWarnings("deprecation") public abstract class ContentRisingFluid extends ContentFlowingFluid {
     private static final int FAR = 1000;
     private static final int SIDES_FROM_SOURCES = 3;
 
-    protected ContentRisingFluid(Properties properties) { super(properties); }
+    protected ContentRisingFluid(Properties properties, FluidDef def) { super(properties, def); }
 
     @Override protected void spread(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull FluidState state) {
         if (state.isEmpty()) { return; }
@@ -71,7 +72,7 @@ import javax.annotation.Nonnull;
         FluidState belowFluid = belowState.getFluidState();
         if (!belowFluid.isEmpty() && belowFluid.getType().isSame(this) && through(level, pos, state, Direction.DOWN, below, belowState, this)) { return getFlowing(8, true); }
         int amount = most - getDropOff(level);
-        return amount <= 0 ? Fluids.EMPTY.defaultFluidState() : getFlowing(amount, false);
+        return amount <= 0 ? Fluids.EMPTY.defaultFluidState() : limit(level, getFlowing(amount, false));
     }
 
     @Override @Nonnull protected Map<Direction, FluidState> getSpread(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state) {
@@ -92,7 +93,7 @@ import javax.annotation.Nonnull;
                 best = distance;
             }
         }
-        return spread;
+        return filled(spread);
     }
 
     @Override protected int getSlopeDistance(@Nonnull LevelReader level, @Nonnull BlockPos pos, int distance, @Nonnull Direction from, @Nonnull BlockState state, @Nonnull BlockPos origin, @Nonnull Short2ObjectMap<Pair<BlockState, FluidState>> states, @Nonnull Short2BooleanMap holes) {
@@ -135,7 +136,7 @@ import javax.annotation.Nonnull;
     private static short key(BlockPos origin, BlockPos pos) { return (short) ((pos.getX() - origin.getX() + 128 & 0xFF) << 8 | pos.getZ() - origin.getZ() + 128 & 0xFF); }
 
     public static final class Source extends ContentRisingFluid {
-        public Source(Properties properties) { super(properties); }
+        public Source(Properties properties, FluidDef def) { super(properties, def); }
 
         @Override public int getAmount(@Nonnull FluidState state) { return 8; }
 
@@ -143,8 +144,8 @@ import javax.annotation.Nonnull;
     }
 
     public static final class Flowing extends ContentRisingFluid {
-        public Flowing(Properties properties) {
-            super(properties);
+        public Flowing(Properties properties, FluidDef def) {
+            super(properties, def);
             registerDefaultState(getStateDefinition().any().setValue(LEVEL, 7));
         }
 

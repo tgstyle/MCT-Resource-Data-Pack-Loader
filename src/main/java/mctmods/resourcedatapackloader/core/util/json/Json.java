@@ -191,6 +191,15 @@ public final class Json {
         return fallback;
     }
 
+    public static float bounded(JsonObject json, String member, float low, float high, Object owner) {
+        if (!json.has(member)) { return Float.NaN; }
+        float value = getFloat(json, member, Float.NaN);
+        if (Float.isNaN(value)) { return Float.NaN; }
+        if (value >= low && value <= high) { return value; }
+        ContentLog.LOGGER.error("{} sets {} to {}, which is outside {} to {}, so the world setting is used instead", owner, member, value, low, high);
+        return Float.NaN;
+    }
+
     public static String choice(JsonObject json, String member, String fallback, Object owner, Collection<String> options) {
         if (!json.has(member)) { return fallback; }
         String asked = getString(json, member, "").trim();
