@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.blocks.fluid;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
 import com.google.common.collect.Maps;
@@ -27,13 +28,12 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.neoforged.neoforge.event.EventHooks;
-import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
-@SuppressWarnings("deprecation") public abstract class ContentRisingFluid extends BaseFlowingFluid {
+@SuppressWarnings("deprecation") public abstract class ContentRisingFluid extends ContentFlowingFluid {
     private static final int FAR = 1000;
     private static final int SIDES_FROM_SOURCES = 3;
 
-    protected ContentRisingFluid(Properties properties) { super(properties); }
+    protected ContentRisingFluid(Properties properties, FluidDef def) { super(properties, def); }
 
     @Override protected void spread(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState here, @Nonnull FluidState state) {
         if (state.isEmpty()) { return; }
@@ -78,7 +78,7 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
         FluidState belowFluid = belowState.getFluidState();
         if (!belowFluid.isEmpty() && belowFluid.getType().isSame(this) && through(level, pos, state, Direction.DOWN, below, belowState, this)) { return getFlowing(8, true); }
         int amount = most - getDropOff(level);
-        return amount <= 0 ? Fluids.EMPTY.defaultFluidState() : getFlowing(amount, false);
+        return amount <= 0 ? Fluids.EMPTY.defaultFluidState() : limit(level, getFlowing(amount, false));
     }
 
     @Override @Nonnull protected Map<Direction, FluidState> getSpread(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState state) {
@@ -99,7 +99,7 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
                 best = distance;
             }
         }
-        return spread;
+        return filled(spread);
     }
 
     private int slopeDistance(LevelReader level, BlockPos pos, int distance, Direction from, BlockState state, BlockPos origin, Short2ObjectMap<Pair<BlockState, FluidState>> states, Short2BooleanMap holes) {
@@ -152,7 +152,7 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
     private static short key(BlockPos origin, BlockPos pos) { return (short) ((pos.getX() - origin.getX() + 128 & 0xFF) << 8 | pos.getZ() - origin.getZ() + 128 & 0xFF); }
 
     public static final class Source extends ContentRisingFluid {
-        public Source(Properties properties) { super(properties); }
+        public Source(Properties properties, FluidDef def) { super(properties, def); }
 
         @Override public int getAmount(@Nonnull FluidState state) { return 8; }
 
@@ -160,8 +160,8 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
     }
 
     public static final class Flowing extends ContentRisingFluid {
-        public Flowing(Properties properties) {
-            super(properties);
+        public Flowing(Properties properties, FluidDef def) {
+            super(properties, def);
             registerDefaultState(getStateDefinition().any().setValue(LEVEL, 7));
         }
 

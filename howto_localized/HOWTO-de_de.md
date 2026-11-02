@@ -154,6 +154,7 @@ Unter `data/`:
 | `<namespace>/curioslots/*.json`              | Curios-Slot-Typen, in denen ein Item getragen werden kann. [Curios-Slot-Typen](#curios-slot-typen)                                                                                                                                                                                     |
 | `<namespace>/items/*.json`                   | Itemdefinitionen. [Items](#items)                                                                                                                                                                                                                                                      |
 | `<namespace>/fluids/*.json`                  | Flüssigkeiten, mit Block und Eimer. [Flüssigkeiten](#flüssigkeiten)                                                                                                                                                                                                                    |
+| `<namespace>/fluid_rules/*.json`             | Reaktionen auf Vanilla-Wasser und -Lava. [Regeln für Wasser und Lava](#regeln-für-wasser-und-lava)                                                                                                                                                                                     |
 | `<namespace>/materials/*.json`               | Werkzeug- und Rüstungsmaterialien. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                                                                    |
 | `<namespace>/tabs/*.json`                    | Kreativtabs. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                                                                                          |
 | `<namespace>/sounds/*.json`                  | Sound-Events. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                                                                                         |
@@ -1933,6 +1934,147 @@ Der Pfad der Datei ist der Registry-Name des Flüssigkeitsblocks. `name` benennt
 | `creativeTab` | nein    | Tab-Name                               | keiner                   | Der Tab, in dem der Eimer auftaucht                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `block`       | nein    | Objekt                                 |                          | Der Flüssigkeitsblock. `material` (`water`): In `water` kann man schwimmen und ertrinken, Boote schwimmen darauf, brennende Wesen werden gelöscht, Ackerland bleibt feucht, und im Nether verdampft sie beim Ausgießen; `lava` setzt alles in Brand, was darin steht, lässt weder Schwimmen noch Ertrinken zu und klingt im Eimer wie Lava; jedes andere Material tut nichts davon. `flammability` (`0`) und `fireSpread` (`0`): wie bereitwillig Feuer den Block verzehrt und sich von ihm ausbreitet. `quantaPerBlock` (`0`, gelesen als 8): wie weit sie von einer Quelle aus fließt, wie auf 1.12.2 einen Block weniger als diese Zahl; Flüssigkeiten reichen hier 1, 2, 3 oder 7 Blöcke weit, 4 und 5 fließen also 3 Blöcke und 6 und mehr 7. `potions` (keine, eine Liste von Effekten für alles, was darin steht, je geschrieben als `potion,duration,amplifier`, mit einem optionalen vierten Teil `true` für einen Umgebungseffekt) |
 | `requires`    | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine                    | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+### Fluss
+
+Die Fluss-Schlüssel stehen in `block`, neben `material`. Ein weggelassener Schlüssel behält den eigenen Wert der Flüssigkeit, eine Flüssigkeit ganz ohne sie fließt also wie bisher.
+
+```json
+{
+  "name": "acid",
+  "block": {
+    "material": "lava",
+    "flowTicks": 10,
+    "spread": 5,
+    "infinite": false,
+    "byDimension": [
+      { "dimensions": ["minecraft:the_nether"], "flowTicks": 4, "spread": 7, "infinite": true }
+    ]
+  }
+}
+```
+
+| Schlüssel     | Pflicht | Wert             | Standard             | Was er macht                                                                                                                                                                                                    |
+| ------------- | ------- | ---------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flowTicks`   | nein    | int, 1 oder mehr | aus `viscosity`      | Ticks zwischen den Fließschritten. Hat für den Fluss Vorrang vor `viscosity`                                                                                                                                    |
+| `spread`      | nein    | int, 1 bis 15    | aus `quantaPerBlock` | Blöcke, die eine Quelle seitlich erreicht. Hat Vorrang vor `quantaPerBlock`. Moderne Versionen bleiben bei 7 stehen und schreiben eine Warnung ins Log                                                          |
+| `infinite`    | nein    | boolean          | `false`              | Zwei Quellen neben einem fließenden Block, mit fester Fläche oder einer Quelle dahinter, machen eine neue Quelle                                                                                                |
+| `byDimension` | nein    | Liste von Zeilen | keine                | Die erste Zeile, deren `dimensions` passt, gewinnt. Jede Zeile braucht `dimensions` und kann `flowTicks`, `spread` und `infinite` setzen. Ein weggelassener Schlüssel fällt auf den Wert der Flüssigkeit zurück |
+
+### Kreaturen
+
+Die Kreatur-Schlüssel stehen in `block.creatures` und wirken auf Lebewesen in der Flüssigkeit. Ein weggelassener Schlüssel behält, was das Material der Flüssigkeit heute bewirkt.
+
+```json
+{
+  "block": {
+    "creatures": { "damage": 2.0, "damageEvery": 20, "damageType": "magic", "fireSeconds": 0, "drown": true, "swim": true, "push": 0.007, "drag": 0.6 }
+  }
+}
+```
+
+| Schlüssel     | Pflicht | Wert               | Standard                              | Was er macht                                                                                                                                                                                                                                                                      |
+| ------------- | ------- | ------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `damage`      | nein    | float              | keiner, auf Lava 4                    | Schaden bei jedem `damageEvery`-Tick. Auf einem Lava-Material schaltet das Setzen von `damage` oder `fireSeconds` den eingebauten Lava-Brand ab, dann entscheiden nur diese Schlüssel                                                                                             |
+| `damageEvery` | nein    | int, 1 oder mehr   | `20`                                  | Ticks zwischen den Treffern, gezählt auf dem eigenen Tick-Zähler des Lebewesens                                                                                                                                                                                                   |
+| `damageType`  | nein    | string             | `generic`                             | `lava`, `in_fire`, `on_fire`, `drown`, `magic`, `wither`, `hot_floor` oder `generic`. Auf 1.12.2 baut jeder andere Name eine Schadensquelle dieses Namens. Moderne Versionen nehmen eine Schadensart-ID, und eine unbekannte ID schreibt einen Fehler ins Log und nutzt `generic` |
+| `fireSeconds` | nein    | int, 0 oder mehr   | `0`, auf Lava 15                      | Setzt das Lebewesen für so viele Sekunden in Brand. Feuerfeste Lebewesen überspringen es                                                                                                                                                                                          |
+| `drown`       | nein    | boolean            | `true` auf Wasser, sonst `false`      | Die Luft geht aus, wenn der Kopf in der Flüssigkeit ist. Die Luftleiste wird angezeigt                                                                                                                                                                                            |
+| `swim`        | nein    | boolean            | `true` auf Wasser, sonst `false`      | Schwimmbewegung. Löscht außerdem Feuer und setzt die Fallhöhe zurück, wie Wasser es tut                                                                                                                                                                                           |
+| `push`        | nein    | float, 0 oder mehr | der Wasserstrom auf Wasser, sonst aus | Schiebt das Lebewesen mit diesem Faktor entlang des Stroms. `0` ist aus                                                                                                                                                                                                           |
+| `drag`        | nein    | float, 0 bis 1     | keiner                                | Multipliziert die Bewegung des Lebewesens in jedem Tick. `0.6` ergibt Lava-artige Trägheit auf jeder Linie                                                                                                                                                                        |
+
+### Gedroppte Items
+
+Die Item-Schlüssel stehen in `block.items` und wirken auf liegende Items in der Flüssigkeit. Ein weggelassener Schlüssel behält, was das Material der Flüssigkeit heute bewirkt.
+
+```json
+{
+  "block": {
+    "items": { "burn": false, "dissolve": 0.02, "immune": ["minecraft:gold_ingot"], "drift": 0.02, "buoyancy": 0.05 }
+  }
+}
+```
+
+| Schlüssel  | Pflicht | Wert               | Standard                       | Was er macht                                                                                                   |
+| ---------- | ------- | ------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `burn`     | nein    | boolean            | `true` auf Lava, sonst `false` | Brandschaden, bis das Item zerstört ist                                                                        |
+| `dissolve` | nein    | float, 0 bis 1     | `0`                            | Chance pro Prüfung, dass das Item zerstört wird. Eine Prüfung bei jedem Tick, in dem sich das Item bewegt      |
+| `immune`   | nein    | Liste von Item-IDs | keine                          | Items, die weder brennen noch sich auflösen. Drift und Auftrieb bewegen sie weiterhin                          |
+| `drift`    | nein    | float              | keiner                         | Zusätzlicher Schub entlang des Stroms. Eine stehende Flüssigkeit hat keinen Strom, daher tut Drift dort nichts |
+| `buoyancy` | nein    | float              | keiner                         | Wird in jedem Tick zur Aufwärtsbewegung addiert. `0.05` schlägt die Schwerkraft                                |
+
+Auf 26.1.2 sinkt ein gedropptes Item in einer Flüssigkeit, wenn keine Schlüssel gesetzt sind. Siehe Hinweise zu Versionen.
+
+### Reaktionen
+
+Reaktionen stehen in `block.reactions` als Liste von Regeln. Eine Regel sucht einen Block oder eine Flüssigkeit, die die Flüssigkeit berührt, und ändert etwas, wenn sie einen findet. Die Regeln werden in Listenreihenfolge geprüft, und pro Prüfung feuert höchstens eine Regel. Eine Regel, die ihre `chance` verfehlt, lässt die nächste Regel prüfen.
+
+```json
+{
+  "block": {
+    "reactions": [
+      { "touching": "minecraft:water", "source": "minecraft:obsidian", "flowing": "minecraft:cobblestone", "sound": "minecraft:block.lava.extinguish", "particles": "minecraft:large_smoke" },
+      { "touching": "minecraft:dirt", "becomes": "minecraft:coarse_dirt" },
+      { "touching": "minecraft:tnt", "explosion": { "power": 4, "fire": false, "grief": true, "at": "touching" }, "source": "minecraft:air", "flowing": "minecraft:air" },
+      { "touching": ["#minecraft:logs", "minecraft:hay_block"], "becomes": "minecraft:air", "chance": 0.1, "interval": 200, "drops": false }
+    ]
+  }
+}
+```
+
+Die Block-IDs in diesen Beispielen sind moderne Namen.
+
+| Schlüssel   | Pflicht | Wert                                                     | Standard   | Was er macht                                                                                                                                                                                                                                                     |
+| ----------- | ------- | -------------------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `touching`  | ja      | Block-ID, Flüssigkeits-ID, `#tag` oder eine Liste davon  | keiner     | Der Block oder die Flüssigkeit, nach der die Regel sucht. Eine Flüssigkeits-ID trifft sowohl ihre Quelle als auch ihre fließenden Blöcke. Ein Eintrag, der nichts benennt, schreibt einen Fehler ins Log, und eine Regel ohne brauchbaren Eintrag wird verworfen |
+| `faces`     | nein    | Liste aus `down`, `up`, `north`, `south`, `west`, `east` | alle sechs | Welche Seiten der Flüssigkeit zählen. Der erste Treffer in dieser Reihenfolge wird genutzt                                                                                                                                                                       |
+| `chance`    | nein    | float, 0 bis 1                                           | `1`        | Wird bei jeder Prüfung gewürfelt. Ein Fehlschlag lässt die nächste Regel prüfen                                                                                                                                                                                  |
+| `interval`  | nein    | int, 20 oder mehr                                        | aus        | Prüft einen stehenden Kontakt alle so viele Ticks neu. Ohne sie reagiert ein stehender Teich gar nicht; siehe die Hinweise unten                                                                                                                                 |
+| `becomes`   | nein    | Blockzustand                                             | keiner     | Wozu der berührte Block wird                                                                                                                                                                                                                                     |
+| `drops`     | nein    | boolean                                                  | `false`    | Der berührte Block lässt seine Items fallen, wenn `becomes` ihn ersetzt                                                                                                                                                                                          |
+| `source`    | nein    | Blockzustand                                             | keiner     | Wozu diese Stelle wird, wenn sie eine Quelle ist. `minecraft:air` verbraucht die Flüssigkeit                                                                                                                                                                     |
+| `flowing`   | nein    | Blockzustand                                             | keiner     | Wozu diese Stelle wird, wenn sie fließt                                                                                                                                                                                                                          |
+| `explosion` | nein    | Objekt                                                   | keine      | Eine Explosion. `power` (ein float über 0, Pflicht), `fire` (`false`), `grief` (`true`), `at` (`touching` oder `self`, Standard `touching`). Ist `grief` aus, verletzt sie Lebewesen und lässt Blöcke stehen                                                     |
+| `sound`     | nein    | Sound-ID                                                 | keiner     | Wird an der Stelle abgespielt                                                                                                                                                                                                                                    |
+| `particles` | nein    | Partikelname                                             | keiner     | Wird vom Server an der Stelle gesendet                                                                                                                                                                                                                           |
+| `function`  | nein    | Funktions-ID                                             | keiner     | Läuft an der Stelle, in ihrer Dimension, mit Berechtigungsstufe 2 und ohne Ausgabe                                                                                                                                                                               |
+
+Eine Regel ohne `becomes`, `source`, `flowing`, `explosion`, `sound`, `particles` oder `function` wird mit einem Fehler verworfen.
+
+Ein stehender Teich reagiert nur, wenn eine Regel `interval` setzt. Ohne sie wird eine Regel geprüft, wenn die Flüssigkeit fließt, platziert wird oder ein Nachbar sich ändert, was für einen Block am Teich genügt. Mit `interval` findet der Server stehende Kontakte per Zufallstick und hält sie auf einer Beobachtungsliste, die jeden davon alle `interval` Ticks neu prüft, bis der Kontakt weg ist. Ein Kontakt, der schon beim Laden der Welt besteht, wird im Mittel nach etwa 1365 Ticks (68 Sekunden) gefunden. Zufallsticks brauchen einen Spieler in der Nähe, und ein `randomTickSpeed` von 0 stoppt das Finden. Die Beobachtungsliste wird nicht gespeichert, daher beginnt das Finden nach einem Neustart von vorn.
+
+Reaktionen zehren von einem Budget, das jeden Tick zurückgesetzt wird: standardmäßig 16 Punkte pro Chunk und 256 pro Dimension, beides in der Konfiguration eingestellt. Eine Blockänderung kostet 1, eine Funktion 4 und eine Explosion 16. Eine Prüfung über dem Budget wird im nächsten Tick erneut versucht. Eine Reaktion, deren Kosten das ganze Budget übersteigen, läuft allein in einem Chunk, der noch nichts ausgegeben hat. Ist die Beobachtungsliste voll, standardmäßig 4096 pro Dimension, wird die Prüfung verworfen, und eine Warnung wird pro Sitzung einmal ins Log geschrieben. Die Konfiguration kann diese Grenzen anheben oder senken.
+
+Namen, die mit `#` beginnen, sind Tags. Auf modernen Versionen treffen sie einen Block-Tag, etwa `#minecraft:logs`. 1.12.2 hat keine Block-Tags, dort liest `#` stattdessen einen Ore-Dictionary-Namen, und eine kleine Tabelle ordnet die Vanilla-Tags zu, die einen haben, etwa `#minecraft:logs` zu `logWood`. Ein unbekanntes `#` schreibt einen Fehler ins Log und trifft nichts.
+
+### Regeln für Wasser und Lava
+
+`<namespace>/fluid_rules/*.json`
+
+Eine Datei hier hängt Reaktionen an Vanilla-Wasser oder -Lava, ohne Mixin. Ihr Schlüssel `fluid` nennt die Flüssigkeit, `minecraft:water` oder `minecraft:lava`, und `reactions` nimmt dieselbe Liste wie die Tabelle Reaktionen oben. Eine Regel auf einer Vanilla-Flüssigkeit hat kein `interval`, da RDPL dafür keinen Timer hat, den es nutzen könnte. Eine Regel feuert, wenn ein Kontakt entsteht oder sich ändert, und die eigene Mischung von Wasser und Lava aus Vanilla läuft zuerst, was ein Pack nicht abstellen kann.
+
+```json
+{
+  "fluid": "minecraft:water",
+  "reactions": [
+    { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
+  ]
+}
+```
+
+Eine Pack-Flüssigkeit braucht diese Datei nicht für ihre eigenen Kontakte. Ihre eigenen `reactions` nennen bereits die Vanilla-Flüssigkeit, auf die sie trifft.
+
+Diese Regeln funktionieren mit `vanillaClients`. Sie sind nur Serverzustand, daher braucht ein einfacher Client nichts aus dem Pack. Eine Regel, die einen Block nennt, den der Server nicht registriert, wird mit ihrem Fehler verworfen.
+
+### Hinweise zu Versionen
+
+- **Reichweite.** 1.12.2 nimmt ein `spread` bis 15. Moderne Versionen bleiben bei 7 stehen und schreiben eine Warnung, da ihr Flüssigkeitsstand nur 8 Mengen hält.
+- **Items in Lava.** Auf 1.12.2 brennt ein gedropptes Item in einer Flüssigkeit mit Lava-Material und springt mit dem Brandgeräusch. Auf modernen Versionen springt es nicht.
+- **Sinkende Items.** Auf 1.12.2 und 26.1.2 sinkt ein gedropptes Item in einer Flüssigkeit, wenn keine Schlüssel gesetzt sind. Auf 1.20.1, 1.21.1 und 26.2 schwebt es langsam. `buoyancy` macht jede Linie gleich.
+- **Bewegungsschlüssel.** `drag`, `drift` und `buoyancy` wendet der Mod auf jeder Linie an, nicht der eigene Flüssigkeitscode des Spiels. `push` gilt auf 1.12.2 ebenfalls und setzt auf modernen Versionen die Strömung der Flüssigkeit. Ein Client mit einem anderen Pack ruckelt, wie bei jedem nicht passenden Inhalt.
+- **Lava-Flüssigkeiten und Bewegung.** Auf 1.12.2 bewegt eine Lava-Flüssigkeit Lebewesen mit der Lava-Physik, oder wie an Land, sobald ein Kreatur- oder Item-Schlüssel ihr Brennen ersetzt. Auf modernen Versionen bewegen sich Lebewesen in jeder Flüssigkeit außer Wasser mit der Wasser-Physik.
+- **Sicht in der Flüssigkeit.** Mit dem Kopf in einer Flüssigkeit verschleiert ein Lava-Material die Sicht auf etwa einen Block, jedes andere Material auf etwa 20. Das Unterwasser-Overlay erscheint, wenn `drown` an ist, oder auf einem Wasser-Material, wenn `drown` weggelassen wird.
 
 ## Materialien, Tabs, Sounds, Tags
 
@@ -9481,12 +9623,16 @@ Kleine Änderungen daran, wie Vanilla sich verhält, jede über die Config-Kateg
 
 Vier weitere sitzen in der Kategorie `content` statt in `tweaks`:
 
-| Option            | Standard | Was sie macht                                                                                        |
-| ----------------- | -------- | ---------------------------------------------------------------------------------------------------- |
-| `cactusMaxHeight` | `3`      | Wie hoch Vanilla-Kakteen wachsen                                                                     |
-| `caneMaxHeight`   | `3`      | Wie hoch Vanilla-Zuckerrohr wächst                                                                   |
-| `shovelPaths`     | an       | Eine Schaufel macht aus Blöcken mit `behavesAs`-Pfad einen Pfad, und Schleichen macht das rückgängig |
-| `hoeTilling`      | an       | Eine Hacke pflügt Blöcke mit `behavesAs` till                                                        |
+| Option                       | Standard | Was sie macht                                                                                                                                                                |
+| ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cactusMaxHeight`            | `3`      | Wie hoch Vanilla-Kakteen wachsen                                                                                                                                             |
+| `caneMaxHeight`              | `3`      | Wie hoch Vanilla-Zuckerrohr wächst                                                                                                                                           |
+| `fluidRules`                 | an       | Liest `fluid_rules/*.json`, die Reaktionen an Vanilla-Wasser und -Lava hängen                                                                                                |
+| `fluidReactionsPerChunk`     | `16`     | Reaktionspunkte, die ein Chunk pro Tick ausgeben darf. Eine Blockänderung kostet 1, eine Funktion 4 und eine Explosion 16                                                    |
+| `fluidReactionsPerDimension` | `256`    | Reaktionspunkte, die eine Dimension pro Tick ausgeben darf, über alle ihre Chunks zusammen                                                                                   |
+| `fluidWatched`               | `4096`   | Höchstzahl der Flüssigkeitskontakte auf der Beobachtungsliste pro Dimension, für Reaktionen, die vom Budget zurückgehalten werden oder in einem Intervall neu geprüft werden |
+| `shovelPaths`                | an       | Eine Schaufel macht aus Blöcken mit `behavesAs`-Pfad einen Pfad, und Schleichen macht das rückgängig                                                                         |
+| `hoeTilling`                 | an       | Eine Hacke pflügt Blöcke mit `behavesAs` till                                                                                                                                |
 
 **Nichts davon erreicht ein Pack.** Diese Optionen ändern nur Minecrafts eigene Kakteen, Zuckerrohre, Blätter und Pfade. Ein Block, den dein Pack mit `"type": "cane"` definiert, bringt seinen eigenen `growth`-Abschnitt mit und wächst auf die Höhe, die du ihm gegeben hast, egal was sonst installiert ist.
 

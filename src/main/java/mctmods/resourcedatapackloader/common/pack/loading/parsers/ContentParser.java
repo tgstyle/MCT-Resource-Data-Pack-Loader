@@ -368,7 +368,7 @@ public final class ContentParser {
                 Json.getInt(block, "flammability", 0),
                 Json.getInt(block, "fireSpread", 0),
                 Json.getInt(block, "quantaPerBlock", 0),
-                Json.strings(block, "potions"), Json.strings(json, "requires"));
+                Json.strings(block, "potions"), Json.strings(json, "requires"), ContentParserFluids.behavior(key, block));
     }
 
     @Nullable public static MaterialDef material(Identifier key, String contents) {

@@ -54,6 +54,7 @@ public final class PackManager {
     public static final String BLOCKS = "blocks";
     public static final String ITEMS = "items";
     public static final String FLUIDS = "fluids";
+    public static final String FLUID_RULES = "fluid_rules";
     public static final String BIOMES = "biomes";
     public static final String CAVEREGIONS = "caveregions";
     public static final String GAMERULES = "gamerules";

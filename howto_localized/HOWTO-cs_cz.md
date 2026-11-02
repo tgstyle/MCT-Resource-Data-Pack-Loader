@@ -154,6 +154,7 @@ V `data/`:
 | `<namespace>/curioslots/*.json`              | Typy slotů Curios, do kterých lze předmět nasadit. [Typy slotů Curios](#typy-slotů-curios)                                                                                                           |
 | `<namespace>/items/*.json`                   | Definice předmětů. [Předměty](#předměty)                                                                                                                                                             |
 | `<namespace>/fluids/*.json`                  | Tekutiny s blokem a kbelíkem. [Tekutiny](#tekutiny)                                                                                                                                                  |
+| `<namespace>/fluid_rules/*.json`             | Reakce na vanilla vodu a lávu. [Pravidla pro vodu a lávu](#pravidla-pro-vodu-a-lávu)                                                                                                                 |
 | `<namespace>/materials/*.json`               | Materiály nástrojů a zbroje. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                            |
 | `<namespace>/tabs/*.json`                    | Karty kreativního režimu. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                               |
 | `<namespace>/sounds/*.json`                  | Zvukové události. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                                       |
@@ -1933,6 +1934,147 @@ Cesta souboru je název bloku tekutiny v registru. `name` pojmenovává samotnou
 | `creativeTab` | ne      | název karty                           | žádný                | Karta, na které se objeví kbelík                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `block`       | ne      | objekt                                |                      | Blok tekutiny. `material` (`water`): `water` lze plavat a utonout v ní, nese lodě, hasí hořící tvory, udržuje ornici vlhkou a vypaří se při vylití v Netheru; `lava` zapálí cokoli, co v ní stojí, nelze v ní plavat ani se utopit a používá zvuky lávového kbelíku; jakýkoli jiný materiál nedělá nic z toho. `flammability` (`0`) a `fireSpread` (`0`): jak ochotně oheň blok spaluje a šíří se z něj. `quantaPerBlock` (`0`, čteno jako 8): jak daleko teče od zdroje, o jeden blok méně, než je číslo, jako v 1.12.2; tekutiny zde dosahují 1, 2, 3 nebo 7 bloků, takže 4 a 5 tečou 3 bloky a 6 a víc teče 7 bloků. `potions` (žádný, seznam efektů dávaných všemu, co v ní stojí, každý zapsaný jako `potion,duration,amplifier` s volitelnou čtvrtou částí `true` pro ambientní) |
 | `requires`    | ne      | seznam id módů nebo namespace balíčků | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+### Tok
+
+Klíče toku sedí v `block`, vedle `material`. Klíč, který chybí, si ponechá vlastní hodnotu tekutiny, takže tekutina bez nich teče jako dosud.
+
+```json
+{
+  "name": "acid",
+  "block": {
+    "material": "lava",
+    "flowTicks": 10,
+    "spread": 5,
+    "infinite": false,
+    "byDimension": [
+      { "dimensions": ["minecraft:the_nether"], "flowTicks": 4, "spread": 7, "infinite": true }
+    ]
+  }
+}
+```
+
+| Klíč          | Povinné | Hodnota                 | Výchozí            | Co dělá                                                                                                                                                                           |
+| ------------- | ------- | ----------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flowTicks`   | ne      | celé číslo, 1 nebo více | z `viscosity`      | Ticky mezi kroky toku. Přebíjí `viscosity` jen pro tok                                                                                                                            |
+| `spread`      | ne      | celé číslo, 1 až 15     | z `quantaPerBlock` | Bloky, které zdroj dosáhne do stran. Přebíjí `quantaPerBlock`. Moderní verze se zastaví na 7 a zaloguje varování                                                                  |
+| `infinite`    | ne      | boolean                 | `false`            | Dva zdroje vedle tekoucího bloku, s pevným blokem nebo zdrojem za ním, vytvoří nový zdroj                                                                                         |
+| `byDimension` | ne      | seznam řádků            | žádný              | Platí první řádek, jehož `dimensions` sedí. Každý řádek potřebuje `dimensions` a může nastavit `flowTicks`, `spread` a `infinite`. Klíč, který chybí, se vrátí k hodnotě tekutiny |
+
+### Tvorové
+
+Klíče tvorů sedí v `block.creatures` a platí pro živé bytosti v tekutině. Klíč, který chybí, ponechá, co materiál tekutiny dělá dnes.
+
+```json
+{
+  "block": {
+    "creatures": { "damage": 2.0, "damageEvery": 20, "damageType": "magic", "fireSeconds": 0, "drown": true, "swim": true, "push": 0.007, "drag": 0.6 }
+  }
+}
+```
+
+| Klíč          | Povinné | Hodnota                      | Výchozí                           | Co dělá                                                                                                                                                                                                                                           |
+| ------------- | ------- | ---------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `damage`      | ne      | desetinné číslo              | žádný, na lávě 4                  | Poškození při každém tiku `damageEvery`. Na lávovém materiálu zadání `damage` nebo `fireSeconds` vypne vestavěné pálení lávou, takže rozhodují jen tyto klíče                                                                                     |
+| `damageEvery` | ne      | celé číslo, 1 nebo více      | `20`                              | Ticky mezi zásahy, počítané podle vlastního počtu ticků bytosti                                                                                                                                                                                   |
+| `damageType`  | ne      | řetězec                      | `generic`                         | `lava`, `in_fire`, `on_fire`, `drown`, `magic`, `wither`, `hot_floor` nebo `generic`. Na 1.12.2 každý jiný název vytvoří zdroj poškození se stejným názvem. Moderní verze berou id typu poškození a neznámé id zaloguje chybu a použije `generic` |
+| `fireSeconds` | ne      | celé číslo, 0 nebo více      | `0`, na lávě 15                   | Zapálí bytost na tolik sekund. Bytosti odolné ohni to přeskočí                                                                                                                                                                                    |
+| `drown`       | ne      | boolean                      | `true` na vodě, jinak `false`     | Vzduch dochází, když je hlava v tekutině. Ukazuje se lišta vzduchu                                                                                                                                                                                |
+| `swim`        | ne      | boolean                      | `true` na vodě, jinak `false`     | Pohyb plavání. Také uhasí oheň a vynuluje pád, jako voda                                                                                                                                                                                          |
+| `push`        | ne      | desetinné číslo, 0 nebo více | proud vody na vodě, jinak vypnuto | Tlačí bytost podél toku touto měrou. `0` je vypnuto                                                                                                                                                                                               |
+| `drag`        | ne      | desetinné číslo, 0 až 1      | žádný                             | Násobí pohyb bytosti každý tik. `0.6` dá pomalost jako na lávě na každé verzi                                                                                                                                                                     |
+
+### Padající předměty
+
+Klíče předmětů sedí v `block.items` a platí pro padající předměty ležící v tekutině. Klíč, který chybí, ponechá, co materiál tekutiny dělá dnes.
+
+```json
+{
+  "block": {
+    "items": { "burn": false, "dissolve": 0.02, "immune": ["minecraft:gold_ingot"], "drift": 0.02, "buoyancy": 0.05 }
+  }
+}
+```
+
+| Klíč       | Povinné | Hodnota                 | Výchozí                       | Co dělá                                                                                      |
+| ---------- | ------- | ----------------------- | ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `burn`     | ne      | boolean                 | `true` na lávě, jinak `false` | Poškození ohněm, dokud předmět nezanikne                                                     |
+| `dissolve` | ne      | desetinné číslo, 0 až 1 | `0`                           | Šance při každé kontrole, že předmět zanikne. Jedna kontrola každý tik, kdy se předmět pohne |
+| `immune`   | ne      | seznam id předmětů      | žádný                         | Předměty, na které oheň a rozpouštění nesahají. Snos a vztlak je pořád hýbou                 |
+| `drift`    | ne      | desetinné číslo         | žádný                         | Přídavný tah podél toku. Tekutina bez toku nemá proud, takže tam drift nedělá nic            |
+| `buoyancy` | ne      | desetinné číslo         | žádný                         | Přičítá se ke pohybu nahoru každý tik. `0.05` přemůže gravitaci                              |
+
+Na 26.1.2 předmět v tekutině klesá, když není nastaven žádný klíč. Viz Poznámky k verzím.
+
+### Reakce
+
+Reakce sedí v `block.reactions` jako seznam pravidel. Pravidlo hledá blok nebo tekutinu, která se tekutiny dotýká, a když ji najde, něco změní. Pravidla se zkoušejí v pořadí seznamu a při každé kontrole se spustí nejvýš jedno. Pravidlo, které mine svou `chance`, nechá zkusit další pravidlo.
+
+```json
+{
+  "block": {
+    "reactions": [
+      { "touching": "minecraft:water", "source": "minecraft:obsidian", "flowing": "minecraft:cobblestone", "sound": "minecraft:block.lava.extinguish", "particles": "minecraft:large_smoke" },
+      { "touching": "minecraft:dirt", "becomes": "minecraft:coarse_dirt" },
+      { "touching": "minecraft:tnt", "explosion": { "power": 4, "fire": false, "grief": true, "at": "touching" }, "source": "minecraft:air", "flowing": "minecraft:air" },
+      { "touching": ["#minecraft:logs", "minecraft:hay_block"], "becomes": "minecraft:air", "chance": 0.1, "interval": 200, "drops": false }
+    ]
+  }
+}
+```
+
+Id bloků v těchto příkladech jsou moderní názvy.
+
+| Klíč        | Povinné | Hodnota                                               | Výchozí    | Co dělá                                                                                                                                                                                       |
+| ----------- | ------- | ----------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `touching`  | ano     | id bloku, id tekutiny, `#tag`, nebo seznam těchto     | žádný      | Blok nebo tekutina, které pravidlo hledá. Id tekutiny sedí na její zdroj i tekoucí bloky. Položka, která nic neoznačí, zaloguje jednu chybu a pravidlo bez použitelné položky se zahodí       |
+| `faces`     | ne      | seznam `down`, `up`, `north`, `south`, `west`, `east` | všech šest | Které strany tekutiny se počítají. Použije se první shoda v tomto pořadí                                                                                                                      |
+| `chance`    | ne      | desetinné číslo, 0 až 1                               | `1`        | Losuje se při každé kontrole. Minutí dá další pravidlo šanci                                                                                                                                  |
+| `interval`  | ne      | celé číslo, 20 nebo více                              | vypnuto    | Kontroluje stojící kontakt každých tolik ticků. Bez něj stojící tekutina nereaguje vůbec; viz poznámky níže                                                                                   |
+| `becomes`   | ne      | stav bloku                                            | žádný      | Na co se dotčený blok změní                                                                                                                                                                   |
+| `drops`     | ne      | boolean                                               | `false`    | Dotčený blok vyhodí své předměty, když ho `becomes` nahradí                                                                                                                                   |
+| `source`    | ne      | stav bloku                                            | žádný      | Na co se toto místo změní, když je zdroj. `minecraft:air` tekutinu spotřebuje                                                                                                                 |
+| `flowing`   | ne      | stav bloku                                            | žádný      | Na co se toto místo změní, když teče                                                                                                                                                          |
+| `explosion` | ne      | objekt                                                | žádný      | Výbuch. `power` (desetinné číslo nad 0, povinné), `fire` (`false`), `grief` (`true`), `at` (`touching` nebo `self`, výchozí `touching`). Při vypnutém `grief` zraňuje bytosti a bloky nechává |
+| `sound`     | ne      | id zvuku                                              | žádný      | Přehraje se na místě                                                                                                                                                                          |
+| `particles` | ne      | název částice                                         | žádný      | Server ji pošle na místo                                                                                                                                                                      |
+| `function`  | ne      | id funkce                                             | žádný      | Spustí se na místě, v jeho dimenzi, na úrovni oprávnění 2, bez výstupu                                                                                                                        |
+
+Pravidlo bez žádného z `becomes`, `source`, `flowing`, `explosion`, `sound`, `particles` nebo `function` se zahodí s chybou.
+
+Stojící louže nereaguje, pokud pravidlo nenastaví `interval`. Bez něj se pravidlo kontroluje, když tekutina teče, je položena nebo se sousedovi změní blok, což stačí pro blok přiložený k louži. S `interval` server stojící kontakty najde náhodným tikem a drží je na seznamu pod dohledem, kontroluje každý každých `interval` ticků, dokud kontakt nezmizí. Kontakt, který už stál při načtení světa, se najde zhruba po 1365 tickách (68 sekundách) v průměru. Náhodné ticky potřebují hráče poblíž a `randomTickSpeed` 0 zastaví hledání. Seznam pod dohledem se neukládá, takže hledání po restartu začíná znovu.
+
+Reakce čerpají z rozpočtu, který se každý tik obnoví: výchozích 16 bodů na chunk a 256 na dimenzi, obojí nastavitelné v configu. Změna bloku stojí 1, funkce 4 a výbuch 16. Kontrola nad rozpočtem se zkusí znovu při dalším ticku. Reakce, jejíž cena je vyšší než celý rozpočet, běží sama v chunku, který zatím nic neutratil. Když je seznam pod dohledem plný, jeho výchozích 4096 na dimenzi, kontrola se zahodí a jedno varování se zaloguje na relaci. Config může tyto limity zvýšit i snížit.
+
+Názvy začínající `#` jsou tagy. Na moderních verzích odpovídají tagu bloku, například `#minecraft:logs`. 1.12.2 tagy bloků nemá, takže tam `#` čte místo toho název ore dictionary, a malá tabulka mapuje vanilla tagy, které ho mají, například `#minecraft:logs` na `logWood`. Neznámé `#` zaloguje chybu a neodpovídá ničemu.
+
+### Pravidla pro vodu a lávu
+
+`<namespace>/fluid_rules/*.json`
+
+Soubor zde připojuje reakce k vanilla vodě nebo lávě, bez mixinu. Jeho klíč `fluid` pojmenovává tekutinu, `minecraft:water` nebo `minecraft:lava`, a `reactions` bere stejný seznam jako tabulka Reakce výše. Pravidlo na vanilla tekutině nemá `interval`, protože RDPL na těchto tekutinách nemá časovač, který by mohl použít. Pravidlo se spustí, když kontakt vznikne nebo se změní, a vanilla vlastní směs vody a lávy běží první, což balíček nemůže zastavit.
+
+```json
+{
+  "fluid": "minecraft:water",
+  "reactions": [
+    { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
+  ]
+}
+```
+
+Tekutina z balíčku tento soubor pro své vlastní kontakty nepotřebuje. Její vlastní `reactions` už pojmenovávají vanilla tekutinu, kterou potkává.
+
+Tato pravidla fungují s `vanillaClients`. Jsou jen serverový stav, takže obyčejný klient od balíčku nic nepotřebuje. Pravidlo, které pojmenuje blok, jejž server neregistruje, se zahodí se svou chybou.
+
+### Poznámky k verzím
+
+- **Dosah.** 1.12.2 přijme `spread` až 15. Moderní verze se zastaví na 7 a zaloguje jedno varování, protože jejich úroveň tekutiny drží jen 8 hodnot.
+- **Předměty v lávě.** Na 1.12.2 padající předmět v tekutině s lávovým materiálem hoří a odskakuje se zvukem hoření. Na moderních verzích neodskakuje.
+- **Klesající předměty.** Na 1.12.2 a 26.1.2 předmět v tekutině klesá, když nejsou nastaveny žádné klíče. Na 1.20.1, 1.21.1 a 26.2 pomalu pluje. `buoyancy` udělá všechny verze stejné.
+- **Klíče pohybu.** `drag`, `drift` a `buoyancy` aplikuje mód na každé verzi, ne vlastní kód tekutin hry. `push` také na 1.12.2 a na moderních verzích nastaví proud tekutiny. Klient s jiným balíčkem cuká, jako by cuknul u jakéhokoli nesouladného obsahu.
+- **Lávové tekutiny a pohyb.** Na 1.12.2 lávová tekutina pohybuje bytosti fyzikou lávy, nebo jako na souši, jakmile má klíč `creatures` nebo `items`, který nahradí její hoření. Na moderních verzích bytosti procházejí každou tekutinou, která není voda, fyzikou vody.
+- **Pohled v tekutině.** S hlavou v tekutině lávový materiál zamlží pohled zhruba na blok a jiný materiál zhruba na 20. Podvodní overlay se vykreslí, když je `drown` zapnuté, nebo na vodním materiálu, když `drown` chybí.
 
 ## Materiály, karty, zvuky, tagy
 
@@ -9481,12 +9623,16 @@ Drobné změny chování vanilla hry, každá se zapíná v kategorii konfigurac
 
 Další čtyři jsou v kategorii `content`, ne v `tweaks`:
 
-| Volba             | Výchozí | Co dělá                                                                        |
-| ----------------- | ------- | ------------------------------------------------------------------------------ |
-| `cactusMaxHeight` | `3`     | Jak vysoko roste vanilla kaktus                                                |
-| `caneMaxHeight`   | `3`     | Jak vysoko roste vanilla cukrová třtina                                        |
-| `shovelPaths`     | zapnuto | Lopata změní bloky označené `behavesAs` path na pěšinu a plížení ji vrátí zpět |
-| `hoeTilling`      | zapnuto | Motyka kypří bloky označené `behavesAs` till                                   |
+| Volba                        | Výchozí | Co dělá                                                                                                                         |
+| ---------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `cactusMaxHeight`            | `3`     | Jak vysoko roste vanilla kaktus                                                                                                 |
+| `caneMaxHeight`              | `3`     | Jak vysoko roste vanilla cukrová třtina                                                                                         |
+| `fluidRules`                 | zapnuto | Čte `fluid_rules/*.json`, které připojují reakce k vanilla vodě a lávě                                                          |
+| `fluidReactionsPerChunk`     | `16`    | Body reakcí, které chunk smí za tik utratit. Změna bloku stojí 1, funkce 4 a výbuch 16                                          |
+| `fluidReactionsPerDimension` | `256`   | Body reakcí, které dimenze smí za tik utratit napříč všemi svými chunky                                                         |
+| `fluidWatched`               | `4096`  | Nejvíce kontaktů tekutin držených pod dohledem na dimenzi, pro reakce zadržené rozpočtem nebo nastavené na kontrolu v intervalu |
+| `shovelPaths`                | zapnuto | Lopata změní bloky označené `behavesAs` path na pěšinu a plížení ji vrátí zpět                                                  |
+| `hoeTilling`                 | zapnuto | Motyka kypří bloky označené `behavesAs` till                                                                                    |
 
 **Nic z toho se balíčku netýká.** Tyto volby mění jen vlastní kaktus, třtinu, listy a cesty Minecraftu. Blok, který tvůj balíček definuje s `"type": "cane"`, nese vlastní sekci `growth` a roste do jakékoli výšky, kterou mu dáš, ať je nainstalováno cokoli jiného.
 

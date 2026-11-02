@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
+import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
+import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
@@ -133,6 +135,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
@@ -356,6 +359,12 @@ public class ModSetup {
         modBus.addListener(RDPLNetwork::register);
         if (ContentExposures.enabled()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
         if (ContentExposures.spreads()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
+        if (VanillaFluidRules.wanted()) { NeoForge.EVENT_BUS.addListener(VanillaFluidRules::onNeighborNotify); }
+        if (FluidReactionQueue.wanted()) {
+            NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onTick);
+            NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onUnload);
+            NeoForge.EVENT_BUS.addListener((TagsUpdatedEvent _) -> VanillaFluidRules.tagsUpdated());
+        }
         if (ContentCaveRegions.ambient()) { NeoForge.EVENT_BUS.addListener(ContentCaveAmbience::onPlayerTick); }
         NeoForge.EVENT_BUS.addListener(ContentSpawning::onPlacementCheck);
         NeoForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);
@@ -430,6 +439,7 @@ public class ModSetup {
         PackFinder.ensureScanned();
         PackManager.get().warnAboutDisabledFeatures();
         event.enqueueWork(ContentRegistry::resolveStacks);
+        event.enqueueWork(ContentRegistry::resolveFluidReactions);
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.applyAliases();

@@ -32,8 +32,9 @@ public final class ContentLiquidBlock extends LiquidBlock {
     public FluidDef getDef() { return def; }
 
     @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull InsideBlockEffectApplier applier, boolean precise) {
+        FluidEntities.touch(level, pos, state, entity, def);
         if (level.isClientSide()) { return; }
-        if (def.lavaMaterial()) { entity.lavaHurt(); }
+        if (def.lavaMaterial() && FluidEntities.lavaDefault(entity, def.behavior())) { FluidEntities.scorch(entity); }
         if (effects.isEmpty() || !(entity instanceof LivingEntity living)) { return; }
         for (MobEffectInstance effect : effects) { living.addEffect(ContentEffects.copy(effect)); }
     }

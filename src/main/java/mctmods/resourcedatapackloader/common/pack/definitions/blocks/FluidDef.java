@@ -7,7 +7,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 
 public record FluidDef(Identifier key, String name, int color, Identifier still, Identifier flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket,
-                       boolean createBlock, String material, String creativeTab, int flammability, int fireSpread, int quantaPerBlock, List<String> potions, List<String> requires) {
+                       boolean createBlock, String material, String creativeTab, int flammability, int fireSpread, int quantaPerBlock, List<String> potions, List<String> requires,
+                       FluidBehaviorDef behavior) {
     private static final int OPAQUE = 0xFF000000;
     private static final int LEGACY_WATER = 0x4260FF;
 

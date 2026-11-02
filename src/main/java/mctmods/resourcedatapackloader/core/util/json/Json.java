@@ -192,6 +192,15 @@ public final class Json {
 
     public static boolean flag(JsonObject object, String key) { return GsonHelper.isValidPrimitive(object, key) && object.get(key).getAsBoolean(); }
 
+    public static float bounded(JsonObject json, String member, float low, float high, Object owner) {
+        if (!json.has(member)) { return Float.NaN; }
+        float value = getFloat(json, member, Float.NaN);
+        if (Float.isNaN(value)) { return Float.NaN; }
+        if (value >= low && value <= high) { return value; }
+        ContentLog.LOGGER.error("{} sets {} to {}, which is outside {} to {}, so the world setting is used instead", owner, member, value, low, high);
+        return Float.NaN;
+    }
+
     public static float ranged(JsonObject json, String member, float fallback, float low, float high, Object owner) {
         if (!json.has(member)) { return fallback; }
         float value = getFloat(json, member, fallback);

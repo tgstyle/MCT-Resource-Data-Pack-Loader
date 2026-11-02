@@ -107,6 +107,7 @@
         "client.particle.ParticleEngineWindMixin",
         "client.renderer.LevelRendererMixin",
         "client.renderer.LevelRendererWeatherMixin",
+        "client.renderer.ScreenEffectRendererMixin",
         "client.renderer.SkyRendererMixin",
         "client.renderer.CloudRendererLookMixin",
         "client.renderer.fog.environment.LavaFogEnvironmentMixin",

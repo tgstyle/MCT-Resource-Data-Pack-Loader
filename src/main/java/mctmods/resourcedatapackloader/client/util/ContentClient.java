@@ -32,14 +32,20 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import java.util.Collections;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.block.BlockAndTintGetter;
 import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.client.renderer.fog.FogData;
+import net.minecraft.client.renderer.fog.environment.FogEnvironment;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -54,7 +60,10 @@ import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.RegisterSpecialModelRendererEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.fluid.FluidTintSources;
+import org.joml.Vector4f;
 
 public final class ContentClient {
     private ContentClient() {}
@@ -64,6 +73,7 @@ public final class ContentClient {
         modBus.addListener(PouchKey::register);
         modBus.addListener(ContentClient::screens);
         modBus.addListener(ContentClient::fluidModels);
+        modBus.addListener(ContentClient::fluidExtensions);
         modBus.addListener(ContentClient::blockColors);
         modBus.addListener(ContentClient::specialRenderers);
         modBus.addListener(ContentClient::renderers);
@@ -116,6 +126,27 @@ public final class ContentClient {
     private static void setup(FMLClientSetupEvent event) { event.enqueueWork(SplashDark::apply); }
 
     private static void fluidModels(RegisterFluidModelsEvent event) { for (ContentFluids.Made made : ContentFluids.made()) { event.register(new FluidModel.Unbaked(new Material(made.def.still(), true), new Material(made.def.flowing(), true), null, FluidTintSources.constant(made.def.tint())), made.still, made.flowing); } }
+
+    private static void fluidExtensions(RegisterClientExtensionsEvent event) { for (ContentFluids.Made made : ContentFluids.made()) { event.registerFluidType(fluidExtension(made), made.type); } }
+
+    private static IClientFluidTypeExtensions fluidExtension(ContentFluids.Made made) {
+        return new IClientFluidTypeExtensions() {
+            @Override public Identifier getRenderOverlayTexture(@Nonnull Minecraft mc) {
+                Boolean drown = made.def.behavior().creatures().drown();
+                return (drown == null ? made.def.waterMaterial() : drown) ? Identifier.withDefaultNamespace("textures/misc/underwater.png") : null;
+            }
+
+            @Override public void modifyFogColor(@Nonnull Camera camera, float partialTick, @Nonnull ClientLevel level, int renderDistance, float darkenWorldAmount, @Nonnull Vector4f fluidFogColor) {
+                int color = made.def.color();
+                fluidFogColor.set(ARGB.red(color) / 255.0F, ARGB.green(color) / 255.0F, ARGB.blue(color) / 255.0F, 1.0F);
+            }
+
+            @Override public void modifyFogRender(@Nonnull Camera camera, FogEnvironment environment, float renderDistance, float partialTick, @Nonnull FogData fogData) {
+                fogData.environmentalStart = 0.0F;
+                fogData.environmentalEnd = made.def.lavaMaterial() ? 1.25F : 20.0F;
+            }
+        };
+    }
 
     private static void blockColors(RegisterColorHandlersEvent.BlockTintSources event) {
         for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
