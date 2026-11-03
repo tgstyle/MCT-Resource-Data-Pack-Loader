@@ -95,6 +95,8 @@
   "rdpl.container_upgrade.unavailable": "このアップグレードには変化先がありません",
   "rdpl.container_upgrade.smaller": "そのコンテナはこのアップグレードには大きすぎます",
   "rdpl.container_upgrade.in_use": "だれかがそのコンテナを開いています",
+  "rdpl.container_upgrade.linked": "2つのブロックがこの収納を共有しています",
+  "rdpl.container_upgrade.cannot_move": "中に移動できないものがあります",
   "rdpl.container_upgrade.loot": "アップグレードする前にそのコンテナを一度開いてください",
   "rdpl.portway.activated": "%sを有効にしました（登録済み %s）",
   "rdpl.portway.twin": "%s (%s, %s, %s)",

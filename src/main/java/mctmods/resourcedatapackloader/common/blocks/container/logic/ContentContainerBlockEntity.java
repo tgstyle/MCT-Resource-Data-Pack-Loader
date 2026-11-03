@@ -159,7 +159,13 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         }
         lootTable = null;
         loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, Objects.requireNonNull(level).registryAccess(), tag));
+        stocked = true;
         setChanged();
+    }
+
+    public void unloot() {
+        lootTable = null;
+        stocked = true;
     }
 
     @Override public void unpackLootTable(@Nullable Player player) {

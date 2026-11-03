@@ -228,7 +228,7 @@ public final class ContentCarry {
         player.sendOverlayMessage(Component.translatable("rdpl.carry.down", label));
     }
 
-    private static boolean twoBlock(BlockState state) { return state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) || state.hasProperty(BlockStateProperties.BED_PART); }
+    public static boolean twoBlock(BlockState state) { return state.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) || state.hasProperty(BlockStateProperties.BED_PART); }
 
     private static boolean permits(ServerPlayer player, BlockPos pos, BlockState state) {
         breaking = true;

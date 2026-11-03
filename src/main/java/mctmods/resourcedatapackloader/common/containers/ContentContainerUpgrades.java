@@ -41,14 +41,15 @@ public final class ContentContainerUpgrades {
         Level level = context.getLevel();
         BlockPos pos = context.getClickedPos();
         BlockState state = level.getBlockState(pos);
+        Identifier key = BuiltInRegistries.ITEM.getKey(kit);
+        ContainerUpgradeDef.Path path = pathFor(upgrade, state, key);
+        if (path != null && path.contents() != ContainerUpgradeDef.Contents.CONTAINER) { return ContentStorageSwap.use(upgrade, path, kit, player, context, state); }
         if (!(state.getBlock() instanceof IContentContainer)) { return InteractionResult.PASS; }
         if (player.getCooldowns().isOnCooldown(kit.getDefaultInstance())) { return InteractionResult.FAIL; }
         if (level.isClientSide()) { return InteractionResult.SUCCESS; }
         if (!(level instanceof ServerLevel server) || !(player instanceof ServerPlayer serverPlayer)) { return InteractionResult.PASS; }
         if (!(level.getBlockEntity(pos) instanceof ContentContainerBlockEntity old)) { return InteractionResult.PASS; }
-        ContainerUpgradeDef.Path path = pathFor(upgrade, state);
         if (path == null) { return refuse(serverPlayer, "no path for that container", "wrong"); }
-        Identifier key = BuiltInRegistries.ITEM.getKey(kit);
         BlockState parsed = ContentStates.parse(path.to(), key);
         if (parsed == null || !(parsed.getBlock() instanceof IContentContainer)) { return refuse(serverPlayer, "nothing to become", "unavailable"); }
         BlockState target = facing(parsed.getBlock().defaultBlockState(), state);
@@ -56,11 +57,7 @@ public final class ContentContainerUpgrades {
         if (container(target).size() < old.getContainerSize()) { return refuse(serverPlayer, "target is smaller", "smaller"); }
         if (old.watched()) { return refuse(serverPlayer, "someone has it open", "in_use"); }
         if (old.pendingLoot() && !upgrade.carryLoot()) { return refuse(serverPlayer, "loot not rolled", "loot"); }
-        if (!player.mayUseItemAt(pos, context.getClickedFace(), context.getItemInHand()) || !ContentCarry.asks(serverPlayer, pos)) {
-            ContentLog.LOGGER.info("Container upgrade: {} was refused at {} (not allowed to change it)", serverPlayer.getGameProfile().name(), pos);
-            serverPlayer.sendOverlayMessage(Component.translatable("rdpl.carry.denied"));
-            return InteractionResult.FAIL;
-        }
+        if (!player.mayUseItemAt(pos, context.getClickedFace(), context.getItemInHand()) || !ContentCarry.asks(serverPlayer, pos)) { return denied(serverPlayer, pos, "not allowed to change it"); }
         if (!swap(server, state, target, pos, old)) { return refuse(serverPlayer, "the swap failed", "unavailable"); }
         ContentLog.LOGGER.info("Container upgrade: {} upgraded the container at {} to {}", serverPlayer.getGameProfile().name(), pos, BuiltInRegistries.BLOCK.getKey(target.getBlock()));
         return InteractionResult.SUCCESS;
@@ -69,9 +66,14 @@ public final class ContentContainerUpgrades {
     public static void check(ItemDef def) {
         if (def.upgrade() == null) { return; }
         for (ContainerUpgradeDef.Path path : def.upgrade().paths()) {
-            BlockState from = ContentStates.parse(path.from(), def.key());
-            BlockState to = ContentStates.parse(path.to(), def.key());
+            boolean storage = path.contents() != ContainerUpgradeDef.Contents.CONTAINER;
+            BlockState from = ContentStates.known(path.from(), def.key());
+            BlockState to = ContentStates.known(path.to(), def.key());
             if (from == null || to == null) { continue; }
+            if (storage) {
+                checkStorage(def, path, from, to);
+                continue;
+            }
             if (!(from.getBlock() instanceof IContentContainer)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which is not a container", def.key(), path.from()); }
             else if (!(to.getBlock() instanceof IContentContainer)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which is not a container", def.key(), path.to()); }
             else if (path.from().equals(path.to())) { ContentLog.LOGGER.error("The container upgrade {} changes {} into itself", def.key(), path.from()); }
@@ -79,18 +81,22 @@ public final class ContentContainerUpgrades {
         }
     }
 
-    private static ContainerDef container(BlockState state) { return ((IContentContainer) state.getBlock()).container(); }
-
-    @Nullable private static ContainerUpgradeDef.Path pathFor(ContainerUpgradeDef upgrade, BlockState state) {
-        for (ContainerUpgradeDef.Path path : upgrade.paths()) {
-            if (matches(path.from(), state)) { return path; }
-        }
-        return null;
+    private static void checkStorage(ItemDef def, ContainerUpgradeDef.Path path, BlockState from, BlockState to) {
+        if (!from.hasBlockEntity()) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which holds nothing", def.key(), path.from()); }
+        else if (!to.hasBlockEntity()) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which holds nothing", def.key(), path.to()); }
+        else if (path.from().equals(path.to())) { ContentLog.LOGGER.error("The container upgrade {} changes {} into itself", def.key(), path.from()); }
+        else if (ContentCarry.twoBlock(from)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.key(), path.from()); }
+        else if (ContentCarry.twoBlock(to)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.key(), path.to()); }
+        else if (path.contents() == ContainerUpgradeDef.Contents.SLOTS && !path.fit() && from.getBlock() instanceof IContentContainer && to.getBlock() instanceof IContentContainer && container(to).size() < container(from).size()) { ContentLog.LOGGER.error("The container upgrade {} changes {} into {}, which holds fewer slots", def.key(), path.from(), path.to()); }
     }
 
-    private static boolean matches(String from, BlockState state) {
-        Identifier named = Identifier.tryParse(from);
-        return named != null && named.equals(BuiltInRegistries.BLOCK.getKey(state.getBlock()));
+    private static ContainerDef container(BlockState state) { return ((IContentContainer) state.getBlock()).container(); }
+
+    @Nullable private static ContainerUpgradeDef.Path pathFor(ContainerUpgradeDef upgrade, BlockState state, Identifier key) {
+        for (ContainerUpgradeDef.Path path : upgrade.paths()) {
+            if (ContentStates.fits(path.from(), state, key)) { return path; }
+        }
+        return null;
     }
 
     private static BlockState facing(BlockState target, BlockState old) {
@@ -98,15 +104,25 @@ public final class ContentContainerUpgrades {
         return target.setValue(BlockStateProperties.HORIZONTAL_FACING, old.getValue(BlockStateProperties.HORIZONTAL_FACING));
     }
 
-    private static InteractionResult refuse(ServerPlayer player, String why, String key) {
+    static InteractionResult refuse(ServerPlayer player, String why, String key) {
         ContentLog.LOGGER.info("Container upgrade: {} was refused ({})", player.getGameProfile().name(), why);
         player.sendOverlayMessage(Component.translatable("rdpl.container_upgrade." + key));
         return InteractionResult.FAIL;
     }
 
-    private static boolean place(ServerLevel level, BlockPos pos, BlockState state) {
+    static InteractionResult denied(ServerPlayer player, BlockPos pos, String why) {
+        ContentLog.LOGGER.info("Container upgrade: {} was refused at {} ({})", player.getGameProfile().name(), pos, why);
+        player.sendOverlayMessage(Component.translatable("rdpl.carry.denied"));
+        return InteractionResult.FAIL;
+    }
+
+    static boolean place(ServerLevel level, BlockPos pos, BlockState state) {
+        return place(level, pos, state, Block.UPDATE_CLIENTS);
+    }
+
+    static boolean place(ServerLevel level, BlockPos pos, BlockState state, int flags) {
         swapping = true;
-        try { return level.setBlock(pos, state, Block.UPDATE_CLIENTS); }
+        try { return level.setBlock(pos, state, flags); }
         finally { swapping = false; }
     }
 

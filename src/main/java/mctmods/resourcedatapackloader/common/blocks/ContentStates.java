@@ -96,21 +96,38 @@ public final class ContentStates {
             catch (CommandSyntaxException wrong) { ContentLog.LOGGER.error("Block '{}' in {} carries data that is not valid NBT, so it is placed without it", text, context); }
             text = text.substring(0, brace).trim();
         }
-        Map<String, String> properties = new LinkedHashMap<>();
+        Map<String, String> properties = written(text);
         int open = text.indexOf('[');
-        String name = text;
-        if (open >= 0) {
-            name = text.substring(0, open).trim();
-            String inside = text.substring(open + 1, text.endsWith("]") ? text.length() - 1 : text.length());
-            for (String pair : inside.split(",")) {
-                String[] halves = Settings.split(pair);
-                if (halves != null) { properties.put(halves[0], halves[1]); }
-            }
-        }
+        String name = open >= 0 ? text.substring(0, open).trim() : text;
         if (name.isEmpty()) { return null; }
         Block block = Registered.block(name);
         if (block == null) { return null; }
         return new Spec(state(block, properties, context), tag, !properties.isEmpty());
+    }
+
+    private static Map<String, String> written(String text) {
+        Map<String, String> properties = new LinkedHashMap<>();
+        int open = text.indexOf('[');
+        if (open < 0) { return properties; }
+        String inside = text.substring(open + 1, text.endsWith("]") ? text.length() - 1 : text.length());
+        for (String pair : inside.split(",")) {
+            String[] halves = Settings.split(pair);
+            if (halves != null) { properties.put(halves[0], halves[1]); }
+        }
+        return properties;
+    }
+
+    public static boolean fits(String written, BlockState found, Object context) {
+        BlockState named = known(written, context);
+        if (named == null || named.getBlock() != found.getBlock()) { return false; }
+        int open = written.indexOf('[');
+        if (open < 0) { return true; }
+        for (String pair : written.substring(open + 1, written.indexOf(']') < 0 ? written.length() : written.indexOf(']')).split(",")) {
+            String[] halves = Settings.split(pair);
+            Property<?> property = halves == null ? null : found.getBlock().getStateDefinition().getProperty(halves[0]);
+            if (property != null && !found.getValue(property).equals(named.getValue(property))) { return false; }
+        }
+        return true;
     }
 
     @Nullable public static Block registered(@Nullable String name) {

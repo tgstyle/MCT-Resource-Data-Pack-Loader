@@ -95,6 +95,8 @@
   "rdpl.container_upgrade.unavailable": "Це покращення не має в що перетворюватися",
   "rdpl.container_upgrade.smaller": "Цей контейнер завеликий для цього покращення",
   "rdpl.container_upgrade.in_use": "Хтось уже відкрив цей контейнер",
+  "rdpl.container_upgrade.linked": "Це сховище спільне для двох блоків",
+  "rdpl.container_upgrade.cannot_move": "Щось усередині не можна перемістити",
   "rdpl.container_upgrade.loot": "Відкрийте цей контейнер, перш ніж покращувати його",
   "rdpl.portway.activated": "%s: активовано (відомо: %s)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
