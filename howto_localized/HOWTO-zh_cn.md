@@ -54,6 +54,7 @@
 
 **合成、战利品与交易**
 - [禁用的方块与物品](#禁用的方块与物品)
+- [物品锁](#物品锁)
 - [熔炉配方与燃料](#熔炉配方与燃料)
 - [配方锁](#配方锁)
 - [工具提示](#工具提示)
@@ -192,6 +193,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/recipe_removals/*.json`                                                            | 按名称、命名空间或产物删除的配方。[可以覆盖的内容](#可以覆盖的内容)                                                   |
 | `<namespace>/recipe_locks/*.json`                                                               | 玩家获得进度之前保持锁定的配方。[配方锁](#配方锁)                                                                     |
 | `<namespace>/spawn_locks/*.json`                                                                | 条件满足之前不会生成的生物。[生成锁](#生成锁)                                                                         |
+| `<namespace>/item_locks/*.json`                                                                 | 玩家获得进度之前，在其列表中隐藏的物品。[物品锁](#物品锁)                                                             |
 | `<namespace>/disabled/*.json`                                                                   | 被移出游戏的方块与物品。[禁用的方块与物品](#禁用的方块与物品)                                                         |
 | `<namespace>/furnace/*.json`                                                                    | 新增与移除的熔炉配方。[熔炉配方与燃料](#熔炉配方与燃料)                                                               |
 | `<namespace>/tooltips/*.json`                                                                   | 额外的工具提示行。[工具提示](#工具提示)                                                                               |
@@ -583,7 +585,7 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当添加在随
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                          | `blocks`、`items`、`fluids`、`materials`                                                                               |
 | `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                       | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，词缀和宝石槽的名称） |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                              | `biomes`、`dimensions`、`portalframes`                                                                                 |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers`                                                                                                            |
+| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins` | `villagers`, `item_locks`                                                                                              |
 | `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的）          | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                                                      |
 | `teams`、`scoring`、`ranks`                                                                                                                     | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放）                                      |
 | 整个控制层、设置和预生成                                                                                                                        |                                                                                                                        |
@@ -2624,6 +2626,34 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 若要把已放置的方块替换成别的东西而不是移除，请在世界模板中给它们一行 `blockReplacements`，例如 `thermalfoundation:ore=minecraft:stone`，参见[替换](#替换)。替换过程所交换的方块由它负责处理。其他模组保留在自己机器内部的配方属于该模组，不会被涉及。这些文件在启动时只读取一次，配置中的 `content.disabled` 会关闭该文件夹，这需要重启。
 
 若要清空某个矿物词典名称而让它的物品仍然留在游戏中，请改在[矿物词典](#矿物词典)文件中使用 `"-name": ["*"]`。
+
+## 物品锁
+
+*合成、战利品与交易*
+
+`<namespace>/item_locks/*.json`
+
+文件名由你自己选择，只读取文件夹，多个文件会叠加。在玩家获得进度之前，从该玩家的创造模式标签页、创造模式搜索和 JEI 中隐藏物品。
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| 键            | 必需 | 值               | 默认值 | 作用                                                                                                                                                         |
+| ------------- | ---- | ---------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `advancement` | 是   | `namespace:path` | 无     | 玩家必须获得的进度，之后这些物品才会对其显示。没有该进度的文件对所有人保持锁定，指定了没有任何包定义的进度的文件也一样；日志会在服务器启动时注明             |
+| `names`       | 否   | 物品名称列表     | 无     | 被锁定的内容。元数据作为第三部分，`"thermalfoundation:material:128"`，锁定的是那一个物品，`:*` 则是所有元数据。以 `*` 结尾的名称匹配所有以其余部分开头的名称 |
+| `namespaces`  | 否   | 模组 id 列表     | 无     | 该模组的每个物品                                                                                                                                             |
+| `oreDict`     | 否   | 矿物词典名称列表 | 无     | 注册在该名称下的每个物品                                                                                                                                     |
+| `requires`    | 否   | 模组 id 列表     | 无     | 除非每一个都已加载，否则跳过该文件。`config:` 和 `file:` 条目的作用与其他任何地方相同                                                                        |
+
+被锁定的物品会一直在玩家的创造模式标签页、创造模式搜索和 JEI 中隐藏，直到该玩家获得进度。锁按玩家分别生效，服务器会告诉每个客户端哪些锁对该玩家已经打开。已打开的 JEI 列表会在下一次切换界面时更新。锁只改变列表所显示的内容：使用上的限制由[配方锁](#配方锁)和 `anvils` 负责，而[禁用的方块与物品](#禁用的方块与物品)会让物品对所有人退出游戏。多个文件会叠加，同时匹配两个文件的物品需要两个进度都具备。没有选中任何物品的文件会被跳过，日志会注明。配置中的 `content.itemLocks` 会关闭该文件夹。
 
 ## 熔炉配方与燃料
 

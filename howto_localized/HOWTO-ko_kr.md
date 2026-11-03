@@ -54,6 +54,7 @@
 
 **제작, 전리품, 거래**
 - [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)
+- [아이템 잠금](#아이템-잠금)
 - [화로 레시피와 연료](#화로-레시피와-연료)
 - [레시피 잠금](#레시피-잠금)
 - [툴팁](#툴팁)
@@ -192,6 +193,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/recipe_removals/*.json`                                                            | 이름, 네임스페이스, 결과물 기준으로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                     |
 | `<namespace>/recipe_locks/*.json`                                                               | 플레이어가 발전 과제를 달성할 때까지 잠겨 있는 레시피. [레시피 잠금](#레시피-잠금)                                                                                       |
 | `<namespace>/spawn_locks/*.json`                                                                | 조건이 충족될 때까지 스폰되지 않는 몹. [스폰 잠금](#스폰-잠금)                                                                                                           |
+| `<namespace>/item_locks/*.json`                                                                 | 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 목록에서 숨기는 아이템. [아이템 잠금](#아이템-잠금)                                                                 |
 | `<namespace>/disabled/*.json`                                                                   | 사용에서 제외한 블록과 아이템. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)                                                                                     |
 | `<namespace>/furnace/*.json`                                                                    | 추가하거나 제거하는 화로 레시피. [화로 레시피와 연료](#화로-레시피와-연료)                                                                                               |
 | `<namespace>/tooltips/*.json`                                                                   | 추가 툴팁 줄. [툴팁](#툴팁)                                                                                                                                              |
@@ -583,7 +585,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                                                        |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                                                          |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                   | `villagers`                                                                                                                     |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                   | `villagers`, `item_locks`                                                                                                       |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
 | `teams`, `scoring`, `ranks`                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                                   |                                                                                                                                 |
@@ -2624,6 +2626,34 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 설치된 블록을 제거하는 대신 다른 것으로 바꾸려면, 월드 템플릿에 `thermalfoundation:ore=minecraft:stone` 같은 `blockReplacements` 줄을 추가하세요. [대체](#대체)를 참고하세요. 대체 과정이 바꾸는 블록은 그 과정에 맡겨집니다. 다른 모드가 자체 기계 안에 보관하는 레시피는 해당 모드의 것이므로 영향을 받지 않습니다. 파일은 시작할 때 한 번만 읽으며, 설정의 `content.disabled`는 폴더를 끄고 재시작이 필요합니다.
 
 광석 사전 이름을 비우되 아이템은 계속 사용하게 하려면, 대신 [광석 사전](#광석-사전) 파일에서 `"-name": ["*"]`를 사용하세요.
+
+## 아이템 잠금
+
+*제작, 전리품, 거래*
+
+`<namespace>/item_locks/*.json`
+
+파일 이름은 원하는 대로 정할 수 있으며, 폴더만 읽고 여러 파일이 겹쳐 적용됩니다. 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 크리에이티브 탭, 크리에이티브 검색, JEI에서 아이템을 숨깁니다.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| 키            | 필수   | 값                    | 기본값 | 설명                                                                                                                                                                                                                        |
+| ------------- | ------ | --------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | 예     | `namespace:path`      | 없음   | 이 아이템이 플레이어에게 보이려면 그 플레이어가 달성해야 하는 발전 과제. 이것이 없는 파일은 모두에게 잠긴 채로 남고, 어떤 팩에도 정의되지 않은 발전 과제를 적은 파일도 마찬가지입니다. 로그에는 서버를 시작할 때 기록됩니다 |
+| `names`       | 아니요 | 아이템 이름의 목록    | 없음   | 잠글 대상입니다. 세 번째 부분으로 메타데이터를 붙인 `"thermalfoundation:material:128"`은 해당 아이템 하나만 잠그고, `:*`는 모든 메타데이터를 잠급니다. `*`로 끝나는 이름은 나머지 부분으로 시작하는 모든 이름과 일치합니다  |
+| `namespaces`  | 아니요 | 모드 id의 목록        | 없음   | 해당 모드의 모든 아이템                                                                                                                                                                                                     |
+| `oreDict`     | 아니요 | 광석 사전 이름의 목록 | 없음   | 해당 이름으로 등록된 모든 아이템                                                                                                                                                                                            |
+| `requires`    | 아니요 | 모드 id의 목록        | 없음   | 모두 로드되지 않으면 파일을 건너뜁니다. `config:`와 `file:` 항목은 다른 곳과 똑같이 동작합니다                                                                                                                              |
+
+잠긴 아이템은 플레이어가 발전 과제를 달성할 때까지 그 플레이어의 크리에이티브 탭, 크리에이티브 검색, JEI에서 숨겨진 채로 있습니다. 플레이어마다 따로 적용되며, 서버는 그 플레이어에게 어떤 잠금이 풀렸는지 각 클라이언트에 알립니다. 열려 있는 JEI 목록은 다음 화면 전환 때 갱신됩니다. 잠금이 바꾸는 것은 목록에 보이는 내용뿐입니다. 사용은 [레시피 잠금](#레시피-잠금)과 `anvils`가 막고, [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)은 아이템을 모두에게서 사용에서 제외합니다. 여러 파일은 겹쳐 적용되며, 두 파일에 일치하는 아이템에는 두 발전 과제가 모두 필요합니다. 아이템을 하나도 고르지 못하는 파일은 건너뛰며 로그에 기록됩니다. 설정의 `content.itemLocks`는 폴더를 끕니다.
 
 ## 화로 레시피와 연료
 

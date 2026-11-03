@@ -54,6 +54,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 
 **Herstellung, Beute und Handel**
 - [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
+- [Item-Sperren](#item-sperren)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
 - [Rezeptsperren](#rezeptsperren)
 - [Tooltips](#tooltips)
@@ -192,6 +193,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/recipe_removals/*.json`                                                            | Rezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                      |
 | `<namespace>/recipe_locks/*.json`                                                               | Rezepte, die gesperrt bleiben, bis ein Spieler einen Fortschritt erreicht. [Rezeptsperren](#rezeptsperren)                                                                                                                                                                             |
 | `<namespace>/spawn_locks/*.json`                                                                | Mobs, die nicht spawnen, solange die Bedingungen nicht gelten. [Spawn-Sperren](#spawn-sperren)                                                                                                                                                                                         |
+| `<namespace>/item_locks/*.json`                                                                 | Items, die in den Listen eines Spielers verborgen bleiben, bis er einen Fortschritt erreicht. [Item-Sperren](#item-sperren)                                                                                                                                                            |
 | `<namespace>/disabled/*.json`                                                                   | Blöcke und Items, aus dem Spiel genommen. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                                                                                                                                              |
 | `<namespace>/furnace/*.json`                                                                    | Ofenrezepte, hinzugefügt und entfernt. [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)                                                                                                                                                                                     |
 | `<namespace>/tooltips/*.json`                                                                   | Zusätzliche Tooltip-Zeilen. [Tooltips](#tooltips)                                                                                                                                                                                                                                      |
@@ -583,7 +585,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                              | `blocks`, `items`, `fluids`, `materials`                                                                                                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                           | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (Tooltip-Zeilen für Gegenstände und Verzauberungen, Namen von Affixen und Edelsteinplätzen) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                  | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                     | `villagers`                                                                                                                                                         |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                     | `villagers`, `item_locks`                                                                                                                                           |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt)                                                                                 |
 | `teams`, `scoring`, `ranks`                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen)                                                                                 |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                                         |                                                                                                                                                                     |
@@ -2624,6 +2626,34 @@ Ein deaktivierter Block oder ein deaktiviertes Item:
 Um platzierte Blöcke gegen etwas anderes zu tauschen, statt sie zu entfernen, gib ihnen in der Weltvorlage eine `blockReplacements`-Zeile wie `thermalfoundation:ore=minecraft:stone`, siehe [Ersetzungen](#ersetzungen). Einen Block, den die Ersetzung tauscht, überlässt die Deaktivierung ihr. Rezepte, die ein anderer Mod in seinen eigenen Maschinen führt, gehören diesem Mod und werden nicht erreicht. Die Dateien werden einmal beim Start gelesen, und `content.disabled` in der Config schaltet den Ordner ab, was einen Neustart braucht.
 
 Um einen Ore-Dictionary-Namen zu leeren, während seine Items im Spiel bleiben, nimm stattdessen `"-name": ["*"]` in einer [Ore-Dictionary](#ore-dictionary)-Datei.
+
+## Item-Sperren
+
+*herstellung, beute und handel*
+
+`<namespace>/item_locks/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Blendet Items in den Kreativ-Tabs, der Kreativ-Suche und in JEI eines Spielers aus, bis er einen Fortschritt erreicht.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| Schlüssel     | Pflicht | Wert                           | Standard | Was er macht                                                                                                                                                                                                                                            |
+| ------------- | ------- | ------------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | ja      | `namespace:path`               | keiner   | Der Fortschritt, den ein Spieler erreicht haben muss, bevor ihm diese Items angezeigt werden. Eine Datei ohne Fortschritt bleibt für alle gesperrt, ebenso eine, die einen Fortschritt nennt, den kein Pack definiert; das Log sagt es beim Serverstart |
+| `names`       | nein    | Liste von Itemnamen            | keine    | Was gesperrt wird. Metadaten als dritter Teil, `"thermalfoundation:material:128"`, sperren genau dieses Item, `:*` alle Metadaten. Ein Name, der auf `*` endet, trifft jeden Namen, der mit dem Rest beginnt                                            |
+| `namespaces`  | nein    | Liste von Mod-IDs              | keine    | Jedes Item des Mods                                                                                                                                                                                                                                     |
+| `oreDict`     | nein    | Liste von Ore-Dictionary-Namen | keine    | Jedes Item, das unter dem Namen eingetragen ist                                                                                                                                                                                                         |
+| `requires`    | nein    | Liste von Mod-IDs              | keine    | Die Datei wird übersprungen, solange nicht jede davon geladen ist. Einträge mit `config:` und `file:` funktionieren wie überall sonst                                                                                                                   |
+
+Ein gesperrtes Item bleibt in den Kreativ-Tabs, der Kreativ-Suche und in JEI eines Spielers ausgeblendet, bis dieser den Fortschritt erreicht hat. Das gilt pro Spieler, und der Server teilt jedem Client mit, welche Sperren für diesen Spieler offen sind. Eine geöffnete JEI-Liste aktualisiert sich beim nächsten Bildschirmwechsel. Eine Sperre ändert nur, was die Listen zeigen: die Nutzung halten [Rezeptsperren](#rezeptsperren) und `anvils` zurück, und [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items) nimmt ein Item für alle aus dem Spiel. Mehrere Dateien addieren sich, und ein Item, das auf zwei Dateien passt, braucht beide Fortschritte. Eine Datei, die kein Item auswählt, wird übersprungen, und das Log sagt es. `content.itemLocks` in der Config schaltet den Ordner ab.
 
 ## Ofenrezepte und Brennstoffe
 

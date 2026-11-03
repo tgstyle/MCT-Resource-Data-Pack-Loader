@@ -54,6 +54,7 @@
 
 **クラフト、ルート、取引**
 - [無効にしたブロックとアイテム](#無効にしたブロックとアイテム)
+- [アイテムロック](#アイテムロック)
 - [かまどのレシピと燃料](#かまどのレシピと燃料)
 - [レシピロック](#レシピロック)
 - [ツールチップ](#ツールチップ)
@@ -192,6 +193,7 @@ Resource Data Pack Loader(RDPL)は `rdploader` という1つのフォルダー�
 | `<namespace>/recipe_removals/*.json`                                                            | 名前、名前空間、出力で指定して削除するレシピ。[オーバーライドできるもの](#オーバーライドできるもの)                                                               |
 | `<namespace>/recipe_locks/*.json`                                                               | プレイヤーが進捗を達成するまで使えないレシピ。[レシピロック](#レシピロック)                                                                                       |
 | `<namespace>/spawn_locks/*.json`                                                                | 条件を満たすまでスポーンしないモブ。[スポーンロック](#スポーンロック)                                                                                             |
+| `<namespace>/item_locks/*.json`                                                                 | プレイヤーが進捗を達成するまで、そのプレイヤーの一覧から隠すアイテム。[アイテムロック](#アイテムロック)                                                           |
 | `<namespace>/disabled/*.json`                                                                   | 使えなくしたブロックとアイテム。[無効にしたブロックとアイテム](#無効にしたブロックとアイテム)                                                                     |
 | `<namespace>/furnace/*.json`                                                                    | 追加または削除するかまどのレシピ。[かまどのレシピと燃料](#かまどのレシピと燃料)                                                                                   |
 | `<namespace>/tooltips/*.json`                                                                   | ツールチップの追加行。[ツールチップ](#ツールチップ)                                                                                                               |
@@ -583,7 +585,7 @@ RDPLは、1つか2つのレシピの置き換えに向いており、自分の�
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                                                | `blocks`、`items`、`fluids`、`materials`                                                                                                           |
 | `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                                             | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （アイテムとエンチャントのツールチップの行、アフィックスとソケットの名前） |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                                                    | `biomes`、`dimensions`、`portalframes`                                                                                                             |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`                       | `villagers`                                                                                                                                        |
+| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`                       | `villagers`, `item_locks`                                                                                                                          |
 | `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（クライアントが知っている職業向け。バニラのもの、または両側に導入されたModのもの） | `entities`、`worldintro`、`texts`（紹介はバニラのクライアントには表示されません）                                                                  |
 | `teams`、`scoring`、`ranks`                                                                                                                                           | `models`、`blockstates`、`textures`、`lang`（クライアント側のフォルダーで、クライアントがない場合は含めません）                                    |
 | 制御レイヤー全体、設定、事前生成                                                                                                                                      |                                                                                                                                                    |
@@ -2624,6 +2626,34 @@ Minecraft はもともとブロックの位置からバリアントを選んで�
 設置済みのブロックを取り除かずに別のものに置き換えたい場合は、ワールドテンプレートに `thermalfoundation:ore=minecraft:stone` のような `blockReplacements` の行を書きます。[置き換え](#置き換え)を参照してください。置き換え処理が差し替えるブロックは、その処理に任されます。ほかのModが自身のマシンの内部に持つレシピはそのModのものなので、対象外です。ファイルは起動時に一度だけ読み込まれ、コンフィグの `content.disabled` でフォルダーを無効にできます。これには再起動が必要です。
 
 アイテムをゲーム内に残したまま鉱石辞書名を空にするには、代わりに[鉱石辞書](#鉱石辞書)ファイルで `"-name": ["*"]` を使います。
+
+## アイテムロック
+
+*クラフト、ルート、取引*
+
+`<namespace>/item_locks/*.json`
+
+ファイル名は自由に決められます。読み込まれるのはフォルダーだけで、複数のファイルは重ねて適用されます。プレイヤーが進捗を達成するまで、そのプレイヤーのクリエイティブタブ、クリエイティブの検索、JEIからアイテムを隠します。
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| キー          | 必須   | 値                 | デフォルト | 説明                                                                                                                                                                                                                                           |
+| ------------- | ------ | ------------------ | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | はい   | `namespace:path`   | なし       | これらのアイテムをプレイヤーに表示するために、そのプレイヤーが達成している必要がある進捗。指定のないファイルは全員に対してロックされたままで、どのパックも定義していない進捗を指定したファイルも同じです。ログにはサーバー起動時に記録されます |
+| `names`       | いいえ | アイテム名のリスト | なし       | ロックする対象。3つ目の要素としてメタデータを付けた `"thermalfoundation:material:128"` はそのアイテムだけをロックし、`:*` はすべてのメタデータをロックします。`*` で終わる名前は、それより前の部分で始まるすべての名前に一致します             |
+| `namespaces`  | いいえ | Mod IDのリスト     | なし       | そのModのすべてのアイテム                                                                                                                                                                                                                      |
+| `oreDict`     | いいえ | 鉱石辞書名のリスト | なし       | その名前で登録されているすべてのアイテム                                                                                                                                                                                                       |
+| `requires`    | いいえ | Mod IDのリスト     | なし       | すべてが読み込まれていない限り、ファイルはスキップされます。`config:` と `file:` のエントリは、ほかの場所と同じように使えます                                                                                                                  |
+
+ロックされたアイテムは、そのプレイヤーが進捗を達成するまで、プレイヤーのクリエイティブタブ、クリエイティブの検索、JEIで非表示のままです。これはプレイヤーごとに働き、サーバーはどのロックがそのプレイヤーに対して解除されているかを各クライアントに伝えます。開いているJEIの一覧は、次に画面を切り替えたときに更新されます。ロックが変えるのは一覧の表示だけです。使用を止めるのは[レシピロック](#レシピロック)と `anvils` で、[無効にしたブロックとアイテム](#無効にしたブロックとアイテム)はアイテムを全員に対して使えなくします。複数のファイルは重ねて適用され、2つのファイルに一致するアイテムは両方の進捗が必要です。アイテムを1つも選ばないファイルはスキップされ、ログに記録されます。コンフィグの `content.itemLocks` でフォルダーを無効にできます。
 
 ## かまどのレシピと燃料
 

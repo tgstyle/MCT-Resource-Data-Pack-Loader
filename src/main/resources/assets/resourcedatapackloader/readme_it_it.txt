@@ -299,6 +299,7 @@ Ognuna di queste è una cartella sotto assets/<yourpack>:
     carries          dialogs          veins            diets
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
+    item_locks
 
 I blocchi hanno queste forme, definite dal campo "type":
 

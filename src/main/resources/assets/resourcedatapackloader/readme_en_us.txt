@@ -279,6 +279,7 @@ Each of these is a folder under assets/<yourpack>:
     carries          dialogs          veins            diets
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
+    item_locks
 
 Blocks come in these shapes, set by the "type" field:
 

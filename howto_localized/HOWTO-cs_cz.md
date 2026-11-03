@@ -54,6 +54,7 @@
 
 **Výroba, kořist a obchod**
 - [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
+- [Zámky předmětů](#zámky-předmětů)
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
@@ -192,6 +193,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/recipe_removals/*.json`                                                            | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                        |
 | `<namespace>/recipe_locks/*.json`                                                               | Recepty, které zůstávají zavřené, dokud hráč nezíská pokrok. [Zámky receptů](#zámky-receptů)                                                                                                                      |
 | `<namespace>/spawn_locks/*.json`                                                                | Moby, které se neobjeví, dokud neplatí podmínky. [Zámky spawnu](#zámky-spawnu)                                                                                                                                    |
+| `<namespace>/item_locks/*.json`                                                                 | Předměty skryté v seznamech hráče, dokud nezíská pokrok. [Zámky předmětů](#zámky-předmětů)                                                                                                                        |
 | `<namespace>/disabled/*.json`                                                                   | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                                         |
 | `<namespace>/furnace/*.json`                                                                    | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                                                         |
 | `<namespace>/tooltips/*.json`                                                                   | Další řádky popisků. [Popisky předmětů](#popisky-předmětů)                                                                                                                                                        |
@@ -583,7 +585,7 @@ Balíček může žít jen na serveru, zatímco hráči hrají na čistých vani
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                 | `blocks`, `items`, `fluids`, `materials`                                                                                       |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                              | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (řádky popisků předmětů a kouzel, názvy afixů a slotů) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                     | `biomes`, `dimensions`, `portalframes`                                                                                         |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`        | `villagers`                                                                                                                    |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`        | `villagers`, `item_locks`                                                                                                      |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách) | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)                                                  |
 | `teams`, `scoring`, `ranks`                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (složky klienta, bez klienta je vynech)                                            |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                       |                                                                                                                                |
@@ -2624,6 +2626,34 @@ Zakázaný blok nebo předmět:
 Chceš-li položené bloky místo odstranění vyměnit za něco jiného, dej jim v šabloně světa řádek `blockReplacements` například `thermalfoundation:ore=minecraft:stone`, viz [Náhrady](#náhrady). Blok, který nahrazující proces vymění, mu zůstává. Recepty, které jiný mód drží uvnitř svých strojů, patří tomu módu a tato funkce na ně nedosáhne. Soubory se čtou jednou při spuštění a `content.disabled` v konfiguraci složku vypíná, což vyžaduje restart.
 
 Chceš-li vyprázdnit název slovníku rud, ale nechat jeho předměty ve hře, použij místo toho `"-name": ["*"]` v souboru [slovníku rud](#slovník-rud).
+
+## Zámky předmětů
+
+*výroba, kořist a obchod*
+
+`<namespace>/item_locks/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Skrývá předměty na kartách kreativního režimu, ve vyhledávání v kreativním režimu a v JEI hráče, dokud hráč nezíská pokrok.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| Klíč          | Povinný | Hodnota                   | Výchozí | Co dělá                                                                                                                                                                                                                |
+| ------------- | ------- | ------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | ano     | `namespace:path`          | žádný   | Pokrok, který musí hráč získat, aby se mu tyto předměty zobrazily. Soubor bez pokroku zůstává zamčený pro všechny, stejně jako soubor, který uvádí pokrok, jejž žádný pack nedefinuje; log to uvede při startu serveru |
+| `names`       | ne      | seznam názvů předmětů     | žádný   | Co se zamyká. Metadata jako třetí část, `"thermalfoundation:material:128"`, zamknou právě ten jeden předmět a `:*` všechna metadata. Název končící `*` odpovídá každému názvu, který začíná zbytkem                    |
+| `namespaces`  | ne      | seznam ID módů            | žádný   | Každý předmět daného módu                                                                                                                                                                                              |
+| `oreDict`     | ne      | seznam názvů slovníku rud | žádný   | Každý předmět zapsaný pod daným názvem                                                                                                                                                                                 |
+| `requires`    | ne      | seznam ID módů            | žádný   | Soubor se přeskočí, pokud nejsou načteny všechny. Položky `config:` a `file:` fungují stejně jako všude jinde                                                                                                          |
+
+Zamčený předmět zůstává skrytý na kartách kreativního režimu, ve vyhledávání v kreativním režimu a v JEI hráče, dokud hráč nezíská pokrok. Platí to pro každého hráče zvlášť a server každému klientovi sdělí, které zámky jsou pro daného hráče otevřené. Otevřený seznam JEI se aktualizuje při další změně obrazovky. Zámek mění jen to, co seznamy ukazují: používání zadržují [Zámky receptů](#zámky-receptů) a `anvils`, a [Zakázané bloky a předměty](#zakázané-bloky-a-předměty) vyřadí předmět ze hry pro všechny. Více souborů se sčítá a předmět, který odpovídá dvěma souborům, potřebuje oba pokroky. Soubor, který nevybere žádný předmět, se přeskočí a log to uvede. `content.itemLocks` v konfiguraci složku vypíná.
 
 ## Recepty pro pec a paliva
 

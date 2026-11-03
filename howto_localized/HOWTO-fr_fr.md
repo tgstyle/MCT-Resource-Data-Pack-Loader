@@ -54,6 +54,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 
 **Artisanat, butin et commerce**
 - [Blocs et objets désactivés](#blocs-et-objets-désactivés)
+- [Verrous d'objets](#verrous-dobjets)
 - [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)
 - [Verrous de recettes](#verrous-de-recettes)
 - [Infobulles](#infobulles)
@@ -192,6 +193,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/recipe_removals/*.json`                                                            | Recettes supprimées par nom, namespace ou résultat. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                      |
 | `<namespace>/recipe_locks/*.json`                                                               | Recettes qui restent fermées tant qu'un joueur n'a pas obtenu un progrès. [Verrous de recettes](#verrous-de-recettes)                                                                                                    |
 | `<namespace>/spawn_locks/*.json`                                                                | Créatures qui n'apparaissent pas tant que les conditions ne sont pas remplies. [Verrous d'apparition](#verrous-dapparition)                                                                                              |
+| `<namespace>/item_locks/*.json`                                                                 | Objets masqués dans les listes d'un joueur tant qu'il n'a pas obtenu un progrès. [Verrous d'objets](#verrous-dobjets)                                                                                                    |
 | `<namespace>/disabled/*.json`                                                                   | Blocs et objets retirés du jeu. [Blocs et objets désactivés](#blocs-et-objets-désactivés)                                                                                                                                |
 | `<namespace>/furnace/*.json`                                                                    | Recettes de fourneau ajoutées et retirées. [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)                                                                                                 |
 | `<namespace>/tooltips/*.json`                                                                   | Lignes d'infobulle supplémentaires. [Infobulles](#infobulles)                                                                                                                                                            |
@@ -583,7 +585,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                                                                                    |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                               | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (lignes d'info-bulle des objets et enchantements, noms des affixes et emplacements) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                      | `biomes`, `dimensions`, `portalframes`                                                                                                                      |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                                         | `villagers`                                                                                                                                                 |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                                         | `villagers`, `item_locks`                                                                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pour les professions que le client connaît : celles de vanilla, ou d'un mod présent des deux côtés) | `entities`, `worldintro`, `texts` (l'introduction n'est jamais montrée à un client vanilla)                                                                 |
 | `teams`, `scoring`, `ranks`                                                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (dossiers client — sans client, ne les incluez pas)                                                             |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                                                           |                                                                                                                                                             |
@@ -2624,6 +2626,34 @@ Un bloc ou un objet désactivé :
 Pour remplacer des blocs placés par autre chose au lieu de les retirer, donnez-leur dans le modèle de monde une ligne `blockReplacements` telle que `thermalfoundation:ore=minecraft:stone`, voir [Remplacements](#remplacements). Un bloc que le processus de remplacement échange lui est laissé. Les recettes qu'un autre mod conserve dans ses propres machines appartiennent à ce mod et ne sont pas atteintes. Les fichiers sont lus une seule fois au démarrage, et `content.disabled` dans la configuration désactive le dossier, ce qui demande un redémarrage.
 
 Pour vider un nom du dictionnaire des minerais tout en gardant ses objets en jeu, utilisez plutôt `"-name": ["*"]` dans un fichier de [dictionnaire des minerais](#dictionnaire-des-minerais).
+
+## Verrous d'objets
+
+*artisanat, butin et commerce*
+
+`<namespace>/item_locks/*.json`
+
+Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs fichiers se cumulent. Masque des objets dans les onglets créatifs, la recherche créative et JEI d'un joueur tant qu'il n'a pas obtenu un progrès.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| Clé           | Requis | Valeur                                     | Défaut | Rôle                                                                                                                                                                                                                                                                 |
+| ------------- | ------ | ------------------------------------------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | oui    | `namespace:path`                           | aucun  | Le progrès qu'un joueur doit avoir obtenu pour que ces objets s'affichent chez lui. Un fichier sans progrès reste verrouillé pour tout le monde, de même qu'un fichier qui nomme un progrès qu'aucun pack ne définit ; le journal le signale au démarrage du serveur |
+| `names`       | non    | liste de noms d'objets                     | aucun  | Ce qui est verrouillé. Une métadonnée en troisième partie, `"thermalfoundation:material:128"`, verrouille cet objet précis, et `:*` toutes les métadonnées. Un nom se terminant par `*` correspond à tout nom commençant par le reste                                |
+| `namespaces`  | non    | liste d'ids de mods                        | aucun  | Chaque objet du mod                                                                                                                                                                                                                                                  |
+| `oreDict`     | non    | liste de noms du dictionnaire des minerais | aucun  | Chaque objet enregistré sous le nom                                                                                                                                                                                                                                  |
+| `requires`    | non    | liste d'ids de mods                        | aucun  | Le fichier est ignoré sauf si tous sont chargés. Les entrées `config:` et `file:` fonctionnent comme partout ailleurs                                                                                                                                                |
+
+Un objet verrouillé reste masqué dans les onglets créatifs, la recherche créative et JEI d'un joueur tant qu'il n'a pas obtenu le progrès. Cela vaut pour chaque joueur, et le serveur indique à chaque client quels verrous sont ouverts pour ce joueur. Une liste JEI ouverte se met à jour au prochain changement d'écran. Un verrou ne change que ce que montrent les listes : l'usage est retenu par les [Verrous de recettes](#verrous-de-recettes) et `anvils`, et les [Blocs et objets désactivés](#blocs-et-objets-désactivés) retirent un objet du jeu pour tout le monde. Plusieurs fichiers se cumulent, et un objet qui correspond à deux fichiers exige les deux progrès. Un fichier qui ne sélectionne aucun objet est ignoré, et le journal le signale. `content.itemLocks` dans la configuration désactive le dossier.
 
 ## Recettes de fourneau et combustibles
 

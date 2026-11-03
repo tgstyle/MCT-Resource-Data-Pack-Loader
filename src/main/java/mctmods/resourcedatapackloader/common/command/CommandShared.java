@@ -7,6 +7,8 @@ import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
+import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
+import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
@@ -87,6 +89,9 @@ public final class CommandShared {
         ContentHearts.refresh(server);
         SpawnLocks.load();
         RecipeLocks.reload();
+        ContentItemLocks.load();
+        ContentItemLocks.report(server);
+        ItemLockSync.resendAll(server);
         for (WorldServer world : server.worlds) {
             ContentTeams.field(world);
             ContentScoring.keep(world);

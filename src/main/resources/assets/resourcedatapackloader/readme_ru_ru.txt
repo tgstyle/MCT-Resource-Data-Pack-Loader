@@ -287,6 +287,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     carries          dialogs          veins            diets
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
+    item_locks
 
 Блоки бывают таких видов, вид задаёт поле "type":
 

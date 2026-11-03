@@ -297,6 +297,7 @@ mypack:copper_oreとして登録されます。記入したり間違えたりす
     carries          dialogs          veins            diets
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
+    item_locks
 
 ブロックには、「type」フィールドで決まる次の形があります。
 

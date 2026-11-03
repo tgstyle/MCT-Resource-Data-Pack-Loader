@@ -53,6 +53,8 @@ import mctmods.resourcedatapackloader.common.hardness.ContentHarvests;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.intro.ContentWorldIntro;
+import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
+import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.items.ContentWeapons;
 import mctmods.resourcedatapackloader.common.items.ContentWorn;
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
@@ -243,6 +245,7 @@ public class ModSetup {
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
         MinecraftForge.EVENT_BUS.register(GateSync.class);
+        MinecraftForge.EVENT_BUS.register(ItemLockSync.class);
         MinecraftForge.EVENT_BUS.register(ContentSleepingBags.class);
         CardRules.load();
         ContentDialogs.load();
@@ -353,6 +356,7 @@ public class ModSetup {
         ContentMobSwitch.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
         ContentLootSwitch.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
         ContentTradeSwitch.serverStarted();
+        ContentItemLocks.report(FMLCommonHandler.instance().getMinecraftServerInstance());
         FunctionOverrides.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
     }
 

@@ -23,6 +23,7 @@ public final class PackReport {
         clientSide(off, Config.content.tooltips, "content.tooltips", PackManager.TOOLTIPS);
         collect(off, Config.content.oreDictionary, "content.oreDictionary", PackManager.JSON, PackManager.OREDICT);
         collect(off, Config.content.disabled, "content.disabled", PackManager.JSON, PackManager.DISABLED);
+        collect(off, Config.content.itemLocks, "content.itemLocks", PackManager.JSON, PackManager.ITEM_LOCKS);
         clientSide(off, Config.content.potions, "content.potions", PackManager.POTIONS, PackManager.POTION_TYPES);
         clientSide(off, Config.content.enchantments, "content.enchantments", PackManager.ENCHANTMENTS);
         collect(off, Config.content.brewing, "content.brewing", PackManager.JSON, PackManager.BREWING);

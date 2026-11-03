@@ -54,6 +54,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 
 **Criação, saque e comércio**
 - [Blocos e itens desativados](#blocos-e-itens-desativados)
+- [Bloqueios de itens](#bloqueios-de-itens)
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
 - [Bloqueios de receitas](#bloqueios-de-receitas)
 - [Dicas de ferramenta](#dicas-de-ferramenta)
@@ -192,6 +193,7 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/recipe_removals/*.json`                                                            | Receitas removidas por nome, namespace ou resultado. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                         |
 | `<namespace>/recipe_locks/*.json`                                                               | Receitas que continuam fechadas até o jogador conquistar um avanço. [Bloqueios de receitas](#bloqueios-de-receitas)                                                                                                    |
 | `<namespace>/spawn_locks/*.json`                                                                | Mobs que não surgem até que as condições sejam cumpridas. [Bloqueios de spawn](#bloqueios-de-spawn)                                                                                                                    |
+| `<namespace>/item_locks/*.json`                                                                 | Itens ocultos nas listas do jogador até ele conquistar um avanço. [Bloqueios de itens](#bloqueios-de-itens)                                                                                                            |
 | `<namespace>/disabled/*.json`                                                                   | Blocos e itens retirados de jogo. [Blocos e itens desativados](#blocos-e-itens-desativados)                                                                                                                            |
 | `<namespace>/furnace/*.json`                                                                    | Receitas de fornalha adicionadas e removidas. [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)                                                                                              |
 | `<namespace>/tooltips/*.json`                                                                   | Linhas extras de dica de ferramenta. [Dicas de ferramenta](#dicas-de-ferramenta)                                                                                                                                       |
@@ -583,7 +585,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (linhas de dica de itens e encantamentos, nomes de afixos e soquetes) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                | `biomes`, `dimensions`, `portalframes`                                                                                                        |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                                   | `villagers`                                                                                                                                   |
+| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`                                   | `villagers`, `item_locks`                                                                                                                     |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profissões que o cliente conhece: as do vanilla ou as de um mod presente nos dois lados) | `entities`, `worldintro`, `texts` (a introdução nunca é exibida a um cliente vanilla)                                                         |
 | `teams`, `scoring`, `ranks`                                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (pastas de cliente — sem cliente, deixe-as de fora)                                               |
 | toda a camada de controle, as configurações e a pré-geração                                                                                                                       |                                                                                                                                               |
@@ -2624,6 +2626,34 @@ Um bloco ou item desativado:
 Para trocar blocos colocados por outra coisa em vez de removê-los, dê a eles uma linha `blockReplacements` como `thermalfoundation:ore=minecraft:stone` no modelo de mundo, veja [Substituições](#substituições). Um bloco que o processo de substituição troca fica por conta dele. As receitas que outro mod mantém dentro de suas próprias máquinas pertencem a esse mod e não são alcançadas. Os arquivos são lidos uma vez na inicialização, e `content.disabled` na config desativa a pasta, o que exige reinício.
 
 Para esvaziar um nome do dicionário de minérios enquanto seus itens continuam em jogo, use `"-name": ["*"]` em um arquivo de [dicionário de minérios](#dicionário-de-minérios).
+
+## Bloqueios de itens
+
+*criação, saque e comércio*
+
+`<namespace>/item_locks/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam. Oculta itens das abas criativas, da busca criativa e do JEI de um jogador até que ele conquiste um avanço.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "thermalfoundation:material:128", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "oreDict": ["oreTin"]
+}
+```
+
+| Chave         | Obrigatória | Valor                                    | Padrão | O que faz                                                                                                                                                                                                                                   |
+| ------------- | ----------- | ---------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | sim         | `namespace:path`                         | nenhum | O avanço que o jogador precisa ter conquistado para que esses itens apareçam para ele. Um arquivo sem avanço continua bloqueado para todos, assim como um que cita um avanço que nenhum pack define; o registro avisa ao iniciar o servidor |
+| `names`       | não         | lista de nomes de itens                  | nenhum | O que é bloqueado. Metadados como terceira parte, `"thermalfoundation:material:128"`, bloqueiam apenas esse item, e `:*` todos os metadados. Um nome terminado em `*` casa com todo nome que começa com o restante                          |
+| `namespaces`  | não         | lista de ids de mods                     | nenhum | Todo item do mod                                                                                                                                                                                                                            |
+| `oreDict`     | não         | lista de nomes do dicionário de minérios | nenhum | Todo item registrado sob o nome                                                                                                                                                                                                             |
+| `requires`    | não         | lista de ids de mods                     | nenhum | O arquivo é ignorado a menos que todos estejam carregados. Entradas `config:` e `file:` funcionam como em todo o resto                                                                                                                      |
+
+Um item bloqueado fica oculto nas abas criativas, na busca criativa e no JEI de um jogador até que ele conquiste o avanço. Isso vale para cada jogador, e o servidor informa a cada cliente quais bloqueios estão abertos para aquele jogador. Uma lista aberta do JEI é atualizada na próxima troca de tela. Um bloqueio muda apenas o que as listas mostram: o uso é segurado pelos [Bloqueios de receitas](#bloqueios-de-receitas) e por `anvils`, e [Blocos e itens desativados](#blocos-e-itens-desativados) retira um item de jogo para todos. Vários arquivos se acumulam, e um item que corresponde a dois arquivos exige os dois avanços. Um arquivo que não seleciona nenhum item é ignorado e o registro avisa. `content.itemLocks` na config desativa a pasta.
 
 ## Receitas de fornalha e combustíveis
 

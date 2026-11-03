@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderers;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
+import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.client.util.PackListClient;
 import mctmods.resourcedatapackloader.client.util.PouchKey;
@@ -45,6 +46,7 @@ public class ClientProxy {
         MinecraftForge.EVENT_BUS.register(PackTooltips.class);
         MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
         MinecraftForge.EVENT_BUS.register(PackListClient.class);
+        MinecraftForge.EVENT_BUS.register(ClientItemLocks.class);
         if (ContentContainerItem.baubled()) { PouchKey.register(); }
     }
 
