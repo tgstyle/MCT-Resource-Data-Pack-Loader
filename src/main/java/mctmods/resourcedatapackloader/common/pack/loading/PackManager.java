@@ -81,6 +81,7 @@ public final class PackManager {
     public static final String ENTITIES = "entities";
     public static final String RECIPE_REMOVALS = "recipe_removals";
     public static final String RECIPE_LOCKS = "recipe_locks";
+    public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
     public static final String DISABLED = "disabled";
     public static final String FURNACE = "furnace";

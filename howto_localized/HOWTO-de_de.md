@@ -57,6 +57,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 
 **Herstellung, Beute und Handel**
 - [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
+- [Item-Sperren](#item-sperren)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
 - [Rezeptsperren](#rezeptsperren)
 - [Tooltips](#tooltips)
@@ -193,6 +194,7 @@ Unter `data/`:
 | `<namespace>/structures/*.nbt`               | Vorlagen, für Setzlinge, `imprint`, Strukturkarten und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                      |
 | `<namespace>/recipes/*.json`                 | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                |
 | `<namespace>/recipe_removals/*.json`         | Handwerksrezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                             |
+| `<namespace>/item_locks/*.json`              | Items, die in den Listen eines Spielers verborgen bleiben, bis er einen Fortschritt erreicht. [Item-Sperren](#item-sperren)                                                                                                                                                            |
 | `<namespace>/recipe_locks/*.json`            | Rezepte, die gesperrt bleiben, bis ein Spieler einen Fortschritt erreicht. [Rezeptsperren](#rezeptsperren)                                                                                                                                                                             |
 | `<namespace>/spawn_locks/*.json`             | Mobs, die nicht spawnen, solange die Bedingungen nicht gelten. [Spawn-Sperren](#spawn-sperren)                                                                                                                                                                                         |
 | `<namespace>/disabled/*.json`                | Blöcke und Items, aus dem Spiel genommen. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                                                                                                                                              |
@@ -2475,6 +2477,34 @@ Ein deaktivierter Block oder ein deaktiviertes Item:
 Um platzierte Blöcke gegen etwas anderes zu tauschen, statt sie zu entfernen, gib ihnen in der Weltvorlage eine `blockReplacements`-Zeile wie `thermal:tin_ore=minecraft:stone`, siehe [Ersetzungen](#ersetzungen). Einen Block, den die Ersetzung tauscht, überlässt die Deaktivierung ihr. Rezepte, die ein anderer Mod in seinen eigenen Maschinen führt, gehören diesem Mod und werden nicht erreicht. Das Ausblenden aus den Kreativ-Tabs und JEI geschieht auf dem Client, ein Vanilla-Client listet das Item also weiter. `content.disabled` in der Config schaltet den Ordner ab.
 
 Um einen Tag zu leeren, während seine Items im Spiel bleiben, nimm stattdessen eine Tag-Datei mit `"replace": true` und leerem `"values": []`, siehe [Tags](#tags).
+
+## Item-Sperren
+
+*herstellung, beute und handel*
+
+`<namespace>/item_locks/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Blendet Items in den Kreativ-Tabs, der Kreativ-Suche und in JEI eines Spielers aus, bis er einen Fortschritt erreicht.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "tags": ["forge:ingots/tin"]
+}
+```
+
+| Schlüssel     | Pflicht | Wert                | Standard | Was er macht                                                                                                                                                                                                                                            |
+| ------------- | ------- | ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | ja      | `namespace:path`    | keiner   | Der Fortschritt, den ein Spieler erreicht haben muss, bevor ihm diese Items angezeigt werden. Eine Datei ohne Fortschritt bleibt für alle gesperrt, ebenso eine, die einen Fortschritt nennt, den kein Pack definiert; das Log sagt es beim Serverstart |
+| `names`       | nein    | Liste von Itemnamen | keine    | Was gesperrt wird.  Ein Name, der auf `*` endet, trifft jeden Namen, der mit dem Rest beginnt                                                                                                                                                           |
+| `namespaces`  | nein    | Liste von Mod-IDs   | keine    | Jedes Item des Mods                                                                                                                                                                                                                                     |
+| `tags`        | nein    | Liste von Item-Tags | keine    | Jedes Item im Tag                                                                                                                                                                                                                                       |
+| `requires`    | nein    | Liste von Mod-IDs   | keine    | Die Datei wird übersprungen, solange nicht jede davon geladen ist. Einträge mit `config:` und `file:` funktionieren wie überall sonst                                                                                                                   |
+
+Ein gesperrtes Item bleibt in den Kreativ-Tabs, der Kreativ-Suche und in JEI eines Spielers ausgeblendet, bis dieser den Fortschritt erreicht hat. Das gilt pro Spieler, und der Server teilt jedem Client mit, welche Sperren für diesen Spieler offen sind.  Eine Sperre ändert nur, was die Listen zeigen: die Nutzung halten [Rezeptsperren](#rezeptsperren) und `anvils` zurück, und [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items) nimmt ein Item für alle aus dem Spiel. Mehrere Dateien addieren sich, und ein Item, das auf zwei Dateien passt, braucht beide Fortschritte. Eine Datei, die kein Item auswählt, wird übersprungen, und das Log sagt es. `content.itemLocks` in der Config schaltet den Ordner ab.
 
 ## Ofenrezepte und Brennstoffe
 

@@ -57,6 +57,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 
 **Artisanat, butin et commerce**
 - [Blocs et objets désactivés](#blocs-et-objets-désactivés)
+- [Verrous d'objets](#verrous-dobjets)
 - [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)
 - [Verrous de recettes](#verrous-de-recettes)
 - [Infobulles](#infobulles)
@@ -193,6 +194,7 @@ Sous `data/` :
 | `<namespace>/structures/*.nbt`               | Modèles, pour les pousses, `imprint` et les surcharges de mods. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                          |
 | `<namespace>/recipes/*.json`                 | Recettes d'artisanat, ajoutées ou remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                            |
 | `<namespace>/recipe_removals/*.json`         | Recettes supprimées par nom, namespace ou résultat. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                      |
+| `<namespace>/item_locks/*.json`              | Objets masqués dans les listes d'un joueur tant qu'il n'a pas obtenu un progrès. [Verrous d'objets](#verrous-dobjets)                                                                                                    |
 | `<namespace>/recipe_locks/*.json`            | Recettes qui restent fermées tant qu'un joueur n'a pas obtenu un progrès. [Verrous de recettes](#verrous-de-recettes)                                                                                                    |
 | `<namespace>/spawn_locks/*.json`             | Créatures qui n'apparaissent pas tant que les conditions ne sont pas remplies. [Verrous d'apparition](#verrous-dapparition)                                                                                              |
 | `<namespace>/disabled/*.json`                | Blocs et objets retirés du jeu. [Blocs et objets désactivés](#blocs-et-objets-désactivés)                                                                                                                                |
@@ -2475,6 +2477,34 @@ Un bloc ou un objet désactivé :
 Pour remplacer des blocs posés par autre chose au lieu de les retirer, donnez-leur une ligne `blockReplacements` telle que `thermal:tin_ore=minecraft:stone` dans le modèle de monde, voir [Remplacements](#remplacements). Un bloc que le processus de remplacement échange lui est laissé. Les recettes qu'un autre mod conserve dans ses propres machines appartiennent à ce mod et ne sont pas touchées. Le masquage dans les onglets créatifs et dans JEI se fait côté client : un client vanilla affiche donc toujours l'objet. `content.disabled` dans la configuration désactive le dossier.
 
 Pour vider un tag tout en laissant ses objets en jeu, utilisez plutôt un fichier de tag avec `"replace": true` et un `"values": []` vide, voir [Tags](#tags).
+
+## Verrous d'objets
+
+*artisanat, butin et commerce*
+
+`<namespace>/item_locks/*.json`
+
+Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs fichiers se cumulent. Masque des objets dans les onglets créatifs, la recherche créative et JEI d'un joueur tant qu'il n'a pas obtenu un progrès.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "tags": ["forge:ingots/tin"]
+}
+```
+
+| Clé           | Requis | Valeur                 | Défaut | Rôle                                                                                                                                                                                                                                                                 |
+| ------------- | ------ | ---------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | oui    | `namespace:path`       | aucun  | Le progrès qu'un joueur doit avoir obtenu pour que ces objets s'affichent chez lui. Un fichier sans progrès reste verrouillé pour tout le monde, de même qu'un fichier qui nomme un progrès qu'aucun pack ne définit ; le journal le signale au démarrage du serveur |
+| `names`       | non    | liste de noms d'objets | aucun  | Ce qui est verrouillé.  Un nom se terminant par `*` correspond à tout nom commençant par le reste                                                                                                                                                                    |
+| `namespaces`  | non    | liste d'ids de mods    | aucun  | Chaque objet du mod                                                                                                                                                                                                                                                  |
+| `tags`        | non    | liste de tags d'objets | aucun  | Chaque objet du tag                                                                                                                                                                                                                                                  |
+| `requires`    | non    | liste d'ids de mods    | aucun  | Le fichier est ignoré sauf si tous sont chargés. Les entrées `config:` et `file:` fonctionnent comme partout ailleurs                                                                                                                                                |
+
+Un objet verrouillé reste masqué dans les onglets créatifs, la recherche créative et JEI d'un joueur tant qu'il n'a pas obtenu le progrès. Cela vaut pour chaque joueur, et le serveur indique à chaque client quels verrous sont ouverts pour ce joueur.  Un verrou ne change que ce que montrent les listes : l'usage est retenu par les [Verrous de recettes](#verrous-de-recettes) et `anvils`, et les [Blocs et objets désactivés](#blocs-et-objets-désactivés) retirent un objet du jeu pour tout le monde. Plusieurs fichiers se cumulent, et un objet qui correspond à deux fichiers exige les deux progrès. Un fichier qui ne sélectionne aucun objet est ignoré, et le journal le signale. `content.itemLocks` dans la configuration désactive le dossier.
 
 ## Recettes de fourneau et combustibles
 

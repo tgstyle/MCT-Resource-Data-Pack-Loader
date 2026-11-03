@@ -20,6 +20,8 @@ public final class Advancements {
         return id == null ? null : server.getAdvancements().getAdvancement(id);
     }
 
+    public static boolean defined(MinecraftServer server, String name) { return find(server, name) != null; }
+
     public static boolean has(@Nullable Player player, String name) {
         if (player == null || name.isEmpty()) { return false; }
         if (player instanceof ServerPlayer held) {

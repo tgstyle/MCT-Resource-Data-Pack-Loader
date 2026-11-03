@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.tags;
 
+import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.util.ContentDisabled;
 
 import java.util.Collection;
@@ -20,5 +21,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow @Final private String directory;
     @Shadow @Final Function<ResourceLocation, Optional<? extends T>> idToValue;
 
-    @Inject(method = "build(Ljava/util/Map;)Ljava/util/Map;", at = @At("RETURN")) private void rdpl$disable(Map<ResourceLocation, List<TagLoader.EntryWithSource>> builders, CallbackInfoReturnable<Map<ResourceLocation, Collection<T>>> cir) { ContentDisabled.strip(directory, cir.getReturnValue(), idToValue); }
+    @Inject(method = "build(Ljava/util/Map;)Ljava/util/Map;", at = @At("RETURN")) private void rdpl$disable(Map<ResourceLocation, List<TagLoader.EntryWithSource>> builders, CallbackInfoReturnable<Map<ResourceLocation, Collection<T>>> cir) {
+        ContentDisabled.strip(directory, cir.getReturnValue(), idToValue);
+        ContentItemLocks.strip(directory, cir.getReturnValue(), idToValue);
+    }
 }

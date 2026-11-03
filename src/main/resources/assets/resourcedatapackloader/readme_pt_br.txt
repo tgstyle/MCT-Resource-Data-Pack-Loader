@@ -219,6 +219,7 @@ Cada um destes é uma pasta em data/<yourpack>:
     veins            diets            enchantments     dice
     games            orders           ranks            recipe_locks
     spawn_locks
+    item_locks
 
 Os blocos vêm nestas formas, definidas pelo campo "type":
 

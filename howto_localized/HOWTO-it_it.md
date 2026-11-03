@@ -57,6 +57,7 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 
 **Crafting, bottino e scambi**
 - [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati)
+- [Blocchi degli oggetti](#blocchi-degli-oggetti)
 - [Ricette e combustibili della fornace](#ricette-e-combustibili-della-fornace)
 - [Blocchi delle ricette](#blocchi-delle-ricette)
 - [Descrizioni comando](#descrizioni-comando)
@@ -193,6 +194,7 @@ Sotto `data/`:
 | `<namespace>/structures/*.nbt`               | Modelli, per arboscelli, `imprint` e override delle mod. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                        |
 | `<namespace>/recipes/*.json`                 | Ricette di crafting, aggiunte o sostituite. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                     |
 | `<namespace>/recipe_removals/*.json`         | Ricette eliminate per nome, namespace o risultato. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                              |
+| `<namespace>/item_locks/*.json`              | Oggetti nascosti nelle liste di un giocatore finché non ottiene un progresso. [Blocchi degli oggetti](#blocchi-degli-oggetti)                                                                                                       |
 | `<namespace>/recipe_locks/*.json`            | Ricette che restano chiuse finché un giocatore non ottiene un progresso. [Blocchi delle ricette](#blocchi-delle-ricette)                                                                                                            |
 | `<namespace>/spawn_locks/*.json`             | Mob che non compaiono finché non valgono le condizioni. [Blocchi di spawn](#blocchi-di-spawn)                                                                                                                                       |
 | `<namespace>/disabled/*.json`                | Blocchi e oggetti tolti dal gioco. [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati)                                                                                                                                  |
@@ -2475,6 +2477,34 @@ Un blocco o un oggetto disattivato:
 Per sostituire i blocchi piazzati con qualcos'altro invece di rimuoverli, dai loro una riga `blockReplacements` come `thermal:tin_ore=minecraft:stone` nel modello di mondo, vedi [Sostituzioni](#sostituzioni). Un blocco che il processo di sostituzione cambia viene lasciato a quest'ultimo. Le ricette che un'altra mod tiene dentro le proprie macchine appartengono a quella mod e non vengono toccate. Nascondere dalle schede creative e da JEI avviene sul client, quindi un client vanilla elenca comunque l'oggetto. `content.disabled` nella configurazione disattiva la cartella.
 
 Per svuotare un tag lasciando in gioco i suoi oggetti, usa invece un file di tag con `"replace": true` e `"values": []` vuoto, vedi [Tag](#tag).
+
+## Blocchi degli oggetti
+
+*crafting, bottino e scambi*
+
+`<namespace>/item_locks/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e più file si sommano. Nasconde gli oggetti dalle schede creative, dalla ricerca creativa e da JEI di un giocatore finché non ottiene un progresso.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "tags": ["forge:ingots/tin"]
+}
+```
+
+| Chiave        | Obbligatorio | Valore                    | Predefinito | Cosa fa                                                                                                                                                                                                                                           |
+| ------------- | ------------ | ------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | sì           | `namespace:path`          | nessuno     | Il progresso che un giocatore deve aver ottenuto perché questi oggetti gli vengano mostrati. Un file senza progresso resta bloccato per tutti, come uno che indica un progresso che nessun pack definisce; il log lo segnala all'avvio del server |
+| `names`       | no           | elenco di nomi di oggetti | nessuno     | Cosa viene bloccato.  Un nome che termina con `*` corrisponde a ogni nome che inizia con il resto                                                                                                                                                 |
+| `namespaces`  | no           | elenco di id di mod       | nessuno     | Ogni oggetto della mod                                                                                                                                                                                                                            |
+| `tags`        | no           | elenco di tag di oggetti  | nessuno     | Ogni oggetto del tag                                                                                                                                                                                                                              |
+| `requires`    | no           | elenco di id di mod       | nessuno     | Il file viene saltato a meno che ogni mod indicata sia caricata. Le voci `config:` e `file:` funzionano come ovunque altrove                                                                                                                      |
+
+Un oggetto bloccato resta nascosto nelle schede creative, nella ricerca creativa e in JEI di un giocatore finché non ottiene il progresso. Vale per ogni giocatore, e il server comunica a ogni client quali blocchi sono aperti per quel giocatore.  Un blocco cambia solo ciò che mostrano le liste: l'uso viene trattenuto dai [Blocchi delle ricette](#blocchi-delle-ricette) e da `anvils`, e [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati) toglie un oggetto dal gioco per tutti. Più file si sommano, e un oggetto che corrisponde a due file richiede entrambi i progressi. Un file che non seleziona nessun oggetto viene saltato e il log lo segnala. `content.itemLocks` nella configurazione disattiva la cartella.
 
 ## Ricette e combustibili della fornace
 

@@ -18,6 +18,7 @@ public final class ConfigContent {
     private final ForgeConfigSpec.BooleanValue villages;
     private final ForgeConfigSpec.BooleanValue overrides;
     private final ForgeConfigSpec.BooleanValue disabled;
+    private final ForgeConfigSpec.BooleanValue itemLocks;
     private final ForgeConfigSpec.BooleanValue hardness;
     private final ForgeConfigSpec.BooleanValue shovelPaths;
     private final ForgeConfigSpec.ConfigValue<String> shovelPathBecomes;
@@ -48,6 +49,7 @@ public final class ConfigContent {
         villages = builder.comment("Register the village plots described by villages/*.json in packs so cities and villages can build them. Requires a restart [Default=true]").worldRestart().define("villages", true);
         overrides = builder.comment("Apply overrides/<namespace>/<name>.json files, which change properties of blocks, items and potion types that already exist, vanilla or modded [Default=true]").define("overrides", true);
         disabled = builder.comment("Apply disabled/*.json files, which take blocks and items out of play: no creative tab, JEI entry, recipe, loot, trade, tag, placing, use or pick-up, and stacks of them are deleted [Default=true]").define("disabled", true);
+        itemLocks = builder.comment("Apply item_locks/*.json files, which keep items out of the creative tabs, creative search and JEI for each player until that player has earned an advancement [Default=true]").define("itemLocks", true);
         hardness = builder.comment("Apply hardness/*.json files, which give a group of blocks a mining time and blast resistance multiplier, rolled per block position [Default=true]").define("hardness", true);
         shovelPaths = builder.comment("Let a shovel turn blocks marked behavesAs path into a path, and revert a path while sneaking [Default=true]").define("shovelPaths", true);
         shovelPathBecomes = builder.comment("What a shovel turns those blocks into. Empty uses the dirt path").define("shovelPathBecomes", "");
@@ -92,6 +94,8 @@ public final class ConfigContent {
     public boolean overrides() { return Config.loaded() ? overrides.get() : ConfigCore.flag("content.overrides", true); }
 
     public boolean disabled() { return Config.loaded() ? disabled.get() : ConfigCore.flag("content.disabled", true); }
+
+    public boolean itemLocks() { return Config.loaded() ? itemLocks.get() : ConfigCore.flag("content.itemLocks", true); }
 
     public boolean hardness() { return Config.loaded() ? hardness.get() : ConfigCore.flag("content.hardness", true); }
 

@@ -181,7 +181,10 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+boolean companion(String key) { return (findProperty('companions') ?: '').toString().split(',').contains(key) }
+
 dependencies {
+    if (companion('jei')) { modRuntimeOnly "mezz.jei:jei-${version_minecraft}-forge:15.20.0.112" }
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     modRuntimeOnly "top.theillusivec4.curios:curios-forge:${version_curios}"
     modRuntimeOnly 'maven.modrinth:betterf3:xo6HmgWj'

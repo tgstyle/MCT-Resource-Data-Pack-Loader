@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
+import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ContentClient;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.client.util.FaceCacheReset;
@@ -67,6 +68,7 @@ public class ClientSetup {
         MinecraftForge.EVENT_BUS.addListener(ProspectTooltip::onTooltip);
         MinecraftForge.EVENT_BUS.addListener(PackTooltips::onTooltip);
         MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> { if (event.phase == TickEvent.Phase.END) { HoldView.tick(); } });
+        MinecraftForge.EVENT_BUS.addListener(ClientItemLocks::onTags);
         MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> {
             HoldView.reset();
             CenterCard.reset();
@@ -76,6 +78,7 @@ public class ClientSetup {
             ContentSeasonTint.forget();
             AnvilCosts.leave();
             ContentSkyGates.clear();
+            ClientItemLocks.clear();
         });
         ContentClient.register(modBus);
         if (Config.worldgen.worldgenDebug()) {
