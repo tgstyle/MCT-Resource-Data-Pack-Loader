@@ -118,7 +118,8 @@ public final class ContentParser {
                 ContentParserContainers.container(key, json),
                 bell(json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
-                ContentParserPortways.portway(key, json));
+                ContentParserPortways.portway(key, json),
+                ContentParserWeights.weight(json, key));
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {
@@ -333,7 +334,8 @@ public final class ContentParser {
                 ContentParserWeapons.weapon(key, json),
                 ContentParserPortways.item(key, json),
                 Json.getBoolean(json, "sleepingBag", false),
-                ContentParserContainers.upgrade(key, Settings.lower(Json.getString(json, "type", DEFAULT_TYPE)), json));
+                ContentParserContainers.upgrade(key, Settings.lower(Json.getString(json, "type", DEFAULT_TYPE)), json),
+                ContentParserWeights.weight(json, key));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

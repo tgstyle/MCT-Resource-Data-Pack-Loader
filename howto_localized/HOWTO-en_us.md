@@ -58,6 +58,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 **Crafting, loot and trade**
 - [Disabled blocks and items](#disabled-blocks-and-items)
 - [Item locks](#item-locks)
+- [Item weights](#item-weights)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
 - [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
@@ -195,6 +196,7 @@ Under `data/`:
 | `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                                           |
 | `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                                  |
 | `<namespace>/item_locks/*.json`              | Items hidden from a player's lists until they earn an advancement. [Item locks](#item-locks)                                                                                   |
+| `<namespace>/weights/*.json`                 | Item weights, a carrying limit and encumbrance tiers. [Item weights](#item-weights)                                                                                            |
 | `<namespace>/recipe_locks/*.json`            | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                                    |
 | `<namespace>/spawn_locks/*.json`             | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                                      |
 | `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                                    |
@@ -584,7 +586,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                    |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                                   |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                                   |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
 
@@ -839,6 +841,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `container`                  | container only                        | object                                            | none                                                                                                         | See [Containers](#containers)                                                                                                                                                                                                                                                                                                                                                                                       |
 | `portway`                    | portway only                          | object                                            | none                                                                                                         | See [Portways](#portways)                                                                                                                                                                                                                                                                                                                                                                                           |
 | `bell`                       | bell only                             | object                                            | none                                                                                                         | See [Bells](#bells)                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `weight`                     | no                                    | number from 0 up                                  | none                                                                                                         | Carried weight of the block's item, in the weights files' unit. Beats every weights file entry. See [Item weights](#item-weights)                                                                                                                                                                                                                                                                                   |
 
 ### Compressed layers
 
@@ -1869,6 +1872,7 @@ A plain item with `sleepingBag` is a sleeping bag. Right-click the top of a soli
 | `wornEffects`    | no            | list of effects                      | none                   | Potion effects held on the wearer while the item is in its Curios slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                               |
 | `wornAttributes` | no            | list of attribute changes            | none                   | Attribute changes held on the wearer while the item is in its Curios slot, as `attribute`, `amount` and `operation`                                                                                                                                           |
 | `requires`       | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
+| `weight`         | no            | number from 0 up                     | none                   | Carried weight of one of this item (for a block, of its item), in the weights files' unit. Beats every weights file entry. See [Item weights](#item-weights)                                                                                                  |
 
 ### Item variant keys
 
@@ -2263,12 +2267,13 @@ Every key is optional and a file changes only what it names, so a file at `overr
 
 *property overrides*
 
-| Key             | Value       | What it does                                          |
-| --------------- | ----------- | ----------------------------------------------------- |
-| `maxStackSize`  | `1` to `64` | Stack size                                            |
-| `maxDamage`     | int         | Durability                                            |
-| `containerItem` | item name   | Left behind in the crafting grid, the way a bucket is |
-| `food`          | object      | Makes the item edible, see below                      |
+| Key             | Value            | What it does                                                                                                                                                 |
+| --------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `maxStackSize`  | `1` to `64`      | Stack size                                                                                                                                                   |
+| `maxDamage`     | int              | Durability                                                                                                                                                   |
+| `containerItem` | item name        | Left behind in the crafting grid, the way a bucket is                                                                                                        |
+| `food`          | object           | Makes the item edible, see below                                                                                                                             |
+| `weight`        | number from 0 up | Carried weight of one of this item (for a block, of its item), in the weights files' unit. Beats every weights file entry. See [Item weights](#item-weights) |
 
 A name that is both a block and an item, and every placeable block's item is, takes both groups from one file:
 
@@ -2554,6 +2559,76 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `requires`    | no       | list of mod ids    | none    | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else                                                                                                    |
 
 A locked item is hidden from a player's creative tabs, creative search and JEI until that player has earned the advancement. It works per player, and the server tells each client which locks are open for that player. A lock changes only what the lists show: use is held back by [Recipe locks](#recipe-locks) and `anvils`, and [Disabled blocks and items](#disabled-blocks-and-items) takes an item out of play for everyone. Several files stack, and an item that matches two files needs both advancements. A file that selects no items is skipped, and the log says so. `content.itemLocks` in the config turns the folder off.
+
+## Item weights
+
+*crafting, loot and trade*
+
+`<namespace>/weights/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Gives items a carried weight and a carrying limit, and slows a player down in steps as the load goes past that limit. The feature is off while no weights are loaded, and `content.weights` in the config turns it off as well.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "unit": "kg",
+  "default": 0.5,
+  "limit": 120,
+  "hardLimit": 1.25,
+  "stackBudget": 64,
+  "bonuses": [
+    { "advancement": "mypack:pack_mule", "add": 40 },
+    { "worn": ["mypack:strap_belt"], "add": 25 }
+  ],
+  "tiers": [
+    { "above": 0.75, "speed": -0.10 },
+    { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
+      "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
+    { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
+  ],
+  "containerFactor": 1.0,
+  "countContents": "rdpl",
+  "wornFactor": 1.0,
+  "creative": false,
+  "items": [
+    { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
+    { "names": ["minecraft:cobblestone", "minecraft:stone*"], "weight": 1.5 },
+    { "tags": ["forge:storage_blocks/iron"], "weight": 8 },
+    { "namespaces": ["mypack"], "weight": 1 },
+    { "names": ["minecraft:feather"], "weight": 0 }
+  ]
+}
+```
+
+| Key               | Required | Value                      | Default | What it does                                                                                                  |
+| ----------------- | -------- | -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `requires`        | no       | list of mod ids            | none    | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else |
+| `unit`            | no       | string                     | `""`    | Label for the numbers, such as `kg`. The last file to set it wins                                             |
+| `default`         | no       | number from 0 up           | `0`     | Weight of any item no entry names. `0` keeps unnamed items free                                               |
+| `limit`           | no       | number above 0             | none    | The carrying limit. With none, weights are counted but nothing is enforced                                    |
+| `hardLimit`       | no       | number above 0             | none    | A hard cap as a multiple of `limit` (`1.1` means 110 percent). Past it, what `hardLimitMode` names is refused |
+| `hardLimitMode`   | no       | `pickup`, `take` or `both` | `both`  | Which way of gaining items the hard cap refuses, see below                                                    |
+| `stackBudget`     | no       | number above 0             | none    | Lowers each weighted item's max stack to this divided by the item's weight, see below                         |
+| `stackBudgetMin`  | no       | whole number 1 to 64       | `1`     | The lowest max stack `stackBudget` sets                                                                       |
+| `bonuses`         | no       | list of bonus entries      | none    | Each adds to the limit while its condition holds, see below                                                   |
+| `tiers`           | no       | list of tier entries       | none    | Encumbrance steps, see below                                                                                  |
+| `containerFactor` | no       | number from 0 up           | `1.0`   | Share of a carried container's contents that counts. The container's own weight always counts in full         |
+| `countContents`   | no       | `none`, `rdpl` or `all`    | `rdpl`  | Which carried containers count their contents, see below                                                      |
+| `wornFactor`      | no       | number from 0 up           | `1.0`   | Share of armor and Curios slots that counts                                                                   |
+| `creative`        | no       | boolean                    | `false` | Whether creative players are encumbered. Spectators never are                                                 |
+| `items`           | no       | list of item entries       | none    | The weight of each item or group, see below                                                                   |
+
+`items` is a list of entries. Each one takes `weight` (a number from 0 up, required, and an entry without it is skipped with a line in the log) and at least one way to pick the items: `names` (the same forms as elsewhere: `namespace:name`, and a trailing `*` for every name that starts with the rest; a block name weighs its item), `namespaces` (every item of the mod) or `tags` (every item in the item tag, written `namespace:path` without `#`). When more than one rule matches an item, the most specific one wins, in this order: the `weight` key in the item's, the block's or an override's own file; a `names` entry; `tags`; `namespaces` or a trailing `*` prefix; and `default`. An `oreDict` key is not read on this line and logs a warning.
+
+`bonuses` is a list of entries that each add `add` to the limit while a condition holds. `add` is a number, required, and may be negative. `advancement` (`namespace:path`) holds once the player has earned it, and `worn` (a list of item names) holds while one of them is worn in an armor, offhand or Curios slot. An entry with neither condition is skipped, and the log says so.
+
+`tiers` is a list of steps, sorted by `above`, which is a multiple of `limit` (`0.75` means 75 percent). The highest tier reached applies, and tiers do not stack. Each step takes `above` (a number above 0, required), `speed` (-1 to 0, default `0`, the movement speed change, so `-0.25` is 25 percent slower), `sprint` (boolean, default `true`, `false` stops sprinting), `jump` (boolean, default `true`, `false` stops jumping), `exhaustion` (a number from 0 up, default `0`, extra hunger exhaustion per second), `effects` (a list of the same objects food effects take, held while the player is in the tier and refreshed every 2 seconds, with particles hidden) and `message` (text or a lang key, shown on the action bar when the player enters the tier).
+
+`hardLimit` refuses items that would take the player past `limit` times `hardLimit`. With `pickup` or `both`, a player picks up only as much of a dropped stack as fits, the rest stays on the ground, and the action bar says it is too heavy. Refusing items taken out of a container (`take`) is not enforced yet. `stackBudget` sets each item's max stack to `stackBudget` divided by its weight, rounded down, never below `stackBudgetMin` and never above the item's own max stack. An item with several metadata weights uses the heaviest one; damageable items, items that already stack to 1 and items that weigh 0 keep their max stack. `/give` and other commands then refuse a count above the new max stack.
+
+What counts as carried: the main inventory and hotbar, the offhand, the stack on the cursor, armor and Curios slots (times `wornFactor`), a block carried with RDPL's carry feature, and carried containers as `countContents` allows. An open chest, the ender chest and items on the ground do not count. `countContents` takes `none` (only the container item itself), `rdpl` (RDPL pouches and container items) or `all` (also any other carried item that holds items, such as a shulker box or another mod's backpack, through an item handler or the item's block entity data with an `Items` list, nested up to 3 deep). `containerFactor` sets the share of a container's contents that counts.
+
+Values are kept in thousandths. The total is updated on pickup, toss, crafting, smelting, use, placing, container open and close, login, respawn, dimension change and advancements, and it is checked every half second as well. A bad value logs an error naming the file and is ignored. Operators can read a player's total with `/rdplserver weight [player]`. Speed is an attribute modifier and needs no client mod, so weights work with vanilla clients.
 
 ## Furnace recipes and fuels
 

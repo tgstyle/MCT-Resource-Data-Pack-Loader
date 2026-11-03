@@ -58,6 +58,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 **Fabrico, saque e comércio**
 - [Blocos e itens desativados](#blocos-e-itens-desativados)
 - [Bloqueios de itens](#bloqueios-de-itens)
+- [Pesos de itens](#pesos-de-itens)
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
 - [Bloqueios de receitas](#bloqueios-de-receitas)
 - [Dicas de ferramenta](#dicas-de-ferramenta)
@@ -195,6 +196,7 @@ Em `data/`:
 | `<namespace>/recipes/*.json`                 | Receitas de fabrico, adicionadas ou substituídas. [O que podes substituir](#o-que-podes-substituir)                                                                                                                      |
 | `<namespace>/recipe_removals/*.json`         | Receitas eliminadas por nome, namespace ou resultado. [O que podes substituir](#o-que-podes-substituir)                                                                                                                  |
 | `<namespace>/item_locks/*.json`              | Itens ocultos nas listas do jogador até ele obter um progresso. [Bloqueios de itens](#bloqueios-de-itens)                                                                                                                |
+| `<namespace>/weights/*.json`                 | Pesos de itens, um limite de carga e escalões de sobrecarga. [Pesos de itens](#pesos-de-itens)                                                                                                                           |
 | `<namespace>/recipe_locks/*.json`            | Receitas que continuam fechadas até o jogador obter um progresso. [Bloqueios de receitas](#bloqueios-de-receitas)                                                                                                        |
 | `<namespace>/spawn_locks/*.json`             | Mobs que não surgem até se cumprirem as condições. [Bloqueios de spawn](#bloqueios-de-spawn)                                                                                                                             |
 | `<namespace>/disabled/*.json`                | Blocos e itens retirados de jogo. [Blocos e itens desativados](#blocos-e-itens-desativados)                                                                                                                              |
@@ -584,7 +586,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla simples,
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                    |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                      |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                                     |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                                     |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (pastas do cliente: sem cliente, deixa-as de fora) |
 | toda a camada de controlo, as definições e a pré-geração                                                                                                  |                                                                                                                           |
 
@@ -839,6 +841,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 | `container`                  | só container                               | objeto                                            | nenhum                                                                                                         | Ver [Contentores](#contentores)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `portway`                    | só em rotas                                | objeto                                            | nenhum                                                                                                         | Ver [Rotas](#rotas)                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `bell`                       | só bell                                    | objeto                                            | nenhum                                                                                                         | Ver [Sinos](#sinos)                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `weight`                     | não                                        | número a partir de 0                              | nenhum                                                                                                         | Peso transportado do item do bloco, na unidade dos ficheiros de pesos. Prevalece sobre cada entrada dos ficheiros de pesos. Ver [Pesos de itens](#pesos-de-itens)                                                                                                                                                                                                                                                                                                      |
 
 ### Camadas comprimidas
 
@@ -1869,6 +1872,7 @@ Um item simples com `sleepingBag` é um saco-cama. Com um clique direito na face
 | `portway`        | portway       | objeto                                        | nenhum                          | As definições de um item de viagem: as [chaves de rota](#rotas) que valem para uma viagem, mais `consume` e `bind`. Ver [Itens de viagem](#itens-de-viagem)                                                                                                                      |
 | `sleepingBag`    | não           | booleano                                      | `false`                         | Para um item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e salta a noite como uma cama. Nunca altera o ponto de reaparecimento e não se gasta. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn`       |
 | `requires`       | não           | lista de ids de mods ou namespaces de pacotes | nenhum                          | O ficheiro é ignorado, a menos que todos estejam presentes                                                                                                                                                                                                                       |
+| `weight`         | não           | número a partir de 0                          | nenhum                          | Peso transportado de um item (para um bloco, do seu item), na unidade dos ficheiros de pesos. Prevalece sobre cada entrada dos ficheiros de pesos. Ver [Pesos de itens](#pesos-de-itens)                                                                                         |
 
 ### Chaves de variantes de itens
 
@@ -2263,12 +2267,13 @@ Todas as chaves são opcionais e um ficheiro altera apenas o que indica, por iss
 
 *substituições de propriedades*
 
-| Chave           | Valor          | O que faz                                                 |
-| --------------- | -------------- | --------------------------------------------------------- |
-| `maxStackSize`  | `1` a `64`     | Tamanho da pilha                                          |
-| `maxDamage`     | número inteiro | Durabilidade                                              |
-| `containerItem` | nome de item   | Fica na grelha de criação, tal como acontece com um balde |
-| `food`          | objeto         | Torna o item comestível, ver abaixo                       |
+| Chave           | Valor                | O que faz                                                                                                                                                                                |
+| --------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxStackSize`  | `1` a `64`           | Tamanho da pilha                                                                                                                                                                         |
+| `maxDamage`     | número inteiro       | Durabilidade                                                                                                                                                                             |
+| `containerItem` | nome de item         | Fica na grelha de criação, tal como acontece com um balde                                                                                                                                |
+| `food`          | objeto               | Torna o item comestível, ver abaixo                                                                                                                                                      |
+| `weight`        | número a partir de 0 | Peso transportado de um item (para um bloco, do seu item), na unidade dos ficheiros de pesos. Prevalece sobre cada entrada dos ficheiros de pesos. Ver [Pesos de itens](#pesos-de-itens) |
 
 Um nome que é ao mesmo tempo bloco e item, e o item de todo o bloco colocável é, aceita os dois grupos num só ficheiro:
 
@@ -2554,6 +2559,76 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
 | `requires`    | não         | lista de ids de mods    | nenhum       | O ficheiro é ignorado, a menos que todos estejam carregados. As entradas `config:` e `file:` funcionam como em todos os outros sítios                                                                                                           |
 
 Um item bloqueado fica oculto nos separadores do modo criativo, na pesquisa criativa e no JEI de um jogador até ele obter o progresso. Isto vale para cada jogador, e o servidor indica a cada cliente quais os bloqueios abertos para esse jogador.  Um bloqueio altera apenas o que as listas mostram: a utilização é retida pelos [Bloqueios de receitas](#bloqueios-de-receitas) e por `anvils`, e os [Blocos e itens desativados](#blocos-e-itens-desativados) retiram um item de jogo para todos. Vários ficheiros acumulam-se, e um item que corresponde a dois ficheiros exige os dois progressos. Um ficheiro que não seleciona nenhum item é ignorado e o registo avisa. `content.itemLocks` na config desativa a pasta.
+
+## Pesos de itens
+
+*fabrico, saque e comércio*
+
+`<namespace>/weights/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros se acumulam. Dá aos itens um peso transportado e um limite de carga, e torna o jogador mais lento por escalões à medida que a carga ultrapassa esse limite. A funcionalidade fica desligada enquanto não houver pesos carregados, e `content.weights` na configuração também a desliga.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "unit": "kg",
+  "default": 0.5,
+  "limit": 120,
+  "hardLimit": 1.25,
+  "stackBudget": 64,
+  "bonuses": [
+    { "advancement": "mypack:pack_mule", "add": 40 },
+    { "worn": ["mypack:strap_belt"], "add": 25 }
+  ],
+  "tiers": [
+    { "above": 0.75, "speed": -0.10 },
+    { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
+      "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
+    { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
+  ],
+  "containerFactor": 1.0,
+  "countContents": "rdpl",
+  "wornFactor": 1.0,
+  "creative": false,
+  "items": [
+    { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
+    { "names": ["minecraft:cobblestone", "minecraft:stone*"], "weight": 1.5 },
+    { "tags": ["forge:storage_blocks/iron"], "weight": 8 },
+    { "namespaces": ["mypack"], "weight": 1 },
+    { "names": ["minecraft:feather"], "weight": 0 }
+  ]
+}
+```
+
+| Chave             | Obrigatório | Valor                        | Predefinição | O que faz                                                                                                                            |
+| ----------------- | ----------- | ---------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `requires`        | não         | lista de ids de mods         | nenhum       | O ficheiro é ignorado a menos que todos estejam carregados. As entradas `config:` e `file:` funcionam como em todos os outros sítios |
+| `unit`            | não         | texto                        | `""`         | Rótulo dos números, como `kg`. Ganha o último ficheiro a defini-lo                                                                   |
+| `default`         | não         | número a partir de 0         | `0`          | Peso de qualquer item que nenhuma entrada nomeie. `0` deixa livres os itens sem nome                                                 |
+| `limit`           | não         | número acima de 0            | nenhum       | O limite de carga. Sem ele, os pesos são contados, mas nada é aplicado                                                               |
+| `hardLimit`       | não         | número acima de 0            | nenhum       | Um teto rígido como múltiplo de `limit` (`1.1` quer dizer 110 por cento). Acima dele, é recusado o que `hardLimitMode` indicar       |
+| `hardLimitMode`   | não         | `pickup`, `take` ou `both`   | `both`       | Que forma de obter itens o teto rígido recusa, ver abaixo                                                                            |
+| `stackBudget`     | não         | número acima de 0            | nenhum       | Reduz o tamanho máximo da pilha de cada item com peso para este valor dividido pelo peso do item, ver abaixo                         |
+| `stackBudgetMin`  | não         | número inteiro de 1 a 64     | `1`          | O menor tamanho máximo da pilha que `stackBudget` define                                                                             |
+| `bonuses`         | não         | lista de entradas de bónus   | nenhum       | Cada uma soma ao limite enquanto a condição se verifica, ver abaixo                                                                  |
+| `tiers`           | não         | lista de entradas de escalão | nenhum       | Escalões de sobrecarga, ver abaixo                                                                                                   |
+| `containerFactor` | não         | número a partir de 0         | `1.0`        | Parte do conteúdo de um contentor transportado que conta. O peso do próprio contentor conta sempre por inteiro                       |
+| `countContents`   | não         | `none`, `rdpl` ou `all`      | `rdpl`       | Que contentores transportados contam o seu conteúdo, ver abaixo                                                                      |
+| `wornFactor`      | não         | número a partir de 0         | `1.0`        | Parte dos slots de armadura e Curios que conta                                                                                       |
+| `creative`        | não         | booleano                     | `false`      | Se os jogadores em modo criativo ficam sobrecarregados. Os espectadores nunca                                                        |
+| `items`           | não         | lista de entradas de item    | nenhum       | O peso de cada item ou grupo, ver abaixo                                                                                             |
+
+`items` é uma lista de entradas. Cada uma recebe `weight` (um número a partir de 0, obrigatório; uma entrada sem ele é ignorada e fica uma linha no registo) e pelo menos uma forma de escolher os itens: `names` (as mesmas formas que no resto: `namespace:name`, e um `*` final para todo o nome que começa pelo restante; um nome de bloco pesa o seu item), `namespaces` (todos os itens do mod) ou `tags` (todos os itens na tag de itens, escrito `namespace:path` sem `#`). Quando mais de uma regra corresponde a um item, ganha a mais específica, por esta ordem: a chave `weight` no ficheiro do item, do bloco ou de um override; uma entrada `names`; `tags`; `namespaces` ou um prefixo `*` final; e `default`. Uma chave `oreDict` não é lida nesta linha e regista um aviso.
+
+`bonuses` é uma lista de entradas que cada uma soma `add` ao limite enquanto uma condição se verifica. `add` é um número, obrigatório, e pode ser negativo. `advancement` (`namespace:path`) vale depois de o jogador o ter obtido, e `worn` (uma lista de nomes de itens) vale enquanto um deles estiver vestido num slot de armadura, na mão secundária ou em Curios. Uma entrada sem nenhuma das duas condições é ignorada, e o registo diz isso.
+
+`tiers` é uma lista de escalões, ordenada por `above`, que é um múltiplo de `limit` (`0.75` quer dizer 75 por cento). Vale o escalão mais alto atingido, e os escalões não se acumulam. Cada escalão recebe `above` (um número acima de 0, obrigatório), `speed` (de -1 a 0, predefinição `0`, a alteração da velocidade de movimento, por isso `-0.25` é 25 por cento mais lento), `sprint` (booleano, predefinição `true`, `false` impede de correr), `jump` (booleano, predefinição `true`, `false` impede de saltar), `exhaustion` (um número a partir de 0, predefinição `0`, exaustão extra de fome por segundo), `effects` (uma lista dos mesmos objetos que os efeitos de comida aceitam, mantida enquanto o jogador está no escalão e renovada a cada 2 segundos, com partículas ocultas) e `message` (texto ou uma chave de idioma, mostrado na barra de ação quando o jogador entra no escalão).
+
+`hardLimit` recusa itens que levariam o jogador para além de `limit` vezes `hardLimit`. Com `pickup` ou `both`, o jogador apanha de uma pilha largada apenas o que cabe, o resto fica no chão, e a barra de ação indica que está pesado de mais. Recusar itens retirados de um contentor (`take`) ainda não está aplicado. `stackBudget` define o tamanho máximo da pilha de cada item como `stackBudget` dividido pelo peso dele, arredondado para baixo, nunca abaixo de `stackBudgetMin` e nunca acima do tamanho máximo próprio do item. Um item com vários pesos de metadados usa o mais pesado; itens com durabilidade, itens que já empilham de 1 em 1 e itens de peso 0 mantêm o tamanho máximo da pilha. Os comandos `/give` e outros recusam então uma quantidade acima do novo tamanho máximo da pilha.
+
+O que conta como transportado: o inventário principal e a barra de atalhos, a mão secundária, a pilha no cursor, os slots de armadura e Curios (vezes `wornFactor`), um bloco transportado com a funcionalidade de transporte do RDPL, e os contentores transportados conforme `countContents` permite. Um baú aberto, o baú do End e os itens no chão não contam. `countContents` aceita `none` (só o próprio item contentor), `rdpl` (bolsas e itens contentores do RDPL) ou `all` (também qualquer outro item transportado que tenha itens dentro, como uma shulker box ou a mochila de outro mod, através de um item handler ou dos dados de entidade de bloco do item com uma lista `Items`, aninhado até 3 níveis). `containerFactor` define a parte do conteúdo de um contentor que conta.
+
+Os valores são guardados em milésimos. O total é atualizado ao apanhar, deitar fora, criar, fundir, usar, colocar, abrir e fechar um contentor, ao entrar, ao renascer, ao mudar de dimensão e nos progressos, e é verificado também a cada meio segundo. Um valor inválido regista um erro que nomeia o ficheiro e é ignorado. Os operadores podem ler o total de um jogador com `/rdplserver weight [player]`. A velocidade é um modificador de atributo e não precisa de mod no cliente, por isso os pesos funcionam com clientes vanilla.
 
 ## Receitas de fornalha e combustíveis
 

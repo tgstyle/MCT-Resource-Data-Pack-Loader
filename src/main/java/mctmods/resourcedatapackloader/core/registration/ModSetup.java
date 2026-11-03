@@ -94,6 +94,9 @@ import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.villages.ContentPathIntersects;
 import mctmods.resourcedatapackloader.common.villages.ContentPaths;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
+import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -306,6 +309,23 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ItemLockSync::onLogin);
         MinecraftForge.EVENT_BUS.addListener(ItemLockSync::onLogout);
         MinecraftForge.EVENT_BUS.addListener(ContentItemLocks::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onPlayerTick);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onJump);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onPickup);
+        MinecraftForge.EVENT_BUS.addListener(WeightEnforce::onPickup);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onToss);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onOpen);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onClose);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onCrafted);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onSmelted);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onUsed);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onPlace);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onLogin);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onRespawn);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onDimension);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onClone);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onAdvancement);
+        MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onLogout);
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onTravel);
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onKill);
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onCraft);
@@ -474,6 +494,7 @@ public class ModSetup {
                     MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
                 }
                 ContentOverrides.reload();
+                ContentWeights.load();
             });
             return;
         }
@@ -484,7 +505,7 @@ public class ModSetup {
 
     private static void onAddReloadListeners(AddReloadListenerEvent event) { event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
-    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); VanillaFluidRules.tagsUpdated(); } }
+    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); VanillaFluidRules.tagsUpdated(); ContentWeights.build(); } else if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.CLIENT_PACKET_RECEIVED) { ContentWeights.build(); } }
 
     private static void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 
@@ -498,6 +519,7 @@ public class ModSetup {
         PackManager.get().report();
         RegistryRemaps.reload();
         ContentOverrides.reload();
+        ContentWeights.load();
         ContentReplacements.reload();
         ContentCityMaps.reload();
         ContentWorldTemplates.load();

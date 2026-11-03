@@ -58,6 +58,7 @@
 **合成、戰利品與交易**
 - [停用的方塊與物品](#停用的方塊與物品)
 - [物品鎖](#物品鎖)
+- [物品重量](#物品重量)
 - [熔爐配方與燃料](#熔爐配方與燃料)
 - [配方鎖](#配方鎖)
 - [工具提示](#工具提示)
@@ -195,6 +196,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/recipes/*.json`                 | 合成配方，新增或取代。[可以覆寫的內容](#可以覆寫的內容)                                                             |
 | `<namespace>/recipe_removals/*.json`         | 依名稱、命名空間或產出刪除的配方。[可以覆寫的內容](#可以覆寫的內容)                                                 |
 | `<namespace>/item_locks/*.json`              | 玩家取得進度之前，在其清單中隱藏的物品。[物品鎖](#物品鎖)                                                           |
+| `<namespace>/weights/*.json`                 | 物品重量、負重上限與負重階段。[物品重量](#物品重量)                                                                 |
 | `<namespace>/recipe_locks/*.json`            | 玩家取得進度之前保持鎖定的配方。[配方鎖](#配方鎖)                                                                   |
 | `<namespace>/spawn_locks/*.json`             | 條件滿足之前不會生成的生物。[生成鎖](#生成鎖)                                                                       |
 | `<namespace>/disabled/*.json`                | 退出遊戲的方塊與物品。[停用的方塊與物品](#停用的方塊與物品)                                                         |
@@ -584,7 +586,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions` | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`tags`、`disabled`                                | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`exposures`、`tooltips`                         |
-| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`、`veins`                                                                     | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
+| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`、`veins`、`weights`                                                          | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
 | `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                            | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
 | 整個控制層、設定與預先生成                                                                                                                                |                                                                                                              |
 
@@ -839,6 +841,7 @@ thatmod.jar
 | `container`                  | 僅限 container                      | 物件                                              | 無                                                                                                 | 見[容器](#容器)                                                                                                                                                                                                                                                                                                                                   |
 | `portway`                    | 僅限傳送通道                        | 物件                                              | 無                                                                                                 | 見[傳送通道](#傳送通道)                                                                                                                                                                                                                                                                                                                           |
 | `bell`                       | 僅限 bell                           | 物件                                              | 無                                                                                                 | 見[鐘](#鐘)                                                                                                                                                                                                                                                                                                                                       |
+| `weight`                     | 否                                  | 0 或更大的數字                                    | 無                                                                                                 | 方塊物品的攜帶重量，單位與重量檔案相同。優先於所有重量檔案項目。見[物品重量](#物品重量)                                                                                                                                                                                                                                                           |
 
 ### 壓縮層
 
@@ -1869,6 +1872,7 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 | `portway`        | portway       | 物件                                | 無                   | 傳送物品的設定：與行程相關的 [傳送通道鍵](#傳送通道)，加上 `consume` 與 `bind`，見[傳送物品](#傳送物品)                                                                                    |
 | `sleepingBag`    | 否            | 布林值                              | `false`              | 對一般物品而言，右鍵方塊頂面會讓持有者躺下睡覺，並像床一樣跳過夜晚。不會改變重生點，也不會被消耗。僅在允許睡覺的地方有效。若同時有 `locates`、`rolls` 或 `passesTurn` 則忽略               |
 | `requires`       | 否            | 模組 id 或資源包命名空間清單        | 無                   | 除非全部存在，否則跳過該檔案                                                                                                                                                               |
+| `weight`         | 否            | 0 或更大的數字                      | 無                   | 該物品（若為方塊則為其物品）的攜帶重量，單位與重量檔案相同。優先於所有重量檔案項目。見[物品重量](#物品重量)                                                                                |
 
 ### 物品變體鍵
 
@@ -2263,12 +2267,13 @@ PNG 永遠優先。如果 `panel.png` 與 `panel.png.json` 同時存在，就會
 
 *屬性覆寫*
 
-| 鍵              | 值          | 作用                     |
-| --------------- | ----------- | ------------------------ |
-| `maxStackSize`  | `1` 到 `64` | 堆疊上限                 |
-| `maxDamage`     | 整數        | 耐久度                   |
-| `containerItem` | 物品名稱    | 留在合成格中，就像桶一樣 |
-| `food`          | 物件        | 讓物品可食用，見下文     |
+| 鍵              | 值             | 作用                                                                                                        |
+| --------------- | -------------- | ----------------------------------------------------------------------------------------------------------- |
+| `maxStackSize`  | `1` 到 `64`    | 堆疊上限                                                                                                    |
+| `maxDamage`     | 整數           | 耐久度                                                                                                      |
+| `containerItem` | 物品名稱       | 留在合成格中，就像桶一樣                                                                                    |
+| `food`          | 物件           | 讓物品可食用，見下文                                                                                        |
+| `weight`        | 0 或更大的數字 | 該物品（若為方塊則為其物品）的攜帶重量，單位與重量檔案相同。優先於所有重量檔案項目。見[物品重量](#物品重量) |
 
 同時是方塊與物品的名稱（每個可放置方塊的物品都是），可以在一個檔案中同時使用兩組：
 
@@ -2554,6 +2559,76 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `requires`    | 否   | 模組 id 的清單   | 無   | 除非每一個模組都已載入，否則會略過該檔案。`config:` 和 `file:` 項目的作用與其他地方相同                                                          |
 
 被鎖定的物品會一直在玩家的創造模式分頁、創造模式搜尋和 JEI 中隱藏，直到該玩家取得進度。鎖依玩家分別生效，伺服器會告訴每個用戶端哪些鎖對該玩家已經開啟。鎖只改變清單所顯示的內容：使用上的限制由[配方鎖](#配方鎖)和 `anvils` 負責，而[停用的方塊與物品](#停用的方塊與物品)會讓物品對所有人退出遊戲。多個檔案會疊加，同時符合兩個檔案的物品需要兩個進度都具備。沒有選中任何物品的檔案會被略過，日誌會註明。設定中的 `content.itemLocks` 會關閉該資料夾。
+
+## 物品重量
+
+*合成、戰利品與交易*
+
+`<namespace>/weights/*.json`
+
+檔案名稱由你自行決定，只讀取這個資料夾，多個檔案會疊加。為物品賦予攜帶重量與負重上限，玩家的負重超過上限後，移動速度會依階段下降。沒有載入任何重量時該功能關閉，設定中的 `content.weights` 也能將其關閉。
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "unit": "kg",
+  "default": 0.5,
+  "limit": 120,
+  "hardLimit": 1.25,
+  "stackBudget": 64,
+  "bonuses": [
+    { "advancement": "mypack:pack_mule", "add": 40 },
+    { "worn": ["mypack:strap_belt"], "add": 25 }
+  ],
+  "tiers": [
+    { "above": 0.75, "speed": -0.10 },
+    { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
+      "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
+    { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
+  ],
+  "containerFactor": 1.0,
+  "countContents": "rdpl",
+  "wornFactor": 1.0,
+  "creative": false,
+  "items": [
+    { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
+    { "names": ["minecraft:cobblestone", "minecraft:stone*"], "weight": 1.5 },
+    { "tags": ["forge:storage_blocks/iron"], "weight": 8 },
+    { "namespaces": ["mypack"], "weight": 1 },
+    { "names": ["minecraft:feather"], "weight": 0 }
+  ]
+}
+```
+
+| 鍵                | 必填 | 值                         | 預設    | 作用                                                                                                 |
+| ----------------- | ---- | -------------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `requires`        | 否   | 模組 id 的清單             | 無      | 除非每一個模組都已載入，否則略過此檔案。`config:` 和 `file:` 項目的作用與其他地方相同                |
+| `unit`            | 否   | 字串                       | `""`    | 數字的單位標籤，例如 `kg`。最後一個設定它的檔案生效                                                  |
+| `default`         | 否   | 0 或更大的數字             | `0`     | 沒有任何項目指定的物品的重量。`0` 會讓未指定的物品不計重量                                           |
+| `limit`           | 否   | 大於 0 的數字              | 無      | 負重上限。沒有時只統計重量，不做限制                                                                 |
+| `hardLimit`       | 否   | 大於 0 的數字              | 無      | 以 `limit` 的倍數表示的硬性上限（`1.1` 即 110%）。超過上限後，`hardLimitMode` 指定的取得方式會被拒絕 |
+| `hardLimitMode`   | 否   | `pickup`、`take` 或 `both` | `both`  | 硬性上限拒絕哪種取得物品的方式，見下文                                                               |
+| `stackBudget`     | 否   | 大於 0 的數字              | 無      | 將每個有重量的物品的堆疊數量降低為此值除以該物品重量的結果，見下文                                   |
+| `stackBudgetMin`  | 否   | 1 到 64 的整數             | `1`     | `stackBudget` 設定的最低堆疊數量                                                                     |
+| `bonuses`         | 否   | 加成項目的清單             | 無      | 每個項目在其條件成立時為上限增加對應數值，見下文                                                     |
+| `tiers`           | 否   | 階段項目的清單             | 無      | 負重階段，見下文                                                                                     |
+| `containerFactor` | 否   | 0 或更大的數字             | `1.0`   | 隨身容器中內容物計入的比例。容器自身的重量總是完全計入                                               |
+| `countContents`   | 否   | `none`、`rdpl` 或 `all`    | `rdpl`  | 哪些隨身容器計入其內容物，見下文                                                                     |
+| `wornFactor`      | 否   | 0 或更大的數字             | `1.0`   | 盔甲與 Curios 欄位計入的比例                                                                         |
+| `creative`        | 否   | 布林值                     | `false` | 創造模式玩家是否承受負重。旁觀者永遠不受影響                                                         |
+| `items`           | 否   | 物品項目的清單             | 無      | 每個物品或分組的重量，見下文                                                                         |
+
+`items` 是一個項目清單。每個項目都要有 `weight`（0 或更大的數字，必填；沒有它的項目會被略過，並在日誌中留下一行記錄），以及至少一種選取物品的方式：`names`（與其他地方相同的格式：`namespace:name`，以及結尾的 `*` 表示所有以其前面部分開頭的名稱；方塊的名稱依其物品計重）、`namespaces`（該模組的每個物品）或 `tags`（物品標籤中的每個物品，寫作 `namespace:path`，不帶 `#`）。當多條規則符合同一個物品時，最具體的規則生效，順序如下：物品、方塊或覆寫檔案自身的 `weight` 鍵；`names` 項目；`tags`；`namespaces` 或結尾 `*` 的前綴；最後是 `default`。項目中的 `oreDict` 鍵不會被讀取，並會在日誌中記錄一條警告。
+
+`bonuses` 是一個項目清單，每個項目在其條件成立期間為上限加上 `add`。`add` 是必填的數字，可以為負。`advancement`（`namespace:path`）在玩家取得該進度後成立，`worn`（物品名稱的清單）則在其中任一物品裝備於盔甲、副手或 Curios 欄位時成立。兩個條件都沒有的項目會被略過，並在日誌中註明。
+
+`tiers` 是依 `above` 排序的階段清單，`above` 是 `limit` 的倍數（`0.75` 即 75%）。生效的是達到的最高階段，階段之間不疊加。每個階段包括：`above`（大於 0 的數字，必填）、`speed`（-1 到 0，預設 `0`，移動速度的變化，`-0.25` 即慢 25%）、`sprint`（布林值，預設 `true`，`false` 時禁止疾跑）、`jump`（布林值，預設 `true`，`false` 時禁止跳躍）、`exhaustion`（0 或更大的數字，預設 `0`，每秒額外增加的飢餓消耗）、`effects`（與食物效果相同的物件清單，玩家處於該階段期間持續生效，每 2 秒重新整理一次，粒子隱藏）、`message`（文字或語言鍵，玩家進入該階段時顯示在動作列上）。
+
+`hardLimit` 會拒絕讓玩家超過 `limit` 乘以 `hardLimit` 的物品。在 `pickup` 或 `both` 模式下，玩家只能撿起掉落物品堆中放得下的部分，其餘留在地上，並且動作列會提示太重了。拒絕從容器中取出的物品（`take`）尚未生效。`stackBudget` 會將每個有重量的物品的堆疊數量設為 `stackBudget` 除以其重量的結果（無條件捨去），但不會低於 `stackBudgetMin`，也不會高於物品自身的堆疊數量。擁有多個中繼資料重量的物品採用最重的那個；可損耗的物品、本來就只能堆疊為 1 的物品以及重量為 0 的物品保留其原有堆疊數量。之後 `/give` 等指令會拒絕超過新堆疊數量的數目。
+
+計入負重的有：主物品欄與快捷欄、副手、游標上的物品堆、盔甲與 Curios 欄位（乘以 `wornFactor`）、用 RDPL 搬運功能攜帶的方塊，以及 `countContents` 允許的隨身容器。打開的箱子、終界箱和地面上的物品不計入。`countContents` 可取 `none`（只計容器物品本身）、`rdpl`（RDPL 袋與容器物品）或 `all`（還包括其他帶有物品的隨身物品，例如界伏盒或其他模組的背包，透過物品處理器，或物品的方塊實體資料中的 `Items` 清單計入，最多巢狀 3 層）。`containerFactor` 決定容器內容物計入的比例。
+
+數值以千分之一為單位保存。總量會在拾取、丟棄、合成、熔煉、使用、放置、打開和關閉容器、登入、重生、切換維度和取得進度時更新，並且每半秒也會檢查一次。無效的數值會記錄一條指明檔案的錯誤並被忽略。管理員可以用 `/rdplserver weight [player]` 查看玩家的總重量。速度是屬性修飾符，不需要用戶端模組，因此重量在原版用戶端上也能運作。
 
 ## 熔爐配方與燃料
 

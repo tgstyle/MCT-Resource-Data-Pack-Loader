@@ -58,6 +58,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 **Výroba, kořist a obchod**
 - [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - [Zámky předmětů](#zámky-předmětů)
+- [Váha předmětů](#váha-předmětů)
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
@@ -195,6 +196,7 @@ V `data/`:
 | `<namespace>/recipes/*.json`                 | Výrobní recepty, přidané nebo nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                       |
 | `<namespace>/recipe_removals/*.json`         | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                           |
 | `<namespace>/item_locks/*.json`              | Předměty skryté v seznamech hráče, dokud nezíská pokrok. [Zámky předmětů](#zámky-předmětů)                                                                                                           |
+| `<namespace>/weights/*.json`                 | Váha předmětů, limit nošení a stupně zatížení. [Váha předmětů](#váha-předmětů)                                                                                                                       |
 | `<namespace>/recipe_locks/*.json`            | Recepty, které zůstávají zavřené, dokud hráč nezíská pokrok. [Zámky receptů](#zámky-receptů)                                                                                                         |
 | `<namespace>/spawn_locks/*.json`             | Moby, které se neobjeví, dokud neplatí podmínky. [Zámky spawnu](#zámky-spawnu)                                                                                                                       |
 | `<namespace>/disabled/*.json`                | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                            |
@@ -584,7 +586,7 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                             |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`                                                                     | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                  |
 
@@ -839,6 +841,7 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `container`                  | jen kontejner                          | objekt                                            | žádný                                                                                            | Viz [Kontejnery](#kontejnery)                                                                                                                                                                                                                                                                                                                                                                                   |
 | `portway`                    | jen průchod                            | objekt                                            | žádný                                                                                            | Viz [Průchody](#průchody)                                                                                                                                                                                                                                                                                                                                                                                       |
 | `bell`                       | jen zvon                               | objekt                                            | žádný                                                                                            | Viz [Zvony](#zvony)                                                                                                                                                                                                                                                                                                                                                                                             |
+| `weight`                     | ne                                     | číslo od 0                                        | žádný                                                                                            | Nesená váha předmětu bloku v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                                                                                                                                                                                                     |
 
 ### Komprimované vrstvy
 
@@ -1869,6 +1872,7 @@ Obyčejný předmět s `sleepingBag` je spacák. Pravým kliknutím na horní st
 | `portway`        | portway       | objekt                                     | žádný                | Nastavení cestovního předmětu: [klíče průchodu](#průchody), které platí pro cestu, plus `consume` a `bind`. Viz [Cestovní předměty](#cestovní-předměty)                                                                                                        |
 | `sleepingBag`    | ne            | boolean                                    | `false`              | U obyčejného předmětu pravé kliknutí na horní stranu bloku uloží držitele ke spánku a noc se přeskočí jako u postele. Nenastavuje bod oživení a nespotřebuje se. Funguje jen tam, kde je spánek povolen. Ignoruje se s `locates`, `rolls` nebo `passesTurn`    |
 | `requires`       | ne            | seznam id módů nebo namespace balíčků      | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                              |
+| `weight`         | ne            | číslo od 0                                 | žádný                | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                   |
 
 ### Klíče variant předmětů
 
@@ -2263,12 +2267,13 @@ Každý klíč je volitelný a soubor mění jen to, co uvádí, takže soubor v
 
 *přepsání vlastností*
 
-| Klíč            | Hodnota        | Co dělá                                  |
-| --------------- | -------------- | ---------------------------------------- |
-| `maxStackSize`  | `1` až `64`    | Velikost stacku                          |
-| `maxDamage`     | celé číslo     | Odolnost                                 |
-| `containerItem` | název předmětu | Zůstane v mřížce výroby, tak jako kbelík |
-| `food`          | objekt         | Udělá z předmětu poživatelný, viz níže   |
+| Klíč            | Hodnota        | Co dělá                                                                                                                                                      |
+| --------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `maxStackSize`  | `1` až `64`    | Velikost stacku                                                                                                                                              |
+| `maxDamage`     | celé číslo     | Odolnost                                                                                                                                                     |
+| `containerItem` | název předmětu | Zůstane v mřížce výroby, tak jako kbelík                                                                                                                     |
+| `food`          | objekt         | Udělá z předmětu poživatelný, viz níže                                                                                                                       |
+| `weight`        | číslo od 0     | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů) |
 
 Název, který je zároveň blok i předmět, a to je každý umístitelný blok, přebírá obě skupiny z jednoho souboru:
 
@@ -2554,6 +2559,76 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 | `requires`    | ne      | seznam ID módů        | žádný   | Soubor se přeskočí, pokud nejsou načteny všechny. Položky `config:` a `file:` fungují stejně jako všude jinde                                                                                                          |
 
 Zamčený předmět zůstává skrytý na kartách kreativního režimu, ve vyhledávání v kreativním režimu a v JEI hráče, dokud hráč nezíská pokrok. Platí to pro každého hráče zvlášť a server každému klientovi sdělí, které zámky jsou pro daného hráče otevřené.  Zámek mění jen to, co seznamy ukazují: používání zadržují [Zámky receptů](#zámky-receptů) a `anvils`, a [Zakázané bloky a předměty](#zakázané-bloky-a-předměty) vyřadí předmět ze hry pro všechny. Více souborů se sčítá a předmět, který odpovídá dvěma souborům, potřebuje oba pokroky. Soubor, který nevybere žádný předmět, se přeskočí a log to uvede. `content.itemLocks` v konfiguraci složku vypíná.
+
+## Váha předmětů
+
+*výroba, kořist a obchod*
+
+`<namespace>/weights/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Dává předmětům nesenou váhu a limit nošení a při překročení limitu hráče postupně zpomaluje, jak náklad roste. Funkce je vypnutá, dokud není načtena žádná váha, a `content.weights` v konfiguraci ji vypíná také.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "unit": "kg",
+  "default": 0.5,
+  "limit": 120,
+  "hardLimit": 1.25,
+  "stackBudget": 64,
+  "bonuses": [
+    { "advancement": "mypack:pack_mule", "add": 40 },
+    { "worn": ["mypack:strap_belt"], "add": 25 }
+  ],
+  "tiers": [
+    { "above": 0.75, "speed": -0.10 },
+    { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
+      "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
+    { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
+  ],
+  "containerFactor": 1.0,
+  "countContents": "rdpl",
+  "wornFactor": 1.0,
+  "creative": false,
+  "items": [
+    { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
+    { "names": ["minecraft:cobblestone", "minecraft:stone*"], "weight": 1.5 },
+    { "tags": ["forge:storage_blocks/iron"], "weight": 8 },
+    { "namespaces": ["mypack"], "weight": 1 },
+    { "names": ["minecraft:feather"], "weight": 0 }
+  ]
+}
+```
+
+| Klíč              | Povinný | Hodnota                      | Výchozí | Co dělá                                                                                                          |
+| ----------------- | ------- | ---------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `requires`        | ne      | seznam ID módů               | žádný   | Soubor se přeskočí, pokud nejsou načteny všechny. Položky `config:` a `file:` fungují stejně jako všude jinde    |
+| `unit`            | ne      | řetězec                      | `""`    | Popisek čísel, například `kg`. Vyhrává poslední soubor, který ho nastavil                                        |
+| `default`         | ne      | číslo od 0                   | `0`     | Váha každého předmětu, který žádný záznam nejmenuje. `0` nechá nepojmenované předměty bez váhy                   |
+| `limit`           | ne      | číslo větší než 0            | žádný   | Limit nošení. Bez něj se váhy počítají, ale nic se neomezuje                                                     |
+| `hardLimit`       | ne      | číslo větší než 0            | žádný   | Pevný strop jako násobek `limit` (`1.1` znamená 110 procent). Za ním se odmítne to, co pojmenuje `hardLimitMode` |
+| `hardLimitMode`   | ne      | `pickup`, `take` nebo `both` | `both`  | Kterým způsobem získávání předmětů strop odmítá, viz níže                                                        |
+| `stackBudget`     | ne      | číslo větší než 0            | žádný   | Snižuje maximální velikost stacku každého předmětu s vahou na tuto hodnotu dělenou jeho vahou, viz níže          |
+| `stackBudgetMin`  | ne      | celé číslo od 1 do 64        | `1`     | Nejnižší maximální velikost stacku, kterou nastavuje `stackBudget`                                               |
+| `bonuses`         | ne      | seznam položek bonusů        | žádný   | Každá přidává k limitu, dokud platí její podmínka, viz níže                                                      |
+| `tiers`           | ne      | seznam položek stupňů        | žádný   | Stupně zatížení, viz níže                                                                                        |
+| `containerFactor` | ne      | číslo od 0                   | `1.0`   | Podíl obsahu nošeného kontejneru, který se počítá. Vlastní váha kontejneru se počítá vždy celá                   |
+| `countContents`   | ne      | `none`, `rdpl` nebo `all`    | `rdpl`  | Které nošené kontejnery počítají svůj obsah, viz níže                                                            |
+| `wornFactor`      | ne      | číslo od 0                   | `1.0`   | Podíl slotů brnění a Curios, který se počítá                                                                     |
+| `creative`        | ne      | logická hodnota              | `false` | Zda jsou hráči v kreativním režimu zatíženi. Diváci nikdy                                                        |
+| `items`           | ne      | seznam položek předmětů      | žádný   | Váha každého předmětu nebo skupiny, viz níže                                                                     |
+
+`items` je seznam položek. Každá přijímá `weight` (číslo od 0, povinné; položka bez něj se přeskočí a v logu se objeví řádek o tom) a alespoň jeden způsob, jak vybrat předměty: `names` (stejné tvary jako jinde: `namespace:name`, a koncové `*` pro každý název, který začíná zbytkem; název bloku váží jeho předmět), `namespaces` (každý předmět módu) nebo `tags` (každý předmět v tagu předmětů, psaný jako `namespace:path` bez `#`). Když na předmět sedí víc pravidel, vyhrává nejkonkrétnější, v tomto pořadí: klíč `weight` v souboru samotného předmětu, bloku nebo přepsání; položka `names`; `tags`; `namespaces` nebo koncové `*` u předpony; a `default`. Klíč `oreDict` se na tomto řádku nečte a zapíše do logu varování.
+
+`bonuses` je seznam položek, z nichž každá přidá `add` k limitu, dokud platí podmínka. `add` je číslo, povinné, a může být záporné. `advancement` (`namespace:path`) platí, jakmile ho hráč získal, a `worn` (seznam názvů předmětů) platí, dokud je některý z nich nasazený ve slotu brnění, v druhé ruce nebo v Curios. Položka bez žádné z těchto podmínek se přeskočí a log to uvede.
+
+`tiers` je seznam stupňů seřazený podle `above`, které je násobkem `limit` (`0.75` znamená 75 procent). Platí nejvyšší dosažený stupeň a stupně se nesčítají. Každý stupeň přijímá `above` (číslo větší než 0, povinné), `speed` (-1 až 0, výchozí `0`, změna rychlosti pohybu, takže `-0.25` znamená o 25 procent pomaleji), `sprint` (logická hodnota, výchozí `true`, `false` zastaví běh), `jump` (logická hodnota, výchozí `true`, `false` zastaví skákání), `exhaustion` (číslo od 0, výchozí `0`, dodatečné vyčerpání hladu za sekundu), `effects` (seznam stejných objektů, jaké berou efekty jídla, drží se, dokud je hráč ve stupni, a obnovuje se každé 2 sekundy, částice jsou skryté) a `message` (text nebo klíč jazyka, zobrazí se na panelu akcí, když hráč do stupně vstoupí).
+
+`hardLimit` odmítá předměty, které by hráče dostaly přes `limit` násobené `hardLimit`. Při `pickup` nebo `both` hráč z položeného stacku sebere jen tolik, kolik se vejde, zbytek zůstane na zemi a na panelu akcí se objeví, že je to příliš těžké. Odmítání předmětů vyjmutých z kontejneru (`take`) zatím není vynucováno. `stackBudget` nastaví maximální velikost stacku každého předmětu na `stackBudget` dělené jeho vahou, zaokrouhlené dolů, nikdy pod `stackBudgetMin` a nikdy nad vlastní maximální velikost stacku předmětu. Předmět s více váhami podle metadat používá tu nejtěžší; předměty s poškozením, předměty, které se už skládají na 1, a předměty s vahou 0 si ponechají svou maximální velikost stacku. Příkazy `/give` a další pak odmítnou počet vyšší než nová maximální velikost stacku.
+
+Nese se: hlavní inventář a hotbar, druhá ruka, stack na kurzoru, sloty brnění a Curios (krát `wornFactor`), blok nesený funkcí nošení RDPL a nesené kontejnery podle toho, co dovolí `countContents`. Otevřená truhla, ender truhla a předměty na zemi se nepočítají. `countContents` bere `none` (jen samotný kontejner), `rdpl` (pytle a kontejnery RDPL) nebo `all` (také každý jiný nesený předmět, který sám drží předměty, například shulker box nebo batoh jiného módu, přes obsluhu předmětů nebo data block entity předmětu se seznamem `Items`, vnořeně až do 3 úrovní). `containerFactor` nastavuje podíl obsahu kontejneru, který se počítá.
+
+Hodnoty se drží v tisícinách. Součet se aktualizuje při sbírání, vyhození, craftu, tavení, použití, pokládání, otevření a zavření kontejneru, přihlášení, respawnu, změně dimenze a pokrocích, a kontroluje se také každou půlsekundu. Neplatná hodnota zapíše do logu chybu s názvem souboru a ignoruje se. Operátoři mohou součet hráče zjistit příkazem `/rdplserver weight [player]`. Rychlost je modifikátor atributu a klientský mod nepotřebuje, takže váhy fungují s vanilla klienty.
 
 ## Recepty pro pec a paliva
 

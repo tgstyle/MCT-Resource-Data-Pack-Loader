@@ -57,6 +57,7 @@ public final class ServerCommands {
                 .then(CommandRaids.raid(NAME))
                 .then(CommandCards.card(NAME))
                 .then(CommandTalk.talk(NAME))
+                .then(WeightCommand.weight(NAME))
                 .then(CommandEnvironments.environment(NAME))
                 .then(CommandGames.game(NAME)));
     }
