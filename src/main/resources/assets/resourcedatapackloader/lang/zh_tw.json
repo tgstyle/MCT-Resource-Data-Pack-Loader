@@ -354,5 +354,7 @@
   "rdpl.team.join.ok": "你已加入 %s",
   "rdpl.socket.empty": "空插槽",
   "rdpl.socket.filled": "插槽：%s",
-  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]",
+  "rdpl.compressed": "壓縮%s",
+  "rdpl.compressed.layered": "壓縮%s (x%d)"
 }

@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.banners.ContentBanners;
 import mctmods.resourcedatapackloader.common.bells.ContentBells;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedOrder;
+import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
@@ -181,6 +183,7 @@ public final class ContentEvents {
     }
 
     private static void registerBlocks(RegisterEvent.RegisterHelper<Block> helper) {
+        ContentCompressables.generate();
         int count = registerBlocks(helper, false) + registerBlocks(helper, true);
         ContentFluids.registerBlocks((id, block) -> {
             if (registered(ForgeRegistries.BLOCKS.containsKey(id), "A block", id, "fluid block")) { return; }
@@ -293,7 +296,10 @@ public final class ContentEvents {
                 .icon(() -> icon(id, source, declared))
                 .displayItems((parameters, out) -> {
                     for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-                        if (id.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), out::accept); }
+                        if (id.equals(ResourceLocation.tryParse(entry.tab()))) {
+                            show(entry.item(), out::accept);
+                            CompressedOrder.layers(entry.item(), out::accept);
+                        }
                     }
                 })
                 .build();
@@ -322,5 +328,6 @@ public final class ContentEvents {
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
             if (tab.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), event::accept); }
         }
+        CompressedOrder.arrange(event);
     }
 }

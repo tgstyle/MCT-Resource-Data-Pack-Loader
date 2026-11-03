@@ -354,5 +354,7 @@
   "rdpl.team.join.ok": "Sei entrato in %s",
   "rdpl.socket.empty": "Castone vuoto",
   "rdpl.socket.filled": "Castone: %s",
-  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]",
+  "rdpl.compressed": "Blocco compresso: %s",
+  "rdpl.compressed.layered": "Blocco compresso: %s (x%d)"
 }

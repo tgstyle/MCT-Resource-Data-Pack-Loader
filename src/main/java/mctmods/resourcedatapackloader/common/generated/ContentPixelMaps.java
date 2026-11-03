@@ -304,7 +304,7 @@ public final class ContentPixelMaps {
         return written(namespace, path, image);
     }
 
-    @Nullable private static byte[] written(String namespace, String path, BufferedImage image) {
+    @Nullable public static byte[] written(String namespace, String path, BufferedImage image) {
         try {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             ImageIO.write(image, "png", out);

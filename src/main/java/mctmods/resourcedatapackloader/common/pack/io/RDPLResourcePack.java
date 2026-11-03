@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -21,6 +22,8 @@ public final class RDPLResourcePack extends RDPLPackResources {
     public static final String ID = "RDPL";
     public static final String ID_OVERRIDING = "RDPL (overriding)";
     private static final String DEFAULT_DESCRIPTION = "Files loaded by Resource Data Pack Loader";
+    private static final String LANG_FOLDER = "lang/";
+    private static final String SERVER_LANG = LANG_FOLDER + "en_us.json";
     private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());
     private final boolean overriding;
 
@@ -55,8 +58,9 @@ public final class RDPLResourcePack extends RDPLPackResources {
 
     @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull ResourceLocation location) {
         trace(location);
-        if (withheld(asked, location.getPath()) || !PackManager.get().existsRaw(asked, location.getNamespace(), location.getPath(), overriding)) { return null; }
-        return supplier(asked, location.getNamespace(), location.getPath());
+        PackType source = location.getPath().startsWith(LANG_FOLDER) ? PackType.CLIENT_RESOURCES : asked;
+        if (withheld(asked, location.getPath()) || !PackManager.get().existsRaw(source, location.getNamespace(), location.getPath(), overriding)) { return null; }
+        return supplier(source, location.getNamespace(), location.getPath());
     }
 
     private static boolean withheld(PackType asked, String path) { return asked == PackType.SERVER_DATA && path.startsWith(PackManager.FUNCTIONS + "/") && Config.data.functionsOff(); }
@@ -84,5 +88,13 @@ public final class RDPLResourcePack extends RDPLPackResources {
         });
     }
 
-    @Override @Nonnull public Set<String> getNamespaces(@Nonnull PackType asked) { return PackManager.get().getNamespaces(asked, overriding); }
+    @Override @Nonnull public Set<String> getNamespaces(@Nonnull PackType asked) {
+        Set<String> held = PackManager.get().getNamespaces(asked, overriding);
+        if (asked != PackType.SERVER_DATA) { return held; }
+        Set<String> all = new LinkedHashSet<>(held);
+        for (String namespace : PackManager.get().getNamespaces(PackType.CLIENT_RESOURCES, overriding)) {
+            if (PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, namespace, SERVER_LANG, overriding)) { all.add(namespace); }
+        }
+        return all;
+    }
 }

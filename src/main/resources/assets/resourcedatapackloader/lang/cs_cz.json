@@ -354,5 +354,7 @@
   "rdpl.team.join.ok": "Připojil jsi se k %s",
   "rdpl.socket.empty": "Prázdná zdířka",
   "rdpl.socket.filled": "Zdířka: %s",
-  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]",
+  "rdpl.compressed": "Stlačený blok: %s",
+  "rdpl.compressed.layered": "Stlačený blok: %s (x%d)"
 }

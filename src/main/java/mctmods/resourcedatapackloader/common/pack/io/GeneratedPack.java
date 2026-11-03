@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.common.pack.io;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.IoSupplier;
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -28,8 +30,13 @@ public final class GeneratedPack extends RDPLPackResources {
     @Override public void listResources(@Nonnull PackType asked, @Nonnull String namespace, @Nonnull String prefix, @Nonnull ResourceOutput out) {
         GeneratedResources.list(asked, namespace, prefix, path -> {
             ResourceLocation location = ResourceLocation.tryBuild(namespace, path);
-            byte[] held = GeneratedResources.get(asked, namespace, path);
-            if (location != null && held != null) { out.accept(location, bytes(held)); }
+            if (location != null) {
+                out.accept(location, () -> {
+                    byte[] held = GeneratedResources.get(asked, namespace, path);
+                    if (held == null) { throw new FileNotFoundException(path); }
+                    return new ByteArrayInputStream(held);
+                });
+            }
         });
     }
 

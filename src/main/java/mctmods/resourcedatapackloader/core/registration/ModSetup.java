@@ -8,6 +8,8 @@ import mctmods.resourcedatapackloader.common.anvils.ContentAnvils;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAliases;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedFuel;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
@@ -174,6 +176,7 @@ public class ModSetup {
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, CompressedFuel::onFuelBurnTime);
         MinecraftForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
         MinecraftForge.EVENT_BUS.addListener(ContentTeams::onLevelLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
@@ -416,6 +419,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
         MinecraftForge.EVENT_BUS.addListener(RegistryRemaps::onMissingMappings);
+        MinecraftForge.EVENT_BUS.addListener(CompressedAliases::onMissingMappings);
         MinecraftForge.EVENT_BUS.addListener(ModSetup::onTagsUpdated);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ModSetup::onAddReloadListeners);
         MinecraftForge.EVENT_BUS.addListener(ModSetup::onRegisterCommands);

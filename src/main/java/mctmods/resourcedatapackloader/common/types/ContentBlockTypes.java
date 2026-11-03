@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentFallingBlock;
 import mctmods.resourcedatapackloader.common.blocks.banner.ContentBannerBlock;
 import mctmods.resourcedatapackloader.common.blocks.banner.ContentWallBannerBlock;
 import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedSet;
+import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.blocks.light.ContentTorchBlock;
 import mctmods.resourcedatapackloader.common.blocks.light.ContentWallTorchBlock;
@@ -17,6 +19,7 @@ import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortwayBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
+import mctmods.resourcedatapackloader.common.items.CompressedBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentBannerItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
@@ -182,7 +185,10 @@ public final class ContentBlockTypes {
                 yield wall == null ? new BlockItem(entry.block(), properties.stacksTo(16)) : new ContentBannerItem(entry.block(), wall.block(), properties.stacksTo(16));
             }
             case DOOR -> new DoubleHighBlockItem(entry.block(), properties);
-            default -> new BlockItem(entry.block(), properties);
+            default -> {
+                CompressedSet set = ContentCompressables.owner(entry.id());
+                yield set == null ? new BlockItem(entry.block(), properties) : new CompressedBlockItem(entry.block(), properties, set);
+            }
         };
     }
 
