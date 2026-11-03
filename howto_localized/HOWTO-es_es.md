@@ -1096,7 +1096,9 @@ Una entrada de `wornEffects` admite `potion`, `amplifier`, `ambient` y `showPart
   "upgrade": {
     "paths": [
       { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
-      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "othermod:crate", "toBlock": "mypack:iron_chest[facing=north]", "contents": "slots", "linked": "half", "fewerSlots": "fit", "state": "named" },
+      { "fromBlock": "mypack:big_barrel", "toBlock": "mypack:steel_barrel", "contents": "nbt" }
     ],
     "consume": true,
     "unopenedLoot": "refuse"
@@ -1113,11 +1115,27 @@ Una entrada de `wornEffects` admite `potion`, `amplifier`, `ambient` y `showPart
 | `consume`      | booleano         | `true`      | Gasta un ítem por mejora. Un jugador en modo creativo nunca gasta ninguno                                                                                                                                                      |
 | `unopenedLoot` | texto            | `refuse`    | Qué hacer con un contenedor cuyo botín aún no se ha sorteado. `refuse` pide al jugador que lo abra primero; `carry` traslada la tabla de botín pendiente, de modo que se sortea la primera vez que se abre el contenedor mayor |
 
+Cada entrada de `paths` puede fijar además estos ajustes, que deciden cómo se mueve el contenido.
+
+| Ajuste de ruta | Tipo     | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `contents`     | texto    | `container` | Qué mueve la ruta. `container` es el cambio entre dos contenedores de este cargador; `slots` mueve los ítems a través del inventario, así que sirve con cualquier bloque de almacenamiento de cualquier mod; `nbt` conserva íntegros los datos guardados de la entidad de bloque, para dos bloques que guardan igual. La regla de ranuras de `toBlock` rige en `container` y en `slots` salvo que `fewerSlots` sea `fit` |
+| `linked`       | texto    | `refuse`    | En una ruta `slots`, qué hacer con un cofre doble o cualquier bloque que comparta su almacenamiento con otro. `refuse` lo rechaza; `half` mejora solo el bloque pulsado. Una ruta `nbt` siempre lo rechaza                                                                                                                                                                                                               |
+| `fewerSlots`   | texto    | `refuse`    | En una ruta `slots`, si se admite un destino con menos ranuras de las que muestra el bloque antiguo. `refuse` lo rechaza; `fit` coloca los ítems en las ranuras que hay y aun así rechaza si no caben todos                                                                                                                                                                                                              |
+| `strict`       | booleano | `true`      | En una ruta `slots`, si rechaza lo que no puede mover con exactitud: un fluido, incluido el combustible que un bloque guarda solo en sus datos guardados, y un bloque cuyas ranuras muestran ítems distintos de los que guarda. Con `false` mueve lo que muestran las ranuras                                                                                                                                            |
+| `state`        | texto    | `carry`     | En una ruta `slots` o `nbt`, el estado del bloque nuevo. `carry` conserva la orientación, el eje, la rotación y el anegamiento del antiguo donde el nuevo los tiene; `named` le da el estado escrito en `toBlock`, donde los corchetes tras el nombre contienen sus propiedades, como en `mypack:iron_chest[facing=north]`. Un `toBlock` con corchetes se toma siempre tal como está escrito                             |
+
 **Qué se conserva.** Cada ítem sigue en su número de ranura, igual que la orientación, el nombre personalizado y el candado. Un destino con más columnas muestra los mismos ítems en otra disposición, porque las ranuras se cuentan de izquierda a derecha y de arriba abajo. Una tabla de botín fijada en el destino se ignora si el contenedor ya tiene contenido. Una ruta coincide solo con el ID del bloque, sin metadatos. El destino toma su estado predeterminado, con la orientación copiada.
 
 **Cómo sostenerlo.** Sostén el ítem en la mano principal y haz clic derecho en el contenedor. Un ítem en la mano secundaria solo funciona al agacharse con la mano principal vacía. En modo aventura se abre la pantalla del contenedor, el kit se conserva y no hay intercambio.
 
 **Cuándo lo rechaza.** El ítem se conserva y la barra de acción dice el motivo: el contenedor equivocado, un destino más pequeño, otra persona lo tiene abierto, el botín aún no se ha sorteado o un terreno que el jugador no puede modificar. Los cofres de vanilla y el almacenamiento de otros mods se abren como siempre.
+
+**Otro almacenamiento.** Una ruta `slots` saca los ítems a través del inventario y los coloca en el bloque nuevo, de modo que el bloque antiguo puede ser un cofre de vanilla, un barril o el almacenamiento de otro mod, y el nuevo también. Una ruta `nbt` traslada los datos guardados tal cual. Eso solo es seguro entre dos bloques que guardan igual, así que la mejora prueba antes el bloque nuevo y rechaza si no conservaría lo que se le da. Las claves que no hacen nada en una ruta se nombran en el registro: `linked`, `fewerSlots`, `strict` y `state` en una ruta `container`, y `linked` y `fewerSlots` en una ruta `nbt`.
+
+**Lo que ve el jugador.** Un rechazo aparece en la barra de acción y el ítem se conserva: «Alguien tiene abierto ese contenedor», «Dos bloques comparten este almacén» para un cofre doble sin `linked: half`, y «Hay algo dentro que no se puede mover». Este último cubre una ruta estricta que se topa con un fluido, un bloque cuyo contenido no se puede sacar o devolver por completo y un destino que no puede guardar lo que había dentro. Un contenedor cuyo botín no se ha sorteado se rechaza en toda ruta salvo que `unopenedLoot` sea `carry`. Trasladar una tabla pendiente exige un destino que también guarde una tabla de botín y, en una ruta `slots`, un bloque que aún no contenga ítems.
+
+**Lo que dice el registro.** Al cargar los ítems, el registro nombra una ruta que nunca puede funcionar: un `fromBlock` o un `toBlock` que no es un contenedor (en una ruta `container`), un bloque que se convierte en sí mismo, un `toBlock` con menos ranuras (entre los contenedores de este cargador), un bloque que no guarda nada, un bloque que son dos bloques y por eso nunca funciona, y un bloque desconocido, que omite la entrada. Una ruta sin `fromBlock` o sin `toBlock` se omite.
 
 ## Tipos de ranura de Curios
 

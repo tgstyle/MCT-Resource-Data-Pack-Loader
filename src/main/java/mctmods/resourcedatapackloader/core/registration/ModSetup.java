@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.cards.CardScan;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.command.ServerCommands;
+import mctmods.resourcedatapackloader.common.containers.ContentStorageSwap;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.dialogs.DialogEvents;
@@ -242,6 +243,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentStorageSwap::onItemJoin);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onDig);
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onUse);
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onUseOn);

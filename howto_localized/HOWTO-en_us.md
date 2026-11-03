@@ -1096,7 +1096,9 @@ An entry in `wornEffects` takes `potion`, `amplifier`, `ambient` and `showPartic
   "upgrade": {
     "paths": [
       { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
-      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "othermod:crate", "toBlock": "mypack:iron_chest[facing=north]", "contents": "slots", "linked": "half", "fewerSlots": "fit", "state": "named" },
+      { "fromBlock": "mypack:big_barrel", "toBlock": "mypack:steel_barrel", "contents": "nbt" }
     ],
     "consume": true,
     "unopenedLoot": "refuse"
@@ -1113,11 +1115,27 @@ An entry in `wornEffects` takes `potion`, `amplifier`, `ambient` and `showPartic
 | `consume`      | boolean         | `true`   | Uses one item per upgrade. A player in creative mode never uses one up                                                                                                                               |
 | `unopenedLoot` | text            | `refuse` | What to do with a container whose loot has not rolled. `refuse` asks the player to open it first; `carry` moves the waiting loot table across, so it rolls the first time the larger container opens |
 
+Each entry of `paths` can also set these, which decide how the contents move.
+
+| Path setting | Type    | Default     | What it does                                                                                                                                                                                                                                                                                                                                                         |
+| ------------ | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contents`   | text    | `container` | What the path moves. `container` is the change between two containers of this loader; `slots` moves the items through the inventory, so it works with any storage block of any mod; `nbt` keeps the block entity's saved data whole, for two blocks that save alike. The slot rule of `toBlock` holds on `container`, and on `slots` unless `fewerSlots` is `fit`    |
+| `linked`     | text    | `refuse`    | On a `slots` path, what to do with a double chest or any block that shares its storage with another. `refuse` turns it away; `half` upgrades only the block that was clicked. An `nbt` path always refuses it                                                                                                                                                        |
+| `fewerSlots` | text    | `refuse`    | On a `slots` path, whether a target with fewer slots than the old block shows is allowed. `refuse` turns it away; `fit` packs the items into the slots there are, and still refuses when they do not all fit                                                                                                                                                         |
+| `strict`     | boolean | `true`      | On a `slots` path, whether it refuses what it cannot move exactly: a fluid, fuel a block keeps only in its saved data included, and a block whose slots show other items than it saves. `false` moves whatever the slots show                                                                                                                                        |
+| `state`      | text    | `carry`     | On a `slots` or `nbt` path, the state of the new block. `carry` keeps the facing, axis, rotation and waterlogging of the old one where the new block has them; `named` gives it the state written in `toBlock`, where the brackets after the name hold its properties, as in `mypack:iron_chest[facing=north]`. A `toBlock` with brackets is always taken as written |
+
 **What moves.** Every item stays in its slot number, along with the facing, the custom name and the lock. A target with more columns shows the same items in a different arrangement, because slots count left to right and top to bottom. A loot table set on the target is ignored for a container that already has contents. A path matches on the block id alone, with no metadata. The target takes its default state, with the facing copied.
 
 **Holding it.** Hold the item in your main hand and right-click the container. An item in the off hand only works when sneaking with an empty main hand. In adventure mode the container screen opens, the kit is kept, and there is no swap.
 
 **When it refuses.** The item is kept and the action bar says why: the wrong container, a smaller target, someone else has it open, loot not rolled yet, or ground the player may not change. Vanilla chests and other mods' storage open as usual.
+
+**Other storage.** A `slots` path takes the items out through the inventory and puts them into the new block, so the old block can be a vanilla chest, a barrel or storage from another mod, and the new one can be too. An `nbt` path carries the saved data across as it is. That is only safe between two blocks that save alike, so the upgrade first tries the new block and refuses when it would not keep what it was given. Keys that do nothing on a path are named in the log: `linked`, `fewerSlots`, `strict` and `state` on a `container` path, `linked` and `fewerSlots` on an `nbt` path.
+
+**What the player sees.** A refusal shows on the action bar and the item is kept: "Someone has that container open", "Two blocks share this storage" for a double chest without `linked: half`, and "Something in there cannot be moved". The last one covers a strict path meeting a fluid, a block whose contents cannot all be taken out or put back, and a target that cannot hold what was in it. A container whose loot has not rolled is refused on every path unless `unopenedLoot` is `carry`. Carrying a waiting table over needs a target that keeps a loot table too, and on a `slots` path a block that holds no items yet.
+
+**What the log says.** When the items load, a path that can never work is named in the log: a `fromBlock` or `toBlock` that is not a container (on a `container` path), a block that changes into itself, a `toBlock` with fewer slots (between this loader's containers), a block that holds nothing, a block that is two blocks and so never works, and an unknown block, which skips the entry. A path with no `fromBlock` or no `toBlock` is skipped.
 
 ## Curios slot types
 

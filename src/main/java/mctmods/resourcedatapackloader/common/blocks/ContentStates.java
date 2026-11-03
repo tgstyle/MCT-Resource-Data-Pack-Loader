@@ -119,6 +119,19 @@ public final class ContentStates {
         return made != null ? made.block() : Registered.block(name);
     }
 
+    public static boolean fits(String written, BlockState found, Object context) {
+        BlockState named = known(written, context);
+        if (named == null || named.getBlock() != found.getBlock()) { return false; }
+        int open = written.indexOf('[');
+        if (open < 0) { return true; }
+        for (String pair : written.substring(open + 1, written.indexOf(']') < 0 ? written.length() : written.indexOf(']')).split(",")) {
+            String[] halves = Settings.split(pair);
+            Property<?> property = halves == null ? null : found.getBlock().getStateDefinition().getProperty(halves[0]);
+            if (property != null && !found.getValue(property).equals(named.getValue(property))) { return false; }
+        }
+        return true;
+    }
+
     public static BlockState state(Block block, Map<String, String> properties, Object context) {
         BlockState state = block.defaultBlockState();
         for (Map.Entry<Property<?>, Comparable<?>> entry : wanted(block, properties, context).entrySet()) { state = with(state, entry.getKey(), entry.getValue()); }

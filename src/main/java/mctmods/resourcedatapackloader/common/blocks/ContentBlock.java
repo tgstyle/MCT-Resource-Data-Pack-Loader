@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.blocks;
 
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentBushBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
+import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -99,7 +100,7 @@ public class ContentBlock extends Block implements IContentBlock {
     }
 
     @Override protected void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
-        ContentDrops.removed(level, pos, state, replaced);
+        if (ContentContainerUpgrades.dropsOnRemove()) { ContentDrops.removed(level, pos, state, replaced); }
         super.onRemove(state, level, pos, replaced, moving);
     }
 

@@ -36,12 +36,13 @@ public final class ContentContainerUpgrades {
 
     public static InteractionResult use(ContainerUpgradeDef upgrade, Item kit, Player player, InteractionHand hand, Level level, BlockPos pos, Direction side) {
         BlockState state = level.getBlockState(pos);
+        ContainerUpgradeDef.Path path = pathFor(upgrade, state);
+        if (path != null && path.contents() != ContainerUpgradeDef.Contents.CONTAINER) { return ContentStorageSwap.use(upgrade, path, kit, player, hand, level, pos, side, state); }
         if (!(state.getBlock() instanceof ContentContainerBlock)) { return InteractionResult.PASS; }
         if (player.getCooldowns().isOnCooldown(kit)) { return InteractionResult.FAIL; }
         if (level.isClientSide()) { return InteractionResult.SUCCESS; }
         if (!(player instanceof ServerPlayer server)) { return InteractionResult.PASS; }
         if (!(level.getBlockEntity(pos) instanceof ContentContainerBlockEntity old)) { return InteractionResult.PASS; }
-        ContainerUpgradeDef.Path path = pathFor(upgrade, state);
         if (path == null) { return refuse(player, "no path for that container", "wrong"); }
         Block toBlock = ContentStates.registered(path.to());
         if (!(toBlock instanceof ContentContainerBlock)) { return refuse(player, "nothing to become", "unavailable"); }
@@ -51,11 +52,7 @@ public final class ContentContainerUpgrades {
         if (((ContentContainerBlock) target.getBlock()).container().size() < old.getContainerSize()) { return refuse(player, "target is smaller", "smaller"); }
         if (old.watched()) { return refuse(player, "someone has it open", "in_use"); }
         if (old.pendingLoot() && !upgrade.carryLoot()) { return refuse(player, "loot not rolled", "loot"); }
-        if (!player.mayUseItemAt(pos, side, player.getItemInHand(hand)) || !ContentCarry.asks(server, pos)) {
-            ContentLog.LOGGER.info("Container upgrade: {} was refused at {} (not allowed to change it)", player.getName().getString(), pos);
-            player.displayClientMessage(Component.translatable("rdpl.carry.denied"), true);
-            return InteractionResult.FAIL;
-        }
+        if (!player.mayUseItemAt(pos, side, player.getItemInHand(hand)) || !ContentCarry.asks(server, pos)) { return denied(player, pos, "not allowed to change it"); }
         if (!swap(state, target, level, pos, old)) { return refuse(player, "the swap failed", "unavailable"); }
         ContentLog.LOGGER.info("Container upgrade: {} upgraded the container at {} to {}", player.getName().getString(), pos, BuiltInRegistries.BLOCK.getKey(target.getBlock()));
         return InteractionResult.SUCCESS;
@@ -64,9 +61,15 @@ public final class ContentContainerUpgrades {
     public static void check(ItemDef def) {
         if (def.upgrade() == null) { return; }
         for (ContainerUpgradeDef.Path path : def.upgrade().paths()) {
-            Block from = ContentStates.registered(path.from());
-            Block to = ContentStates.registered(path.to());
-            if (from == null || to == null) { continue; }
+            BlockState fromState = ContentStates.known(path.from(), def.key());
+            BlockState toState = ContentStates.known(path.to(), def.key());
+            if (fromState == null || toState == null) { continue; }
+            if (path.contents() != ContainerUpgradeDef.Contents.CONTAINER) {
+                checkStorage(def, path, fromState, toState);
+                continue;
+            }
+            Block from = fromState.getBlock();
+            Block to = toState.getBlock();
             if (!(from instanceof ContentContainerBlock)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which is not a container", def.key(), path.from()); }
             else if (!(to instanceof ContentContainerBlock)) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which is not a container", def.key(), path.to()); }
             else if (path.from().equals(path.to())) { ContentLog.LOGGER.error("The container upgrade {} changes {} into itself", def.key(), path.from()); }
@@ -74,24 +77,43 @@ public final class ContentContainerUpgrades {
         }
     }
 
+    private static void checkStorage(ItemDef def, ContainerUpgradeDef.Path path, BlockState fromState, BlockState toState) {
+        if (!fromState.hasBlockEntity()) { ContentLog.LOGGER.error("The container upgrade {} names {} as a fromBlock, which holds nothing", def.key(), path.from()); }
+        else if (!toState.hasBlockEntity()) { ContentLog.LOGGER.error("The container upgrade {} names {} as a toBlock, which holds nothing", def.key(), path.to()); }
+        else if (path.from().equals(path.to())) { ContentLog.LOGGER.error("The container upgrade {} changes {} into itself", def.key(), path.from()); }
+        else if (ContentCarry.twoBlock(fromState)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.key(), path.from()); }
+        else if (ContentCarry.twoBlock(toState)) { ContentLog.LOGGER.error("The container upgrade {} names {}, which is two blocks, so it never works", def.key(), path.to()); }
+        else if (path.contents() == ContainerUpgradeDef.Contents.SLOTS && !path.fit() && fromState.getBlock() instanceof ContentContainerBlock fromContainer && toState.getBlock() instanceof ContentContainerBlock toContainer && toContainer.container().size() < fromContainer.container().size()) { ContentLog.LOGGER.error("The container upgrade {} changes {} into {}, which holds fewer slots", def.key(), path.from(), path.to()); }
+    }
+
     @Nullable private static ContainerUpgradeDef.Path pathFor(ContainerUpgradeDef upgrade, BlockState state) {
         for (ContainerUpgradeDef.Path path : upgrade.paths()) {
-            if (matches(path.from(), state)) { return path; }
+            if (matches(path, state)) { return path; }
         }
         return null;
     }
 
-    private static boolean matches(String from, BlockState state) { return ContentStates.registered(from) == state.getBlock(); }
+    private static boolean matches(ContainerUpgradeDef.Path path, BlockState state) { return path.contents() != ContainerUpgradeDef.Contents.CONTAINER ? ContentStates.fits(path.from(), state, path.from()) : ContentStates.registered(path.from()) == state.getBlock(); }
 
-    private static InteractionResult refuse(Player player, String why, String key) {
+    static InteractionResult refuse(Player player, String why, String key) {
         ContentLog.LOGGER.info("Container upgrade: {} was refused ({})", player.getName().getString(), why);
         player.displayClientMessage(Component.translatable("rdpl.container_upgrade." + key), true);
         return InteractionResult.FAIL;
     }
 
-    private static boolean place(Level level, BlockPos pos, BlockState state) {
+    static InteractionResult denied(Player player, BlockPos pos, String why) {
+        ContentLog.LOGGER.info("Container upgrade: {} was refused at {} ({})", player.getName().getString(), pos, why);
+        player.displayClientMessage(Component.translatable("rdpl.carry.denied"), true);
+        return InteractionResult.FAIL;
+    }
+
+    static boolean place(Level level, BlockPos pos, BlockState state) {
+        return place(level, pos, state, Block.UPDATE_CLIENTS);
+    }
+
+    static boolean place(Level level, BlockPos pos, BlockState state, int flags) {
         swapping = true;
-        try { return level.setBlock(pos, state, Block.UPDATE_CLIENTS); }
+        try { return level.setBlock(pos, state, flags); }
         finally { swapping = false; }
     }
 

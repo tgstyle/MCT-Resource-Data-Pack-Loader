@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -83,11 +84,28 @@ public final class ContentParserContainers {
                 ContentLog.LOGGER.error("A path in the container upgrade {} names no fromBlock or no toBlock, skipping it", key);
                 continue;
             }
-            paths.add(new ContainerUpgradeDef.Path(from, to));
+            paths.add(path(key, element.getAsJsonObject(), from, to));
         }
         if (paths.isEmpty()) { ContentLog.LOGGER.error("The container upgrade {} has no valid path, so it fits nothing", key); }
         boolean carry = "carry".equals(Json.choice(held, "unopenedLoot", "refuse", "Container upgrade " + key, Arrays.asList("refuse", "carry")));
         return new ContainerUpgradeDef(Collections.unmodifiableList(paths), Json.getBoolean(held, "consume", true), carry);
+    }
+
+    private static ContainerUpgradeDef.Path path(ResourceLocation key, JsonObject entry, String from, String to) {
+        String owner = "Container upgrade " + key;
+        ContainerUpgradeDef.Contents contents = ContainerUpgradeDef.Contents.valueOf(Json.choice(entry, "contents", "container", owner, Arrays.asList("container", "slots", "nbt")).toUpperCase(Locale.ROOT));
+        for (String idle : idleKeys(contents)) {
+            if (entry.has(idle)) { ContentLog.LOGGER.error("The container upgrade {} sets {} on the path from {}, which has no effect on this path", key, idle, from); }
+        }
+        boolean half = "half".equals(Json.choice(entry, "linked", "refuse", owner, Arrays.asList("refuse", "half")));
+        boolean fit = "fit".equals(Json.choice(entry, "fewerSlots", "refuse", owner, Arrays.asList("refuse", "fit")));
+        boolean carry = "carry".equals(Json.choice(entry, "state", "carry", owner, Arrays.asList("carry", "named")));
+        return new ContainerUpgradeDef.Path(from, to, contents, half, fit, Json.getBoolean(entry, "strict", true), carry);
+    }
+
+    private static List<String> idleKeys(ContainerUpgradeDef.Contents contents) {
+        if (contents == ContainerUpgradeDef.Contents.CONTAINER) { return Arrays.asList("linked", "fewerSlots", "strict", "state"); }
+        return contents == ContainerUpgradeDef.Contents.NBT ? Arrays.asList("linked", "fewerSlots") : Collections.emptyList();
     }
 
     static String curioSlot(ResourceLocation key, JsonObject json) {

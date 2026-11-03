@@ -95,6 +95,8 @@
   "rdpl.container_upgrade.unavailable": "Esta melhoria não tem em que se transformar",
   "rdpl.container_upgrade.smaller": "Esse contêiner é grande demais para esta melhoria",
   "rdpl.container_upgrade.in_use": "Alguém está com esse contêiner aberto",
+  "rdpl.container_upgrade.linked": "Dois blocos compartilham este armazenamento",
+  "rdpl.container_upgrade.cannot_move": "Há algo lá dentro que não pode ser movido",
   "rdpl.container_upgrade.loot": "Abra esse contêiner antes de melhorá-lo",
   "rdpl.portway.activated": "%s ativada (%s conhecidas)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
