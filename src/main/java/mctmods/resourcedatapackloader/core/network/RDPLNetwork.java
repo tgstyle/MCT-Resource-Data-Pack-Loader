@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.client.gui.intro.WorldIntroScreen;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
@@ -20,14 +21,17 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackg
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
@@ -63,6 +67,8 @@ public final class RDPLNetwork {
         registrar.playToClient(TalkMessage.TYPE, TalkMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { TalkScreen.receive(message); } });
         registrar.playToServer(TalkPickMessage.TYPE, TalkPickMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { DialogTalk.pick(player, message.index()); } });
         registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
+        registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ClientWeights.receive(message); } });
+        registrar.playToClient(WeightFloorsMessage.TYPE, WeightFloorsMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WeightStacks.receiveFloors(message.floors()); } });
     }
 
     public static void openWorn() { ClientPacketDistributor.sendToServer(new OpenWornMessage()); }
@@ -97,6 +103,10 @@ public final class RDPLNetwork {
     public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(StringListCodec.capped(open))); }
 
     public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return send(player, new UnlocksMessage(StringListCodec.capped(open))); }
+
+    public static boolean sendWeight(ServerPlayer player, int total, int limit, int tier, boolean exempt) { return send(player, new WeightMessage(total, limit, tier, exempt)); }
+
+    public static void sendWeightFloors(ServerPlayer player, Map<Item, Integer> floors) { send(player, new WeightFloorsMessage(floors)); }
 
     private static List<Integer> boxed(int[] values) { return Arrays.stream(values).boxed().toList(); }
 

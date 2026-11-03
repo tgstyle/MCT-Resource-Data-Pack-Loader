@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HeartsHud;
 import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.hud.PackTooltips;
 import mctmods.resourcedatapackloader.client.gui.hud.ProspectTooltip;
+import mctmods.resourcedatapackloader.client.gui.hud.WeightHud;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
@@ -18,6 +19,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentClient;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.client.util.FaceCacheReset;
@@ -51,6 +53,9 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
         modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAbove(VanillaGuiLayers.PLAYER_HEALTH, ResourceDataPackLoader.id("hearts"), HeartsHud::onLayer));
         NeoForge.EVENT_BUS.addListener(HeartsHud::onPre);
+        modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAbove(VanillaGuiLayers.HOTBAR, ResourceDataPackLoader.id("weight"), WeightHud::onLayer));
+        NeoForge.EVENT_BUS.addListener(WeightHud::onScreen);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> ClientWeights.tick());
         modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(ResourceDataPackLoader.id("cards"), CardOverlay::onLayer));
         modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(ResourceDataPackLoader.id("center_cards"), CenterCard::onLayer));
         NeoForge.EVENT_BUS.addListener(CenterCard::onClientTick);
@@ -83,6 +88,7 @@ public class ClientSetup {
             AnvilCosts.leave();
             ContentSkyGates.clear();
             ClientItemLocks.clear();
+            ClientWeights.clear();
         });
         ContentClient.register(modBus);
         if (Config.worldgen.worldgenDebug()) {

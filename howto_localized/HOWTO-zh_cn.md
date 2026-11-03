@@ -2580,7 +2580,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     { "worn": ["mypack:strap_belt"], "add": 25 }
   ],
   "tiers": [
-    { "above": 0.75, "speed": -0.10 },
+    { "above": 0.75, "speed": -0.10, "color": "FFFF00" },
     { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
       "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
     { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
@@ -2589,6 +2589,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
   "countContents": "rdpl",
   "wornFactor": 1.0,
   "creative": false,
+  "tooltip": true,
+  "hud": { "show": "tiers", "inventory": true, "anchor": "hotbar", "x": 0, "y": 0 },
   "items": [
     { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
     { "names": ["minecraft:cobblestone", "minecraft:stone_*"], "weight": 1.5 },
@@ -2615,15 +2617,19 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `countContents`   | 否   | `none`、`rdpl` 或 `all`    | `rdpl`  | 哪些随身容器计入其内容物，见下文                                                                     |
 | `wornFactor`      | 否   | 0 或更大的数字             | `1.0`   | 盔甲与 Curios 槽位计入的比例                                                                         |
 | `creative`        | 否   | 布尔值                     | `false` | 创造模式玩家是否承受负重。旁观者永远不受影响                                                         |
+| `tooltip`         | 否   | 布尔值                     | `true`  | 物品提示框是否显示重量，见下文                                                                       |
+| `hud`             | 否   | 对象                       | 见下文  | 重量条与库存行，见下文                                                                               |
 | `items`           | 否   | 物品条目列表               | 无      | 每个物品或分组的重量，见下文                                                                         |
 
 `items` 是一个条目列表。每个条目都要有 `weight`（0 或更大的数字，必需；没有它的条目会被跳过，并在日志中留下一行记录），以及至少一种选取物品的方式：`names`（与其他地方相同的形式：`namespace:name`，以及结尾的 `*` 表示所有以其前面部分开头的名称；方块的名称按其物品计重）、`namespaces`（该模组的每个物品）或 `tags`（物品标签中的每个物品，写作 `namespace:path`，不带 `#`）。当多条规则匹配同一个物品时，最具体的规则生效，顺序如下：物品、方块或覆盖文件自身的 `weight` 键；`names` 条目；`tags`；`namespaces` 或结尾 `*` 的前缀；最后是 `default`。`oreDict` 键在此处不会被读取，并会在日志中记录一条警告。
 
 `bonuses` 是一个条目列表，每个条目在其条件成立期间为上限加上 `add`。`add` 是必需的数字，可以为负。`advancement`（`namespace:path`）在玩家获得该进度后成立，`worn`（物品名称的列表）则在其中任一物品装备于盔甲、副手或 Curios 槽位时成立。两个条件都没有的条目会被跳过，并在日志中注明。
 
-`tiers` 是按 `above` 排序的阶段列表，`above` 是 `limit` 的倍数（`0.75` 即 75%）。生效的是达到的最高阶段，阶段之间不叠加。每个阶段包括：`above`（大于 0 的数字，必需）、`speed`（-1 到 0，默认 `0`，移动速度的变化，`-0.25` 即慢 25%）、`sprint`（布尔值，默认 `true`，`false` 时禁止疾跑）、`jump`（布尔值，默认 `true`，`false` 时禁止跳跃）、`exhaustion`（0 或更大的数字，默认 `0`，每秒额外增加的饥饿消耗）、`effects`（与食物效果相同的对象列表，玩家处于该阶段期间持续生效，每 2 秒刷新一次，粒子隐藏）、`message`（文本或语言键，玩家进入该阶段时显示在动作栏上）。
+`tiers` 是按 `above` 排序的阶段列表，`above` 是 `limit` 的倍数（`0.75` 即 75%）。生效的是达到的最高阶段，阶段之间不叠加。每个阶段包括：`above`（大于 0 的数字，必需）、`speed`（-1 到 0，默认 `0`，移动速度的变化，`-0.25` 即慢 25%）、`sprint`（布尔值，默认 `true`，`false` 时禁止疾跑）、`jump`（布尔值，默认 `true`，`false` 时禁止跳跃）、`exhaustion`（0 或更大的数字，默认 `0`，每秒额外增加的饥饿消耗）、`effects`（与食物效果相同的对象列表，玩家处于该阶段期间持续生效，每 2 秒刷新一次，粒子隐藏）、`color`（十六进制颜色，例如 `FF8800`，默认 `FFFFFF`，玩家处于该阶段时重量条的颜色）、`message`（文本或语言键，玩家进入该阶段时显示在动作栏上）。
 
-`hardLimit` 会拒绝让玩家超过 `limit` 乘以 `hardLimit` 的物品。在 `pickup` 或 `both` 模式下，玩家只能拾取掉落物品堆中放得下的部分，其余留在地上，并且动作栏会提示太重了。拒绝从容器中取出的物品（`take`）尚未生效。`stackBudget` 会将每个有重量的物品的堆叠上限设为 `stackBudget` 除以其重量的结果（向下取整），但不会低于 `stackBudgetMin`，也不会高于物品自身的堆叠上限。拥有多个元数据重量的物品采用最重的那个；可损耗的物品、本来就只能堆叠为 1 的物品以及重量为 0 的物品保留其原有堆叠上限。之后 `/give` 等命令会拒绝超过新堆叠上限的数量。
+玩家所见：开启 `tooltip` 后，物品的提示框末尾会有一行灰色文字显示其重量；若一叠有多个，还会显示整叠的重量。携带的容器会额外添加一行，显示其内容物的重量。`hud` 接受 `show`（`never`、`tiers` 或 `always`，默认 `tiers`，即只有到达第一个阶段后才显示重量条）和 `inventory`（布尔值，默认 `true`，在库存界面下方显示一行总重与上限）。`anchor`（`hotbar`、`top_left`、`top`、`top_right`、`left`、`center`、`right`、`bottom_left`、`bottom` 或 `bottom_right`，默认 `hotbar`）决定重量条的位置：快捷栏右侧，或屏幕的角落、边缘、正中。`x` 和 `y`（整数，默认 `0`）再从该位置向右、向下偏移，负值则向左、向上。重量条在 `limit` 乘以 `hardLimit` 时满格（没有 `hardLimit` 时以 `limit` 为满格），颜色取当前阶段的 `color`。开启配置项 `vanillaClients` 时，上述内容都不会绘制。
+
+`hardLimit` 会拒绝让玩家超过 `limit` 乘以 `hardLimit` 的物品。在 `pickup` 或 `both` 模式下，玩家只能拾取掉落物品堆中放得下的部分，其余留在地上，并且动作栏会提示太重了。在 `take` 或 `both` 模式下，会使玩家超过上限的点击会被拒绝，什么都不会移动：从箱子或其他容器中取出、合成或熔炼的产物，或者打开的随身容器（按 `containerFactor` 比例计算，因此在 `1` 时永远不会发生）。左键或 Shift 点击按整个堆叠计重，右键点击按其一半（向上取整）计重，动作栏会提示太重了。未检查的情况：合成产物上的 Shift 点击只计算第一次合成的重量，以及其他模组覆盖了 `mayPickup` 却没有调用原方法的槽位，例如许多模组存储方块所用的 NeoForge `SlotItemHandler`。`stackBudget` 会将每个有重量的物品的堆叠上限设为 `stackBudget` 除以其重量的结果（向下取整），但不会低于 `stackBudgetMin`，也不会高于物品自身的堆叠上限。拥有多个元数据重量的物品采用最重的那个；可损耗的物品、本来就只能堆叠为 1 的物品以及重量为 0 的物品保留其原有堆叠上限。之后 `/give` 等命令会拒绝超过新堆叠上限的数量。
 
 计入负重的有：主物品栏和快捷栏、副手、光标上的物品堆、盔甲与 Curios 槽位（乘以 `wornFactor`）、用 RDPL 搬运功能携带的方块，以及 `countContents` 允许的随身容器。打开的箱子、末影箱和地面上的物品不计入。`countContents` 可取 `none`（只计容器物品本身）、`rdpl`（RDPL 袋与容器物品）或 `all`（还包括其他带有物品的随身物品，例如潜影盒或其他模组的背包，通过物品处理器、物品的方块实体数据（带有 `Items` 列表），或容器、捆绑包组件计入，最多嵌套 3 层）。`containerFactor` 决定容器内容物计入的比例。
 

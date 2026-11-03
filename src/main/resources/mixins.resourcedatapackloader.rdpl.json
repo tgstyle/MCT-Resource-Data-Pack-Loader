@@ -22,6 +22,8 @@
         "world.item.enchantment.EnchantmentHelperMixin",
         "world.inventory.CraftingMenuMixin",
         "world.inventory.ItemCombinerMenuMixin",
+        "world.inventory.SlotMixin",
+        "world.inventory.AbstractContainerMenuMixin",
         "world.item.ItemStackMixin",
         "world.attribute.EnvironmentAttributeSystemBuilderMixin",
         "world.level.biome.BiomeMixin",

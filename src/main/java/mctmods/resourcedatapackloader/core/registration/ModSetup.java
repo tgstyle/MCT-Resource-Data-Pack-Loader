@@ -100,6 +100,7 @@ import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.weights.WeightStacks;
+import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -322,6 +323,10 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onClone);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onAdvancement);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onLogout);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onTick);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onLogin);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onLogout);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onDatapackSync);
         NeoForge.EVENT_BUS.addListener(ContentItemLocks::onServerStarted);
         NeoForge.EVENT_BUS.addListener(GateEvents::onTravel);
         NeoForge.EVENT_BUS.addListener(GateEvents::onKill);
@@ -506,7 +511,7 @@ public class ModSetup {
 
     private static void onAddReloadListeners(AddServerReloadListenersEvent event) {
         LineCompat.recipeRegistries(event);
-        event.addListener(ResourceDataPackLoader.id("weight_release"), (_, _, barrier, _) -> { WeightStacks.release(); return barrier.wait((Void) null); });
+        event.addListener(ResourceDataPackLoader.id("weight_release"), (_, _, barrier, _) -> { WeightStacks.release(); return barrier.wait(Unit.INSTANCE).thenAccept(_ -> {}); });
         event.addDependency(ResourceDataPackLoader.id("weight_release"), VanillaServerListeners.FIRST);
         event.addListener(ResourceDataPackLoader.id("recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 

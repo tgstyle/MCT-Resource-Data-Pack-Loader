@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.gates;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
-import mctmods.resourcedatapackloader.common.util.PlayerSetSync;
+import mctmods.resourcedatapackloader.common.util.PlayerValueSync;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 
 import java.util.HashSet;
@@ -13,7 +13,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class GateSync {
     private static final Set<String> WATCHED = new HashSet<>();
-    private static final PlayerSetSync SYNC = new PlayerSetSync(GateSync::open, () -> !WATCHED.isEmpty(), RDPLNetwork::sendGates);
+    private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(GateSync::open, () -> !WATCHED.isEmpty(), RDPLNetwork::sendGates);
     private static final int EVERY = 20;
 
     private GateSync() {}

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.weights;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.util.ItemHolders;
+import mctmods.resourcedatapackloader.core.util.Summary;
 
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -39,6 +40,15 @@ public final class WeightStacks {
     public static synchronized void release() { restore(); }
 
     public static void recipeFloors(RecipeMap recipes) { loaded = recipes; }
+
+    public static Map<Item, Integer> floors() { return floors; }
+
+    public static void receiveFloors(Map<Item, Integer> sent) {
+        if (sent.equals(floors)) { return; }
+        floors = sent;
+        apply();
+        Summary.info("weights", "Received " + sent.size() + " recipe floors");
+    }
 
     public static void bindFloors() {
         RecipeMap recipes = loaded;

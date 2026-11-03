@@ -1,12 +1,18 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
+import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.config.Config;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
@@ -49,7 +55,23 @@ public final class PackTooltips {
         }
     }
 
+    private static Component grey(String key, String... values) { return Component.translatable(key, (Object[]) values).withStyle(ChatFormatting.GRAY); }
+
+    private static void weight(ItemStack stack, HolderLookup.Provider access, List<Component> tooltip) {
+        WeightDef settings = ContentWeights.settings();
+        if (Config.content.vanillaClients() || !settings.tooltip || !ContentWeights.any() || stack.isEmpty()) { return; }
+        long single = ContentWeights.of(stack);
+        long held = CarriedWeight.single(stack, settings, access) - single;
+        if (single > 0L) {
+            String each = ClientWeights.format(single);
+            tooltip.add(stack.getCount() > 1 ? grey("rdpl.weight.stack", each, ClientWeights.format((single + held) * stack.getCount())) : grey("rdpl.weight.line", each));
+        }
+        if (held > 0L) { tooltip.add(grey("rdpl.weight.contents", ClientWeights.format(held))); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
+        HolderLookup.Provider access = event.getContext().registries();
+        if (access != null) { weight(event.getItemStack(), access, event.getToolTip()); }
         affixes(event.getItemStack(), event.getToolTip());
         if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();

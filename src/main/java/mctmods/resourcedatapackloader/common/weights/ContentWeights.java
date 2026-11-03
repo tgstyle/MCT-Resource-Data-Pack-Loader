@@ -78,6 +78,7 @@ public final class ContentWeights {
         own(sources, DEFINED);
         own(sources, OVERRIDDEN);
         state = new State(settings.build(), sources, new IdentityHashMap<>()).bound();
+        WeightStacks.bindFloors();
         WeightStacks.apply();
         if (!sources.isEmpty()) { Summary.info("weights", "Loaded " + sources.size() + " weight entries"); }
     }
