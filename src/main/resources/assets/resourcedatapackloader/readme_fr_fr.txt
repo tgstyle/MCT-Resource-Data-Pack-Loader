@@ -304,6 +304,7 @@ Chacun de ceux-ci est un dossier sous assets/<yourpack> :
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 Les blocs existent sous ces formes, fixées par le champ "type" :
 

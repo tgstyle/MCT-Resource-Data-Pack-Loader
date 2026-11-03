@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.recipes;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.blocks.compress.CompressedRecipes;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.event.RegistryEvent;
@@ -24,6 +25,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         RecipeRemovals.apply(event.getRegistry());
         RecipeLocks.reload();
         ContentItemLocks.load();
+        ContentWeights.load();
         RecipeBlocking.apply(event.getRegistry());
     }
 }

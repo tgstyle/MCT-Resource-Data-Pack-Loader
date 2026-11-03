@@ -290,6 +290,7 @@ Cada um destes é uma pasta em assets/<yourpack>:
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 Os blocos vêm nestas formas, definidas pelo campo "type":
 

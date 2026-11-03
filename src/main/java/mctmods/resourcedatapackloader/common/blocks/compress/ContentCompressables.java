@@ -109,6 +109,6 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
         }
         return new BlockDef(name, ContentBlockTypes.DEFAULT, source.material, source.mapColor, source.sound, source.creativeTab, source.tool, source.toolLevel, true, 0, 0, 1.0F, byMeta, Collections.unmodifiableList(visible), source.requires,
                 ContentBlockTypes.defaultLayer(ContentBlockTypes.DEFAULT, true), true, true, 255, 0.6F, null, 0, 0, "minecraft:stone", 0, false, BlockDef.PARTICLE_FLAME, true, 0xFFFFFF, "", "", 7, null, null, null,
-                Collections.emptyList(), Collections.emptyList(), "", "", 5, null, "", null, null, Collections.emptyList(), true, null);
+                Collections.emptyList(), Collections.emptyList(), "", "", 5, null, "", null, null, Collections.emptyList(), true, null, -1);
     }
 }

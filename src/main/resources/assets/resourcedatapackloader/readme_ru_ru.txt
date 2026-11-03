@@ -288,6 +288,7 @@ RDPL хорош, чтобы заменить один-два рецепта, а 
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 Блоки бывают таких видов, вид задаёт поле "type":
 

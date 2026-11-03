@@ -300,6 +300,7 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 

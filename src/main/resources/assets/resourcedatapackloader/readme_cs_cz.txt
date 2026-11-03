@@ -285,6 +285,7 @@ Každá z těchto věcí je složka pod assets/<yourpack>:
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 Bloky existují v těchto tvarech, nastavených polem "type":
 

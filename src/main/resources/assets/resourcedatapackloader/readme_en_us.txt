@@ -280,6 +280,7 @@ Each of these is a folder under assets/<yourpack>:
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 Blocks come in these shapes, set by the "type" field:
 

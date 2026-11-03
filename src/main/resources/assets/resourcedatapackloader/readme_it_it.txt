@@ -300,6 +300,7 @@ Ognuna di queste è una cartella sotto assets/<yourpack>:
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 I blocchi hanno queste forme, definite dal campo "type":
 

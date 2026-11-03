@@ -45,6 +45,13 @@ public final class ItemSelection {
         oreNames.addAll(Json.strings(json, "oreDict"));
     }
 
+    public static boolean isMetaName(String name) {
+        String[] parts = Settings.lower(name).split(":");
+        return parts.length == 3 && !"*".equals(parts[2]);
+    }
+
+    public static boolean isPrefixName(String name) { return Settings.lower(name).endsWith("*") && Settings.lower(name).split(":").length == 2; }
+
     public boolean unnamed() { return names.isEmpty() && prefixes.isEmpty() && namedMetas.isEmpty() && oreNames.isEmpty(); }
 
     public boolean any() { return !items.isEmpty() || !metas.isEmpty() || !blocks.isEmpty(); }

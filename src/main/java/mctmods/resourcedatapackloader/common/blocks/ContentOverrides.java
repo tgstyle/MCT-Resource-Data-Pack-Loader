@@ -5,9 +5,11 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffe
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWeights;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -57,6 +59,7 @@ public final class ContentOverrides {
         restoreAll();
         DEFS.clear();
         EDIBLE.clear();
+        ContentWeights.clearOverrides();
         if (!Config.content.overrides) { return; }
         PackManager.get().forEach(PackManager.OVERRIDES, PackManager.JSON, (namespace, path, contents) -> {
             ResourceLocation source = new ResourceLocation(namespace, PackManager.OVERRIDES + "/" + path);
@@ -101,7 +104,8 @@ public final class ContentOverrides {
                 stringOrNull(json, "containerItem"),
                 json.has("effects") ? effects(source, json) : null,
                 json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
-                Json.strings(json, "requires"));
+                Json.strings(json, "requires"),
+                ContentParserWeights.weight(json, source));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
@@ -154,6 +158,7 @@ public final class ContentOverrides {
             else { item.setContainerItem(container.getItem()); }
         }
         if (def.food != null) { applyFood(def, def.food, item); }
+        if (def.weight >= 0) { ContentWeights.override(def.target, def.weight); }
         return true;
     }
 

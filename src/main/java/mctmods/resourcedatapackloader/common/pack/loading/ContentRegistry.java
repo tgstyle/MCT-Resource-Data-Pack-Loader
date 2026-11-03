@@ -37,6 +37,7 @@ import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.common.util.ContentMaterials;
 import mctmods.resourcedatapackloader.common.util.ContentOreDict;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.CofhWorldContainer;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.cofh.ContentCofhWorld;
@@ -428,6 +429,7 @@ public final class ContentRegistry {
 
     private static void resolve() {
         for (BlockDef def : BLOCK_DEFS.values()) {
+            if (def.weight >= 0) { ContentWeights.define(def.registryName, def.weight); }
             for (BlockVariant variant : def.visible) {
                 for (DropDef drop : variant.drops) {
                     ResourceLocation entity = drop.entity;
@@ -444,6 +446,7 @@ public final class ContentRegistry {
             }
         }
         for (ItemDef def : ITEM_DEFS.values()) {
+            if (def.weight >= 0) { ContentWeights.define(def.registryName, def.weight); }
             if (!def.container.isEmpty()) { def.resolveContainer(ContentStacks.parse(def.registryName, def.container, 1)); }
             if (def.upgrade != null) { ContentContainerUpgrades.check(def); }
         }

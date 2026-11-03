@@ -65,10 +65,11 @@ public final class BlockDef {
     @Nullable public final ContainerDef container;
     @Nullable public final BellDef bell;
     @Nullable public final PortwayDef portway;
+    public final int weight;
     public final List<String> spreadsOnto;
     public final boolean needsOxygen;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell, List<String> spreadsOnto, boolean needsOxygen, @Nullable PortwayDef portway) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell, List<String> spreadsOnto, boolean needsOxygen, @Nullable PortwayDef portway, int weight) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -116,6 +117,7 @@ public final class BlockDef {
         this.spreadsOnto = spreadsOnto;
         this.needsOxygen = needsOxygen;
         this.portway = portway;
+        this.weight = weight;
     }
 
     public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }

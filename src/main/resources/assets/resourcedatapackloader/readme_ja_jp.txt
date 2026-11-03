@@ -298,6 +298,7 @@ mypack:copper_oreとして登録されます。記入したり間違えたりす
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 ブロックには、「type」フィールドで決まる次の形があります。
 

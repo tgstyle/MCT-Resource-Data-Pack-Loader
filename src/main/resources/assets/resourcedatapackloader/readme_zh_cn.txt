@@ -265,6 +265,7 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当放在旁边
     enchantments     dice             games            orders
     ranks            recipe_locks     spawn_locks
     item_locks
+    weights
 
 方块有以下几种形态，由“type”字段决定：
 

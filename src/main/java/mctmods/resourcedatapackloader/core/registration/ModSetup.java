@@ -106,6 +106,9 @@ import mctmods.resourcedatapackloader.common.villages.ContentPierCargo;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.villages.RecurrentVillages;
 import mctmods.resourcedatapackloader.common.villages.VillagePieces;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
+import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveAmbience;
@@ -167,6 +170,8 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
+        MinecraftForge.EVENT_BUS.register(PlayerWeights.class);
+        MinecraftForge.EVENT_BUS.register(WeightEnforce.class);
         MinecraftForge.EVENT_BUS.register(ContentStorageSwap.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
@@ -335,6 +340,7 @@ public class ModSetup {
         FurnaceBlocking.apply();
         RecipeDisabled.furnace();
         ContentOverrides.reload();
+        ContentWeights.load();
         ContentReplacements.reload();
         ContentStructurePlacement.reload();
         ContentEntityTicks.reload();

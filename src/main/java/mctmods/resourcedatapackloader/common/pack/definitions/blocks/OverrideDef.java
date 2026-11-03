@@ -25,8 +25,9 @@ public final class OverrideDef {
     @Nullable public final List<PotionEffectDef> effects;
     @Nullable public final FoodDef food;
     public final List<String> requires;
+    public final int weight;
 
-    public OverrideDef(ResourceLocation target, ResourceLocation source, @Nullable Float hardness, @Nullable Float resistance, @Nullable Float slipperiness, @Nullable Integer light, @Nullable Integer lightOpacity, @Nullable String soundType, @Nullable String harvestTool, int harvestToolLevel, @Nullable Integer flammability, int fireSpread, @Nullable Integer maxStackSize, @Nullable Integer maxDamage, @Nullable String containerItem, @Nullable List<PotionEffectDef> effects, @Nullable FoodDef food, List<String> requires) {
+    public OverrideDef(ResourceLocation target, ResourceLocation source, @Nullable Float hardness, @Nullable Float resistance, @Nullable Float slipperiness, @Nullable Integer light, @Nullable Integer lightOpacity, @Nullable String soundType, @Nullable String harvestTool, int harvestToolLevel, @Nullable Integer flammability, int fireSpread, @Nullable Integer maxStackSize, @Nullable Integer maxDamage, @Nullable String containerItem, @Nullable List<PotionEffectDef> effects, @Nullable FoodDef food, List<String> requires, int weight) {
         this.target = target;
         this.source = source;
         this.hardness = hardness;
@@ -45,11 +46,12 @@ public final class OverrideDef {
         this.effects = effects;
         this.food = food;
         this.requires = requires;
+        this.weight = weight;
     }
 
     public boolean touchesBlock() { return hardness != null || resistance != null || slipperiness != null || light != null || lightOpacity != null || soundType != null || harvestTool != null || flammability != null; }
 
-    public boolean touchesItem() { return maxStackSize != null || maxDamage != null || containerItem != null || food != null; }
+    public boolean touchesItem() { return maxStackSize != null || maxDamage != null || containerItem != null || food != null || weight >= 0; }
 
     public boolean touchesPotionType() { return effects != null; }
 

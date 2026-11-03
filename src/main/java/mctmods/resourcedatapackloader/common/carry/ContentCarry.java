@@ -28,6 +28,8 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
+import net.minecraft.init.Items;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
@@ -71,6 +73,14 @@ public final class ContentCarry {
     public static boolean breaking() { return breaking; }
 
     public static boolean probing() { return probing; }
+
+    @SuppressWarnings("deprecation") public static ItemStack carried(EntityPlayer player) {
+        NBTTagCompound held = PlayerPersisted.read(player, CARRY);
+        if (!BLOCK.equals(held.getString(KIND))) { return ItemStack.EMPTY; }
+        Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(held.getString(BLOCK)));
+        Item item = block == null ? Items.AIR : Item.getItemFromBlock(block);
+        return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item, 1, block.damageDropped(block.getStateFromMeta(held.getInteger(META))));
+    }
 
     public static boolean listsMob(Entity target) {
         rules();

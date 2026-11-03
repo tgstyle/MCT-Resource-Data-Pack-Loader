@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.worldgen.Biomes;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
@@ -90,6 +91,7 @@ public final class CommandShared {
         SpawnLocks.load();
         RecipeLocks.reload();
         ContentItemLocks.load();
+        ContentWeights.load();
         ContentItemLocks.report(server);
         ItemLockSync.resendAll(server);
         for (WorldServer world : server.worlds) {

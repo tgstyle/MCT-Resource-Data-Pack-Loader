@@ -70,7 +70,7 @@ import net.minecraftforge.common.DimensionManager;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "weight");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -172,6 +172,7 @@ public class ServerCommands extends CommandBase {
         if (args.length >= 2 && "gate".equals(args[0])) { return GateCommand.complete(server, args); }
         if (args.length >= 2 && "portway".equals(args[0])) { return PortwayCommand.complete(server, args); }
         if (args.length >= 2 && "talk".equals(args[0])) { return TalkCommand.complete(server, args); }
+        if (args.length >= 2 && "weight".equals(args[0])) { return WeightCommand.complete(server, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
         if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
         if (args.length == 3 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
@@ -244,6 +245,7 @@ public class ServerCommands extends CommandBase {
         else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
         else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
         else if ("talk".equals(args[0])) { TalkCommand.run(server, sender, args, getUsage(sender)); }
+        else if ("weight".equals(args[0]) && args.length <= 2) { WeightCommand.run(server, sender, args); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
