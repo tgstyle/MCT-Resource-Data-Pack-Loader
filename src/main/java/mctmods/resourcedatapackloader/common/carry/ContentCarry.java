@@ -206,7 +206,7 @@ public final class ContentCarry {
         player.sendStatusMessage(new TextComponentTranslation("rdpl.carry.down", name), true);
     }
 
-    private static boolean twoBlock(IBlockState state) { return state.getPropertyKeys().contains(BlockDoor.HALF) || state.getPropertyKeys().contains(BlockDoublePlant.HALF) || state.getPropertyKeys().contains(BlockBed.PART); }
+    public static boolean twoBlock(IBlockState state) { return state.getPropertyKeys().contains(BlockDoor.HALF) || state.getPropertyKeys().contains(BlockDoublePlant.HALF) || state.getPropertyKeys().contains(BlockBed.PART); }
 
     private static boolean permits(EntityPlayerMP player, BlockPos pos) {
         breaking = true;

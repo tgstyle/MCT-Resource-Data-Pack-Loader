@@ -93,6 +93,21 @@ public final class ContentChests {
         }
     }
 
+    public static void parted(World world, BlockPos pos, Block was) {
+        for (EnumFacing side : EnumFacing.Plane.HORIZONTAL) {
+            BlockPos beside = pos.offset(side);
+            if (!world.isBlockLoaded(beside)) { continue; }
+            IBlockState besideState = world.getBlockState(beside);
+            TileEntity other = world.getTileEntity(beside);
+            if (besideState.getBlock() != was || !(other instanceof IChestPartner)) { continue; }
+            int partner = ((IChestPartner) other).rdpl$partner();
+            if (partner != UNKEYED && partner != side.getOpposite().getIndex()) { continue; }
+            ((IChestPartner) other).rdpl$setPartner(SINGLE);
+            world.notifyBlockUpdate(beside, besideState, besideState, 3);
+        }
+        recheck(world, pos);
+    }
+
     @Nullable private static EnumFacing candidate(World world, BlockPos at, EnumFacing side, Block block) {
         BlockPos beside = at.offset(side);
         IBlockState state = world.getBlockState(beside);

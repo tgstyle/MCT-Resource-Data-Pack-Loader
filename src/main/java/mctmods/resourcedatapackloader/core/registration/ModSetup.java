@@ -22,6 +22,7 @@ import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.cards.CardScan;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.command.ServerCommands;
+import mctmods.resourcedatapackloader.common.containers.ContentStorageSwap;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.dialogs.DialogEvents;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
@@ -165,6 +166,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
+        MinecraftForge.EVENT_BUS.register(ContentStorageSwap.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
         LootTableList.register(ContentPierCargo.LOOT_TABLE);

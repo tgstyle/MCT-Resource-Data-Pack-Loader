@@ -1133,7 +1133,9 @@ Una voce di `wornEffects` accetta `potion`, `amplifier`, `ambient` e `showPartic
   "upgrade": {
     "paths": [
       { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
-      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "othermod:crate", "toBlock": "mypack:iron_chest:2", "contents": "slots", "linked": "half", "fewerSlots": "fit", "state": "named" },
+      { "fromBlock": "mypack:big_barrel", "toBlock": "mypack:steel_barrel", "contents": "nbt" }
     ],
     "consume": true,
     "unopenedLoot": "refuse"
@@ -1150,11 +1152,27 @@ Una voce di `wornEffects` accetta `potion`, `amplifier`, `ambient` e `showPartic
 | `consume`      | booleano          | `true`      | Consuma un oggetto per ogni potenziamento. Un giocatore in modalità creativa non ne consuma mai                                                                                                                                         |
 | `unopenedLoot` | testo             | `refuse`    | Cosa fare con un contenitore la cui loot table non è ancora stata assegnata. `refuse` chiede al giocatore di aprirlo prima; `carry` sposta la loot table in attesa, così viene assegnata alla prima apertura del contenitore più grande |
 
+Ogni voce di `paths` può impostare anche questi valori, che decidono come si sposta il contenuto.
+
+| Impostazione del percorso | Tipo     | Predefinito | Cosa fa                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------- | -------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contents`                | testo    | `container` | Cosa sposta il percorso. `container` è il passaggio tra due contenitori di questo loader; `slots` sposta gli oggetti attraverso l'inventario, quindi funziona con qualsiasi blocco di stoccaggio di qualsiasi mod; `nbt` mantiene intatti i dati salvati dell'entità del blocco, per due blocchi che salvano allo stesso modo. La regola sugli slot di `toBlock` vale per `container` e per `slots`, a meno che `fewerSlots` sia `fit` |
+| `linked`                  | testo    | `refuse`    | Su un percorso `slots`, cosa fare con una cassa doppia o con qualsiasi blocco che condivide il proprio spazio con un altro. `refuse` lo rifiuta; `half` potenzia solo il blocco cliccato. Un percorso `nbt` lo rifiuta sempre                                                                                                                                                                                                          |
+| `fewerSlots`              | testo    | `refuse`    | Su un percorso `slots`, se è ammessa una destinazione con meno slot di quelli mostrati dal vecchio blocco. `refuse` la rifiuta; `fit` sistema gli oggetti negli slot disponibili e rifiuta comunque se non entrano tutti                                                                                                                                                                                                               |
+| `strict`                  | booleano | `true`      | Su un percorso `slots`, se rifiuta ciò che non può spostare con esattezza: un fluido, compreso il combustibile che un blocco tiene solo nei dati salvati, e un blocco i cui slot mostrano oggetti diversi da quelli che salva. Con `false` sposta ciò che mostrano gli slot                                                                                                                                                            |
+| `state`                   | testo    | `carry`     | Su un percorso `slots` o `nbt`, lo stato del nuovo blocco. `carry` mantiene orientamento, asse, rotazione e allagamento del vecchio dove il nuovo li ha; `named` gli dà lo stato scritto in `toBlock`, dove un numero dopo il nome è il metadato, come in `mypack:iron_chest:2`. Un `toBlock` con un numero è sempre preso come scritto                                                                                                |
+
 **Cosa si sposta.** Ogni oggetto resta nel proprio numero di slot, insieme a orientamento, nome personalizzato e serratura. Una destinazione con più colonne mostra gli stessi oggetti in una disposizione diversa, perché gli slot si contano da sinistra a destra e dall'alto in basso. Una loot table impostata sulla destinazione viene ignorata per un contenitore che ha già un contenuto.
 
 **Come tenerlo.** Tieni l'oggetto nella mano principale e fai clic destro sul contenitore. Un oggetto nella mano secondaria funziona solo restando accovacciati con la mano principale vuota.
 
 **Quando rifiuta.** L'oggetto viene conservato e la barra delle azioni ne dice il motivo: il contenitore sbagliato, una destinazione più piccola, qualcun altro lo ha aperto, la loot table non è ancora stata assegnata, oppure un terreno che il giocatore non può modificare. I bauli vanilla e i depositi di altre mod si aprono come al solito.
+
+**Altri contenitori.** Un percorso `slots` estrae gli oggetti attraverso l'inventario e li mette nel nuovo blocco, quindi il vecchio blocco può essere una cassa vanilla, un barile o lo stoccaggio di un'altra mod, e lo stesso vale per il nuovo. Un percorso `nbt` copia i dati salvati così come sono. È sicuro solo tra due blocchi che salvano allo stesso modo, perciò il potenziamento prova prima il nuovo blocco e rifiuta se non conserverebbe ciò che gli viene dato. Le chiavi che su un percorso non hanno effetto vengono nominate nel log: `linked`, `fewerSlots`, `strict` e `state` su un percorso `container`, `linked` e `fewerSlots` su un percorso `nbt`.
+
+**Cosa vede il giocatore.** Un rifiuto compare nella barra delle azioni e l'oggetto viene conservato: «Qualcuno ha aperto quel contenitore», «Due blocchi condividono questo contenitore» per una cassa doppia senza `linked: half`, e «Qualcosa all'interno non può essere spostato». L'ultimo vale per un percorso rigoroso che incontra un fluido, per un blocco il cui contenuto non può essere tolto o rimesso per intero e per una destinazione che non può tenere ciò che c'era dentro. Un contenitore la cui loot table non è ancora stata assegnata viene rifiutato su ogni percorso, a meno che `unopenedLoot` sia `carry`. Portare con sé una tabella in attesa richiede una destinazione che conservi anch'essa una loot table e, su un percorso `slots`, un blocco che non contenga ancora oggetti.
+
+**Cosa dice il log.** Al caricamento degli oggetti il log nomina un percorso che non può mai funzionare: un `fromBlock` o un `toBlock` che non è un contenitore (su un percorso `container`), un blocco che si trasforma in se stesso, un `toBlock` con meno slot (tra i contenitori di questo loader), un blocco che non contiene nulla, un blocco fatto di due blocchi che quindi non funziona mai, e un blocco sconosciuto, che fa saltare la voce. Un percorso senza `fromBlock` o senza `toBlock` viene saltato.
 
 ## Campane
 

@@ -1133,7 +1133,9 @@ Položka v `wornEffects` bere `potion`, `amplifier`, `ambient` a `showParticles`
   "upgrade": {
     "paths": [
       { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
-      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "othermod:crate", "toBlock": "mypack:iron_chest:2", "contents": "slots", "linked": "half", "fewerSlots": "fit", "state": "named" },
+      { "fromBlock": "mypack:big_barrel", "toBlock": "mypack:steel_barrel", "contents": "nbt" }
     ],
     "consume": true,
     "unopenedLoot": "refuse"
@@ -1150,11 +1152,27 @@ Položka v `wornEffects` bere `potion`, `amplifier`, `ambient` a `showParticles`
 | `consume`      | boolean        | `true`   | Spotřebuje při každém vylepšení jeden předmět. Hráč v kreativním režimu žádný nespotřebuje                                                                                                                        |
 | `unopenedLoot` | text           | `refuse` | Co dělat s kontejnerem, jehož kořist se ještě nevygenerovala. `refuse` požádá hráče, aby ho nejdřív otevřel; `carry` přenese čekající tabulku kořisti, takže se vygeneruje při prvním otevření většího kontejneru |
 
+Každý záznam v `paths` může navíc nastavit tyto hodnoty, které určují, jak se obsah přesouvá.
+
+| Nastavení cesty | Typ     | Výchozí     | Co dělá                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------- | ------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contents`      | text    | `container` | Co cesta přesouvá. `container` je změna mezi dvěma kontejnery tohoto načítače; `slots` přesouvá předměty přes inventář, takže funguje s jakýmkoli úložným blokem z jakéhokoli modu; `nbt` ponechává uložená data bloku beze změny, pro dva bloky, které ukládají stejně. Pravidlo o slotech u `toBlock` platí pro `container` a pro `slots`, pokud není `fewerSlots` nastaveno na `fit` |
+| `linked`        | text    | `refuse`    | U cesty `slots` určuje, co dělat s dvojitou truhlou nebo jiným blokem, který sdílí úložiště s dalším. `refuse` ji odmítne; `half` vylepší jen blok, na který se kliklo. Cesta `nbt` ji odmítne vždy                                                                                                                                                                                     |
+| `fewerSlots`    | text    | `refuse`    | U cesty `slots` určuje, zda je povolen cíl s menším počtem slotů, než kolik ukazuje starý blok. `refuse` ho odmítne; `fit` uloží předměty do slotů, které jsou k dispozici, a stále odmítne, pokud se nevejdou všechny                                                                                                                                                                  |
+| `strict`        | boolean | `true`      | U cesty `slots` určuje, zda odmítne to, co nelze přesunout přesně: tekutinu, včetně paliva, které blok drží jen v uložených datech, a blok, jehož sloty ukazují jiné předměty, než jaké ukládá. S `false` přesune, co sloty ukazují                                                                                                                                                     |
+| `state`         | text    | `carry`     | U cesty `slots` nebo `nbt` určuje stav nového bloku. `carry` převezme směr, osu, otočení a zaplavení starého bloku tam, kde je nový má; `named` mu dá stav zapsaný v `toBlock`, kde číslo za názvem jsou metadata, jako v `mypack:iron_chest:2`. `toBlock` s číslem se vždy bere tak, jak je zapsán                                                                                     |
+
 **Co se přenese.** Každý předmět zůstane na svém čísle slotu spolu se směrem, vlastním jménem a zámkem. Cíl s více sloupci zobrazí stejné předměty v jiném uspořádání, protože sloty se počítají zleva doprava a shora dolů. Tabulka kořisti nastavená na cíli se u kontejneru, který už má obsah, ignoruje.
 
 **Jak ho držet.** Drž předmět v hlavní ruce a klikni pravým tlačítkem na kontejner. Předmět v druhé ruce funguje jen při plížení s prázdnou hlavní rukou.
 
 **Kdy odmítne.** Předmět zůstane u tebe a akční lišta řekne proč: špatný kontejner, menší cíl, někdo jiný ho má otevřený, kořist se ještě nevygenerovala nebo místo, které hráč nesmí měnit. Obyčejné truhly z vanilly a úložiště jiných módů se otevřou jako obvykle.
+
+**Jiné úložiště.** Cesta `slots` vyndá předměty přes inventář a vloží je do nového bloku, takže starý blok může být vanilla truhla, sud nebo úložiště z jiného modu, a nový také. Cesta `nbt` přenese uložená data tak, jak jsou. To je bezpečné jen mezi dvěma bloky, které ukládají stejně, proto vylepšení nový blok nejdřív vyzkouší a odmítne, pokud by neudržel to, co dostal. Klíče, které na cestě nic nedělají, log pojmenuje: `linked`, `fewerSlots`, `strict` a `state` u cesty `container`, `linked` a `fewerSlots` u cesty `nbt`.
+
+**Co vidí hráč.** Odmítnutí se zobrazí na liště akcí a předmět zůstane zachován: „Ten kontejner má někdo otevřený“, „Tento úložný prostor sdílejí dva bloky“ u dvojité truhly bez `linked: half` a „Něco uvnitř nelze přesunout“. Poslední platí pro přísnou cestu, která narazí na tekutinu, pro blok, jehož obsah nelze celý vyndat nebo vrátit, a pro cíl, který nemůže pojmout to, co v něm bylo. Kontejner, jehož kořist se ještě nevygenerovala, se odmítne na každé cestě, pokud není `unopenedLoot` nastaveno na `carry`. Přenesení čekající tabulky vyžaduje cíl, který tabulku kořisti také drží, a u cesty `slots` blok, který zatím neobsahuje žádné předměty.
+
+**Co říká log.** Při načítání předmětů log pojmenuje cestu, která nikdy nemůže fungovat: `fromBlock` nebo `toBlock`, který není kontejner (u cesty `container`), blok, který se mění sám na sebe, `toBlock` s méně sloty (mezi kontejnery tohoto načítače), blok, který nic neobsahuje, blok, který jsou dva bloky, a proto nikdy nefunguje, a neznámý blok, kvůli kterému se záznam přeskočí. Cesta bez `fromBlock` nebo bez `toBlock` se přeskočí.
 
 ## Zvony
 

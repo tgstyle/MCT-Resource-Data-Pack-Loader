@@ -15,13 +15,25 @@ public final class ContainerUpgradeDef {
         this.carryLoot = carryLoot;
     }
 
+    public enum Contents { CONTAINER, SLOTS, NBT }
+
     public static final class Path {
         public final String from;
         public final String to;
+        public final Contents contents;
+        public final boolean linkedHalf;
+        public final boolean fit;
+        public final boolean strict;
+        public final boolean carryState;
 
-        public Path(String from, String to) {
+        public Path(String from, String to, Contents contents, boolean linkedHalf, boolean fit, boolean strict, boolean carryState) {
             this.from = from;
             this.to = to;
+            this.contents = contents;
+            this.linkedHalf = linkedHalf;
+            this.fit = fit;
+            this.strict = strict;
+            this.carryState = carryState;
         }
     }
 }
