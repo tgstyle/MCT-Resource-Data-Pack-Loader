@@ -15,11 +15,13 @@ import javax.annotation.Nullable;
 public final class GeneratedResources {
     private static final Map<PackType, Map<String, Map<String, byte[]>>> HELD = new EnumMap<>(PackType.class);
     private static final Map<PackType, Map<String, Map<String, Supplier<byte[]>>>> LATER = new EnumMap<>(PackType.class);
+    private static final Map<PackType, Map<String, Set<String>>> DEFERRED = new EnumMap<>(PackType.class);
 
     static {
         for (PackType type : PackType.values()) {
             HELD.put(type, new ConcurrentHashMap<>());
             LATER.put(type, new ConcurrentHashMap<>());
+            DEFERRED.put(type, new ConcurrentHashMap<>());
         }
     }
 
@@ -30,6 +32,16 @@ public final class GeneratedResources {
     public static void put(PackType type, String namespace, String path, byte[] contents) { HELD.get(type).computeIfAbsent(namespace, _ -> new ConcurrentHashMap<>()).put(path, contents.clone()); }
 
     public static void putLater(PackType type, String namespace, String path, Supplier<byte[]> contents) { LATER.get(type).computeIfAbsent(namespace, _ -> new ConcurrentHashMap<>()).put(path, contents); }
+
+    public static void putOnOpen(PackType type, String namespace, String path, Supplier<byte[]> contents) {
+        putLater(type, namespace, path, contents);
+        DEFERRED.get(type).computeIfAbsent(namespace, _ -> ConcurrentHashMap.newKeySet()).add(path);
+    }
+
+    public static boolean deferred(PackType type, String namespace, String path) {
+        Set<String> paths = DEFERRED.get(type).get(namespace);
+        return paths != null && paths.contains(path);
+    }
 
     @Nullable public static byte[] get(PackType type, String namespace, String path) {
         Map<String, byte[]> paths = HELD.get(type).get(namespace);
@@ -42,6 +54,8 @@ public final class GeneratedResources {
         if (made == null) { return null; }
         put(type, namespace, path, made);
         later.remove(path);
+        Set<String> deferred = DEFERRED.get(type).get(namespace);
+        if (deferred != null) { deferred.remove(path); }
         return made;
     }
 
@@ -70,6 +84,7 @@ public final class GeneratedResources {
     public static void remove(PackType type, String prefix) {
         for (Map<String, byte[]> paths : HELD.get(type).values()) { paths.keySet().removeIf(path -> path.startsWith(prefix)); }
         for (Map<String, Supplier<byte[]>> paths : LATER.get(type).values()) { paths.keySet().removeIf(path -> path.startsWith(prefix)); }
+        for (Set<String> paths : DEFERRED.get(type).values()) { paths.removeIf(path -> path.startsWith(prefix)); }
     }
 
     public static boolean holds() { return count() > 0; }
@@ -88,5 +103,6 @@ public final class GeneratedResources {
     public static void clear() {
         for (Map<String, Map<String, byte[]>> held : HELD.values()) { held.clear(); }
         for (Map<String, Map<String, Supplier<byte[]>>> later : LATER.values()) { later.clear(); }
+        for (Map<String, Set<String>> deferred : DEFERRED.values()) { deferred.clear(); }
     }
 }

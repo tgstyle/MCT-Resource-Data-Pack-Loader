@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.recipes;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedRecipes;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
@@ -59,6 +61,12 @@ public final class RecipeFiles {
                 continue;
             }
             result.put(entry.getKey(), now == was ? entry.getValue() : rewritten(entry.getValue(), now));
+        }
+        if (!listed.isEmpty()) {
+            Resource anchor = listed.values().iterator().next();
+            for (Map.Entry<Identifier, JsonElement> entry : kept.entrySet()) {
+                if (CompressedRecipes.ids().contains(entry.getKey()) && !read.containsKey(entry.getKey())) { result.put(FILES.idToFile(entry.getKey()), rewritten(anchor, entry.getValue())); }
+            }
         }
         return result;
     }

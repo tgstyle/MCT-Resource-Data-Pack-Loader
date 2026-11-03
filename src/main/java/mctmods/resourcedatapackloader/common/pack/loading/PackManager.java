@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.loading;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAssets;
 import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
 import mctmods.resourcedatapackloader.common.pack.definitions.LangGates;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
@@ -553,6 +554,7 @@ public final class PackManager {
         warned.clear();
         served.clear();
         ContentPixelMaps.forget();
+        CompressedAssets.forget();
         meta = null;
     }
 

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.util;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedFuel;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
 import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.WorldgenFiles;
@@ -199,6 +200,7 @@ public final class LineCompat {
             @Override public void container(Item item) { event.getBuilder().addContainer(item); }
         }));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, FurnaceFuelBurnTimeEvent.class, LineCompat::burnTime);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, FurnaceFuelBurnTimeEvent.class, LineCompat::compressedBurnTime);
     }
 
     private static void burnTime(FurnaceFuelBurnTimeEvent event) {
@@ -206,6 +208,11 @@ public final class LineCompat {
         if (fuel.isEmpty()) { return; }
         int time = ContentFuels.burnTime(fuel.getItem(), fuel::is);
         if (time > 0) { event.setBurnTime(time); }
+    }
+
+    private static void compressedBurnTime(FurnaceFuelBurnTimeEvent event) {
+        int time = CompressedFuel.burnTime(event.getItemStack(), base -> base.getBurnTime(event.getRecipeType(), event.getFuelValues()));
+        if (time >= 0) { event.setBurnTime(time); }
     }
 
     @Nullable public static <T> T param(LootContext context, ContextKey<T> key) { return context.getOptionalParameter(key); }

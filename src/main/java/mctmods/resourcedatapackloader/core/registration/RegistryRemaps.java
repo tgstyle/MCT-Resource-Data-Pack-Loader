@@ -88,6 +88,6 @@ public final class RegistryRemaps {
             registry.addAlias(from, renamed);
             ContentLog.LOGGER.debug("Remapped {} to {} in {}", from, renamed, name);
         }
-        catch (IllegalStateException clash) { ContentLog.LOGGER.error("Could not remap {} to {} in {}: {}", from, renamed, name, clash.getMessage()); }
+        catch (IllegalArgumentException clash) { ContentLog.LOGGER.error("Could not remap {} to {} in {}: {}", from, renamed, name, clash.getMessage()); }
     }
 }

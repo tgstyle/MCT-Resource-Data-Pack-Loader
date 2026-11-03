@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.generated;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayDef;
@@ -363,7 +364,7 @@ public final class ContentGeneratedModels {
         ContentGenerated.asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, model);
     }
 
-    @Nullable private static String texture(String namespace, String name) { return ContentGenerated.provided(PackType.CLIENT_RESOURCES, namespace, "textures/block/" + name + ".png") ? namespace + ":block/" + name : null; }
+    @Nullable private static String texture(String namespace, String name) { return ContentGenerated.provided(PackType.CLIENT_RESOURCES, namespace, "textures/block/" + name + ".png") || ContentCompressables.draws(namespace, name) ? namespace + ":block/" + name : null; }
 
     @Nullable private static String textureOr(String namespace, String name, @Nullable String fallback) {
         String found = texture(namespace, name);

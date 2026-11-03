@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.core.util;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedFuel;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
+import mctmods.resourcedatapackloader.common.loot.CompressedFuelProvider;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeRegistries;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.worldgen.WorldgenUp;
@@ -138,6 +140,7 @@ import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.floats.ContextFloatProviders;
 import net.minecraft.world.level.storage.loot.providers.number.floats.ResolvableFloat;
 import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.config.IConfigSpec;
@@ -150,6 +153,7 @@ import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
 import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
 import net.neoforged.neoforge.event.ModifyDefaultComponentsEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class LineCompat {
     public static final PushReaction PUSH_NORMAL = PushReaction.PUSH_PULL;
@@ -210,9 +214,17 @@ public final class LineCompat {
 
     public static void recipeRegistries(AddServerReloadListenersEvent event) { if (event.getServerResources().getRecipeManager() instanceof IRecipeRegistries recipes) { recipes.rdpl$registries(event.getServerResources().registryAccess); } }
 
-    public static void listen(IEventBus modBus) { modBus.addListener(ModifyDefaultComponentsEvent.class, event -> event.modifyMatching((_, _) -> true, LineCompat::fuel)); }
+    public static void listen(IEventBus modBus) {
+        modBus.addListener(ModifyDefaultComponentsEvent.class, event -> event.modifyMatching((_, _) -> true, LineCompat::fuel));
+        CompressedFuelProvider.REGISTER.register(modBus);
+        modBus.addListener(EventPriority.LOWEST, RegisterEvent.class, event -> { if (Registries.ITEM.equals(event.getRegistryKey())) { CompressedFuelProvider.publish(); } });
+    }
 
     private static void fuel(DataComponentMap.Builder components, HolderLookup.Provider context, Item item) {
+        if (CompressedFuel.layer(item)) {
+            components.set(DataComponents.COOKING_FUEL, new CookingFuel(ResolvableInt.fromKey(CompressedFuelProvider.KEY), ResolvableFloat.fromKey(ContextFloatProviders.COOKING_DEFAULT_SPEED_MULTIPLIER)));
+            return;
+        }
         HolderLookup.RegistryLookup<Item> items = context.lookupOrThrow(Registries.ITEM);
         int time = ContentFuels.burnTime(item, tag -> items.get(tag).map(set -> set.contains(BuiltInRegistries.ITEM.wrapAsHolder(item))).orElse(false));
         if (time <= 0) { return; }

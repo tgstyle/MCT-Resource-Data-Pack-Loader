@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.loading;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
+import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactions;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
@@ -84,7 +85,7 @@ public final class ContentRegistry {
         for (Map.Entry<Identifier, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
             try {
-                BlockDef def = Json.within("block definition", held.getKey(), () -> ContentParser.block(held.getKey(), held.getValue()));
+                BlockDef def = Json.within("block definition", held.getKey(), () -> ContentCompressables.read(held.getKey(), held.getValue()) ? null : ContentParser.block(held.getKey(), held.getValue()));
                 if (def != null) { BLOCK_DEFS.put(held.getKey(), def); }
             }
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }

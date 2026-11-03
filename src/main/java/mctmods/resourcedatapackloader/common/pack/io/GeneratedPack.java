@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.pack.io;
 
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.Set;
 import javax.annotation.Nonnull;
@@ -32,6 +34,14 @@ public final class GeneratedPack extends RDPLPackResources {
     @Override public void listResources(@Nonnull PackType asked, @Nonnull String namespace, @Nonnull String prefix, @Nonnull ResourceOutput out) {
         GeneratedResources.list(asked, namespace, prefix, path -> {
             Identifier location = Identifier.tryBuild(namespace, path);
+            if (location != null && GeneratedResources.deferred(asked, namespace, path)) {
+                out.accept(location, () -> {
+                    byte[] made = GeneratedResources.get(asked, namespace, path);
+                    if (made == null) { throw new FileNotFoundException(path); }
+                    return new ByteArrayInputStream(made);
+                });
+                return;
+            }
             byte[] held = GeneratedResources.get(asked, namespace, path);
             if (location != null && held != null) { out.accept(location, bytes(held)); }
         });

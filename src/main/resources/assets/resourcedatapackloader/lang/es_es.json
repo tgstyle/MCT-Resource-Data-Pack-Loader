@@ -357,5 +357,7 @@
   "rdpl.team.join.ok": "Te has unido a %s",
   "rdpl.socket.empty": "Engaste vacío",
   "rdpl.socket.filled": "Engaste: %s",
-  "rdpl.game.usage": "/rdplserver game <coin|die <caras|nombre>|dice <tirada>|advantage [tirada]|disadvantage [tirada]|pick <player|team [equipo]>|deck <draw|shuffle|left> <nombre>|teamroll [tirada]|tiebreak [objetivo]|last [cantidad]|pass> [store <objetivo>] [audience <self|team|all|radius <bloques>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <caras|nombre>|dice <tirada>|advantage [tirada]|disadvantage [tirada]|pick <player|team [equipo]>|deck <draw|shuffle|left> <nombre>|teamroll [tirada]|tiebreak [objetivo]|last [cantidad]|pass> [store <objetivo>] [audience <self|team|all|radius <bloques>|silent>]",
+  "rdpl.compressed": "Bloque comprimido: %s",
+  "rdpl.compressed.layered": "Bloque comprimido: %s (x%d)"
 }

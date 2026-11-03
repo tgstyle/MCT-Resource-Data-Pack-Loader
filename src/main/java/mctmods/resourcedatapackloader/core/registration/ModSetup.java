@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAliases;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
@@ -451,6 +452,7 @@ public class ModSetup {
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.applyAliases();
+            CompressedAliases.apply();
             event.enqueueWork(() -> {
                 ContentSpawners.apply();
                 ContentPortals.bind();
@@ -494,6 +496,7 @@ public class ModSetup {
         PackManager.get().scan(root);
         PackManager.get().report();
         RegistryRemaps.applyAliases();
+        CompressedAliases.apply();
         ContentOverrides.reload();
         ContentReplacements.reload();
         ContentCityMaps.reload();
