@@ -1,4 +1,6 @@
 rdpl.build.toolow=Building stops at y %s
+rdpl.compressed=Compressed %s
+rdpl.compressed.layered=Compressed %s (x%d)
 rdpl.command.allused=Every file in your pack has been requested at least once
 rdpl.command.biomefound='%s' at %d, %d, %d blocks away
 rdpl.command.biomemissing=No '%s' within %d blocks. It may be rare, or not generated at all

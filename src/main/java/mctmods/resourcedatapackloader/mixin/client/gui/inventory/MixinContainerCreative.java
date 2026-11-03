@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.client.gui.inventory;
 
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedOrder;
 import mctmods.resourcedatapackloader.common.util.ContentDisabled;
 
 import net.minecraft.client.gui.inventory.GuiContainerCreative;
@@ -17,5 +18,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "scrollTo", at = @At("HEAD")) private void rdpl$hideDisabled(float pos, CallbackInfo ci) {
         if (ContentDisabled.any() || ClientItemLocks.active()) { itemList.removeIf(stack -> ContentDisabled.disabled(stack) || ClientItemLocks.hides(stack)); }
+        CompressedOrder.arrange(itemList);
     }
 }

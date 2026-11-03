@@ -1,4 +1,6 @@
 rdpl.build.toolow=La construction s'arrête à y %s
+rdpl.compressed=Bloc compressé : %s
+rdpl.compressed.layered=Bloc compressé : %s (x%d)
 rdpl.command.allused=Chaque fichier de votre pack a été demandé au moins une fois
 rdpl.command.biomefound=« %s » en %d, %d, à %d blocs
 rdpl.command.biomemissing=Aucun « %s » à moins de %d blocs. Il peut être rare, ou ne pas être généré du tout

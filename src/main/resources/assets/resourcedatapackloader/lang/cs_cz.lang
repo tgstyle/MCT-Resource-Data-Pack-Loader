@@ -1,4 +1,6 @@
 rdpl.build.toolow=Stavba se zastaví na y %s
+rdpl.compressed=Stlačený blok: %s
+rdpl.compressed.layered=Stlačený blok: %s (x%d)
 rdpl.command.allused=Každý soubor ve tvém balíčku byl alespoň jednou vyžádán
 rdpl.command.biomefound='%s' na %d, %d, %d, bloků daleko
 rdpl.command.biomemissing=Žádný '%s' v okruhu %d bloků. Může být vzácný, nebo se vůbec negeneruje

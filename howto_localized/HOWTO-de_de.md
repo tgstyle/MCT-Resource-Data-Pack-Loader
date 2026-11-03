@@ -831,7 +831,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 
 | Schlüssel                    | Pflicht                               | Wert                                              | Standard                                                                                                 | Was er macht                                                                                                                                                                                                                                                                                                                                                  |
 | ---------------------------- | ------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`                   | ja                                    | Objekt aus Variantenname zu Variante              |                                                                                                          | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst                                                                                                                                                                                   |
+| `variants`                   | ja, außer `compressable` nennt `of`   | Objekt aus Variantenname zu Variante              |                                                                                                          | Ein Eintrag pro Metadatenwert. Der Schlüssel benennt diesen Wert im Blockstate, im Modellpfad und im Sprachschlüssel. Der Registry-Name kommt aus dem Pfad der Datei selbst                                                                                                                                                                                   |
 | `type`                       | nein                                  | einer der Typen oben                              | `basic`                                                                                                  | Welche Form der Block annimmt                                                                                                                                                                                                                                                                                                                                 |
 | `material`                   | nein                                  | eines der [Blockmaterialien](#wertelisten)        | `rock`                                                                                                   | Abbauverhalten, Kolben, Feuer und Flüssigkeiten                                                                                                                                                                                                                                                                                                               |
 | `soundType`                  | nein                                  | einer der [Sound-Typen](#wertelisten)             | `stone`; `wood` bei `log`, `plant` bei `leaves` und `crop`, der des `modelBlock` bei `stairs` und `wall` | Schritte, Abbauen und Setzen                                                                                                                                                                                                                                                                                                                                  |
@@ -874,6 +874,37 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 | `container`                  | nur `container`                       | Objekt                                            | keines                                                                                                   | Siehe [Behälter](#behälter)                                                                                                                                                                                                                                                                                                                                   |
 | `portway`                    | nur `portway`                         | Objekt                                            | keines                                                                                                   | Siehe [Wegportale](#wegportale)                                                                                                                                                                                                                                                                                                                               |
 | `bell`                       | nur `bell`                            | Objekt                                            | keines                                                                                                   | Siehe [Glocken](#glocken)                                                                                                                                                                                                                                                                                                                                     |
+
+### Komprimierte Schichten
+
+*blöcke*
+
+`compressable` stapelt Schichten auf die Variante mit dem kleinsten Metadatenwert einer Blockdatei. Diese Variante ist Schicht 0, und pro Datei entsteht nur ein Satz Schichten. Schicht 1 bis 16 bekommen die Metadatenwerte 0 bis 15 von `<name>_compressed`, Schicht 17 bis 20 die Metadatenwerte von `<name>_compressed_2`. Härte und Widerstand wachsen mit jeder Schicht, jede Schicht droppt sich selbst, und Werkzeug und Sound kommen von der Basis.
+
+Jede Schicht bekommt außerdem einen Ore-Dictionary-Namen, `compressed<Name><n>x`, und eine Textur, die dunkler ist als die darunter, mit wachsendem Rahmen. Eine Basis, die brennt, gibt jeder Schicht die zehnfache Brenndauer der Schicht darunter.
+
+```json
+{
+  "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "type": "basic",
+  "variants": {
+    "slate": { "meta": 0 }
+  },
+  "compressable": { "layers": 9 }
+}
+```
+
+| Schlüssel | Pflicht             | Wert                               | Standard         | Was er macht                                                                                                                                                                        |
+| --------- | ------------------- | ---------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`  | ja                  | 1 bis 20                           |                  | Wie viele Schichten über Schicht 0 gebaut werden. Wird der Wert später gesenkt, bleiben gesetzte Blöcke erhalten; ihre Metadatenwerte rutschen auf die höchste verbleibende Schicht |
+| `of`      | nur ohne `variants` | `id` oder `id:meta`, Meta 0 bis 15 | keine            | Der Block, der in einer Datei ohne `variants` komprimiert wird: ein Block eines anderen Mods oder ein Vanilla-Block                                                                 |
+| `texture` | nein                | Texturpfad                         | Modell der Basis | Die Basistextur, aus der die Schichten gebaut werden, statt der Textur, die RDPL aus dem Modell der Basis liest                                                                     |
+| `recipes` | nein                | boolean                            | `true`           | Fügt die Rezepte `<name>_compress_<n>` und `<name>_decompress_<n>` hinzu: neun aus Schicht n-1 im 3x3-Raster zu einer aus Schicht n, und eine zurück zu neun                        |
 
 ### Variantenschlüssel
 
@@ -1653,7 +1684,7 @@ Ein stehendes Banner reicht also bis `29.33`, fast zwei Blöcke, und ein Wandban
 
 *modelle, blockstates und texturen*
 
-Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die PNG gelandet wäre, und häng `.json` an den ganzen Namen: `textures/blocks/panel.png.json` beantwortet dann jede Anfrage nach `textures/blocks/panel.png`. Sonst ändert sich nichts – Modelle zeigen weiter auf `mypack:blocks/panel`, Atlas, Mipmaps und eine Animations-`.mcmeta` funktionieren wie gehabt, denn was das Spiel bekommt, ist nach wie vor eine PNG.
+Eine Textur darf eine JSON-Datei statt einer PNG sein. Leg sie dorthin, wo die PNG gelandet wäre, und häng `.json` an den ganzen Namen: `textures/blocks/panel.png.json` beantwortet dann jede Anfrage nach `textures/blocks/panel.png`. Sonst ändert sich nichts – Modelle zeigen weiter auf `mypack:blocks/panel`, Atlas, Mipmaps und eine Animations-`.mcmeta` funktionieren wie gehabt, denn was das Spiel bekommt, ist nach wie vor eine PNG. Komprimierte Schichten sind Pixelkarten, die RDPL im Speicher aus der Basistextur erzeugt; eine PNG im Pack am Texturpfad der Schicht ersetzt die erzeugte.
 
 ```json
 {

@@ -1,4 +1,6 @@
 rdpl.build.toolow=Bauen endet bei y %s
+rdpl.compressed=Komprimierter Block: %s
+rdpl.compressed.layered=Komprimierter Block: %s (x%d)
 rdpl.command.allused=Jede Datei in deinem Pack wurde mindestens einmal angefragt
 rdpl.command.biomefound='%s' bei %d, %d, %d Blöcke entfernt
 rdpl.command.biomemissing=Kein '%s' innerhalb von %d Blöcken. Es ist vielleicht selten oder generiert gar nicht

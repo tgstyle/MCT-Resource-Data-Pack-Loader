@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
+import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
 import mctmods.resourcedatapackloader.common.blocks.bell.logic.TileEntityPackBell;
 import mctmods.resourcedatapackloader.common.blocks.container.logic.TileEntityPackContainer;
@@ -363,6 +364,8 @@ public class ModSetup {
     }
 
     public static void onServerStopping() { ContentPregen.serverStopping(); }
+
+    public static void onIdMapping() { ContentCompressables.mapOrphanMetas(); }
 
     public static void onServerStopped() {
         ContentStructureSearch.forget();

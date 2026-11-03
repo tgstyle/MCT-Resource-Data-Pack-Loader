@@ -1,4 +1,6 @@
 rdpl.build.toolow=建築は y %s で止まります
+rdpl.compressed=圧縮%s
+rdpl.compressed.layered=圧縮%s (x%d)
 rdpl.command.allused=パック内のすべてのファイルが、少なくとも一度は要求されています
 rdpl.command.biomefound='%s' は %d, %d, %d にあり、ここから離れています
 rdpl.command.biomemissing='%s' は %d ブロック以内にありません。珍しいか、そもそも生成されていない可能性があります

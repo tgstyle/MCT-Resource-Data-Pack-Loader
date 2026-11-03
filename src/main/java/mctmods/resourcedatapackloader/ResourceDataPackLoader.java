@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLInterModComms;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
+import net.minecraftforge.fml.common.event.FMLModIdMappingEvent;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
@@ -43,4 +44,6 @@ import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
     @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ModSetup.onServerStopping(); }
 
     @Mod.EventHandler public void onServerStopped(FMLServerStoppedEvent event) { ModSetup.onServerStopped(); }
+
+    @Mod.EventHandler public void onIdMapping(FMLModIdMappingEvent event) { ModSetup.onIdMapping(); }
 }

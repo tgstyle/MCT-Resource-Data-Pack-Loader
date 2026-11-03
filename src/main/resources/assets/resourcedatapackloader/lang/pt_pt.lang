@@ -1,4 +1,6 @@
 rdpl.build.toolow=A construção para na altura y %s
+rdpl.compressed=Bloco comprimido: %s
+rdpl.compressed.layered=Bloco comprimido: %s (x%d)
 rdpl.command.allused=Todos os ficheiros do teu pacote já foram pedidos pelo menos uma vez
 rdpl.command.biomefound='%s' a %d, %d, %d blocos de distância
 rdpl.command.biomemissing=Nenhum '%s' a menos de %d blocos. Pode ser raro, ou não ser gerado de todo

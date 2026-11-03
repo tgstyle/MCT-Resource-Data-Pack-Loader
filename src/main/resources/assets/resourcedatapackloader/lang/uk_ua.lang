@@ -1,4 +1,6 @@
 rdpl.build.toolow=Будування зупиняється на висоті y %s
+rdpl.compressed=Стиснутий блок: %s
+rdpl.compressed.layered=Стиснутий блок: %s (x%d)
 rdpl.command.allused=Кожен файл у вашому наборі вже запитано щонайменше раз
 rdpl.command.biomefound='%s' за %d, %d, %d блоків звідси
 rdpl.command.biomemissing=Немає '%s' у межах %d блоків. Він може бути рідкісним або взагалі не згенерованим

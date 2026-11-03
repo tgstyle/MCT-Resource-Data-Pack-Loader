@@ -1,4 +1,6 @@
 rdpl.build.toolow=建造在 y %s 处停止
+rdpl.compressed=压缩%s
+rdpl.compressed.layered=压缩%s (x%d)
 rdpl.command.allused=你的资源包中的每个文件都至少被请求过一次
 rdpl.command.biomefound=“%s”位于 %d, %d，距离 %d 个方块
 rdpl.command.biomemissing=%2$d 个方块内没有“%1$s”。它可能很稀有，或者根本没有生成

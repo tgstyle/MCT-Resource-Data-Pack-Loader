@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
+import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluid;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluidBlock;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactions;
@@ -101,7 +102,7 @@ public final class ContentRegistry {
         if (loaded) { return; }
         loaded = true;
         if (!Config.registersToClients()) { return; }
-        parseAll(PackManager.BLOCKS, "block", ContentParser::block, BLOCK_DEFS);
+        parseAll(PackManager.BLOCKS, "block", ContentRegistry::block, BLOCK_DEFS);
         for (Map.Entry<ResourceLocation, DimensionDef> opened : ContentPortals.opening().entrySet()) {
             ResourceLocation key = ContentPortals.blockName(opened.getKey());
             if (BLOCK_DEFS.containsKey(key)) { continue; }
@@ -146,6 +147,8 @@ public final class ContentRegistry {
         }
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !WORLDGEN_DEFS.isEmpty()) { Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid and " + WORLDGEN_DEFS.size() + " worldgen definition(s)"); }
     }
+
+    @Nullable private static BlockDef block(ResourceLocation key, String contents) { return ContentCompressables.read(key, contents) ? null : ContentParser.block(key, contents); }
 
     private static <T> void parseAll(String folder, String what, BiFunction<ResourceLocation, String, T> parse, Map<ResourceLocation, T> into) {
         for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(folder).entrySet()) {
@@ -226,6 +229,7 @@ public final class ContentRegistry {
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerBlocks(RegistryEvent.Register<Block> event) {
         load();
+        ContentCompressables.generate(BLOCK_DEFS);
         for (Map.Entry<ResourceLocation, BlockDef> entry : BLOCK_DEFS.entrySet()) {
             ResourceLocation key = entry.getKey();
             BlockDef def = entry.getValue();

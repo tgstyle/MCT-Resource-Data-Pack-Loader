@@ -1,4 +1,6 @@
 rdpl.build.toolow=Строительство заканчивается на y %s
+rdpl.compressed=Сжатый блок: %s
+rdpl.compressed.layered=Сжатый блок: %s (x%d)
 rdpl.command.allused=Каждый файл вашего пака запрашивался хотя бы раз
 rdpl.command.biomefound='%s' на %d, %d, в %d блоках отсюда
 rdpl.command.biomemissing='%s' нет в пределах %d блоков. Он может быть редким или не генерироваться вовсе

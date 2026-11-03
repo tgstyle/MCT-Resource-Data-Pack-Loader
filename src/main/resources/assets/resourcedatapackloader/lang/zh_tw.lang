@@ -1,4 +1,6 @@
 rdpl.build.toolow=建造到 y %s 為止
+rdpl.compressed=壓縮%s
+rdpl.compressed.layered=壓縮%s (x%d)
 rdpl.command.allused=資料包中的每個檔案至少都已被請求過一次
 rdpl.command.biomefound='%s' 位於 %d, %d, %d，距離若干方塊
 rdpl.command.biomemissing='%s' 在 %d 格內都找不到。它可能很稀有，或根本沒有生成

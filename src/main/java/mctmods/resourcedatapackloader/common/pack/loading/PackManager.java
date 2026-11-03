@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.loading;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAssets;
 import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
 import mctmods.resourcedatapackloader.common.pack.definitions.LangGates;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
@@ -366,7 +367,8 @@ public final class PackManager {
     public boolean existsRaw(String namespace, String path, boolean overriding) {
         if (resolve(namespace, path, overriding) != null) { return true; }
         if (LangGates.active(namespace, path, overriding)) { return true; }
-        return ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding);
+        if (ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding)) { return true; }
+        return servesCompressed(overriding) && CompressedAssets.has(namespace, path);
     }
 
     @Nullable public InputStream openRaw(String namespace, String path) throws IOException {
@@ -383,8 +385,8 @@ public final class PackManager {
             if (entry == null) { return new ByteArrayInputStream(new byte[0]); }
         }
         if (entry != null) { return entry.pack.open(namespace, entry.actual); }
-        if (!ContentPixelMaps.couldBeDrawn(path)) { return null; }
-        byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
+        byte[] drawn = ContentPixelMaps.couldBeDrawn(path) && ContentPixelMaps.exists(namespace, path, overriding) ? ContentPixelMaps.made(namespace, path, overriding) : null;
+        if (drawn == null && servesCompressed(overriding)) { drawn = CompressedAssets.open(namespace, path); }
         return drawn == null ? null : new ByteArrayInputStream(drawn);
     }
 
@@ -401,6 +403,7 @@ public final class PackManager {
                 if (path.endsWith(ContentPixelMaps.PNG + JSON_SUFFIX)) { paths.add(path.substring(0, path.length() - JSON_SUFFIX.length())); }
             }
         }
+        if (servesCompressed(overriding)) { paths.addAll(CompressedAssets.paths()); }
         return paths;
     }
 
@@ -555,6 +558,8 @@ public final class PackManager {
         return false;
     }
 
+    private boolean servesCompressed(boolean overriding) { return overriding != hasTier(false); }
+
     public void close() {
         for (RDPLPack pack : packs) {
             try { pack.close(); }
@@ -567,6 +572,7 @@ public final class PackManager {
         warned.clear();
         served.clear();
         ContentPixelMaps.forget();
+        CompressedAssets.forget();
         namespacesNormal = null;
         namespacesOverride = null;
         packMeta = null;
