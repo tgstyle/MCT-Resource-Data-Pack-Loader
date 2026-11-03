@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.world.item.crafting;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceRecipes;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
 import com.google.gson.JsonElement;
@@ -57,7 +58,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         original.call(manager, lister, ops, codec, result, loading);
     }
 
-    @Inject(method = "apply(Lnet/minecraft/world/item/crafting/RecipeMap;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN")) private void rdpl$afterRecipes(RecipeMap recipes, ResourceManager manager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.attach(this); }
+    @Inject(method = "apply(Lnet/minecraft/world/item/crafting/RecipeMap;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN")) private void rdpl$afterRecipes(RecipeMap recipes, ResourceManager manager, ProfilerFiller profiler, CallbackInfo ci) { WeightStacks.recipeFloors(recipes); RecipeLoading.attach(this); }
 
     @Inject(method = "finalizeRecipeLoading(Lnet/minecraft/world/flag/FeatureFlagSet;)V", at = @At("HEAD")) private void rdpl$beforeFinalize(FeatureFlagSet enabledFlags, CallbackInfo ci) { RecipeLoading.componentsBound(this); }
 

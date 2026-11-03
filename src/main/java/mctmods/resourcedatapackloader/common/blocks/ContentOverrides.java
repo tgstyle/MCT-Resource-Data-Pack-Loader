@@ -7,11 +7,15 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffe
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWeights;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentToolTypes;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
+import mctmods.resourcedatapackloader.common.util.ItemHolders;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -78,6 +82,7 @@ public final class ContentOverrides {
     }
 
     private static void reapply() {
+        WeightStacks.release();
         load();
         restoreAll();
         Map<Block, Integer> lights = new IdentityHashMap<>();
@@ -89,6 +94,7 @@ public final class ContentOverrides {
         lightBlocks = lights.isEmpty() ? Collections.emptyMap() : lights;
         if (applied > 0) { Summary.info("overrides", "Applied " + applied + " override(s) to existing blocks, items and potion types"); }
         ContentGenerated.retag();
+        WeightStacks.reinstall();
     }
 
     public static void harvestTags(Map<String, Set<String>> tags, Map<String, Set<String>> removed) {
@@ -111,6 +117,7 @@ public final class ContentOverrides {
     private static void load() {
         if (!LOADED.stale()) { return; }
         DEFS.clear();
+        ContentWeights.clearOverrides();
         if (!Config.content.overrides()) { return; }
         Json.eachFile(PackManager.OVERRIDES, "override file", (key, contents) -> {
             Identifier source = Identifier.fromNamespaceAndPath(key.getNamespace(), PackManager.OVERRIDES + "/" + key.getPath());
@@ -155,7 +162,7 @@ public final class ContentOverrides {
                 intOrNull(json, "flammability"), Math.max(0, Json.getInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
                 intOrNull(json, "maxStackSize"), intOrNull(json, "maxDamage"), stringOrNull(json, "containerItem"),
                 effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
-                Json.strings(json, "requires"));
+                Json.strings(json, "requires"), ContentParserWeights.weight(json, source));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
@@ -199,7 +206,8 @@ public final class ContentOverrides {
     private static boolean applyItem(OverrideDef def) {
         Item item = Registered.find(BuiltInRegistries.ITEM, def.target());
         if (item == null) { return false; }
-        if (!holder(item).areComponentsBound()) { return true; }
+        if (def.weight() >= 0) { ContentWeights.override(def.target(), def.weight()); }
+        if (!ItemHolders.of(item).areComponentsBound()) { return true; }
         ITEMS.computeIfAbsent(item, ItemSnapshot::of);
         DataComponentMap.Builder builder = DataComponentMap.builder().addAll(item.components());
         if (def.maxStackSize() != null) { builder.set(DataComponents.MAX_STACK_SIZE, Mth.clamp(def.maxStackSize(), 1, 64)); }
@@ -218,7 +226,7 @@ public final class ContentOverrides {
             if (!item.components().has(DataComponents.FOOD)) { builder.set(DataComponents.CONSUMABLE, consumable(def, food)); }
             else if (!food.effects().isEmpty()) { ContentLog.LOGGER.error("Override {} puts effects on {}, which is already food. Effects on existing food are not supported, only heal, saturation and alwaysEdible were applied", def.source(), def.target()); }
         }
-        holder(item).bindComponents(builder.build());
+        ItemHolders.of(item).bindComponents(builder.build());
         return true;
     }
 
@@ -265,8 +273,6 @@ public final class ContentOverrides {
         }
         return new MobEffectInstance(effect, entry.duration(), entry.amplifier(), entry.ambient(), entry.showParticles());
     }
-
-    private static Holder.Reference<Item> holder(Item item) { return BuiltInRegistries.ITEM.getOrThrow(BuiltInRegistries.ITEM.getResourceKey(item).orElseThrow()); }
 
     private static void restoreAll() {
         BLOCKS.forEach((block, held) -> held.restore(block));
@@ -341,7 +347,7 @@ public final class ContentOverrides {
         static ItemSnapshot of(Item item) { return new ItemSnapshot(item.components(), item.craftingRemainingItem); }
 
         void restore(Item item) {
-            holder(item).bindComponents(components);
+            ItemHolders.of(item).bindComponents(components);
             item.craftingRemainingItem = remaining;
         }
     }

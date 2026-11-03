@@ -25,6 +25,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.items.TabDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -256,6 +257,7 @@ public final class ContentRegistry {
 
     public static void resolveStacks() {
         for (BlockDef def : BLOCK_DEFS.values()) {
+            if (def.weight() >= 0) { ContentWeights.define(def.key(), def.weight()); }
             for (BlockVariant variant : def.variants()) {
                 for (DropDef drop : variant.drops()) { resolveDrop(def, variant, drop); }
             }
@@ -265,6 +267,7 @@ public final class ContentRegistry {
         }
         ContentGenerated.cropLoot();
         for (ItemDef def : ITEM_DEFS.values()) {
+            if (def.weight() >= 0) { ContentWeights.define(def.key(), def.weight()); }
             if (def.upgrade() != null) { ContentContainerUpgrades.check(def); }
             if (def.container().isEmpty()) { continue; }
             Item container = ContentStacks.find(def.key(), def.container());

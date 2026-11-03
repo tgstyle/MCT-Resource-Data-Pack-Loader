@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.recipes.FurnaceRecipes;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeRegistries;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow @Final @Mutable private Collection<RecipeHolder<?>> learnableRecipes;
     @Unique private RegistryAccess rdpl$registries;
 
-    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$afterRecipes(HolderLookup.Provider registries, CallbackInfo ci) { RecipeLoading.attach(this); }
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$afterRecipes(HolderLookup.Provider registries, CallbackInfo ci) { WeightStacks.recipeFloors(recipes); RecipeLoading.attach(this); }
 
     @Inject(method = "finalizeRecipeLoading(Lnet/minecraft/world/flag/FeatureFlagSet;)V", at = @At("HEAD")) private void rdpl$beforeFinalize(FeatureFlagSet enabledFlags, CallbackInfo ci) { RecipeLoading.componentsBound(this); }
 

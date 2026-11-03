@@ -85,6 +85,7 @@ public final class PackManager {
     public static final String RECIPE_LOCKS = "recipe_locks";
     public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
+    public static final String WEIGHTS = "weights";
     public static final String DISABLED = "disabled";
     public static final String FURNACE = "furnace";
     public static final String LOOT_INJECTIONS = "loot_injections";

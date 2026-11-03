@@ -96,6 +96,10 @@ import mctmods.resourcedatapackloader.common.util.world.SavedDataMigration;
 import mctmods.resourcedatapackloader.common.villages.ContentPathIntersects;
 import mctmods.resourcedatapackloader.common.villages.ContentPaths;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
+import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -143,6 +147,7 @@ import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.resource.VanillaServerListeners;
 
 public class ModSetup {
     public static void construct(IEventBus modBus, ModContainer container) {
@@ -174,6 +179,7 @@ public class ModSetup {
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
         LineCompat.listen(modBus);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentWeights::componentsBound);
         NeoForge.EVENT_BUS.addListener(ContentOverrides::componentsBound);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
@@ -299,6 +305,23 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ItemLockSync::onLogin);
         NeoForge.EVENT_BUS.addListener(ItemLockSync::onLogout);
         NeoForge.EVENT_BUS.addListener(ItemLockSync::onTick);
+        NeoForge.EVENT_BUS.addListener((TagsUpdatedEvent _) -> ContentWeights.tagsUpdated());
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onPickup);
+        NeoForge.EVENT_BUS.addListener(WeightEnforce::onPickup);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onToss);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onOpen);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onClose);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onCrafted);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onSmelted);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onUsed);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onPlace);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onLogin);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onRespawn);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onDimension);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onClone);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onAdvancement);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentItemLocks::onServerStarted);
         NeoForge.EVENT_BUS.addListener(GateEvents::onTravel);
         NeoForge.EVENT_BUS.addListener(GateEvents::onKill);
@@ -483,6 +506,8 @@ public class ModSetup {
 
     private static void onAddReloadListeners(AddServerReloadListenersEvent event) {
         LineCompat.recipeRegistries(event);
+        event.addListener(ResourceDataPackLoader.id("weight_release"), (_, _, barrier, _) -> { WeightStacks.release(); return barrier.wait((Void) null); });
+        event.addDependency(ResourceDataPackLoader.id("weight_release"), VanillaServerListeners.FIRST);
         event.addListener(ResourceDataPackLoader.id("recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
     private static void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
@@ -498,6 +523,7 @@ public class ModSetup {
         RegistryRemaps.applyAliases();
         CompressedAliases.apply();
         ContentOverrides.reload();
+        ContentWeights.load();
         ContentReplacements.reload();
         ContentCityMaps.reload();
         ContentWorldTemplates.load();

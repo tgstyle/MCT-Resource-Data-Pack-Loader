@@ -79,6 +79,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.component.BlockTransformers;
+import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.CookingFuel;
 import net.minecraft.world.item.component.SwingAnimation;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
@@ -185,6 +186,8 @@ public final class LineCompat {
     }
 
     public static String densitySeed(Identifier id) { return id.toString(); }
+
+    public static Stream<ItemStack> bundled(BundleContents bundle) { return bundle.itemCopies(); }
 
     public static JsonObject densityInterpolated(JsonElement input) {
         JsonObject out = densityOf("minecraft:interpolated", input);

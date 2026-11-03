@@ -35,6 +35,7 @@ public final class PackReport {
         collect(off, Config.content.hardness(), "content.hardness", PackManager.JSON, PackManager.HARDNESS);
         collect(off, Config.content.disabled(), "content.disabled", PackManager.JSON, PackManager.DISABLED);
         collect(off, Config.content.itemLocks(), "content.itemLocks", PackManager.JSON, PackManager.ITEM_LOCKS);
+        clientSide(off, Config.content.weights(), "content.weights", PackManager.WEIGHTS);
         collect(off, Config.recipes.furnace(), "recipes.furnace", PackManager.JSON, PackManager.FURNACE);
         collect(off, Config.recipes.removals(), "recipes.removals", PackManager.JSON, PackManager.RECIPE_REMOVALS);
         collect(off, !Config.data.lootInjectionsOff(), "data.lootInjections", PackManager.JSON, PackManager.LOOT_INJECTIONS);

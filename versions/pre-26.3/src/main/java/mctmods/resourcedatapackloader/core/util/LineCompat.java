@@ -69,6 +69,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.ToolMaterial;
 import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.level.ChunkPos;
@@ -175,6 +176,8 @@ public final class LineCompat {
     }
 
     public static JsonObject densityInterpolated(JsonElement input) { return densityOf("minecraft:interpolated", input); }
+
+    public static Stream<ItemStack> bundled(BundleContents bundle) { return bundle.itemCopyStream(); }
 
     public static void skyPlace(WorldGenLevel level, ChunkGenerator generator, RandomSource random, PlacedFeature placed, BlockPos origin) {
         PlacementContext context = new PlacementContext(level, generator, Optional.of(placed));

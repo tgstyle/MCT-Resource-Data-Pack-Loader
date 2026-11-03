@@ -24,6 +24,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.RDPLPack;
 import mctmods.resourcedatapackloader.common.pregen.ContentReset;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentOreVein;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
@@ -328,6 +329,7 @@ public final class CommandShared {
         ContentHearts.load();
         ContentHearts.refresh(server);
         SpawnLocks.load();
+        ContentWeights.load();
         ContentItemLocks.report(server);
         ItemLockSync.resendAll(server);
         for (ServerLevel level : server.getAllLevels()) {
