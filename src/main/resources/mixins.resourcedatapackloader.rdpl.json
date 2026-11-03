@@ -23,6 +23,8 @@
         "world.inventory.EnchantmentMenuMixin",
         "world.item.enchantment.EnchantmentHelperMixin",
         "world.inventory.ItemCombinerMenuMixin",
+        "world.inventory.SlotMixin",
+        "world.inventory.AbstractContainerMenuMixin",
         "world.item.ItemStackMixin",
         "commands.arguments.item.ItemParserMixin",
         "world.level.biome.BiomeMixin",

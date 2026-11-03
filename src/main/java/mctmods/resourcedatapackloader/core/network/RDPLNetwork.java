@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.client.gui.intro.WorldIntroScreen;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
@@ -62,7 +63,10 @@ public final class RDPLNetwork {
         registrar.playToServer(TalkPickMessage.TYPE, TalkPickMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { DialogTalk.pick(player, message.index()); } });
         registrar.playToServer(PortwayFilterMessage.TYPE, PortwayFilterMessage.CODEC, (message, context) -> { if (context.player().containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
         registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
+        registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } });
     }
+
+    public static boolean sendWeight(ServerPlayer player, int total, int limit, int tier, boolean exempt) { return send(player, new WeightMessage(total, limit, tier, exempt)); }
 
     public static void openWorn() { PacketDistributor.sendToServer(new OpenWornMessage()); }
 

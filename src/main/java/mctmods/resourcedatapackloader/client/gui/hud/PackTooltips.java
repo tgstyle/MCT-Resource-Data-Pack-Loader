@@ -1,11 +1,17 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
+import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.config.Config;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.util.List;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
@@ -13,6 +19,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
@@ -34,7 +41,22 @@ public final class PackTooltips {
 
     private static String translated(String line) { return I18n.exists(line) ? I18n.get(line) : line; }
 
+    private static void weight(ItemStack stack, List<Component> tooltip) {
+        WeightDef settings = ContentWeights.settings();
+        if (Config.content.vanillaClients() || !settings.tooltip || !ContentWeights.any() || stack.isEmpty()) { return; }
+        Player player = Minecraft.getInstance().player;
+        if (player == null) { return; }
+        long single = ContentWeights.of(stack);
+        long held = CarriedWeight.single(player, stack, settings) - single;
+        if (single > 0L) {
+            String each = ClientWeights.format(single);
+            tooltip.add(Component.literal(stack.getCount() > 1 ? I18n.get("rdpl.weight.stack", each, ClientWeights.format((single + held) * stack.getCount())) : I18n.get("rdpl.weight.line", each)).withStyle(ChatFormatting.GRAY));
+        }
+        if (held > 0L) { tooltip.add(Component.literal(I18n.get("rdpl.weight.contents", ClientWeights.format(held))).withStyle(ChatFormatting.GRAY)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
+        weight(event.getItemStack(), event.getToolTip());
         affixes(event.getItemStack(), event.getToolTip());
         lines(event);
     }

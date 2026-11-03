@@ -102,6 +102,7 @@ import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.weights.WeightStacks;
+import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -253,6 +254,9 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onPickup);
         NeoForge.EVENT_BUS.addListener(WeightEnforce::onPickup);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onServerTick);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onLogin);
+        NeoForge.EVENT_BUS.addListener(WeightSync::onLogout);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onToss);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onOpen);
         NeoForge.EVENT_BUS.addListener(PlayerWeights::onClose);

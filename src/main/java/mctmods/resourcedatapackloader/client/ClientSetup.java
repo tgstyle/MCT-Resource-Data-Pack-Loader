@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HeartsHud;
 import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.hud.PackTooltips;
 import mctmods.resourcedatapackloader.client.gui.hud.ProspectTooltip;
+import mctmods.resourcedatapackloader.client.gui.hud.WeightHud;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionAmbience;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
@@ -19,6 +20,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentClient;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.client.util.FaceCacheReset;
@@ -76,6 +78,9 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(PackTooltips::onTooltip);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> HoldView.tick());
         NeoForge.EVENT_BUS.addListener(ClientItemLocks::onTags);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ClientWeights.tick());
+        NeoForge.EVENT_BUS.addListener(WeightHud::onHud);
+        NeoForge.EVENT_BUS.addListener(WeightHud::onScreen);
         NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, event -> {
             if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.CLIENT_PACKET_RECEIVED && Minecraft.getInstance().getSingleplayerServer() == null) { ContentWeights.load(); }
         });
@@ -89,6 +94,7 @@ public class ClientSetup {
             AnvilCosts.leave();
             ContentSkyGates.clear();
             ClientItemLocks.clear();
+            ClientWeights.clear();
         });
         ContentClient.register(modBus);
         if (Config.worldgen.worldgenDebug()) {
