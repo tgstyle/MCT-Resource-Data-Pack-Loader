@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.common.itemlocks;
 
-import mctmods.resourcedatapackloader.common.util.PlayerSetSync;
+import mctmods.resourcedatapackloader.common.util.PlayerValueSync;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -15,7 +15,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ItemLockSync {
     private static final int INTERVAL = 20;
-    private static final PlayerSetSync SYNC = new PlayerSetSync(ContentItemLocks::open, ContentItemLocks::any, ItemLockSync::send);
+    private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(ContentItemLocks::open, ContentItemLocks::any, ItemLockSync::send);
     private static int ticks;
 
     private ItemLockSync() {}

@@ -109,6 +109,7 @@ import mctmods.resourcedatapackloader.common.villages.VillagePieces;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
+import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveAmbience;
@@ -172,6 +173,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
         MinecraftForge.EVENT_BUS.register(PlayerWeights.class);
         MinecraftForge.EVENT_BUS.register(WeightEnforce.class);
+        MinecraftForge.EVENT_BUS.register(WeightSync.class);
         MinecraftForge.EVENT_BUS.register(ContentStorageSwap.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());

@@ -62,6 +62,8 @@
     "inventory.MixinContainerEnchantment",
     "inventory.MixinContainerRepair",
     "inventory.MixinContainerRepairOutput",
+    "inventory.MixinContainerClick",
+    "inventory.MixinSlot",
     "integration.forge.MixinCraftingHelper",
     "world.storage.MixinDerivedWorldInfo",
     "world.end.MixinDragonFightManager",

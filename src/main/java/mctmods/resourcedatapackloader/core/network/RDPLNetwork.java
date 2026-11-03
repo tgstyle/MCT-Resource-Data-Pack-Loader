@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.client.gui.intro.IntroLandMadeHandler;
 import mctmods.resourcedatapackloader.client.gui.intro.IntroPlayHandler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
@@ -74,6 +75,7 @@ public final class RDPLNetwork {
         registerClient(() -> HeartsHud.Handler.class, HeartColorsMessage.class);
         registerClient(() -> ContentSkyGates.Handler.class, GatesMessage.class);
         registerClient(() -> ClientItemLocks.Handler.class, UnlocksMessage.class);
+        registerClient(() -> ClientWeights.Handler.class, WeightMessage.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -136,6 +138,12 @@ public final class RDPLNetwork {
     public static boolean sendUnlocks(EntityPlayerMP player, Collection<String> open) {
         if (unreachable(player)) { return false; }
         channel.sendTo(new UnlocksMessage(open), player);
+        return true;
+    }
+
+    public static boolean sendWeight(EntityPlayerMP player, int total, int limit, int tier, boolean exempt) {
+        if (unreachable(player)) { return false; }
+        channel.sendTo(new WeightMessage(total, limit, tier, exempt), player);
         return true;
     }
 

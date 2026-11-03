@@ -1,7 +1,12 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
+import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.config.Config;
 
 import java.util.List;
 import java.util.Map;
@@ -26,10 +31,23 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private static String text(String line) { return TextFormatting.GRAY + translated(line); }
 
+    private static void weight(ItemStack stack, List<String> tooltip) {
+        WeightDef settings = ContentWeights.settings();
+        if (Config.content.vanillaClients || !settings.tooltip || !ContentWeights.any() || stack.isEmpty()) { return; }
+        long single = ContentWeights.of(stack);
+        long held = CarriedWeight.single(stack, settings) - single;
+        if (single > 0L) {
+            String each = ClientWeights.format(single);
+            tooltip.add(TextFormatting.GRAY + (stack.getCount() > 1 ? I18n.format("rdpl.weight.stack", each, ClientWeights.format((single + held) * stack.getCount())) : I18n.format("rdpl.weight.line", each)));
+        }
+        if (held > 0L) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.weight.contents", ClientWeights.format(held))); }
+    }
+
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
-        if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();
         List<String> tooltip = event.getToolTip();
+        weight(stack, tooltip);
+        if (ContentTooltips.none()) { return; }
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(stack).entrySet()) {
             List<String> lines = ContentTooltips.forEnchantment(entry.getKey());
             int at = lines.isEmpty() ? -1 : tooltip.indexOf(entry.getKey().getTranslatedName(entry.getValue()));
