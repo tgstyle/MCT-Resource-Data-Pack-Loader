@@ -97,6 +97,7 @@ import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
+import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -326,6 +327,9 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onClone);
         MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onAdvancement);
         MinecraftForge.EVENT_BUS.addListener(PlayerWeights::onLogout);
+        MinecraftForge.EVENT_BUS.addListener(WeightSync::onTick);
+        MinecraftForge.EVENT_BUS.addListener(WeightSync::onLogin);
+        MinecraftForge.EVENT_BUS.addListener(WeightSync::onLogout);
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onTravel);
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onKill);
         MinecraftForge.EVENT_BUS.addListener(GateEvents::onCraft);

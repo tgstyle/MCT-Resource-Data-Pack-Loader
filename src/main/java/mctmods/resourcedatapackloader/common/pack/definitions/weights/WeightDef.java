@@ -18,6 +18,16 @@ public final class WeightDef {
     public static final String HUD_NEVER = "never";
     public static final String HUD_TIERS = "tiers";
     public static final String HUD_ALWAYS = "always";
+    public static final String HUD_HOTBAR = "hotbar";
+    public static final String HUD_TOP_LEFT = "top_left";
+    public static final String HUD_TOP = "top";
+    public static final String HUD_TOP_RIGHT = "top_right";
+    public static final String HUD_LEFT = "left";
+    public static final String HUD_CENTER = "center";
+    public static final String HUD_RIGHT = "right";
+    public static final String HUD_BOTTOM_LEFT = "bottom_left";
+    public static final String HUD_BOTTOM = "bottom";
+    public static final String HUD_BOTTOM_RIGHT = "bottom_right";
 
     public final String unit;
     public final int defaultWeight;
@@ -33,6 +43,9 @@ public final class WeightDef {
     public final double wornFactor;
     public final boolean creative;
     public final String hudShow;
+    public final String hudAnchor;
+    public final int hudX;
+    public final int hudY;
     public final boolean hudInventory;
     public final boolean tooltip;
 
@@ -53,6 +66,9 @@ public final class WeightDef {
         this.wornFactor = from.wornFactor;
         this.creative = from.creative;
         this.hudShow = from.hudShow;
+        this.hudAnchor = from.hudAnchor;
+        this.hudX = from.hudX;
+        this.hudY = from.hudY;
         this.hudInventory = from.hudInventory;
         this.tooltip = from.tooltip;
     }
@@ -78,6 +94,9 @@ public final class WeightDef {
         public double wornFactor = 1.0D;
         public boolean creative = false;
         public String hudShow = HUD_TIERS;
+        public String hudAnchor = HUD_HOTBAR;
+        public int hudX = 0;
+        public int hudY = 0;
         public boolean hudInventory = true;
         public boolean tooltip = true;
 

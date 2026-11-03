@@ -2581,7 +2581,7 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
     { "worn": ["mypack:strap_belt"], "add": 25 }
   ],
   "tiers": [
-    { "above": 0.75, "speed": -0.10 },
+    { "above": 0.75, "speed": -0.10, "color": "FFFF00" },
     { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
       "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
     { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
@@ -2590,6 +2590,8 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
   "countContents": "rdpl",
   "wornFactor": 1.0,
   "creative": false,
+  "tooltip": true,
+  "hud": { "show": "tiers", "anchor": "hotbar", "x": 0, "y": 0, "inventory": true },
   "items": [
     { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
     { "names": ["minecraft:cobblestone", "minecraft:stone*"], "weight": 1.5 },
@@ -2600,31 +2602,35 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 }
 ```
 
-| Klíč              | Povinný | Hodnota                      | Výchozí | Co dělá                                                                                                          |
-| ----------------- | ------- | ---------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
-| `requires`        | ne      | seznam ID módů               | žádný   | Soubor se přeskočí, pokud nejsou načteny všechny. Položky `config:` a `file:` fungují stejně jako všude jinde    |
-| `unit`            | ne      | řetězec                      | `""`    | Popisek čísel, například `kg`. Vyhrává poslední soubor, který ho nastavil                                        |
-| `default`         | ne      | číslo od 0                   | `0`     | Váha každého předmětu, který žádný záznam nejmenuje. `0` nechá nepojmenované předměty bez váhy                   |
-| `limit`           | ne      | číslo větší než 0            | žádný   | Limit nošení. Bez něj se váhy počítají, ale nic se neomezuje                                                     |
-| `hardLimit`       | ne      | číslo větší než 0            | žádný   | Pevný strop jako násobek `limit` (`1.1` znamená 110 procent). Za ním se odmítne to, co pojmenuje `hardLimitMode` |
-| `hardLimitMode`   | ne      | `pickup`, `take` nebo `both` | `both`  | Kterým způsobem získávání předmětů strop odmítá, viz níže                                                        |
-| `stackBudget`     | ne      | číslo větší než 0            | žádný   | Snižuje maximální velikost stacku každého předmětu s vahou na tuto hodnotu dělenou jeho vahou, viz níže          |
-| `stackBudgetMin`  | ne      | celé číslo od 1 do 64        | `1`     | Nejnižší maximální velikost stacku, kterou nastavuje `stackBudget`                                               |
-| `bonuses`         | ne      | seznam položek bonusů        | žádný   | Každá přidává k limitu, dokud platí její podmínka, viz níže                                                      |
-| `tiers`           | ne      | seznam položek stupňů        | žádný   | Stupně zatížení, viz níže                                                                                        |
-| `containerFactor` | ne      | číslo od 0                   | `1.0`   | Podíl obsahu nošeného kontejneru, který se počítá. Vlastní váha kontejneru se počítá vždy celá                   |
-| `countContents`   | ne      | `none`, `rdpl` nebo `all`    | `rdpl`  | Které nošené kontejnery počítají svůj obsah, viz níže                                                            |
-| `wornFactor`      | ne      | číslo od 0                   | `1.0`   | Podíl slotů brnění a Curios, který se počítá                                                                     |
-| `creative`        | ne      | logická hodnota              | `false` | Zda jsou hráči v kreativním režimu zatíženi. Diváci nikdy                                                        |
-| `items`           | ne      | seznam položek předmětů      | žádný   | Váha každého předmětu nebo skupiny, viz níže                                                                     |
+| Klíč              | Povinný | Hodnota                      | Výchozí  | Co dělá                                                                                                          |
+| ----------------- | ------- | ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------- |
+| `requires`        | ne      | seznam ID módů               | žádný    | Soubor se přeskočí, pokud nejsou načteny všechny. Položky `config:` a `file:` fungují stejně jako všude jinde    |
+| `unit`            | ne      | řetězec                      | `""`     | Popisek čísel, například `kg`. Vyhrává poslední soubor, který ho nastavil                                        |
+| `default`         | ne      | číslo od 0                   | `0`      | Váha každého předmětu, který žádný záznam nejmenuje. `0` nechá nepojmenované předměty bez váhy                   |
+| `limit`           | ne      | číslo větší než 0            | žádný    | Limit nošení. Bez něj se váhy počítají, ale nic se neomezuje                                                     |
+| `hardLimit`       | ne      | číslo větší než 0            | žádný    | Pevný strop jako násobek `limit` (`1.1` znamená 110 procent). Za ním se odmítne to, co pojmenuje `hardLimitMode` |
+| `hardLimitMode`   | ne      | `pickup`, `take` nebo `both` | `both`   | Kterým způsobem získávání předmětů strop odmítá, viz níže                                                        |
+| `stackBudget`     | ne      | číslo větší než 0            | žádný    | Snižuje maximální velikost stacku každého předmětu s vahou na tuto hodnotu dělenou jeho vahou, viz níže          |
+| `stackBudgetMin`  | ne      | celé číslo od 1 do 64        | `1`      | Nejnižší maximální velikost stacku, kterou nastavuje `stackBudget`                                               |
+| `bonuses`         | ne      | seznam položek bonusů        | žádný    | Každá přidává k limitu, dokud platí její podmínka, viz níže                                                      |
+| `tiers`           | ne      | seznam položek stupňů        | žádný    | Stupně zatížení, viz níže                                                                                        |
+| `containerFactor` | ne      | číslo od 0                   | `1.0`    | Podíl obsahu nošeného kontejneru, který se počítá. Vlastní váha kontejneru se počítá vždy celá                   |
+| `countContents`   | ne      | `none`, `rdpl` nebo `all`    | `rdpl`   | Které nošené kontejnery počítají svůj obsah, viz níže                                                            |
+| `wornFactor`      | ne      | číslo od 0                   | `1.0`    | Podíl slotů brnění a Curios, který se počítá                                                                     |
+| `creative`        | ne      | logická hodnota              | `false`  | Zda jsou hráči v kreativním režimu zatíženi. Diváci nikdy                                                        |
+| `tooltip`         | ne      | logická hodnota              | `true`   | Zda popisky předmětů ukazují váhy, viz níže                                                                      |
+| `hud`             | ne      | objekt                       | viz níže | Pruh váhy a řádek inventáře, viz níže                                                                            |
+| `items`           | ne      | seznam položek předmětů      | žádný    | Váha každého předmětu nebo skupiny, viz níže                                                                     |
 
 `items` je seznam položek. Každá přijímá `weight` (číslo od 0, povinné; položka bez něj se přeskočí a v logu se objeví řádek o tom) a alespoň jeden způsob, jak vybrat předměty: `names` (stejné tvary jako jinde: `namespace:name`, a koncové `*` pro každý název, který začíná zbytkem; název bloku váží jeho předmět), `namespaces` (každý předmět módu) nebo `tags` (každý předmět v tagu předmětů, psaný jako `namespace:path` bez `#`). Když na předmět sedí víc pravidel, vyhrává nejkonkrétnější, v tomto pořadí: klíč `weight` v souboru samotného předmětu, bloku nebo přepsání; položka `names`; `tags`; `namespaces` nebo koncové `*` u předpony; a `default`. Klíč `oreDict` se na tomto řádku nečte a zapíše do logu varování.
 
 `bonuses` je seznam položek, z nichž každá přidá `add` k limitu, dokud platí podmínka. `add` je číslo, povinné, a může být záporné. `advancement` (`namespace:path`) platí, jakmile ho hráč získal, a `worn` (seznam názvů předmětů) platí, dokud je některý z nich nasazený ve slotu brnění, v druhé ruce nebo v Curios. Položka bez žádné z těchto podmínek se přeskočí a log to uvede.
 
-`tiers` je seznam stupňů seřazený podle `above`, které je násobkem `limit` (`0.75` znamená 75 procent). Platí nejvyšší dosažený stupeň a stupně se nesčítají. Každý stupeň přijímá `above` (číslo větší než 0, povinné), `speed` (-1 až 0, výchozí `0`, změna rychlosti pohybu, takže `-0.25` znamená o 25 procent pomaleji), `sprint` (logická hodnota, výchozí `true`, `false` zastaví běh), `jump` (logická hodnota, výchozí `true`, `false` zastaví skákání), `exhaustion` (číslo od 0, výchozí `0`, dodatečné vyčerpání hladu za sekundu), `effects` (seznam stejných objektů, jaké berou efekty jídla, drží se, dokud je hráč ve stupni, a obnovuje se každé 2 sekundy, částice jsou skryté) a `message` (text nebo klíč jazyka, zobrazí se na panelu akcí, když hráč do stupně vstoupí).
+`tiers` je seznam stupňů seřazený podle `above`, které je násobkem `limit` (`0.75` znamená 75 procent). Platí nejvyšší dosažený stupeň a stupně se nesčítají. Každý stupeň přijímá `above` (číslo větší než 0, povinné), `speed` (-1 až 0, výchozí `0`, změna rychlosti pohybu, takže `-0.25` znamená o 25 procent pomaleji), `sprint` (logická hodnota, výchozí `true`, `false` zastaví běh), `jump` (logická hodnota, výchozí `true`, `false` zastaví skákání), `exhaustion` (číslo od 0, výchozí `0`, dodatečné vyčerpání hladu za sekundu), `effects` (seznam stejných objektů, jaké berou efekty jídla, drží se, dokud je hráč ve stupni, a obnovuje se každé 2 sekundy, částice jsou skryté) `color` (hexadecimální barva, například `FF8800`, výchozí `FFFFFF`, barva pruhu váhy, dokud je hráč ve stupni), a `message` (text nebo klíč jazyka, zobrazí se na panelu akcí, když hráč do stupně vstoupí).
 
-`hardLimit` odmítá předměty, které by hráče dostaly přes `limit` násobené `hardLimit`. Při `pickup` nebo `both` hráč z položeného stacku sebere jen tolik, kolik se vejde, zbytek zůstane na zemi a na panelu akcí se objeví, že je to příliš těžké. Odmítání předmětů vyjmutých z kontejneru (`take`) zatím není vynucováno. `stackBudget` nastaví maximální velikost stacku každého předmětu na `stackBudget` dělené jeho vahou, zaokrouhlené dolů, nikdy pod `stackBudgetMin` a nikdy nad vlastní maximální velikost stacku předmětu. Předmět s více váhami podle metadat používá tu nejtěžší; předměty s poškozením, předměty, které se už skládají na 1, a předměty s vahou 0 si ponechají svou maximální velikost stacku. Příkazy `/give` a další pak odmítnou počet vyšší než nová maximální velikost stacku.
+Co hráč vidí: s zapnutým `tooltip` končí popisek předmětu šedým řádkem s jeho vahou, a když je v zásobníku víc kusů, i vahou celého zásobníku, a nesený kontejner přidává řádek s vahou svého obsahu. `hud` přijímá `show` (`never`, `tiers` nebo `always`, výchozí `tiers`, který ukazuje pruh až od prvního dosaženého stupně) a `inventory` (logická hodnota, výchozí `true`, řádek s celkem a limitem pod oknem inventáře). `anchor` určuje, kde pruh leží: `hotbar` (výchozí, vpravo od hotbaru), `top_left`, `top`, `top_right`, `left`, `center`, `right`, `bottom_left`, `bottom` nebo `bottom_right`. `x` a `y` (celá čísla, výchozí `0`) ho pak posunou v pixelech GUI, `x` doprava a `y` dolů; nic se neořezává, takže pruh posunutý mimo obrazovku není vidět. Pruh je plný při `limit` násobeném `hardLimit` (při `limit` bez `hardLimit`) a má barvu `color` aktuálního stupně. Nic z toho se nekreslí, dokud je zapnutá konfigurační volba `vanillaClients`.
+
+`hardLimit` odmítá předměty, které by hráče dostaly přes `limit` násobené `hardLimit`. Při `pickup` nebo `both` hráč z položeného stacku sebere jen tolik, kolik se vejde, zbytek zůstane na zemi a na panelu akcí se objeví, že je to příliš těžké. U `take` nebo `both` se klik, který by hráče dostal přes strop, odmítne a nic se nepřesune: vybírání z truhly nebo jiného kontejneru, výstup craftingu nebo tavení, nebo otevřený nošený kontejner (úměrně `containerFactor`, takže nikdy při `1`). Levý klik nebo shift-klik váží celý stack, pravý klik jeho polovinu zaokrouhlenou nahoru, a na panelu akcí se objeví, že je to příliš těžké. Neověřeno: shift-klik na výstupu craftingu váží jen první výrobu, a také slot z jiného modu, který přepisuje `mayPickup` bez volání originálu, například `SlotItemHandler` z Forge, který používá mnoho modových skladovacích bloků. `stackBudget` nastaví maximální velikost stacku každého předmětu na `stackBudget` dělené jeho vahou, zaokrouhlené dolů, nikdy pod `stackBudgetMin` a nikdy nad vlastní maximální velikost stacku předmětu. Předmět s více váhami podle metadat používá tu nejtěžší; předměty s poškozením, předměty, které se už skládají na 1, a předměty s vahou 0 si ponechají svou maximální velikost stacku. Příkazy `/give` a další pak odmítnou počet vyšší než nová maximální velikost stacku.
 
 Nese se: hlavní inventář a hotbar, druhá ruka, stack na kurzoru, sloty brnění a Curios (krát `wornFactor`), blok nesený funkcí nošení RDPL a nesené kontejnery podle toho, co dovolí `countContents`. Otevřená truhla, ender truhla a předměty na zemi se nepočítají. `countContents` bere `none` (jen samotný kontejner), `rdpl` (pytle a kontejnery RDPL) nebo `all` (také každý jiný nesený předmět, který sám drží předměty, například shulker box nebo batoh jiného módu, přes obsluhu předmětů nebo data block entity předmětu se seznamem `Items`, vnořeně až do 3 úrovní). `containerFactor` nastavuje podíl obsahu kontejneru, který se počítá.
 

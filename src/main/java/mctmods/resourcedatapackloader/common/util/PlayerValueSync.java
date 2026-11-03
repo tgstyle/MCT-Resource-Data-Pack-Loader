@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.util;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -11,13 +10,13 @@ import java.util.function.Function;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
-public final class PlayerSetSync {
-    private final Map<UUID, Set<String>> sent = new HashMap<>();
-    private final Function<ServerPlayer, Set<String>> compute;
+public final class PlayerValueSync<T> {
+    private final Map<UUID, T> sent = new HashMap<>();
+    private final Function<ServerPlayer, T> compute;
     private final BooleanSupplier watching;
-    private final BiConsumer<ServerPlayer, Set<String>> send;
+    private final BiConsumer<ServerPlayer, T> send;
 
-    public PlayerSetSync(Function<ServerPlayer, Set<String>> compute, BooleanSupplier watching, BiConsumer<ServerPlayer, Set<String>> send) {
+    public PlayerValueSync(Function<ServerPlayer, T> compute, BooleanSupplier watching, BiConsumer<ServerPlayer, T> send) {
         this.compute = compute;
         this.watching = watching;
         this.send = send;
@@ -25,11 +24,11 @@ public final class PlayerSetSync {
 
     public void push(ServerPlayer player) {
         if (!watching.getAsBoolean()) { return; }
-        Set<String> open = compute.apply(player);
+        T value = compute.apply(player);
         UUID id = player.getUUID();
-        if (open.equals(sent.get(id))) { return; }
-        sent.put(id, open);
-        send.accept(player, open);
+        if (value.equals(sent.get(id))) { return; }
+        sent.put(id, value);
+        send.accept(player, value);
     }
 
     public void fresh(ServerPlayer player) {

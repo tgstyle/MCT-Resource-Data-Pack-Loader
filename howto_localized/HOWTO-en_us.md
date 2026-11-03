@@ -2581,7 +2581,7 @@ The file name is yours to choose, only the folder is read, and several files sta
     { "worn": ["mypack:strap_belt"], "add": 25 }
   ],
   "tiers": [
-    { "above": 0.75, "speed": -0.10 },
+    { "above": 0.75, "speed": -0.10, "color": "FFFF00" },
     { "above": 1.0, "speed": -0.25, "sprint": false, "exhaustion": 0.01, "message": "mypack.weight.heavy",
       "effects": [ { "potion": "minecraft:mining_fatigue", "amplifier": 0 } ] },
     { "above": 1.25, "speed": -0.60, "sprint": false, "jump": false }
@@ -2590,6 +2590,8 @@ The file name is yours to choose, only the folder is read, and several files sta
   "countContents": "rdpl",
   "wornFactor": 1.0,
   "creative": false,
+  "tooltip": true,
+  "hud": { "show": "tiers", "anchor": "hotbar", "x": 0, "y": 0, "inventory": true },
   "items": [
     { "names": ["minecraft:iron_ingot", "minecraft:gold_ingot"], "weight": 0.9 },
     { "names": ["minecraft:cobblestone", "minecraft:stone*"], "weight": 1.5 },
@@ -2600,31 +2602,35 @@ The file name is yours to choose, only the folder is read, and several files sta
 }
 ```
 
-| Key               | Required | Value                      | Default | What it does                                                                                                  |
-| ----------------- | -------- | -------------------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
-| `requires`        | no       | list of mod ids            | none    | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else |
-| `unit`            | no       | string                     | `""`    | Label for the numbers, such as `kg`. The last file to set it wins                                             |
-| `default`         | no       | number from 0 up           | `0`     | Weight of any item no entry names. `0` keeps unnamed items free                                               |
-| `limit`           | no       | number above 0             | none    | The carrying limit. With none, weights are counted but nothing is enforced                                    |
-| `hardLimit`       | no       | number above 0             | none    | A hard cap as a multiple of `limit` (`1.1` means 110 percent). Past it, what `hardLimitMode` names is refused |
-| `hardLimitMode`   | no       | `pickup`, `take` or `both` | `both`  | Which way of gaining items the hard cap refuses, see below                                                    |
-| `stackBudget`     | no       | number above 0             | none    | Lowers each weighted item's max stack to this divided by the item's weight, see below                         |
-| `stackBudgetMin`  | no       | whole number 1 to 64       | `1`     | The lowest max stack `stackBudget` sets                                                                       |
-| `bonuses`         | no       | list of bonus entries      | none    | Each adds to the limit while its condition holds, see below                                                   |
-| `tiers`           | no       | list of tier entries       | none    | Encumbrance steps, see below                                                                                  |
-| `containerFactor` | no       | number from 0 up           | `1.0`   | Share of a carried container's contents that counts. The container's own weight always counts in full         |
-| `countContents`   | no       | `none`, `rdpl` or `all`    | `rdpl`  | Which carried containers count their contents, see below                                                      |
-| `wornFactor`      | no       | number from 0 up           | `1.0`   | Share of armor and Curios slots that counts                                                                   |
-| `creative`        | no       | boolean                    | `false` | Whether creative players are encumbered. Spectators never are                                                 |
-| `items`           | no       | list of item entries       | none    | The weight of each item or group, see below                                                                   |
+| Key               | Required | Value                      | Default   | What it does                                                                                                  |
+| ----------------- | -------- | -------------------------- | --------- | ------------------------------------------------------------------------------------------------------------- |
+| `requires`        | no       | list of mod ids            | none      | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else |
+| `unit`            | no       | string                     | `""`      | Label for the numbers, such as `kg`. The last file to set it wins                                             |
+| `default`         | no       | number from 0 up           | `0`       | Weight of any item no entry names. `0` keeps unnamed items free                                               |
+| `limit`           | no       | number above 0             | none      | The carrying limit. With none, weights are counted but nothing is enforced                                    |
+| `hardLimit`       | no       | number above 0             | none      | A hard cap as a multiple of `limit` (`1.1` means 110 percent). Past it, what `hardLimitMode` names is refused |
+| `hardLimitMode`   | no       | `pickup`, `take` or `both` | `both`    | Which way of gaining items the hard cap refuses, see below                                                    |
+| `stackBudget`     | no       | number above 0             | none      | Lowers each weighted item's max stack to this divided by the item's weight, see below                         |
+| `stackBudgetMin`  | no       | whole number 1 to 64       | `1`       | The lowest max stack `stackBudget` sets                                                                       |
+| `bonuses`         | no       | list of bonus entries      | none      | Each adds to the limit while its condition holds, see below                                                   |
+| `tiers`           | no       | list of tier entries       | none      | Encumbrance steps, see below                                                                                  |
+| `containerFactor` | no       | number from 0 up           | `1.0`     | Share of a carried container's contents that counts. The container's own weight always counts in full         |
+| `countContents`   | no       | `none`, `rdpl` or `all`    | `rdpl`    | Which carried containers count their contents, see below                                                      |
+| `wornFactor`      | no       | number from 0 up           | `1.0`     | Share of armor and Curios slots that counts                                                                   |
+| `creative`        | no       | boolean                    | `false`   | Whether creative players are encumbered. Spectators never are                                                 |
+| `tooltip`         | no       | boolean                    | `true`    | Whether item tooltips show weights, see below                                                                 |
+| `hud`             | no       | object                     | see below | The weight bar and the inventory line, see below                                                              |
+| `items`           | no       | list of item entries       | none      | The weight of each item or group, see below                                                                   |
 
 `items` is a list of entries. Each one takes `weight` (a number from 0 up, required, and an entry without it is skipped with a line in the log) and at least one way to pick the items: `names` (the same forms as elsewhere: `namespace:name`, and a trailing `*` for every name that starts with the rest; a block name weighs its item), `namespaces` (every item of the mod) or `tags` (every item in the item tag, written `namespace:path` without `#`). When more than one rule matches an item, the most specific one wins, in this order: the `weight` key in the item's, the block's or an override's own file; a `names` entry; `tags`; `namespaces` or a trailing `*` prefix; and `default`. An `oreDict` key is not read on this line and logs a warning.
 
 `bonuses` is a list of entries that each add `add` to the limit while a condition holds. `add` is a number, required, and may be negative. `advancement` (`namespace:path`) holds once the player has earned it, and `worn` (a list of item names) holds while one of them is worn in an armor, offhand or Curios slot. An entry with neither condition is skipped, and the log says so.
 
-`tiers` is a list of steps, sorted by `above`, which is a multiple of `limit` (`0.75` means 75 percent). The highest tier reached applies, and tiers do not stack. Each step takes `above` (a number above 0, required), `speed` (-1 to 0, default `0`, the movement speed change, so `-0.25` is 25 percent slower), `sprint` (boolean, default `true`, `false` stops sprinting), `jump` (boolean, default `true`, `false` stops jumping), `exhaustion` (a number from 0 up, default `0`, extra hunger exhaustion per second), `effects` (a list of the same objects food effects take, held while the player is in the tier and refreshed every 2 seconds, with particles hidden) and `message` (text or a lang key, shown on the action bar when the player enters the tier).
+`tiers` is a list of steps, sorted by `above`, which is a multiple of `limit` (`0.75` means 75 percent). The highest tier reached applies, and tiers do not stack. Each step takes `above` (a number above 0, required), `speed` (-1 to 0, default `0`, the movement speed change, so `-0.25` is 25 percent slower), `sprint` (boolean, default `true`, `false` stops sprinting), `jump` (boolean, default `true`, `false` stops jumping), `exhaustion` (a number from 0 up, default `0`, extra hunger exhaustion per second), `effects` (a list of the same objects food effects take, held while the player is in the tier and refreshed every 2 seconds, with particles hidden) `color` (a hex color such as `FF8800`, default `FFFFFF`, the weight bar's color while the player is in the tier), and `message` (text or a lang key, shown on the action bar when the player enters the tier).
 
-`hardLimit` refuses items that would take the player past `limit` times `hardLimit`. With `pickup` or `both`, a player picks up only as much of a dropped stack as fits, the rest stays on the ground, and the action bar says it is too heavy. Refusing items taken out of a container (`take`) is not enforced yet. `stackBudget` sets each item's max stack to `stackBudget` divided by its weight, rounded down, never below `stackBudgetMin` and never above the item's own max stack. An item with several metadata weights uses the heaviest one; damageable items, items that already stack to 1 and items that weigh 0 keep their max stack. `/give` and other commands then refuse a count above the new max stack.
+What the player sees: with `tooltip` on, an item's tooltip ends in a gray line with its weight, plus the whole stack's weight when there is more than one, and a carried container adds a line with the weight of its contents. `hud` takes `show` (`never`, `tiers` or `always`, default `tiers`, which shows the bar only once the first tier is reached) and `inventory` (boolean, default `true`, a line with the total and the limit under the inventory window). `anchor` picks where the bar sits: `hotbar` (the default, to the right of the hotbar), `top_left`, `top`, `top_right`, `left`, `center`, `right`, `bottom_left`, `bottom` or `bottom_right`. `x` and `y` (whole numbers, default `0`) then move it in GUI pixels, `x` to the right and `y` down; nothing is clamped, so a bar moved off the screen is not seen. The bar is full at `limit` times `hardLimit` (at `limit` with no `hardLimit`), and takes the current tier's `color`. None of this is drawn while the `vanillaClients` config option is on.
+
+`hardLimit` refuses items that would take the player past `limit` times `hardLimit`. With `pickup` or `both`, a player picks up only as much of a dropped stack as fits, the rest stays on the ground, and the action bar says it is too heavy. With `take` or `both`, a click that would take the player past the cap is refused and nothing moves: taking from a chest or other container, a crafting or smelting output, or an open pouch (in proportion to `containerFactor`, so never at `1`). A left click or shift-click weighs the whole stack, a right click half of it rounded up, and the action bar says it is too heavy. Not checked: a shift-click on a crafting output weighs only the first craft, and a slot from another mod that overrides `mayPickup` without calling the original, such as Forge's `SlotItemHandler` used by many modded storage blocks. `stackBudget` sets each item's max stack to `stackBudget` divided by its weight, rounded down, never below `stackBudgetMin` and never above the item's own max stack. An item with several metadata weights uses the heaviest one; damageable items, items that already stack to 1 and items that weigh 0 keep their max stack. `/give` and other commands then refuse a count above the new max stack.
 
 What counts as carried: the main inventory and hotbar, the offhand, the stack on the cursor, armor and Curios slots (times `wornFactor`), a block carried with RDPL's carry feature, and carried containers as `countContents` allows. An open chest, the ender chest and items on the ground do not count. `countContents` takes `none` (only the container item itself), `rdpl` (RDPL pouches and container items) or `all` (also any other carried item that holds items, such as a shulker box or another mod's backpack, through an item handler or the item's block entity data with an `Items` list, nested up to 3 deep). `containerFactor` sets the share of a container's contents that counts.
 

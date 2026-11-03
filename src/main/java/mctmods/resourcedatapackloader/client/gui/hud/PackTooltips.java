@@ -1,7 +1,12 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
+import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.config.Config;
 
 import java.util.List;
 import java.util.Map;
@@ -23,7 +28,20 @@ public final class PackTooltips {
 
     private static String translated(String line) { return I18n.exists(line) ? I18n.get(line) : line; }
 
+    private static void weight(ItemStack stack, List<Component> tooltip) {
+        WeightDef settings = ContentWeights.settings();
+        if (Config.content.vanillaClients() || !settings.tooltip || !ContentWeights.any() || stack.isEmpty()) { return; }
+        long single = ContentWeights.of(stack);
+        long held = CarriedWeight.single(stack, settings) - single;
+        if (single > 0L) {
+            String each = ClientWeights.format(single);
+            tooltip.add(Component.literal(stack.getCount() > 1 ? I18n.get("rdpl.weight.stack", each, ClientWeights.format((single + held) * stack.getCount())) : I18n.get("rdpl.weight.line", each)).withStyle(ChatFormatting.GRAY));
+        }
+        if (held > 0L) { tooltip.add(Component.literal(I18n.get("rdpl.weight.contents", ClientWeights.format(held))).withStyle(ChatFormatting.GRAY)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
+        weight(event.getItemStack(), event.getToolTip());
         lines(event);
         affixes(event.getItemStack(), event.getToolTip());
     }

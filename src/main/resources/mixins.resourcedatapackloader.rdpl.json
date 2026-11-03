@@ -20,6 +20,8 @@
         "world.item.enchantment.EnchantmentHelperMixin",
         "world.inventory.CraftingMenuMixin",
         "world.inventory.ItemCombinerMenuMixin",
+        "world.inventory.SlotMixin",
+        "world.inventory.AbstractContainerMenuMixin",
         "world.entity.ExperienceOrbMixin",
         "world.level.biome.BiomeMixin",
         "world.entity.item.ItemEntityMixin",

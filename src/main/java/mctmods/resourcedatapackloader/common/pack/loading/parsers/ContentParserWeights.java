@@ -64,6 +64,9 @@ public final class ContentParserWeights {
         if (json.has("hud")) {
             JsonObject hud = Json.getJsonObject(json, "hud", new JsonObject());
             into.hudShow = Json.choice(hud, "show", into.hudShow, key, Arrays.asList(WeightDef.HUD_NEVER, WeightDef.HUD_TIERS, WeightDef.HUD_ALWAYS));
+            into.hudAnchor = Json.choice(hud, "anchor", into.hudAnchor, key, Arrays.asList(WeightDef.HUD_HOTBAR, WeightDef.HUD_TOP_LEFT, WeightDef.HUD_TOP, WeightDef.HUD_TOP_RIGHT, WeightDef.HUD_LEFT, WeightDef.HUD_CENTER, WeightDef.HUD_RIGHT, WeightDef.HUD_BOTTOM_LEFT, WeightDef.HUD_BOTTOM, WeightDef.HUD_BOTTOM_RIGHT));
+            into.hudX = Json.getInt(hud, "x", into.hudX);
+            into.hudY = Json.getInt(hud, "y", into.hudY);
             into.hudInventory = Json.getBoolean(hud, "inventory", into.hudInventory);
         }
         return defines;

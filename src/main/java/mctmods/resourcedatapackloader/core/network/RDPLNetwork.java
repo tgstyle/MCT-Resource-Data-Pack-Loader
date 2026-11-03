@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.BlastHush;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
+import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentRuleClient;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
@@ -86,6 +87,7 @@ public final class RDPLNetwork {
         channel.messageBuilder(HeartColorsMessage.class, 15, NetworkDirection.PLAY_TO_CLIENT).encoder(HeartColorsMessage::write).decoder(HeartColorsMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { HeartsHud.show(message.colors()); } }).add();
         channel.messageBuilder(GatesMessage.class, 16, NetworkDirection.PLAY_TO_CLIENT).encoder(GatesMessage::write).decoder(GatesMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ContentSkyGates.receive(message.ids()); } }).add();
         channel.messageBuilder(UnlocksMessage.class, 17, NetworkDirection.PLAY_TO_CLIENT).encoder(UnlocksMessage::write).decoder(UnlocksMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } }).add();
+        channel.messageBuilder(WeightMessage.class, 18, NetworkDirection.PLAY_TO_CLIENT).encoder(WeightMessage::write).decoder(WeightMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } }).add();
     }
 
     public static void openWorn() { if (channel != null) { channel.sendToServer(new OpenWornMessage()); } }
@@ -132,6 +134,8 @@ public final class RDPLNetwork {
     public static void sendGates(ServerPlayer player, Set<String> open) { toPlayer(player, new GatesMessage(List.copyOf(open))); }
 
     public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return toPlayer(player, new UnlocksMessage(List.copyOf(open))); }
+
+    public static boolean sendWeight(ServerPlayer player, int total, int limit, int tier, boolean exempt) { return toPlayer(player, new WeightMessage(total, limit, tier, exempt)); }
 
     public static void sendEnvironments(ServerPlayer player, EnvironmentsMessage environments) { toPlayer(player, environments); }
 }
