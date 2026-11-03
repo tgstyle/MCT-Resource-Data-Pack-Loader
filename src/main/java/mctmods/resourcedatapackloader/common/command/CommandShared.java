@@ -11,6 +11,8 @@ import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
+import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
+import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
@@ -326,6 +328,8 @@ public final class CommandShared {
         ContentHearts.load();
         ContentHearts.refresh(server);
         SpawnLocks.load();
+        ContentItemLocks.report(server);
+        ItemLockSync.resendAll(server);
         for (ServerLevel level : server.getAllLevels()) {
             ContentTeams.field(level);
             ContentScoring.keep(level);

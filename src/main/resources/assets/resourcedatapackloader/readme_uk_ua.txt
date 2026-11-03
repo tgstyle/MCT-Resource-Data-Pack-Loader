@@ -216,6 +216,7 @@ assets, так само, як будь-який інший файл у цій т
     veins            diets            enchantments     dice
     games            orders           ranks            recipe_locks
     spawn_locks
+    item_locks
 
 Блоки бувають таких форм, їх задає поле "type":
 

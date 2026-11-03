@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.intro.WorldIntroScreen;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
+import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
@@ -22,6 +23,7 @@ import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -60,6 +62,7 @@ public final class RDPLNetwork {
         registrar.playToServer(PortwayFilterMessage.TYPE, PortwayFilterMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player && player.containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
         registrar.playToClient(TalkMessage.TYPE, TalkMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { TalkScreen.receive(message); } });
         registrar.playToServer(TalkPickMessage.TYPE, TalkPickMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { DialogTalk.pick(player, message.index()); } });
+        registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
     }
 
     public static void openWorn() { ClientPacketDistributor.sendToServer(new OpenWornMessage()); }
@@ -91,7 +94,9 @@ public final class RDPLNetwork {
 
     public static void sendHeartColors(ServerPlayer player) { send(player, new HeartColorsMessage(boxed(ContentHearts.colors()))); }
 
-    public static void sendGates(ServerPlayer player, List<String> open) { send(player, new GatesMessage(open)); }
+    public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(StringListCodec.capped(open))); }
+
+    public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return send(player, new UnlocksMessage(StringListCodec.capped(open))); }
 
     private static List<Integer> boxed(int[] values) { return Arrays.stream(values).boxed().toList(); }
 

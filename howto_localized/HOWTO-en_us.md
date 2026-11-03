@@ -57,6 +57,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 
 **Crafting, loot and trade**
 - [Disabled blocks and items](#disabled-blocks-and-items)
+- [Item locks](#item-locks)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
 - [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
@@ -193,6 +194,7 @@ Under `data/`:
 | `<namespace>/structures/*.nbt`               | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                                          |
 | `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                                           |
 | `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                                  |
+| `<namespace>/item_locks/*.json`              | Items hidden from a player's lists until they earn an advancement. [Item locks](#item-locks)                                                                                   |
 | `<namespace>/recipe_locks/*.json`            | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                                    |
 | `<namespace>/spawn_locks/*.json`             | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                                      |
 | `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                                    |
@@ -2477,6 +2479,34 @@ A disabled block or item:
 To swap placed blocks for something else instead of removing them, give them a `blockReplacements` line such as `thermal:tin_ore=minecraft:stone` in the world template, see [Replacements](#replacements). A block the replacement process swaps is left to it. Recipes another mod keeps inside its own machines belong to that mod and are not reached. Hiding from the creative tabs and JEI happens on the client, so a vanilla client still lists the item. `content.disabled` in the config turns the folder off.
 
 To empty a tag while its items stay in play, use a tag file with `"replace": true` and an empty `"values": []` instead, see [Tags](#tags).
+
+## Item locks
+
+*crafting, loot and trade*
+
+`<namespace>/item_locks/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Hides items from a player's creative tabs, creative search and JEI until that player earns an advancement.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "tags": ["c:ingots/tin"]
+}
+```
+
+| Key           | Required | Value              | Default | What it does                                                                                                                                                                                                     |
+| ------------- | -------- | ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | yes      | `namespace:path`   | none    | The advancement a player must have earned before these items show for them. A file without one stays locked for everyone, and so does one naming an advancement no pack defines; the log says so at server start |
+| `names`       | no       | list of item names | none    | What is locked. A name ending in `*` matches every name that starts with the rest                                                                                                                                |
+| `namespaces`  | no       | list of mod ids    | none    | Every item of the mod                                                                                                                                                                                            |
+| `tags`        | no       | list of item tags  | none    | Every item in the tag                                                                                                                                                                                            |
+| `requires`    | no       | list of mod ids    | none    | The file is skipped unless every one is loaded. `config:` and `file:` entries work as they do everywhere else                                                                                                    |
+
+A locked item is hidden from a player's creative tabs, creative search and JEI until that player has earned the advancement. It works per player, and the server tells each client which locks are open for that player. A lock changes only what the lists show: use is held back by [Recipe locks](#recipe-locks) and `anvils`, and [Disabled blocks and items](#disabled-blocks-and-items) takes an item out of play for everyone. Several files stack, and an item that matches two files needs both advancements. A file that selects no items is skipped, and the log says so. `content.itemLocks` in the config turns the folder off.
 
 ## Furnace recipes and fuels
 

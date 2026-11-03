@@ -26,6 +26,8 @@ tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
+boolean companion(String key) { return (findProperty('companions') ?: '').toString().split(',').contains(key) }
+
 subprojects {
     apply plugin: 'java-library'
     apply plugin: 'net.neoforged.moddev'
@@ -178,6 +180,9 @@ subprojects {
     }
 
     dependencies {
+        if (companion('jei')) {
+            runtimeOnly "mezz.jei:jei-${version_minecraft}-neoforge:${version_jei}"
+        }
         if (version_curios != null) {
             runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
         }
