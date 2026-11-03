@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAliases;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedFuel;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
@@ -176,6 +178,7 @@ public class ModSetup {
         modBus.addListener(ContentEvents::onBuildTab);
         NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(event.getBuilder()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, CompressedFuel::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
@@ -453,6 +456,7 @@ public class ModSetup {
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.applyAliases();
+            CompressedAliases.apply();
             event.enqueueWork(() -> {
                 ContentSpawners.apply();
                 ContentPortals.bind();
@@ -496,6 +500,7 @@ public class ModSetup {
         PackManager.get().scan(root);
         PackManager.get().report();
         RegistryRemaps.applyAliases();
+        CompressedAliases.apply();
         ContentOverrides.reload();
         ContentReplacements.reload();
         ContentCityMaps.reload();

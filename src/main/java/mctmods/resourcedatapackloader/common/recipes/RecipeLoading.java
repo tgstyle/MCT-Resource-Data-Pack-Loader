@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.recipes;
 
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedRecipes;
 import mctmods.resourcedatapackloader.common.pack.io.RDPLResourcePack;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
@@ -83,6 +84,7 @@ public final class RecipeLoading {
         }
         LOADED.clear();
         LOADED.addAll(recipes.keySet());
+        CompressedRecipes.register(recipes);
     }
 
     @SuppressWarnings("resource") private static void keepOriginals(Map<ResourceLocation, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, BiConsumer<ResourceLocation, JsonElement> parse) {

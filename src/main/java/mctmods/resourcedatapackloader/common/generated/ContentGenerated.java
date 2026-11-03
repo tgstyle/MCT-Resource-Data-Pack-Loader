@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.generated;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
+import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAssets;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
@@ -82,6 +83,7 @@ public final class ContentGenerated {
         tags(itemTags, Map.of(), ContentFormats.ITEM_TAGS);
         worn();
         potionIcons();
+        CompressedAssets.generate();
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
 
