@@ -7,9 +7,12 @@ import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionEffe
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWeights;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentToolTypes;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -68,7 +71,9 @@ public final class ContentOverrides {
     public static void reload() {
         if (!APPLIED.stale()) { return; }
         load();
+        WeightStacks.release();
         restoreAll();
+        ContentWeights.clearOverrides();
         Map<Block, Integer> lights = new IdentityHashMap<>();
         int applied = 0;
         for (OverrideDef def : DEFS.values()) {
@@ -78,6 +83,7 @@ public final class ContentOverrides {
         lightBlocks = lights.isEmpty() ? Collections.emptyMap() : lights;
         if (applied > 0) { Summary.info("overrides", "Applied " + applied + " override(s) to existing blocks, items and potion types"); }
         ContentGenerated.retag();
+        WeightStacks.reinstall();
     }
 
     public static void harvestTags(Map<String, Set<String>> tags, Map<String, Set<String>> removed) {
@@ -144,7 +150,7 @@ public final class ContentOverrides {
                 intOrNull(json, "flammability"), Math.max(0, Json.getInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
                 intOrNull(json, "maxStackSize"), intOrNull(json, "maxDamage"), stringOrNull(json, "containerItem"),
                 effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
-                Json.strings(json, "requires"));
+                Json.strings(json, "requires"), ContentParserWeights.weight(json, source));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
             return null;
@@ -203,6 +209,7 @@ public final class ContentOverrides {
         OverrideDef.FoodDef food = def.food();
         if (food != null) { builder.set(DataComponents.FOOD, food(def, food, item.components().get(DataComponents.FOOD))); }
         item.components = builder.build();
+        if (def.weight() >= 0) { ContentWeights.override(def.target(), def.weight()); }
         return true;
     }
 

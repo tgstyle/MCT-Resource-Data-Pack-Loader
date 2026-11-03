@@ -36,6 +36,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -73,6 +76,13 @@ public final class ContentCarry {
     public static boolean breaking() { return breaking; }
 
     public static boolean probing() { return probing; }
+
+    public static ItemStack carried(Player player) {
+        CompoundTag held = PlayerPersisted.read(player, CARRY);
+        if (!BLOCK.equals(held.getString(KIND))) { return ItemStack.EMPTY; }
+        Item item = NbtUtils.readBlockState(player.level().holderLookup(Registries.BLOCK), held.getCompound(STATE)).getBlock().asItem();
+        return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
+    }
 
     public static boolean listsMob(Entity target) {
         rules();

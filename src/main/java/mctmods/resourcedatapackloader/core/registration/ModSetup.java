@@ -98,6 +98,10 @@ import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.villages.ContentPathIntersects;
 import mctmods.resourcedatapackloader.common.villages.ContentPaths;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
+import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
+import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
@@ -246,6 +250,22 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onPickup);
+        NeoForge.EVENT_BUS.addListener(WeightEnforce::onPickup);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onToss);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onOpen);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onClose);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onCrafted);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onSmelted);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onUsed);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onPlace);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onLogin);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onRespawn);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onDimension);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onClone);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onAdvancement);
+        NeoForge.EVENT_BUS.addListener(PlayerWeights::onLogout);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentStorageSwap::onItemJoin);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onDig);
         NeoForge.EVENT_BUS.addListener(ContentDisabledEvents::onUse);
@@ -485,9 +505,9 @@ public class ModSetup {
         throw new IllegalStateException(message);
     }
 
-    private static void onAddReloadListeners(AddReloadListenerEvent event) { event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
+    private static void onAddReloadListeners(AddReloadListenerEvent event) { event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> { WeightStacks.release(); return barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2); }); }
 
-    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); VanillaFluidRules.tagsUpdated(); } }
+    private static void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); VanillaFluidRules.tagsUpdated(); ContentWeights.load(); } }
 
     private static void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 

@@ -56,6 +56,8 @@ public final class ItemSelection {
         }
     }
 
+    public static boolean isPrefixName(String name) { return Settings.lower(name).endsWith("*") && Settings.lower(name).split(":").length == 2; }
+
     public boolean unnamed() { return names.isEmpty() && prefixes.isEmpty() && tags.isEmpty(); }
 
     public Set<ResourceLocation> tags() { return Collections.unmodifiableSet(tags); }

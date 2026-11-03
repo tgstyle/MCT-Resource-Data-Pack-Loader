@@ -27,8 +27,10 @@ import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
+import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -36,6 +38,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.TagsUpdatedEvent;
 
 public class ClientSetup {
     public static void pouchKey() {
@@ -73,6 +76,9 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(PackTooltips::onTooltip);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> HoldView.tick());
         NeoForge.EVENT_BUS.addListener(ClientItemLocks::onTags);
+        NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, event -> {
+            if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.CLIENT_PACKET_RECEIVED && Minecraft.getInstance().getSingleplayerServer() == null) { ContentWeights.load(); }
+        });
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             HoldView.reset();
             CenterCard.reset();
