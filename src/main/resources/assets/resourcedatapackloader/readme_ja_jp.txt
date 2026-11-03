@@ -219,6 +219,7 @@ Modが優先され、自作のバリアントはスキップされます。
     veins            diets            enchantments     dice
     games            orders           ranks            recipe_locks
     spawn_locks
+    item_locks
 
 ブロックには、"type" フィールドで指定する次の形があります。
 

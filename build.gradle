@@ -170,7 +170,10 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+boolean companion(String key) { return (findProperty('companions') ?: '').toString().split(',').contains(key) }
+
 dependencies {
+    if (companion('jei')) { runtimeOnly "mezz.jei:jei-${version_minecraft}-neoforge:19.27.0.343" }
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
     runtimeOnly 'maven.modrinth:betterf3:maXNB1dn'
     runtimeOnly 'maven.modrinth:cloth-config:izKINKFg'

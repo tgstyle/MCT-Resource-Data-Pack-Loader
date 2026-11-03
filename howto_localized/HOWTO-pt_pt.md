@@ -57,6 +57,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 
 **Fabrico, saque e comércio**
 - [Blocos e itens desativados](#blocos-e-itens-desativados)
+- [Bloqueios de itens](#bloqueios-de-itens)
 - [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)
 - [Bloqueios de receitas](#bloqueios-de-receitas)
 - [Dicas de ferramenta](#dicas-de-ferramenta)
@@ -193,6 +194,7 @@ Em `data/`:
 | `<namespace>/structures/*.nbt`               | Modelos, para rebentos, `imprint` e substituições de mods. [O que podes substituir](#o-que-podes-substituir)                                                                                                           |
 | `<namespace>/recipes/*.json`                 | Receitas de fabrico, adicionadas ou substituídas. [O que podes substituir](#o-que-podes-substituir)                                                                                                                    |
 | `<namespace>/recipe_removals/*.json`         | Receitas eliminadas por nome, namespace ou resultado. [O que podes substituir](#o-que-podes-substituir)                                                                                                                |
+| `<namespace>/item_locks/*.json`              | Itens ocultos nas listas do jogador até ele obter um progresso. [Bloqueios de itens](#bloqueios-de-itens)                                                                                                              |
 | `<namespace>/recipe_locks/*.json`            | Receitas que continuam fechadas até o jogador obter um progresso. [Bloqueios de receitas](#bloqueios-de-receitas)                                                                                                      |
 | `<namespace>/spawn_locks/*.json`             | Mobs que não surgem até se cumprirem as condições. [Bloqueios de spawn](#bloqueios-de-spawn)                                                                                                                           |
 | `<namespace>/disabled/*.json`                | Blocos e itens retirados de jogo. [Blocos e itens desativados](#blocos-e-itens-desativados)                                                                                                                            |
@@ -2471,6 +2473,34 @@ Um bloco ou item desativado:
 Para trocar os blocos colocados por outra coisa em vez de os remover, dá-lhes uma linha `blockReplacements` como `thermal:tin_ore=minecraft:stone` no modelo de mundo, vê [Substituições](#substituições). Um bloco que o processo de substituição troca fica a cargo dele. As receitas que outro mod guarda dentro das suas próprias máquinas pertencem a esse mod e não são alcançadas. Ocultar dos separadores do criativo e do JEI acontece no cliente, por isso um cliente vanilla continua a listar o item. `content.disabled` na config desliga a pasta.
 
 Para esvaziar uma tag mantendo os seus itens em jogo, usa antes um ficheiro de tag com `"replace": true` e um `"values": []` vazio, vê [Tags](#tags).
+
+## Bloqueios de itens
+
+*fabrico, saque e comércio*
+
+`<namespace>/item_locks/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se. Oculta itens dos separadores do modo criativo, da pesquisa criativa e do JEI de um jogador até ele obter um progresso.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "tags": ["c:ingots/tin"]
+}
+```
+
+| Chave         | Obrigatório | Valor                   | Predefinição | O que faz                                                                                                                                                                                                                                       |
+| ------------- | ----------- | ----------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | sim         | `namespace:path`        | nenhum       | O progresso que o jogador precisa de ter obtido para que estes itens lhe apareçam. Um ficheiro sem progresso continua bloqueado para todos, tal como um que indica um progresso que nenhum pack define; o registo avisa no arranque do servidor |
+| `names`       | não         | lista de nomes de itens | nenhum       | O que é bloqueado. Um nome terminado em `*` corresponde a todos os nomes que começam pelo resto                                                                                                                                                 |
+| `namespaces`  | não         | lista de ids de mods    | nenhum       | Todos os itens do mod                                                                                                                                                                                                                           |
+| `tags`        | não         | lista de tags de itens  | nenhum       | Todos os itens na tag                                                                                                                                                                                                                           |
+| `requires`    | não         | lista de ids de mods    | nenhum       | O ficheiro é ignorado, a menos que todos estejam carregados. As entradas `config:` e `file:` funcionam como em todos os outros sítios                                                                                                           |
+
+Um item bloqueado fica oculto nos separadores do modo criativo, na pesquisa criativa e no JEI de um jogador até ele obter o progresso. Isto vale para cada jogador, e o servidor indica a cada cliente quais os bloqueios abertos para esse jogador. Um bloqueio altera apenas o que as listas mostram: a utilização é retida pelos [Bloqueios de receitas](#bloqueios-de-receitas) e por `anvils`, e os [Blocos e itens desativados](#blocos-e-itens-desativados) retiram um item de jogo para todos. Vários ficheiros acumulam-se, e um item que corresponde a dois ficheiros exige os dois progressos. Um ficheiro que não seleciona nenhum item é ignorado e o registo avisa. `content.itemLocks` na config desativa a pasta.
 
 ## Receitas de fornalha e combustíveis
 

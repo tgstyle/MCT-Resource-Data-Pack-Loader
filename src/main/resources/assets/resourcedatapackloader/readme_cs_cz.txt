@@ -215,6 +215,7 @@ Každé z těchto je složka pod data/<yourpack>:
     veins            diets            enchantments     dice
     games            orders           ranks            recipe_locks
     spawn_locks
+    item_locks
 
 Bloky se dodávají v těchto tvarech, určených polem "type":
 

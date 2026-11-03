@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
+import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ContentClient;
 import mctmods.resourcedatapackloader.client.util.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.client.util.FaceCacheReset;
@@ -71,6 +72,7 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(ProspectTooltip::onTooltip);
         NeoForge.EVENT_BUS.addListener(PackTooltips::onTooltip);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> HoldView.tick());
+        NeoForge.EVENT_BUS.addListener(ClientItemLocks::onTags);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             HoldView.reset();
             CenterCard.reset();
@@ -80,6 +82,7 @@ public class ClientSetup {
             ContentSeasonTint.forget();
             AnvilCosts.leave();
             ContentSkyGates.clear();
+            ClientItemLocks.clear();
         });
         ContentClient.register(modBus);
         if (Config.worldgen.worldgenDebug()) {

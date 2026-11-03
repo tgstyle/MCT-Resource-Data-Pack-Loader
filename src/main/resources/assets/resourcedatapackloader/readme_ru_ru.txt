@@ -217,6 +217,7 @@ priority равным -1, чтобы он оставался под всем о�
     veins            diets            enchantments     dice
     games            orders           ranks            recipe_locks
     spawn_locks
+    item_locks
 
 Блоки бывают таких форм, их задаёт поле "type":
 

@@ -224,6 +224,7 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     veins            diets            enchantments     dice
     games            orders           ranks            recipe_locks
     spawn_locks
+    item_locks
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 

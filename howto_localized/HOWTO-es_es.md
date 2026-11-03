@@ -57,6 +57,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 
 **Fabricación, botín y comercio**
 - [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)
+- [Bloqueos de ítems](#bloqueos-de-ítems)
 - [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)
 - [Bloqueos de recetas](#bloqueos-de-recetas)
 - [Descripciones emergentes](#descripciones-emergentes)
@@ -193,6 +194,7 @@ Bajo `data/`:
 | `<namespace>/structures/*.nbt`               | Plantillas, para brotes, `imprint` y sobrescrituras de mods. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                               |
 | `<namespace>/recipes/*.json`                 | Recetas de fabricación, añadidas o sustituidas. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                            |
 | `<namespace>/recipe_removals/*.json`         | Recetas eliminadas por nombre, espacio de nombres o resultado. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                             |
+| `<namespace>/item_locks/*.json`              | Ítems ocultos en las listas de un jugador hasta que consigue un logro. [Bloqueos de ítems](#bloqueos-de-ítems)                                                                                                                 |
 | `<namespace>/recipe_locks/*.json`            | Recetas que siguen cerradas hasta que un jugador consigue un logro. [Bloqueos de recetas](#bloqueos-de-recetas)                                                                                                                |
 | `<namespace>/spawn_locks/*.json`             | Criaturas que no aparecen hasta que se cumplen las condiciones. [Bloqueos de aparición](#bloqueos-de-aparición)                                                                                                                |
 | `<namespace>/disabled/*.json`                | Bloques e ítems retirados del juego. [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)                                                                                                                             |
@@ -2471,6 +2473,34 @@ Un bloque o ítem desactivado:
 Para cambiar los bloques colocados por otra cosa en lugar de eliminarlos, dales una línea `blockReplacements` como `thermal:tin_ore=minecraft:stone` en la plantilla de mundo, consulta [Sustituciones](#sustituciones). Un bloque que el proceso de sustitución cambia queda a cargo de este. Las recetas que otro mod guarda dentro de sus propias máquinas pertenecen a ese mod y no se alcanzan. Ocultar de las pestañas creativas y de JEI ocurre en el cliente, así que un cliente vanilla sigue mostrando el ítem. `content.disabled` en la configuración desactiva la carpeta.
 
 Para vaciar una etiqueta mientras sus ítems siguen en juego, usa en su lugar un archivo de etiqueta con `"replace": true` y un `"values": []` vacío, consulta [Etiquetas](#etiquetas).
+
+## Bloqueos de ítems
+
+*fabricación, botín y comercio*
+
+`<namespace>/item_locks/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Oculta ítems en las pestañas creativas, la búsqueda creativa y JEI de un jugador hasta que consigue un logro.
+
+```json
+{
+  "advancement": "mypack:deep_miner",
+  "requires": ["thermalfoundation"],
+  "names": ["minecraft:diamond_pickaxe", "mekanism:salt*"],
+  "namespaces": ["tconstruct"],
+  "tags": ["c:ingots/tin"]
+}
+```
+
+| Clave         | Obligatorio | Valor                       | Por defecto | Qué hace                                                                                                                                                                                                                                 |
+| ------------- | ----------- | --------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `advancement` | sí          | `namespace:path`            | ninguno     | El logro que debe haber conseguido un jugador para que estos ítems se le muestren. Un archivo sin él sigue bloqueado para todos, igual que uno que nombra un logro que ningún pack define; el registro lo indica al arrancar el servidor |
+| `names`       | no          | lista de nombres de ítems   | ninguno     | Lo que se bloquea. Un nombre que termina en `*` coincide con todo nombre que empiece por el resto                                                                                                                                        |
+| `namespaces`  | no          | lista de ids de mods        | ninguno     | Todos los ítems del mod                                                                                                                                                                                                                  |
+| `tags`        | no          | lista de etiquetas de ítems | ninguno     | Todo ítem de la etiqueta                                                                                                                                                                                                                 |
+| `requires`    | no          | lista de ids de mods        | ninguno     | El archivo se omite a menos que estén cargados todos. Las entradas `config:` y `file:` funcionan como en cualquier otro sitio                                                                                                            |
+
+Un ítem bloqueado permanece oculto en las pestañas creativas, la búsqueda creativa y JEI de un jugador hasta que este consigue el logro. Funciona por jugador, y el servidor le indica a cada cliente qué bloqueos están abiertos para ese jugador. Un bloqueo solo cambia lo que muestran las listas: el uso lo retienen los [Bloqueos de recetas](#bloqueos-de-recetas) y `anvils`, y los [Bloques e ítems desactivados](#bloques-e-ítems-desactivados) sacan un ítem del juego para todos. Varios archivos se acumulan, y un ítem que coincide con dos archivos necesita ambos logros. Un archivo que no selecciona ningún ítem se omite y el registro lo indica. `content.itemLocks` en la configuración desactiva la carpeta.
 
 ## Recetas de horno y combustibles
 

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.intro.WorldIntroScreen;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
+import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
@@ -60,6 +61,7 @@ public final class RDPLNetwork {
         registrar.playToClient(TalkMessage.TYPE, TalkMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { TalkScreen.receive(message); } });
         registrar.playToServer(TalkPickMessage.TYPE, TalkPickMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { DialogTalk.pick(player, message.index()); } });
         registrar.playToServer(PortwayFilterMessage.TYPE, PortwayFilterMessage.CODEC, (message, context) -> { if (context.player().containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
+        registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
     }
 
     public static void openWorn() { PacketDistributor.sendToServer(new OpenWornMessage()); }
@@ -91,7 +93,9 @@ public final class RDPLNetwork {
 
     public static void sendHeartColors(ServerPlayer player) { send(player, new HeartColorsMessage(boxed(ContentHearts.colors()))); }
 
-    public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(open.stream().limit(GatesMessage.MOST).toList())); }
+    public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(StringListCodec.capped(open))); }
+
+    public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return send(player, new UnlocksMessage(StringListCodec.capped(open))); }
 
     private static List<Integer> boxed(int[] values) { return Arrays.stream(values).boxed().toList(); }
 
