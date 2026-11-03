@@ -94,6 +94,8 @@
   "rdpl.container_upgrade.unavailable": "Questo potenziamento non ha nulla in cui trasformarsi",
   "rdpl.container_upgrade.smaller": "Quel contenitore è troppo grande per questo potenziamento",
   "rdpl.container_upgrade.in_use": "Qualcuno ha aperto quel contenitore",
+  "rdpl.container_upgrade.linked": "Due blocchi condividono questo contenitore",
+  "rdpl.container_upgrade.cannot_move": "Qualcosa all'interno non può essere spostato",
   "rdpl.container_upgrade.loot": "Apri quel contenitore prima di potenziarlo",
   "rdpl.carry.full": "Stai già trasportando qualcosa",
   "rdpl.portway.activated": "%s attivato (%s noti)",

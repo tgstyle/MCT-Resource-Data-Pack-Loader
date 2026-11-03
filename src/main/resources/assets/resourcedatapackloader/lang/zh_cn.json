@@ -94,6 +94,8 @@
   "rdpl.container_upgrade.unavailable": "这个升级套件没有可升级的目标",
   "rdpl.container_upgrade.smaller": "该容器对这个升级套件来说太大了",
   "rdpl.container_upgrade.in_use": "有人正在使用该容器",
+  "rdpl.container_upgrade.linked": "两个方块共用此存储空间",
+  "rdpl.container_upgrade.cannot_move": "里面有无法移动的物品",
   "rdpl.container_upgrade.loot": "请先打开该容器再升级",
   "rdpl.carry.full": "你已经在搬运东西了",
   "rdpl.portway.activated": "%s 已激活（已记录 %s）",

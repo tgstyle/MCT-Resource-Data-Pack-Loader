@@ -94,6 +94,8 @@
   "rdpl.container_upgrade.unavailable": "Это улучшение не во что превращать",
   "rdpl.container_upgrade.smaller": "Этот контейнер слишком велик для этого улучшения",
   "rdpl.container_upgrade.in_use": "Кто-то уже открыл этот контейнер",
+  "rdpl.container_upgrade.linked": "Это хранилище общее для двух блоков",
+  "rdpl.container_upgrade.cannot_move": "Что-то внутри нельзя переместить",
   "rdpl.container_upgrade.loot": "Откройте этот контейнер, прежде чем улучшать его",
   "rdpl.carry.full": "Вы уже что-то несёте",
   "rdpl.portway.activated": "%s: активирован (известно: %s)",

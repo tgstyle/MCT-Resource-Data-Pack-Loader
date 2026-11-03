@@ -175,6 +175,7 @@ repositories {
     maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
     maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
     maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
+    maven { url = 'https://www.cursemaven.com' ; content { includeGroup 'curse.maven' } }
 }
 
 configurations {
@@ -186,6 +187,7 @@ boolean companion(String key) { return (findProperty('companions') ?: '').toStri
 dependencies {
     if (companion('jei')) { modRuntimeOnly "mezz.jei:jei-${version_minecraft}-forge:15.20.0.112" }
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    if (companion('immersiveengineering')) { modRuntimeOnly "curse.maven:immersive-engineering-231951:6206989" }
     modRuntimeOnly "top.theillusivec4.curios:curios-forge:${version_curios}"
     modRuntimeOnly 'maven.modrinth:betterf3:xo6HmgWj'
     modRuntimeOnly 'maven.modrinth:cloth-config:t8TXrZvZ'

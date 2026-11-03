@@ -145,7 +145,13 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         }
         lootTable = null;
         load(tag);
+        stocked = true;
         setChanged();
+    }
+
+    public void unloot() {
+        stocked = true;
+        lootTable = null;
     }
 
     @Override public boolean canOpen(@Nonnull Player player) { return true; }

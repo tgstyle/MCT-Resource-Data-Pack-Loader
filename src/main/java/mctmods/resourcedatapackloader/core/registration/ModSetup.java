@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.cards.CardScan;
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
 import mctmods.resourcedatapackloader.common.command.ServerCommands;
+import mctmods.resourcedatapackloader.common.containers.ContentStorageSwap;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.dialogs.DialogEvents;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
@@ -239,6 +240,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onPlayerTick);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentStorageSwap::onItemJoin);
         MinecraftForge.EVENT_BUS.addListener(ContentAnvils::onDig);
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onUse);
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onUseOn);

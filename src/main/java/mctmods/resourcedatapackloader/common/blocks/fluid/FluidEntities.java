@@ -80,7 +80,7 @@ public final class FluidEntities {
         return def.gaseous() ? box.maxY <= pos.getY() + 1.0D - filled : box.minY >= pos.getY() + filled;
     }
 
-    private static void flow(Level level, BlockPos pos, BlockState state, Entity entity, FluidDef def, float scale) {
+    @SuppressWarnings("deprecation") private static void flow(Level level, BlockPos pos, BlockState state, Entity entity, FluidDef def, float scale) {
         FluidState fluid = state.getFluidState();
         if (def.gaseous() || !entity.isPushedByFluid()) { return; }
         entity.setDeltaMovement(entity.getDeltaMovement().add(fluid.getFlow(level, pos).normalize().scale(scale)));

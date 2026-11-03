@@ -1099,7 +1099,9 @@ Uma entrada de `wornEffects` aceita `potion`, `amplifier`, `ambient` e `showPart
   "upgrade": {
     "paths": [
       { "fromBlock": "mypack:wood_chest", "toBlock": "mypack:iron_chest" },
-      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" }
+      { "fromBlock": "mypack:copper_chest", "toBlock": "mypack:iron_chest" },
+      { "fromBlock": "othermod:crate", "toBlock": "mypack:iron_chest[facing=east]", "contents": "slots", "linked": "half", "fewerSlots": "fit", "state": "named" },
+      { "fromBlock": "mypack:big_barrel", "toBlock": "mypack:steel_barrel", "contents": "nbt" }
     ],
     "consume": true,
     "unopenedLoot": "refuse"
@@ -1116,11 +1118,27 @@ Uma entrada de `wornEffects` aceita `potion`, `amplifier`, `ambient` e `showPart
 | `consume`      | booleano         | `true`   | Gasta um item por melhoria. Um jogador no modo criativo nunca gasta nenhum                                                                                                                                                       |
 | `unopenedLoot` | texto            | `refuse` | O que fazer com um contêiner cujo saque ainda não foi sorteado. `refuse` pede ao jogador que o abra primeiro; `carry` leva junto a tabela de saque pendente, que então é sorteada na primeira vez que o contêiner maior é aberto |
 
+Cada entrada de `paths` também pode definir estas configurações, que decidem como o conteúdo se move.
+
+| Configuração do caminho | Tipo     | Padrão      | O que faz                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `contents`              | texto    | `container` | O que o caminho move. `container` é a troca entre dois contêineres deste carregador; `slots` move os itens pelo inventário, então funciona com qualquer bloco de armazenamento de qualquer mod; `nbt` mantém intactos os dados salvos da entidade do bloco, para dois blocos que salvam do mesmo jeito. A regra de espaços de `toBlock` vale em `container` e em `slots`, a menos que `fewerSlots` seja `fit` |
+| `linked`                | texto    | `refuse`    | Em um caminho `slots`, o que fazer com um baú duplo ou com qualquer bloco que divide seu armazenamento com outro. `refuse` o recusa; `half` melhora só o bloco clicado. Um caminho `nbt` o recusa sempre                                                                                                                                                                                                      |
+| `fewerSlots`            | texto    | `refuse`    | Em um caminho `slots`, se um destino com menos espaços do que o bloco antigo mostra é aceito. `refuse` o recusa; `fit` acomoda os itens nos espaços que há e ainda recusa se nem todos couberem                                                                                                                                                                                                               |
+| `strict`                | booleano | `true`      | Em um caminho `slots`, se ele recusa o que não consegue mover com exatidão: um fluido, inclusive combustível que um bloco guarda só nos dados salvos, e um bloco cujos espaços mostram itens diferentes dos que ele salva. Com `false`, move o que os espaços mostram                                                                                                                                         |
+| `state`                 | texto    | `carry`     | Em um caminho `slots` ou `nbt`, o estado do bloco novo. `carry` mantém a direção, o eixo, a rotação e o alagamento do antigo onde o novo os tem; `named` dá a ele o estado escrito em `toBlock`, onde as propriedades entre colchetes depois do nome são o estado, como em `mypack:iron_chest[facing=east]`. Um `toBlock` com propriedades é sempre tomado como está escrito                                  |
+
 **O que se mantém.** Cada item continua no mesmo número de espaço, junto com a direção, o nome personalizado e a trava. Um destino com mais colunas mostra os mesmos itens em outro arranjo, porque os espaços são contados da esquerda para a direita e de cima para baixo. Uma tabela de saque definida no destino é ignorada em um contêiner que já tem conteúdo. Um caminho corresponde apenas ao id do bloco, sem metadados. O destino assume seu estado padrão, com a direção copiada.
 
 **Segurando o item.** Segure o item na mão principal e clique com o botão direito no contêiner. Um item na mão secundária só funciona ao agachar com a mão principal vazia. No modo aventura, a tela do contêiner abre, o kit é mantido e não há troca.
 
 **Quando ele recusa.** O item é mantido e a barra de ação diz o motivo: contêiner errado, destino menor, outra pessoa com ele aberto, saque ainda não sorteado ou terreno que o jogador não pode alterar. Os baús vanilla e o armazenamento de outros mods abrem normalmente.
+
+**Outros armazenamentos.** Um caminho `slots` tira os itens pelo inventário e os coloca no bloco novo, então o bloco antigo pode ser um baú vanilla, um barril ou o armazenamento de outro mod, e o novo também. Um caminho `nbt` leva os dados salvos como estão. Isso só é seguro entre dois blocos que salvam do mesmo jeito, por isso a melhoria testa o bloco novo antes e recusa se ele não guardaria o que recebe. As chaves que não têm efeito em um caminho são citadas no registro: `linked`, `fewerSlots`, `strict` e `state` em um caminho `container`, `linked` e `fewerSlots` em um caminho `nbt`.
+
+**O que o jogador vê.** Uma recusa aparece na barra de ação e o item é mantido: "Alguém está com esse contêiner aberto", "Dois blocos compartilham este armazenamento" para um baú duplo sem `linked: half`, e "Há algo lá dentro que não pode ser movido". A última vale para um caminho estrito que encontra um fluido, para um bloco cujo conteúdo não pode ser todo retirado ou devolvido e para um destino que não consegue guardar o que havia dentro. Um contêiner cujo saque ainda não foi sorteado é recusado em qualquer caminho, a menos que `unopenedLoot` seja `carry`. Levar junto uma tabela pendente exige um destino que também guarde uma tabela de saque e, em um caminho `slots`, um bloco que ainda não tenha itens.
+
+**O que o registro diz.** Quando os itens carregam, o registro cita um caminho que nunca pode funcionar: um `fromBlock` ou `toBlock` que não é um contêiner (em um caminho `container`), um bloco que se transforma nele mesmo, um `toBlock` com menos espaços (entre os contêineres deste carregador), um bloco que não guarda nada, um bloco que são dois blocos e por isso nunca funciona, e um bloco desconhecido, que faz a entrada ser ignorada. Um caminho sem `fromBlock` ou sem `toBlock` é ignorado.
 
 ## Tipos de espaço do Curios
 
