@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityM
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Enums;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -15,11 +16,13 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import net.minecraft.util.Mth;
 
 public final class ContentControl {
     public static final String TERRAIN = "terrain";
@@ -38,6 +41,8 @@ public final class ContentControl {
     public static final String ENTITIES = "entities";
     public static final String BLAST_PLASTER = "blastPlaster";
     public static final String SERVER = "server";
+    public static final String OWNERSHIP = "ownership";
+    public static final String CLAIMS = "claims";
     private static final String DEFAULT = "default";
     private static final String GLOBAL = "global";
     private static final String OFF = "off";
@@ -103,7 +108,12 @@ public final class ContentControl {
             "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals",
             "worldSpawnNpcs", "worldViewDistance", "worldSimulationDistance", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "terrainOffset", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
-            "worldTypeExceptions");
+            "worldTypeExceptions", "blocks", "who", "onJoinTeam", "onDissolve", "removeAs", "dissolvePerTick", "checkTicks",
+            "teamSource", "onFtbTeamDeleted", "ftbPolicy",
+            "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
+            "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers",
+            "denyMessage", "protectBreak", "protectPlace", "protectUse", "protectExplosions", "protectMobGriefing", "protectFluids", "protectPistons", "protectFire", "protectPvp",
+            "useBlocks", "useExceptions", "message", "messageWilderness", "claimOnDissolve", "restore", "regenerate", "restorePerTick", "movePlayers", "entities");
     private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();
     private static final Map<String, JsonElement> SETTINGS = new ConcurrentHashMap<>();
     @Nullable private static WorldTemplateDef settingsFrom;
@@ -233,6 +243,18 @@ public final class ContentControl {
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
         return value.getAsInt();
+    }
+
+    public static int ranged(String group, String key, int configured, int least, int most) {
+        return Mth.clamp(number(group, key, configured), least, most);
+    }
+
+    public static <E extends Enum<E>> E choice(String group, String key, String configured, E fallback) {
+        String value = text(group, key, configured);
+        E found = Enums.byName(fallback.getDeclaringClass(), value);
+        if (found != null) { return found; }
+        ContentLog.LOGGER.error("{} {} is '{}', which is not a known value, using {}", group, key, value, fallback.name().toLowerCase(Locale.ROOT));
+        return fallback;
     }
 
     public static float decimal(String group, String key, float fallback) {
@@ -365,6 +387,8 @@ public final class ContentControl {
         if (ENTITIES.equals(group)) { return Config.control.entities(); }
         if (BLAST_PLASTER.equals(group)) { return Config.control.blastPlaster(); }
         if (SERVER.equals(group)) { return Config.control.server(); }
+        if (OWNERSHIP.equals(group)) { return Config.control.ownership(); }
+        if (CLAIMS.equals(group)) { return Config.control.claims(); }
         return DEFAULT;
     }
 }

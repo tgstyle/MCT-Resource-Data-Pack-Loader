@@ -19,6 +19,8 @@ public final class ConfigControl {
     private final ForgeConfigSpec.ConfigValue<String> commands;
     private final ForgeConfigSpec.ConfigValue<String> recipes;
     private final ForgeConfigSpec.ConfigValue<String> blastPlaster;
+    private final ForgeConfigSpec.ConfigValue<String> ownership;
+    private final ForgeConfigSpec.ConfigValue<String> claims;
     private final ForgeConfigSpec.ConfigValue<String> server;
 
     ConfigControl(ForgeConfigSpec.Builder builder) {
@@ -38,6 +40,8 @@ public final class ConfigControl {
         commands = builder.comment("Who may run the mod's own commands: the goto permission levels [default|global|off]").define("commands", DEFAULT);
         recipes = builder.comment("Recipe and furnace blocking and their whitelists [default|global|off]").define("recipes", DEFAULT);
         blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", DEFAULT);
+        ownership = builder.comment("Which blocks are owned and what happens to them when a team changes, from packs [default|global|off]").define("ownership", DEFAULT);
+        claims = builder.comment("Which claims settings the pack decides and which this file decides [default|global|off]").define("claims", DEFAULT);
         server = builder.comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view and simulation distances, and commands on a world opened to LAN [default|global|off]").define("server", DEFAULT);
         builder.pop();
     }
@@ -67,6 +71,10 @@ public final class ConfigControl {
     public String recipes() { return ConfigCore.text(recipes); }
 
     public String blastPlaster() { return ConfigCore.text(blastPlaster); }
+
+    public String ownership() { return ConfigCore.text(ownership); }
+
+    public String claims() { return ConfigCore.text(claims); }
 
     public String replacements() { return ConfigCore.text(replacements); }
 

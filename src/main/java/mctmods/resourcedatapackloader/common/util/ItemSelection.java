@@ -42,14 +42,22 @@ public final class ItemSelection {
     }
 
     public void read(JsonObject json, ResourceLocation key) {
-        for (String name : Json.strings(json, "names")) {
+        readNames(Json.strings(json, "names"), key);
+        for (String namespace : Json.strings(json, "namespaces")) { prefixes.add(Settings.lower(namespace) + ":"); }
+        readTags(Json.strings(json, "tags"), key);
+    }
+
+    public void readNames(Iterable<String> given, ResourceLocation key) {
+        for (String name : given) {
             String trimmed = Settings.lower(name);
             if (trimmed.indexOf(':') < 0) { ContentLog.LOGGER.error("Name '{}' in {} needs a namespace, such as minecraft:iron_ingot, skipping it", name, key); }
             else if (trimmed.endsWith("*")) { prefixes.add(trimmed.substring(0, trimmed.length() - 1)); }
             else { names.add(trimmed); }
         }
-        for (String namespace : Json.strings(json, "namespaces")) { prefixes.add(Settings.lower(namespace) + ":"); }
-        for (String tag : Json.strings(json, "tags")) {
+    }
+
+    public void readTags(Iterable<String> given, ResourceLocation key) {
+        for (String tag : given) {
             ResourceLocation location = Registered.tagId(tag);
             if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", tag, key); }
             else { tags.add(location); }

@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.command;
 
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipCommand;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimCommand;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 
@@ -59,7 +61,11 @@ public final class ServerCommands {
                 .then(CommandTalk.talk(NAME))
                 .then(WeightCommand.weight(NAME))
                 .then(CommandEnvironments.environment(NAME))
-                .then(CommandGames.game(NAME)));
+                .then(CommandGames.game(NAME))
+                .then(OwnershipCommand.ownership(NAME))
+                .then(ClaimCommand.claim(NAME))
+                .then(ClaimCommand.unclaim(NAME))
+                .then(ClaimCommand.claims(NAME)));
     }
 
     private static int reload(CommandContext<CommandSourceStack> context) {

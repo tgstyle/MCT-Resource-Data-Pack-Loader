@@ -89,6 +89,7 @@
         "server.WorldLoaderPackConfigMixin",
         "world.item.crafting.RecipeManagerMixin",
         "world.level.block.CactusBlockMixin",
+        "world.level.block.FireBlockMixin",
         "world.level.block.SugarCaneBlockMixin",
         "world.level.block.LeavesBlockMixin",
         "world.level.block.DirtPathBlockMixin",

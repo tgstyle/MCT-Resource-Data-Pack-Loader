@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.scoring;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.cards.CardIds;
 import mctmods.resourcedatapackloader.common.downed.ContentDowned;
+import mctmods.resourcedatapackloader.common.ownership.TeamDissolve;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemGiveDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
@@ -120,6 +121,7 @@ public final class ContentTeams {
                 if (team != null) {
                     ContentLog.LOGGER.info("{} no longer stands on the scoreboard, so its team and its {} member(s) are struck off, which is what lets its mobs fight each other again", def.name(), Scores.members(team).size());
                     Scores.removeTeam(board, team);
+                    TeamDissolve.check(level.getServer());
                 }
                 continue;
             }

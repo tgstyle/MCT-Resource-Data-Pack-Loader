@@ -60,6 +60,10 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptionsWorld;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -123,6 +127,8 @@ import mctmods.resourcedatapackloader.core.config.AtomicModConfig;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurioSlots;
+import mctmods.resourcedatapackloader.core.integration.ftbchunks.ContentFtbChunks;
+import mctmods.resourcedatapackloader.core.integration.ftbteams.ContentFtbTeams;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
@@ -406,6 +412,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onLevelTick);
         MinecraftForge.EVENT_BUS.addGenericListener(LevelChunk.class, ContentChunkTokens::onAttach);
         modBus.addListener(ContentChunkTokens::register);
+        OwnershipEvents.register(modBus);
         MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onCreateSpawn);
         MinecraftForge.EVENT_BUS.addListener(ContentCaveRegions::onLevelLoad);
         MinecraftForge.EVENT_BUS.addListener(ContentSkyLand::onLevelLoad);
@@ -475,6 +482,8 @@ public class ModSetup {
         event.enqueueWork(ContentRegistry::resolveStacks);
         event.enqueueWork(ContentRegistry::resolveFluidReactions);
         event.enqueueWork(ContentPotions::applyBrewing);
+        ContentFtbTeams.install();
+        ContentFtbChunks.install();
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.reload();
@@ -523,6 +532,8 @@ public class ModSetup {
         PackManager.get().report();
         RegistryRemaps.reload();
         ContentOverrides.reload();
+        OwnershipSettings.reload();
+        ClaimSettings.reload();
         ContentWeights.load();
         ContentReplacements.reload();
         ContentCityMaps.reload();
@@ -550,6 +561,7 @@ public class ModSetup {
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
+        DissolvePass.clear();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
         PackManager.get().close();
     }

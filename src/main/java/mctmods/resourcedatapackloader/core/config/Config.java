@@ -14,6 +14,8 @@ public final class Config {
     public static final ConfigChunks chunks;
     public static final ConfigCommands commands;
     public static final ConfigControl control;
+    public static final ConfigOwnership ownership;
+    public static final ConfigClaims claims;
     public static final String WELCOME = "Welcome to your World!";
     public static final String PREGEN_RUNNING = "World pregeneration running, %d%% done";
     public static final String PREGEN_FINISHED = "World pregeneration finished";
@@ -32,6 +34,8 @@ public final class Config {
         chunks = new ConfigChunks(builder);
         commands = new ConfigCommands(builder);
         control = new ConfigControl(builder);
+        ownership = new ConfigOwnership(builder);
+        claims = new ConfigClaims(builder);
         SPEC = builder.build();
     }
 

@@ -15,6 +15,8 @@ import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldTemplateDef;
@@ -301,6 +303,8 @@ public final class CommandShared {
         PackManager.get().scan(root);
         PackManager.get().report();
         ContentOverrides.reload();
+        OwnershipSettings.reload();
+        ClaimSettings.reload();
         ContentWeights.load();
         ContentReplacements.reload();
         ContentWorldTemplates.load();

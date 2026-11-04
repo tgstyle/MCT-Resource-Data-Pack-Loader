@@ -193,6 +193,14 @@ dependencies {
     modRuntimeOnly 'maven.modrinth:cloth-config:t8TXrZvZ'
     modCompileOnly "mezz.jei:jei-${version_minecraft}-common-api:15.20.0.112"
     modCompileOnly "mezz.jei:jei-${version_minecraft}-forge-api:15.20.0.112"
+    modCompileOnly "curse.maven:ftb-teams-forge-404468:7499810"
+    modCompileOnly "curse.maven:ftb-chunks-forge-314906:8216874"
+    modCompileOnly "curse.maven:ftb-library-forge-404465:8226927"
+    modCompileOnly "curse.maven:architectury-api-419699:4663010"
+    if (companion('ftbteams')) { modRuntimeOnly "curse.maven:ftb-teams-forge-404468:7499810" }
+    if (companion('ftbchunks')) { modRuntimeOnly "curse.maven:ftb-chunks-forge-314906:8216874" }
+    if (companion('ftblibrary')) { modRuntimeOnly "curse.maven:ftb-library-forge-404465:8226927" }
+    if (companion('architectury')) { modRuntimeOnly "curse.maven:architectury-api-419699:4663010" }
 
     if (bpJar != null) {
         compileOnly files(bpJar)
