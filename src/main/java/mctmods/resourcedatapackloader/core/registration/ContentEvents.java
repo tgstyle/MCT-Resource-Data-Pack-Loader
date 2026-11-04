@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpaw
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
 import mctmods.resourcedatapackloader.common.generated.ContentGenerated;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.ownership.OwnedBlocksStore;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
@@ -163,6 +164,7 @@ public final class ContentEvents {
         event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE));
         event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> {
             helper.register(id(ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type());
+            helper.register(id("owned_blocks"), OwnedBlocksStore.type());
             helper.register(EntityStorage.KEY, EntityStorage.TYPE);
         });
         if (Config.contentOff()) {

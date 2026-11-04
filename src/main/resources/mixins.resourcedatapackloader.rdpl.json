@@ -34,6 +34,7 @@
         "world.level.LevelMixin",
         "world.level.dimension.DimensionTypeMixin",
         "world.level.block.FallingBlockMixin",
+        "world.level.block.FireBlockMixin",
         "world.level.biome.MultiNoiseBiomeSourceMixin",
         "tags.TagLoaderMixin",
         "world.level.storage.PrimaryLevelDataMixin",

@@ -176,6 +176,14 @@ boolean companion(String key) { return (findProperty('companions') ?: '').toStri
 dependencies {
     if (companion('jei')) { runtimeOnly "mezz.jei:jei-${version_minecraft}-neoforge:19.27.0.343" }
     if (companion('immersiveengineering')) { runtimeOnly "curse.maven:immersive-engineering-231951:6733669" }
+    if (companion('ftbteams')) { runtimeOnly "curse.maven:ftb-teams-404468:7878281" }
+    if (companion('ftbchunks')) { runtimeOnly "curse.maven:ftb-chunks-314906:9374151" }
+    if (companion('ftblibrary')) { runtimeOnly "curse.maven:ftb-library-404465:9350706" }
+    if (companion('architectury')) { runtimeOnly "curse.maven:architectury-api-419699:8492726" }
+    compileOnly "curse.maven:ftb-teams-404468:7878281"
+    compileOnly "curse.maven:ftb-chunks-314906:9374151"
+    compileOnly "curse.maven:ftb-library-404465:9350706"
+    compileOnly "curse.maven:architectury-api-419699:8492726"
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
     runtimeOnly 'maven.modrinth:betterf3:maXNB1dn'
     runtimeOnly 'maven.modrinth:cloth-config:izKINKFg'

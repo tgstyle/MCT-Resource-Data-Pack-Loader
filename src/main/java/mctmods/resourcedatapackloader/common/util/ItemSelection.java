@@ -42,18 +42,29 @@ public final class ItemSelection {
     }
 
     public void read(JsonObject json, ResourceLocation key) {
-        for (String name : Json.strings(json, "names")) {
-            String trimmed = Settings.lower(name);
-            if (trimmed.indexOf(':') < 0) { ContentLog.LOGGER.error("Name '{}' in {} needs a namespace, such as minecraft:iron_ingot, skipping it", name, key); }
-            else if (trimmed.endsWith("*")) { prefixes.add(trimmed.substring(0, trimmed.length() - 1)); }
-            else { names.add(trimmed); }
-        }
+        for (String name : Json.strings(json, "names")) { name(name, key); }
         for (String namespace : Json.strings(json, "namespaces")) { prefixes.add(Settings.lower(namespace) + ":"); }
-        for (String tag : Json.strings(json, "tags")) {
-            ResourceLocation location = Registered.tagId(tag);
-            if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", tag, key); }
-            else { tags.add(location); }
+        for (String tag : Json.strings(json, "tags")) { tag(tag, key); }
+    }
+
+    public void readNames(Iterable<String> raw, ResourceLocation key) {
+        for (String each : raw) {
+            if (each.startsWith("#")) { tag(each, key); }
+            else if (!Settings.lower(each).isEmpty()) { name(each, key); }
         }
+    }
+
+    private void name(String name, ResourceLocation key) {
+        String trimmed = Settings.lower(name);
+        if (trimmed.indexOf(':') < 0) { ContentLog.LOGGER.error("Name '{}' in {} needs a namespace, such as minecraft:iron_ingot, skipping it", name, key); }
+        else if (trimmed.endsWith("*")) { prefixes.add(trimmed.substring(0, trimmed.length() - 1)); }
+        else { names.add(trimmed); }
+    }
+
+    private void tag(String tag, ResourceLocation key) {
+        ResourceLocation location = Registered.tagId(tag);
+        if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", tag, key); }
+        else { tags.add(location); }
     }
 
     public static boolean isPrefixName(String name) { return Settings.lower(name).endsWith("*") && Settings.lower(name).split(":").length == 2; }

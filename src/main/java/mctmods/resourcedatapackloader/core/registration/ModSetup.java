@@ -64,6 +64,10 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptionsWorld;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -126,6 +130,8 @@ import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurioSlots;
+import mctmods.resourcedatapackloader.core.integration.ftbchunks.ContentFtbChunks;
+import mctmods.resourcedatapackloader.core.integration.ftbteams.ContentFtbTeams;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
@@ -149,6 +155,7 @@ import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 
@@ -198,6 +205,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentScoring::onDeath);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onPlayerDeath);
+        OwnershipEvents.register();
+        NeoForge.EVENT_BUS.addListener(ModSetup::onServerStarting);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onRespawn);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onBack);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onStill);
@@ -475,6 +484,8 @@ public class ModSetup {
     private static void onCommonSetup(FMLCommonSetupEvent event) {
         PackFinder.ensureScanned();
         PackManager.get().warnAboutDisabledFeatures();
+        ContentFtbTeams.install();
+        ContentFtbChunks.install();
         event.enqueueWork(ContentRegistry::resolveStacks);
         event.enqueueWork(ContentRegistry::resolveFluidReactions);
         Set<String> missing = PackRequirements.required();
@@ -517,6 +528,8 @@ public class ModSetup {
 
     private static void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); }
 
+    private static void onServerStarting(ServerStartingEvent event) { ContentFtbTeams.serverStarting(); ClaimSettings.announceForeign(); }
+
     private static void beforeServerStart(ServerAboutToStartEvent event) {
         ContentListBiomes.seed(event.getServer().getWorldData().worldGenOptions().seed());
         Path root = PackManager.get().getRoot();
@@ -526,6 +539,8 @@ public class ModSetup {
         RegistryRemaps.applyAliases();
         CompressedAliases.apply();
         ContentOverrides.reload();
+        OwnershipSettings.reload();
+        ClaimSettings.reload();
         ContentReplacements.reload();
         ContentCityMaps.reload();
         ContentWorldTemplates.load();
@@ -552,6 +567,7 @@ public class ModSetup {
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
+        DissolvePass.clear();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
         PackManager.get().close();
     }
