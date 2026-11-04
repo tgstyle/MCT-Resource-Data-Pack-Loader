@@ -6,16 +6,19 @@ import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockItemTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,9 +32,16 @@ import net.minecraft.world.entity.monster.zombie.ZombieVillager;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkGenerator;
+import net.minecraft.world.level.chunk.ProtoChunk;
+import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.WorldGenerationContext;
+import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.blockpredicates.BlockPredicate;
 import net.minecraft.world.level.levelgen.feature.LakeFeature;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
@@ -65,6 +75,8 @@ public final class Compat {
 
     @SuppressWarnings("unused") public static void refuseSpecificInteract(Predicate<Player> refused) {}
 
+    @SuppressWarnings("unused") public static void refuseSpecificInteractWith(BiPredicate<Player, Entity> refused) {}
+
     public static boolean isSlime(Mob mob) { return mob instanceof Slime; }
 
     public static MoveControl<Mob> moveControl(Mob mob) { return new MoveControl<>(mob); }
@@ -87,4 +99,17 @@ public final class Compat {
     @SuppressWarnings("deprecation") public static LakeFeature.Configuration lake(Block fluid, Block barrier) { return new LakeFeature.Configuration(BlockStateProvider.simple(fluid), BlockStateProvider.simple(barrier), BlockPredicate.alwaysTrue(), BlockPredicate.not(BlockPredicate.matchesTag(BlockTags.FEATURES_CANNOT_REPLACE)), BlockPredicate.not(BlockPredicate.matchesTag(BlockTags.LAVA_POOL_STONE_CANNOT_REPLACE))); }
 
     public static void markPostProcessing(ChunkAccess chunk, BlockPos pos) { chunk.markPosForPostProcessing(pos); }
+
+    public static void generate(ServerLevel world, ProtoChunk chunk) {
+        ChunkGenerator generator = world.getChunkSource().getGenerator();
+        RandomState random = world.getChunkSource().randomState();
+        ScratchRegion region = new ScratchRegion(world, chunk);
+        StructureManager structures = world.structureManager().forWorldGenRegion(region);
+        generator.createBiomes(random, Blender.empty(), structures, chunk).join();
+        generator.fillFromNoise(Blender.empty(), random, structures, chunk).join();
+        if (generator instanceof NoiseBasedChunkGenerator noise) {
+            noise.buildSurface(chunk, new WorldGenerationContext(noise, world), random, structures, region.getBiomeManager(), Blender.empty(), null);
+            noise.applyCarvers(region, world.getSeed(), random, region.getBiomeManager(), structures, chunk);
+        }
+    }
 }

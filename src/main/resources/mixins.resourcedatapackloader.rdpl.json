@@ -95,6 +95,7 @@
         "world.level.block.SaplingBlockMixin",
         "world.level.block.LeavesBlockMixin",
         "world.level.block.DirtPathBlockMixin",
+        "world.level.block.FireBlockMixin",
         "server.network.ServerGamePacketListenerImplMixin",
         "server.dedicated.DedicatedServerMixin",
         "server.dedicated.WorldDimensionDataMixin"

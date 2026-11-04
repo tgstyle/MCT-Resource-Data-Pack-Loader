@@ -40,6 +40,20 @@ versionRange="[9,)"
 ordering="AFTER"
 side="BOTH"
 
+[[dependencies.resourcedatapackloader]]
+modId="ftbteams"
+type="optional"
+versionRange="[1,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.resourcedatapackloader]]
+modId="ftbchunks"
+type="optional"
+versionRange="[1,)"
+ordering="AFTER"
+side="BOTH"
+
 [[mixins]]
 config="mixins.resourcedatapackloader.rdpl.json"
 

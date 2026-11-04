@@ -171,6 +171,7 @@ subprojects {
         mavenCentral()
         maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
         maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
+        maven { name = 'CurseMaven' ; url = 'https://www.cursemaven.com' ; content { includeGroup 'curse.maven' } }
         maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
         maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
     }
@@ -183,6 +184,15 @@ subprojects {
         if (companion('jei')) {
             runtimeOnly "mezz.jei:jei-${version_minecraft}-neoforge:${version_jei}"
         }
+        if (companion('ftbteams')) {
+            runtimeOnly "curse.maven:ftb-teams-404468:9405340"
+        }
+        if (companion('ftbchunks')) {
+            runtimeOnly "curse.maven:ftb-chunks-314906:9374016"
+        }
+        if (companion('ftblibrary')) {
+            runtimeOnly "curse.maven:ftb-library-404465:9361489"
+        }
         if (version_curios != null) {
             runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
         }
@@ -190,6 +200,9 @@ subprojects {
             runtimeOnly "maven.modrinth:betterf3:${version_betterf3}"
         }
         runtimeOnly "maven.modrinth:cloth-config:${version_cloth}"
+        compileOnly "curse.maven:ftb-teams-404468:9405340"
+        compileOnly "curse.maven:ftb-chunks-314906:9374016"
+        compileOnly "curse.maven:ftb-library-404465:9361489"
         compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
         compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"
         if (bpJar != null) {

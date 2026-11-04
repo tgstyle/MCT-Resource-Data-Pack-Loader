@@ -15,8 +15,10 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -42,23 +44,38 @@ public final class ItemSelection {
     }
 
     public void read(JsonObject json, Identifier key) {
-        for (String name : Json.strings(json, "names")) {
+        readNames(Json.strings(json, "names"), key);
+        for (String namespace : Json.strings(json, "namespaces")) { prefixes.add(Settings.lower(namespace) + ":"); }
+        for (String tag : Json.strings(json, "tags")) { tag(tag, key); }
+    }
+
+    private void tag(String name, Identifier key) {
+        Identifier location = Registered.tagId(name);
+        if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", name, key); }
+        else { tags.add(location); }
+    }
+
+    public void readNames(Iterable<String> raw, Identifier key) {
+        for (String name : raw) {
             String trimmed = Settings.lower(name);
-            if (trimmed.indexOf(':') < 0) { ContentLog.LOGGER.error("Name '{}' in {} needs a namespace, such as minecraft:iron_ingot, skipping it", name, key); }
+            if (trimmed.startsWith("#")) { tag(trimmed, key); }
+            else if (trimmed.indexOf(':') < 0) { ContentLog.LOGGER.error("Name '{}' in {} needs a namespace, such as minecraft:iron_ingot, skipping it", name, key); }
             else if (trimmed.endsWith("*")) { prefixes.add(trimmed.substring(0, trimmed.length() - 1)); }
             else { names.add(trimmed); }
-        }
-        for (String namespace : Json.strings(json, "namespaces")) { prefixes.add(Settings.lower(namespace) + ":"); }
-        for (String tag : Json.strings(json, "tags")) {
-            Identifier location = Registered.tagId(tag);
-            if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", tag, key); }
-            else { tags.add(location); }
         }
     }
 
     public static boolean isPrefixName(String name) { return Settings.lower(name).endsWith("*") && Settings.lower(name).split(":").length == 2; }
 
     public boolean unnamed() { return names.isEmpty() && prefixes.isEmpty() && tags.isEmpty(); }
+
+    public boolean matches(Block block) {
+        if (named(BuiltInRegistries.BLOCK.getKey(block))) { return true; }
+        for (Identifier tag : tags) {
+            if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, tag))) { return true; }
+        }
+        return false;
+    }
 
     public Set<Identifier> tags() { return Collections.unmodifiableSet(tags); }
 

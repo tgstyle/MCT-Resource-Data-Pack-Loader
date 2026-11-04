@@ -1,0 +1,15 @@
+package mctmods.resourcedatapackloader.core.integration.ftbchunks;
+
+import mctmods.resourcedatapackloader.common.ownership.claims.ForeignClaimsHolder;
+import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
+
+public final class ContentFtbChunks {
+    private ContentFtbChunks() {}
+
+    public static void install() {
+        if (!PackRequirements.modLoaded("ftbchunks")) { return; }
+        ContentLog.LOGGER.info("FTB Chunks is loaded, so a pack can have claims yield to its chunk claims with claims ftbPolicy");
+        ForeignClaimsHolder.set(new FtbChunksClaims());
+    }
+}

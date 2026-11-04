@@ -62,6 +62,10 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptionsWorld;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
@@ -124,6 +128,8 @@ import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurioSlots;
+import mctmods.resourcedatapackloader.core.integration.ftbchunks.ContentFtbChunks;
+import mctmods.resourcedatapackloader.core.integration.ftbteams.ContentFtbTeams;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
@@ -146,6 +152,7 @@ import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.resource.VanillaServerListeners;
@@ -158,6 +165,8 @@ public class ModSetup {
         PackFinder.ensureScanned();
         ContentRegistry.load();
         ContentCurioSlots.load();
+        ContentFtbTeams.install();
+        ContentFtbChunks.install();
         ContentEntities.load();
         SpawnLocks.load();
         ContentWorldTemplates.load();
@@ -213,6 +222,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentRaids::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentRaids::onRaiderHit);
         NeoForge.EVENT_BUS.addListener(ContentRaids::onRaiderTarget);
+        OwnershipEvents.register();
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, ContentDiet::onTick);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onFinish);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onLogout);
@@ -375,6 +385,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentEntities::onJump);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentServer::onAboutToStart);
         NeoForge.EVENT_BUS.addListener(ContentServer::onStarting);
+        NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> ContentFtbTeams.serverStarting(event.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStartingEvent _) -> ClaimSettings.announceForeign());
         NeoForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentWorldgen::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
@@ -528,6 +540,8 @@ public class ModSetup {
         RegistryRemaps.applyAliases();
         CompressedAliases.apply();
         ContentOverrides.reload();
+        OwnershipSettings.reload();
+        ClaimSettings.reload();
         ContentWeights.load();
         ContentReplacements.reload();
         ContentCityMaps.reload();
@@ -556,6 +570,7 @@ public class ModSetup {
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
+        DissolvePass.clear();
         if (FMLEnvironment.getDist() == Dist.CLIENT) { return; }
         PackManager.get().close();
     }
