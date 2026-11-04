@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -165,7 +166,7 @@ public final class ContentPregenDimensions {
     private static boolean alreadyMade(PregenMemory memory, ServerLevel level, int reach, int middleX, int middleZ) {
         String dimension = level.dimension().location().toString();
         if (memory.madeTo(dimension) < reach) { return false; }
-        File region = DimensionType.getStorageFolder(level.dimension(), level.getServer().getWorldPath(LevelResource.ROOT)).resolve("region").toFile();
+        File region = regionFolder(level).toFile();
         int expected = 0;
         int missing = 0;
         for (int rx = (middleX - reach) >> 5; rx <= (middleX + reach) >> 5; rx++) {
@@ -181,6 +182,10 @@ public final class ContentPregenDimensions {
         if (missing == expected) { freshDragon(level); }
         return false;
     }
+
+    public static Path regionFolder(ServerLevel level) { return regionFolder(level, level.getServer().getWorldPath(LevelResource.ROOT)); }
+
+    public static Path regionFolder(ServerLevel level, Path saveRoot) { return DimensionType.getStorageFolder(level.dimension(), saveRoot).resolve("region"); }
 
     private static boolean landless(File file) { return !file.isFile() || file.length() <= REGION_HEADER; }
 

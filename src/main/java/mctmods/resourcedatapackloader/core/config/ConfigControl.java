@@ -20,6 +20,8 @@ public final class ConfigControl {
     private final ModConfigSpec.ConfigValue<String> recipes;
     private final ModConfigSpec.ConfigValue<String> blastPlaster;
     private final ModConfigSpec.ConfigValue<String> server;
+    private final ModConfigSpec.ConfigValue<String> ownership;
+    private final ModConfigSpec.ConfigValue<String> claims;
 
     ConfigControl(ModConfigSpec.Builder builder) {
         builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
@@ -39,6 +41,8 @@ public final class ConfigControl {
         recipes = builder.comment("Recipe and furnace blocking and their whitelists [default|global|off]").define("recipes", DEFAULT);
         blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", DEFAULT);
         server = builder.comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view and simulation distances, and commands on a world opened to LAN [default|global|off]").define("server", DEFAULT);
+        ownership = builder.comment("Which blocks are owned and what happens to them when a team changes, from packs [default|global|off]").define("ownership", DEFAULT);
+        claims = builder.comment("Which claims settings the pack decides and which this file decides [default|global|off]").define("claims", DEFAULT);
         builder.pop();
     }
 
@@ -73,4 +77,8 @@ public final class ConfigControl {
     public String entities() { return ConfigCore.text(entities); }
 
     public String server() { return ConfigCore.text(server); }
+
+    public String ownership() { return ConfigCore.text(ownership); }
+
+    public String claims() { return ConfigCore.text(claims); }
 }
