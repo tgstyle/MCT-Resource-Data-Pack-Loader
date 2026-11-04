@@ -68,6 +68,8 @@ public class RegionCubeStorage implements IRubicStorage {
 
     @Override public boolean columnExists(@Nonnull ChunkPos pos) throws IOException { return this.save.getSaveSection2D().hasEntry(new EntryLocation2D(pos.x, pos.z)); }
 
+    @Override public boolean cubeExists(@Nonnull CubePos pos) throws IOException { return this.save.getSaveSection3D().hasEntry(new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ())); }
+
     @Override public NBTTagCompound readColumn(@Nonnull ChunkPos pos) throws IOException {
         try { return parsed(this.save.load(new EntryLocation2D(pos.x, pos.z), true).orElse(null), "Column", pos); }
         catch (ICorruptedDataException corrupt) {

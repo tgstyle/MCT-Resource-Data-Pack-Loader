@@ -40,9 +40,16 @@ public final class ItemSelection {
     }
 
     public void read(JsonObject json, ResourceLocation key) {
-        for (String name : Json.strings(json, "names")) { name(key, Settings.lower(name)); }
+        readNames(Json.strings(json, "names"), key);
         for (String namespace : Json.strings(json, "namespaces")) { prefixes.add(Settings.lower(namespace) + ":"); }
         oreNames.addAll(Json.strings(json, "oreDict"));
+    }
+
+    public void readNames(Iterable<String> raw, ResourceLocation key) {
+        for (String each : raw) {
+            String name = Settings.lower(each);
+            if (!name.isEmpty()) { name(key, name); }
+        }
     }
 
     public static boolean isMetaName(String name) {

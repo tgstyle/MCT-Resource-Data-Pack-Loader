@@ -66,8 +66,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         this.worldServer = worldServer;
         this.profiler = worldServer.profiler;
         try {
-            Path path = worldServer.getSaveHandler().getWorldDirectory().toPath();
-            if (worldServer.provider.getSaveFolder() != null) { path = path.resolve(worldServer.provider.getSaveFolder()); }
+            Path path = storagePath(worldServer);
             World overworld = Objects.requireNonNull(worldServer.getMinecraftServer(), "server").getEntityWorld();
             WorldSavedRubicData savedData = Objects.requireNonNull(
                     (WorldSavedRubicData) overworld.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID),
@@ -84,6 +83,11 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         }
         this.emptyColumn = new EmptyColumn(worldServer, 0, 0);
         this.emptyCube = new BlankCube(emptyColumn);
+    }
+
+    public static Path storagePath(WorldServer world) {
+        Path path = world.getSaveHandler().getWorldDirectory().toPath();
+        return world.provider.getSaveFolder() == null ? path : path.resolve(world.provider.getSaveFolder());
     }
 
     @Override @Detainted public void queueUnload(@Nonnull Chunk chunk) {}

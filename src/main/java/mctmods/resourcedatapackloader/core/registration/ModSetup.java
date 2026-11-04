@@ -65,6 +65,16 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.KilledName;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
+import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
+import mctmods.resourcedatapackloader.common.ownership.OwnedBlocksProvider;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimMessages;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimProtection;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimTools;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimWorldProtection;
+import mctmods.resourcedatapackloader.common.ownership.claims.ContentClaims;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
@@ -130,6 +140,8 @@ import mctmods.resourcedatapackloader.common.worldgen.surface.ContentVoidWorld;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
+import mctmods.resourcedatapackloader.core.integration.ftblib.ContentFtbLib;
+import mctmods.resourcedatapackloader.core.integration.ftbutilities.ContentFtbUtilities;
 import mctmods.resourcedatapackloader.core.integration.galacticraftcore.GcPlanetWorldgen;
 import mctmods.resourcedatapackloader.core.integration.streams.StreamsRubicValleys;
 import mctmods.resourcedatapackloader.core.integration.thuttech.ThutRubicLifts;
@@ -252,6 +264,8 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentHearts.class);
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
+        ContentFtbLib.install();
+        ContentFtbUtilities.install();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
         MinecraftForge.EVENT_BUS.register(GateSync.class);
@@ -297,6 +311,14 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentPregenHold.class);
         MinecraftForge.EVENT_BUS.register(CityGrid.class);
         ContentWorn.register();
+        OwnedBlocksProvider.register();
+        MinecraftForge.EVENT_BUS.register(OwnedBlocksProvider.class);
+        MinecraftForge.EVENT_BUS.register(ContentOwnership.class);
+        MinecraftForge.EVENT_BUS.register(ClaimProtection.class);
+        MinecraftForge.EVENT_BUS.register(ClaimMessages.class);
+        MinecraftForge.EVENT_BUS.register(ClaimWorldProtection.class);
+        MinecraftForge.EVENT_BUS.register(ClaimTools.class);
+        MinecraftForge.EVENT_BUS.register(ContentClaims.class);
         if (Config.worldgen.worldgenDebug) {
             MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
             MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);
@@ -342,6 +364,8 @@ public class ModSetup {
         FurnaceBlocking.apply();
         RecipeDisabled.furnace();
         ContentOverrides.reload();
+        OwnershipSettings.reload();
+        ClaimSettings.reload();
         ContentWeights.load();
         ContentReplacements.reload();
         ContentStructurePlacement.reload();
@@ -358,7 +382,11 @@ public class ModSetup {
         if (ContentVillages.load()) { ContentVillages.register(); }
     }
 
-    public static void serverCommands(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }
+    public static void serverCommands(FMLServerStartingEvent event) {
+        event.registerServerCommand(new ServerCommands());
+        ContentFtbLib.serverStarting();
+        ClaimSettings.announceForeign();
+    }
 
     public static void onServerStarted() {
         ContentCelestial.serverStarted();
@@ -385,6 +413,7 @@ public class ModSetup {
         ContentTradeSwitch.serverStopped();
         FunctionOverrides.serverStopped();
         GateEvents.serverStopped();
+        DissolvePass.clear();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }
         PackManager.get().close();
     }

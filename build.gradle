@@ -137,6 +137,8 @@ dependencies {
     compileOnly deobf("curse.maven:${common.bf3r_version}")
     compileOnly deobf("curse.maven:${common.quar_version}")
     compileOnly deobf("curse.maven:${common.gcor_version}")
+    compileOnly deobf("curse.maven:${common.ftbl_version}")
+    compileOnly deobf("curse.maven:${common.ftbu_version}")
     compileOnly deobf("curse.maven:${common.dngn_version}")
     compileOnly deobf("curse.maven:${common.lstc_version}")
     compileOnly deobf("curse.maven:${common.aeth_version}")
@@ -171,6 +173,8 @@ dependencies {
 
     clientRuntime deobf("curse.maven:${common.bf3r_version}")
     if (companion('vintagefix')) { runtimeOnly deobf("curse.maven:${common.vfix_version}") }
+    if (companion('ftblib')) { runtimeOnly deobf("curse.maven:${common.ftbl_version}") }
+    if (companion('ftbutilities')) { runtimeOnly deobf("curse.maven:${common.ftbu_version}") }
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'

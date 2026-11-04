@@ -44,6 +44,8 @@ public interface ICubeIO extends Flushable, AutoCloseable, IThreadedFileIO {
 
     boolean columnExists(int columnX, int columnZ);
 
+    boolean cubeExists(int cubeX, int cubeY, int cubeZ);
+
     int getPendingColumnCount();
 
     int getPendingCubeCount();

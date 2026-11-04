@@ -3351,7 +3351,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 | ---------- | ---- | ------------ | ---------------------- | ------------------------------------------------------------------------------------ |
 | `crops`    | 是   | 方块 ID 列表 |                        | 右键即可收获的作物方块，原版或资源包的均可。没有任何东西注册的方块会被跳过并写入日志 |
 | `age`      | 否   | int          | 该方块允许的最大 `age` | 文件内所有作物视为成熟的年龄                                                         |
-| `replant`  | 否   | boolean      | `true`                 | 作物是原地回到年龄 0，还是掉落后被移除                                               |
+| `replant`  | 否   | 布尔值       | `true`                 | 作物是原地回到年龄 0，还是掉落后被移除                                               |
 | `requires` | 否   | 字符串列表   | 无                     | 必须存在的模组 ID、资源包命名空间或 `config:` 选项，与所有定义相同                   |
 
 任何带有整数属性 `age` 的方块都可以列入。未成熟的作物、潜行的玩家和旁观者仍按普通右键处理。掉落与破坏该作物时相同，会计入手持工具的时运以及“方块掉落”一节的所有规则；重新种下时，若掉落物中有一颗该作物的种子，就会从中扣除一颗。村民的 `harvestFarmland` 任务是独立的，不受影响。
@@ -7820,6 +7820,117 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 回合结束或重置时，所有倒地的人会立即解除：效果移除，生命值恢复满。
 
+### 归属方块
+
+*队伍*
+
+玩家放置的方块可以归其所在阵营所有，也可以归玩家本人所有。归属方块是声明领地和袭击的基础，它们本身不会改变玩家能看到的任何东西。键写在配置的 `ownership` 分类中，或世界模板的 `settings` 中，哪一个生效由 `control.ownership` 决定（[控制层](#控制层)）。
+
+```json
+{
+  "settings": {
+    "blocks": ["minecraft:chest", "mypack:*"],
+    "who": "teamOrPlayer",
+    "onDissolve": "release"
+  }
+}
+```
+
+| 设置               | 类型 | 默认值       | 作用                                                                                                                                                                                     |
+| ------------------ | ---- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blocks`           | 列表 | 空           | 归放置者所有的方块：`modid:name`，`modid:*` 表示某个模组的全部方块，`*` 表示所有方块。按名称匹配，从不按 meta 匹配。为空则不拥有任何方块，该功能不做任何工作                             |
+| `who`              | 文本 | `team`       | `team` 仅当放置者在某个阵营中时才拥有方块，并把方块交给该阵营；`teamOrPlayer` 把方块交给没有阵营的放置者自己；`player` 始终交给放置者                                                    |
+| `onJoinTeam`       | 文本 | `keep`       | 玩家加入阵营时，其个人方块如何处理：`keep` 保留给玩家，`move` 交给阵营                                                                                                                   |
+| `onDissolve`       | 文本 | `keep`       | 阵营从计分板移除时，其方块如何处理：`keep` 让方块仍归已消失的阵营所有，因此等于无主；`release` 解除归属；`remove` 把方块从世界中移除                                                     |
+| `removeAs`         | 文本 | `drop`       | 配合 `remove` 使用：`drop` 以掉落物破坏方块，`vanish` 把方块变为空气                                                                                                                     |
+| `dissolvePerTick`  | 数字 | `64`         | 每个 tick 释放或移除的归属方块数，所有区块合计，包括扫描（1 到 100000）                                                                                                                  |
+| `checkTicks`       | 数字 | `20`         | 多久检查一次计分板中是否有已移除的阵营，单位为 tick（1 到 1200）                                                                                                                         |
+| `teamSource`       | 文本 | `scoreboard` | 阵营从哪里来。`scoreboard` 取计分板队伍，`ftb` 改取玩家的 FTBLib 队伍。`ftb` 需要 FTBLib；没有时改用计分板，并在服务器启动时记录一行日志                                                 |
+| `onFtbTeamDeleted` | 文本 | `follow`     | 仅在 `teamSource` 为 `ftb` 时生效：被删除的 FTB 队伍，其方块如何处理。`follow` 的行为与 `onDissolve` 相同；`keep`、`release` 和 `remove` 的取值与 `onDissolve` 相同，但仅适用于 FTB 队伍 |
+
+方块只有在同一个方块仍然位于原处时才保持归属。被破坏、炸毁、替换、被活塞推动或被命令改变的方块会失去归属者。阵营消失后，其方块会随区块加载逐个区块地被释放或移除，因此无人访问的区块中的方块要等到它们被加载才会处理；`/rdplserver ownership sweep` 会遍历每一个已保存的区块，把剩下的工作做完。
+
+### 已声明的区块
+
+*队伍*
+
+队伍或玩家可以声明一片土地上的区块。被声明的区块在解除声明之前归其归属者所有，下面的保护规则决定其他人可以在其中做什么。`methods` 为空时，无法声明任何区块，此功能完全不起作用。这些键写在配置的 `claims` 分类中，或世界模板的 `settings` 中，哪一个生效由 `control.claims` 决定（[控制层](#控制层)）。声明会保护其中的每一个方块，无论其是否归属于谁；归属方块则单独追踪。
+
+```json
+{
+  "settings": {
+    "methods": ["command", "item"],
+    "claimWho": "team",
+    "limitMode": "perMember",
+    "limitPerMember": 4,
+    "protectBreak": true,
+    "protectPlace": true,
+    "protectPvp": true,
+    "message": true,
+    "claimOnDissolve": "release",
+    "ftbPolicy": "independent"
+  }
+}
+```
+
+| 设置                     | 类型   | 默认值        | 作用                                                                                                                                        |
+| ------------------------ | ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `methods`                | 列表   | 空            | 声明的方式：`command` 为 `/rdplserver claim` 的各种形式，`item` 为声明物品，`block` 为声明方块，可任意组合。为空则无法声明任何区块          |
+| `claimWho`               | 文本   | `team`        | 声明归谁所有。`team` 归给声明者所在的队伍，需要有队伍；`teamOrPlayer` 对没有队伍的声明者归其本人；`player` 始终归给声明者                   |
+| `commandRadius`          | 数字   | `3`           | `/rdplserver claim <radius>` 最多可以声明的区块数（每个方向）（0 到 64）                                                                    |
+| `commandLevel`           | 数字   | `0`           | 声明、取消声明和列表命令所需的权限等级。0 表示所有人（0 到 4）                                                                              |
+| `opLevel`                | 数字   | `2`           | 可以操作其他所有者声明的权限等级，并且 `claim for` 会跳过下面的限制（0 到 4）                                                               |
+| `item`                   | 文本   | 空            | 声明物品，格式为 `modid:name`。为空则没有声明物品                                                                                           |
+| `itemConsume`            | 布尔值 | `false`       | 开启时，每声明一个区块消耗一个声明物品，取消声明时不退还                                                                                    |
+| `block`                  | 文本   | 空            | 声明方块，格式为 `modid:name`。为空则没有声明方块                                                                                           |
+| `blockRadius`            | 数字   | `0`           | 放置的声明方块会占用其四周各方向的区块数。0 表示只占自己所在的区块（0 到 64）                                                               |
+| `blockOverlap`           | 文本   | `refuse`      | 声明方块的正方形与其他所有者的区块相交时的处理方式。`refuse` 取消放置，`skip` 只占用空闲的区块                                              |
+| `claimCheckTicks`        | 数字   | `100`         | 多久检查一次已加载的声明方块是否被破坏或移动，单位为 tick（1 到 1200）                                                                      |
+| `limitMode`              | 文本   | `flat`        | `flat` 给每人 `limit`；`perMember` 按队伍中每名成员给 `limitPerMember`；`score` 读取计分板目标 `limitScore`                                 |
+| `limit`                  | 数字   | `16`          | `flat` 模式下，每个声明者最多可持有的区块数。0 表示该所有者不能声明                                                                         |
+| `limitPerMember`         | 数字   | `4`           | `perMember` 模式下，每名队伍成员增加的区块数。一名玩家即为一名成员                                                                          |
+| `limitScore`             | 文本   | 空            | `score` 模式下保存每个声明者上限的目标。队伍的上限为其成员分数之和                                                                          |
+| `mustTouch`              | 布尔值 | `false`       | 开启时，新区块必须与所有者已有的某个区块共享一条边，所有者的第一次声明除外                                                                  |
+| `minDistance`            | 数字   | `0`           | 新声明与其他所有者的声明之间至少保留的区块数。0 允许相接                                                                                    |
+| `spawnRadius`            | 数字   | `0`           | 距离维度出生点此区块数之内不允许声明（0 到 64）                                                                                             |
+| `dimensions`             | 列表   | 空            | 允许声明的维度 ID。为空则所有维度均可                                                                                                       |
+| `dimensionsAreBlacklist` | 布尔值 | `false`       | 开启时，声明不在 `dimensions` 中生效；关闭时，只在其中生效                                                                                  |
+| `orphanAccess`           | 文本   | `locked`      | 所有者已不存在的土地。`locked` 将除管理员以外的人拒之门外；`open` 允许所有人进入并忽略其中的保护，但区块仍保持被声明状态                    |
+| `fakePlayers`            | 文本   | `deny`        | 机器等假玩家能否在他人的声明中行动。`deny` 阻止，`allow` 允许                                                                               |
+| `denyMessage`            | 布尔值 | `true`        | 开启时，被声明阻止的玩家会收到提示，且至多每秒一次                                                                                          |
+| `protectBreak`           | 布尔值 | `false`       | 开启时，其他人不能在声明内破坏方块，也不能击打物品展示框、画和盔甲架                                                                        |
+| `protectPlace`           | 布尔值 | `false`       | 开启时，其他人不能在声明内放置方块或用桶装填液体                                                                                            |
+| `protectUse`             | 布尔值 | `false`       | 开启时，其他人不能使用 `useBlocks` 所列的方块，除非 `useExceptions` 允许；也不能打开声明内实体的物品栏                                      |
+| `useBlocks`              | 列表   | `*`           | `protectUse` 阻止他人使用的方块，格式为 `modid:name`、`modid:*`，或用 `*` 表示所有方块                                                      |
+| `useExceptions`          | 列表   | 空            | 即使有 `protectUse`，他人仍可使用的方块，写法同 `useBlocks`                                                                                 |
+| `protectExplosions`      | 布尔值 | `false`       | 开启时，爆炸不会破坏声明内的方块                                                                                                            |
+| `protectMobGriefing`     | 布尔值 | `false`       | 开启时，站在声明内的生物不能改变其中的方块，例如末影人拿走方块或僵尸破坏门                                                                  |
+| `protectFluids`          | 布尔值 | `false`       | 开启时，液体不会从他人所有的土地流入声明内                                                                                                  |
+| `protectPistons`         | 布尔值 | `false`       | 开启时，活塞不能从声明外把方块推入声明内或推出声明                                                                                          |
+| `protectFire`            | 布尔值 | `false`       | 开启时，火不会从声明外蔓延进来，也不会烧毁其中的方块                                                                                        |
+| `protectPvp`             | 布尔值 | `false`       | 开启时，玩家不能在声明内互相伤害。所有者的成员之间也不豁免                                                                                  |
+| `message`                | 布尔值 | `false`       | 开启时，跨过声明边界的玩家会被告知这是谁的土地                                                                                              |
+| `messageWilderness`      | 布尔值 | `false`       | 开启时，玩家从声明走入未声明土地时也会被告知                                                                                                |
+| `claimOnDissolve`        | 文本   | `keep`        | 已消失的所有者的声明如何处理。`keep` 保留在已消失的所有者名下；`release` 释放为无主土地；`remove` 收回土地，并撤销其上所建的内容            |
+| `restore`                | 布尔值 | `false`       | 配合 `remove` 使用：若原始副本覆盖该区块，则先将其从原始副本还原                                                                            |
+| `regenerate`             | 布尔值 | `false`       | 配合 `remove` 使用：还原时未被覆盖的区块，将根据世界种子重新生成                                                                            |
+| `restorePerTick`         | 数字   | `1`           | 每个 tick 还原或重新生成的段数，所有区块合计（1 及以上）                                                                                    |
+| `movePlayers`            | 布尔值 | `true`        | 开启时，正在被还原或重新生成的区块内的玩家会先被移出                                                                                        |
+| `entities`               | 文本   | `keep`        | 被还原或重新生成的区块中的实体如何处理。`keep` 保留它们；`remove` 移除所有非玩家实体                                                        |
+| `ftbPolicy`              | 文本   | `independent` | 声明如何与 FTB Utilities 的声明并存。`independent` 忽略它们；`yield` 把 FTB 的区块交给 FTB；`exclusive` 在 FTB 声明生效期间拒绝 RDPL 的声明 |
+
+**声明。** `command` 仅在 `methods` 包含它时才列出 `/rdplserver claim` 的各种形式。`item` 对其所使用的区块进行声明；若在空中使用，则对玩家所站的区块声明；潜行时使用则取消声明。`block` 对放置的声明方块所在的区块声明，或对其周围 `blockRadius` 正方形内的每个区块声明；破坏该方块会精确释放它所声明的区块。由于计分板队伍没有队长，队伍中的任何成员都可以代表队伍进行声明和取消声明。
+
+**限制。** 新声明按以下顺序检查，第一个失败的检查给出它唯一的提示：维度、出生点半径、已被其他所有者占用、仍在清理中的区块、上限、`mustTouch`、`minDistance`。使用 `claim for` 的管理员会跳过上限、`mustTouch`、`minDistance` 和 `spawnRadius`。上限为 0 表示该所有者不能声明。
+
+**保护。** 声明所有者的成员可以通过，`opLevel` 或更高等级的管理员也可以通过。每个 `protect*` 键都是游戏事件上独立的处理器，优先级为普通，因此 FTB Utilities 的拒绝会先生效，且只显示一条提示。`protectPlace` 也涵盖实体上的放置和桶的使用，`protectUse` 也涵盖展示框和盔甲架。漏斗、发射器及其他不靠玩家移动物品的机器不会被阻止，直接调用修改方块的模组也不会被阻止。从声明外闯入的生物不受 `protectMobGriefing` 覆盖。
+
+**进入与离开提示。** 开启 `message` 后，跨过声明边界进入不同所有者土地的玩家，会在动作栏看到 `Entering <owner>'s land` 或 `Leaving <owner>'s land`：成员为绿色，其他人为红色，没有所有者的土地为黄色。`messageWilderness` 会在玩家从声明走入未声明土地时加上 `Wilderness`。传送和重生在下一次检查时才计为跨界。
+
+**消失。** 当队伍从计分板中移除，或 FTB 队伍按 `onFtbTeamDeleted` 被删除时，由 `claimOnDissolve` 决定其声明。`keep` 使声明仍归已消失的所有者，因此由 `orphanAccess` 决定谁可以进入。`release` 立即解除声明，该土地上的归属方块遵循 `onDissolve`。`remove` 立即解除声明，然后按顺序逐个处理每个区块：若 `restore` 开启且原始副本覆盖该区块，则先还原；若 `regenerate` 开启，则重新生成；否则只按 `removeAs` 的规定移除归属方块。还原读取存档旁 `rdpl-pristine/<world>` 中保存的原始副本。重新生成只根据种子重建地形形状，不包括树木、矿石或结构，因此要得到忠实的结果，需要在预生成的区域上进行还原。还原和重新生成会替换该区块中的每个方块，无论是谁放置的。这项工作是惰性的：区块加载时入队，每个 tick 处理 `restorePerTick` 个段，若区块内有玩家则等待，除非 `movePlayers` 将玩家移到所有待处理区块之外最近的安全位置。`entities` 决定被还原区块中的生物、物品和载具是否保留。
+
+**FTB Utilities。** `ftbPolicy` 单独读取，RDPL 的声明与 FTB Utilities 的声明是各自独立的记录。`independent`（默认）忽略 FTB 的声明。`yield` 拒绝对 FTB 所持有区块的声明，并把该处的保护交给 FTB，因此在 FTB 持有该区块期间，之前的声明不再提供保护。`exclusive` 拒绝所有 RDPL 声明，并指引玩家使用 FTB 的声明命令，且在 FTB 声明生效期间关闭 RDPL 的保护。若没有生效的 FTB 声明，`yield` 和 `exclusive` 都按 `independent` 运行，并在服务器启动时记录一行日志。
+
 ## 计分
 
 *游戏模式*
@@ -8721,7 +8832,7 @@ RDPL 附带下列字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `global`  | 以配置为准。资源包的相应部分被忽略     |
 | `off`     | 该分组被完全禁用，任何资源包都无法启用 |
 
-这些分组是 `ores`、`biomes`、`generators`、`structures`、`spawning`、`bedrock`、`voidWorld`、`recipes`、`terrain`、`replacements`、`villages`、`entities`、`chunks`、`blastPlaster`、`commands` 和 `server`。
+这些分组是 `ores`、`biomes`、`generators`、`structures`、`spawning`、`bedrock`、`voidWorld`、`recipes`、`terrain`、`replacements`、`villages`、`entities`、`chunks`、`blastPlaster`、`ownership`、`commands` 和 `server`。
 
 设置按 **生物群系 → 世界模板 → 配置** 的顺序解析。世界模板的 `settings` 块使用与配置相同的键名，因此资源包设置它们的方式与你自己设置的一样：
 
@@ -10724,18 +10835,29 @@ Blast Plaster（本模组的依赖）负责爆炸后的行为：逐方块修复�
 
 *服务器命令*
 
-| 命令                                                                                     | 等级 | 作用                                                                                                                                                                                                             |
-| ---------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/rdplserver intro`                                                                      | 0    | 让世界开场动画在你下次加入时再次播放。任何玩家都可以运行，且只会清除他自己的记录                                                                                                                                 |
-| `/rdplserver team`、`team join [name]`、`team leave`、`team vote <player>`、`team claim` | 0    | 与上文的 `/rdpl team` 各形式相同，那些命令会转交到这里                                                                                                                                                           |
-| `/rdplserver round start`                                                                | 0    | 与 `/rdpl round start` 相同，该命令会转交到这里                                                                                                                                                                  |
-| `/rdplserver round reset`、`round vote yes`、`round vote no`                             | 0    | 与上文的 `/rdpl round` 各形式相同，那些命令会转交到这里                                                                                                                                                          |
-| `/rdplserver card <rule> [players]`                                                      | 2    | 按 id 或文件名，向指定的玩家或你自己显示一条[卡片规则](#卡片)。`when`、`repeat` 和 `cooldown` 会被跳过                                                                                                           |
-| `/rdplserver talk <number>`                                                              | 0    | 在已打开的对话中按编号选择一条回复。原版客户端中可点击的回复会运行它。[对话](#对话)                                                                                                                              |
-| `/rdplserver talk open <players> <dialog> <npc>`                                         | 2    | 为指定的玩家打开对话，并以指定的实体作为说话者，对话可按 ID 或文件名指定。说话者必须与玩家在同一世界，且相距不超过 8 格。[对话](#对话)                                                                           |
-| `/rdplserver raid <袭击> [玩家 或 x y z]`                                                | 3    | 在指定玩家处、指定位置，或两者都不填时在你自己处开始指定的[袭击](#袭击)，无需村庄。若 `reach` 范围内已有另一场袭击正在进行则被拒绝                                                                               |
-| `/rdplserver environment [<维度> <名称>]`                                                | 2    | 把维度切换到它的某个[环境](#环境)，或用 `default` 恢复它自己的外观。不带参数时，列出每个带有环境的维度及其当前使用的环境                                                                                         |
-| `/rdplserver reset`                                                                      | 3    | 让地图恢复到一个回合结束时的样子：所有人被拦住，实体被清扫，分数被清零，运行 `resetRuns`，玩家被送到 `resetSendsTo` 并被释放，并以起始计数开启一个回合，如[预生成](#预生成)下的重置设置所述。不会从 `/rdpl` 转交 |
+| 命令                                                                                     | 等级 | 作用                                                                                                                                                                                                                                           |
+| ---------------------------------------------------------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver intro`                                                                      | 0    | 让世界开场动画在你下次加入时再次播放。任何玩家都可以运行，且只会清除他自己的记录                                                                                                                                                               |
+| `/rdplserver team`、`team join [name]`、`team leave`、`team vote <player>`、`team claim` | 0    | 与上文的 `/rdpl team` 各形式相同，那些命令会转交到这里                                                                                                                                                                                         |
+| `/rdplserver round start`                                                                | 0    | 与 `/rdpl round start` 相同，该命令会转交到这里                                                                                                                                                                                                |
+| `/rdplserver round reset`、`round vote yes`、`round vote no`                             | 0    | 与上文的 `/rdpl round` 各形式相同，那些命令会转交到这里                                                                                                                                                                                        |
+| `/rdplserver card <rule> [players]`                                                      | 2    | 按 id 或文件名，向指定的玩家或你自己显示一条[卡片规则](#卡片)。`when`、`repeat` 和 `cooldown` 会被跳过                                                                                                                                         |
+| `/rdplserver talk <number>`                                                              | 0    | 在已打开的对话中按编号选择一条回复。原版客户端中可点击的回复会运行它。[对话](#对话)                                                                                                                                                            |
+| `/rdplserver talk open <players> <dialog> <npc>`                                         | 2    | 为指定的玩家打开对话，并以指定的实体作为说话者，对话可按 ID 或文件名指定。说话者必须与玩家在同一世界，且相距不超过 8 格。[对话](#对话)                                                                                                         |
+| `/rdplserver raid <袭击> [玩家 或 x y z]`                                                | 3    | 在指定玩家处、指定位置，或两者都不填时在你自己处开始指定的[袭击](#袭击)，无需村庄。若 `reach` 范围内已有另一场袭击正在进行则被拒绝                                                                                                             |
+| `/rdplserver environment [<维度> <名称>]`                                                | 2    | 把维度切换到它的某个[环境](#环境)，或用 `default` 恢复它自己的外观。不带参数时，列出每个带有环境的维度及其当前使用的环境                                                                                                                       |
+| `/rdplserver reset`                                                                      | 3    | 让地图恢复到一个回合结束时的样子：所有人被拦住，实体被清扫，分数被清零，运行 `resetRuns`，玩家被送到 `resetSendsTo` 并被释放，并以起始计数开启一个回合，如[预生成](#预生成)下的重置设置所述。不会从 `/rdpl` 转交                               |
+| `/rdplserver ownership sweep [dimension]`                                                | 3    | 每个 tick 加载一个已保存的区块，使已消失阵营的方块释放或移除也能到达无人访问的区块。不带维度时遍历所有维度，然后重新统计每个所有者持有的方块数，并忘记已消失且一个方块也不持有的所有者；带维度时只遍历该维度，且不重新统计。重启后从停止处继续 |
+| `/rdplserver ownership status`                                                           | 3    | 扫描进行到哪里                                                                                                                                                                                                                                 |
+| `/rdplserver ownership cancel`                                                           | 3    | 停止扫描                                                                                                                                                                                                                                       |
+| `/rdplserver claim`                                                                      | 0    | 按 `claimWho` 的设置，为你的队伍或你自己声明你所站的区块。需要 `methods` 中有 `command`，等级由 `commandLevel` 决定                                                                                                                            |
+| `/rdplserver claim <radius>`                                                             | 0    | 以你为中心、该区块数为半径的正方形内，声明每一个空闲区块，上限为 `commandRadius`。已被占用的区块会被跳过并在回复中计数；若正方形会超过上限，则整条命令被拒绝                                                                                   |
+| `/rdplserver claim for <team or player>`                                                 | 2    | 为另一支队伍或玩家声明你所站的区块，并跳过上限、`mustTouch`、`minDistance` 和 `spawnRadius`。除命令本身的等级外，还需要 `opLevel`                                                                                                              |
+| `/rdplserver unclaim`                                                                    | 0    | 若你所站的区块属于你，则取消其声明。管理员可借此释放其他所有者的区块                                                                                                                                                                           |
+| `/rdplserver unclaim <radius>`                                                           | 0    | 释放以你为中心、该区块数为半径的正方形内你的区块                                                                                                                                                                                               |
+| `/rdplserver unclaim all`                                                                | 0    | 释放你的队伍或你本人持有的每一个区块                                                                                                                                                                                                           |
+| `/rdplserver claims`                                                                     | 0    | 按维度和区块列出你的声明，合并为连续区段，并附上数量和上限                                                                                                                                                                                     |
+| `/rdplserver claims <team or player>`                                                    | 2    | 列出另一所有者的声明。需要 `opLevel`                                                                                                                                                                                                           |
 
 #### 前往各处
 

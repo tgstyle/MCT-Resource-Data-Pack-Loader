@@ -56,6 +56,20 @@ public class AsyncBatchingCubeIO implements ICubeIO {
         }
     }
 
+    @Override public boolean cubeExists(int cubeX, int cubeY, int cubeZ) {
+        CubePos pos = new CubePos(cubeX, cubeY, cubeZ);
+        try {
+            return underReadLock(() -> {
+                this.ensureOpen();
+                return this.pendingCubes.containsKey(pos) || this.storage.cubeExists(pos);
+            });
+        }
+        catch (IOException e) {
+            ContentLog.LOGGER.catching(e);
+            return false;
+        }
+    }
+
     @Override public PartialData<Chunk> loadColumnNbt(int chunkX, int chunkZ) throws IOException {
         ChunkPos pos = new ChunkPos(chunkX, chunkZ);
         return underReadLock(() -> {

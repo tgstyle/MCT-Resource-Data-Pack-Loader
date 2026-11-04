@@ -16,6 +16,8 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
     @net.minecraftforge.common.config.Config.Comment("Small changes to how vanilla behaves") public static Tweaks tweaks = new Tweaks();
     @net.minecraftforge.common.config.Config.Comment("Chunks held loaded around a world's spawn point") public static Chunks chunks = new Chunks();
     @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that can be opened up") public static Commands commands = new Commands();
+    @net.minecraftforge.common.config.Config.Comment("Blocks that belong to the team or player who placed them, and what happens to them when a team changes [Default=nothing owned]") public static Ownership ownership = new Ownership();
+    @net.minecraftforge.common.config.Config.Comment("Claims: areas a team or player takes with a command, an item or a block, and what others may do inside them [Default=nothing can be claimed]") public static Claims claims = new Claims();
 
     public static boolean registersToClients() { return content.load && !content.vanillaClients; }
 
@@ -34,6 +36,8 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("Ticking entities less often far from every player [default|global|off]") public String entities = "default";
         @net.minecraftforge.common.config.Config.Comment("How many chunks are held loaded around a world's spawn point [default|global|off]") public String chunks = "default";
         @net.minecraftforge.common.config.Config.Comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]") public String blastPlaster = "default";
+        @net.minecraftforge.common.config.Config.Comment("Which blocks are owned and what happens to them when a team changes, from packs [default|global|off]") public String ownership = "default";
+        @net.minecraftforge.common.config.Config.Comment("Which claims settings the pack decides and which this file decides [default|global|off]") public String claims = "default";
         @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that a pack is allowed to open up [default|global|off]") public String commands = "default";
         @net.minecraftforge.common.config.Config.Comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view distance and the build height, and commands on a world opened to LAN [default|global|off]") public String server = "default";
     }
@@ -153,6 +157,61 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("Draw the card's panel, border and color stripe, and the dark backdrop behind the welcome and the hold notes. Off leaves only the text, which keeps its shadow, and saysImage if one is set [Default=true]") public boolean saysBackground = true;
         @net.minecraftforge.common.config.Config.Comment("A font for the card's text, named as namespace:name, e.g. rubyworld:runes for the pack's assets/rubyworld/textures/font/runes.png, drawn like vanilla's ascii.png. Empty uses the game's font [Default=]") public String saysFont = "";
         @net.minecraftforge.common.config.Config.Comment("Show the game's toasts, the pop-ups in the upper right corner for advancements, unlocked recipes and tutorial hints, other mods' toasts included. Off shows none. Takes effect on the next world or server joined [Default=false]") public boolean toasts = false;
+    }
+
+    public static class Ownership {
+        @net.minecraftforge.common.config.Config.Comment("Blocks that are owned by whoever places them, as modid:name, modid:* for every block of a mod, or * for every block. Matched by block name only, never by meta [Default={}]") public String[] blocks = {};
+        @net.minecraftforge.common.config.Config.Comment("Who an owned block belongs to. team tags only a placer on a team and gives the block to the team, teamOrPlayer gives a placer with no team the block themselves, player always gives it to the placer [team|teamOrPlayer|player] [Default=team]") public String who = "team";
+        @net.minecraftforge.common.config.Config.Comment("What happens to a player's own owned blocks when the player joins a team. keep leaves them the player's, move hands them to the team [keep|move] [Default=keep]") public String onJoinTeam = "keep";
+        @net.minecraftforge.common.config.Config.Comment("What happens to the owned blocks of a team that is dissolved. keep leaves them owned by the gone team, release makes them owned by nobody, remove takes them out of the world [keep|release|remove] [Default=keep]") public String onDissolve = "keep";
+        @net.minecraftforge.common.config.Config.Comment("How removed blocks are taken out when onDissolve is remove. drop breaks them and drops their items, vanish takes them without drops [drop|vanish] [Default=drop]") public String removeAs = "drop";
+        @net.minecraftforge.common.config.Config.Comment("How many owned blocks of a dissolved team are released or removed each tick [Default=64]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 100000) public int dissolvePerTick = 64;
+        @net.minecraftforge.common.config.Config.Comment("How often, in ticks, the ownership work of a dissolved or changed team is checked for [Default=20]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1200) public int checkTicks = 20;
+    }
+
+    public static class Claims {
+        @net.minecraftforge.common.config.Config.Comment("How a claim can be made. command is the claim command, item is right clicking with the claim item, block is placing the claim block. Empty means nothing can be claimed [command|item|block] [Default={}]") public String[] methods = {};
+        @net.minecraftforge.common.config.Config.Comment("Who a claim belongs to. team gives it to the claimer's team and needs one, teamOrPlayer gives a claimer with no team the claim themselves, player always gives it to the claimer [team|teamOrPlayer|player] [Default=team]") public String claimWho = "team";
+        @net.minecraftforge.common.config.Config.Comment("How many chunks around the claimer the claim command takes [Default=3]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 64) public int commandRadius = 3;
+        @net.minecraftforge.common.config.Config.Comment("The permission level a player needs to use the claim command, 0 is everyone [Default=0]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4) public int commandLevel = 0;
+        @net.minecraftforge.common.config.Config.Comment("The permission level that may change or remove claims that are not their own [Default=2]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4) public int opLevel = 2;
+        @net.minecraftforge.common.config.Config.Comment("The item that claims when used, as modid:name. Empty means no claim item [Default=]") public String item = "";
+        @net.minecraftforge.common.config.Config.Comment("On, using the claim item uses one up [Default=false]") public boolean itemConsume = false;
+        @net.minecraftforge.common.config.Config.Comment("The block that claims when placed, as modid:name. Empty means no claim block [Default=]") public String block = "";
+        @net.minecraftforge.common.config.Config.Comment("How many chunks around the claim block a placed claim block takes. 0 is its own chunk only [Default=0]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 64) public int blockRadius = 0;
+        @net.minecraftforge.common.config.Config.Comment("What a claim block does when its area meets a chunk that is already claimed. refuse is not placed, skip takes only the free chunks [refuse|skip] [Default=refuse]") public String blockOverlap = "refuse";
+        @net.minecraftforge.common.config.Config.Comment("How often, in ticks, claim blocks are checked for being broken or moved [Default=100]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1200) public int claimCheckTicks = 100;
+        @net.minecraftforge.common.config.Config.Comment("How many chunks a team or player may claim. flat gives everyone limit, perMember gives limitPerMember for each team member, score reads the scoreboard objective limitScore [flat|perMember|score] [Default=flat]") public String limitMode = "flat";
+        @net.minecraftforge.common.config.Config.Comment("The most chunks each claimer may claim in flat mode [Default=16]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 100000) public int limit = 16;
+        @net.minecraftforge.common.config.Config.Comment("The most chunks each team member adds in perMember mode [Default=4]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 100000) public int limitPerMember = 4;
+        @net.minecraftforge.common.config.Config.Comment("The scoreboard objective that holds each claimer's limit in score mode. Empty means no limit from it [Default=]") public String limitScore = "";
+        @net.minecraftforge.common.config.Config.Comment("On, a new claim must touch a chunk the claimer already has, unless it is their first [Default=false]") public boolean mustTouch = false;
+        @net.minecraftforge.common.config.Config.Comment("The fewest chunks a new claim keeps between itself and another claimer's claim. 0 allows touching [Default=0]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 64) public int minDistance = 0;
+        @net.minecraftforge.common.config.Config.Comment("How many chunks around the world spawn cannot be claimed. 0 allows all [Default=0]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 64) public int spawnRadius = 0;
+        @net.minecraftforge.common.config.Config.Comment("Dimensions claims work in. Empty means every dimension") public int[] dimensions = {};
+        @net.minecraftforge.common.config.Config.Comment("On, claims do not work in these dimensions. Off, they work only in them [Default=false]") public boolean dimensionsAreBlacklist = false;
+        @net.minecraftforge.common.config.Config.Comment("What a claim does while its owner is gone, such as a dissolved team. locked keeps everyone out, open lets everyone in [locked|open] [Default=locked]") public String orphanAccess = "locked";
+        @net.minecraftforge.common.config.Config.Comment("Whether fake players, such as machines, may act in claims of others. deny stops them, allow lets them [deny|allow] [Default=deny]") public String fakePlayers = "deny";
+        @net.minecraftforge.common.config.Config.Comment("On, a player stopped by a claim is told so [Default=true]") public boolean denyMessage = true;
+        @net.minecraftforge.common.config.Config.Comment("On, others cannot break blocks in a claim [Default=false]") public boolean protectBreak = false;
+        @net.minecraftforge.common.config.Config.Comment("On, others cannot place blocks in a claim [Default=false]") public boolean protectPlace = false;
+        @net.minecraftforge.common.config.Config.Comment("On, others cannot use blocks and items in a claim, as far as useBlocks and useExceptions say [Default=false]") public boolean protectUse = false;
+        @net.minecraftforge.common.config.Config.Comment("On, explosions do not damage blocks in a claim [Default=false]") public boolean protectExplosions = false;
+        @net.minecraftforge.common.config.Config.Comment("On, mobs cannot change blocks in a claim, such as endermen and ravagers [Default=false]") public boolean protectMobGriefing = false;
+        @net.minecraftforge.common.config.Config.Comment("On, fluids do not flow into a claim from outside it [Default=false]") public boolean protectFluids = false;
+        @net.minecraftforge.common.config.Config.Comment("On, pistons cannot push blocks into or out of a claim from outside it [Default=false]") public boolean protectPistons = false;
+        @net.minecraftforge.common.config.Config.Comment("On, fire does not spread into or burn blocks in a claim [Default=false]") public boolean protectFire = false;
+        @net.minecraftforge.common.config.Config.Comment("On, players cannot hurt each other in a claim [Default=false]") public boolean protectPvp = false;
+        @net.minecraftforge.common.config.Config.Comment("Blocks protectUse stops others from using, as modid:name, modid:* for every block of a mod, or * for every block [Default={\"*\"}]") public String[] useBlocks = {"*"};
+        @net.minecraftforge.common.config.Config.Comment("Blocks protectUse lets others use anyway, written like useBlocks [Default={}]") public String[] useExceptions = {};
+        @net.minecraftforge.common.config.Config.Comment("On, a player who crosses a claim's edge is told whose it is [Default=false]") public boolean message = false;
+        @net.minecraftforge.common.config.Config.Comment("On, a player who crosses into unclaimed land from a claim is told so too [Default=false]") public boolean messageWilderness = false;
+        @net.minecraftforge.common.config.Config.Comment("What happens to the claims of a team that is dissolved. keep leaves them owned by the gone team, release makes them free, remove deletes them [keep|release|remove] [Default=keep]") public String claimOnDissolve = "keep";
+        @net.minecraftforge.common.config.Config.Comment("On, a claim that is removed has its chunks put back from the pristine copy saved after pregeneration (pregenBackup) [Default=false]") public boolean restore = false;
+        @net.minecraftforge.common.config.Config.Comment("On, a claim that is removed has its chunks regenerated from the world seed [Default=false]") public boolean regenerate = false;
+        @net.minecraftforge.common.config.Config.Comment("How many chunks are restored or regenerated each tick [Default=1]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 100000) public int restorePerTick = 1;
+        @net.minecraftforge.common.config.Config.Comment("On, players standing in a claim that is removed are moved out of it [Default=true]") public boolean movePlayers = true;
+        @net.minecraftforge.common.config.Config.Comment("What happens to entities in a claim that is removed. keep leaves them, remove takes them out of the world [keep|remove] [Default=keep]") public String entities = "keep";
     }
 
     public static class Worldgen {

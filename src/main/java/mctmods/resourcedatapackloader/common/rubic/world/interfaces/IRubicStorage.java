@@ -12,6 +12,8 @@ import net.minecraft.util.math.ChunkPos;
 public interface IRubicStorage extends Flushable, AutoCloseable {
     boolean columnExists(ChunkPos pos) throws IOException;
 
+    boolean cubeExists(CubePos pos) throws IOException;
+
     NBTTagCompound readColumn(ChunkPos pos) throws IOException;
 
     NBTTagCompound readCube(CubePos pos) throws IOException;

@@ -14,8 +14,10 @@ import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.text.Listing;
 
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.fml.common.StartupQuery;
@@ -137,6 +139,10 @@ public final class RubicWorldControl {
     }
 
     public static int pendingSaves(ChunkProviderServer provider) { return ((CubeProviderServer) provider).getCubeIO().getPendingCubeCount(); }
+
+    public static boolean cubeSaved(ChunkProviderServer provider, int cubeX, int cubeY, int cubeZ) { return ((CubeProviderServer) provider).getCubeIO().cubeExists(cubeX, cubeY, cubeZ); }
+
+    public static Path storagePath(WorldServer world) { return CubeProviderServer.storagePath(world); }
 
     public static int loadedCubes(ChunkProviderServer provider) { return ((CubeProviderServer) provider).getLoadedCubeCount(); }
 

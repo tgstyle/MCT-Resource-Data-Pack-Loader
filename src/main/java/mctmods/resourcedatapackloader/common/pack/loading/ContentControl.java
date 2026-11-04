@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityM
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.core.util.Enums;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -14,6 +15,7 @@ import com.google.gson.JsonObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
+import net.minecraft.util.math.MathHelper;
 
 public final class ContentControl {
     public static final String ORES = "ores";
@@ -32,6 +34,8 @@ public final class ContentControl {
     public static final String ENTITIES = "entities";
     public static final String CHUNKS = "chunks";
     public static final String BLAST_PLASTER = "blastPlaster";
+    public static final String OWNERSHIP = "ownership";
+    public static final String CLAIMS = "claims";
     public static final String COMMANDS = "commands";
     public static final String SERVER = "server";
     private static final String DEFAULT = "default";
@@ -68,6 +72,11 @@ public final class ContentControl {
             "villagePathMinimumWidth", "villagePathIntersects", "villagePathFlatRun",
             "villagePathBridgeSidewalkBlock", "villagePathBridgeBarrierBlock", "villagePathBridgeDrop", "villagePathBridgeBarrierHeight", "villagePathVergeBlock", "villagePathVergeWaterBlock", "villagePathTunnelBlock", "villagePathTunnelDepth", "villagePathTunnelLightBlock", "villagePathTunnelLightRun", "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance", "villagePathPiers", "villagePathBridgeFrameBlock", "villagePathBridgeFrameTopBlock", "villagePathBridgeFrameHeight", "villagePathBridgeFrameRun", "villagePathBridgeFrameLeast", "villagePathDeadEnds", "villagePathLampBlock", "villagePathLampHeight", "villagePathLampTopBlock", "villagePathLampSideBlock", "villagePathLampStructure", "villageWellStructure", "villagePathPierCargo", "villagePathPierLoot", "villageRailLines", "villageRailSpacing", "villageRailDirection", "villageRailWidth", "villageRailBlock", "villageRailTrackSeat", "villageRailBedBlock", "villageRailTieBlock", "villageRailTieRun", "villageRailPowerRun", "villageRailTracks", "villageRailTrackGap", "villageRailShoulderBlock", "villageRailShoulderWidth", "villageRailPowerBlock", "villageRailPowerBase", "villageRailTunnelLightBlock", "villageRailTunnelLightRun", "villageRailSupportBlock", "villageRailDeckBlock", "villageRailBarrierBlock", "villageRailBridgeFrameBlock", "villageRailBridgeFrameTopBlock", "villageRailBridgeFrameHeight", "villageRailBridgeFrameRun", "villageRailBridgeFrameLeast", "villageRailTunnelBlock", "villageRailTunnelDepth", "villageRailClimb", "villageRailTail", "villageRailLinks", "villageRailLinkLeast", "villageRailLinkMost", "villageRailLinkBridgeMost", "villageRailLinkTunnelMost", "villageRailLinkStation", "villageRailLinkStationLength", "villageRailLinkPlatformWidth", "villageRailLinkPlatformBlock", "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villagePlotsLeast",
             "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageCitySpacing", "villageBlockSizes", "villageLayout", "biomes", "voidPlatformBlock",
+            "blocks", "who", "onJoinTeam", "onDissolve", "removeAs", "dissolvePerTick", "checkTicks", "teamSource", "onFtbTeamDeleted", "ftbPolicy",
+            "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
+            "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers",
+            "denyMessage", "protectBreak", "protectPlace", "protectUse", "protectExplosions", "protectMobGriefing", "protectFluids", "protectPistons", "protectFire", "protectPvp",
+            "useBlocks", "useExceptions", "message", "messageWilderness", "claimOnDissolve", "restore", "regenerate", "restorePerTick", "movePlayers", "entities",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",
             "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight", "structureAt", "structureMost", "rubicWorld", "rubicWorldDimensions", "rubicWorldDimensionsAreBlacklist", "terrainOffset", "worldBorder", "worldBelow", "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage", "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether", "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals", "worldSpawnNpcs", "worldViewDistance", "worldBuildHeight", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType", "worldTypeExceptions"));
 
@@ -113,6 +122,18 @@ public final class ContentControl {
         if (value == null) { return fallback; }
         if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) { return rejected(key, "a number", fallback); }
         return value.getAsInt();
+    }
+
+    public static int ranged(String group, String key, int configured, int least, int most) {
+        return MathHelper.clamp(number(group, key, configured), least, most);
+    }
+
+    public static <E extends Enum<E>> E choice(String group, String key, String configured, E fallback) {
+        String value = text(group, key, configured);
+        E found = Enums.byName(fallback.getDeclaringClass(), value);
+        if (found != null) { return found; }
+        ContentLog.LOGGER.error("{} {} is '{}', which is not a known value, using {}", group, key, value, fallback.name().toLowerCase(Locale.ROOT));
+        return fallback;
     }
 
     public static float decimal(String group, String key, float fallback) {
@@ -287,6 +308,8 @@ public final class ContentControl {
             case ENTITIES: return Config.control.entities;
             case CHUNKS: return Config.control.chunks;
             case BLAST_PLASTER: return Config.control.blastPlaster;
+            case OWNERSHIP: return Config.control.ownership;
+            case CLAIMS: return Config.control.claims;
             case COMMANDS: return Config.control.commands;
             case SERVER: return Config.control.server;
             default: return DEFAULT;

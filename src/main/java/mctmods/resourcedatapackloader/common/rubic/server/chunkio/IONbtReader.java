@@ -117,31 +117,34 @@ public class IONbtReader {
         return cube;
     }
 
-    @SuppressWarnings("deprecation") private static void readBlocks(NBTTagCompound nbt, World world, Cube cube) {
+    private static void readBlocks(NBTTagCompound nbt, World world, Cube cube) {
         boolean isEmpty = !nbt.hasKey("Sections");
         if (!isEmpty) {
             NBTTagList sectionList = nbt.getTagList("Sections", Constants.NBT.TAG_COMPOUND);
-            nbt = sectionList.getCompoundTagAt(0);
-            ExtendedBlockStorage ebs = new ExtendedBlockStorage(Coords.cubeToMinBlock(cube.getY()), cube.getWorld().provider.hasSkyLight());
-            byte[] abyte = nbt.getByteArray("Blocks");
-            NibbleArray data = new NibbleArray(nbt.getByteArray("Data"));
-            NibbleArray add = nbt.hasKey("Add", Constants.NBT.TAG_BYTE_ARRAY) ? new NibbleArray(nbt.getByteArray("Add")) : null;
-            NibbleArray add2neid = nbt.hasKey("Add2", Constants.NBT.TAG_BYTE_ARRAY) ? new NibbleArray(nbt.getByteArray("Add2")) : null;
-            for (int i = 0; i < 4096; i++) {
-                int x = i & 15;
-                int y = i >> 8 & 15;
-                int z = i >> 4 & 15;
-                int toAdd = add == null ? 0 : add.getFromIndex(i);
-                toAdd = (toAdd & 0xF) | (add2neid == null ? 0 : add2neid.getFromIndex(i) << 4);
-                int id = (toAdd << 12) | ((abyte[i] & 0xFF) << 4) | data.getFromIndex(i);
-                IBlockState state = Block.BLOCK_STATE_IDS.getByValue(id);
-                ebs.getData().set(x, y, z, state == null ? Blocks.AIR.getDefaultState() : state);
-            }
-            ebs.setBlockLight(new NibbleArray(nbt.getByteArray("BlockLight")));
-            if (world.provider.hasSkyLight()) { ebs.setSkyLight(new NibbleArray(nbt.getByteArray("SkyLight"))); }
-            ebs.recalculateRefCounts();
-            cube.setStorageFromSave(ebs);
+            cube.setStorageFromSave(decodeStorage(sectionList.getCompoundTagAt(0), world, cube.getY()));
         }
+    }
+
+    @SuppressWarnings("deprecation") public static ExtendedBlockStorage decodeStorage(NBTTagCompound nbt, World world, int cubeY) {
+        ExtendedBlockStorage ebs = new ExtendedBlockStorage(Coords.cubeToMinBlock(cubeY), world.provider.hasSkyLight());
+        byte[] abyte = nbt.getByteArray("Blocks");
+        NibbleArray data = new NibbleArray(nbt.getByteArray("Data"));
+        NibbleArray add = nbt.hasKey("Add", Constants.NBT.TAG_BYTE_ARRAY) ? new NibbleArray(nbt.getByteArray("Add")) : null;
+        NibbleArray add2neid = nbt.hasKey("Add2", Constants.NBT.TAG_BYTE_ARRAY) ? new NibbleArray(nbt.getByteArray("Add2")) : null;
+        for (int i = 0; i < 4096; i++) {
+            int x = i & 15;
+            int y = i >> 8 & 15;
+            int z = i >> 4 & 15;
+            int toAdd = add == null ? 0 : add.getFromIndex(i);
+            toAdd = (toAdd & 0xF) | (add2neid == null ? 0 : add2neid.getFromIndex(i) << 4);
+            int id = (toAdd << 12) | ((abyte[i] & 0xFF) << 4) | data.getFromIndex(i);
+            IBlockState state = Block.BLOCK_STATE_IDS.getByValue(id);
+            ebs.getData().set(x, y, z, state == null ? Blocks.AIR.getDefaultState() : state);
+        }
+        ebs.setBlockLight(new NibbleArray(nbt.getByteArray("BlockLight")));
+        if (world.provider.hasSkyLight()) { ebs.setSkyLight(new NibbleArray(nbt.getByteArray("SkyLight"))); }
+        ebs.recalculateRefCounts();
+        return ebs;
     }
 
     private static void readEntities(NBTTagCompound nbt, World world, Cube cube) {

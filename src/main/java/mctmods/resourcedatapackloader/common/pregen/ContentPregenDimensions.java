@@ -216,7 +216,7 @@ public final class ContentPregenDimensions {
         ContentLog.LOGGER.info("The end's land is gone, so the dragon and its fight start over with it");
     }
 
-    private static File regionFolder(WorldServer world) {
+    public static File regionFolder(WorldServer world) {
         if (!(world.getChunkProvider().chunkLoader instanceof AnvilChunkLoader)) { return null; }
         return new File(((AnvilChunkLoader) world.getChunkProvider().chunkLoader).chunkSaveLocation, "region");
     }

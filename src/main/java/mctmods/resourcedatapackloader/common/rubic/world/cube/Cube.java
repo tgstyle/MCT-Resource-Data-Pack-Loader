@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rubic.world.cube;
 
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
+import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
 import mctmods.resourcedatapackloader.common.rubic.world.EntityContainer;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInternal;
@@ -260,6 +261,7 @@ public class Cube implements ICube {
         ContentOrders.plotSigns(this.world, this.tileEntityMap.values());
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
+        if (!this.world.isRemote) { ContentOwnership.onCubeLoad(this); }
         boolean raised = false;
         ExtendedBlockStorage blocks = storage == null || storage.isEmpty() ? null : storage;
         boolean stale = isSurfaceTracked && !world.isRemote && surfaceIsStale(blocks);
@@ -293,7 +295,7 @@ public class Cube implements ICube {
         return false;
     }
 
-    @SuppressWarnings("deprecation") private void pushOpacity(@Nullable ExtendedBlockStorage blocks) {
+    @SuppressWarnings("deprecation") public void pushOpacity(@Nullable ExtendedBlockStorage blocks) {
         IHeightMap opindex = ((IColumn) column).getOpacityIndex();
         int miny = getCoords().getMinBlockY();
         column.setModified(true);

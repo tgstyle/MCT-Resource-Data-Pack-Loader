@@ -21,6 +21,8 @@ public class SaveCubeColumns implements Flushable, Closeable {
 
     public SaveSection2D getSaveSection2D() { return saveSection2D; }
 
+    public SaveSection3D getSaveSection3D() { return saveSection3D; }
+
     public void save3d(Map<EntryLocation3D, ByteBuffer> entries) throws IOException { this.saveSection3D.save(entries); }
 
     public void save2d(Map<EntryLocation2D, ByteBuffer> entries) throws IOException { this.saveSection2D.save(entries); }

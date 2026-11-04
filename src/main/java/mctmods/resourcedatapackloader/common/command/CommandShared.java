@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.command;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.cards.CardRules;
@@ -106,6 +108,8 @@ public final class CommandShared {
         PackManager.get().scan(root);
         PackManager.get().report();
         ContentOverrides.reload();
+        OwnershipSettings.reload();
+        ClaimSettings.reload();
     }
 
     public static void which(ICommandSender sender, String target, boolean clientSide) {

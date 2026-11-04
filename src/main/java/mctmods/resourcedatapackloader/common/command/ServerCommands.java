@@ -18,6 +18,9 @@ import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.locate.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
+import mctmods.resourcedatapackloader.common.ownership.OwnershipCommand;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimCommand;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
@@ -70,7 +73,7 @@ import net.minecraftforge.common.DimensionManager;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "weight");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "weight", "ownership", "claim", "unclaim", "claims");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -146,9 +149,9 @@ public class ServerCommands extends CommandBase {
     }
 
     private static List<String> forOperator() {
-        if (ContentTeams.any()) { return SUBCOMMANDS; }
         List<String> shown = new ArrayList<>(SUBCOMMANDS);
-        shown.remove("team");
+        if (!ContentTeams.any()) { shown.remove("team"); }
+        if (!ClaimCommand.listed()) { shown.removeAll(ClaimCommand.NAMES); }
         return shown;
     }
 
@@ -158,6 +161,7 @@ public class ServerCommands extends CommandBase {
         open.add("talk");
         if (ContentTeams.any()) { open.add("team"); }
         if (ContentScoring.any()) { open.add("round"); }
+        if (ClaimCommand.listed() && sender.canUseCommand(ClaimSettings.commandLevel(), getName())) { open.addAll(ClaimCommand.NAMES); }
         if (sender.canUseCommand(lowestGotoLevel(), getName())) { open.add("goto"); }
         if (sender.canUseCommand(GameCommand.lowest(), getName())) { open.add("game"); }
         return open;
@@ -173,6 +177,8 @@ public class ServerCommands extends CommandBase {
         if (args.length >= 2 && "portway".equals(args[0])) { return PortwayCommand.complete(server, args); }
         if (args.length >= 2 && "talk".equals(args[0])) { return TalkCommand.complete(server, args); }
         if (args.length >= 2 && "weight".equals(args[0])) { return WeightCommand.complete(server, args); }
+        if (args.length >= 2 && "ownership".equals(args[0])) { return OwnershipCommand.complete(args); }
+        if (args.length >= 2 && ClaimCommand.handles(args[0])) { return ClaimCommand.complete(server, sender, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
         if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
         if (args.length == 3 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
@@ -214,9 +220,11 @@ public class ServerCommands extends CommandBase {
         }
         else if ("card".equals(args[0]) || "talk".equals(args[0]) && TalkCommand.opens(args)) { allow(sender, CardCommand.LEVEL); }
         else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
+        else if (ClaimCommand.handles(args[0])) { allow(sender, ClaimSettings.commandLevel()); }
         else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && !"talk".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
+        else if (ClaimCommand.handles(args[0])) { ClaimCommand.run(server, sender, args, getUsage(sender)); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
         else if (args.length == 1 && "unused".equals(args[0])) { unused(sender, "rdpl.command.serverunusednote"); }
@@ -246,6 +254,7 @@ public class ServerCommands extends CommandBase {
         else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
         else if ("talk".equals(args[0])) { TalkCommand.run(server, sender, args, getUsage(sender)); }
         else if ("weight".equals(args[0]) && args.length <= 2) { WeightCommand.run(server, sender, args); }
+        else if ("ownership".equals(args[0])) { OwnershipCommand.run(server, sender, args, getUsage(sender)); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
