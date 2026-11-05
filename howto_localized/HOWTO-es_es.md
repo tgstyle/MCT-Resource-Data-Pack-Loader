@@ -10780,6 +10780,7 @@ Todas las carpetas, con su ruta completa y un enlace a la sección que las descr
 | `/rdpl biome list`                                                                            | ninguno         | Todos los biomas que pueden generarse y su id                                                                                                                                                                              |
 | `/rdpl biome list all`                                                                        | ninguno         | Lo mismo, incluidos los biomas que nada puede generar                                                                                                                                                                      |
 | `/rdpl biome here`                                                                            | ninguno         | El bioma en el que estás                                                                                                                                                                                                   |
+| `/rdpl dumpregistry`                                                                          | el del servidor | Enlazado. Escribe cada id de bloque e ítem, con sus metas y su NBT por defecto, en `rdpl-registry.txt` en la carpeta del servidor                                                                                          |
 | `/rdpl biome find <name>`                                                                     | el del servidor | Enlazado. Se pasa a `/rdplserver biome find`, el único lado que conoce la semilla                                                                                                                                          |
 | `/rdpl team`                                                                                  | ninguno         | Los bandos que ha puesto en juego un pack, cada uno con su color, a cuál perteneces y quién lidera cada uno                                                                                                                |
 | `/rdpl team join [name]`                                                                      | ninguno         | Únete a un bando. Solo se ofrecen los bandos que un pack deja abiertos; no puedes entrar en un bando de mobs. Si omites el nombre, se te asigna al bando con menos jugadores entre los que admiten jugadores por `balance` |
@@ -10807,15 +10808,16 @@ En un servidor dedicado, `/rdplserver` hace lo mismo con la copia de la carpeta 
 
 *comandos de servidor*
 
-| Comando                              | Nivel | Qué hace                                                                                                                                    |
-| ------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/rdplserver reload`                 | 3     | Vuelve a escanear la carpeta del servidor y recarga todo                                                                                    |
-| `/rdplserver list`                   | 3     | Todos los packs que cargó el servidor, su prioridad y lo que contienen                                                                      |
-| `/rdplserver which <namespace:path>` | 3     | Qué pack proporciona un archivo dado y a qué packs tapa                                                                                     |
-| `/rdplserver unused`                 | 3     | Archivos de los packs del servidor que nadie ha pedido                                                                                      |
-| `/rdplserver config unused`          | 3     | Archivos de opciones en `rdploader/config` que ningún pack instalado define ya                                                              |
-| `/rdplserver config prune`           | 3     | Elimina esos archivos                                                                                                                       |
-| `/rdplserver weight [player]`        | 3     | Muestra el peso llevado, el límite, el escalón y la velocidad de movimiento del jugador, o indica que los pesos de ítems están desactivados |
+| Comando                              | Nivel | Qué hace                                                                                                                                                             |
+| ------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                 | 3     | Vuelve a escanear la carpeta del servidor y recarga todo                                                                                                             |
+| `/rdplserver list`                   | 3     | Todos los packs que cargó el servidor, su prioridad y lo que contienen                                                                                               |
+| `/rdplserver which <namespace:path>` | 3     | Qué pack proporciona un archivo dado y a qué packs tapa                                                                                                              |
+| `/rdplserver unused`                 | 3     | Archivos de los packs del servidor que nadie ha pedido                                                                                                               |
+| `/rdplserver config unused`          | 3     | Archivos de opciones en `rdploader/config` que ningún pack instalado define ya                                                                                       |
+| `/rdplserver config prune`           | 3     | Elimina esos archivos                                                                                                                                                |
+| `/rdplserver dumpregistry`           | 3     | Escribe cada id de bloque e ítem, con metas, variantes y NBT por defecto, en `rdpl-registry.txt` en la carpeta del servidor, y responde con la ruta y las cantidades |
+| `/rdplserver weight [player]`        | 3     | Muestra el peso llevado, el límite, el escalón y la velocidad de movimiento del jugador, o indica que los pesos de ítems están desactivados                          |
 
 `/rdplserver reload` también recarga ahora los bloqueos de aparición y los bloqueos de recetas.
 

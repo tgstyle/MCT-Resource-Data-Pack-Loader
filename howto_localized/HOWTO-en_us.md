@@ -10780,6 +10780,7 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl biome list`                                                                            | none         | Every biome that can generate, and its id                                                                                                                                                                        |
 | `/rdpl biome list all`                                                                        | none         | The same, including the biomes nothing can generate                                                                                                                                                              |
 | `/rdpl biome here`                                                                            | none         | The biome you are standing in                                                                                                                                                                                    |
+| `/rdpl dumpregistry`                                                                          | the server's | Linked. Writes every block and item id, with metas and default NBT, to `rdpl-registry.txt` in the server's folder                                                                                                |
 | `/rdpl biome find <name>`                                                                     | the server's | Linked. Passed to `/rdplserver biome find`, the only side that knows the seed                                                                                                                                    |
 | `/rdpl team`                                                                                  | none         | The sides a pack has fielded, each in its own color, which one you are on, and who leads each                                                                                                                    |
 | `/rdpl team join [name]`                                                                      | none         | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into. Leave the name off to be put on the side with the fewest players among those that take players by `balance` |
@@ -10807,15 +10808,16 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 *server commands*
 
-| Command                              | Level | What it does                                                                                     |
-| ------------------------------------ | ----- | ------------------------------------------------------------------------------------------------ |
-| `/rdplserver reload`                 | 3     | Rescan the server's folder and reload everything                                                 |
-| `/rdplserver list`                   | 3     | Every pack the server loaded, its priority, and what it contains                                 |
-| `/rdplserver which <namespace:path>` | 3     | Which pack provides a given file, and which packs it shadows                                     |
-| `/rdplserver unused`                 | 3     | Files in the server's packs that nothing has asked for                                           |
-| `/rdplserver config unused`          | 3     | Option files in `rdploader/config` that no installed pack defines any more                       |
-| `/rdplserver config prune`           | 3     | Delete those files                                                                               |
-| `/rdplserver weight [player]`        | 3     | Prints the player's carried weight, limit, tier and movement speed, or says item weights are off |
+| Command                              | Level | What it does                                                                                                                                              |
+| ------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                 | 3     | Rescan the server's folder and reload everything                                                                                                          |
+| `/rdplserver list`                   | 3     | Every pack the server loaded, its priority, and what it contains                                                                                          |
+| `/rdplserver which <namespace:path>` | 3     | Which pack provides a given file, and which packs it shadows                                                                                              |
+| `/rdplserver unused`                 | 3     | Files in the server's packs that nothing has asked for                                                                                                    |
+| `/rdplserver config unused`          | 3     | Option files in `rdploader/config` that no installed pack defines any more                                                                                |
+| `/rdplserver config prune`           | 3     | Delete those files                                                                                                                                        |
+| `/rdplserver dumpregistry`           | 3     | Writes every block and item id, with metas, variants and default NBT, to `rdpl-registry.txt` in the server's folder, and replies with the path and counts |
+| `/rdplserver weight [player]`        | 3     | Prints the player's carried weight, limit, tier and movement speed, or says item weights are off                                                          |
 
 `/rdplserver reload` now also reloads spawn locks and recipe locks.
 

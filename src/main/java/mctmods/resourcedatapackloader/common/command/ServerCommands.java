@@ -73,7 +73,7 @@ import net.minecraftforge.common.DimensionManager;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "weight", "ownership", "claim", "unclaim", "claims");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "weight", "ownership", "claim", "unclaim", "claims", "dumpregistry");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -255,6 +255,7 @@ public class ServerCommands extends CommandBase {
         else if ("talk".equals(args[0])) { TalkCommand.run(server, sender, args, getUsage(sender)); }
         else if ("weight".equals(args[0]) && args.length <= 2) { WeightCommand.run(server, sender, args); }
         else if ("ownership".equals(args[0])) { OwnershipCommand.run(server, sender, args, getUsage(sender)); }
+        else if (args.length == 1 && "dumpregistry".equals(args[0])) { RegistryDumpCommand.run(server, sender); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 

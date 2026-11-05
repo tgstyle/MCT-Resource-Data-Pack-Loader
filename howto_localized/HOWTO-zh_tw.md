@@ -10780,6 +10780,7 @@ Blast Plaster（本模組的相依項目）負責處理爆炸後的行為：逐�
 | `/rdpl biome list`                                                                            | 無       | 每個可以生成的生態域，以及它的 id                                                                                                             |
 | `/rdpl biome list all`                                                                        | 無       | 同上，但包括沒有任何東西能生成的生態域                                                                                                        |
 | `/rdpl biome here`                                                                            | 無       | 你所站立的生態域                                                                                                                              |
+| `/rdpl dumpregistry`                                                                          | 依伺服器 | 已連結。將每個方塊和物品的 ID 連同元資料與預設 NBT 寫入伺服器資料夾中的 `rdpl-registry.txt`                                                   |
 | `/rdpl biome find <name>`                                                                     | 依伺服器 | 已連結。轉交給 `/rdplserver biome find`，這是唯一知道種子碼的一方                                                                             |
 | `/rdpl team`                                                                                  | 無       | 資源包派出的各陣營，每個以自己的顏色顯示，你在哪一邊，以及各自由誰領導                                                                        |
 | `/rdpl team join [name]`                                                                      | 無       | 加入一個陣營。只會提供資源包保持開放的陣營；由生物組成的陣營不是你能走進去的。省略名稱則會被放進依 `balance` 接受玩家的陣營中玩家最少的那一邊 |
@@ -10807,15 +10808,16 @@ Blast Plaster（本模組的相依項目）負責處理爆炸後的行為：逐�
 
 *伺服器指令*
 
-| 指令                                 | 等級 | 作用                                                           |
-| ------------------------------------ | ---- | -------------------------------------------------------------- |
-| `/rdplserver reload`                 | 3    | 重新掃描伺服器的資料夾並重新載入所有內容                       |
-| `/rdplserver list`                   | 3    | 伺服器載入的每個資源包、它的優先順序，以及它包含的內容         |
-| `/rdplserver which <namespace:path>` | 3    | 哪個資源包提供了指定的檔案，以及它遮蔽了哪些資源包             |
-| `/rdplserver unused`                 | 3    | 伺服器的資源包中，目前沒有任何東西要求過的檔案                 |
-| `/rdplserver config unused`          | 3    | `rdploader/config` 中，已沒有任何已安裝資源包定義的選項檔案    |
-| `/rdplserver config prune`           | 3    | 刪除那些檔案                                                   |
-| `/rdplserver weight [player]`        | 3    | 列印玩家攜帶的重量、上限、階段和移動速度，或說明物品重量已關閉 |
+| 指令                                 | 等級 | 作用                                                                                                        |
+| ------------------------------------ | ---- | ----------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                 | 3    | 重新掃描伺服器的資料夾並重新載入所有內容                                                                    |
+| `/rdplserver list`                   | 3    | 伺服器載入的每個資源包、它的優先順序，以及它包含的內容                                                      |
+| `/rdplserver which <namespace:path>` | 3    | 哪個資源包提供了指定的檔案，以及它遮蔽了哪些資源包                                                          |
+| `/rdplserver unused`                 | 3    | 伺服器的資源包中，目前沒有任何東西要求過的檔案                                                              |
+| `/rdplserver config unused`          | 3    | `rdploader/config` 中，已沒有任何已安裝資源包定義的選項檔案                                                 |
+| `/rdplserver config prune`           | 3    | 刪除那些檔案                                                                                                |
+| `/rdplserver dumpregistry`           | 3    | 將每個方塊和物品的 ID 連同元資料、變體與預設 NBT 寫入伺服器資料夾中的 `rdpl-registry.txt`，並回覆路徑和數量 |
+| `/rdplserver weight [player]`        | 3    | 列印玩家攜帶的重量、上限、階段和移動速度，或說明物品重量已關閉                                              |
 
 `/rdplserver reload` 現在也會重新載入生成鎖和配方鎖。
 

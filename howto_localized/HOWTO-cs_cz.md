@@ -10780,6 +10780,7 @@ Každá složka s plnou cestou a odkazem na sekci, která ji popisuje, je v [Kam
 | `/rdpl biome list`                                                                            | žádná     | Každý biom, který se může generovat, a jeho id                                                                                                                                                                                  |
 | `/rdpl biome list all`                                                                        | žádná     | Totéž, včetně biomů, které nic nemůže vygenerovat                                                                                                                                                                               |
 | `/rdpl biome here`                                                                            | žádná     | Biom, ve kterém stojíš                                                                                                                                                                                                          |
+| `/rdpl dumpregistry`                                                                          | serverová | Propojeno. Zapíše id každého bloku a předmětu s metadaty a výchozím NBT do `rdpl-registry.txt` ve složce serveru                                                                                                                |
 | `/rdpl biome find <name>`                                                                     | serverová | Propojeno. Předá se do `/rdplserver biome find`, jediné strany, která zná seed                                                                                                                                                  |
 | `/rdpl team`                                                                                  | žádná     | Strany, které balíček postavil, každá vlastní barvou, na které z nich jsi a kdo každou vede                                                                                                                                     |
 | `/rdpl team join [name]`                                                                      | žádná     | Připojit se ke straně. Nabízejí se jen strany, které balíček nechává otevřené; stranu složenou z mobů nelze vstoupit. Když jméno vynecháš, zařadí tě na stranu s nejméně hráči mezi těmi, které přijímají hráče podle `balance` |
@@ -10807,15 +10808,16 @@ Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky 
 
 *příkazy serveru*
 
-| Příkaz                               | Úroveň | Co dělá                                                                                                |
-| ------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------ |
-| `/rdplserver reload`                 | 3      | Znovu prohledat složku serveru a znovu načíst vše                                                      |
-| `/rdplserver list`                   | 3      | Každý balíček, který server načetl, jeho priorita a co obsahuje                                        |
-| `/rdplserver which <namespace:path>` | 3      | Který balíček poskytuje daný soubor a které balíčky zastiňuje                                          |
-| `/rdplserver unused`                 | 3      | Soubory v balíčcích serveru, které si zatím nikdo nevyžádal                                            |
-| `/rdplserver config unused`          | 3      | Soubory voleb v `rdploader/config`, které už žádný nainstalovaný balíček nedefinuje                    |
-| `/rdplserver config prune`           | 3      | Tyto soubory smazat                                                                                    |
-| `/rdplserver weight [player]`        | 3      | Vypíše nesenou váhu hráče, limit, stupeň a rychlost pohybu, nebo oznámí, že váhy předmětů jsou vypnuté |
+| Příkaz                               | Úroveň | Co dělá                                                                                                                                   |
+| ------------------------------------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                 | 3      | Znovu prohledat složku serveru a znovu načíst vše                                                                                         |
+| `/rdplserver list`                   | 3      | Každý balíček, který server načetl, jeho priorita a co obsahuje                                                                           |
+| `/rdplserver which <namespace:path>` | 3      | Který balíček poskytuje daný soubor a které balíčky zastiňuje                                                                             |
+| `/rdplserver unused`                 | 3      | Soubory v balíčcích serveru, které si zatím nikdo nevyžádal                                                                               |
+| `/rdplserver config unused`          | 3      | Soubory voleb v `rdploader/config`, které už žádný nainstalovaný balíček nedefinuje                                                       |
+| `/rdplserver config prune`           | 3      | Tyto soubory smazat                                                                                                                       |
+| `/rdplserver dumpregistry`           | 3      | Zapíše id každého bloku a předmětu s metadaty, variantami a výchozím NBT do `rdpl-registry.txt` ve složce serveru a odpoví cestou a počty |
+| `/rdplserver weight [player]`        | 3      | Vypíše nesenou váhu hráče, limit, stupeň a rychlost pohybu, nebo oznámí, že váhy předmětů jsou vypnuté                                    |
 
 `/rdplserver reload` teď znovu načítá také zámky spawnu a zámky receptů.
 
