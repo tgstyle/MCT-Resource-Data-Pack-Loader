@@ -411,6 +411,13 @@
   "rdpl.team.join.ok": "Vous avez rejoint %s",
   "rdpl.socket.empty": "Châsse vide",
   "rdpl.socket.filled": "Châsse : %s",
+  "rdpl.sleep.setSpawn": "Définir le point d'apparition",
+  "rdpl.sleep.noPreviousBed": "Aucun point d'apparition jusqu'ici : c'est désormais ce lit",
+  "rdpl.sleep.currentSpawnBed": "Ce lit est votre point d'apparition actuel",
+  "rdpl.sleep.spawnUpdated": "Point d'apparition déplacé vers ce lit",
+  "rdpl.sleep.asleep": "%1$s s'est endormi (%2$s sur %3$s)",
+  "rdpl.sleep.awake": "%1$s s'est levé (%2$s sur %3$s endormis)",
+  "rdpl.sleep.morning": "La nuit est passée. Bonjour !",
   "rdpl.game.usage": "/rdplserver game <coin|die <faces|nom>|dice <lancer>|advantage [lancer]|disadvantage [lancer]|pick <player|team [équipe]>|deck <draw|shuffle|left> <nom>|teamroll [lancer]|tiebreak [objectif]|last [nombre]|pass> [store <objectif>] [audience <self|team|all|radius <blocs>|silent>]",
   "rdpl.compressed": "Bloc compressé : %s",
   "rdpl.compressed.layered": "Bloc compressé : %s (x%d)"

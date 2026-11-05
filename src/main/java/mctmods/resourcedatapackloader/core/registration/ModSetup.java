@@ -96,6 +96,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.ContentDisabledEvents;
@@ -347,6 +348,12 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onCanContinue);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onWakeUp);
         NeoForge.EVENT_BUS.addListener(ContentSleepingBags::onLogout);
+        NeoForge.EVENT_BUS.addListener(ContentSleep::onSetSpawn);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentSleep::onCanSleep);
+        NeoForge.EVENT_BUS.addListener(ContentSleep::onWakeUp);
+        NeoForge.EVENT_BUS.addListener(ContentSleep::onLogout);
+        NeoForge.EVENT_BUS.addListener(ContentSleep::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(ContentSleep::onLevelTick);
         NeoForge.EVENT_BUS.addListener(CardEvents::onDimension);
         NeoForge.EVENT_BUS.addListener(CardEvents::onRespawn);
         NeoForge.EVENT_BUS.addListener(CardEvents::onDeath);
@@ -501,6 +508,7 @@ public class ModSetup {
                 ContentAnvils.load();
                 ContentAffixes.load();
                 ContentEnchanting.load();
+                ContentSleep.load();
                 if (ContentOrders.load()) {
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);

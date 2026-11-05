@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.TalkScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
@@ -19,6 +20,7 @@ import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.items.ContentWornContainers;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 
@@ -64,6 +66,8 @@ public final class RDPLNetwork {
         registrar.playToServer(PortwayFilterMessage.TYPE, PortwayFilterMessage.CODEC, (message, context) -> { if (context.player().containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
         registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
         registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } });
+        registrar.playToClient(BedStateMessage.TYPE, BedStateMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { SleepScreen.receive(message.state()); } });
+        registrar.playToServer(SetSpawnMessage.TYPE, SetSpawnMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentSleep.setSpawnHere(player); } });
     }
 
     public static boolean sendWeight(ServerPlayer player, int total, int limit, int tier, boolean exempt) { return send(player, new WeightMessage(total, limit, tier, exempt)); }
@@ -116,4 +120,8 @@ public final class RDPLNetwork {
     public static void sendTalkPick(int index) { PacketDistributor.sendToServer(new TalkPickMessage(index)); }
 
     public static void sendEnvironments(ServerPlayer player, EnvironmentsMessage environments) { send(player, environments); }
+
+    public static void sendBedState(ServerPlayer player, byte state) { send(player, new BedStateMessage(state)); }
+
+    public static void setSpawnHere() { PacketDistributor.sendToServer(new SetSpawnMessage()); }
 }

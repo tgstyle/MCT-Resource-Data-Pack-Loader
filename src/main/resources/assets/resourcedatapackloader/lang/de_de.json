@@ -411,6 +411,13 @@
   "rdpl.team.join.ok": "Du bist %s beigetreten",
   "rdpl.socket.empty": "Leere Fassung",
   "rdpl.socket.filled": "Fassung: %s",
+  "rdpl.sleep.setSpawn": "Einstiegspunkt setzen",
+  "rdpl.sleep.noPreviousBed": "Noch kein Einstiegspunkt, darum ist es jetzt dieses Bett",
+  "rdpl.sleep.currentSpawnBed": "Dieses Bett ist dein aktueller Einstiegspunkt",
+  "rdpl.sleep.spawnUpdated": "Einstiegspunkt auf dieses Bett verlegt",
+  "rdpl.sleep.asleep": "%1$s schläft (%2$s von %3$s)",
+  "rdpl.sleep.awake": "%1$s ist aufgestanden (%2$s von %3$s schlafen)",
+  "rdpl.sleep.morning": "Die Nacht wurde durchgeschlafen. Guten Morgen!",
   "rdpl.game.usage": "/rdplserver game <coin|die <Seiten|Name>|dice <Wurf>|advantage [Wurf]|disadvantage [Wurf]|pick <player|team [Team]>|deck <draw|shuffle|left> <Name>|teamroll [Wurf]|tiebreak [Ziel]|last [Anzahl]|pass> [store <Ziel>] [audience <self|team|all|radius <Blöcke>|silent>]",
   "rdpl.compressed": "Komprimierter Block: %s",
   "rdpl.compressed.layered": "Komprimierter Block: %s (x%d)"

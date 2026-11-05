@@ -411,6 +411,13 @@
   "rdpl.team.join.ok": "Sei entrato in %s",
   "rdpl.socket.empty": "Castone vuoto",
   "rdpl.socket.filled": "Castone: %s",
+  "rdpl.sleep.setSpawn": "Imposta punto di rinascita",
+  "rdpl.sleep.noPreviousBed": "Nessun punto di rinascita finora, quindi ora è questo letto",
+  "rdpl.sleep.currentSpawnBed": "Questo letto è il tuo punto di rinascita attuale",
+  "rdpl.sleep.spawnUpdated": "Punto di rinascita spostato su questo letto",
+  "rdpl.sleep.asleep": "%1$s si è addormentato (%2$s su %3$s)",
+  "rdpl.sleep.awake": "%1$s si è alzato dal letto (%2$s su %3$s dormono)",
+  "rdpl.sleep.morning": "La notte è passata. Buongiorno!",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]",
   "rdpl.compressed": "Blocco compresso: %s",
   "rdpl.compressed.layered": "Blocco compresso: %s (x%d)"

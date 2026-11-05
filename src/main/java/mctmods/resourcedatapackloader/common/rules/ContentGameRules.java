@@ -89,4 +89,9 @@ public final class ContentGameRules {
         ContentLog.LOGGER.debug("Dimension {} keeps its own game rules: {}", level.dimension().location(), wanted);
         return held;
     }
+
+    public static boolean names(Level level, GameRules.Key<?> rule) {
+        Map<String, String> wanted = BY_DIMENSION.get(level.dimension().location());
+        return wanted != null && wanted.containsKey(rule.getId());
+    }
 }

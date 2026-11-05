@@ -411,6 +411,13 @@
   "rdpl.team.join.ok": "Připojil jsi se k %s",
   "rdpl.socket.empty": "Prázdná zdířka",
   "rdpl.socket.filled": "Zdířka: %s",
+  "rdpl.sleep.setSpawn": "Nastavit bod oživení",
+  "rdpl.sleep.noPreviousBed": "Dosud žádný bod oživení, proto je jím teď tato postel",
+  "rdpl.sleep.currentSpawnBed": "Tato postel je tvůj současný bod oživení",
+  "rdpl.sleep.spawnUpdated": "Bod oživení přesunut k této posteli",
+  "rdpl.sleep.asleep": "%1$s spí (%2$s z %3$s)",
+  "rdpl.sleep.awake": "%1$s vstává z postele (spí %2$s z %3$s)",
+  "rdpl.sleep.morning": "Noc byla prospána. Dobré ráno!",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]",
   "rdpl.compressed": "Stlačený blok: %s",
   "rdpl.compressed.layered": "Stlačený blok: %s (x%d)"

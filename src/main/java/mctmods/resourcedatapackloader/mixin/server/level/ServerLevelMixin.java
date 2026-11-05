@@ -11,12 +11,16 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTr
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnChunks;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.SleepStatus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ChunkPos;
@@ -96,6 +100,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         long locked = ContentTerrain.lockedTime((ServerLevel) (Object) this);
         return locked >= 0 ? locked : data.getDayTime();
     }
+
+    @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughSleeping(I)Z")) private boolean rdpl$enoughAsleep(SleepStatus status, int requiredSleepPercentage, Operation<Boolean> original) { return ContentSleep.leavesOut() ? ContentSleep.enoughAsleep((ServerLevel) (Object) this, requiredSleepPercentage) : original.call(status, requiredSleepPercentage); }
+
+    @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughDeepSleeping(ILjava/util/List;)Z")) private boolean rdpl$enoughDeepAsleep(SleepStatus status, int requiredSleepPercentage, List<ServerPlayer> sleepingPlayers, Operation<Boolean> original) { return ContentSleep.leavesOut() || original.call(status, requiredSleepPercentage, sleepingPlayers); }
 
     @Redirect(method = "setDefaultSpawnPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/GameRules;getInt(Lnet/minecraft/world/level/GameRules$Key;)I")) private int rdpl$spawnRuleTicket(GameRules rules, GameRules.Key<GameRules.IntegerValue> key) { return ContentSpawnChunks.leftToTheGame() ? rules.getInt(key) : 0; }
 
