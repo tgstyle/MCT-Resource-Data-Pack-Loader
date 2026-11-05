@@ -65,6 +65,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Travail à l'enclume](#travail-à-lenclume)
 - [Affixes et châsses](#affixes-et-châsses)
 - [Table d'enchantement](#table-denchantement)
+- [Sommeil](#sommeil)
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
@@ -182,6 +183,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/orders/*.json`                                                                     | Travaux que des variantes d'entité font pour un joueur à un coffre. [Ordres de travail](#ordres-de-travail)                                                                                                              |
 | `<namespace>/exposures/*.json`                                                                  | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions, biomes, structures, régions de grottes ou hauteurs nommés. [Expositions](#expositions)                          |
 | `<namespace>/enchanting/*.json`                                                                 | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                                          |
+| `<namespace>/sleeping/*.json`                                                                   | Si un lit fixe le point d'apparition, combien de joueurs doivent dormir pour passer la nuit, et les lignes annoncées quand les joueurs dorment, se réveillent et que le matin arrive. [Sommeil](#sommeil)                |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés)                                                                               |
 | `<namespace>/villages/*.json`                                                                   | Parcelles que les villages peuvent bâtir. [Parcelles de village](#parcelles-de-village)                                                                                                                                  |
 | `<namespace>/pathintersects/*.json`                                                             | Motifs peints là où les routes de village se croisent. [Routes de village](#routes-de-village)                                                                                                                           |
@@ -3286,6 +3288,40 @@ Un objet rendu enchantable qui n'a pas d'enchantabilité propre a aussi besoin d
 Avec Quark's Matrix Enchanting activé, la table de Quark garde son lapis et `keepLapis` n'est pas pris en compte.
 
 L'écran affiche toujours le un, deux et trois de vanilla à côté des emplacements et dans leurs infobulles ; ce que la table vérifie et prend suit le fichier.
+
+## Sommeil
+
+`<namespace>/sleeping/*.json` règle le fonctionnement des lits et du passage de la nuit sur tout le serveur. Le nom du fichier est celui du pack ; plusieurs fichiers se cumulent, une clé définie par un fichier ultérieur l'emporte, et une clé omise garde le comportement de vanilla.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Clé                   | Requis | Valeur                 | Défaut  | Ce qu'il fait                                                                                                                                                                                                             |
+| --------------------- | ------ | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | non    | booléen                | `true`  | `false`, et dormir dans un lit ne déplace plus un point d'apparition que le joueur a déjà ; l'écran du lit reçoit à la place un bouton Définir l'apparition. Un joueur sans point d'apparition valide a quand même le lit |
+| `bedSpawnByDay`       | non    | booléen                | `false` | `true`, et utiliser un lit de jour fixe le point d'apparition là, sauf si le joueur s'accroupit. Lu seulement quand `bedSetsSpawn` vaut `false`                                                                           |
+| `sleepShare`          | non    | entier de 0 à 100      | `100`   | Pourcentage des joueurs comptés qui doivent dormir pour passer la nuit ; `0` signifie qu'un seul dormeur suffit                                                                                                           |
+| `sleepLeavesOutBelow` | non    | entier (Y)             | aucun   | Les joueurs éveillés qui se tiennent sous ce Y sont exclus du décompte                                                                                                                                                    |
+| `sleepSays`           | non    | clé de langue ou texte | aucun   | Ligne envoyée aux joueurs de cette dimension quand quelqu'un s'endort                                                                                                                                                     |
+| `wakeSays`            | non    | clé de langue ou texte | aucun   | Ligne quand quelqu'un sort du lit alors que la nuit n'est pas finie                                                                                                                                                       |
+| `morningSays`         | non    | clé de langue ou texte | aucun   | Ligne quand le sommeil fait passer la nuit                                                                                                                                                                                |
+| `sleepSaysIn`         | non    | `chat` ou `bar`        | `chat`  | Où s'affichent les trois lignes : dans le chat ou dans la barre d'action                                                                                                                                                  |
+
+Les lignes prennent `%1$s` le nom du joueur, `%2$s` les joueurs endormis, `%3$s` les joueurs comptés et `%4$s` les joueurs exclus ; la ligne du matin nomme l'un des derniers joueurs endormis. Une valeur est l'une des clés prêtes de RDPL (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), une clé du fichier de langue du pack, ou du texte brut, affiché tel quel.
+
+Avec `bedSetsSpawn` désactivé, l'écran du lit affiche le bouton Définir l'apparition quand le lit n'est pas le point d'apparition du joueur, une ligne bleue quand il l'est, une ligne rouge quand le joueur n'a pas encore de point d'apparition et que ce lit le deviendra, et une ligne verte une fois que le bouton l'a déplacé. Un point d'apparition défini avec `/spawnpoint` compte comme un point que le joueur possède. Avec `bedSpawnByDay`, une ligne du chat indique que le point d'apparition a été défini. Un joueur sans RDPL côté client n'a pas de bouton, et le point d'apparition reste où il était.
+
+Un `rules.sleep` désactivé dans un environnement empêche une dimension de dormir du tout ([Environnements](#environnements)).
 
 ## Butins des blocs
 

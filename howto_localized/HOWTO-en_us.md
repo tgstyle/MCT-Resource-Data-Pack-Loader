@@ -65,6 +65,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Anvil work](#anvil-work)
 - [Affixes and sockets](#affixes-and-sockets)
 - [Enchanting table](#enchanting-table)
+- [Sleeping](#sleeping)
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
@@ -182,6 +183,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/orders/*.json`                                                                     | Jobs entity variants do for a player at a chest. [Work orders](#work-orders)                                                                                                   |
 | `<namespace>/exposures/*.json`                                                                  | Hazards that expose players near named blocks, carrying named items or in named dimensions, biomes, structures, cave regions or heights. [Exposures](#exposures)               |
 | `<namespace>/enchanting/*.json`                                                                 | What the enchanting table offers, asks and takes: per enchantment, per item and in all. [Enchanting table](#enchanting-table)                                                  |
+| `<namespace>/sleeping/*.json`                                                                   | Whether a bed sets the spawn point, how many players must sleep to skip the night, and the lines said when players sleep, wake and the morning comes. [Sleeping](#sleeping)    |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)                                                             |
 | `<namespace>/villages/*.json`                                                                   | Plots villages can build. [Village plots](#village-plots)                                                                                                                      |
 | `<namespace>/pathintersects/*.json`                                                             | Designs painted where village roads meet. [Village roads](#village-roads)                                                                                                      |
@@ -3286,6 +3288,40 @@ An item made enchantable that has no enchantability of its own needs `enchantabi
 With Quark's Matrix Enchanting on, Quark's own table keeps its lapis and `keepLapis` is left out.
 
 The screen still draws vanilla's one, two and three beside the slots and in their tooltips; what the table checks and takes follows the file.
+
+## Sleeping
+
+`<namespace>/sleeping/*.json` sets how beds and the night skip work on the whole server. The file name is the pack's own; several files stack, a key a later file sets wins, and a key left out keeps vanilla.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Key                   | Required | Value             | Default | What it does                                                                                                                                                                                |
+| --------------------- | -------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | no       | boolean           | `true`  | `false` and sleeping in a bed no longer moves a spawn point the player already has; the bed screen gets a Set spawn button instead. A player with no working spawn point still gets the bed |
+| `bedSpawnByDay`       | no       | boolean           | `false` | `true` and using a bed by day sets the spawn point there unless the player sneaks. Read only when `bedSetsSpawn` is `false`                                                                 |
+| `sleepShare`          | no       | int from 0 to 100 | `100`   | Percent of the counted players who must be asleep to skip the night; `0` means one sleeper is enough                                                                                        |
+| `sleepLeavesOutBelow` | no       | int (Y)           | none    | Awake players standing below this Y are left out of the count                                                                                                                               |
+| `sleepSays`           | no       | lang key or text  | none    | Line to the players of that dimension when someone falls asleep                                                                                                                             |
+| `wakeSays`            | no       | lang key or text  | none    | Line when someone gets out of bed while it is still night                                                                                                                                   |
+| `morningSays`         | no       | lang key or text  | none    | Line when sleeping skips the night                                                                                                                                                          |
+| `sleepSaysIn`         | no       | `chat` or `bar`   | `chat`  | Where the three lines show: chat or the action bar                                                                                                                                          |
+
+The lines take `%1$s` the player's name, `%2$s` the players asleep, `%3$s` the players counted and `%4$s` the players left out; the morning line names one of the last players asleep. A value is one of RDPL's ready keys (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), a key from the pack's own lang file, or plain text, shown as written.
+
+With `bedSetsSpawn` off, the bed screen shows the Set spawn button when the bed is not the player's spawn point, a blue line when it is, a red line when the player has no spawn point yet and this bed becomes it, and a green line once the button has moved it. A spawn point set with `/spawnpoint` counts as one the player has. With `bedSpawnByDay`, a chat line says the spawn point was set. A player without RDPL on the client gets no button, and the spawn point still stays where it was.
+
+An environment's `rules.sleep` off keeps a dimension from sleeping at all ([Environments](#environments)).
 
 ## Block drops
 

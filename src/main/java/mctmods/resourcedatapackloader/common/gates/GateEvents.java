@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.GateDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.dimension.Travel;
+import mctmods.resourcedatapackloader.common.util.entity.SpawnPoints;
 import mctmods.resourcedatapackloader.common.util.loot.Stacks;
 import mctmods.resourcedatapackloader.core.integration.galacticraftcore.GcCamera;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -221,16 +222,11 @@ public final class GateEvents {
     }
 
     private static BlockPos landing(EntityPlayerMP player, World world, int dimension) {
-        BlockPos bed = safeBed(player, world, player.getBedLocation(dimension), dimension);
+        BlockPos bed = SpawnPoints.working(player, world, player.getBedLocation(dimension), dimension);
         return ground(world, bed == null ? world.getSpawnPoint() : bed);
     }
 
     private static BlockPos ground(World world, BlockPos target) { return new BlockPos(target.getX(), world.getTopSolidOrLiquidBlock(target).getY(), target.getZ()); }
-
-    @Nullable private static BlockPos safeBed(EntityPlayerMP player, World world, @Nullable BlockPos bed, int dimension) {
-        if (bed == null) { return null; }
-        return EntityPlayer.getBedSpawnLocation(world, bed, player.isSpawnForced(dimension));
-    }
 
     private static boolean quiet(EntityPlayerMP player) {
         long now = System.currentTimeMillis();

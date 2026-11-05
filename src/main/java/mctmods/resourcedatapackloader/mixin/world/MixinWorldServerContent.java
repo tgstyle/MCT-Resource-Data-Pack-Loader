@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.world;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -22,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(WorldServer.class) public abstract class MixinWorldServerContent {
     @WrapOperation(method = "createChunkProvider", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;createChunkGenerator()Lnet/minecraft/world/gen/IChunkGenerator;")) private IChunkGenerator rdpl$existingGenerator(WorldProvider provider, Operation<IChunkGenerator> original) { return ContentDimensionRules.existingGenerator((World) (Object) this, () -> original.call(provider)); }
@@ -49,6 +51,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldServer;setWorldTime(J)V")) private void rdpl$holdTimeWhileMaking(WorldServer world, long time) {
         if (ContentPregen.busyIn(world)) { return; }
         world.setWorldTime(ContentRuleSwitch.woken(world, time));
+    }
+
+    @Inject(method = "areAllPlayersAsleep", at = @At("HEAD"), cancellable = true) private void rdpl$sleepShare(CallbackInfoReturnable<Boolean> cir) {
+        if (ContentSleep.vanillaShare()) { return; }
+        WorldServer self = (WorldServer) (Object) this;
+        cir.setReturnValue(!self.isRemote && ContentSleep.enoughAsleep(self));
     }
 
     @Inject(method = "updateWeather", at = @At("HEAD"), cancellable = true) private void rdpl$holdWeatherWhileMaking(CallbackInfo ci) {

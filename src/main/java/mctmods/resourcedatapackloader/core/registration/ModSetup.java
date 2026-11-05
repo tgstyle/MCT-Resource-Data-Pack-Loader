@@ -106,6 +106,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.trades.ContentTradeGate;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
@@ -272,6 +273,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(GateSync.class);
         MinecraftForge.EVENT_BUS.register(ItemLockSync.class);
         MinecraftForge.EVENT_BUS.register(ContentSleepingBags.class);
+        MinecraftForge.EVENT_BUS.register(ContentSleep.class);
         CardRules.load();
         ContentDialogs.load();
         MinecraftForge.EVENT_BUS.register(DialogEvents.class);
@@ -299,6 +301,7 @@ public class ModSetup {
         if (ContentAffixes.load()) { MinecraftForge.EVENT_BUS.register(ContentAffixes.class); }
         if (anvils || ContentAffixes.sockets()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
         ContentEnchanting.load();
+        ContentSleep.load();
         MinecraftForge.EVENT_BUS.register(TableLapis.class);
         if (ContentHardness.load()) {
             ContentHardness.resolve();

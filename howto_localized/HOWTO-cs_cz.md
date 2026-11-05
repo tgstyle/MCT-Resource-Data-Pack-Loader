@@ -65,6 +65,7 @@
 - [Práce s kovadlinou](#práce-s-kovadlinou)
 - [Afixy a patice](#afixy-a-patice)
 - [Čarovací stůl](#čarovací-stůl)
+- [Spánek](#spánek)
 - [Dropy z bloků](#dropy-z-bloků)
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
@@ -182,6 +183,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/orders/*.json`                                                                     | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky)                                                                                                                                    |
 | `<namespace>/exposures/*.json`                                                                  | Nebezpečí, která vystavují hráče účinku poblíž pojmenovaných bloků, při nošení pojmenovaných předmětů nebo v pojmenovaných dimenzích, biomech, strukturách, oblastech jeskyní nebo výškách. [Expozice](#expozice) |
 | `<namespace>/enchanting/*.json`                                                                 | Co čarovací stůl nabízí, žádá a bere: podle očarování, podle předmětu a celkově. [Čarovací stůl](#čarovací-stůl)                                                                                                  |
+| `<namespace>/sleeping/*.json`                                                                   | Zda postel nastavuje místo oživení, kolik hráčů musí spát, aby se přeskočila noc, a hlášky, které zazní, když hráči usnou, vstanou a přijde ráno. [Spánek](#spánek)                                               |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností)                                                                                            |
 | `<namespace>/villages/*.json`                                                                   | Pozemky, které mohou vesnice stavět. [Pozemky vesnic](#pozemky-vesnic)                                                                                                                                            |
 | `<namespace>/pathintersects/*.json`                                                             | Vzory malované tam, kde se vesnické cesty protínají. [Cesty vesnic](#cesty-vesnic)                                                                                                                                |
@@ -3286,6 +3288,40 @@ Předmět, který se stal očarovatelným a nemá vlastní očarovatelnost, pot�
 Při zapnutém Quark's Matrix Enchanting si Quarkův vlastní stůl ponechá svůj lapis a `keepLapis` se nepoužije.
 
 Obrazovka dál kreslí vanilla jedničku, dvojku a trojku vedle polí a v jejich popiscích; co stůl kontroluje a bere, se řídí souborem.
+
+## Spánek
+
+`<namespace>/sleeping/*.json` nastavuje, jak fungují postele a přeskakování noci na celém serveru. Název souboru si volí balíček; několik souborů se skládá, klíč nastavený pozdějším souborem vyhraje a klíč, který chybí, zůstává jako ve vanille.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Klíč                  | Povinný | Hodnota                | Výchozí | Co dělá                                                                                                                                                                                           |
+| --------------------- | ------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | ne      | logická hodnota        | `true`  | `false` a spánek v posteli už nepřesune místo oživení, které hráč má; obrazovka postele místo toho dostane tlačítko Nastavit místo oživení. Hráč bez funkčního místa oživení postel dostane pořád |
+| `bedSpawnByDay`       | ne      | logická hodnota        | `false` | `true` a použití postele přes den nastaví místo oživení tam, pokud hráč nepřikrčí. Čte se jen tehdy, když je `bedSetsSpawn` `false`                                                               |
+| `sleepShare`          | ne      | celé číslo od 0 do 100 | `100`   | Procento počítaných hráčů, kteří musí spát, aby se noc přeskočila; `0` znamená, že stačí jeden spící                                                                                              |
+| `sleepLeavesOutBelow` | ne      | celé číslo (Y)         | žádné   | Hráči bdící pod tímto Y se do počtu nezapočítají                                                                                                                                                  |
+| `sleepSays`           | ne      | klíč jazyka nebo text  | žádné   | Řádek hráčům té dimenze, když někdo usne                                                                                                                                                          |
+| `wakeSays`            | ne      | klíč jazyka nebo text  | žádné   | Řádek, když někdo vstane z postele, zatímco je ještě noc                                                                                                                                          |
+| `morningSays`         | ne      | klíč jazyka nebo text  | žádné   | Řádek, když spánek přeskočí noc                                                                                                                                                                   |
+| `sleepSaysIn`         | ne      | `chat` nebo `bar`      | `chat`  | Kde se tři řádky ukazují: v chatu nebo na liště akcí                                                                                                                                              |
+
+Řádky berou `%1$s` jméno hráče, `%2$s` počet spících hráčů, `%3$s` počet počítaných hráčů a `%4$s` počet vynechaných hráčů; řádek o ránu jmenuje jednoho z posledních spících hráčů. Hodnota je jeden z hotových klíčů RDPL (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), klíč z vlastního jazykového souboru balíčku, nebo prostý text, zobrazený tak, jak je napsán.
+
+Při vypnutém `bedSetsSpawn` ukazuje obrazovka postele tlačítko Nastavit místo oživení, když postel není místem oživení hráče, modrý řádek, když je, červený řádek, když hráč ještě žádné místo oživení nemá a tato postel se jím stane, a zelený řádek, jakmile tlačítko místo přesunulo. Místo oživení nastavené příkazem `/spawnpoint` se počítá jako to, které hráč má. Při `bedSpawnByDay` říká řádek v chatu, že místo oživení bylo nastaveno. Hráč bez RDPL na klientovi nedostane tlačítko a místo oživení zůstává, kde bylo.
+
+Když má prostředí `rules.sleep` vypnuté, dimenze vůbec nespí ([Prostředí](#prostředí)).
 
 ## Dropy z bloků
 

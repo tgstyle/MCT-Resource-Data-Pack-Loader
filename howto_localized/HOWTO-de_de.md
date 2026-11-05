@@ -65,6 +65,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Ambosswerk](#ambosswerk)
 - [Affixe und Fassungen](#affixe-und-fassungen)
 - [Zaubertisch](#zaubertisch)
+- [Schlafen](#schlafen)
 - [Blockdrops](#blockdrops)
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
@@ -182,6 +183,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/orders/*.json`                                                                     | Arbeiten, die Entity-Varianten für einen Spieler an einer Truhe erledigen. [Arbeitsaufträge](#arbeitsaufträge)                                                                                                                                                                         |
 | `<namespace>/exposures/*.json`                                                                  | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen, Biomen, Strukturen, Höhlenregionen oder Höhen ausgesetzt sind. [Expositionen](#expositionen)                                                                          |
 | `<namespace>/enchanting/*.json`                                                                 | Was der Zaubertisch anbietet, verlangt und nimmt: je Verzauberung, je Item und insgesamt. [Zaubertisch](#zaubertisch)                                                                                                                                                                  |
+| `<namespace>/sleeping/*.json`                                                                   | Ob ein Bett den Spawnpunkt setzt, wie viele Spieler schlafen müssen, um die Nacht zu überspringen, und die Zeilen, die beim Einschlafen, Aufwachen und Morgen erscheinen. [Schlafen](#schlafen)                                                                                        |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                                                                                                                                                   |
 | `<namespace>/villages/*.json`                                                                   | Grundstücke, die Dörfer bauen können. [Dorfgrundstücke](#dorfgrundstücke)                                                                                                                                                                                                              |
 | `<namespace>/pathintersects/*.json`                                                             | Muster, die an Kreuzungen von Dorfstraßen gemalt werden. [Dorfwege](#dorfwege)                                                                                                                                                                                                         |
@@ -3286,6 +3288,40 @@ Ein verzauberbar gemachtes Item ohne eigene Verzauberbarkeit braucht auch `encha
 Ist Quarks Matrix Enchanting aktiv, behält der eigene Tisch von Quark seinen Lapislazuli, und `keepLapis` entfällt.
 
 Der Bildschirm zeigt neben den Plätzen und in ihren Tooltips weiter die Vanilla-Werte eins, zwei und drei; was der Tisch prüft und nimmt, folgt der Datei.
+
+## Schlafen
+
+`<namespace>/sleeping/*.json` legt fest, wie Betten und das Überspringen der Nacht auf dem ganzen Server funktionieren. Den Dateinamen wählt das Pack selbst; mehrere Dateien werden gestapelt, ein Schlüssel, den eine spätere Datei setzt, gewinnt, und ein weggelassener Schlüssel behält den Vanilla-Wert.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Schlüssel             | Pflicht | Wert                      | Standard | Was er tut                                                                                                                                                                                                                                              |
+| --------------------- | ------- | ------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | nein    | Wahrheitswert             | `true`   | `false`, und Schlafen in einem Bett verschiebt einen Spawnpunkt, den der Spieler schon hat, nicht mehr; der Bettbildschirm bekommt stattdessen einen Button „Spawnpunkt setzen“. Ein Spieler ohne funktionierenden Spawnpunkt bekommt trotzdem das Bett |
+| `bedSpawnByDay`       | nein    | Wahrheitswert             | `false`  | `true`, und das Benutzen eines Bettes am Tag setzt dort den Spawnpunkt, außer der Spieler schleicht. Wird nur gelesen, wenn `bedSetsSpawn` `false` ist                                                                                                  |
+| `sleepShare`          | nein    | ganze Zahl von 0 bis 100  | `100`    | Prozent der gezählten Spieler, die schlafen müssen, um die Nacht zu überspringen; `0` heißt, ein Schläfer genügt                                                                                                                                        |
+| `sleepLeavesOutBelow` | nein    | ganze Zahl (Y)            | keiner   | Wache Spieler unter diesem Y werden aus der Zählung ausgelassen                                                                                                                                                                                         |
+| `sleepSays`           | nein    | Sprachschlüssel oder Text | keiner   | Zeile an die Spieler dieser Dimension, wenn jemand einschläft                                                                                                                                                                                           |
+| `wakeSays`            | nein    | Sprachschlüssel oder Text | keiner   | Zeile, wenn jemand aufsteht, während es noch Nacht ist                                                                                                                                                                                                  |
+| `morningSays`         | nein    | Sprachschlüssel oder Text | keiner   | Zeile, wenn Schlafen die Nacht überspringt                                                                                                                                                                                                              |
+| `sleepSaysIn`         | nein    | `chat` oder `bar`         | `chat`   | Wo die drei Zeilen erscheinen: im Chat oder in der Aktionsleiste                                                                                                                                                                                        |
+
+Die Zeilen nehmen `%1$s` den Namen des Spielers, `%2$s` die schlafenden Spieler, `%3$s` die gezählten Spieler und `%4$s` die ausgelassenen Spieler; die Morgenzeile nennt einen der zuletzt schlafenden Spieler. Ein Wert ist einer der fertigen RDPL-Schlüssel (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), ein Schlüssel aus der eigenen Sprachdatei des Packs oder Klartext, der so angezeigt wird, wie er geschrieben ist.
+
+Bei ausgeschaltetem `bedSetsSpawn` zeigt der Bettbildschirm den Button Spawnpunkt setzen, wenn das Bett nicht der Spawnpunkt des Spielers ist, eine blaue Zeile, wenn es das ist, eine rote Zeile, wenn der Spieler noch keinen Spawnpunkt hat und dieses Bett ihn wird, und eine grüne Zeile, sobald der Button ihn verschoben hat. Ein mit `/spawnpoint` gesetzter Spawnpunkt zählt als einer, den der Spieler hat. Bei `bedSpawnByDay` sagt eine Chatzeile, dass der Spawnpunkt gesetzt wurde. Ein Spieler ohne RDPL auf dem Client bekommt keinen Button, und der Spawnpunkt bleibt, wo er war.
+
+Steht `rules.sleep` einer Umgebung auf aus, kann in dieser Dimension gar nicht geschlafen werden ([Umgebungen](#umgebungen)).
 
 ## Blockdrops
 

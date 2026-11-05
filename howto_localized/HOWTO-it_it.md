@@ -65,6 +65,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Lavori all'incudine](#lavori-allincudine)
 - [Affissi e castoni](#affissi-e-castoni)
 - [Tavolo per incantesimi](#tavolo-per-incantesimi)
+- [Dormire](#dormire)
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
@@ -182,6 +183,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/orders/*.json`                                                                     | Lavori che le varianti di entità svolgono per un giocatore presso un baule. [Ordini di lavoro](#ordini-di-lavoro)                                                                                                                   |
 | `<namespace>/exposures/*.json`                                                                  | Pericoli che espongono i giocatori vicino a blocchi con nome, mentre portano oggetti con nome o in dimensioni, biomi, strutture, regioni di grotte o altezze con nome. [Esposizioni](#esposizioni)                                  |
 | `<namespace>/enchanting/*.json`                                                                 | Ciò che il tavolo per incantesimi offre, chiede e toglie: per incantesimo, per oggetto e in tutto. [Tavolo per incantesimi](#tavolo-per-incantesimi)                                                                                |
+| `<namespace>/sleeping/*.json`                                                                   | Se un letto imposta il punto di spawn, quanti giocatori devono dormire per saltare la notte e le righe che compaiono quando i giocatori dormono, si svegliano e arriva il mattino. [Dormire](#dormire)                              |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Proprietà di blocchi, oggetti e tipi di pozione esistenti, modificate sul posto. [Override delle proprietà](#override-delle-proprietà)                                                                                              |
 | `<namespace>/villages/*.json`                                                                   | Lotti che i villaggi possono costruire. [Lotti dei villaggi](#lotti-dei-villaggi)                                                                                                                                                   |
 | `<namespace>/pathintersects/*.json`                                                             | Disegni dipinti dove si incontrano le strade dei villaggi. [Strade dei villaggi](#strade-dei-villaggi)                                                                                                                              |
@@ -3286,6 +3288,40 @@ Un oggetto reso incantabile che non ha un'incantabilità propria ha bisogno anch
 Con Quark's Matrix Enchanting attivo, il tavolo di Quark conserva i suoi lapislazzuli e `keepLapis` non viene considerato.
 
 Lo schermo mostra ancora l'uno, due e tre di vanilla accanto agli slot e nei loro suggerimenti; ciò che il tavolo controlla e toglie segue il file.
+
+## Dormire
+
+`<namespace>/sleeping/*.json` decide come funzionano letti e salto della notte su tutto il server. Il nome del file è a scelta del pack; più file si sommano, una chiave impostata da un file successivo vince, e una chiave omessa mantiene il comportamento di vanilla.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Chiave                | Obbligatoria | Valore                   | Predefinito | Cosa fa                                                                                                                                                                                                                      |
+| --------------------- | ------------ | ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | no           | booleano                 | `true`      | `false` e dormire in un letto non sposta più un punto di spawn che il giocatore ha già; la schermata del letto riceve invece un pulsante Imposta spawn. Un giocatore senza un punto di spawn valido riceve comunque il letto |
+| `bedSpawnByDay`       | no           | booleano                 | `false`     | `true` e usare un letto di giorno imposta lì il punto di spawn, a meno che il giocatore non si accovacci. Letto solo quando `bedSetsSpawn` è `false`                                                                         |
+| `sleepShare`          | no           | intero da 0 a 100        | `100`       | Percentuale dei giocatori conteggiati che devono dormire per saltare la notte; `0` significa che basta un dormiente                                                                                                          |
+| `sleepLeavesOutBelow` | no           | intero (Y)               | nessuno     | I giocatori svegli che stanno sotto questa Y non vengono conteggiati                                                                                                                                                         |
+| `sleepSays`           | no           | chiave di lingua o testo | nessuno     | Riga per i giocatori di quella dimensione quando qualcuno si addormenta                                                                                                                                                      |
+| `wakeSays`            | no           | chiave di lingua o testo | nessuno     | Riga quando qualcuno si alza dal letto mentre è ancora notte                                                                                                                                                                 |
+| `morningSays`         | no           | chiave di lingua o testo | nessuno     | Riga quando dormire salta la notte                                                                                                                                                                                           |
+| `sleepSaysIn`         | no           | `chat` o `bar`           | `chat`      | Dove appaiono le tre righe: in chat o nella barra delle azioni                                                                                                                                                               |
+
+Le righe prendono `%1$s` il nome del giocatore, `%2$s` i giocatori addormentati, `%3$s` i giocatori conteggiati e `%4$s` i giocatori lasciati fuori; la riga del mattino nomina uno degli ultimi giocatori addormentati. Un valore è una delle chiavi pronte di RDPL (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), una chiave del file di lingua del pack o testo semplice, mostrato così come è scritto.
+
+Con `bedSetsSpawn` disattivo, la schermata del letto mostra il pulsante Imposta spawn quando il letto non è il punto di spawn del giocatore, una riga blu quando lo è, una riga rossa quando il giocatore non ha ancora un punto di spawn e questo letto lo diventa, e una riga verde una volta che il pulsante lo ha spostato. Un punto di spawn impostato con `/spawnpoint` conta come uno che il giocatore ha. Con `bedSpawnByDay`, una riga in chat dice che il punto di spawn è stato impostato. Un giocatore senza RDPL sul client non riceve il pulsante, e il punto di spawn resta dov'era.
+
+Un `rules.sleep` disattivato in un ambiente impedisce a una dimensione di dormire del tutto ([Ambienti](#ambienti)).
 
 ## Drop dei blocchi
 

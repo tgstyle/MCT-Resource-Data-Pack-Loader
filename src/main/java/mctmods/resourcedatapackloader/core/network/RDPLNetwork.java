@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.TalkScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
@@ -76,6 +77,8 @@ public final class RDPLNetwork {
         registerClient(() -> ContentSkyGates.Handler.class, GatesMessage.class);
         registerClient(() -> ClientItemLocks.Handler.class, UnlocksMessage.class);
         registerClient(() -> ClientWeights.Handler.class, WeightMessage.class);
+        registerClient(() -> SleepScreen.Handler.class, BedStateMessage.class);
+        registerMessage(SetSpawnMessage.Handler.class, SetSpawnMessage.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -133,6 +136,8 @@ public final class RDPLNetwork {
 
     public static void sendHeartColors(EntityPlayerMP player) { sendTo(new HeartColorsMessage(ContentHearts.colors()), player); }
 
+    public static void sendBedState(EntityPlayerMP player, int state) { sendTo(new BedStateMessage(state), player); }
+
     public static void sendGates(EntityPlayerMP player, Collection<String> gates) { sendTo(new GatesMessage(gates), player); }
 
     public static boolean sendUnlocks(EntityPlayerMP player, Collection<String> open) {
@@ -159,5 +164,10 @@ public final class RDPLNetwork {
     public static void sendTalkPick(int index) {
         if (channel == null) { return; }
         channel.sendToServer(new TalkPickMessage(index));
+    }
+
+    public static void setSpawnHere() {
+        if (channel == null) { return; }
+        channel.sendToServer(new SetSpawnMessage());
     }
 }

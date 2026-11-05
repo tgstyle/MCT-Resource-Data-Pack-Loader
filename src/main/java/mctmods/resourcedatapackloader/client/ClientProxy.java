@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.client.gui.CreateWorldPack;
 import mctmods.resourcedatapackloader.client.gui.PackOptionsButton;
+import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
 import mctmods.resourcedatapackloader.client.gui.hud.CenterCard;
@@ -35,6 +36,7 @@ public class ClientProxy {
             ContentHardnessCheck.watching();
         }
         MinecraftForge.EVENT_BUS.register(new PackOptionsButton.Handler());
+        MinecraftForge.EVENT_BUS.register(SleepScreen.class);
         MinecraftForge.EVENT_BUS.register(BossBackgrounds.class);
         MinecraftForge.EVENT_BUS.register(CreateWorldPack.class);
         MinecraftForge.EVENT_BUS.register(CardOverlay.class);
