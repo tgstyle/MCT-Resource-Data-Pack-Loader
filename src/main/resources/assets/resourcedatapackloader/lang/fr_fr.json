@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "Vous entrez sur un terrain revendiqué sans propriétaire",
   "rdpl.claim.leave": "Vous quittez les terres de %s",
   "rdpl.claim.leave.orphan": "Vous quittez un terrain revendiqué sans propriétaire",
-  "rdpl.claim.wilderness": "Étendues sauvages"
+  "rdpl.claim.wilderness": "Étendues sauvages",
+  "rdpl.sleep.setSpawn": "Définir l'apparition",
+  "rdpl.sleep.noPreviousBed": "Aucun point d'apparition précédent : ce lit devient le vôtre",
+  "rdpl.sleep.currentSpawnBed": "Ce lit est votre point d'apparition",
+  "rdpl.sleep.spawnUpdated": "Point d'apparition déplacé vers ce lit",
+  "rdpl.sleep.asleep": "%1$s dort (%2$s sur %3$s)",
+  "rdpl.sleep.awake": "%1$s s'est levé (%2$s sur %3$s endormis)",
+  "rdpl.sleep.morning": "La nuit est passée. Bonjour !"
 }

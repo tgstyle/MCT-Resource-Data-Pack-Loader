@@ -68,6 +68,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 - [Travail à l'enclume](#travail-à-lenclume)
 - [Affixes et châsses](#affixes-et-châsses)
 - [Table d'enchantement](#table-denchantement)
+- [Sommeil](#sommeil)
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
@@ -177,6 +178,7 @@ Sous `data/` :
 | `<namespace>/gems/*.json`                    | Objets qu'une enclume enchâsse pour un bonus d'attribut. [Affixes et châsses](#affixes-et-châsses)                                                                                                                       |
 | `<namespace>/anvils/*.json`                  | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle octroie, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume)                                                                   |
 | `<namespace>/enchanting/*.json`              | Ce que la table d'enchantement propose, demande et prend : par enchantement, par objet et en tout. [Table d'enchantement](#table-denchantement)                                                                          |
+| `<namespace>/sleeping/*.json`                | Si un lit fixe le point d'apparition, combien de joueurs doivent dormir pour passer la nuit, et les lignes annoncées quand les joueurs dorment, se réveillent et que le matin arrive. [Sommeil](#sommeil)                |
 | `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                                                                                                |
 | `<namespace>/dialogs/*.json`                 | Conversation ramifiée avec une variante d'entité : nœuds de texte et réponses qui continuent, exécutent une fonction ou montrent une carte. [Dialogues](#dialogues)                                                      |
 | `<namespace>/dice/*.json`                    | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets)                                                                             |
@@ -3142,6 +3144,42 @@ Un objet rendu enchantable qui n'a pas d'enchantabilité propre a aussi besoin d
 | `keepLapis`     | non    | booléen                              | `false`      | `true` fait que le lapis-lazuli posé dans la table y reste quand l'écran se ferme, s'affiche au joueur suivant qui l'ouvre et tombe quand la table est cassée. Un second joueur qui ouvre la table alors qu'un autre l'a ouverte trouve l'emplacement vide. |
 
 L'écran affiche toujours le un, deux et trois de vanilla à côté des emplacements et dans leurs infobulles ; ce que la table vérifie et prend suit le fichier.
+
+## Sommeil
+
+`<namespace>/sleeping/*.json` règle le fonctionnement des lits et du passage de la nuit sur tout le serveur. Le nom du fichier est celui du pack ; plusieurs fichiers se cumulent, une clé définie par un fichier ultérieur l'emporte, et une clé omise garde le comportement de vanilla.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Clé                   | Requis | Valeur                 | Défaut  | Ce qu'il fait                                                                                                                                                                                                             |
+| --------------------- | ------ | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | non    | booléen                | `true`  | `false`, et dormir dans un lit ne déplace plus un point d'apparition que le joueur a déjà ; l'écran du lit reçoit à la place un bouton Définir l'apparition. Un joueur sans point d'apparition valide a quand même le lit |
+| `bedSpawnByDay`       | non    | booléen                | `false` | `true`, et utiliser un lit de jour fixe le point d'apparition là, sauf si le joueur s'accroupit. Lu seulement quand `bedSetsSpawn` vaut `false`                                                                           |
+| `sleepShare`          | non    | entier de 0 à 100      | `100`   | Pourcentage des joueurs comptés qui doivent dormir pour passer la nuit ; `0` signifie qu'un seul dormeur suffit                                                                                                           |
+| `sleepLeavesOutBelow` | non    | entier (Y)             | aucun   | Les joueurs éveillés qui se tiennent sous ce Y sont exclus du décompte                                                                                                                                                    |
+| `sleepSays`           | non    | clé de langue ou texte | aucun   | Ligne envoyée aux joueurs de cette dimension quand quelqu'un s'endort                                                                                                                                                     |
+| `wakeSays`            | non    | clé de langue ou texte | aucun   | Ligne quand quelqu'un sort du lit alors que la nuit n'est pas finie                                                                                                                                                       |
+| `morningSays`         | non    | clé de langue ou texte | aucun   | Ligne quand le sommeil fait passer la nuit                                                                                                                                                                                |
+| `sleepSaysIn`         | non    | `chat` ou `bar`        | `chat`  | Où s'affichent les trois lignes : dans le chat ou dans la barre d'action                                                                                                                                                  |
+
+Les lignes prennent `%1$s` le nom du joueur, `%2$s` les joueurs endormis, `%3$s` les joueurs comptés et `%4$s` les joueurs exclus ; la ligne du matin nomme l'un des derniers joueurs endormis. Une valeur est l'une des clés prêtes de RDPL (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), une clé du fichier de langue du pack, ou du texte brut, affiché tel quel.
+
+Avec `bedSetsSpawn` désactivé, l'écran du lit affiche le bouton Définir l'apparition quand le lit n'est pas le point d'apparition du joueur, une ligne bleue quand il l'est, une ligne rouge quand le joueur n'a pas encore de point d'apparition et que ce lit le deviendra, et une ligne verte une fois que le bouton l'a déplacé. Un point d'apparition défini avec `/spawnpoint` compte comme un point que le joueur possède. Avec `bedSpawnByDay`, la ligne propre à vanilla indique que le point d'apparition a été défini. Un joueur sans RDPL côté client n'a pas de bouton, et le point d'apparition reste où il était.
+
+`sleepShare` définit la règle de jeu `playersSleepingPercentage` dans chaque dimension au démarrage du serveur ; une dimension dont le fichier `gamerules` propre nomme cette règle garde sa valeur, et un `/gamerule` d'opérateur est rétabli au prochain démarrage tant que la clé est définie. `sleepLeavesOutBelow` est le décompte propre à RDPL, donc le décompte des joueurs endormis dans la barre d'action de vanilla affiche toujours les chiffres de vanilla.
+
+Un `rules.sleep` désactivé dans un environnement empêche une dimension de dormir du tout ([Environnements](#environnements)).
 
 ## Butins des blocs
 

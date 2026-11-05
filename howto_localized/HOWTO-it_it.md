@@ -68,6 +68,7 @@ Questa guida è per la build 26.x, che copre 26.1.2, 26.2 e 26.3; tutte e tre le
 - [Lavori all'incudine](#lavori-allincudine)
 - [Affissi e castoni](#affissi-e-castoni)
 - [Tavolo per incantesimi](#tavolo-per-incantesimi)
+- [Dormire](#dormire)
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
@@ -177,6 +178,7 @@ Sotto `data/`:
 | `<namespace>/gems/*.json`                    | Oggetti che un'incudine incastona in un castone per un bonus di attributo. [Affissi e castoni](#affissi-e-castoni)                                                                                                                  |
 | `<namespace>/anvils/*.json`                  | Incantesimi che un'incudine applica a un oggetto con nome, un progresso che ne deriva e un blocco fino ad allora. [Lavori all'incudine](#lavori-allincudine)                                                                        |
 | `<namespace>/enchanting/*.json`              | Ciò che il tavolo per incantesimi offre, chiede e toglie: per incantesimo, per oggetto e in tutto. [Tavolo per incantesimi](#tavolo-per-incantesimi)                                                                                |
+| `<namespace>/sleeping/*.json`                | Se un letto imposta il punto di spawn, quanti giocatori devono dormire per saltare la notte e le righe che compaiono quando i giocatori dormono, si svegliano e arriva il mattino. [Dormire](#dormire)                              |
 | `<namespace>/cards/*.json`                   | Carte a schermo mostrate da un attivatore e i messaggi che questa mod dice da sé. [Carte](#carte)                                                                                                                                   |
 | `<namespace>/dialogs/*.json`                 | Conversazione ramificata con una variante di entità: nodi di testo e risposte che proseguono, eseguono una funzione o mostrano una carta. [Dialoghi](#dialoghi)                                                                     |
 | `<namespace>/dice/*.json`                    | Dadi del pack con facce con peso, mazzi di carte, chi sente un tiro e la formulazione dei risultati. [Dadi e mazzi](#dadi-e-mazzi)                                                                                                  |
@@ -3142,6 +3144,42 @@ Un oggetto reso incantabile che non ha un'incantabilità propria ha bisogno anch
 | `keepLapis`     | no           | booleano                             | `false`     | `true` fa sì che i lapislazzuli messi nel tavolo restino lì quando lo schermo si chiude, vengano mostrati al giocatore successivo che lo apre e cadano quando il tavolo viene rotto. Un secondo giocatore che apre il tavolo mentre un altro lo ha aperto trova lo slot vuoto. |
 
 Lo schermo mostra ancora l'uno, due e tre di vanilla accanto agli slot e nei loro suggerimenti; ciò che il tavolo controlla e toglie segue il file.
+
+## Dormire
+
+`<namespace>/sleeping/*.json` decide come funzionano letti e salto della notte su tutto il server. Il nome del file è a scelta del pack; più file si sommano, una chiave impostata da un file successivo vince, e una chiave omessa mantiene il comportamento di vanilla.
+
+```json
+{
+  "bedSetsSpawn": false,
+  "bedSpawnByDay": true,
+  "sleepShare": 50,
+  "sleepLeavesOutBelow": 54,
+  "sleepSays": "rdpl.sleep.asleep",
+  "wakeSays": "rdpl.sleep.awake",
+  "morningSays": "rdpl.sleep.morning",
+  "sleepSaysIn": "chat"
+}
+```
+
+| Chiave                | Obbligatoria | Valore                   | Predefinito | Cosa fa                                                                                                                                                                                                                      |
+| --------------------- | ------------ | ------------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bedSetsSpawn`        | no           | booleano                 | `true`      | `false` e dormire in un letto non sposta più un punto di spawn che il giocatore ha già; la schermata del letto riceve invece un pulsante Imposta spawn. Un giocatore senza un punto di spawn valido riceve comunque il letto |
+| `bedSpawnByDay`       | no           | booleano                 | `false`     | `true` e usare un letto di giorno imposta lì il punto di spawn, a meno che il giocatore non si accovacci. Letto solo quando `bedSetsSpawn` è `false`                                                                         |
+| `sleepShare`          | no           | intero da 0 a 100        | `100`       | Percentuale dei giocatori conteggiati che devono dormire per saltare la notte; `0` significa che basta un dormiente                                                                                                          |
+| `sleepLeavesOutBelow` | no           | intero (Y)               | nessuno     | I giocatori svegli che stanno sotto questa Y non vengono conteggiati                                                                                                                                                         |
+| `sleepSays`           | no           | chiave di lingua o testo | nessuno     | Riga per i giocatori di quella dimensione quando qualcuno si addormenta                                                                                                                                                      |
+| `wakeSays`            | no           | chiave di lingua o testo | nessuno     | Riga quando qualcuno si alza dal letto mentre è ancora notte                                                                                                                                                                 |
+| `morningSays`         | no           | chiave di lingua o testo | nessuno     | Riga quando dormire salta la notte                                                                                                                                                                                           |
+| `sleepSaysIn`         | no           | `chat` o `bar`           | `chat`      | Dove appaiono le tre righe: in chat o nella barra delle azioni                                                                                                                                                               |
+
+Le righe prendono `%1$s` il nome del giocatore, `%2$s` i giocatori addormentati, `%3$s` i giocatori conteggiati e `%4$s` i giocatori lasciati fuori; la riga del mattino nomina uno degli ultimi giocatori addormentati. Un valore è una delle chiavi pronte di RDPL (`rdpl.sleep.asleep`, `rdpl.sleep.awake`, `rdpl.sleep.morning`), una chiave del file di lingua del pack o testo semplice, mostrato così come è scritto.
+
+Con `bedSetsSpawn` disattivo, la schermata del letto mostra il pulsante Imposta spawn quando il letto non è il punto di spawn del giocatore, una riga blu quando lo è, una riga rossa quando il giocatore non ha ancora un punto di spawn e questo letto lo diventa, e una riga verde una volta che il pulsante lo ha spostato. Un punto di spawn impostato con `/spawnpoint` conta come uno che il giocatore ha. Con `bedSpawnByDay`, la riga propria di vanilla dice che il punto di spawn è stato impostato. Un giocatore senza RDPL sul client non riceve il pulsante, e il punto di spawn resta dov'era.
+
+`sleepShare` imposta la regola di gioco `playersSleepingPercentage` in ogni dimensione all'avvio del server; una dimensione il cui file `gamerules` proprio cita quella regola conserva il suo valore, e il `/gamerule` di un operatore viene ripristinato al riavvio successivo finché la chiave è impostata. `sleepLeavesOutBelow` è il conteggio proprio di RDPL, quindi il conteggio dei giocatori addormentati nella barra delle azioni di vanilla continua a mostrare i numeri di vanilla.
+
+Un `rules.sleep` disattivato in un ambiente impedisce a una dimensione di dormire del tutto ([Ambienti](#ambienti)).
 
 ## Drop dei blocchi
 

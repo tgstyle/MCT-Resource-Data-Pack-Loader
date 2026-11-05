@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "Vstupuješ na zabrané území bez vlastníka",
   "rdpl.claim.leave": "Opouštíš území, které patří %s",
   "rdpl.claim.leave.orphan": "Opouštíš zabrané území bez vlastníka",
-  "rdpl.claim.wilderness": "Divočina"
+  "rdpl.claim.wilderness": "Divočina",
+  "rdpl.sleep.setSpawn": "Nastavit bod oživení",
+  "rdpl.sleep.noPreviousBed": "Žádný předchozí bod oživení: tato postel se jím stane",
+  "rdpl.sleep.currentSpawnBed": "Tato postel je tvůj bod oživení",
+  "rdpl.sleep.spawnUpdated": "Bod oživení přesunut na tuto postel",
+  "rdpl.sleep.asleep": "%1$s spí (%2$s z %3$s)",
+  "rdpl.sleep.awake": "%1$s vstal z postele (spí %2$s z %3$s)",
+  "rdpl.sleep.morning": "Noc uběhla. Dobré ráno!"
 }

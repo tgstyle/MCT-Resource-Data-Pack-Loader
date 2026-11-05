@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "소유자가 없는 점유된 땅에 들어갑니다",
   "rdpl.claim.leave": "%s의 땅에서 나갑니다",
   "rdpl.claim.leave.orphan": "소유자가 없는 점유된 땅에서 나갑니다",
-  "rdpl.claim.wilderness": "야생"
+  "rdpl.claim.wilderness": "야생",
+  "rdpl.sleep.setSpawn": "리스폰 지점 설정",
+  "rdpl.sleep.noPreviousBed": "이전 리스폰 지점 없음: 이 침대가 리스폰 지점이 됩니다",
+  "rdpl.sleep.currentSpawnBed": "이 침대가 현재 리스폰 지점입니다",
+  "rdpl.sleep.spawnUpdated": "리스폰 지점이 이 침대로 변경되었습니다",
+  "rdpl.sleep.asleep": "%1$s 님이 잠들었습니다 (%3$s명 중 %2$s명)",
+  "rdpl.sleep.awake": "%1$s 님이 일어났습니다 (%3$s명 중 %2$s명 수면 중)",
+  "rdpl.sleep.morning": "밤이 지났습니다. 좋은 아침입니다!"
 }

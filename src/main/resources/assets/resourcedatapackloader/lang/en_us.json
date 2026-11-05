@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "Entering claimed land with no owner",
   "rdpl.claim.leave": "Leaving %s's land",
   "rdpl.claim.leave.orphan": "Leaving claimed land with no owner",
-  "rdpl.claim.wilderness": "Wilderness"
+  "rdpl.claim.wilderness": "Wilderness",
+  "rdpl.sleep.setSpawn": "Set spawn",
+  "rdpl.sleep.noPreviousBed": "No earlier spawn point: this bed becomes your spawn",
+  "rdpl.sleep.currentSpawnBed": "This bed is your spawn point",
+  "rdpl.sleep.spawnUpdated": "Spawn point moved to this bed",
+  "rdpl.sleep.asleep": "%1$s is asleep (%2$s of %3$s)",
+  "rdpl.sleep.awake": "%1$s got out of bed (%2$s of %3$s asleep)",
+  "rdpl.sleep.morning": "The night has passed. Good morning!"
 }

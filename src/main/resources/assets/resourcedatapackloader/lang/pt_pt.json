@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "A entrar em terreno reivindicado sem dono",
   "rdpl.claim.leave": "A sair do terreno de %s",
   "rdpl.claim.leave.orphan": "A sair de terreno reivindicado sem dono",
-  "rdpl.claim.wilderness": "Região selvagem"
+  "rdpl.claim.wilderness": "Região selvagem",
+  "rdpl.sleep.setSpawn": "Definir reaparecimento",
+  "rdpl.sleep.noPreviousBed": "Sem ponto de reaparecimento anterior: esta cama passa a ser o teu",
+  "rdpl.sleep.currentSpawnBed": "Esta cama é o teu ponto de reaparecimento",
+  "rdpl.sleep.spawnUpdated": "Ponto de reaparecimento mudado para esta cama",
+  "rdpl.sleep.asleep": "%1$s está a dormir (%2$s de %3$s)",
+  "rdpl.sleep.awake": "%1$s levantou-se (%2$s de %3$s a dormir)",
+  "rdpl.sleep.morning": "A noite passou. Bom dia!"
 }

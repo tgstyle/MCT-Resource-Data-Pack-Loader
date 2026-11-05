@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.gui.ContentWorldScreen;
 import mctmods.resourcedatapackloader.client.gui.PackOptionsButton;
+import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
 import mctmods.resourcedatapackloader.client.gui.hud.CenterCard;
@@ -27,6 +28,7 @@ import mctmods.resourcedatapackloader.client.util.PouchKey;
 import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.core.config.Config;
 
@@ -64,6 +66,8 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(PackOptionsButton::onInit);
         NeoForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPre);
         NeoForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPost);
+        NeoForge.EVENT_BUS.addListener(SleepScreen::onInit);
+        NeoForge.EVENT_BUS.addListener(SleepScreen::onRender);
         NeoForge.EVENT_BUS.addListener(ChatHistoryKeeper::onOpening);
         NeoForge.EVENT_BUS.addListener(SeamSkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(ContentFogSampler::onFog);
@@ -89,6 +93,7 @@ public class ClientSetup {
             ContentSkyGates.clear();
             ClientItemLocks.clear();
             ClientWeights.clear();
+            SleepScreen.receive(ContentSleep.HIDDEN);
         });
         ContentClient.register(modBus);
         if (Config.worldgen.worldgenDebug()) {

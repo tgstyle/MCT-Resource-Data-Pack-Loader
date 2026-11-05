@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "Вы входите на захваченную землю без владельца",
   "rdpl.claim.leave": "Вы покидаете землю %s",
   "rdpl.claim.leave.orphan": "Вы покидаете захваченную землю без владельца",
-  "rdpl.claim.wilderness": "Дикая местность"
+  "rdpl.claim.wilderness": "Дикая местность",
+  "rdpl.sleep.setSpawn": "Сделать точкой возрождения",
+  "rdpl.sleep.noPreviousBed": "Прежней точки возрождения нет: ею станет эта кровать",
+  "rdpl.sleep.currentSpawnBed": "Эта кровать — ваша точка возрождения",
+  "rdpl.sleep.spawnUpdated": "Точка возрождения перенесена на эту кровать",
+  "rdpl.sleep.asleep": "%1$s спит (%2$s из %3$s)",
+  "rdpl.sleep.awake": "%1$s встаёт с кровати (спят %2$s из %3$s)",
+  "rdpl.sleep.morning": "Ночь прошла. Доброе утро!"
 }

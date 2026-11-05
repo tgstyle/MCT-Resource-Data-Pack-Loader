@@ -13,17 +13,21 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import java.util.List;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.SleepStatus;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.clock.ServerClockManager;
@@ -103,6 +107,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/neoforged/neoforge/common/util/ClockAdjustment;apply(Lnet/minecraft/world/clock/ServerClockManager;Lnet/minecraft/core/Holder;)V")) private void rdpl$sleepKeepsTime(ClockAdjustment adjustment, ServerClockManager clocks, Holder<WorldClock> clock, Operation<Void> original) { if (rdpl$movesOwnClock((ServerLevel) (Object) this)) { original.call(adjustment, clocks, clock); } }
 
     @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;resetWeatherCycle()V")) private void rdpl$sleepKeepsWeather(ServerLevel level, Operation<Void> original) { if (rdpl$movesOwnClock(level)) { original.call(level); } }
+
+    @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughSleeping(I)Z")) private boolean rdpl$sleepersLeftOut(SleepStatus status, int sleepPercentageNeeded, Operation<Boolean> original) { return ContentSleep.leavesOut() ? ContentSleep.enoughAsleep((ServerLevel) (Object) this, sleepPercentageNeeded) : original.call(status, sleepPercentageNeeded); }
+
+    @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughDeepSleeping(ILjava/util/List;)Z")) private boolean rdpl$deepSleepersLeftOut(SleepStatus status, int sleepPercentageNeeded, List<ServerPlayer> players, Operation<Boolean> original) { return ContentSleep.leavesOut() || original.call(status, sleepPercentageNeeded, players); }
 
     @Unique private static boolean rdpl$movesOwnClock(ServerLevel level) { return level.dimension() == Level.OVERWORLD || ContentDimensions.def(level) == null; }
 

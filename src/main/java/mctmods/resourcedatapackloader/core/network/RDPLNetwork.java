@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.network;
 
+import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.TalkScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
@@ -19,6 +20,7 @@ import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.items.ContentWornContainers;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.weights.WeightStacks;
@@ -69,7 +71,13 @@ public final class RDPLNetwork {
         registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
         registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { ClientWeights.receive(message); } });
         registrar.playToClient(WeightFloorsMessage.TYPE, WeightFloorsMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WeightStacks.receiveFloors(message.floors()); } });
+        registrar.playToClient(BedStateMessage.TYPE, BedStateMessage.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { SleepScreen.receive(message.state()); } });
+        registrar.playToServer(SetSpawnMessage.TYPE, SetSpawnMessage.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentSleep.setSpawnHere(player); } });
     }
+
+    public static void setSpawnHere() { ClientPacketDistributor.sendToServer(new SetSpawnMessage()); }
+
+    public static void sendBedState(ServerPlayer player, int state) { send(player, new BedStateMessage(state)); }
 
     public static void openWorn() { ClientPacketDistributor.sendToServer(new OpenWornMessage()); }
 

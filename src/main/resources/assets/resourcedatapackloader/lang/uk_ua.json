@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "Ви входите на захоплену землю без власника",
   "rdpl.claim.leave": "Ви виходите з землі %s",
   "rdpl.claim.leave.orphan": "Ви виходите із захопленої землі без власника",
-  "rdpl.claim.wilderness": "Дика місцевість"
+  "rdpl.claim.wilderness": "Дика місцевість",
+  "rdpl.sleep.setSpawn": "Зробити точкою відродження",
+  "rdpl.sleep.noPreviousBed": "Попередньої точки відродження немає: нею стане це ліжко",
+  "rdpl.sleep.currentSpawnBed": "Це ліжко — ваша точка відродження",
+  "rdpl.sleep.spawnUpdated": "Точку відродження перенесено на це ліжко",
+  "rdpl.sleep.asleep": "%1$s спить (%2$s з %3$s)",
+  "rdpl.sleep.awake": "%1$s встає з ліжка (сплять %2$s з %3$s)",
+  "rdpl.sleep.morning": "Ніч минула. Доброго ранку!"
 }

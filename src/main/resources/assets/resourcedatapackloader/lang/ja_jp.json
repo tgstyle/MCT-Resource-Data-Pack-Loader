@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "所有者のいない確保された土地に入ります",
   "rdpl.claim.leave": "%sの土地から出ます",
   "rdpl.claim.leave.orphan": "所有者のいない確保された土地から出ます",
-  "rdpl.claim.wilderness": "荒野"
+  "rdpl.claim.wilderness": "荒野",
+  "rdpl.sleep.setSpawn": "リスポーン地点に設定",
+  "rdpl.sleep.noPreviousBed": "以前のリスポーン地点はありません：このベッドがリスポーン地点になります",
+  "rdpl.sleep.currentSpawnBed": "このベッドが現在のリスポーン地点です",
+  "rdpl.sleep.spawnUpdated": "リスポーン地点をこのベッドに変更しました",
+  "rdpl.sleep.asleep": "%1$sが眠りました（%3$s人中%2$s人）",
+  "rdpl.sleep.awake": "%1$sが起きました（%3$s人中%2$s人が睡眠中）",
+  "rdpl.sleep.morning": "夜が明けました。おはようございます！"
 }

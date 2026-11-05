@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "Du betrittst beanspruchtes Land ohne Besitzer",
   "rdpl.claim.leave": "Du verlässt Land von %s",
   "rdpl.claim.leave.orphan": "Du verlässt beanspruchtes Land ohne Besitzer",
-  "rdpl.claim.wilderness": "Wildnis"
+  "rdpl.claim.wilderness": "Wildnis",
+  "rdpl.sleep.setSpawn": "Einstiegspunkt setzen",
+  "rdpl.sleep.noPreviousBed": "Noch kein Einstiegspunkt: Dieses Bett wird dein Einstiegspunkt",
+  "rdpl.sleep.currentSpawnBed": "Dieses Bett ist dein Einstiegspunkt",
+  "rdpl.sleep.spawnUpdated": "Einstiegspunkt auf dieses Bett verlegt",
+  "rdpl.sleep.asleep": "%1$s schläft (%2$s von %3$s)",
+  "rdpl.sleep.awake": "%1$s ist aufgestanden (%2$s von %3$s schlafen)",
+  "rdpl.sleep.morning": "Die Nacht ist vorbei. Guten Morgen!"
 }

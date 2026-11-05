@@ -413,5 +413,12 @@
   "rdpl.claim.enter.orphan": "正在進入無主的已認領領地",
   "rdpl.claim.leave": "正在離開 %s 的領地",
   "rdpl.claim.leave.orphan": "正在離開無主的已認領領地",
-  "rdpl.claim.wilderness": "荒野"
+  "rdpl.claim.wilderness": "荒野",
+  "rdpl.sleep.setSpawn": "設為重生點",
+  "rdpl.sleep.noPreviousBed": "沒有先前的重生點：這張床將成為你的重生點",
+  "rdpl.sleep.currentSpawnBed": "這張床是你目前的重生點",
+  "rdpl.sleep.spawnUpdated": "重生點已更新為這張床",
+  "rdpl.sleep.asleep": "%1$s 已入睡（%2$s/%3$s）",
+  "rdpl.sleep.awake": "%1$s 起床了（%2$s/%3$s 人在睡覺）",
+  "rdpl.sleep.morning": "長夜已過，早安！"
 }
