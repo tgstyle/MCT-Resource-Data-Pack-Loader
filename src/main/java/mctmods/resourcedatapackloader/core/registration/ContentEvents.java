@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchantments;
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
@@ -166,6 +167,7 @@ public final class ContentEvents {
             helper.register(id(ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type());
             helper.register(id("owned_blocks"), OwnedBlocksStore.type());
             helper.register(EntityStorage.KEY, EntityStorage.TYPE);
+            helper.register(id("table_lapis"), TableLapis.TYPE);
         });
         if (Config.contentOff()) {
             event.register(Registries.ITEM, helper -> generateData());

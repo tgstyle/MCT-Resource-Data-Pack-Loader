@@ -3124,17 +3124,19 @@ Ein verzauberbar gemachtes Item ohne eigene Verzauberbarkeit braucht auch `encha
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Schlüssel       | Pflicht | Wert                             | Standard    | Was er macht                                                                                                                               |
-| --------------- | ------- | -------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `enchantLevels` | nein    | Liste von 3 ints, je 1 oder mehr | gewürfelt   | Die Stufe, die jeder Platz von oben nach unten statt der gewürfelten verlangt; auch seine Verzauberungen werden auf dieser Stufe gewürfelt |
-| `enchantCosts`  | nein    | Liste von 3 ints, je 0 oder mehr | `[1, 2, 3]` | Die Stufen, die jeder Platz bei der Wahl abzieht                                                                                           |
-| `lapisCosts`    | nein    | Liste von 3 ints, je 1 oder mehr | `[1, 2, 3]` | Der Lapislazuli, den jeder Platz bei der Wahl nimmt und der im Tisch liegen muss                                                           |
-| `shelfCap`      | nein    | int, 0 oder mehr                 | `15`        | Wie viele Bücherregale höchstens zählen                                                                                                    |
-| `shelfPower`    | nein    | Zahl von 0 bis 16                | `1`         | Wie viel jedes Bücherregal zählt, über alle zusammen gerundet                                                                              |
+| Schlüssel       | Pflicht | Wert                             | Standard    | Was er macht                                                                                                                                                                                                                                                                                                      |
+| --------------- | ------- | -------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | nein    | Liste von 3 ints, je 1 oder mehr | gewürfelt   | Die Stufe, die jeder Platz von oben nach unten statt der gewürfelten verlangt; auch seine Verzauberungen werden auf dieser Stufe gewürfelt                                                                                                                                                                        |
+| `enchantCosts`  | nein    | Liste von 3 ints, je 0 oder mehr | `[1, 2, 3]` | Die Stufen, die jeder Platz bei der Wahl abzieht                                                                                                                                                                                                                                                                  |
+| `lapisCosts`    | nein    | Liste von 3 ints, je 1 oder mehr | `[1, 2, 3]` | Der Lapislazuli, den jeder Platz bei der Wahl nimmt und der im Tisch liegen muss                                                                                                                                                                                                                                  |
+| `shelfCap`      | nein    | int, 0 oder mehr                 | `15`        | Wie viele Bücherregale höchstens zählen                                                                                                                                                                                                                                                                           |
+| `shelfPower`    | nein    | Zahl von 0 bis 16                | `1`         | Wie viel jedes Bücherregal zählt, über alle zusammen gerundet                                                                                                                                                                                                                                                     |
+| `keepLapis`     | nein    | boolean                          | `false`     | `true` heißt, dass Lapislazuli, der in den Tisch gelegt wird, beim Schließen des Bildschirms dort bleibt, dem nächsten Spieler, der den Tisch öffnet, angezeigt wird und beim Abbau des Tisches herausfällt. Ein zweiter Spieler, der den Tisch öffnet, während ein anderer ihn offen hat, findet den Platz leer. |
 
 Der Bildschirm zeigt neben den Plätzen und in ihren Tooltips weiter die Vanilla-Werte eins, zwei und drei; was der Tisch prüft und nimmt, folgt der Datei.
 

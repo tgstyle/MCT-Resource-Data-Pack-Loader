@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.world.inventory;
 
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchanting;
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 
 import java.util.List;
 import net.minecraft.core.RegistryAccess;
@@ -21,11 +22,12 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EnchantmentMenu.class) public abstract class EnchantmentMenuMixin {
     @Shadow @Final private Container enchantSlots;
-    @Shadow @Final private ContainerLevelAccess access;
+    @Shadow @Final public ContainerLevelAccess access;
     @Shadow @Final private RandomSource random;
     @Shadow @Final private DataSlot enchantmentSeed;
     @Unique private int rdpl$slot;
@@ -61,4 +63,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Redirect(method = "clickMenuButton", at = @At(value = "FIELD", target = "Lnet/minecraft/world/entity/player/Player;experienceLevel:I", opcode = Opcodes.GETFIELD, ordinal = 0)) private int rdpl$levelsAgainstCost(Player player) { return player.experienceLevel - AnvilCosts.paid(player.level().isClientSide, rdpl$slot) + rdpl$slot + 1; }
+
+    @Inject(method = "removed", at = @At("HEAD")) private void rdpl$keepLapis(Player player, CallbackInfo ci) { TableLapis.closing(access, enchantSlots); }
 }

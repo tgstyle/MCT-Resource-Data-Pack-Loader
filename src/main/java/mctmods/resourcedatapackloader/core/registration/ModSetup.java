@@ -31,6 +31,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchanting;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchantments;
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
@@ -311,6 +312,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EntityStorage::onInteract);
         NeoForge.EVENT_BUS.addListener(EntityStorage::onLeave);
         NeoForge.EVENT_BUS.addListener(EntityStorage::onDrops);
+        NeoForge.EVENT_BUS.addListener(TableLapis::onOpen);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onFall);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentEntities::onExperience);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onBreathe);

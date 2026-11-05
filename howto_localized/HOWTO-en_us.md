@@ -3124,17 +3124,19 @@ An item made enchantable that has no enchantability of its own needs `enchantabi
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Key             | Required | Value                     | Default     | What it does                                                                                                           |
-| --------------- | -------- | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `enchantLevels` | no       | list of 3 ints, 1 or more | rolled      | The level each slot, top to bottom, asks for in place of the rolled one; its enchantments are rolled at that level too |
-| `enchantCosts`  | no       | list of 3 ints, 0 or more | `[1, 2, 3]` | The levels each slot takes once picked                                                                                 |
-| `lapisCosts`    | no       | list of 3 ints, 1 or more | `[1, 2, 3]` | The lapis lazuli each slot takes once picked, which must be in the table                                               |
-| `shelfCap`      | no       | int, 0 or more            | `15`        | How many bookshelves count at most                                                                                     |
-| `shelfPower`    | no       | number from 0 to 16       | `1`         | What each bookshelf counts as, rounded over the lot                                                                    |
+| Key             | Required | Value                     | Default     | What it does                                                                                                                                                                                                                                   |
+| --------------- | -------- | ------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | no       | list of 3 ints, 1 or more | rolled      | The level each slot, top to bottom, asks for in place of the rolled one; its enchantments are rolled at that level too                                                                                                                         |
+| `enchantCosts`  | no       | list of 3 ints, 0 or more | `[1, 2, 3]` | The levels each slot takes once picked                                                                                                                                                                                                         |
+| `lapisCosts`    | no       | list of 3 ints, 1 or more | `[1, 2, 3]` | The lapis lazuli each slot takes once picked, which must be in the table                                                                                                                                                                       |
+| `shelfCap`      | no       | int, 0 or more            | `15`        | How many bookshelves count at most                                                                                                                                                                                                             |
+| `shelfPower`    | no       | number from 0 to 16       | `1`         | What each bookshelf counts as, rounded over the lot                                                                                                                                                                                            |
+| `keepLapis`     | no       | boolean                   | `false`     | `true` and lapis lazuli put in the table stays there when the screen closes, shown to the next player who opens it and dropped when the table is broken. A second player opening the table while someone else has it open finds the slot empty |
 
 The screen still draws vanilla's one, two and three beside the slots and in their tooltips; what the table checks and takes follows the file.
 

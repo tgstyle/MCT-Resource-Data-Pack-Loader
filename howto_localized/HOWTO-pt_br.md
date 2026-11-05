@@ -3124,17 +3124,19 @@ Um item que se tornou encantável sem ter encantabilidade própria também preci
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Chave           | Obrigatória | Valor                              | Padrão      | O que faz                                                                                                                    |
-| --------------- | ----------- | ---------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `enchantLevels` | não         | lista de 3 ints, cada um 1 ou mais | sorteado    | O nível que cada slot, de cima para baixo, pede no lugar do sorteado; os encantamentos dele também são sorteados nesse nível |
-| `enchantCosts`  | não         | lista de 3 ints, cada um 0 ou mais | `[1, 2, 3]` | Os níveis que cada slot tira ao ser escolhido                                                                                |
-| `lapisCosts`    | não         | lista de 3 ints, cada um 1 ou mais | `[1, 2, 3]` | O lápis-lazúli que cada slot tira ao ser escolhido, que precisa estar na mesa                                                |
-| `shelfCap`      | não         | int, 0 ou mais                     | `15`        | Quantas estantes de livros contam no máximo                                                                                  |
-| `shelfPower`    | não         | número de 0 a 16                   | `1`         | Quanto cada estante de livros conta, arredondado sobre o total                                                               |
+| Chave           | Obrigatória | Valor                              | Padrão      | O que faz                                                                                                                                                                                                                                 |
+| --------------- | ----------- | ---------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | não         | lista de 3 ints, cada um 1 ou mais | sorteado    | O nível que cada slot, de cima para baixo, pede no lugar do sorteado; os encantamentos dele também são sorteados nesse nível                                                                                                              |
+| `enchantCosts`  | não         | lista de 3 ints, cada um 0 ou mais | `[1, 2, 3]` | Os níveis que cada slot tira ao ser escolhido                                                                                                                                                                                             |
+| `lapisCosts`    | não         | lista de 3 ints, cada um 1 ou mais | `[1, 2, 3]` | O lápis-lazúli que cada slot tira ao ser escolhido, que precisa estar na mesa                                                                                                                                                             |
+| `shelfCap`      | não         | int, 0 ou mais                     | `15`        | Quantas estantes de livros contam no máximo                                                                                                                                                                                               |
+| `shelfPower`    | não         | número de 0 a 16                   | `1`         | Quanto cada estante de livros conta, arredondado sobre o total                                                                                                                                                                            |
+| `keepLapis`     | não         | booleano                           | `false`     | `true` faz o lápis-lazúli posto na mesa ficar lá quando a tela fecha, aparecer para o próximo jogador que a abrir e cair quando a mesa é quebrada. Um segundo jogador que abrir a mesa enquanto outro a tem aberta encontra o slot vazio. |
 
 A tela continua mostrando o um, dois e três do vanilla ao lado dos slots e nas dicas deles; o que a mesa confere e tira segue o arquivo.
 
