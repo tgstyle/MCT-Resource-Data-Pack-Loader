@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.common.util.TableMath;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.integration.CompatHooks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.VanillaClients;
@@ -22,6 +23,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockEnchantmentTable;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentData;
 import net.minecraft.item.ItemStack;
@@ -36,11 +39,13 @@ public final class ContentEnchanting {
     private static final String ENCHANTMENTS = "enchantments";
     private static final String SHELF_CAP = "shelfCap";
     private static final String SHELF_POWER = "shelfPower";
+    private static final String KEEP_LAPIS = "keepLapis";
     private static final float MOST_SHELF_POWER = 16.0F;
     private static final Map<Enchantment, TableMath.Shape> SHAPES = new HashMap<>();
     private static final List<Fit> FITS = new ArrayList<>();
     private static int shelfCap = TableMath.VANILLA_SHELF_CAP;
     private static float shelfPower = 1.0F;
+    private static boolean keepLapis;
 
     private ContentEnchanting() {}
 
@@ -63,6 +68,7 @@ public final class ContentEnchanting {
         FITS.clear();
         shelfCap = TableMath.VANILLA_SHELF_CAP;
         shelfPower = 1.0F;
+        keepLapis = false;
         AnvilCosts.resetTable();
         if (!Config.data.enchanting) { return; }
         Json.eachFile(PackManager.ENCHANTING, "enchanting file", (key, contents) -> {
@@ -75,12 +81,15 @@ public final class ContentEnchanting {
         boolean opening = false;
         for (Fit fit : FITS) { opening |= Boolean.TRUE.equals(fit.enchantable); }
         AnvilCosts.serveOpening(opening);
+        Block table = ForgeRegistries.BLOCKS.getValue(new ResourceLocation("enchanting_table"));
+        if (keepLapis && table != null && table.getClass() != BlockEnchantmentTable.class && CompatHooks.present("quark", "Quark's Matrix Enchanting replaces the enchanting table and keeps its own lapis, so keepLapis is left out")) { keepLapis = false; }
         if (!SHAPES.isEmpty()) { Summary.info("enchanting", "Loaded table settings for " + SHAPES.size() + " enchantment(s)"); }
         if (!FITS.isEmpty()) { Summary.info("enchanting", "Loaded " + FITS.size() + " enchanting table item rule(s)"); }
         if (AnvilCosts.levels().length > 0) { Summary.info("enchanting", "The enchanting table asks for levels " + Arrays.toString(AnvilCosts.levels())); }
         if (AnvilCosts.servedPaid().length > 0) { Summary.info("enchanting", "The enchanting table takes levels " + Arrays.toString(AnvilCosts.servedPaid())); }
         if (AnvilCosts.servedLapis().length > 0) { Summary.info("enchanting", "The enchanting table takes lapis " + Arrays.toString(AnvilCosts.servedLapis())); }
         if (shelfCap != TableMath.VANILLA_SHELF_CAP || shelfPower != 1.0F) { Summary.info("enchanting", "Bookshelves count up to " + shelfCap + " power at " + shelfPower + " each"); }
+        if (keepLapis) { Summary.info("enchanting", "Lapis placed in the enchanting table stays there when the screen closes"); }
     }
 
     private static void shape(ResourceLocation key, JsonObject json) {
@@ -132,6 +141,7 @@ public final class ContentEnchanting {
         int cap = whole(key, json, SHELF_CAP, 0);
         if (cap >= 0) { shelfCap = cap; }
         if (json.has(SHELF_POWER)) { shelfPower = Json.ranged(json, SHELF_POWER, 1.0F, 0.0F, MOST_SHELF_POWER, key); }
+        if (json.has(KEEP_LAPIS)) { keepLapis = Json.getBoolean(json, KEEP_LAPIS, false); }
     }
 
     private static int whole(ResourceLocation key, JsonObject json, String name, int least) {
@@ -169,6 +179,8 @@ public final class ContentEnchanting {
     }
 
     private static int enchantability(ItemStack stack, @Nullable Fit fit) { return fit != null && fit.enchantability >= 0 ? fit.enchantability : stack.getItem().getItemEnchantability(stack); }
+
+    public static boolean keepLapis() { return keepLapis; }
 
     @Nullable public static Integer level(Random rand, int slot, int power, ItemStack stack) {
         Fit fit = fitOf(stack);

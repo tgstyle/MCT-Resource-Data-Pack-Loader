@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.mixin.block;
 
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockEnchantmentTable;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
@@ -11,6 +14,7 @@ import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Block.class) public abstract class MixinBlock {
@@ -19,5 +23,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         float multiplier = ContentHardness.blastAt(world.getBlockState(pos), pos.getX(), pos.getY(), pos.getZ());
         if (multiplier == 1.0F) { return; }
         cir.setReturnValue(cir.getReturnValue() * multiplier);
+    }
+
+    @Inject(method = "breakBlock", at = @At("HEAD")) private void rdpl$tableLapis(World worldIn, BlockPos pos, IBlockState state, CallbackInfo ci) {
+        if ((Object) this instanceof BlockEnchantmentTable) { TableLapis.broken(worldIn, pos); }
     }
 }

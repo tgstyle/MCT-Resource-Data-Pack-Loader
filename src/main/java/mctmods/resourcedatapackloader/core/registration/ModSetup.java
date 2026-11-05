@@ -31,6 +31,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchanting;
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
@@ -298,6 +299,7 @@ public class ModSetup {
         if (ContentAffixes.load()) { MinecraftForge.EVENT_BUS.register(ContentAffixes.class); }
         if (anvils || ContentAffixes.sockets()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
         ContentEnchanting.load();
+        MinecraftForge.EVENT_BUS.register(TableLapis.class);
         if (ContentHardness.load()) {
             ContentHardness.resolve();
             MinecraftForge.EVENT_BUS.register(ContentHardness.class);

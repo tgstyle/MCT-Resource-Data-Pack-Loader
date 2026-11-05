@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.inventory;
 
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.enchantments.ContentEnchanting;
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 
 import java.util.List;
 import java.util.Random;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ContainerEnchantment.class) public abstract class MixinContainerEnchantment {
@@ -62,4 +64,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Redirect(method = "enchantItem", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/player/EntityPlayer;experienceLevel:I", opcode = Opcodes.GETFIELD, ordinal = 0)) private int rdpl$levelsAgainstCost(EntityPlayer player) { return player.experienceLevel - AnvilCosts.paid(player.world.isRemote, rdpl$slot) + rdpl$slot + 1; }
 
     @ModifyArg(method = "enchantItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/EntityPlayer;onEnchant(Lnet/minecraft/item/ItemStack;I)V"), index = 1) private int rdpl$levelsPaid(int vanilla) { return AnvilCosts.paid(false, vanilla - 1); }
+
+    @Inject(method = "onContainerClosed", at = @At("HEAD")) private void rdpl$keepLapis(EntityPlayer playerIn, CallbackInfo ci) { TableLapis.closing((ContainerEnchantment) (Object) this, world); }
 }

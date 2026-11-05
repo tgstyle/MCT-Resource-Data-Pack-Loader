@@ -3269,17 +3269,21 @@ Předmět, který se stal očarovatelným a nemá vlastní očarovatelnost, pot�
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Klíč            | Povinné | Hodnota                                 | Výchozí     | Co dělá                                                                                                  |
-| --------------- | ------- | --------------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
-| `enchantLevels` | ne      | seznam 3 celých čísel, každé 1 nebo víc | losováno    | Úroveň, kterou každé pole shora dolů žádá místo vylosované; jeho očarování se losují také na této úrovni |
-| `enchantCosts`  | ne      | seznam 3 celých čísel, každé 0 nebo víc | `[1, 2, 3]` | Úrovně, které každé pole po výběru vezme                                                                 |
-| `lapisCosts`    | ne      | seznam 3 celých čísel, každé 1 nebo víc | `[1, 2, 3]` | Lapis lazuli, který každé pole po výběru vezme a který musí být ve stole                                 |
-| `shelfCap`      | ne      | celé číslo, 0 nebo víc                  | `15`        | Kolik knihoven se nejvýš počítá                                                                          |
-| `shelfPower`    | ne      | číslo od 0 do 16                        | `1`         | Kolik se počítá za každou knihovnu, zaokrouhleno za všechny dohromady                                    |
+| Klíč            | Povinné | Hodnota                                 | Výchozí     | Co dělá                                                                                                                                                                                                                                         |
+| --------------- | ------- | --------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | ne      | seznam 3 celých čísel, každé 1 nebo víc | losováno    | Úroveň, kterou každé pole shora dolů žádá místo vylosované; jeho očarování se losují také na této úrovni                                                                                                                                        |
+| `enchantCosts`  | ne      | seznam 3 celých čísel, každé 0 nebo víc | `[1, 2, 3]` | Úrovně, které každé pole po výběru vezme                                                                                                                                                                                                        |
+| `lapisCosts`    | ne      | seznam 3 celých čísel, každé 1 nebo víc | `[1, 2, 3]` | Lapis lazuli, který každé pole po výběru vezme a který musí být ve stole                                                                                                                                                                        |
+| `shelfCap`      | ne      | celé číslo, 0 nebo víc                  | `15`        | Kolik knihoven se nejvýš počítá                                                                                                                                                                                                                 |
+| `shelfPower`    | ne      | číslo od 0 do 16                        | `1`         | Kolik se počítá za každou knihovnu, zaokrouhleno za všechny dohromady                                                                                                                                                                           |
+| `keepLapis`     | ne      | boolean                                 | `false`     | `true` znamená, že lapis vložený do stolu v něm zůstane, když se obrazovka zavře; ukáže se dalšímu hráči, který stůl otevře, a při rozbití stolu vypadne. Druhý hráč, který stůl otevře, zatímco ho má otevřený někdo jiný, najde slot prázdný. |
+
+Při zapnutém Quark's Matrix Enchanting si Quarkův vlastní stůl ponechá svůj lapis a `keepLapis` se nepoužije.
 
 Obrazovka dál kreslí vanilla jedničku, dvojku a trojku vedle polí a v jejich popiscích; co stůl kontroluje a bere, se řídí souborem.
 
