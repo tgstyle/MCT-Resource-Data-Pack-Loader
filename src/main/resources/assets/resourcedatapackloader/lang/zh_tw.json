@@ -410,5 +410,12 @@
   "rdpl.socket.filled": "插槽：%s",
   "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]",
   "rdpl.compressed": "壓縮%s",
-  "rdpl.compressed.layered": "壓縮%s (x%d)"
+  "rdpl.compressed.layered": "壓縮%s (x%d)",
+  "rdpl.sleep.setSpawn": "設為重生點",
+  "rdpl.sleep.noPreviousBed": "沒有先前的重生點：這張床將成為你的重生點",
+  "rdpl.sleep.currentSpawnBed": "這張床是你目前的重生點",
+  "rdpl.sleep.spawnUpdated": "重生點已更新為這張床",
+  "rdpl.sleep.asleep": "%1$s 已入睡（%2$s/%3$s）",
+  "rdpl.sleep.awake": "%1$s 起床了（%2$s/%3$s 人在睡覺）",
+  "rdpl.sleep.morning": "長夜已過，早安！"
 }

@@ -75,6 +75,11 @@ public final class ContentGameRules {
         if (!BY_DIMENSION.isEmpty()) { Summary.info("gamerules", "Applying separate game rules in dimension(s) " + BY_DIMENSION.keySet()); }
     }
 
+    public static boolean names(Level level, GameRules.Key<?> rule) {
+        Map<String, String> wanted = BY_DIMENSION.get(level.dimension().location());
+        return wanted != null && wanted.containsKey(rule.getId());
+    }
+
     @Nullable public static GameRules forLevel(Level level) {
         if (BY_DIMENSION.isEmpty()) { return null; }
         GameRules held = BUILT.get(level);

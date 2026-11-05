@@ -410,5 +410,12 @@
   "rdpl.socket.filled": "Engaste: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <lados|nome>|dice <lançamento>|advantage [lançamento]|disadvantage [lançamento]|pick <jogador|team [equipa]>|deck <draw|shuffle|left> <nome>|teamroll [lançamento]|tiebreak [objetivo]|last [contagem]|pass> [store <objetivo>] [audience <self|team|all|radius <blocos>|silent>]",
   "rdpl.compressed": "Bloco comprimido: %s",
-  "rdpl.compressed.layered": "Bloco comprimido: %s (x%d)"
+  "rdpl.compressed.layered": "Bloco comprimido: %s (x%d)",
+  "rdpl.sleep.setSpawn": "Definir reaparecimento",
+  "rdpl.sleep.noPreviousBed": "Sem ponto de reaparecimento anterior: esta cama passa a ser o teu",
+  "rdpl.sleep.currentSpawnBed": "Esta cama é o teu ponto de reaparecimento",
+  "rdpl.sleep.spawnUpdated": "Ponto de reaparecimento mudado para esta cama",
+  "rdpl.sleep.asleep": "%1$s está a dormir (%2$s de %3$s)",
+  "rdpl.sleep.awake": "%1$s levantou-se (%2$s de %3$s a dormir)",
+  "rdpl.sleep.morning": "A noite passou. Bom dia!"
 }

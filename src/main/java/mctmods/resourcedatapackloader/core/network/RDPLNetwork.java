@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.core.network;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.TalkScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.gui.hud.CardOverlay;
@@ -21,6 +22,7 @@ import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.items.ContentWornContainers;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.BossBackgroundDef;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Says;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 
@@ -40,7 +42,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class RDPLNetwork {
     private static final ResourceLocation NAME = ResourceDataPackLoader.id("main");
-    private static final String VERSION = "2";
+    private static final String VERSION = "3";
     @Nullable private static SimpleChannel channel;
 
     private RDPLNetwork() {}
@@ -88,7 +90,16 @@ public final class RDPLNetwork {
         channel.messageBuilder(GatesMessage.class, 16, NetworkDirection.PLAY_TO_CLIENT).encoder(GatesMessage::write).decoder(GatesMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ContentSkyGates.receive(message.ids()); } }).add();
         channel.messageBuilder(UnlocksMessage.class, 17, NetworkDirection.PLAY_TO_CLIENT).encoder(UnlocksMessage::write).decoder(UnlocksMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } }).add();
         channel.messageBuilder(WeightMessage.class, 18, NetworkDirection.PLAY_TO_CLIENT).encoder(WeightMessage::write).decoder(WeightMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } }).add();
+        channel.messageBuilder(BedStateMessage.class, 19, NetworkDirection.PLAY_TO_CLIENT).encoder(BedStateMessage::write).decoder(BedStateMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { SleepScreen.receive(message.state()); } }).add();
+        channel.messageBuilder(SetSpawnMessage.class, 20, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> {}).decoder(buf -> new SetSpawnMessage()).consumerMainThread((message, context) -> {
+            ServerPlayer player = context.get().getSender();
+            if (player != null) { ContentSleep.setSpawnHere(player); }
+        }).add();
     }
+
+    public static void setSpawnHere() { if (channel != null) { channel.sendToServer(new SetSpawnMessage()); } }
+
+    public static void sendBedState(ServerPlayer player, byte state) { toPlayer(player, new BedStateMessage(state)); }
 
     public static void openWorn() { if (channel != null) { channel.sendToServer(new OpenWornMessage()); } }
 

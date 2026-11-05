@@ -116,6 +116,7 @@ public final class PackManager {
     public static final String VEINS = "veins";
     public static final String CARRIES = "carries";
     public static final String ENCHANTING = "enchanting";
+    public static final String SLEEPING = "sleeping";
     public static final String ORDERS = "orders";
     public static final String RANKS = "ranks";
     private static final String DISABLED_SUFFIX = ".disabled";

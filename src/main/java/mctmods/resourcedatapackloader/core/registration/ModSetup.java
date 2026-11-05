@@ -92,6 +92,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
 import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.ContentDisabledEvents;
@@ -348,6 +349,11 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentSleepingBags::onLocationCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentSleepingBags::onWakeUp);
         MinecraftForge.EVENT_BUS.addListener(ContentSleepingBags::onLogout);
+        MinecraftForge.EVENT_BUS.addListener(ContentSleep::onSetSpawn);
+        MinecraftForge.EVENT_BUS.addListener(ContentSleep::onSleepInBed);
+        MinecraftForge.EVENT_BUS.addListener(ContentSleep::onWakeUp);
+        MinecraftForge.EVENT_BUS.addListener(ContentSleep::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(ContentSleep::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(CardEvents::onDimension);
         MinecraftForge.EVENT_BUS.addListener(CardEvents::onRespawn);
         MinecraftForge.EVENT_BUS.addListener(CardEvents::onDeath);
@@ -498,6 +504,7 @@ public class ModSetup {
                 ContentAnvils.load();
                 ContentAffixes.load();
                 ContentEnchanting.load();
+                ContentSleep.load();
                 if (ContentOrders.load()) {
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onPlace);

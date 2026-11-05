@@ -410,5 +410,12 @@
   "rdpl.socket.filled": "ソケット: %s",
   "rdpl.game.usage": "/rdplserver game <coin|die <面数|名前>|dice <ロール>|advantage [ロール]|disadvantage [ロール]|pick <プレイヤー|team [チーム]>|deck <draw|shuffle|left> <名前>|teamroll [ロール]|tiebreak [目標]|last [件数]|pass> [store <目標>] [audience <self|team|all|radius <ブロック>|silent>]",
   "rdpl.compressed": "圧縮%s",
-  "rdpl.compressed.layered": "圧縮%s (x%d)"
+  "rdpl.compressed.layered": "圧縮%s (x%d)",
+  "rdpl.sleep.setSpawn": "リスポーン地点に設定",
+  "rdpl.sleep.noPreviousBed": "以前のリスポーン地点はありません：このベッドがリスポーン地点になります",
+  "rdpl.sleep.currentSpawnBed": "このベッドが現在のリスポーン地点です",
+  "rdpl.sleep.spawnUpdated": "リスポーン地点をこのベッドに変更しました",
+  "rdpl.sleep.asleep": "%1$sが眠りました（%3$s人中%2$s人）",
+  "rdpl.sleep.awake": "%1$sが起きました（%3$s人中%2$s人が睡眠中）",
+  "rdpl.sleep.morning": "夜が明けました。おはようございます！"
 }

@@ -12,9 +12,11 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTr
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnChunks;
+import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.Packet;
@@ -23,8 +25,10 @@ import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.server.players.SleepStatus;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -79,6 +83,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ContentWeatherCycle.hurry(level, serverLevelData, steps);
         return type.hasSkyLight();
     }
+
+    @Redirect(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughSleeping(I)Z")) private boolean rdpl$enoughAsleep(SleepStatus status, int requiredSleepPercentage) { return ContentSleep.leavesOut() ? ContentSleep.enoughAsleep((ServerLevel) (Object) this, requiredSleepPercentage) : status.areEnoughSleeping(requiredSleepPercentage); }
+
+    @Redirect(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/players/SleepStatus;areEnoughDeepSleeping(ILjava/util/List;)Z")) private boolean rdpl$enoughDeepAsleep(SleepStatus status, int requiredSleepPercentage, List<ServerPlayer> sleepingPlayers) { return ContentSleep.leavesOut() || status.areEnoughDeepSleeping(requiredSleepPercentage, sleepingPlayers); }
 
     @Redirect(method = "tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;isThundering()Z")) private boolean rdpl$lightningWhereAllowed(ServerLevel level) {
         DimensionTraitsDef traits = ContentWeather.traits(level);
