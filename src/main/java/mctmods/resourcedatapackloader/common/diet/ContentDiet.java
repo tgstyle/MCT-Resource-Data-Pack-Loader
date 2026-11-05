@@ -16,6 +16,8 @@ import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +35,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
@@ -47,8 +50,13 @@ public final class ContentDiet {
     private static final Map<UUID, float[]> BEFORE = new HashMap<>();
     private static final Map<PotionEffectDef, MobEffect> EFFECTS = new IdentityHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static final String KEEP_ON_DEATH = "keepOnDeath";
+    private static final float FULL = 20.0F;
     @Nullable private static DietDef diet;
     @Nullable private static ResourceLocation source;
+    @Nullable private static ResourceLocation keepSource;
+    @Nullable private static float[] keepFood;
+    @Nullable private static float[] keepSaturation;
     private static boolean ran;
 
     private ContentDiet() {}
@@ -62,16 +70,23 @@ public final class ContentDiet {
     private static void reload() {
         diet = null;
         source = null;
+        keepFood = null;
+        keepSaturation = null;
         EFFECTS.clear();
         GENERATION.stale();
         Json.eachObject(PackManager.DIETS, "diet file", ContentDiet::read);
         DietDef loaded = diet;
         if (loaded != null) { Summary.info("diet", "Food variety from " + source + ": remembers " + loaded.memory() + " meal(s)"); }
+        float[] keptFood = keepFood;
+        float[] keptSaturation = keepSaturation;
+        if (keptFood != null && keptSaturation != null) { Summary.info("dietKeep", "A death respawn keeps hunger " + keptFood[0] + " to " + keptFood[1] + " and saturation " + keptSaturation[0] + " to " + keptSaturation[1]); }
         Standing.settleDiet();
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
+        if (json.has(KEEP_ON_DEATH)) { readKeep(key, json); }
+        if (onlyKeep(json)) { return; }
         if (diet != null) {
             ContentLog.LOGGER.error("Diet file {} found, but {} already set the diet, so the first one is kept", key, source);
             return;
@@ -81,6 +96,52 @@ public final class ContentDiet {
             source = key;
         }
         catch (IllegalArgumentException ex) { ContentLog.LOGGER.error("Diet file {} is skipped: {}", key, ex.getMessage()); }
+    }
+
+    private static boolean onlyKeep(JsonObject json) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) { if (!KEEP_ON_DEATH.equals(entry.getKey()) && !"requires".equals(entry.getKey())) { return false; } }
+        return true;
+    }
+
+    private static void readKeep(ResourceLocation key, JsonObject json) {
+        if (keepFood != null) {
+            ContentLog.LOGGER.error("Diet file {} sets keepOnDeath, but {} already did, so the first one is kept", key, keepSource);
+            return;
+        }
+        if (!json.get(KEEP_ON_DEATH).isJsonObject()) {
+            ContentLog.LOGGER.error("Diet file {} has a keepOnDeath that is not an object, so it is ignored", key);
+            return;
+        }
+        JsonObject keep = json.getAsJsonObject(KEEP_ON_DEATH);
+        keepFood = range(keep, "hunger", key);
+        keepSaturation = range(keep, "saturation", key);
+        keepSource = key;
+    }
+
+    private static float[] range(JsonObject keep, String member, ResourceLocation owner) {
+        float[] full = {0.0F, FULL};
+        if (!keep.has(member)) { return full; }
+        JsonArray pair = Json.getJsonArray(keep, member, new JsonArray());
+        if (pair.size() == 2) {
+            float low = Json.asFloat(pair.get(0), member, -1.0F);
+            float high = Json.asFloat(pair.get(1), member, -1.0F);
+            if (low >= 0.0F && low <= high && high <= FULL) { return new float[] {low, high}; }
+        }
+        ContentLog.LOGGER.error("Diet file {} keepOnDeath {} must be [min, max] within 0 to {}, so the full range is used", owner, member, (int) FULL);
+        return full;
+    }
+
+    public static void onClone(PlayerEvent.Clone event) {
+        if (!event.isWasDeath() || !(event.getEntity() instanceof ServerPlayer)) { return; }
+        if (GENERATION.stale()) { reload(); }
+        float[] keptFood = keepFood;
+        float[] keptSaturation = keepSaturation;
+        if (keptFood == null || keptSaturation == null) { return; }
+        FoodData old = event.getOriginal().getFoodData();
+        int level = Math.round(Mth.clamp(old.getFoodLevel(), keptFood[0], keptFood[1]));
+        FoodData food = event.getEntity().getFoodData();
+        food.setFoodLevel(level);
+        food.setSaturation(Math.min(level, Mth.clamp(old.getSaturationLevel(), keptSaturation[0], keptSaturation[1])));
     }
 
     public static void onTick(LivingEntityUseItemEvent.Tick event) {

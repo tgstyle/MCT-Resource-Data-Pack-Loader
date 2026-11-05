@@ -225,6 +225,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, LivingEntityUseItemEvent.Tick.class, ContentDiet::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentDiet::onFinish);
         MinecraftForge.EVENT_BUS.addListener(ContentDiet::onLogout);
+        MinecraftForge.EVENT_BUS.addListener(ContentDiet::onClone);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onLogin);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onLogout);
         MinecraftForge.EVENT_BUS.addListener(ContentHearts::onClone);
