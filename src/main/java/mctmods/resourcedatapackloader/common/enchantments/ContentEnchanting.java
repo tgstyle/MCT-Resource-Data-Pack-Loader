@@ -36,11 +36,13 @@ public final class ContentEnchanting {
     private static final String ENCHANTMENTS = "enchantments";
     private static final String SHELF_CAP = "shelfCap";
     private static final String SHELF_POWER = "shelfPower";
+    private static final String KEEP_LAPIS = "keepLapis";
     private static final float MOST_SHELF_POWER = 16.0F;
     private static final Map<Enchantment, TableMath.Shape> SHAPES = new HashMap<>();
     private static final List<Fit> FITS = new ArrayList<>();
     private static int shelfCap = TableMath.VANILLA_SHELF_CAP;
     private static float shelfPower = 1.0F;
+    private static boolean keepLapis;
 
     private ContentEnchanting() {}
 
@@ -51,6 +53,7 @@ public final class ContentEnchanting {
         FITS.clear();
         shelfCap = TableMath.VANILLA_SHELF_CAP;
         shelfPower = 1.0F;
+        keepLapis = false;
         AnvilCosts.resetTable();
         if (Config.data.enchantingOff()) { return; }
         Json.eachFile(PackManager.ENCHANTING, "enchanting file", (key, contents) -> {
@@ -69,6 +72,7 @@ public final class ContentEnchanting {
         if (AnvilCosts.servedPaid().length > 0) { Summary.info("enchanting", "The enchanting table takes levels " + Arrays.toString(AnvilCosts.servedPaid())); }
         if (AnvilCosts.servedLapis().length > 0) { Summary.info("enchanting", "The enchanting table takes lapis " + Arrays.toString(AnvilCosts.servedLapis())); }
         if (shelfCap != TableMath.VANILLA_SHELF_CAP || shelfPower != 1.0F) { Summary.info("enchanting", "Bookshelves count up to " + shelfCap + " power at " + shelfPower + " each"); }
+        if (keepLapis) { Summary.info("enchanting", "Lapis placed in the enchanting table stays there when the screen closes"); }
     }
 
     @Nullable private static Enchantment named(String named) {
@@ -125,6 +129,7 @@ public final class ContentEnchanting {
         int cap = whole(key, json, SHELF_CAP, 0);
         if (cap >= 0) { shelfCap = cap; }
         if (json.has(SHELF_POWER)) { shelfPower = Json.ranged(json, SHELF_POWER, 1.0F, 0.0F, MOST_SHELF_POWER, key); }
+        if (json.has(KEEP_LAPIS)) { keepLapis = Json.getBoolean(json, KEEP_LAPIS, false); }
     }
 
     private static int whole(ResourceLocation key, JsonObject json, String name, int least) {
@@ -162,6 +167,8 @@ public final class ContentEnchanting {
     }
 
     private static int enchantability(ItemStack stack, @Nullable Fit fit) { return fit != null && fit.enchantability >= 0 ? fit.enchantability : stack.getEnchantmentValue(); }
+
+    public static boolean keepLapis() { return keepLapis; }
 
     @Nullable public static Integer level(RandomSource rand, int slot, int power, ItemStack stack) {
         Fit fit = fitOf(stack);

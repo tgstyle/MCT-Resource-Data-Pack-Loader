@@ -1,13 +1,16 @@
 package mctmods.resourcedatapackloader.mixin.world.level.block.state;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
+import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EnchantmentTableBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,6 +18,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BlockBehaviour.BlockStateBase.class) public abstract class BlockStateBaseMixin {
@@ -39,5 +43,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (!ContentHardness.anyRolls() || !((Object) this instanceof BlockState state)) { return; }
         Long held = ContentHardness.modelSeed(state, pos);
         if (held != null) { cir.setReturnValue(held); }
+    }
+
+    @Inject(method = "onRemove", at = @At("HEAD")) private void rdpl$tableLapis(Level level, BlockPos pos, BlockState newState, boolean movedByPiston, CallbackInfo ci) {
+        if (getBlock() instanceof EnchantmentTableBlock && !newState.is(getBlock())) { TableLapis.broken(level, pos); }
     }
 }
