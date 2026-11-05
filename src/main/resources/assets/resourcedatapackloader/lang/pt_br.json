@@ -221,6 +221,8 @@
   "rdpl.command.talkfar": "%s está longe demais desse interlocutor para conversar",
   "rdpl.command.cardshown": "A carta %s foi mostrada a %s jogador(es)",
   "rdpl.command.noraid": "Nenhuma invasão se chama %s",
+  "rdpl.command.dumpregistry": "%s blocos e %s itens gravados em %s",
+  "rdpl.command.dumpfailed": "Não foi possível gravar %s: %s",
   "rdpl.command.raidbusy": "A invasão %s não pode começar ali, já há outra em andamento por perto",
   "rdpl.command.raidstarted": "A invasão %s começa em %s, %s, %s",
   "rdpl.command.noenvironment": "A dimensão %s não tem nenhum ambiente chamado %s",

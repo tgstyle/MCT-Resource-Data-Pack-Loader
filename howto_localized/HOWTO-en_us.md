@@ -9686,6 +9686,7 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl biome`, `biome list`, `biome list all`                                                              | none         | Every biome that can generate, and its id; `all` includes the ones nothing can generate                                                                                                                          |
 | `/rdpl biome here`                                                                                         | none         | The biome you are standing in: its name, id and number                                                                                                                                                           |
 | `/rdpl biome find <name>`                                                                                  | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below                                                                                                                             |
+| `/rdpl dumpregistry`                                                                                       | the server's | Linked. Writes every block and item id, with block states and default components, to `rdpl-registry.txt` in the server's folder                                                                                  |
 | `/rdpl team`                                                                                               | none         | The sides a pack has fielded, each in its own color, which one you are on, and who leads each                                                                                                                    |
 | `/rdpl team join [name]`                                                                                   | none         | Join a side. Only sides a pack leaves open are offered; a side of mobs is not one you can walk into. Leave the name off to be put on the side with the fewest players among those that take players by `balance` |
 | `/rdpl team leave`                                                                                         | none         | Leave the side you are on                                                                                                                                                                                        |
@@ -9707,15 +9708,16 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 *server commands*
 
-| Command                                 | Level | What it does                                                                                |
-| --------------------------------------- | ----- | ------------------------------------------------------------------------------------------- |
-| `/rdplserver reload`                    | 3     | Rescan the server's folder and reload everything, then field the teams and objectives again |
-| `/rdplserver list`                      | 3     | Every pack the server loaded, its priority, and what it contains                            |
-| `/rdplserver which <namespace:path>`    | 3     | Which pack provides a given file, and which packs it shadows                                |
-| `/rdplserver unused`                    | 3     | Files in the server's packs that nothing has asked for                                      |
-| `/rdplserver config unused`             | 3     | Option files in `rdploader/config` that no installed pack defines any more                  |
-| `/rdplserver config prune`              | 3     | Delete those files                                                                          |
-| `/rdplserver pixelmap <namespace:path>` | 3     | What a pixel map came out as                                                                |
+| Command                                 | Level | What it does                                                                                                                                                  |
+| --------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                    | 3     | Rescan the server's folder and reload everything, then field the teams and objectives again                                                                   |
+| `/rdplserver list`                      | 3     | Every pack the server loaded, its priority, and what it contains                                                                                              |
+| `/rdplserver which <namespace:path>`    | 3     | Which pack provides a given file, and which packs it shadows                                                                                                  |
+| `/rdplserver unused`                    | 3     | Files in the server's packs that nothing has asked for                                                                                                        |
+| `/rdplserver config unused`             | 3     | Option files in `rdploader/config` that no installed pack defines any more                                                                                    |
+| `/rdplserver config prune`              | 3     | Delete those files                                                                                                                                            |
+| `/rdplserver dumpregistry`              | 3     | Writes every block and item id, with block states and default components, to `rdpl-registry.txt` in the server's folder, and replies with the path and counts |
+| `/rdplserver pixelmap <namespace:path>` | 3     | What a pixel map came out as                                                                                                                                  |
 
 `/rdplserver reload` now also reloads spawn locks and recipe locks.
 

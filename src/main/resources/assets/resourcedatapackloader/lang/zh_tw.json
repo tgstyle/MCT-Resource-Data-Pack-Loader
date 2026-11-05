@@ -221,6 +221,8 @@
   "rdpl.command.talkfar": "%s 離該說話者太遠，無法交談",
   "rdpl.command.cardshown": "已將卡片 %s 展示給 %s 位玩家",
   "rdpl.command.noraid": "沒有名為 %s 的突襲",
+  "rdpl.command.dumpregistry": "已將 %s 個方塊和 %s 個物品寫入 %s",
+  "rdpl.command.dumpfailed": "無法寫入 %s：%s",
   "rdpl.command.raidbusy": "突襲 %s 無法在此開始，附近已有另一場突襲正在進行",
   "rdpl.command.raidstarted": "突襲 %s 在 %s, %s, %s 開始",
   "rdpl.command.noenvironment": "維度 %s 沒有名為 %s 的環境",

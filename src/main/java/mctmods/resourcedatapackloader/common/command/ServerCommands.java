@@ -56,6 +56,7 @@ public final class ServerCommands {
                     CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.introreplay"));
                     return 1;
                 }))
+                .then(RegistryDumpCommand.dump(NAME))
                 .then(CommandRaids.raid(NAME))
                 .then(OwnershipCommand.ownership(NAME))
                 .then(ClaimCommand.claim(NAME))

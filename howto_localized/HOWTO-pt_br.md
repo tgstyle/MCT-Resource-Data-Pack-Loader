@@ -9686,6 +9686,7 @@ Todas as pastas, com o caminho completo e um link para a seção que as descreve
 | `/rdpl biome`, `biome list`, `biome list all`                                                              | nenhum        | Todo bioma que pode ser gerado, e o seu id; `all` inclui os que nada pode gerar                                                                                                                                                          |
 | `/rdpl biome here`                                                                                         | nenhum        | O bioma em que você está: o seu nome, id e número                                                                                                                                                                                        |
 | `/rdpl biome find <name>`                                                                                  | o do servidor | Vinculado. Repassado palavra por palavra ao `/rdplserver`, que decide, então veja a tabela abaixo                                                                                                                                        |
+| `/rdpl dumpregistry`                                                                                       | o do servidor | Encaminhado. Grava cada id de bloco e item, com estados de bloco e componentes padrão, em `rdpl-registry.txt` na pasta do servidor                                                                                                       |
 | `/rdpl team`                                                                                               | nenhum        | As equipes que um pacote formou, cada uma na sua cor, em qual você está e quem lidera cada uma                                                                                                                                           |
 | `/rdpl team join [name]`                                                                                   | nenhum        | Entra numa equipe. Só são oferecidas as equipes que um pacote deixa abertas; uma equipe de mobs não é uma em que se possa entrar. Sem o nome, você é colocado na equipe com menos jogadores entre as que aceitam jogadores por `balance` |
 | `/rdpl team leave`                                                                                         | nenhum        | Sai da equipe em que você está                                                                                                                                                                                                           |
@@ -9707,15 +9708,16 @@ Em um servidor dedicado, `/rdplserver` faz o mesmo pela cópia da pasta do próp
 
 *comandos de servidor*
 
-| Comando                                 | Nível | O que faz                                                                                       |
-| --------------------------------------- | ----- | ----------------------------------------------------------------------------------------------- |
-| `/rdplserver reload`                    | 3     | Reexamina a pasta do servidor e recarrega tudo, depois escala as equipes e os objetivos de novo |
-| `/rdplserver list`                      | 3     | Todo pacote que o servidor carregou, a sua prioridade e o que ele contém                        |
-| `/rdplserver which <namespace:path>`    | 3     | Qual pacote fornece um dado arquivo, e quais pacotes ele sobrepõe                               |
-| `/rdplserver unused`                    | 3     | Arquivos dos pacotes do servidor que nada requisitou                                            |
-| `/rdplserver config unused`             | 3     | Arquivos de opções em `rdploader/config` que nenhum pacote instalado define mais                |
-| `/rdplserver config prune`              | 3     | Exclui esses arquivos                                                                           |
-| `/rdplserver pixelmap <namespace:path>` | 3     | No que um mapa de pixels resultou                                                               |
+| Comando                                 | Nível | O que faz                                                                                                                                                      |
+| --------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                    | 3     | Reexamina a pasta do servidor e recarrega tudo, depois escala as equipes e os objetivos de novo                                                                |
+| `/rdplserver list`                      | 3     | Todo pacote que o servidor carregou, a sua prioridade e o que ele contém                                                                                       |
+| `/rdplserver which <namespace:path>`    | 3     | Qual pacote fornece um dado arquivo, e quais pacotes ele sobrepõe                                                                                              |
+| `/rdplserver unused`                    | 3     | Arquivos dos pacotes do servidor que nada requisitou                                                                                                           |
+| `/rdplserver config unused`             | 3     | Arquivos de opções em `rdploader/config` que nenhum pacote instalado define mais                                                                               |
+| `/rdplserver config prune`              | 3     | Exclui esses arquivos                                                                                                                                          |
+| `/rdplserver dumpregistry`              | 3     | Grava cada id de bloco e item, com estados de bloco e componentes padrão, em `rdpl-registry.txt` na pasta do servidor, e responde com o caminho e as contagens |
+| `/rdplserver pixelmap <namespace:path>` | 3     | No que um mapa de pixels resultou                                                                                                                              |
 
 `/rdplserver reload` agora também recarrega os bloqueios de spawn e os bloqueios de receitas.
 

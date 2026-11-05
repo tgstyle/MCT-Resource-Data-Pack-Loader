@@ -221,6 +221,8 @@
   "rdpl.command.talkfar": "%s je příliš daleko od tohoto mluvčího",
   "rdpl.command.cardshown": "Karta %s ukázána %s hráčům",
   "rdpl.command.noraid": "Žádný nájezd nemá název %s",
+  "rdpl.command.dumpregistry": "Zapsáno %s bloků a %s předmětů do %s",
+  "rdpl.command.dumpfailed": "Nelze zapsat %s: %s",
   "rdpl.command.raidbusy": "Nájezd %s tam nemůže začít, v okolí už jeden probíhá",
   "rdpl.command.raidstarted": "Nájezd %s začíná na %s, %s, %s",
   "rdpl.command.noenvironment": "Dimenze %s nemá žádné prostředí s názvem %s",

@@ -221,6 +221,8 @@
   "rdpl.command.talkfar": "%s is too far from that speaker to talk",
   "rdpl.command.cardshown": "Showed the card %s to %s player(s)",
   "rdpl.command.noraid": "No raid is named %s",
+  "rdpl.command.dumpregistry": "Wrote %s blocks and %s items to %s",
+  "rdpl.command.dumpfailed": "Could not write %s: %s",
   "rdpl.command.raidbusy": "Raid %s cannot begin there, another raid is already underway nearby",
   "rdpl.command.raidstarted": "Raid %s begins at %s, %s, %s",
   "rdpl.command.noenvironment": "Dimension %s has no environment named %s",

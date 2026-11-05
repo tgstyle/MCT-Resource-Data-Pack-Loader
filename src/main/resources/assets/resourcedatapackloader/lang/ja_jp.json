@@ -221,6 +221,8 @@
   "rdpl.command.talkfar": "%s は話し相手から遠すぎて会話できません",
   "rdpl.command.cardshown": "カード %s を %s 人のプレイヤーに表示しました",
   "rdpl.command.noraid": "%s という名前の襲撃はありません",
+  "rdpl.command.dumpregistry": "ブロック %s 件とアイテム %s 件を %s に書き出しました",
+  "rdpl.command.dumpfailed": "%s を書き込めませんでした: %s",
   "rdpl.command.raidbusy": "襲撃 %s はそこで始められません。近くで別の襲撃がすでに進行中です",
   "rdpl.command.raidstarted": "襲撃 %s が %s, %s, %s で始まりました",
   "rdpl.command.noenvironment": "ディメンション %s に %s という名前の環境はありません",

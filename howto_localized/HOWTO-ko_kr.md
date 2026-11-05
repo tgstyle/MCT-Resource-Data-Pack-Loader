@@ -9686,6 +9686,7 @@ Blast Plaster는 폭발 뒤의 동작을 처리합니다. 구덩이를 블록 �
 | `/rdpl biome`, `biome list`, `biome list all`                                                              | 없음      | 생성될 수 있는 모든 생물 군계와 그 id입니다. `all`은 아무것도 생성할 수 없는 것도 포함합니다                                                                                        |
 | `/rdpl biome here`                                                                                         | 없음      | 내가 서 있는 생물 군계의 이름, id, 번호입니다                                                                                                                                       |
 | `/rdpl biome find <name>`                                                                                  | 서버의 것 | 연결됩니다. 말 그대로 `/rdplserver`에 넘겨져 그쪽이 판단하므로 아래 표를 참고하세요                                                                                                 |
+| `/rdpl dumpregistry`                                                                                       | 서버의 것 | 연결됨. 모든 블록과 아이템 ID를 블록 상태와 기본 컴포넌트와 함께 서버 폴더의 `rdpl-registry.txt`에 기록합니다                                                                       |
 | `/rdpl team`                                                                                               | 없음      | 팩이 내세운 편들과 각각의 색, 자신이 속한 편, 각 편의 리더                                                                                                                          |
 | `/rdpl team join [name]`                                                                                   | 없음      | 편에 참가합니다. 팩이 열어 둔 편만 제시되며, 몹으로 이루어진 편에는 걸어 들어갈 수 없습니다. 이름을 생략하면 `balance`로 플레이어를 받는 편 중 플레이어가 가장 적은 편에 배정됩니다 |
 | `/rdpl team leave`                                                                                         | 없음      | 속한 편에서 나갑니다                                                                                                                                                                |
@@ -9707,15 +9708,16 @@ Blast Plaster는 폭발 뒤의 동작을 처리합니다. 구덩이를 블록 �
 
 *서버 명령어*
 
-| 명령어                                  | 레벨 | 설명                                                                       |
-| --------------------------------------- | ---- | -------------------------------------------------------------------------- |
-| `/rdplserver reload`                    | 3    | 서버의 폴더를 다시 훑고 모든 것을 리로드한 뒤, 팀과 목표를 다시 편성합니다 |
-| `/rdplserver list`                      | 3    | 서버가 로드한 모든 팩과 그 우선순위, 담고 있는 것입니다                    |
-| `/rdplserver which <namespace:path>`    | 3    | 주어진 파일을 제공하는 팩과, 그 팩이 가리는 팩입니다                       |
-| `/rdplserver unused`                    | 3    | 서버의 팩 안에서 아직 아무도 요청하지 않은 파일입니다                      |
-| `/rdplserver config unused`             | 3    | 설치된 어떤 팩도 더는 정의하지 않는 `rdploader/config`의 옵션 파일입니다   |
-| `/rdplserver config prune`              | 3    | 그 파일을 삭제합니다                                                       |
-| `/rdplserver pixelmap <namespace:path>` | 3    | 픽셀 맵이 어떻게 나왔는지입니다                                            |
+| 명령어                                  | 레벨 | 설명                                                                                                                          |
+| --------------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                    | 3    | 서버의 폴더를 다시 훑고 모든 것을 리로드한 뒤, 팀과 목표를 다시 편성합니다                                                    |
+| `/rdplserver list`                      | 3    | 서버가 로드한 모든 팩과 그 우선순위, 담고 있는 것입니다                                                                       |
+| `/rdplserver which <namespace:path>`    | 3    | 주어진 파일을 제공하는 팩과, 그 팩이 가리는 팩입니다                                                                          |
+| `/rdplserver unused`                    | 3    | 서버의 팩 안에서 아직 아무도 요청하지 않은 파일입니다                                                                         |
+| `/rdplserver config unused`             | 3    | 설치된 어떤 팩도 더는 정의하지 않는 `rdploader/config`의 옵션 파일입니다                                                      |
+| `/rdplserver config prune`              | 3    | 그 파일을 삭제합니다                                                                                                          |
+| `/rdplserver dumpregistry`              | 3    | 모든 블록과 아이템 ID를 블록 상태와 기본 컴포넌트와 함께 서버 폴더의 `rdpl-registry.txt`에 기록하고 경로와 개수를 알려 줍니다 |
+| `/rdplserver pixelmap <namespace:path>` | 3    | 픽셀 맵이 어떻게 나왔는지입니다                                                                                               |
 
 `/rdplserver reload`는 이제 스폰 잠금과 레시피 잠금도 다시 불러옵니다.
 

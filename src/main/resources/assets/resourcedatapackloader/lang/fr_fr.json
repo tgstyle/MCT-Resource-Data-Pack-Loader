@@ -221,6 +221,8 @@
   "rdpl.command.talkfar": "%s est trop loin de cet interlocuteur",
   "rdpl.command.cardshown": "Carte %s montrée à %s joueur(s)",
   "rdpl.command.noraid": "Aucun raid ne s'appelle %s",
+  "rdpl.command.dumpregistry": "%s blocs et %s objets écrits dans %s",
+  "rdpl.command.dumpfailed": "Impossible d'écrire %s : %s",
   "rdpl.command.raidbusy": "Le raid %s ne peut pas commencer là, un autre est déjà en cours à proximité",
   "rdpl.command.raidstarted": "Le raid %s commence en %s, %s, %s",
   "rdpl.command.noenvironment": "La dimension %s n'a aucun environnement nommé %s",
