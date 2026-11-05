@@ -229,6 +229,8 @@
   "rdpl.command.environments": "Dimensione %s: %s (ambienti: %s)",
   "rdpl.command.noenvironments": "Nessuna dimensione definisce ambienti",
   "rdpl.command.weight": "%s trasporta %s su %s, livello %s, velocità %s",
+  "rdpl.command.dumpregistry": "Scritti %s blocchi e %s oggetti in %s",
+  "rdpl.command.dumpfailed": "Impossibile scrivere %s: %s",
   "rdpl.command.weightoff": "I pesi degli oggetti sono disattivati",
   "rdpl.command.ownershipoff": "La proprietà dei blocchi è disattivata",
   "rdpl.command.ownershiprunning": "Una scansione della proprietà è già in corso",

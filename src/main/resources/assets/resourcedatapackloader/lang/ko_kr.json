@@ -229,6 +229,8 @@
   "rdpl.command.environments": "차원 %s: %s (환경: %s)",
   "rdpl.command.noenvironments": "환경을 정의한 차원이 없습니다",
   "rdpl.command.weight": "%s의 소지 무게 %s/%s, 단계 %s, 속도 %s",
+  "rdpl.command.dumpregistry": "블록 %s개와 아이템 %s개를 %s에 기록했습니다",
+  "rdpl.command.dumpfailed": "%s을(를) 쓸 수 없습니다: %s",
   "rdpl.command.weightoff": "아이템 무게가 꺼져 있습니다",
   "rdpl.command.ownershipoff": "블록 소유권이 꺼져 있습니다",
   "rdpl.command.ownershiprunning": "소유권 검사가 이미 진행 중입니다",

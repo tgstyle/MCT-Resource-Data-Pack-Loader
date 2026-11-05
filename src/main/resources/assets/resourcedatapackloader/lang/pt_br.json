@@ -229,6 +229,8 @@
   "rdpl.command.environments": "Dimensão %s: %s (ambientes: %s)",
   "rdpl.command.noenvironments": "Nenhuma dimensão define ambientes",
   "rdpl.command.weight": "%s carrega %s de %s, nível %s, velocidade %s",
+  "rdpl.command.dumpregistry": "%s blocos e %s itens gravados em %s",
+  "rdpl.command.dumpfailed": "Não foi possível gravar %s: %s",
   "rdpl.command.weightoff": "Os pesos dos itens estão desativados",
   "rdpl.command.ownershipoff": "A posse de blocos está desligada",
   "rdpl.command.ownershiprunning": "Já há uma varredura de posse em andamento",

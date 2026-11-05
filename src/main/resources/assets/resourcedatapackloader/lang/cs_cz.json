@@ -229,6 +229,8 @@
   "rdpl.command.environments": "Dimenze %s: %s (prostředí: %s)",
   "rdpl.command.noenvironments": "Žádná dimenze neurčuje prostředí",
   "rdpl.command.weight": "%s nese %s z %s, stupeň %s, rychlost %s",
+  "rdpl.command.dumpregistry": "Zapsáno %s bloků a %s předmětů do %s",
+  "rdpl.command.dumpfailed": "Nelze zapsat %s: %s",
   "rdpl.command.weightoff": "Hmotnost předmětů je vypnutá",
   "rdpl.command.ownershipoff": "Vlastnictví bloků je vypnuté",
   "rdpl.command.ownershiprunning": "Kontrola vlastnictví už běží",

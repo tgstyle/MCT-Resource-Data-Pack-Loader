@@ -229,6 +229,8 @@
   "rdpl.command.environments": "维度 %s：%s（环境：%s）",
   "rdpl.command.noenvironments": "没有维度定义环境",
   "rdpl.command.weight": "%s 负重 %s/%s，等级 %s，速度 %s",
+  "rdpl.command.dumpregistry": "已将 %s 个方块和 %s 个物品写入 %s",
+  "rdpl.command.dumpfailed": "无法写入 %s：%s",
   "rdpl.command.weightoff": "物品重量已关闭",
   "rdpl.command.ownershipoff": "方块归属已关闭",
   "rdpl.command.ownershiprunning": "归属检查已在运行",

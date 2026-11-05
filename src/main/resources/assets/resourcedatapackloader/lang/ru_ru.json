@@ -224,6 +224,8 @@
   "rdpl.command.environments": "Измерение %s: %s (окружения: %s)",
   "rdpl.command.noenvironments": "Ни одно измерение не задаёт окружений",
   "rdpl.command.weight": "%s несёт %s из %s, ступень %s, скорость %s",
+  "rdpl.command.dumpregistry": "Записано блоков: %s, предметов: %s, в файл %s",
+  "rdpl.command.dumpfailed": "Не удалось записать %s: %s",
   "rdpl.command.weightoff": "Вес предметов отключён",
   "rdpl.command.ownershipoff": "Владение блоками выключено",
   "rdpl.command.ownershiprunning": "Проверка владения уже запущена",

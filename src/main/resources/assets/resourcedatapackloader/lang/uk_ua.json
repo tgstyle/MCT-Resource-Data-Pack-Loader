@@ -229,6 +229,8 @@
   "rdpl.command.environments": "Вимір %s: %s (оточення: %s)",
   "rdpl.command.noenvironments": "Жоден вимір не задає оточень",
   "rdpl.command.weight": "%s несе %s з %s, щабель %s, швидкість %s",
+  "rdpl.command.dumpregistry": "Записано блоків: %s, предметів: %s, у файл %s",
+  "rdpl.command.dumpfailed": "Не вдалося записати %s: %s",
   "rdpl.command.weightoff": "Вагу предметів вимкнено",
   "rdpl.command.ownershipoff": "Володіння блоками вимкнено",
   "rdpl.command.ownershiprunning": "Перевірка володіння вже виконується",

@@ -229,6 +229,8 @@
   "rdpl.command.environments": "Dimension %s: %s (environments: %s)",
   "rdpl.command.noenvironments": "No dimension names any environments",
   "rdpl.command.weight": "%s carries %s of %s, tier %s, speed %s",
+  "rdpl.command.dumpregistry": "Wrote %s blocks and %s items to %s",
+  "rdpl.command.dumpfailed": "Could not write %s: %s",
   "rdpl.command.weightoff": "Item weights are off",
   "rdpl.command.ownershipoff": "Block ownership is off",
   "rdpl.command.ownershiprunning": "An ownership sweep is already running",

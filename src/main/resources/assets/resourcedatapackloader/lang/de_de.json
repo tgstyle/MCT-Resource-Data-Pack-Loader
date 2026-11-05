@@ -224,6 +224,8 @@
   "rdpl.command.environments": "Dimension %s: %s (Umgebungen: %s)",
   "rdpl.command.noenvironments": "Keine Dimension legt Umgebungen fest",
   "rdpl.command.weight": "%s trägt %s von %s, Stufe %s, Tempo %s",
+  "rdpl.command.dumpregistry": "%s Blöcke und %s Items nach %s geschrieben",
+  "rdpl.command.dumpfailed": "%s konnte nicht geschrieben werden: %s",
   "rdpl.command.weightoff": "Itemgewichte sind deaktiviert",
   "rdpl.command.ownershipoff": "Block-Besitz ist aus",
   "rdpl.command.ownershiprunning": "Eine Besitzprüfung läuft bereits",

@@ -229,6 +229,8 @@
   "rdpl.command.environments": "Dimensión %s: %s (entornos: %s)",
   "rdpl.command.noenvironments": "Ninguna dimensión define entornos",
   "rdpl.command.weight": "%s lleva %s de %s, nivel %s, velocidad %s",
+  "rdpl.command.dumpregistry": "Se escribieron %s bloques y %s ítems en %s",
+  "rdpl.command.dumpfailed": "No se pudo escribir %s: %s",
   "rdpl.command.weightoff": "Los pesos de objetos están desactivados",
   "rdpl.command.ownershipoff": "La propiedad de bloques está desactivada",
   "rdpl.command.ownershiprunning": "Ya hay un barrido de propiedad en curso",

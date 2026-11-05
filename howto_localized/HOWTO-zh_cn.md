@@ -9693,6 +9693,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdpl pixelmap <namespace:path>`                                                                          | 无       | [像素图](#以像素图编写的纹理) 的最终结果，逐字符显示                                                                                  |
 | `/rdpl biome`、`biome list`、`biome list all`                                                              | 无       | 每个可以生成的生物群系及其 id；`all` 包括那些无法生成的                                                                               |
 | `/rdpl biome here`                                                                                         | 无       | 你所在的生物群系：其名称、id 和编号                                                                                                   |
+| `/rdpl dumpregistry`                                                                                       | 服务器的 | 已链接。将每个方块和物品的 ID 连同方块状态和默认数据组件写入服务器文件夹中的 `rdpl-registry.txt`                                      |
 | `/rdpl biome find <name>`                                                                                  | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表                                                                                  |
 | `/rdpl team`                                                                                               | 无       | 资源包设置的各个阵营，各以自己的颜色显示，你所在的阵营，以及每个阵营的领队                                                            |
 | `/rdpl team join [name]`                                                                                   | 无       | 加入一个阵营。只提供资源包保持开放的阵营；由生物组成的阵营不能加入。省略名称时，会被分配到按 `balance` 接纳玩家的阵营中人数最少的一方 |
@@ -9715,15 +9716,16 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 
 *服务器命令*
 
-| 命令                                    | 等级 | 作用                                                      |
-| --------------------------------------- | ---- | --------------------------------------------------------- |
-| `/rdplserver reload`                    | 3    | 重新扫描服务器的文件夹并重载一切，然后再次编排队伍和目标  |
-| `/rdplserver list`                      | 3    | 服务器加载的每个资源包、其优先级及其内容                  |
-| `/rdplserver which <namespace:path>`    | 3    | 由哪个资源包提供指定文件，以及它遮蔽了哪些资源包          |
-| `/rdplserver unused`                    | 3    | 服务器资源包中尚无任何东西请求过的文件                    |
-| `/rdplserver config unused`             | 3    | `rdploader/config` 中已没有任何已安装资源包定义的选项文件 |
-| `/rdplserver config prune`              | 3    | 删除这些文件                                              |
-| `/rdplserver pixelmap <namespace:path>` | 3    | 像素图的最终结果                                          |
+| 命令                                    | 等级 | 作用                                                                                                       |
+| --------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                    | 3    | 重新扫描服务器的文件夹并重载一切，然后再次编排队伍和目标                                                   |
+| `/rdplserver list`                      | 3    | 服务器加载的每个资源包、其优先级及其内容                                                                   |
+| `/rdplserver which <namespace:path>`    | 3    | 由哪个资源包提供指定文件，以及它遮蔽了哪些资源包                                                           |
+| `/rdplserver dumpregistry`              | 3    | 将每个方块和物品的 ID 连同方块状态和默认数据组件写入服务器文件夹中的 `rdpl-registry.txt`，并回复路径和数量 |
+| `/rdplserver unused`                    | 3    | 服务器资源包中尚无任何东西请求过的文件                                                                     |
+| `/rdplserver config unused`             | 3    | `rdploader/config` 中已没有任何已安装资源包定义的选项文件                                                  |
+| `/rdplserver config prune`              | 3    | 删除这些文件                                                                                               |
+| `/rdplserver pixelmap <namespace:path>` | 3    | 像素图的最终结果                                                                                           |
 
 `/rdplserver reload` 现在也会重新加载生成锁和配方锁。
 

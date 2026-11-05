@@ -46,6 +46,10 @@ public final class ServerCommands {
                             CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.pregenmaking", total, at.getX() >> 4, at.getZ() >> 4, source.getLevel().dimension().location().toString()));
                             return 1;
                         })))
+                .then(Commands.literal("dumpregistry").requires(source -> source.hasPermission(CommandShared.OPERATOR)).executes(context -> {
+                    CommandShared.ran(context.getSource(), NAME, "dumpregistry");
+                    return RegistryDumpCommand.run(context.getSource());
+                }))
                 .then(Commands.literal("intro").executes(context -> {
                     CommandSourceStack source = context.getSource();
                     CommandShared.ran(source, NAME, "intro");

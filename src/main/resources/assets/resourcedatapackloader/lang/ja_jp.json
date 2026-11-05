@@ -229,6 +229,8 @@
   "rdpl.command.environments": "ディメンション %s: %s (環境: %s)",
   "rdpl.command.noenvironments": "環境を定義しているディメンションはありません",
   "rdpl.command.weight": "%sの所持重量は%s／%s、段階%s、速度%s",
+  "rdpl.command.dumpregistry": "ブロック %s 件とアイテム %s 件を %s に書き出しました",
+  "rdpl.command.dumpfailed": "%s を書き込めませんでした: %s",
   "rdpl.command.weightoff": "アイテムの重量は無効です",
   "rdpl.command.ownershipoff": "ブロックの所有権は無効です",
   "rdpl.command.ownershiprunning": "所有権の走査はすでに実行中です",
