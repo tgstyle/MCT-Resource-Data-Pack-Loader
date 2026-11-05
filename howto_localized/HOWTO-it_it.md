@@ -3127,17 +3127,19 @@ Un oggetto reso incantabile che non ha un'incantabilità propria ha bisogno anch
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Chiave          | Obbligatorio | Valore                               | Predefinito | Cosa fa                                                                                                                                    |
-| --------------- | ------------ | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `enchantLevels` | no           | elenco di 3 interi, ciascuno 1 o più | estratto    | Il livello che ogni slot, dall'alto in basso, chiede al posto di quello estratto; anche i suoi incantesimi vengono estratti a quel livello |
-| `enchantCosts`  | no           | elenco di 3 interi, ciascuno 0 o più | `[1, 2, 3]` | I livelli che ogni slot toglie una volta scelto                                                                                            |
-| `lapisCosts`    | no           | elenco di 3 interi, ciascuno 1 o più | `[1, 2, 3]` | I lapislazzuli che ogni slot toglie una volta scelto, che devono trovarsi nel tavolo                                                       |
-| `shelfCap`      | no           | intero, 0 o più                      | `15`        | Quante librerie contano al massimo                                                                                                         |
-| `shelfPower`    | no           | numero da 0 a 16                     | `1`         | Quanto conta ogni libreria, arrotondato sul totale                                                                                         |
+| Chiave          | Obbligatorio | Valore                               | Predefinito | Cosa fa                                                                                                                                                                                                                                                                        |
+| --------------- | ------------ | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enchantLevels` | no           | elenco di 3 interi, ciascuno 1 o più | estratto    | Il livello che ogni slot, dall'alto in basso, chiede al posto di quello estratto; anche i suoi incantesimi vengono estratti a quel livello                                                                                                                                     |
+| `enchantCosts`  | no           | elenco di 3 interi, ciascuno 0 o più | `[1, 2, 3]` | I livelli che ogni slot toglie una volta scelto                                                                                                                                                                                                                                |
+| `lapisCosts`    | no           | elenco di 3 interi, ciascuno 1 o più | `[1, 2, 3]` | I lapislazzuli che ogni slot toglie una volta scelto, che devono trovarsi nel tavolo                                                                                                                                                                                           |
+| `shelfCap`      | no           | intero, 0 o più                      | `15`        | Quante librerie contano al massimo                                                                                                                                                                                                                                             |
+| `shelfPower`    | no           | numero da 0 a 16                     | `1`         | Quanto conta ogni libreria, arrotondato sul totale                                                                                                                                                                                                                             |
+| `keepLapis`     | no           | booleano                             | `false`     | `true` fa sì che i lapislazzuli messi nel tavolo restino lì quando lo schermo si chiude, vengano mostrati al giocatore successivo che lo apre e cadano quando il tavolo viene rotto. Un secondo giocatore che apre il tavolo mentre un altro lo ha aperto trova lo slot vuoto. |
 
 Lo schermo mostra ancora l'uno, due e tre di vanilla accanto agli slot e nei loro suggerimenti; ciò che il tavolo controlla e toglie segue il file.
 

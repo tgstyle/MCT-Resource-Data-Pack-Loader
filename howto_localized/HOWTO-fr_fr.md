@@ -3127,17 +3127,19 @@ Un objet rendu enchantable qui n'a pas d'enchantabilité propre a aussi besoin d
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Clé             | Requis | Valeur                               | Défaut       | Rôle                                                                                                                                        |
-| --------------- | ------ | ------------------------------------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `enchantLevels` | non    | liste de 3 entiers, chacun 1 ou plus | tiré au sort | Le niveau que demande chaque emplacement, de haut en bas, à la place de celui tiré au sort ; ses enchantements sont aussi tirés à ce niveau |
-| `enchantCosts`  | non    | liste de 3 entiers, chacun 0 ou plus | `[1, 2, 3]`  | Les niveaux que prend chaque emplacement une fois choisi                                                                                    |
-| `lapisCosts`    | non    | liste de 3 entiers, chacun 1 ou plus | `[1, 2, 3]`  | Le lapis-lazuli que prend chaque emplacement une fois choisi, qui doit se trouver dans la table                                             |
-| `shelfCap`      | non    | entier, 0 ou plus                    | `15`         | Combien de bibliothèques comptent au plus                                                                                                   |
-| `shelfPower`    | non    | nombre de 0 à 16                     | `1`          | Ce que compte chaque bibliothèque, arrondi sur l'ensemble                                                                                   |
+| Clé             | Requis | Valeur                               | Défaut       | Rôle                                                                                                                                                                                                                                                        |
+| --------------- | ------ | ------------------------------------ | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | non    | liste de 3 entiers, chacun 1 ou plus | tiré au sort | Le niveau que demande chaque emplacement, de haut en bas, à la place de celui tiré au sort ; ses enchantements sont aussi tirés à ce niveau                                                                                                                 |
+| `enchantCosts`  | non    | liste de 3 entiers, chacun 0 ou plus | `[1, 2, 3]`  | Les niveaux que prend chaque emplacement une fois choisi                                                                                                                                                                                                    |
+| `lapisCosts`    | non    | liste de 3 entiers, chacun 1 ou plus | `[1, 2, 3]`  | Le lapis-lazuli que prend chaque emplacement une fois choisi, qui doit se trouver dans la table                                                                                                                                                             |
+| `shelfCap`      | non    | entier, 0 ou plus                    | `15`         | Combien de bibliothèques comptent au plus                                                                                                                                                                                                                   |
+| `shelfPower`    | non    | nombre de 0 à 16                     | `1`          | Ce que compte chaque bibliothèque, arrondi sur l'ensemble                                                                                                                                                                                                   |
+| `keepLapis`     | non    | booléen                              | `false`      | `true` fait que le lapis-lazuli posé dans la table y reste quand l'écran se ferme, s'affiche au joueur suivant qui l'ouvre et tombe quand la table est cassée. Un second joueur qui ouvre la table alors qu'un autre l'a ouverte trouve l'emplacement vide. |
 
 L'écran affiche toujours le un, deux et trois de vanilla à côté des emplacements et dans leurs infobulles ; ce que la table vérifie et prend suit le fichier.
 

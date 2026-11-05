@@ -16,6 +16,7 @@
         "world.entity.monster.breeze.BreezeMixin",
         "world.level.block.state.BlockStateMixin",
         "world.level.block.state.BlockStateBaseMixin",
+        "world.level.block.entity.BlockEntityMixin",
         "world.entity.player.PlayerMixin",
         "world.inventory.AnvilMenuMixin",
         "world.inventory.EnchantmentMenuMixin",

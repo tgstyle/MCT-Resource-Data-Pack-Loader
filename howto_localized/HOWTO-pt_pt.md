@@ -3127,17 +3127,19 @@ Um item tornado encantável sem encantabilidade própria precisa também de `enc
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Chave           | Obrigatório | Valor                                          | Predefinição | O que faz                                                                                                                      |
-| --------------- | ----------- | ---------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------ |
-| `enchantLevels` | não         | lista de 3 números inteiros, cada um 1 ou mais | sorteado     | O nível que cada ranhura, de cima para baixo, pede em vez do sorteado; os seus encantamentos são também sorteados a esse nível |
-| `enchantCosts`  | não         | lista de 3 números inteiros, cada um 0 ou mais | `[1, 2, 3]`  | Os níveis que cada ranhura tira quando é escolhida                                                                             |
-| `lapisCosts`    | não         | lista de 3 números inteiros, cada um 1 ou mais | `[1, 2, 3]`  | O lápis-lazúli que cada ranhura tira quando é escolhida, que tem de estar na mesa                                              |
-| `shelfCap`      | não         | número inteiro, 0 ou mais                      | `15`         | Quantas estantes contam no máximo                                                                                              |
-| `shelfPower`    | não         | número de 0 a 16                               | `1`          | Quanto conta cada estante, arredondado sobre o total                                                                           |
+| Chave           | Obrigatório | Valor                                          | Predefinição | O que faz                                                                                                                                                                                                                                  |
+| --------------- | ----------- | ---------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enchantLevels` | não         | lista de 3 números inteiros, cada um 1 ou mais | sorteado     | O nível que cada ranhura, de cima para baixo, pede em vez do sorteado; os seus encantamentos são também sorteados a esse nível                                                                                                             |
+| `enchantCosts`  | não         | lista de 3 números inteiros, cada um 0 ou mais | `[1, 2, 3]`  | Os níveis que cada ranhura tira quando é escolhida                                                                                                                                                                                         |
+| `lapisCosts`    | não         | lista de 3 números inteiros, cada um 1 ou mais | `[1, 2, 3]`  | O lápis-lazúli que cada ranhura tira quando é escolhida, que tem de estar na mesa                                                                                                                                                          |
+| `shelfCap`      | não         | número inteiro, 0 ou mais                      | `15`         | Quantas estantes contam no máximo                                                                                                                                                                                                          |
+| `shelfPower`    | não         | número de 0 a 16                               | `1`          | Quanto conta cada estante, arredondado sobre o total                                                                                                                                                                                       |
+| `keepLapis`     | não         | booleano                                       | `false`      | `true` faz o lápis-lazúli colocado na mesa ficar lá quando o ecrã fecha, aparecer ao jogador seguinte que a abrir e cair quando a mesa é partida. Um segundo jogador que abra a mesa enquanto outro a tem aberta encontra a ranhura vazia. |
 
 O ecrã continua a mostrar o um, dois e três do vanilla ao lado das ranhuras e nas suas descrições; o que a mesa verifica e tira segue o ficheiro.
 

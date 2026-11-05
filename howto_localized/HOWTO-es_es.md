@@ -3127,17 +3127,19 @@ Un ítem que se vuelve encantable sin tener encantabilidad propia necesita tambi
   "enchantCosts": [1, 2, 3],
   "lapisCosts": [1, 2, 3],
   "shelfCap": 20,
-  "shelfPower": 1.5
+  "shelfPower": 1.5,
+  "keepLapis": true
 }
 ```
 
-| Clave           | Obligatorio | Valor                                | Por defecto | Qué hace                                                                                                                 |
-| --------------- | ----------- | ------------------------------------ | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `enchantLevels` | no          | lista de 3 enteros, cada uno 1 o más | al azar     | El nivel que pide cada ranura, de arriba abajo, en lugar del sorteado; sus encantamientos se sortean también a ese nivel |
-| `enchantCosts`  | no          | lista de 3 enteros, cada uno 0 o más | `[1, 2, 3]` | Los niveles que quita cada ranura al elegirla                                                                            |
-| `lapisCosts`    | no          | lista de 3 enteros, cada uno 1 o más | `[1, 2, 3]` | El lapislázuli que quita cada ranura al elegirla, que debe estar en la mesa                                              |
-| `shelfCap`      | no          | entero, 0 o más                      | `15`        | Cuántas librerías cuentan como máximo                                                                                    |
-| `shelfPower`    | no          | número de 0 a 16                     | `1`         | Cuánto cuenta cada librería, redondeado sobre el total                                                                   |
+| Clave           | Obligatorio | Valor                                | Por defecto | Qué hace                                                                                                                                                                                                                                                 |
+| --------------- | ----------- | ------------------------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantLevels` | no          | lista de 3 enteros, cada uno 1 o más | al azar     | El nivel que pide cada ranura, de arriba abajo, en lugar del sorteado; sus encantamientos se sortean también a ese nivel                                                                                                                                 |
+| `enchantCosts`  | no          | lista de 3 enteros, cada uno 0 o más | `[1, 2, 3]` | Los niveles que quita cada ranura al elegirla                                                                                                                                                                                                            |
+| `lapisCosts`    | no          | lista de 3 enteros, cada uno 1 o más | `[1, 2, 3]` | El lapislázuli que quita cada ranura al elegirla, que debe estar en la mesa                                                                                                                                                                              |
+| `shelfCap`      | no          | entero, 0 o más                      | `15`        | Cuántas librerías cuentan como máximo                                                                                                                                                                                                                    |
+| `shelfPower`    | no          | número de 0 a 16                     | `1`         | Cuánto cuenta cada librería, redondeado sobre el total                                                                                                                                                                                                   |
+| `keepLapis`     | no          | booleano                             | `false`     | `true` hace que el lapislázuli puesto en la mesa se quede ahí al cerrar la pantalla, se muestre al siguiente jugador que la abra y se suelte al romper la mesa. Un segundo jugador que la abra mientras otro la tiene abierta encuentra la ranura vacía. |
 
 La pantalla sigue dibujando el uno, dos y tres de vanilla junto a las ranuras y en sus descripciones emergentes; lo que la mesa comprueba y quita sigue al archivo.
 
