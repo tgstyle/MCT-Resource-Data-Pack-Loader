@@ -9700,6 +9700,7 @@ Chaque dossier, avec son chemin complet et un lien vers la section qui le décri
 | `/rdpl pixelmap <namespace:path>`                                                                          | aucun            | Ce qu'une [carte de pixels](#textures-écrites-sous-forme-de-cartes-de-pixels) a donné, caractère par caractère                                                                                                                                               |
 | `/rdpl biome`, `biome list`, `biome list all`                                                              | aucun            | Chaque biome qui peut se générer, et son id ; `all` inclut ceux que rien ne peut générer                                                                                                                                                                     |
 | `/rdpl biome here`                                                                                         | aucun            | Le biome dans lequel vous vous trouvez : son nom, son id et son numéro                                                                                                                                                                                       |
+| `/rdpl dumpregistry`                                                                                       | celui du serveur | Liée. Écrit chaque identifiant de bloc et d'objet, avec ses états de bloc et son NBT par défaut, dans `rdpl-registry.txt` à la racine du serveur                                                                                                             |
 | `/rdpl biome find <name>`                                                                                  | celui du serveur | Liée. Transmise mot pour mot à `/rdplserver`, qui décide, voir donc le tableau ci-dessous                                                                                                                                                                    |
 | `/rdpl team`                                                                                               | aucun            | Les camps qu'un pack a mis en place, chacun dans sa couleur, celui dans lequel vous êtes, et qui dirige chacun                                                                                                                                               |
 | `/rdpl team join [name]`                                                                                   | aucun            | Rejoindre un camp. Seuls les camps que le pack laisse ouverts sont proposés ; un camp de mobs n'est pas un camp que l'on peut rejoindre. Sans nom, vous êtes placé dans le camp qui a le moins de joueurs parmi ceux qui acceptent des joueurs par `balance` |
@@ -9722,15 +9723,16 @@ Sur un serveur dédié, `/rdplserver` fait la même chose pour la copie du dossi
 
 *commandes serveur*
 
-| Commande                                | Niveau | Rôle                                                                                            |
-| --------------------------------------- | ------ | ----------------------------------------------------------------------------------------------- |
-| `/rdplserver reload`                    | 3      | Réanalyse le dossier du serveur et recharge tout, puis reconstitue les équipes et les objectifs |
-| `/rdplserver list`                      | 3      | Chaque pack que le serveur a chargé, sa priorité et ce qu'il contient                           |
-| `/rdplserver which <namespace:path>`    | 3      | Quel pack fournit un fichier donné, et quels packs il masque                                    |
-| `/rdplserver unused`                    | 3      | Les fichiers des packs du serveur que rien n'a demandés                                         |
-| `/rdplserver config unused`             | 3      | Les fichiers d'options de `rdploader/config` qu'aucun pack installé ne définit plus             |
-| `/rdplserver config prune`              | 3      | Supprime ces fichiers                                                                           |
-| `/rdplserver pixelmap <namespace:path>` | 3      | Ce qu'une carte de pixels a donné                                                               |
+| Commande                                | Niveau | Rôle                                                                                                                                                                               |
+| --------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                    | 3      | Réanalyse le dossier du serveur et recharge tout, puis reconstitue les équipes et les objectifs                                                                                    |
+| `/rdplserver list`                      | 3      | Chaque pack que le serveur a chargé, sa priorité et ce qu'il contient                                                                                                              |
+| `/rdplserver which <namespace:path>`    | 3      | Quel pack fournit un fichier donné, et quels packs il masque                                                                                                                       |
+| `/rdplserver unused`                    | 3      | Les fichiers des packs du serveur que rien n'a demandés                                                                                                                            |
+| `/rdplserver config unused`             | 3      | Les fichiers d'options de `rdploader/config` qu'aucun pack installé ne définit plus                                                                                                |
+| `/rdplserver config prune`              | 3      | Supprime ces fichiers                                                                                                                                                              |
+| `/rdplserver dumpregistry`              | 3      | Écrit chaque identifiant de bloc et d'objet, avec ses états de bloc et son NBT par défaut, dans `rdpl-registry.txt` à la racine du serveur, et répond avec le chemin et les totaux |
+| `/rdplserver pixelmap <namespace:path>` | 3      | Ce qu'une carte de pixels a donné                                                                                                                                                  |
 
 `/rdplserver reload` recharge désormais aussi les verrous d'apparition et les verrous de recettes.
 

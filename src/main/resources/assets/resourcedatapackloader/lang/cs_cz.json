@@ -252,6 +252,8 @@
   "rdpl.command.nogates": "Nejsou načteny žádné brány",
   "rdpl.command.weight": "%s nese %s z %s, stupeň %s, rychlost %s",
   "rdpl.command.weightoff": "Váha předmětů je vypnutá",
+  "rdpl.command.dumpregistry": "Zapsáno %s bloků a %s předmětů do %s",
+  "rdpl.command.dumpfailed": "Nelze zapsat %s: %s",
   "rdpl.weight.too_heavy": "Příliš těžké na zvednutí",
   "rdpl.weight.line": "Váha: %s",
   "rdpl.weight.stack": "Váha: %s (zásobník: %s)",

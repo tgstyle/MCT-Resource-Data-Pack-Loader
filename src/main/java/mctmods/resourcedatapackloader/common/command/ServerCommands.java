@@ -60,6 +60,7 @@ public final class ServerCommands {
                 .then(CommandCards.card(NAME))
                 .then(CommandTalk.talk(NAME))
                 .then(WeightCommand.weight(NAME))
+                .then(RegistryDumpCommand.dump(NAME))
                 .then(CommandEnvironments.environment(NAME))
                 .then(CommandGames.game(NAME))
                 .then(OwnershipCommand.ownership(NAME))

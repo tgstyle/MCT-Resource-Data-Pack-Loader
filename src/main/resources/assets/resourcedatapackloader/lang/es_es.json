@@ -252,6 +252,8 @@
   "rdpl.command.nogates": "No hay ninguna puerta cargada",
   "rdpl.command.weight": "%s lleva %s de %s, nivel %s, velocidad %s",
   "rdpl.command.weightoff": "El peso de los objetos está desactivado",
+  "rdpl.command.dumpregistry": "Se escribieron %s bloques y %s ítems en %s",
+  "rdpl.command.dumpfailed": "No se pudo escribir %s: %s",
   "rdpl.weight.too_heavy": "Demasiado pesado para recogerlo",
   "rdpl.weight.line": "Peso: %s",
   "rdpl.weight.stack": "Peso: %s (pila: %s)",

@@ -252,6 +252,8 @@
   "rdpl.command.nogates": "No gates are loaded",
   "rdpl.command.weight": "%s carries %s of %s, tier %s, speed %s",
   "rdpl.command.weightoff": "Item weights are off",
+  "rdpl.command.dumpregistry": "Wrote %s blocks and %s items to %s",
+  "rdpl.command.dumpfailed": "Could not write %s: %s",
   "rdpl.weight.too_heavy": "Too heavy to pick up",
   "rdpl.weight.line": "Weight: %s",
   "rdpl.weight.stack": "Weight: %s (stack: %s)",

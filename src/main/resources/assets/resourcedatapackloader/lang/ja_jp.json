@@ -252,6 +252,8 @@
   "rdpl.command.nogates": "読み込まれているゲートはありません",
   "rdpl.command.weight": "%sの所持重量は%s / %s、段階 %s、速度 %s",
   "rdpl.command.weightoff": "アイテムの重量は無効です",
+  "rdpl.command.dumpregistry": "ブロック %s 件とアイテム %s 件を %s に書き出しました",
+  "rdpl.command.dumpfailed": "%s を書き込めませんでした: %s",
   "rdpl.weight.too_heavy": "重すぎて拾えません",
   "rdpl.weight.line": "重量: %s",
   "rdpl.weight.stack": "重量: %s (スタック: %s)",

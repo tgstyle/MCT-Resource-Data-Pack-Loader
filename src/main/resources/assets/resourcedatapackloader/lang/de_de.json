@@ -250,6 +250,8 @@
   "rdpl.command.nogates": "Es sind keine Tore geladen",
   "rdpl.command.weight": "%s trägt %s von %s, Stufe %s, Tempo %s",
   "rdpl.command.weightoff": "Gegenstandsgewichte sind deaktiviert",
+  "rdpl.command.dumpregistry": "%s Blöcke und %s Items nach %s geschrieben",
+  "rdpl.command.dumpfailed": "%s konnte nicht geschrieben werden: %s",
   "rdpl.weight.too_heavy": "Zu schwer zum Aufheben",
   "rdpl.weight.line": "Gewicht: %s",
   "rdpl.weight.stack": "Gewicht: %s (Stapel: %s)",

@@ -252,6 +252,8 @@
   "rdpl.command.nogates": "Nessun cancello caricato",
   "rdpl.command.weight": "%s trasporta %s su %s, livello %s, velocità %s",
   "rdpl.command.weightoff": "Il peso degli oggetti è disattivato",
+  "rdpl.command.dumpregistry": "Scritti %s blocchi e %s oggetti in %s",
+  "rdpl.command.dumpfailed": "Impossibile scrivere %s: %s",
   "rdpl.weight.too_heavy": "Troppo pesante per essere raccolto",
   "rdpl.weight.line": "Peso: %s",
   "rdpl.weight.stack": "Peso: %s (pila: %s)",

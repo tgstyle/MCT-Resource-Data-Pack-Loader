@@ -9700,6 +9700,7 @@ Blast Plaster 負責處理爆炸後的行為：逐方塊修復彈坑、考量樹
 | `/rdpl pixelmap <namespace:path>`                                                                          | 無       | 一張[像素圖](#以像素圖編寫的材質)解析出來的結果，逐字元顯示                                                                                   |
 | `/rdpl biome`, `biome list`, `biome list all`                                                              | 無       | 每個能生成的生態域及其 id；`all` 包含那些沒有任何東西能生成的                                                                                 |
 | `/rdpl biome here`                                                                                         | 無       | 你所站的生態域：其名稱、id 和編號                                                                                                             |
+| `/rdpl dumpregistry`                                                                                       | 依伺服器 | 已連結。將每個方塊和物品的 ID 連同方塊狀態與預設 NBT 寫入伺服器資料夾中的 `rdpl-registry.txt`                                                 |
 | `/rdpl biome find <name>`                                                                                  | 伺服器的 | 已連結。逐字轉交給 `/rdplserver`，由它決定，所以請見下方表格                                                                                  |
 | `/rdpl team`                                                                                               | 無       | 資源包派出的各陣營，每個以自己的顏色顯示，你在哪一邊，以及各自由誰領導                                                                        |
 | `/rdpl team join [name]`                                                                                   | 無       | 加入一個陣營。只會提供資源包保持開放的陣營；由生物組成的陣營不是你能走進去的。省略名稱則會被放進依 `balance` 接受玩家的陣營中玩家最少的那一邊 |
@@ -9722,15 +9723,16 @@ Blast Plaster 負責處理爆炸後的行為：逐方塊修復彈坑、考量樹
 
 *伺服器指令*
 
-| 指令                                    | 等級 | 作用                                                         |
-| --------------------------------------- | ---- | ------------------------------------------------------------ |
-| `/rdplserver reload`                    | 3    | 重新掃描伺服器的資料夾並重新載入一切，然後重新編組隊伍與目標 |
-| `/rdplserver list`                      | 3    | 伺服器載入的每個資源包、其優先順序，以及它包含的內容         |
-| `/rdplserver which <namespace:path>`    | 3    | 哪個資源包提供指定的檔案，以及它遮蔽了哪些資源包             |
-| `/rdplserver unused`                    | 3    | 伺服器資源包中尚無任何東西請求過的檔案                       |
-| `/rdplserver config unused`             | 3    | `rdploader/config` 中不再有任何已安裝資源包定義的選項檔案    |
-| `/rdplserver config prune`              | 3    | 刪除這些檔案                                                 |
-| `/rdplserver pixelmap <namespace:path>` | 3    | 一張像素圖解析出來的結果                                     |
+| 指令                                    | 等級 | 作用                                                                                                    |
+| --------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------- |
+| `/rdplserver reload`                    | 3    | 重新掃描伺服器的資料夾並重新載入一切，然後重新編組隊伍與目標                                            |
+| `/rdplserver list`                      | 3    | 伺服器載入的每個資源包、其優先順序，以及它包含的內容                                                    |
+| `/rdplserver which <namespace:path>`    | 3    | 哪個資源包提供指定的檔案，以及它遮蔽了哪些資源包                                                        |
+| `/rdplserver unused`                    | 3    | 伺服器資源包中尚無任何東西請求過的檔案                                                                  |
+| `/rdplserver config unused`             | 3    | `rdploader/config` 中不再有任何已安裝資源包定義的選項檔案                                               |
+| `/rdplserver config prune`              | 3    | 刪除這些檔案                                                                                            |
+| `/rdplserver dumpregistry`              | 3    | 將每個方塊和物品的 ID 連同方塊狀態與預設 NBT 寫入伺服器資料夾中的 `rdpl-registry.txt`，並回覆路徑和數量 |
+| `/rdplserver pixelmap <namespace:path>` | 3    | 一張像素圖解析出來的結果                                                                                |
 
 `/rdplserver reload` 現在也會重新載入生成鎖和配方鎖。
 

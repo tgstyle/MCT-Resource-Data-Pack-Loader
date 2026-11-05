@@ -29,7 +29,7 @@ import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 public final class ClientCommands {
     private static final String NAME = "rdpl";
     private static final String SERVER = "rdplserver";
-    private static final List<String> FORWARDED = List.of("oregen", "generators", "gate", "dimensions", "pregen", "intro", "locate", "goto", "vein", "team", "round", "game");
+    private static final List<String> FORWARDED = List.of("oregen", "generators", "gate", "dimensions", "pregen", "intro", "locate", "goto", "vein", "team", "round", "game", "dumpregistry");
 
     private ClientCommands() {}
 

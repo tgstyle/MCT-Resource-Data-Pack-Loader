@@ -252,6 +252,8 @@
   "rdpl.command.nogates": "没有加载任何闸门",
   "rdpl.command.weight": "%s 负重 %s／%s，等级 %s，速度 %s",
   "rdpl.command.weightoff": "物品重量已关闭",
+  "rdpl.command.dumpregistry": "已将 %s 个方块和 %s 个物品写入 %s",
+  "rdpl.command.dumpfailed": "无法写入 %s：%s",
   "rdpl.weight.too_heavy": "太重，无法拾取",
   "rdpl.weight.line": "重量：%s",
   "rdpl.weight.stack": "重量：%s（堆叠：%s）",
