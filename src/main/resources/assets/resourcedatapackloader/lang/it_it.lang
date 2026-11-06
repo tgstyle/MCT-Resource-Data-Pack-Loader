@@ -212,6 +212,7 @@ rdpl.container_upgrade.in_use=Qualcuno ha aperto quel contenitore
 rdpl.container_upgrade.linked=Due blocchi condividono questo contenitore
 rdpl.container_upgrade.cannot_move=Qualcosa all'interno non può essere spostato
 rdpl.container_upgrade.loot=Apri quel contenitore prima di potenziarlo
+rdpl.container.kept=Contiene %s pile
 rdpl.hearts.gained=Ti senti più robusto.
 rdpl.hearts.lost=Ti senti più fragile.
 rdpl.portway.activated=%s attivato (%s noti)

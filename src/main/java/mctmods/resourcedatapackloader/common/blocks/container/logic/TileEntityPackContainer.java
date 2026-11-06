@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.blocks.container.logic;
 
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.gui.ContainerPack;
+import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 
 import javax.annotation.Nonnull;
@@ -10,6 +11,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
@@ -35,6 +37,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     private EnumFacing facing = EnumFacing.SOUTH;
     private float lid;
     private float lidBefore;
+    private boolean creative;
 
     public void shape(ContainerDef def, String named) {
         this.rows = def.rows;
@@ -68,6 +71,11 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     @Override @Nonnull public String getGuiID() { return "resourcedatapackloader:container"; }
 
     @Override public int getInventoryStackLimit() { return 64; }
+
+    @Override public boolean isItemValidForSlot(int index, @Nonnull ItemStack stack) {
+        ContainerDef def = def();
+        return def == null || !def.keepContents || ContainerPack.storable(stack);
+    }
 
     @Override @Nonnull public String getName() {
         if (hasCustomName() && customName != null) { return customName; }
@@ -104,23 +112,33 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     @Override public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity packet) {
         readShape(packet.getNbtCompound());
-        if (items.size() != rows * columns) { items = NonNullList.withSize(rows * columns, ItemStack.EMPTY); }
+        fit();
     }
 
+    private void fit() { if (items.size() != rows * columns) { items = NonNullList.withSize(rows * columns, ItemStack.EMPTY); } }
+
     private void readShape(NBTTagCompound tag) {
-        rows = Math.max(1, tag.getInteger(ROWS));
-        columns = Math.max(1, tag.getInteger(COLUMNS));
+        readSize(tag);
         named = tag.getString(NAMED);
         facing = EnumFacing.byHorizontalIndex(tag.getInteger(FACING));
         customName = tag.hasKey(CUSTOM_NAME, 8) ? tag.getString(CUSTOM_NAME) : null;
     }
 
     private void writeShape(NBTTagCompound tag) {
-        tag.setInteger(ROWS, rows);
-        tag.setInteger(COLUMNS, columns);
+        writeSize(tag);
         tag.setString(NAMED, named);
         tag.setInteger(FACING, facing.getHorizontalIndex());
         if (hasCustomName()) { tag.setString(CUSTOM_NAME, customName); }
+    }
+
+    private void readSize(NBTTagCompound tag) {
+        rows = Math.max(1, tag.getInteger(ROWS));
+        columns = Math.max(1, tag.getInteger(COLUMNS));
+    }
+
+    private void writeSize(NBTTagCompound tag) {
+        tag.setInteger(ROWS, rows);
+        tag.setInteger(COLUMNS, columns);
     }
 
     @Override public void openInventory(@Nonnull EntityPlayer player) {
@@ -175,10 +193,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     }
 
     public void adopt(NBTTagCompound tag) {
-        if (rows * columns >= tag.getInteger(ROWS) * tag.getInteger(COLUMNS)) {
-            tag.setInteger(ROWS, rows);
-            tag.setInteger(COLUMNS, columns);
-        }
+        if (rows * columns >= tag.getInteger(ROWS) * tag.getInteger(COLUMNS)) { writeSize(tag); }
         tag.setString(NAMED, named);
         lootTable = null;
         readFromNBT(tag);
@@ -191,6 +206,36 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     }
 
     public void unloot() { lootTable = null; }
+
+    public void brokenBy(@Nonnull EntityPlayer player) {
+        creative = player.capabilities.isCreativeMode;
+        fillWithLoot(player);
+    }
+
+    @Nonnull public ItemStack kept(@Nonnull ItemStack block, @Nonnull ContainerDef def) {
+        fillWithLoot(null);
+        for (int i = 0; i < items.size(); i++) {
+            if (!items.get(i).isEmpty() && !ContainerPack.storable(items.get(i))) {
+                InventoryHelper.spawnItemStack(world, pos.getX(), pos.getY(), pos.getZ(), items.get(i));
+                items.set(i, ItemStack.EMPTY);
+            }
+        }
+        if (creative && isEmpty() && !hasCustomName()) { return ItemStack.EMPTY; }
+        if (!isEmpty()) { PouchInventory.store(block, items); }
+        if (rows != def.rows || columns != def.columns) { writeSize(block.getOrCreateSubCompound(PouchInventory.HELD)); }
+        if (hasCustomName() && customName != null) { block.setStackDisplayName(customName); }
+        clear();
+        return block;
+    }
+
+    public void restore(@Nonnull ItemStack stack) {
+        NBTTagCompound held = stack.getSubCompound(PouchInventory.HELD);
+        if (held != null && held.hasKey(ROWS)) {
+            readSize(held);
+            fit();
+        }
+        PouchInventory.load(stack, items);
+    }
 
     @Nonnull public EnumFacing facing() { return facing; }
 

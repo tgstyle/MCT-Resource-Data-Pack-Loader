@@ -23,20 +23,26 @@ public class PouchInventory implements IInventory {
         this.pouch = pouch;
         this.named = named;
         this.items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
-        NBTTagCompound tag = pouch.getTagCompound();
+        load(pouch, items);
+    }
+
+    public static void load(ItemStack stack, NonNullList<ItemStack> items) {
+        NBTTagCompound tag = stack.getTagCompound();
         if (tag != null && tag.hasKey(HELD)) { ItemStackHelper.loadAllItems(tag.getCompoundTag(HELD), items); }
     }
 
-    public void save() {
-        NBTTagCompound tag = pouch.getTagCompound();
+    public static void store(ItemStack stack, NonNullList<ItemStack> items) {
+        NBTTagCompound tag = stack.getTagCompound();
         if (tag == null) {
             tag = new NBTTagCompound();
-            pouch.setTagCompound(tag);
+            stack.setTagCompound(tag);
         }
         NBTTagCompound held = new NBTTagCompound();
         ItemStackHelper.saveAllItems(held, items, true);
         tag.setTag(HELD, held);
     }
+
+    public void save() { store(pouch, items); }
 
     public ItemStack pouch() { return pouch; }
 

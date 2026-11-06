@@ -7,24 +7,30 @@ import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.container.logic.TileEntityPackContainer;
 import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.gui.PackGuiHandler;
+import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.InventoryHelper;
+import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 
 @SuppressWarnings("deprecation") public class ContentContainerBlock extends ContentBlock {
     public static final int MAX_VARIANTS = BlockDef.MAX_META;
-    private static final ContainerDef PLAIN = new ContainerDef(3, 9, "", false, null, null, 0, 0);
+    private static final ContainerDef PLAIN = new ContainerDef(3, 9, "", false, null, null, 0, 0, false);
     private final ContainerDef container;
 
     public static ContentContainerBlock create(BlockDef def) { return BlockVariants.construct(def, ContentContainerBlock::new); }
@@ -35,6 +41,8 @@ import net.minecraft.world.World;
     }
 
     public ContainerDef container() { return held(); }
+
+    public static boolean holdsKept(ItemStack stack) { Block block = Block.getBlockFromItem(stack.getItem()); return block instanceof ContentContainerBlock && ((ContentContainerBlock) block).held().keepContents && stack.getSubCompound(PouchInventory.HELD) != null; }
 
     private ContainerDef held() {
         if (container != null) { return container; }
@@ -61,22 +69,36 @@ import net.minecraft.world.World;
         return true;
     }
 
-    @Override public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull net.minecraft.entity.EntityLivingBase placer, @Nonnull net.minecraft.item.ItemStack stack) {
+    @Override public void onBlockPlacedBy(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull net.minecraft.entity.EntityLivingBase placer, @Nonnull ItemStack stack) {
         super.onBlockPlacedBy(world, pos, state, placer, stack);
         TileEntity tile = world.getTileEntity(pos);
         if (!(tile instanceof TileEntityPackContainer)) { return; }
         ((TileEntityPackContainer) tile).unloot();
+        ((TileEntityPackContainer) tile).restore(stack);
         ((TileEntityPackContainer) tile).face(placer.getHorizontalFacing().getOpposite());
         if (stack.hasDisplayName()) { ((TileEntityPackContainer) tile).setCustomName(stack.getDisplayName()); }
         tile.markDirty();
         world.notifyBlockUpdate(pos, state, state, 3);
     }
 
+    @Override public void onBlockHarvested(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player) {
+        TileEntity tile = world.getTileEntity(pos);
+        if (!world.isRemote && held().keepContents && tile instanceof TileEntityPackContainer) { ((TileEntityPackContainer) tile).brokenBy(player); }
+        super.onBlockHarvested(world, pos, state, player);
+    }
+
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         TileEntity tile = world.getTileEntity(pos);
-        if (tile instanceof TileEntityPackContainer && ContentContainerUpgrades.dropsAllowed()) { net.minecraft.inventory.InventoryHelper.dropInventoryItems(world, pos, (TileEntityPackContainer) tile); }
+        if (tile instanceof TileEntityPackContainer && ContentContainerUpgrades.dropsAllowed()) {
+            if (held().keepContents) { spawnAsEntity(world, pos, ((TileEntityPackContainer) tile).kept(new ItemStack(this, 1, damageDropped(state)), held())); }
+            else { InventoryHelper.dropInventoryItems(world, pos, (TileEntityPackContainer) tile); }
+        }
         super.breakBlock(world, pos, state);
     }
+
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) { if (!held().keepContents) { super.getDrops(drops, world, pos, state, fortune); } }
+
+    @Override public boolean canSilkHarvest(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player) { return !held().keepContents && super.canSilkHarvest(world, pos, state, player); }
 
     @Override @Nonnull public net.minecraft.util.EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return held().chestModel ? net.minecraft.util.EnumBlockRenderType.ENTITYBLOCK_ANIMATED : super.getRenderType(state); }
 

@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
+import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
@@ -24,6 +26,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT) public final class PackTooltips {
     private static final int COMPOUND = 10;
+    private static final String ITEMS = "Items";
 
     private PackTooltips() {}
 
@@ -43,10 +46,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (held > 0L) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.weight.contents", ClientWeights.format(held))); }
     }
 
+    private static void kept(ItemStack stack, List<String> tooltip) {
+        NBTTagCompound held = stack.getSubCompound(PouchInventory.HELD);
+        if (held != null && ContentContainerBlock.holdsKept(stack) && held.getTagList(ITEMS, COMPOUND).tagCount() > 0) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.container.kept", held.getTagList(ITEMS, COMPOUND).tagCount())); }
+    }
+
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         List<String> tooltip = event.getToolTip();
         weight(stack, tooltip);
+        kept(stack, tooltip);
         if (ContentTooltips.none()) { return; }
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(stack).entrySet()) {
             List<String> lines = ContentTooltips.forEnchantment(entry.getKey());

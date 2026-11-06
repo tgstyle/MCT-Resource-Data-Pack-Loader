@@ -51,7 +51,7 @@ public final class ContentParserContainers {
         boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
         ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key.toString()) : null;
         return new ContainerDef(rows, columns, Json.getString(held, "lootTable", "").trim(),
-                chest, sheet, texture, wide, tall);
+                chest, sheet, texture, wide, tall, Json.getBoolean(held, "keepContents", false));
     }
 
     @Nullable static ContainerUpgradeDef upgrade(ResourceLocation key, String type, JsonObject json) {

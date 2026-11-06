@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.items;
 import mctmods.resourcedatapackloader.common.blocks.compress.CompressedNames;
 import mctmods.resourcedatapackloader.common.blocks.compress.CompressedSet;
 import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
+import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 
 import javax.annotation.Nonnull;
@@ -30,7 +31,7 @@ import net.minecraft.item.ItemStack;
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) { return def.at(stack.getMetadata()).rarity; }
 
-    @Override public int getItemStackLimit(@Nonnull ItemStack stack) { return def.at(stack.getMetadata()).maxSize; }
+    @Override public int getItemStackLimit(@Nonnull ItemStack stack) { return ContentContainerBlock.holdsKept(stack) ? 1 : def.at(stack.getMetadata()).maxSize; }
 
     @Override public int getMetadata(int damage) { return damage; }
 }

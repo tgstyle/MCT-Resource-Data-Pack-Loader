@@ -212,6 +212,7 @@ rdpl.container_upgrade.in_use=Кто-то уже открыл этот конт�
 rdpl.container_upgrade.linked=Это хранилище общее для двух блоков
 rdpl.container_upgrade.cannot_move=Что-то внутри нельзя переместить
 rdpl.container_upgrade.loot=Откройте этот контейнер, прежде чем улучшать его
+rdpl.container.kept=Содержит стаков: %s
 rdpl.hearts.gained=Вы чувствуете себя выносливее.
 rdpl.hearts.lost=Вы чувствуете себя слабее.
 rdpl.portway.activated=%s: активирован (известно: %s)

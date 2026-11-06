@@ -19,7 +19,7 @@ public class ContentContainerItem extends ContentItem {
 
     public ContentContainerItem(ItemDef def) {
         super(def);
-        this.holds = def.holds == null ? new ContainerDef(1, 9, "", false, null, null, 0, 0) : def.holds;
+        this.holds = def.holds == null ? new ContainerDef(1, 9, "", false, null, null, 0, 0, false) : def.holds;
         setMaxStackSize(1);
     }
 
