@@ -148,7 +148,7 @@ public final class ContentTasks {
             return avoided == null ? null : new EntityAIAvoidEntity<>((EntityCreature) l, avoided, t.distance(6.0F), t.speed(1.0D), t.nearSpeed(1.2D));
         });
         task("beg", EntityWolf.class, "a wolf", EntityAIBeg.class, (l, t, d) -> new EntityAIBeg((EntityWolf) l, t.distance(8.0F)));
-        task("breakDoor", ANY, ANY_NAME, EntityAIBreakDoor.class, (l, t, d) -> new EntityAIBreakDoor(l));
+        task("breakDoor", ANY, ANY_NAME, EntityAIBreakDoor.class, (l, t, d) -> MobAbilities.breakDoor(l));
         task("creeperSwell", EntityCreeper.class, "a creeper", EntityAICreeperSwell.class, (l, t, d) -> new EntityAICreeperSwell((EntityCreeper) l));
         target("defendVillage", EntityIronGolem.class, GOLEM, EntityAIDefendVillage.class, (l, t, d) -> new EntityAIDefendVillage((EntityIronGolem) l));
         task("eatGrass", ANY, ANY_NAME, EntityAIEatGrass.class, (l, t, d) -> new EntityAIEatGrass(l));

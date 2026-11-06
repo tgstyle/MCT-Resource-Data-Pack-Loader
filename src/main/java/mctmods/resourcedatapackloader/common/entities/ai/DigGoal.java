@@ -123,7 +123,8 @@ public final class DigGoal extends EntityAIBase {
         ItemStack tool = mob.getHeldItemMainhand();
         if (ContentHardness.digBarred(mob, state, tool)) { return false; }
         String needed = state.getBlock().getHarvestTool(state);
-        if (needed == null || !tool.getItem().getToolClasses(tool).contains(needed)) { return false; }
+        if (needed == null) { return tool.getItem().canHarvestBlock(state, tool); }
+        if (!tool.getItem().getToolClasses(tool).contains(needed)) { return false; }
         return tool.getItem().getHarvestLevel(tool, needed, null, state) >= state.getBlock().getHarvestLevel(state);
     }
 }

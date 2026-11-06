@@ -54,6 +54,20 @@ public final class ContentParserEntities {
         return effects;
     }
 
+    public static Map<String, String> equipment(ResourceLocation key, JsonObject json) {
+        Map<String, String> equipment = new LinkedHashMap<>();
+        if (json.has("equipment")) {
+            for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "equipment").entrySet()) {
+                if (!entry.getValue().isJsonPrimitive()) {
+                    ContentLog.LOGGER.error("Entity variant {} sets slot '{}' to something that is not an item name, ignoring it", key, entry.getKey());
+                    continue;
+                }
+                equipment.put(entry.getKey(), entry.getValue().getAsString());
+            }
+        }
+        return equipment;
+    }
+
     @Nullable public static EntityVariantDef entityVariant(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "entity file");
         if (json == null) { return null; }
@@ -66,16 +80,6 @@ public final class ContentParserEntities {
         List<String> tintParts = new ArrayList<>();
         for (String part : strings(json, "tintParts")) { tintParts.add(Settings.lower(part)); }
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
-        Map<String, String> equipment = new LinkedHashMap<>();
-        if (json.has("equipment")) {
-            for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "equipment").entrySet()) {
-                if (!entry.getValue().isJsonPrimitive()) {
-                    ContentLog.LOGGER.error("Entity variant {} sets slot '{}' to something that is not an item name, ignoring it", key, entry.getKey());
-                    continue;
-                }
-                equipment.put(entry.getKey(), entry.getValue().getAsString());
-            }
-        }
         List<SpawnEntryDef> spawns = ContentParser.spawns(key, json, "creatureType", false);
         JsonObject sounds = Json.getJsonObject(json, "sounds", new JsonObject());
         Map<String, Integer> effects = effects(key, json);
@@ -155,7 +159,7 @@ public final class ContentParserEntities {
                 Math.max(0.0F, Json.getFloat(json, "explosionPower", 3.0F)),
                 Math.max(1, Json.getInt(json, "explosionFuse", 30)),
                 Json.getBoolean(json, "explosionFire", false),
-                equipment, spawns,
+                equipment(key, json), spawns,
                 strings(json, "biomes"), strings(json, "biomeTypes"), strings(json, "requires"),
                 Json.getBoolean(json, "charges", false),
                 Json.getBoolean(json, "pounces", false),

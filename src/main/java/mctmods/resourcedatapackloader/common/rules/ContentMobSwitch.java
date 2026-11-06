@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rules;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.entities.behavior.MobGear;
 import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.MobSwitchDef;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -155,10 +156,10 @@ public final class ContentMobSwitch {
             if (item == null || !mob.getItemStackFromSlot(slot).isEmpty()) { continue; }
             NBTTagCompound held = new NBTTagCompound();
             held.setString(ITEM, entry.getValue().item);
-            held.setFloat(CHANCE, chances(mob, slot)[slot.getIndex()]);
+            held.setFloat(CHANCE, MobGear.chances(mob, slot)[slot.getIndex()]);
             gear.setTag(entry.getKey(), held);
             mob.setItemStackToSlot(slot, new ItemStack(item));
-            chances(mob, slot)[slot.getIndex()] = entry.getValue().chance;
+            MobGear.chances(mob, slot)[slot.getIndex()] = entry.getValue().chance;
         }
         NBTTagCompound record = new NBTTagCompound();
         record.setTag(GEAR, gear);
@@ -181,7 +182,7 @@ public final class ContentMobSwitch {
             EntityEquipmentSlot slot = EntityEquipmentSlot.fromString(name);
             if (item == null || mob.getItemStackFromSlot(slot).getItem() != item) { continue; }
             mob.setItemStackToSlot(slot, ItemStack.EMPTY);
-            chances(mob, slot)[slot.getIndex()] = recorded.getFloat(CHANCE);
+            MobGear.chances(mob, slot)[slot.getIndex()] = recorded.getFloat(CHANCE);
         }
         data.removeTag(RECORD);
     }
@@ -190,8 +191,6 @@ public final class ContentMobSwitch {
         IAttributeInstance instance = MobStats.attribute(mob, attribute);
         if (instance != null) { instance.removeModifier(id); }
     }
-
-    private static float[] chances(EntityLiving mob, EntityEquipmentSlot slot) { return slot.getSlotType() == EntityEquipmentSlot.Type.HAND ? mob.inventoryHandsDropChances : mob.inventoryArmorDropChances; }
 
     public static void settleAll(World world) {
         for (Object entity : new ArrayList<>(world.loadedEntityList)) {

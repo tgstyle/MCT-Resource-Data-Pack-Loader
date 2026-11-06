@@ -1,9 +1,13 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
+import mctmods.resourcedatapackloader.common.entities.ai.DigGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.StealContainerGoal;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankRandomDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.RankScalingDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
-import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserEntities;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserRanks;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
@@ -11,11 +15,8 @@ import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.common.collect.MapMaker;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,11 +24,14 @@ import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.passive.AbstractChestHorse;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -35,13 +39,15 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingDropsEvent;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentRanks {
-    private static final List<String> KEYS = Arrays.asList("entities", "weight", "name", "health", "damage", "effects", "loot", "dimensions");
     private static final String RANK = "rdplRank";
+    private static final String STEPS = "rdplRankSteps";
+    private static final String GEAR_PENDING = "rdplRankGear";
     private static final String NAME = "RDPL rank";
     private static final UUID HEALTH = UUID.fromString("6f1a3c52-9b0e-4d7a-8a41-2e5c0d9b7a21");
     private static final UUID DAMAGE = UUID.fromString("6f1a3c52-9b0e-4d7a-8a41-2e5c0d9b7a22");
@@ -68,66 +74,36 @@ public final class ContentRanks {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "rank definition");
         if (json == null) { return; }
-        RankDef def = parse(key, json);
+        RankDef def = ContentParserRanks.parse(key, json);
         if (def != null) { DEFS.put(key.toString(), def); }
     }
 
-    @Nullable private static RankDef parse(ResourceLocation key, JsonObject json) {
-        String owner = "Rank " + key;
-        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
-            if (!KEYS.contains(entry.getKey())) {
-                ContentLog.LOGGER.error("{} gives {}, which is not a rank key, ignoring the rank", owner, entry.getKey());
-                return null;
-            }
-        }
-        List<String> entities = Collections.singletonList(MobStats.MONSTER);
-        if (json.has("entities")) {
-            entities = MobStats.entities(owner, "entities", json.get("entities"));
-            if (entities == null || entities.size() != json.get("entities").getAsJsonArray().size()) {
-                ContentLog.LOGGER.error("{} gives entities that are not all entity ids and kinds, ignoring the rank", owner);
-                return null;
-            }
-        }
-        Float weight = number(owner, json, "weight", 1.0F, true, "a whole number of 1 or more");
-        Float health = number(owner, json, "health", Float.MIN_VALUE, false, "a number above 0");
-        Float damage = number(owner, json, "damage", 0.0F, false, "a number of 0 or more");
-        Float loot = number(owner, json, "loot", 1.0F, false, "a number of 1 or more");
-        if (weight == null || health == null || damage == null || loot == null) { return null; }
-        String label = "";
-        if (json.has("name")) {
-            JsonElement name = json.get("name");
-            if (!name.isJsonPrimitive() || !name.getAsJsonPrimitive().isString()) {
-                ContentLog.LOGGER.error("{} gives name as {}, which is not text, ignoring the rank", owner, name);
-                return null;
-            }
-            label = name.getAsString();
-        }
-        Map<String, Integer> effects = ContentParserEntities.effects(key, json);
-        if (json.has("effects") && effects.size() != json.get("effects").getAsJsonArray().size()) {
-            ContentLog.LOGGER.error("{} gives effects that are not all objects with a different potion each, ignoring the rank", owner);
-            return null;
-        }
-        return new RankDef(key, entities, weight.intValue(), label, health, damage, effects, loot, Json.strings(json, "dimensions"));
-    }
-
-    @Nullable private static Float number(String owner, JsonObject json, String key, float low, boolean whole, String need) {
-        if (!json.has(key)) { return 1.0F; }
-        JsonElement value = json.get(key);
-        if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber()) {
-            float number = value.getAsFloat();
-            if (number >= low && number < Float.POSITIVE_INFINITY && (!whole || number == Math.floor(number))) { return number; }
-        }
-        ContentLog.LOGGER.error("{} gives {} as {}, which is not {}, ignoring the rank", owner, key, value, need);
-        return null;
-    }
-
     public static void verify() {
+        MobGearPool.clear();
         DEFS.values().removeIf(ContentRanks::unregistered);
         if (!DEFS.isEmpty()) { Summary.info("ranks", "Loaded " + DEFS.size() + " mob rank(s)"); }
     }
 
+    public static boolean stealing() {
+        for (RankDef def : DEFS.values()) {
+            if (def.steals) { return true; }
+        }
+        return false;
+    }
+
     private static boolean unregistered(RankDef def) {
         boolean missing = false;
+        List<String> items = new ArrayList<>(def.equipment.values());
+        if (def.digs && !def.digItem.isEmpty()) { items.add(def.digItem); }
+        for (String exclude : def.random.exclude) {
+            if (exclude.indexOf(':') >= 0) { items.add(exclude); }
+        }
+        for (String item : items) {
+            if (Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(item)) == null) {
+                ContentLog.LOGGER.error("Rank {} names item '{}', which nothing registers, ignoring the rank", def.key, item);
+                missing = true;
+            }
+        }
         for (String id : def.entities) {
             if (!id.startsWith("#") && !EntityList.isRegistered(new ResourceLocation(id))) {
                 ContentLog.LOGGER.error("Rank {} names entity '{}', which is not an entity, ignoring the rank", def.key, id);
@@ -147,7 +123,11 @@ public final class ContentRanks {
         if (event.getWorld().isRemote || DEFS.isEmpty() || !(event.getEntity() instanceof EntityLiving)) { return; }
         EntityLiving mob = (EntityLiving) event.getEntity();
         NBTTagCompound data = mob.getEntityData();
-        if (data.hasKey(RANK)) { return; }
+        if (data.hasKey(RANK)) {
+            RankDef known = DEFS.get(data.getString(RANK));
+            if (known != null) { arm(mob, known); }
+            return;
+        }
         List<RankDef> matches = new ArrayList<>();
         for (RankDef def : DEFS.values()) {
             if (MobStats.targets(def.entities, mob) && (def.dimensions.isEmpty() || CardPlace.inAny(def.dimensions, mob.world.provider.getDimension()))) { matches.add(def); }
@@ -155,12 +135,56 @@ public final class ContentRanks {
         RankDef def = WeightedPicks.pick(matches, rank -> rank.weight, mob.world.rand);
         if (def == null) { return; }
         data.setString(RANK, def.key.toString());
-        MobStats.scale(mob, SharedMonsterAttributes.MAX_HEALTH, HEALTH, def.health, NAME);
-        if (def.health != 1.0F) { mob.setHealth(mob.getHealth() * def.health); }
-        MobStats.scale(mob, SharedMonsterAttributes.ATTACK_DAMAGE, DAMAGE, def.damage, NAME);
+        float steps = RankScaling.steps(mob, def.scaling);
+        if (def.scaling != null) { data.setFloat(STEPS, steps); }
+        RankScalingDef scaling = RankScaling.of(def);
+        float health = Math.max(0.1F, RankScaling.add(def.health, scaling.health, steps));
+        MobStats.scale(mob, SharedMonsterAttributes.MAX_HEALTH, HEALTH, health, NAME);
+        if (health != 1.0F) { mob.setHealth(mob.getHealth() * health); }
+        MobStats.scale(mob, SharedMonsterAttributes.ATTACK_DAMAGE, DAMAGE, Math.max(0.0F, RankScaling.add(def.damage, scaling.damage, steps)), NAME);
         ContentEntityApply.effects(mob, def.effects, def.key);
         if (!def.label.isEmpty() && !mob.hasCustomName()) { mob.setCustomNameTag(def.label.replace("%s", mob.getName())); }
+        if (givesGear(def)) { data.setBoolean(GEAR_PENDING, true); }
+        arm(mob, def);
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Rank {} rolled for {} at {}", def.key, EntityList.getKey(mob), mob.getPosition()); }
+    }
+
+    private static boolean givesGear(RankDef def) { return !def.equipment.isEmpty() || def.random != RankRandomDef.NONE || scalesGear(def.scaling) || !def.digItem.isEmpty() || def.picksUpLoot != null; }
+
+    private static boolean scalesGear(@Nullable RankScalingDef scaling) { return scaling != null && (scaling.armor > 0.0F || scaling.weapon > 0.0F || scaling.enchant > 0.0F); }
+
+    private static void arm(EntityLiving mob, RankDef def) {
+        if (def.digs) {
+            if (mob instanceof EntityCreature) {
+                mob.tasks.addTask(1, new DigGoal((EntityCreature) mob));
+                MobAbilities.sightlessTarget((EntityCreature) mob, EntityPlayer.class, 2);
+            }
+            else if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Rank {} digs, but {} is not a walking creature, skipping it", def.key, EntityList.getKey(mob)); }
+        }
+        if (def.breaksDoors) {
+            EntityAIBase task = MobAbilities.breakDoor(mob);
+            if (task != null) { mob.tasks.addTask(1, task); }
+        }
+        if (def.steals && mob instanceof EntityCreature) { mob.tasks.addTask(5, new StealContainerGoal((EntityCreature) mob)); }
+    }
+
+    @SubscribeEvent public static void onUpdate(LivingEvent.LivingUpdateEvent event) {
+        if (!(event.getEntity() instanceof EntityLiving) || event.getEntity().world.isRemote) { return; }
+        EntityLiving mob = (EntityLiving) event.getEntity();
+        NBTTagCompound data = mob.getEntityData();
+        if (!data.hasKey(GEAR_PENDING)) { return; }
+        data.removeTag(GEAR_PENDING);
+        RankDef def = DEFS.get(data.getString(RANK));
+        if (def != null) { gear(mob, def, data.getFloat(STEPS)); }
+    }
+
+    private static void gear(EntityLiving mob, RankDef def, float steps) {
+        RankScalingDef scaling = RankScaling.of(def);
+        RankRandomDef random = def.random;
+        MobGear.fixed(mob, def.equipment, def.dropChance, "Mob rank " + def.key);
+        MobGear.random(mob, RankScaling.chance(random.armor, scaling.armor, steps), RankScaling.chance(random.armorPiece, scaling.armor, steps), RankScaling.chance(random.weapon, scaling.weapon, steps), RankScaling.chance(random.offhand, scaling.weapon, steps), RankScaling.chance(random.enchant, scaling.enchant, steps), def.digs, random.exclude, def.dropChance);
+        if (def.picksUpLoot != null) { mob.setCanPickUpLoot(def.picksUpLoot); }
+        if (def.digs) { MobAbilities.armPick(mob, def.digItem, def.dropChance, "Mob rank " + def.key); }
     }
 
     @Nullable private static RankDef multiplying(Entity entity) {

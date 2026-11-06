@@ -14,7 +14,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityAgeable;
 import net.minecraft.entity.EntityLiving;
@@ -31,9 +30,6 @@ import net.minecraft.entity.monster.EntitySlime;
 import net.minecraft.entity.monster.EntityZombie;
 import net.minecraft.entity.passive.EntityRabbit;
 import net.minecraft.entity.passive.EntityVillager;
-import net.minecraft.inventory.EntityEquipmentSlot;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.pathfinding.PathNavigateClimber;
 import net.minecraft.pathfinding.PathNavigateFlying;
@@ -90,7 +86,7 @@ public final class ContentEntityApply {
         if (def.leftHanded) { living.setLeftHanded(true); }
         living.setCanPickUpLoot(def.picksUpLoot);
         priorities(living, def);
-        gear(living, def);
+        MobGear.fixed(living, def.equipment, def.dropChance, "Entity variant " + def.registryName);
         ContentEntityBehavior.behavior(living, def);
         ContentTasks.apply(living, def);
     }
@@ -238,24 +234,4 @@ public final class ContentEntityApply {
             living.setPathPriority(type, entry.getValue());
         }
     }
-
-    private static void gear(EntityLiving living, EntityVariantDef def) {
-        for (Map.Entry<String, String> entry : def.equipment.entrySet()) {
-            EntityEquipmentSlot slot = slot(entry.getKey());
-            if (slot == null) {
-                ContentLog.LOGGER.error("Entity variant {} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", def.registryName, entry.getKey());
-                continue;
-            }
-            ResourceLocation name = new ResourceLocation(entry.getValue());
-            Item item = Registries.find(ForgeRegistries.ITEMS, name);
-            if (item == null) {
-                ContentLog.LOGGER.error("Entity variant {} gives {}, which nothing registers", def.registryName, name);
-                continue;
-            }
-            living.setItemStackToSlot(slot, new ItemStack(item));
-            living.setDropChance(slot, def.dropChance);
-        }
-    }
-
-    @Nullable private static EntityEquipmentSlot slot(String name) { return Enums.byName(EntityEquipmentSlot.class, name); }
 }

@@ -40,6 +40,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTick
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
+import mctmods.resourcedatapackloader.common.entities.behavior.RankSteal;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
@@ -266,6 +267,7 @@ public class ModSetup {
             if (ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(ContentOrders.class); }
         }
         if (ContentRanks.load()) { MinecraftForge.EVENT_BUS.register(ContentRanks.class); }
+        if (ContentRanks.stealing()) { MinecraftForge.EVENT_BUS.register(RankSteal.class); }
         ContentHearts.load();
         MinecraftForge.EVENT_BUS.register(ContentHearts.class);
         if (ContentVillages.load()) { ContentVillages.register(); }
