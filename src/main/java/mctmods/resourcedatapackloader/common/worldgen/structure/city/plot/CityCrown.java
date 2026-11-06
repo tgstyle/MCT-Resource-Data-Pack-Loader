@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city.plot;
 
+import mctmods.resourcedatapackloader.common.util.worldgen.LineTags;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCityStructure;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityBergs;
@@ -40,7 +41,6 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
-import net.neoforged.neoforge.common.Tags;
 
 public final class CityCrown {
     private static final int REACH = 4;
@@ -134,7 +134,7 @@ public final class CityCrown {
         return Integer.MIN_VALUE;
     }
 
-    private static boolean underSoil(BlockState held) { return held.is(BlockTags.BASE_STONE_OVERWORLD) || held.is(Tags.Blocks.ORES) || ContentBiomes.packStone(held); }
+    private static boolean underSoil(BlockState held) { return held.is(BlockTags.BASE_STONE_OVERWORLD) || held.is(LineTags.ORES) || ContentBiomes.packStone(held); }
 
     private static boolean covers(BlockState held) { return CityPlotGround.solid(held) && !held.is(BlockTags.LEAVES); }
 

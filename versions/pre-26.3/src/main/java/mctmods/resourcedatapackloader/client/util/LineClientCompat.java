@@ -20,6 +20,7 @@ import net.minecraft.util.ARGB;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import org.joml.Vector3f;
 import org.lwjgl.system.MemoryStack;
 import java.util.List;
@@ -39,6 +40,8 @@ public final class LineClientCompat {
         Vector3f tint = ARGB.vector3fFromRGB24(camera.attributeProbe().getValue(EnvironmentAttributes.SKY_COLOR, partialTick));
         return new Vec3(tint.x(), tint.y(), tint.z());
     }
+
+    public static float partialTick(ViewportEvent event) { return (float) event.getPartialTick(); }
 
     public static List<PreparableReloadListener> paletteListeners() { return List.of(); }
 

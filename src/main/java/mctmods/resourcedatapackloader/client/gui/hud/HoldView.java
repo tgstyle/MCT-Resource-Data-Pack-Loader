@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.util.CardFont;
 import mctmods.resourcedatapackloader.client.util.ClientCompat;
 import mctmods.resourcedatapackloader.client.util.Crisp;
+import mctmods.resourcedatapackloader.client.util.LineClientCompat;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -84,7 +85,7 @@ public final class HoldView {
 
     public static void onFog(ViewportEvent.RenderFog event) {
         if (!held && !fogging) { return; }
-        float strength = strength((float) event.getPartialTick());
+        float strength = strength(LineClientCompat.partialTick(event));
         if (strength <= 0.0F) { return; }
         float eased = strength * strength * (3.0F - 2.0F * strength);
         FogData fog = event.getFogData();

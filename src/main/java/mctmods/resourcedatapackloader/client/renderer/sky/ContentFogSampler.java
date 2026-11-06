@@ -125,7 +125,7 @@ public final class ContentFogSampler {
         SkyLookDef look = look(level);
         boolean samples = look != null && look.sampleFog() && sampled;
         if (!samples && !ContentWindowLook.colorsFog(level) || camera.getFluidInCamera() != FogType.NONE) { return; }
-        float partialTick = (float) event.getPartialTick();
+        float partialTick = LineClientCompat.partialTick(event);
         Vec3 sky = LineClientCompat.skyColor(camera, partialTick);
         double weight = look == null ? ContentParserSkyLook.GROUND_WEIGHT : look.fogGroundWeight();
         Vec3 ground = current == null ? sky : sky.scale(1.0D - weight).add(current.scale(weight));

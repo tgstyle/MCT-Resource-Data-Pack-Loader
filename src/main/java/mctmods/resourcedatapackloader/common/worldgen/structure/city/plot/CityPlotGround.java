@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city.plot;
 
+import mctmods.resourcedatapackloader.common.util.worldgen.LineTags;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.CityPalette;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCity;
@@ -52,7 +53,7 @@ public final class CityPlotGround {
 
     private CityPlotGround() {}
 
-    public static boolean terrain(BlockState state) { return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.SUBSTRATE_OVERWORLD) || state.is(Blocks.GRAVEL) || state.is(BlockTags.SAND) || state.is(Blocks.CLAY) || state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(BlockTags.ICE) || state.is(Tags.Blocks.ORES) || ContentBiomes.packGround(state); }
+    public static boolean terrain(BlockState state) { return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.SUBSTRATE_OVERWORLD) || state.is(Blocks.GRAVEL) || state.is(BlockTags.SAND) || state.is(Blocks.CLAY) || state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(BlockTags.ICE) || state.is(LineTags.ORES) || ContentBiomes.packGround(state); }
 
     static boolean opening(BlockState state) { return terrain(state) || state.is(BlockTags.TERRACOTTA) || state.is(Blocks.SANDSTONE) || state.is(Blocks.RED_SANDSTONE) || state.is(Blocks.MOSSY_COBBLESTONE); }
 
