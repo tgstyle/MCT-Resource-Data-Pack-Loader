@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nonnull;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.MenuProvider;
@@ -25,6 +26,8 @@ public final class ContentContainerItem extends Item {
         this.container = container;
     }
 
+    public ContainerDef holds() { return container; }
+
     @Override @Nonnull public InteractionResultHolder<ItemStack> use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         if (level.isClientSide() || !(player instanceof ServerPlayer server)) { return InteractionResultHolder.success(held); }
@@ -33,7 +36,7 @@ public final class ContentContainerItem extends Item {
     }
 
     public void open(ServerPlayer player, ItemStack held, Supplier<ItemStack> source, int worn) {
-        ContentPouchInventory inventory = new ContentPouchInventory(held, container);
+        Container inventory = container.ender() ? new ContentEnderInventory(player.level(), player.getUUID(), container, null) : new ContentPouchInventory(held, container);
         MenuProvider provider = new MenuProvider() {
             @Override @Nonnull public Component getDisplayName() { return held.getHoverName(); }
 

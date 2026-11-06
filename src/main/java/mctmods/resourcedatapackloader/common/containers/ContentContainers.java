@@ -34,7 +34,7 @@ public final class ContentContainers {
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         BlockEntityType<ContentContainerBlockEntity> registered = TYPE.registeredType();
-        if (registered != null) { event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, registered, (held, side) -> new InvWrapper(held)); }
+        if (registered != null) { event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, registered, (held, side) -> new InvWrapper(held.automation())); }
     }
 
     public static void registerMenu(RegisterEvent.RegisterHelper<MenuType<?>> helper) {

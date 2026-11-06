@@ -50,6 +50,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.TriState;
 
 public final class ContentContainerBlock extends BaseEntityBlock implements IContentBlock, IContentContainer {
@@ -88,7 +89,8 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
     @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentContainerBlockEntity(pos, state); }
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
-        if (!level.isClientSide() || !container.chestModel()) { return null; }
+        if (!level.isClientSide()) { return container.ender() && container.enderAutomation() ? createTickerHelper(type, ContentContainers.TYPE.get(), ContentContainerBlockEntity::storeTick) : null; }
+        if (!container.chestModel()) { return null; }
         return createTickerHelper(type, ContentContainers.TYPE.get(), ContentContainerBlockEntity::lidTick);
     }
 
@@ -101,7 +103,9 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
 
     @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (placer != null && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.placed(); }
+        if (!(level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held)) { return; }
+        if (placer != null) { held.placed(); }
+        if (container.ender() && placer instanceof Player player && !(player instanceof FakePlayer)) { held.own(player.getUUID()); }
     }
 
     @Override @Nonnull public BlockState playerWillDestroy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Player player) {
