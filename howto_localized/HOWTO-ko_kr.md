@@ -73,6 +73,7 @@
 - [우클릭 수확](#우클릭-수확)
 - [광맥 채굴](#광맥-채굴)
 - [들기](#들기)
+- [전리품 제거](#전리품-제거)
 - [플레이어 전리품](#플레이어-전리품)
 - [음식 다양성](#음식-다양성)
 - [주민과 거래](#주민과-거래)
@@ -213,6 +214,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/trades/*.json`                  | 직업이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                       |
 | `<namespace>/loot_tables/*.json`             | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                               |
 | `<namespace>/loot_injections/*.json`         | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                       |
+| `<namespace>/loot_removals/*.json`           | 이미 있는 테이블에서 빼는 항목, 또는 테이블 전체를 비운 것. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                           |
 | `<namespace>/block_drops/*.json`             | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                           |
 | `<namespace>/harvests/*.json`                | 우클릭으로 수확하고 다시 심는 작물. [우클릭 수확](#우클릭-수확)                                                                                       |
 | `<namespace>/veins/*.json`                   | 도구 하나로 한 번에 캐는 블록 그룹으로, 제한과 허기 비용을 정합니다. [광맥 채굴](#광맥-채굴)                                                          |
@@ -567,6 +569,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 - **레시피 제거**: 이름, 네임스페이스, 결과물 기준으로 제작 레시피를 삭제합니다
 - **비활성화된 블록과 아이템**: 어떤 블록이나 아이템이든 사용에서 제외합니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템) 참고
 - **전리품 주입**: 전리품 테이블을 통째로 교체하는 대신 풀을 추가합니다
+- **전리품 제거**: 전리품 테이블을 통째로 교체하지 않고, 항목이나 아이템을 빼거나 테이블을 비웁니다
 - **블록 드롭**: 블록이 부서질 때 드롭하는 것을, 경험치까지 포함해, 추가하거나 교체합니다
 - **플레이어 전리품**: 플레이어가 죽을 때 들고 있던 것에 더해, 또는 그 대신 전리품 테이블을 굴립니다
 - **기존 블록, 아이템, 물약의 속성**: 경도, 빛, 스택 크기, 무엇에든 붙이는 음식 속성, 물약의 효과. [속성 재정의](#속성-재정의) 참고
@@ -586,7 +589,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                         |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 어펙스와 보석 소켓의 이름) |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots` (Curios는 바닐라 클라이언트를 거부합니다)                                |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots` (Curios는 바닐라 클라이언트를 거부합니다)                                |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요)           |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                           |                                                                                                                                |
 
@@ -674,7 +677,7 @@ thatmod.jar
 - 1.12.2 블록 상태는 전혀 제공되지 않습니다. 대신 그 텍스처를 읽어 생성기가 찾는 이름으로 제공하며, 블록 상태에 `end`, `top`, `bottom`이 있던 곳에는 `_top`과 `_bottom`이 붙은 `textures/block/<variant>.png`를 씁니다. 그러면 여기서 작성한 팩과 마찬가지로 변형마다 블록 상태와 모델이 생성됩니다.
 - 레시피는 `data`를 잃고 평탄화된 id를 얻습니다. `forge:ore_shaped`는 `ore` 재료를 `tag`로 바꾼 `minecraft:crafting_shaped`가 되고, 전리품 테이블도 같은 방식으로 `set_data`를 잃으며, `data`가 있는 발전 과제의 `item`은 `items`가 됩니다. 발전 과제의 `background`는 `textures/blocks/`에서 `textures/block/`으로 옮겨지고, 아이콘은 아이템을 `id`로 지정합니다.
 - 레시피의 1.12.2 Forge 어휘도 함께 변환됩니다. `forge:ore_dict` 또는 `minecraft:item` 재료 유형은 버려지고, `minecraft:item_nbt` 재료는 nbt를 데이터 픽서에 통과시킨 `forge:nbt`(1.21.1: `neoforge:components`)가 되며, `minecraft:item_exists`는 `forge:item_exists`가 되고(1.21.1: 모든 조건이 `neoforge:conditions` 아래에서 `neoforge` 이름을 가짐), 네임스페이스가 없는 아이템은 레시피의 네임스페이스를 갖고, `data` 32767은 모든 변형의 목록이 됩니다. 모드의 `_constants.json`에 있는 `#CONSTANT`는 함께 가져올 수 없으며 로그에 이름이 남습니다. 아이템을 나열하는 곳이면 어디든 `name:*`는 그 아이템이 가졌던 모든 변형이 되고, 단일 값은 첫 번째를 취하며, 이는 `recipe_removals` 결과물과 `furnace` 제거에도 미치고 이들도 아이템으로 변환됩니다. `name:*`로 쓴 모루의 `item`이나 `with`는 모든 변형의 목록이 되며, 그중 어느 것이든 응답합니다.
-- 1.12.2 이후 이름이 바뀐 전리품 테이블은 팩이 그것을 지정하는 모든 곳에서 이름이 바뀝니다. `loot_injections` 대상, `player_loot` 테이블, `loot_table` 항목(1.21.1: 그 `value`)이 해당하므로, `minecraft:entities/zombie_pigman`은 `minecraft:entities/zombified_piglin`이 됩니다. `inverse`가 있는 `killed_by_player`는 `inverted` 조건이 되고, `on_fire`가 있는 `entity_properties`는 `flags` 조건자가 되며, `generic.maxHealth` 같은 `set_attributes` 이름은 `generic.max_health`가 됩니다(1.21.1: 연산이 새 이름을 얻고 수정자의 `name`은 `id`가 됨).
+- 1.12.2 이후 이름이 바뀐 전리품 테이블은 팩이 그것을 지정하는 모든 곳에서 이름이 바뀝니다. `loot_injections` 대상, `loot_removals` 대상과 그 아이템 ID, `player_loot` 테이블, `loot_table` 항목(1.21.1: 그 `value`)이 해당하므로, `minecraft:entities/zombie_pigman`은 `minecraft:entities/zombified_piglin`이 됩니다. `inverse`가 있는 `killed_by_player`는 `inverted` 조건이 되고, `on_fire`가 있는 `entity_properties`는 `flags` 조건자가 되며, `generic.maxHealth` 같은 `set_attributes` 이름은 `generic.max_health`가 됩니다(1.21.1: 연산이 새 이름을 얻고 수정자의 `name`은 `id`가 됨).
 - 평탄화가 쪼갠 1.12.2 블록에 대한 재정의, 예를 들어 `overrides/minecraft/wool.json`은 1.12.2가 모든 변형을 한꺼번에 바꾸었으므로 그것이 된 모든 블록, 즉 열여섯 가지 양털 전부에 대한 재정의로 읽힙니다.
 - 게임 규칙 파일의 `gameLoopFunction`은 게임 규칙이 없어졌으므로 `#minecraft:tick` 함수 태그가 되어 `data/minecraft/tags/function/tick.json`으로 기록됩니다. 팩 자체의 차원 번호는 그 `dimensions` 파일을 통해 읽으므로, `dimensions/verdant.json`의 `"id": 7`은 팩이 7을 지정하는 모든 곳에서 7을 `mypack:verdant`로 만듭니다. `villageBlocks` 쌍은 양쪽 모두 고쳐지고 확률은 유지되며, `registry_remap` 파일은 1.12.2의 복수형 `minecraft:blocks`와 `minecraft:items`를 그대로 써도 됩니다.
 - 1.12.2가 한 차원에 두었던 모든 구조물을 끄는 월드 템플릿은 이 버전에만 있는 구조물도 거기서 끕니다. 오버월드의 `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins`, `trial_chambers`와 네더의 `nether_fossils`입니다. 1.12.2 이름 중 하나라도 켜 두면 나머지는 그대로 둡니다. `blockWorldGenerators`와 그 짝 키 같은 생성기 제어 키는 여기서 읽는 곳이 없으므로 로그에 한 줄을 남기고 변환된 템플릿에서 빠집니다. 평지 템플릿의 `generatorOptions` 계층도 블록 이름이 같은 방식으로 고쳐져, `minecraft:grass`는 `minecraft:grass_block`이 됩니다.
@@ -3505,6 +3508,43 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 `priceScale`은 `buy`만 바꾸고 `buySecondary`는 바꾸지 않으며, 조정된 가격에도 게임 자체의 수요와 평판 보정이 그대로 더해집니다. 조건부 거래는 직업과 아이템(`buy`, `buySecondary`, `sell`)으로 주민의 다른 거래와 구분되므로, 그 직업의 다른 거래가 쓰지 않는 아이템을 지정하세요. 같은 아이템을 쓰는 팩 거래가 둘이면 나중 것은 건너뛰고 로그에 남깁니다. 거래가 이미 생성된 주민은 그 거래를 그대로 유지합니다.
 
 ---
+
+## 전리품 제거
+
+*제작, 전리품, 거래*
+
+`<namespace>/loot_removals/*.json`
+
+이 폴더의 파일은 이미 있는 전리품 테이블에서 항목을 빼거나, 테이블을 통째로 비웁니다. `loot_tables/`의 파일처럼 테이블을 교체하지는 않습니다. 파일 하나는 테이블 하나를 편집하며, 같은 테이블을 가리키는 여러 파일은 모두 적용됩니다.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| 키        | 타입                   | 의미                                                                                                           |
+| --------- | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `target`  | 문자열, 필수           | 파일이 편집하는 전리품 테이블. 이름만 쓰면 `minecraft:`가 붙습니다.                                            |
+| `clear`   | 불리언, 기본값 `false` | 모든 풀을 제거합니다. 테이블은 빈 채로 남고 `entries`와 `items`는 무시됩니다.                                  |
+| `entries` | `{pool, entry}` 배열   | `pool`이라는 이름의 풀에서 `entry`를 주는 항목을 제거합니다.                                                   |
+| `items`   | 아이템 ID 배열         | 모든 풀에서 그 아이템을 주는 항목을 제거합니다. `alternatives`, `group`, `sequence` 안에 있는 것도 포함합니다. |
+
+- `pool`은 먼저 풀의 이름과 맞춥니다. 어떤 풀도 그 이름이 없으면 `main`은 첫 번째 풀, `pool<N>`은 0부터 세어 N번째 인덱스의 풀을 뜻합니다.
+- 항목에는 이름이 없으므로 `entry`는 항목이 주는 것, 곧 아이템 ID, 태그 ID, 전리품 테이블 ID와 맞춥니다. 1.12.2 팩에서 사용자 지정 `entryName`으로 항목을 지정했다면 대신 아이템 ID를 써야 합니다.
+- `items`는 항목의 함수를 무시하므로 개수, 피해도, 컴포넌트와 상관없이 그 항목을 제거합니다. 그 아이템을 줄 `tag` 항목은 남으므로, 태그를 `entry`에 적으세요.
+- 자식이 없어진 `alternatives`, `group`, `sequence` 항목도 제거됩니다.
+- 제거는 `loot_injections`보다 먼저 실행되므로 주입된 풀은 절대 제거되지 않습니다. RDPL 이후에 테이블에 추가하는 모드는 자기가 추가한 것을 유지합니다.
+- 아무것도 맞지 않는 풀, 항목, 아이템은 `rdpl.log`에 경고로 남으므로, 모드를 빼도 팩이 계속 동작합니다.
+- 설정의 `lootRemovals`로 끌 수 있습니다. 전리품 테이블은 서버 데이터이므로 서버만 있으면 충분합니다.
 
 # 생물과 위험 요소
 
@@ -9489,6 +9529,7 @@ cactusMaxHeight = 3
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9499,6 +9540,7 @@ functions = true
 | 설정             | 유형   | 기본값 | 설명                                                                                                                                                           |
 | ---------------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | 불리언 | `true` | 이미 존재하는 전리품 테이블을 통째로 대체하지 않고 풀을 추가하는 loot_injections/*.json 파일을 적용합니다                                                      |
+| `lootRemovals`   | 불리언 | `true` | 이미 존재하는 전리품 테이블에서 이름이 지정된 항목을 빼거나, 테이블을 통째로 비우는 loot_removals/*.json 파일을 적용합니다                                     |
 | `playerLoot`     | 불리언 | `true` | 플레이어가 죽을 때 전리품 테이블을 굴려 나온 것을 인벤토리에 더하거나 인벤토리 대신 떨어뜨리는 player_loot/*.json 파일을 적용합니다                            |
 | `registryRemaps` | 불리언 | `true` | 레지스트리 항목의 이름을 바꾸어, 이름이 바뀌기 전에 저장된 월드가 블록과 아이템을 잃지 않고 유지하게 하는 registry_remap 파일을 적용합니다                     |
 | `affixes`        | 불리언 | `true` | 플레이어가 처음 들었을 때 아이템에 무작위 속성 보너스와 소켓을 주고, 모루로 소켓에 보석을 끼우게 하는 affixes/*.json 과 gems/*.json 파일을 적용합니다          |

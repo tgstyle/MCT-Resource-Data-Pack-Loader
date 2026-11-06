@@ -73,6 +73,7 @@
 - [右クリック収穫](#右クリック収穫)
 - [鉱脈採掘](#鉱脈採掘)
 - [持ち運び](#持ち運び)
+- [ルートの削除](#ルートの削除)
 - [プレイヤーのルート](#プレイヤーのルート)
 - [食事のバリエーション](#食事のバリエーション)
 - [村人と取引](#村人と取引)
@@ -213,6 +214,7 @@ Resource Data Pack Loader(RDPL)は `rdploader` という1つのフォルダー�
 | `<namespace>/trades/*.json`                  | 職業が買うものと売るもの。[村人と取引](#村人と取引)                                                                                                                   |
 | `<namespace>/loot_tables/*.json`             | 置き換えるルートテーブル。[オーバーライドできるもの](#オーバーライドできるもの)                                                                                       |
 | `<namespace>/loot_injections/*.json`         | すでにあるテーブルに追加するプール。[オーバーライドできるもの](#オーバーライドできるもの)                                                                             |
+| `<namespace>/loot_removals/*.json`           | すでにあるテーブルから取り除くエントリ、またはテーブル全体を空にしたもの。[オーバーライドできるもの](#オーバーライドできるもの)                                       |
 | `<namespace>/block_drops/*.json`             | パックが所有していないブロックの、追加または置き換えのドロップ。[ブロックのドロップ](#ブロックのドロップ)                                                             |
 | `<namespace>/harvests/*.json`                | 右クリックで収穫して植え直す作物。[右クリック収穫](#右クリック収穫)                                                                                                   |
 | `<namespace>/veins/*.json`                   | ツールが一度にまとめて掘るブロックのグループ。上限と空腹コストを指定します。[鉱脈採掘](#鉱脈採掘)                                                                     |
@@ -567,6 +569,7 @@ Mod自身のID `resourcedatapackloader` は予約されています。この名�
 - **レシピの削除。** 名前、名前空間、出力を指定してクラフトレシピを削除します
 - **無効にしたブロックとアイテム。** あらゆるブロックやアイテムを使えなくします。[無効にしたブロックとアイテム](#無効にしたブロックとアイテム)を参照してください
 - **ルートの注入。** ルートテーブル全体を置き換える代わりに、プールを追加します
+- **ルートの削除。** ルートテーブルを置き換えずに、エントリやアイテムを取り除くか、テーブルを空にします
 - **ブロックのドロップ。** あらゆるブロックが壊れたときのドロップを、経験値も含めて追加したり置き換えたりできます
 - **プレイヤーのルート。** プレイヤーの死亡時に、持っていたものに加えて、またはその代わりに、ルートテーブルを抽選します
 - **既存のブロック、アイテム、ポーションのプロパティ。** 硬度、明るさ、スタックサイズ、あらゆるものへの食べ物の設定、ポーションの効果。[プロパティのオーバーライド](#プロパティのオーバーライド)を参照してください
@@ -586,7 +589,7 @@ RDPLは1つか2つのレシピを置き換えるのに向いています。自�
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                               |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`（アイテムとエンチャントのツールチップの行、アフィックスとジェムソケットの名前） |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`（Curiosはバニラのクライアントを受け付けません）                                                |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`（Curiosはバニラのクライアントを受け付けません）                                                |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（クライアント用のフォルダーです。クライアントがない場合は入れません）         |
 | 制御レイヤー全体、設定、事前生成                                                                                                                          |                                                                                                                                                      |
 
@@ -674,7 +677,7 @@ Modのパックは、`overrideResourcePacks` の設定にかかわらず、リ�
 - 1.12.2のブロックステートは、まったく提供されません。代わりにそのテクスチャが読まれ、ジェネレーターが探す名前で提供されます。ブロックステートに `end`、`top`、`bottom` があった場合は `_top` と `_bottom` を付けた `textures/block/<variant>.png` になるので、ここで書かれたパックと同じように、バリアントごとにブロックステートとモデルが生成されます。
 - レシピは `data` がなくなって平坦化されたIDになり、`forge:ore_shaped` は `minecraft:crafting_shaped` になって、`ore` の材料は `tag` になります。ルートテーブルも同じように `set_data` がなくなり、進捗の `data` 付きの `item` は `items` になります。進捗の `background` は `textures/blocks/` から `textures/block/` に移り、アイコンはアイテムを `id` で指定します。
 - レシピの1.12.2のForge語彙も引き継がれます。`forge:ore_dict` または `minecraft:item` の材料タイプは捨てられ、`minecraft:item_nbt` の材料は、NBTをデータフィクサーに通した `forge:nbt`（1.21.1では `neoforge:components`）になります。`minecraft:item_exists` は `forge:item_exists` になります（1.21.1では、すべての条件が `neoforge:conditions` の下で `neoforge` の名前を取ります）。名前空間のないアイテムはレシピの名前空間を取り、`data` の32767はすべてのバリアントのリストになります。Modの `_constants.json` にある `#CONSTANT` は引き継げず、ログにその名前が出ます。アイテムを列挙するどの場所でも、`name:*` はそのアイテムにあったすべてのバリアントになり、単独の値は最初のものを取ります。これは `recipe_removals` の出力と `furnace` の削除にも及び、それらもアイテムとして引き継がれます。金床の `item` または `with` が `name:*` と書かれている場合は、すべてのバリアントのリストになり、どれでも応じます。
-- 1.12.2以降に名前が変わったルートテーブルは、パックがそれを指定するどの場所でも名前が変わります。`loot_injections` の対象、`player_loot` のテーブル、`loot_table` エントリ（1.21.1では `value`）が該当し、`minecraft:entities/zombie_pigman` は `minecraft:entities/zombified_piglin` になります。`inverse` 付きの `killed_by_player` は `inverted` 条件になり、`on_fire` 付きの `entity_properties` は `flags` 述語になり、`generic.maxHealth` のような `set_attributes` の名前は `generic.max_health` になります（1.21.1では、演算が新しい名前になり、修飾子の `name` が `id` になります）。
+- 1.12.2以降に名前が変わったルートテーブルは、パックがそれを指定するどの場所でも名前が変わります。`loot_injections` の対象、`loot_removals` の対象とそのアイテム ID、`player_loot` のテーブル、`loot_table` エントリ（1.21.1では `value`）が該当し、`minecraft:entities/zombie_pigman` は `minecraft:entities/zombified_piglin` になります。`inverse` 付きの `killed_by_player` は `inverted` 条件になり、`on_fire` 付きの `entity_properties` は `flags` 述語になり、`generic.maxHealth` のような `set_attributes` の名前は `generic.max_health` になります（1.21.1では、演算が新しい名前になり、修飾子の `name` が `id` になります）。
 - フラット化で分割された1.12.2のブロックのオーバーライド、たとえば `overrides/minecraft/wool.json` は、それが変わった先のすべてのブロック、つまり16色すべての羊毛のオーバーライドとして読まれます。1.12.2ではすべてのバリアントが一度に変更されたからです。
 - ゲームルールファイルの `gameLoopFunction` は、ゲームルールがなくなったため、`data/minecraft/tags/function/tick.json` として書かれる `#minecraft:tick` ファンクションタグになります。パック自身のディメンション番号は `dimensions` ファイルを通して読まれるので、`dimensions/verdant.json` の `"id": 7` は、パックがどこで指定しても7を `mypack:verdant` にします。`villageBlocks` の組は両側が修正され、確率はそのまま残り、`registry_remap` ファイルは1.12.2の複数形の `minecraft:blocks` と `minecraft:items` を保てます。
 - 1.12.2がディメンションで持っていたすべての構造物を無効にするワールドテンプレートは、このバージョンにしかない構造物もそこで無効にします。オーバーワールドの `ancient_cities`、`buried_treasures`、`ocean_ruins`、`pillager_outposts`、`ruined_portals`、`shipwrecks`、`trail_ruins`、`trial_chambers`、ネザーの `nether_fossils` です。1.12.2の名前を1つでもオンのままにすれば、それらはそのままになります。ジェネレーターの制御キー、つまり `blockWorldGenerators` とその仲間は、ここでは何も読まないので、変換されたテンプレートからは、ログに1行を残して除かれます。フラットテンプレートの `generatorOptions` のレイヤーは、ブロック名が同じように修正され、`minecraft:grass` は `minecraft:grass_block` になります。
@@ -3505,6 +3508,43 @@ Minecraft はすでにブロックの位置からバリアントを選んでい�
 `priceScale` が変えるのは `buy` だけで、`buySecondary` は変わりません。スケールされた価格には、ゲーム自身の需要と評判による調整がさらに加わります。条件付きの取引は、職業とアイテム（`buy`、`buySecondary`、`sell`）で村人のほかの取引と区別されるため、その職業のほかの取引が使っていないアイテムを指定してください。同じアイテムを使うパックの取引が2つある場合、後のものは無視され、ログに記録されます。取引がすでに生成された村人は、それをそのまま持ち続けます。
 
 ---
+
+## ルートの削除
+
+*クラフト、ルート、取引*
+
+`<namespace>/loot_removals/*.json`
+
+このフォルダのファイルは、既存のルートテーブルからエントリを取り除くか、テーブルを空にします。バニラや Mod のテーブルのどちらも対象になります。`loot_tables/` のファイルと違ってテーブルを置き換えることはありません。1 つのファイルは 1 つのテーブルを編集し、同じテーブルに対する複数のファイルはすべて適用されます。
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| キー      | 型                           | 説明                                                                                                                 |
+| --------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `target`  | 文字列、必須                 | ファイルが編集するルートテーブル。名前だけの場合は `minecraft:` が付きます。                                         |
+| `clear`   | 真偽値、デフォルトは `false` | すべてのプールを削除します。テーブルは空のまま残り、`entries` と `items` は無視されます。                            |
+| `entries` | `{pool, entry}` の配列       | `pool` という名前のプールから、`entry` を与えるエントリを削除します。                                                |
+| `items`   | アイテム ID の配列           | すべてのプールから、そのアイテムを与えるエントリを削除します。`alternatives`、`group`、`sequence` の内側も対象です。 |
+
+- `pool` はまずプールの名前に一致します。どのプールもその名前でない場合、`main` は最初のプール、`pool<N>` は 0 から数えて N 番目のプールを指します。
+- エントリには名前がないため、`entry` はエントリが与えるもの（アイテム ID、タグ ID、ルートテーブル ID）に一致します。独自の `entryName` でエントリを指定している 1.12.2 のパックは、代わりにアイテム ID を使う必要があります。
+- `items` はエントリの関数を無視するため、個数・ダメージ・コンポーネントに関係なくそのエントリを削除します。そのアイテムを与える `tag` エントリは残るので、タグを `entry` で指定してください。
+- 子を失った `alternatives`、`group`、`sequence` のエントリも削除されます。
+- 削除は `loot_injections` より前に行われるため、注入されたプールが削除されることはありません。RDPL の後にテーブルへ追加する Mod は、追加したものを保持します。
+- 一致しないプール、エントリ、アイテムは `rdpl.log` に警告として記録されるため、Mod を外してもパックは動き続けます。
+- 設定の `lootRemovals` でオフにできます。ルートテーブルはサーバーのデータなので、サーバーだけで十分です。
 
 # 生物と危険要素
 
@@ -9489,6 +9529,7 @@ cactusMaxHeight = 3
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9499,6 +9540,7 @@ functions = true
 | 設定             | 種類   | デフォルト | 説明                                                                                                                                                                            |
 | ---------------- | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | 真偽値 | `true`     | ルートテーブル全体を置き換えるのではなく、すでにあるルートテーブルにプールを追加する loot_injections/*.json ファイルを適用します                                                |
+| `lootRemovals`   | 真偽値 | `true`     | loot_removals/*.json ファイルを適用します。既存のルートテーブルから名前付きのエントリを取り除くか、テーブル全体を空にします                                                     |
 | `playerLoot`     | 真偽値 | `true`     | プレイヤーが死んだときにルートテーブルを抽選し、できたものを、インベントリに加えて、またはインベントリの代わりにドロップする player_loot/*.json ファイルを適用します            |
 | `registryRemaps` | 真偽値 | `true`     | レジストリの項目名を変更する registry_remap ファイルを適用します。名前の変更前に保存されたワールドが、ブロックやアイテムを失わずに保てます                                      |
 | `affixes`        | 真偽値 | `true`     | プレイヤーが初めて手にしたときにアイテムへランダムな属性ボーナスとソケットを与え、金床でソケットに宝石をはめられるようにする affixes/*.json と gems/*.json ファイルを適用します |

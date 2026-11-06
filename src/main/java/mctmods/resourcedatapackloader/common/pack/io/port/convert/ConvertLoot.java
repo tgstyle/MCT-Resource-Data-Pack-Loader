@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
@@ -24,8 +25,21 @@ public final class ConvertLoot {
 
     public static String loot(JsonObject json, String namespace, Ported pack) {
         if (GsonHelper.isValidPrimitive(json, "target")) { lootTable(json, "target", pack); }
+        removalIds(json, pack);
         lootWalk(json, namespace, pack);
         return Ported.GSON.toJson(json);
+    }
+
+    private static void removalIds(JsonObject json, Ported pack) {
+        if (GsonHelper.isArrayNode(json, "items")) {
+            JsonArray items = new JsonArray();
+            for (JsonElement element : json.getAsJsonArray("items")) { items.add(element.isJsonPrimitive() ? new JsonPrimitive(Convert.itemName(element.getAsString(), pack)) : element); }
+            json.add("items", items);
+        }
+        if (!GsonHelper.isArrayNode(json, "entries")) { return; }
+        for (JsonElement element : json.getAsJsonArray("entries")) {
+            if (element.isJsonObject() && !element.getAsJsonObject().has("type")) { Convert.renamed(element.getAsJsonObject(), "entry", id -> Convert.itemName(id, pack), pack); }
+        }
     }
 
     private static void lootWalk(JsonElement element, String namespace, Ported pack) {

@@ -73,6 +73,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
 - [Carrying](#carrying)
+- [Loot removals](#loot-removals)
 - [Player loot](#player-loot)
 - [Food variety](#food-variety)
 - [Villagers and trades](#villagers-and-trades)
@@ -213,6 +214,7 @@ Under `data/`:
 | `<namespace>/trades/*.json`                  | What professions buy and sell. [Villagers and trades](#villagers-and-trades)                                                                                                   |
 | `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                                                                         |
 | `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                                                                   |
+| `<namespace>/loot_removals/*.json`           | Entries taken out of a table that already exists, or the whole table emptied. [What you can override](#what-you-can-override)                                                  |
 | `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                                                                         |
 | `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                                                                   |
 | `<namespace>/veins/*.json`                   | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                                           |
@@ -567,6 +569,7 @@ The template never registers, while `jacks_ore` registers with the template's ma
 - **Recipe removals**, delete a crafting recipe by name, namespace or output
 - **Disabled blocks and items**, take any block or item out of play, see [Disabled blocks and items](#disabled-blocks-and-items)
 - **Loot injections**, add a pool to a loot table instead of replacing the whole thing
+- **Loot removals**, take an entry or an item out of a loot table, or empty it, without replacing the table
 - **Block drops**, add to or replace what any block drops when it is broken, experience included
 - **Player loot**, roll a loot table when a player dies, on top of what they were carrying or instead of it
 - **Properties of existing blocks, items and potions**, hardness, light, stack sizes, food on anything, a potion's effects, see [Property overrides](#property-overrides)
@@ -586,7 +589,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                            |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (item and enchantment tooltip lines, affix and socket names) |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots` (Curios refuses vanilla clients)                                            |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots` (Curios refuses vanilla clients)                                            |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out)           |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                                   |
 
@@ -674,7 +677,7 @@ A pack made for the 1.12.2 line loads as it is. The loader recognizes one by its
 - A 1.12.2 blockstate is not served at all. Its textures are read instead and served under the names the generator looks for, `textures/block/<variant>.png` with `_top` and `_bottom` where the blockstate had `end`, `top` or `bottom`, so the blockstate and the models are generated for each variant as they would be for a pack written here.
 - Recipes lose their `data` and gain flattened ids, `forge:ore_shaped` becomes `minecraft:crafting_shaped` with `ore` ingredients as `tag`, loot tables lose `set_data` the same way, and an advancement's `item` with `data` becomes `items`. An advancement's `background` moves from `textures/blocks/` to `textures/block/`, and its icon names the item as `id`.
 - A recipe's 1.12.2 Forge vocabulary is carried too: a `forge:ore_dict` or `minecraft:item` ingredient type is dropped, a `minecraft:item_nbt` ingredient becomes `forge:nbt` (1.21.1: `neoforge:components`) with its nbt run through the data fixers, `minecraft:item_exists` becomes `forge:item_exists` (1.21.1: every condition takes its `neoforge` name, under `neoforge:conditions`), an item without a namespace takes the recipe's, and `data` 32767 becomes a list of every variant. A `#CONSTANT` from a mod's `_constants.json` cannot come along, and the log names it. Wherever a list names items, `name:*` becomes every variant the item had, and a single value takes the first; that reaches `recipe_removals` outputs and `furnace` removals, which are carried as items too. An anvil's `item` or `with` written as `name:*` becomes a list of every variant, and any of them answers.
-- Loot tables renamed since 1.12.2 are renamed wherever a pack names one: a `loot_injections` target, a `player_loot` table and a `loot_table` entry (1.21.1: its `value`), so `minecraft:entities/zombie_pigman` becomes `minecraft:entities/zombified_piglin`. `killed_by_player` with `inverse` becomes an `inverted` condition, `entity_properties` with `on_fire` becomes a `flags` predicate, and `set_attributes` names such as `generic.maxHealth` become `generic.max_health` (1.21.1: the operation takes its new name, and the modifier's `name` becomes its `id`).
+- Loot tables renamed since 1.12.2 are renamed wherever a pack names one: a `loot_injections` target, a `loot_removals` target and its item ids, a `player_loot` table and a `loot_table` entry (1.21.1: its `value`), so `minecraft:entities/zombie_pigman` becomes `minecraft:entities/zombified_piglin`. `killed_by_player` with `inverse` becomes an `inverted` condition, `entity_properties` with `on_fire` becomes a `flags` predicate, and `set_attributes` names such as `generic.maxHealth` become `generic.max_health` (1.21.1: the operation takes its new name, and the modifier's `name` becomes its `id`).
 - An override of a 1.12.2 block the flattening split, such as `overrides/minecraft/wool.json`, is read as an override of every block it became, all sixteen wools, since 1.12.2 changed every variant at once.
 - A game rules file's `gameLoopFunction` becomes the `#minecraft:tick` function tag, written as `data/minecraft/tags/function/tick.json`, since the game rule is gone. The pack's own dimension numbers are read through its `dimensions` files, so `"id": 7` in `dimensions/verdant.json` makes 7 `mypack:verdant` wherever the pack names it. Both sides of a `villageBlocks` pair are fixed, the chance kept, and a `registry_remap` file may keep 1.12.2's plural `minecraft:blocks` and `minecraft:items`.
 - A world template that turns off every structure 1.12.2 had in a dimension turns off the structures only this version has there too: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` and `trial_chambers` in the overworld and `nether_fossils` in the Nether. Leave one of the 1.12.2 names on and they are left alone. The generator control keys, `blockWorldGenerators` and its companions, are left out of a converted template with one line in the log, since nothing here reads them. A flat template's `generatorOptions` layers have their block names fixed the same way, so `minecraft:grass` becomes `minecraft:grass_block`.
@@ -3505,6 +3508,43 @@ A trade can also depend on the player who opens the window. A player who fails a
 `priceScale` changes `buy` only, never `buySecondary`, and the scaled cost still gets the game's own demand and reputation adjustments on top. The game tells a conditional trade apart from the villager's other trades by its profession and its items (`buy`, `buySecondary` and `sell`), so give it items that no other trade of that profession uses. Two pack trades with the same items: the later one is skipped and logged. Villagers whose trades were already generated keep them.
 
 ---
+
+## Loot removals
+
+*crafting, loot and trade*
+
+`<namespace>/loot_removals/*.json`
+
+A file here takes entries out of a loot table that already exists, whether vanilla's or a mod's, or empties it, without replacing the table the way a file in `loot_tables/` does. One file edits one table, and several files for the same table all apply.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Key       | Type                     | Meaning                                                                                               |
+| --------- | ------------------------ | ----------------------------------------------------------------------------------------------------- |
+| `target`  | string, required         | The loot table the file edits. A bare name gets `minecraft:`.                                         |
+| `clear`   | boolean, default `false` | Removes every pool. The table stays, empty, and `entries` and `items` are ignored.                    |
+| `entries` | array of `{pool, entry}` | Removes the entries of the pool named `pool` that give `entry`.                                       |
+| `items`   | array of item ids        | Removes every item entry of that item, in every pool, also inside alternatives, groups and sequences. |
+
+- `pool` matches a pool's name first. When no pool has that name, `main` means the first pool and `pool<N>` the pool at index N, counting from 0.
+- Entries have no names, so `entry` matches what an entry gives: an item id, a tag id or a loot table id. A 1.12.2 pack that names an entry by a custom `entryName` must use the item id instead.
+- `items` ignores an entry's functions, so it removes the entry whatever count, damage or components it would have given. A `tag` entry that would give the item stays, so name the tag in `entry`.
+- An alternatives, group or sequence entry left with no children is removed too.
+- Removals run before `loot_injections`, so an injected pool is never removed. A mod that adds to the table after RDPL keeps what it added.
+- A pool, entry or item that matches nothing is a warning in `rdpl.log`, so a pack keeps working after a mod is dropped.
+- `lootRemovals` in the config turns them off. Loot tables are server data, so the server alone is enough.
 
 # Creatures and hazards
 
@@ -9489,6 +9529,7 @@ Loot, functions and registry names. Config only.
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9499,6 +9540,7 @@ functions = true
 | Setting          | Type    | Default | What it does                                                                                                                                                                    |
 | ---------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | boolean | `true`  | Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table                                                      |
+| `lootRemovals`   | boolean | `true`  | Apply loot_removals/*.json files, which take named entries out of loot tables that already exist, or empty a table whole                                                        |
 | `playerLoot`     | boolean | `true`  | Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory                                        |
 | `registryRemaps` | boolean | `true`  | Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them                                  |
 | `affixes`        | boolean | `true`  | Apply affixes/*.json and gems/*.json files, which give an item random attribute bonuses and sockets the first time a player holds it, and let an anvil put a gem in a socket    |
