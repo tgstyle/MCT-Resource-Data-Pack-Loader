@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
+import mctmods.resourcedatapackloader.common.items.ContentPouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
@@ -22,6 +24,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 
 public final class PackTooltips {
+    private static final String ITEMS = "Items";
+
     private PackTooltips() {}
 
     private static Component text(String line) { return (I18n.exists(line) ? Component.translatable(line) : Component.literal(line)).withStyle(ChatFormatting.GRAY); }
@@ -40,8 +44,14 @@ public final class PackTooltips {
         if (held > 0L) { tooltip.add(Component.literal(I18n.get("rdpl.weight.contents", ClientWeights.format(held))).withStyle(ChatFormatting.GRAY)); }
     }
 
+    private static void kept(ItemStack stack, List<Component> tooltip) {
+        CompoundTag held = stack.getTagElement(ContentPouchInventory.HELD);
+        if (held != null && ContentContainerBlockItem.holdsKept(stack) && !held.getList(ITEMS, Tag.TAG_COMPOUND).isEmpty()) { tooltip.add(Component.translatable("rdpl.container.kept", held.getList(ITEMS, Tag.TAG_COMPOUND).size()).withStyle(ChatFormatting.GRAY)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         weight(event.getItemStack(), event.getToolTip());
+        kept(event.getItemStack(), event.getToolTip());
         lines(event);
         affixes(event.getItemStack(), event.getToolTip());
     }

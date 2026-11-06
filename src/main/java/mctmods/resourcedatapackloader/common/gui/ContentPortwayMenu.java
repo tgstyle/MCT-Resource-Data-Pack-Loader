@@ -51,7 +51,7 @@ public final class ContentPortwayMenu extends AbstractContainerMenu {
     public static final int ROWS = 6;
     public static final int COLUMNS = 9;
     public static final int FILTER_MAX = 32;
-    public static final ContainerDef SHAPE = new ContainerDef(ROWS, COLUMNS, "", false, null, null, 0, 0);
+    public static final ContainerDef SHAPE = new ContainerDef(ROWS, COLUMNS, "", false, null, null, 0, 0, false);
     private static final int SLOTS = ROWS * COLUMNS;
     private static final int PAGED = SLOTS - COLUMNS;
     private static final int TOP = 18;

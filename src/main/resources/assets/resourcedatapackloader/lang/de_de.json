@@ -143,6 +143,7 @@
   "rdpl.container_upgrade.linked": "Zwei Blöcke teilen sich diesen Speicher",
   "rdpl.container_upgrade.cannot_move": "Etwas darin lässt sich nicht verschieben",
   "rdpl.container_upgrade.loot": "Öffne den Behälter, bevor du ihn aufwertest",
+  "rdpl.container.kept": "Enthält %s Stapel",
   "rdpl.carry.full": "Du trägst bereits etwas",
   "rdpl.portway.activated": "%s aktiviert (%s bekannt)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",

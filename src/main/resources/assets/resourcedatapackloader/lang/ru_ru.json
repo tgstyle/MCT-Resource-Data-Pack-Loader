@@ -143,6 +143,7 @@
   "rdpl.container_upgrade.linked": "Это хранилище общее для двух блоков",
   "rdpl.container_upgrade.cannot_move": "Что-то внутри нельзя переместить",
   "rdpl.container_upgrade.loot": "Откройте этот контейнер, прежде чем улучшать его",
+  "rdpl.container.kept": "Содержит стаков: %s",
   "rdpl.carry.full": "Вы уже что-то несёте",
   "rdpl.portway.activated": "%s: активирован (известно: %s)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",

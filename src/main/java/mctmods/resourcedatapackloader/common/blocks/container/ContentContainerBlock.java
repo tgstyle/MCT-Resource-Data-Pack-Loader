@@ -11,8 +11,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
 
+import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -39,9 +41,14 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.network.NetworkHooks;
 
@@ -92,14 +99,27 @@ import net.minecraftforge.network.NetworkHooks;
         super.setPlacedBy(level, pos, state, placer, stack);
         if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) {
             if (placer != null) { held.placed(); }
+            held.restore(stack);
             if (stack.hasCustomHoverName()) { held.setCustomName(stack.getHoverName()); }
         }
+    }
+
+    @Override public void playerWillDestroy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Player player) {
+        if (!level.isClientSide() && container.keepContents() && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.brokenBy(player); }
+        super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override @Nonnull public List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
+        if (!container.keepContents()) { return super.getDrops(state, builder); }
+        LootParams params = builder.withParameter(LootContextParams.BLOCK_STATE, state).create(LootContextParamSets.BLOCK);
+        return ForgeHooks.modifyLoot(getLootTable(), new ObjectArrayList<>(), new LootContext.Builder(params).create(null));
     }
 
     @Override public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
         if (state.is(replaced.getBlock())) { return; }
         if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held && ContentContainerUpgrades.idle()) {
-            Containers.dropContents(level, pos, held);
+            if (container.keepContents()) { popResource(level, pos, held.kept(level, new ItemStack(this))); }
+            else { Containers.dropContents(level, pos, held); }
             level.updateNeighbourForOutputSignal(pos, this);
         }
         ContentDrops.removed(level, pos, state, replaced);

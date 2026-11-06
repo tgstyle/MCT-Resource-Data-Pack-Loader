@@ -143,6 +143,7 @@
   "rdpl.container_upgrade.linked": "Two blocks share this storage",
   "rdpl.container_upgrade.cannot_move": "Something in there cannot be moved",
   "rdpl.container_upgrade.loot": "Open that container before upgrading it",
+  "rdpl.container.kept": "Holds %s stacks",
   "rdpl.carry.full": "You are already carrying something",
   "rdpl.portway.activated": "%s activated (%s known)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",

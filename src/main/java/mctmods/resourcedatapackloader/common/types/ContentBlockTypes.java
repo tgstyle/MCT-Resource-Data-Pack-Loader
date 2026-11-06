@@ -21,6 +21,7 @@ import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
 import mctmods.resourcedatapackloader.common.items.CompressedBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentBannerItem;
+import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
@@ -184,6 +185,7 @@ public final class ContentBlockTypes {
                 ContentRegistry.BlockEntry wall = ContentRegistry.block(ContentTypes.wallId(entry.id()));
                 yield wall == null ? new BlockItem(entry.block(), properties.stacksTo(16)) : new ContentBannerItem(entry.block(), wall.block(), properties.stacksTo(16));
             }
+            case CONTAINER -> new ContentContainerBlockItem(entry.block(), properties);
             case DOOR -> new DoubleHighBlockItem(entry.block(), properties);
             default -> {
                 CompressedSet set = ContentCompressables.owner(entry.id());

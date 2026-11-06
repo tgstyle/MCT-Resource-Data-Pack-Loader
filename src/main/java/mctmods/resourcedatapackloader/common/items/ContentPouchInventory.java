@@ -18,13 +18,22 @@ public final class ContentPouchInventory extends SimpleContainer {
     public ContentPouchInventory(ItemStack pouch, ContainerDef def) {
         super(def.size());
         this.pouch = pouch;
-        CompoundTag tag = pouch.getTag();
-        if (tag == null || !tag.contains(HELD)) { return; }
         NonNullList<ItemStack> items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
-        ContainerHelper.loadAllItems(tag.getCompound(HELD), items);
+        load(pouch, items);
         loading = true;
         for (int at = 0; at < items.size(); at++) { setItem(at, items.get(at)); }
         loading = false;
+    }
+
+    public static void load(ItemStack stack, NonNullList<ItemStack> items) {
+        CompoundTag held = stack.getTagElement(HELD);
+        if (held != null) { ContainerHelper.loadAllItems(held, items); }
+    }
+
+    public static void store(ItemStack stack, NonNullList<ItemStack> items) {
+        CompoundTag held = new CompoundTag();
+        ContainerHelper.saveAllItems(held, items, true);
+        stack.getOrCreateTag().put(HELD, held);
     }
 
     @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return ContentContainerMenu.storable(stack); }
@@ -34,8 +43,6 @@ public final class ContentPouchInventory extends SimpleContainer {
         if (loading) { return; }
         NonNullList<ItemStack> items = NonNullList.withSize(getContainerSize(), ItemStack.EMPTY);
         for (int at = 0; at < getContainerSize(); at++) { items.set(at, getItem(at)); }
-        CompoundTag held = new CompoundTag();
-        ContainerHelper.saveAllItems(held, items, true);
-        pouch.getOrCreateTag().put(HELD, held);
+        store(pouch, items);
     }
 }

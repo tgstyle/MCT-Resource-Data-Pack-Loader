@@ -143,6 +143,7 @@
   "rdpl.container_upgrade.linked": "두 블록이 이 보관함을 함께 쓰고 있습니다",
   "rdpl.container_upgrade.cannot_move": "안에 옮길 수 없는 것이 있습니다",
   "rdpl.container_upgrade.loot": "업그레이드하기 전에 해당 보관함을 먼저 여세요",
+  "rdpl.container.kept": "%s칸 사용 중",
   "rdpl.carry.full": "이미 무언가를 들고 있습니다",
   "rdpl.portway.activated": "%s을(를) 활성화했습니다 (%s개 등록됨)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",

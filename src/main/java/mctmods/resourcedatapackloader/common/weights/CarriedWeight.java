@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.weights;
 
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
+import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
 import mctmods.resourcedatapackloader.common.items.ContentPouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
@@ -55,7 +56,7 @@ public final class CarriedWeight {
     private static long contents(ItemStack stack, WeightDef settings, int depth) {
         if (WeightDef.CONTENTS_NONE.equals(settings.countContents)) { return 0L; }
         CompoundTag tag = stack.getTag();
-        if (stack.getItem() instanceof ContentContainerItem) { return tag == null ? 0L : listed(tag.getCompound(ContentPouchInventory.HELD).getList(ITEMS, Tag.TAG_COMPOUND), settings, depth); }
+        if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlockItem.holdsKept(stack)) { return tag == null ? 0L : listed(tag.getCompound(ContentPouchInventory.HELD).getList(ITEMS, Tag.TAG_COMPOUND), settings, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(settings.countContents)) { return 0L; }
         IItemHandler handler = stack.getCapability(ForgeCapabilities.ITEM_HANDLER).resolve().orElse(null);
         if (handler != null) {

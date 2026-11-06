@@ -143,6 +143,7 @@
   "rdpl.container_upgrade.linked": "Dos bloques comparten este almacén",
   "rdpl.container_upgrade.cannot_move": "Hay algo dentro que no se puede mover",
   "rdpl.container_upgrade.loot": "Abre ese contenedor antes de mejorarlo",
+  "rdpl.container.kept": "Contiene %s pilas",
   "rdpl.carry.full": "Ya llevas algo",
   "rdpl.portway.activated": "%s activado (%s conocidos)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
