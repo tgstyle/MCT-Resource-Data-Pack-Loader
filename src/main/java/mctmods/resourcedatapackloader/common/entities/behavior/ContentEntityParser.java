@@ -294,7 +294,7 @@ public final class ContentEntityParser {
         return found;
     }
 
-    private static Map<String, String> equipment(ResourceLocation key, JsonObject json) {
+    static Map<String, String> equipment(ResourceLocation key, JsonObject json) {
         Map<String, String> found = new LinkedHashMap<>();
         if (!json.has("equipment")) { return found; }
         for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "equipment").entrySet()) {

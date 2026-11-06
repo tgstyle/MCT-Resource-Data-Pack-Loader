@@ -32,10 +32,12 @@ import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
+import mctmods.resourcedatapackloader.common.entities.ai.RankBreakDoorGoal;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
+import mctmods.resourcedatapackloader.common.entities.behavior.RankSteal;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
@@ -304,6 +306,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentServer::onAboutToStart);
         MinecraftForge.EVENT_BUS.addListener(ContentServer::onStarting);
         MinecraftForge.EVENT_BUS.addListener((LivingEvent.LivingTickEvent event) -> {
+            RankBreakDoorGoal.holdDoors(event.getEntity());
             ContentEntities.tick(event.getEntity());
             ContentPhysics.tick(event.getEntity());
             EntityStorage.tick(event.getEntity());
@@ -519,8 +522,12 @@ public class ModSetup {
                 }
                 if (ContentRanks.load()) {
                     MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentRanks::onJoin);
+                    MinecraftForge.EVENT_BUS.addListener(ContentRanks::onTick);
                     MinecraftForge.EVENT_BUS.addListener(ContentRanks::onDeath);
                     MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
+                    if (ContentRanks.stealing()) {
+                        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen);
+                    }
                 }
                 ContentOverrides.reload();
                 ContentWeights.load();
