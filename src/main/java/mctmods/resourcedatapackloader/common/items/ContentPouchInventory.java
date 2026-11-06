@@ -20,11 +20,15 @@ public final class ContentPouchInventory extends SimpleContainer {
         super(def.size());
         this.pouch = pouch;
         NonNullList<ItemStack> items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
-        pouch.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(items);
+        load(pouch, items);
         loading = true;
         for (int at = 0; at < items.size(); at++) { setItem(at, items.get(at)); }
         loading = false;
     }
+
+    public static void load(ItemStack stack, NonNullList<ItemStack> items) { stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(items); }
+
+    public static void store(ItemStack stack, List<ItemStack> items) { stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items)); }
 
     @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return ContentContainerMenu.storable(stack); }
 
@@ -33,6 +37,6 @@ public final class ContentPouchInventory extends SimpleContainer {
         if (loading) { return; }
         List<ItemStack> items = new ArrayList<>(getContainerSize());
         for (int at = 0; at < getContainerSize(); at++) { items.add(getItem(at)); }
-        pouch.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        store(pouch, items);
     }
 }

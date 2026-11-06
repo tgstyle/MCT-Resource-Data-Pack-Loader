@@ -98,6 +98,7 @@
   "rdpl.container_upgrade.linked": "兩個方塊共用此儲存空間",
   "rdpl.container_upgrade.cannot_move": "裡面有無法移動的物品",
   "rdpl.container_upgrade.loot": "請先打開該容器再升級",
+  "rdpl.container.kept": "裝有 %s 組物品",
   "rdpl.portway.activated": "%s 已啟動（已記錄 %s）",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "第 %s 頁，共 %s 頁",

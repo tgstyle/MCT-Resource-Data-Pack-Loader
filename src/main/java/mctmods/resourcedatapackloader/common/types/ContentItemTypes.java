@@ -56,7 +56,7 @@ public final class ContentItemTypes {
     public static final String CONTAINER_UPGRADE = "container_upgrade";
     public static final String PORTWAY = "portway";
     private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, CONTAINER_UPGRADE, PORTWAY);
-    private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0);
+    private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0, false);
     private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, Identifier.parse(ContentFormats.MINEABLE_SWORD));
     private static final Map<String, ArmorType> SLOTS = Map.of("helmet", ArmorType.HELMET, "head", ArmorType.HELMET, "chestplate", ArmorType.CHESTPLATE, "chest", ArmorType.CHESTPLATE,
             "leggings", ArmorType.LEGGINGS, "legs", ArmorType.LEGGINGS, "boots", ArmorType.BOOTS, "feet", ArmorType.BOOTS);

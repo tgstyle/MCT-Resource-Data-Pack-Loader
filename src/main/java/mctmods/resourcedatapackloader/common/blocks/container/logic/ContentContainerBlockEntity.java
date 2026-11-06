@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.common.blocks.container.logic;
 
+import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.containers.IContentContainer;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
+import mctmods.resourcedatapackloader.common.items.ContentPouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -13,6 +15,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -22,18 +25,22 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
@@ -47,6 +54,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     private int rows;
     private int columns;
     private boolean stocked;
+    private boolean creative;
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
         super(ContentContainers.TYPE.get(), pos, state);
@@ -125,9 +133,13 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     @Override protected void saveAdditional(@Nonnull ValueOutput output) {
         super.saveAdditional(output);
         output.putBoolean(STOCKED, stocked);
+        saveSize(output);
+        if (!trySaveLootTable(output)) { ContainerHelper.saveAllItems(output, this.items); }
+    }
+
+    private void saveSize(ValueOutput output) {
         output.putInt(ROWS, rows);
         output.putInt(COLUMNS, columns);
-        if (!trySaveLootTable(output)) { ContainerHelper.saveAllItems(output, this.items); }
     }
 
     public void placed() {
@@ -138,6 +150,38 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     @Override public boolean canOpen(@Nonnull Player player) { return true; }
 
     @Override public boolean stillValid(@Nonnull Player player) { return Container.stillValidBlockEntity(this, player); }
+
+    @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return !def().keepContents() || ContentContainerMenu.storable(stack); }
+
+    public void brokenBy(Player player) {
+        creative = player.isCreative();
+        unpackLootTable(player);
+    }
+
+    @Override public void preRemoveSideEffects(@Nonnull BlockPos pos, @Nonnull BlockState state) {
+        if (level != null && def(state).keepContents() && !ContentContainerUpgrades.swapping()) { Block.popResource(level, pos, kept(level, pos, new ItemStack(state.getBlock()))); }
+        super.preRemoveSideEffects(pos, state);
+    }
+
+    private ItemStack kept(Level world, BlockPos pos, ItemStack block) {
+        unpackLootTable(null);
+        for (int at = 0; at < items.size(); at++) {
+            if (items.get(at).isEmpty() || ContentContainerMenu.storable(items.get(at))) { continue; }
+            Containers.dropItemStack(world, pos.getX(), pos.getY(), pos.getZ(), items.get(at));
+            items.set(at, ItemStack.EMPTY);
+        }
+        Component named = getCustomName();
+        if (creative && named == null && isEmpty()) { return ItemStack.EMPTY; }
+        if (!isEmpty()) { ContentPouchInventory.store(block, items); }
+        if (rows != def().rows() || columns != def().columns()) {
+            TagValueOutput size = TagValueOutput.createWithoutContext(ProblemReporter.DISCARDING);
+            saveSize(size);
+            BlockItem.setBlockEntityData(block, getType(), size);
+        }
+        if (named != null) { block.set(DataComponents.CUSTOM_NAME, named); }
+        clearContent();
+        return block;
+    }
 
     public boolean watched() { return openers > 0; }
 

@@ -11,10 +11,14 @@ import mctmods.resourcedatapackloader.common.pack.definitions.containers.Contain
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.TriState;
@@ -38,9 +42,15 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.common.loot.LootTableIdCondition;
 
 public final class ContentContainerBlock extends LineCompat.ContainerBase implements IContentBlock, IContentContainer {
     private final ContainerDef container;
@@ -90,6 +100,17 @@ public final class ContentContainerBlock extends LineCompat.ContainerBase implem
     @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
         if (placer != null && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.placed(); }
+    }
+
+    @Override @Nonnull public BlockState playerWillDestroy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Player player) {
+        if (!level.isClientSide() && container.keepContents() && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.brokenBy(player); }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override @Nonnull protected List<ItemStack> getDrops(@Nonnull BlockState state, @Nonnull LootParams.Builder builder) {
+        if (!container.keepContents()) { return super.getDrops(state, builder); }
+        LootParams params = builder.withParameter(LootContextParams.BLOCK_STATE, state).create(LootContextParamSets.BLOCK);
+        return CommonHooks.modifyLoot(getLootTable().map(ResourceKey::identifier).orElse(LootTableIdCondition.UNKNOWN_LOOT_TABLE), new ObjectArrayList<>(), new LootContext.Builder(params).create(Optional.empty()));
     }
 
     @Override protected void affectNeighborsAfterRemoval(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, boolean movedByPiston) {

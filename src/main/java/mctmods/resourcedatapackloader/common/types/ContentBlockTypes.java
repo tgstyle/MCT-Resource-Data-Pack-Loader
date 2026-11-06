@@ -22,6 +22,7 @@ import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
 import mctmods.resourcedatapackloader.common.items.CompressedBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentBannerItem;
+import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
@@ -176,6 +177,7 @@ public final class ContentBlockTypes {
                 yield wall == null ? new BlockItem(entry.block(), properties.stacksTo(16)) : new ContentBannerItem(entry.block(), wall.block(), properties.stacksTo(16));
             }
             case DOOR -> new DoubleHighBlockItem(entry.block(), properties);
+            case CONTAINER -> new ContentContainerBlockItem(entry.block(), properties);
             default -> {
                 CompressedSet set = ContentCompressables.owner(entry.id());
                 yield set == null ? new BlockItem(entry.block(), properties) : new CompressedBlockItem(entry.block(), properties, set);

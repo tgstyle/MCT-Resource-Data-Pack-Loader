@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
@@ -19,6 +20,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
@@ -69,10 +71,17 @@ public final class PackTooltips {
         if (held > 0L) { tooltip.add(grey("rdpl.weight.contents", ClientWeights.format(held))); }
     }
 
+    private static void kept(ItemStack stack, List<Component> tooltip) {
+        if (!ContentContainerBlockItem.holdsKept(stack)) { return; }
+        long held = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyItemCopyStream().count();
+        if (held > 0L) { tooltip.add(grey("rdpl.container.kept", String.valueOf(held))); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         HolderLookup.Provider access = event.getContext().registries();
         if (access != null) { weight(event.getItemStack(), access, event.getToolTip()); }
         affixes(event.getItemStack(), event.getToolTip());
+        kept(event.getItemStack(), event.getToolTip());
         if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();

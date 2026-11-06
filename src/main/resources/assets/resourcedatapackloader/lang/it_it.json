@@ -98,6 +98,7 @@
   "rdpl.container_upgrade.linked": "Due blocchi condividono questo contenitore",
   "rdpl.container_upgrade.cannot_move": "Qualcosa all'interno non può essere spostato",
   "rdpl.container_upgrade.loot": "Apri quel contenitore prima di potenziarlo",
+  "rdpl.container.kept": "Contiene %s pile",
   "rdpl.portway.activated": "%s attivato (%s noti)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "Pagina %s di %s",

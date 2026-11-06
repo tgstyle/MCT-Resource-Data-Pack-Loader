@@ -98,6 +98,7 @@
   "rdpl.container_upgrade.linked": "2つのブロックがこの収納を共有しています",
   "rdpl.container_upgrade.cannot_move": "中に移動できないものがあります",
   "rdpl.container_upgrade.loot": "アップグレードする前にそのコンテナを一度開いてください",
+  "rdpl.container.kept": "%s スタック収納中",
   "rdpl.portway.activated": "%sを有効にしました（登録済み %s）",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "%s / %s ページ",

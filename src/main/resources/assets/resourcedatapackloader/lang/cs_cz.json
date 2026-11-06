@@ -98,6 +98,7 @@
   "rdpl.container_upgrade.linked": "Tento úložný prostor sdílejí dva bloky",
   "rdpl.container_upgrade.cannot_move": "Něco uvnitř nelze přesunout",
   "rdpl.container_upgrade.loot": "Před vylepšením ten kontejner nejdřív otevři",
+  "rdpl.container.kept": "Obsahuje stacků: %s",
   "rdpl.portway.activated": "%s aktivován (známo %s)",
   "rdpl.portway.twin": "%s (%s, %s, %s)",
   "rdpl.portway.page": "Strana %s z %s",
