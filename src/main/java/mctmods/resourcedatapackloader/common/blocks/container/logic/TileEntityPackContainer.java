@@ -2,15 +2,19 @@ package mctmods.resourcedatapackloader.common.blocks.container.logic;
 
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.gui.ContainerPack;
+import mctmods.resourcedatapackloader.common.gui.EnderInventory;
 import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
+import mctmods.resourcedatapackloader.common.util.StackLists;
 
+import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -22,6 +26,10 @@ import net.minecraft.util.ITickable;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.items.CapabilityItemHandler;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 
 public class TileEntityPackContainer extends TileEntityLockableLoot implements ITickable {
     private static final String ROWS = "RdplRows";
@@ -29,6 +37,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     private static final String NAMED = "RdplNamed";
     private static final String FACING = "RdplFacing";
     private static final String CUSTOM_NAME = "CustomName";
+    private static final String OWNER = "RdplOwner";
     private NonNullList<ItemStack> items = NonNullList.withSize(27, ItemStack.EMPTY);
     private int rows = 3;
     private int columns = 9;
@@ -38,6 +47,10 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     private float lid;
     private float lidBefore;
     private boolean creative;
+    @Nullable private UUID owner;
+    @Nullable private EnderInventory pipes;
+    @Nullable private IItemHandler piped;
+    private int seen;
 
     public void shape(ContainerDef def, String named) {
         this.rows = def.rows;
@@ -59,12 +72,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     @Override public int getSizeInventory() { return items.size(); }
 
-    @Override public boolean isEmpty() {
-        for (ItemStack held : items) {
-            if (!held.isEmpty()) { return false; }
-        }
-        return true;
-    }
+    @Override public boolean isEmpty() { return StackLists.empty(items, items.size()); }
 
     @Override @Nonnull protected NonNullList<ItemStack> getItems() { return items; }
 
@@ -74,7 +82,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     @Override public boolean isItemValidForSlot(int index, @Nonnull ItemStack stack) {
         ContainerDef def = def();
-        return def == null || !def.keepContents || ContainerPack.storable(stack);
+        return def == null || !def.ender && (!def.keepContents || ContainerPack.storable(stack));
     }
 
     @Override @Nonnull public String getName() {
@@ -83,13 +91,49 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     }
 
     @Override @Nonnull public Container createContainer(@Nonnull InventoryPlayer player, @Nonnull EntityPlayer opening) {
+        EnderInventory ender = ender(opening);
+        if (ender != null) { return new ContainerPack(player, ender); }
         fillWithLoot(opening);
         return new ContainerPack(player, this);
+    }
+
+    @Nullable public EnderInventory ender(EntityPlayer opening) {
+        ContainerDef def = def();
+        return def == null || !def.ender ? null : new EnderInventory(world, opening.getUniqueID(), def.rows, def.columns, getDisplayName(), hasCustomName(), this);
+    }
+
+    public void own(UUID placer) {
+        owner = placer;
+        pipes = null;
+        piped = null;
+        markDirty();
+    }
+
+    @Nullable private EnderInventory pipes() {
+        if (pipes != null || owner == null || world == null || world.isRemote) { return pipes; }
+        ContainerDef def = def();
+        if (def != null && def.ender && def.enderAutomation) { pipes = new EnderInventory(world, owner, def.rows, def.columns, getDisplayName(), hasCustomName(), null); }
+        return pipes;
+    }
+
+    public IInventory automation() {
+        EnderInventory held = pipes();
+        return held == null ? this : held;
+    }
+
+    @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing side) {
+        EnderInventory held = capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY ? pipes() : null;
+        if (held == null) { return super.getCapability(capability, side); }
+        if (piped == null) { piped = new InvWrapper(held); }
+        return CapabilityItemHandler.ITEM_HANDLER_CAPABILITY.cast(piped);
     }
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound tag) {
         super.readFromNBT(tag);
         readShape(tag);
+        owner = tag.hasUniqueId(OWNER) ? tag.getUniqueId(OWNER) : null;
+        pipes = null;
+        piped = null;
         items = NonNullList.withSize(rows * columns, ItemStack.EMPTY);
         if (!checkLootAndRead(tag)) { net.minecraft.inventory.ItemStackHelper.loadAllItems(tag, items); }
     }
@@ -97,6 +141,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound tag) {
         super.writeToNBT(tag);
         writeShape(tag);
+        if (owner != null) { tag.setUniqueId(OWNER, owner); }
         if (!checkLootAndWrite(tag)) { net.minecraft.inventory.ItemStackHelper.saveAllItems(tag, items); }
         return tag;
     }
@@ -173,12 +218,20 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     }
 
     @Override public void update() {
+        if (owner != null && !world.isRemote) { signal(); }
         lidBefore = lid;
         if (watchers > 0 && lid == 0.0F) { sound(true); }
         if (watchers == 0 && lid > 0.0F || watchers > 0 && lid < 1.0F) {
             lid = net.minecraft.util.math.MathHelper.clamp(lid + (watchers > 0 ? 0.1F : -0.1F), 0.0F, 1.0F);
             if (lid < 0.5F && lidBefore >= 0.5F && watchers == 0) { sound(false); }
         }
+    }
+
+    private void signal() {
+        EnderInventory held = pipes();
+        if (held == null || held.version() == seen) { return; }
+        seen = held.version();
+        world.updateComparatorOutputLevel(pos, getBlockType());
     }
 
     public boolean watched() { return watchers > 0; }

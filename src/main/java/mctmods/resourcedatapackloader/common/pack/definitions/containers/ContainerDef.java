@@ -15,8 +15,12 @@ public final class ContainerDef {
     public final int guiWidth;
     public final int guiHeight;
     public final boolean keepContents;
+    public final boolean ender;
+    public final boolean enderAutomation;
 
-    public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, boolean keepContents) {
+    public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, boolean keepContents) { this(rows, columns, lootTable, chestModel, chestTexture, guiTexture, guiWidth, guiHeight, keepContents, false, false); }
+
+    public ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture, @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, boolean keepContents, boolean ender, boolean enderAutomation) {
         this.rows = rows;
         this.columns = columns;
         this.lootTable = lootTable;
@@ -26,6 +30,8 @@ public final class ContainerDef {
         this.guiWidth = guiWidth;
         this.guiHeight = guiHeight;
         this.keepContents = keepContents;
+        this.ender = ender;
+        this.enderAutomation = enderAutomation;
     }
 
     public int size() { return rows * columns; }

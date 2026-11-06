@@ -13,6 +13,7 @@ import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumHand;
@@ -49,18 +50,20 @@ public class PackGuiHandler implements IGuiHandler {
         if (id == ENTITY) { return storage(player, world, x); }
         if (id == PORTWAY || id == PORTWAY_MAIN || id == PORTWAY_OFF) { return portway(player, world, id, x, y, z); }
         Pouch pouch = id == POUCH_BAUBLE ? bauble(player, x) : id == POUCH_MAIN || id == POUCH_OFF ? pouch(player, id) : null;
-        if (id == POUCH_MAIN || id == POUCH_OFF || id == POUCH_BAUBLE) { return pouch == null ? null : new ContainerPouch(player.inventory, pouch.inventory, pouch.source, pouch.def.rows, pouch.def.columns) .worn(id == POUCH_BAUBLE ? x : -1); }
+        if (id == POUCH_MAIN || id == POUCH_OFF || id == POUCH_BAUBLE) { return pouch == null ? null : new ContainerPouch(player.inventory, pouch.inventory, pouch.stack, pouch.source, pouch.def.rows, pouch.def.columns) .worn(id == POUCH_BAUBLE ? x : -1); }
         TileEntityPackContainer tile = held(world, x, y, z);
         if (id != CONTAINER || tile == null) { return null; }
         return tile.createContainer(player.inventory, player);
     }
 
     private static final class Pouch {
-        private final PouchInventory inventory;
+        private final IInventory inventory;
+        private final ItemStack stack;
         private final ContainerDef def;
         private final ContainerPouch.ISource source;
-        private Pouch(PouchInventory inventory, ContainerDef def, ContainerPouch.ISource source) {
+        private Pouch(IInventory inventory, ItemStack stack, ContainerDef def, ContainerPouch.ISource source) {
             this.inventory = inventory;
+            this.stack = stack;
             this.def = def;
             this.source = source;
         }
@@ -68,19 +71,21 @@ public class PackGuiHandler implements IGuiHandler {
 
     @Nullable private static Pouch pouch(EntityPlayer player, int id) {
         EnumHand hand = id == POUCH_OFF ? EnumHand.OFF_HAND : EnumHand.MAIN_HAND;
-        return of(player.getHeldItem(hand), holder -> holder.getHeldItem(hand));
+        return of(player, player.getHeldItem(hand), holder -> holder.getHeldItem(hand));
     }
 
     @Nullable private static Pouch bauble(EntityPlayer player, int slot) {
         if (!ContentContainerItem.baubled()) { return null; }
-        return of(mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch.worn(player, slot),
+        return of(player, mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch.worn(player, slot),
                 holder -> mctmods.resourcedatapackloader.core.integration.baubles.BaublesPouch.worn(holder, slot));
     }
 
-    @Nullable private static Pouch of(ItemStack stack, ContainerPouch.ISource source) {
+    @Nullable private static Pouch of(EntityPlayer player, ItemStack stack, ContainerPouch.ISource source) {
         if (!(stack.getItem() instanceof ContentContainerItem)) { return null; }
-        ContentContainerItem item = (ContentContainerItem) stack.getItem();
-        return new Pouch(new PouchInventory(stack, item.holds(), stack.getTranslationKey() + ".name"), item.holds(), source);
+        ContainerDef def = ((ContentContainerItem) stack.getItem()).holds();
+        String named = stack.getTranslationKey() + ".name";
+        IInventory inventory = def.ender ? new EnderInventory(player.world, player.getUniqueID(), def.rows, def.columns, PouchInventory.title(stack, named), stack.hasDisplayName(), null) : new PouchInventory(stack, def, named);
+        return new Pouch(inventory, stack, def, source);
     }
 
     @Override @Nullable public Object getClientGuiElement(int id, EntityPlayer player, World world, int x, int y, int z) {
@@ -94,12 +99,14 @@ public class PackGuiHandler implements IGuiHandler {
             return storage == null || entity == null ? null : new mctmods.resourcedatapackloader.client.gui.GuiEntityStorage(storage, entity);
         }
         Pouch shown = id == POUCH_BAUBLE ? bauble(player, x) : id == POUCH_MAIN || id == POUCH_OFF ? pouch(player, id) : null;
-        if (shown != null) { return new mctmods.resourcedatapackloader.client.gui.GuiPackContainer( new ContainerPouch(player.inventory, shown.inventory, shown.source, shown.def.rows, shown.def.columns) .worn(id == POUCH_BAUBLE ? x : -1), shown.inventory, shown.def.rows, shown.def.columns, shown.def); }
+        if (shown != null) { return new mctmods.resourcedatapackloader.client.gui.GuiPackContainer( new ContainerPouch(player.inventory, shown.inventory, shown.stack, shown.source, shown.def.rows, shown.def.columns) .worn(id == POUCH_BAUBLE ? x : -1), shown.inventory, shown.def.rows, shown.def.columns, shown.def); }
         TileEntityPackContainer tile = held(world, x, y, z);
         if (id != CONTAINER || tile == null) { return null; }
         Block block = world.getBlockState(new BlockPos(x, y, z)).getBlock();
-        return new mctmods.resourcedatapackloader.client.gui.GuiPackContainer(player.inventory, tile,
-                block instanceof ContentContainerBlock ? ((ContentContainerBlock) block).container() : null);
+        ContainerDef def = block instanceof ContentContainerBlock ? ((ContentContainerBlock) block).container() : null;
+        EnderInventory ender = tile.ender(player);
+        if (ender != null) { return new mctmods.resourcedatapackloader.client.gui.GuiPackContainer(new ContainerPack(player.inventory, ender), ender, ender.rows(), ender.columns(), def); }
+        return new mctmods.resourcedatapackloader.client.gui.GuiPackContainer(player.inventory, tile, def);
     }
 
     @Nullable private static TileEntityPackContainer held(World world, int x, int y, int z) {

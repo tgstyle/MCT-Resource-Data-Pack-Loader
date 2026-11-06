@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.gui;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
 import javax.annotation.Nonnull;
@@ -19,10 +20,10 @@ public class ContainerPouch extends ContainerPack {
         return this;
     }
 
-    public ContainerPouch(InventoryPlayer player, PouchInventory held, ISource source, int rows, int columns) {
+    public ContainerPouch(InventoryPlayer player, IInventory held, ItemStack opened, ISource source, int rows, int columns) {
         super(player, held, rows, columns);
         this.source = source;
-        this.opened = held.pouch();
+        this.opened = opened;
     }
 
     @Override protected Slot playerSlot(InventoryPlayer player, int index, int x, int y) {

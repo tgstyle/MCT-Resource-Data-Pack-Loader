@@ -27,6 +27,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.FakePlayer;
 
 @SuppressWarnings("deprecation") public class ContentContainerBlock extends ContentBlock {
     public static final int MAX_VARIANTS = BlockDef.MAX_META;
@@ -75,6 +76,7 @@ import net.minecraft.world.World;
         if (!(tile instanceof TileEntityPackContainer)) { return; }
         ((TileEntityPackContainer) tile).unloot();
         ((TileEntityPackContainer) tile).restore(stack);
+        if (held().ender && placer instanceof EntityPlayer && !(placer instanceof FakePlayer)) { ((TileEntityPackContainer) tile).own(placer.getUniqueID()); }
         ((TileEntityPackContainer) tile).face(placer.getHorizontalFacing().getOpposite());
         if (stack.hasDisplayName()) { ((TileEntityPackContainer) tile).setCustomName(stack.getDisplayName()); }
         tile.markDirty();
@@ -114,7 +116,7 @@ import net.minecraft.world.World;
 
     @Override public int getComparatorInputOverride(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) {
         TileEntity tile = world.getTileEntity(pos);
-        return tile instanceof TileEntityPackContainer ? Container.calcRedstoneFromInventory((TileEntityPackContainer) tile) : 0;
+        return tile instanceof TileEntityPackContainer ? Container.calcRedstoneFromInventory(((TileEntityPackContainer) tile).automation()) : 0;
     }
 
     @Override public boolean eventReceived(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, int id, int value) { return ContentSetup.forwardEvent(world, pos, id, value); }

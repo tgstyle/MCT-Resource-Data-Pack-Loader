@@ -56,6 +56,7 @@ public final class CarriedWeight {
     private static long contents(ItemStack stack, WeightDef settings, int depth) {
         if (WeightDef.CONTENTS_NONE.equals(settings.countContents)) { return 0L; }
         NBTTagCompound tag = stack.getTagCompound();
+        if (stack.getItem() instanceof ContentContainerItem && ((ContentContainerItem) stack.getItem()).holds().ender) { return 0L; }
         if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlock.holdsKept(stack)) { return tag == null ? 0L : listed(tag.getCompoundTag(PouchInventory.HELD).getTagList(ITEMS, Constants.NBT.TAG_COMPOUND), settings, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(settings.countContents)) { return 0L; }
         IItemHandler handler = stack.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);

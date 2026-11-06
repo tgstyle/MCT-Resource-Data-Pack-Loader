@@ -50,8 +50,13 @@ public final class ContentParserContainers {
         JsonElement asked = held.get("chestModel");
         boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
         ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key.toString()) : null;
-        return new ContainerDef(rows, columns, Json.getString(held, "lootTable", "").trim(),
-                chest, sheet, texture, wide, tall, Json.getBoolean(held, "keepContents", false));
+        boolean ender = Json.getBoolean(held, "ender", false);
+        String loot = Json.getString(held, "lootTable", "").trim();
+        boolean keep = Json.getBoolean(held, "keepContents", false);
+        if (ender && (!loot.isEmpty() || keep)) { ContentLog.LOGGER.error("The container on {} sets ender, which opens each player's own store, so its lootTable and keepContents are ignored", key); }
+        boolean automation = Json.getBoolean(held, "enderAutomation", false);
+        if (automation && !ender) { ContentLog.LOGGER.error("The container on {} sets enderAutomation without ender, so it is ignored", key); }
+        return new ContainerDef(rows, columns, ender ? "" : loot, chest, sheet, texture, wide, tall, keep && !ender, ender, ender && automation);
     }
 
     @Nullable static ContainerUpgradeDef upgrade(ResourceLocation key, String type, JsonObject json) {

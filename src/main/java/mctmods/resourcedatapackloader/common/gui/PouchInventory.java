@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.gui;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
+import mctmods.resourcedatapackloader.common.util.StackLists;
 
 import javax.annotation.Nonnull;
 import net.minecraft.entity.player.EntityPlayer;
@@ -48,20 +49,11 @@ public class PouchInventory implements IInventory {
 
     @Override public int getSizeInventory() { return items.size(); }
 
-    @Override public boolean isEmpty() {
-        for (ItemStack held : items) {
-            if (!held.isEmpty()) { return false; }
-        }
-        return true;
-    }
+    @Override public boolean isEmpty() { return StackLists.empty(items, items.size()); }
 
     @Override @Nonnull public ItemStack getStackInSlot(int slot) { return slot >= 0 && slot < items.size() ? items.get(slot) : ItemStack.EMPTY; }
 
-    @Override @Nonnull public ItemStack decrStackSize(int slot, int amount) {
-        ItemStack taken = ItemStackHelper.getAndSplit(items, slot, amount);
-        if (!taken.isEmpty()) { markDirty(); }
-        return taken;
-    }
+    @Override @Nonnull public ItemStack decrStackSize(int slot, int amount) { return StackLists.split(this, items, slot, amount); }
 
     @Override @Nonnull public ItemStack removeStackFromSlot(int slot) { return ItemStackHelper.getAndRemove(items, slot); }
 
@@ -96,5 +88,7 @@ public class PouchInventory implements IInventory {
 
     @Override public boolean hasCustomName() { return pouch.hasDisplayName(); }
 
-    @Override @Nonnull public ITextComponent getDisplayName() { return pouch.hasDisplayName() ? new TextComponentString(pouch.getDisplayName()) : new TextComponentTranslation(named); }
+    public static ITextComponent title(ItemStack pouch, String named) { return pouch.hasDisplayName() ? new TextComponentString(pouch.getDisplayName()) : new TextComponentTranslation(named); }
+
+    @Override @Nonnull public ITextComponent getDisplayName() { return title(pouch, named); }
 }

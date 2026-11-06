@@ -30,6 +30,11 @@ public class ContainerPack extends Container {
         tile.openInventory(player.player);
     }
 
+    public ContainerPack(InventoryPlayer player, EnderInventory ender) {
+        this(player, ender, ender.rows(), ender.columns());
+        ender.openInventory(player.player);
+    }
+
     protected ContainerPack(InventoryPlayer player, IInventory held, int rows, int columns) {
         this.held = held;
         this.rows = Math.max(1, rows);
