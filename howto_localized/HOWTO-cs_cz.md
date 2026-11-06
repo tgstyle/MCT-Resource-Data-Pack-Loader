@@ -11118,6 +11118,7 @@ Další dvě jsou v jiných kategoriích:
 
 | Volba                   | Výchozí | Co dělá                                                                                                                                                                                                                                                 |
 | ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hideRecipeBookButton`  | vypnuto | V kategorii `client`. Odebere tlačítko receptáře z obrazovky inventáře a pracovního stolu a udrží panel receptáře zavřený, i když zůstal otevřený                                                                                                       |
 | `loadingScreenPercent`  | zapnuto | V kategorii `client`. Přidá procento oblasti spawnu na obrazovku načítání světa, takže pomalé první načtení ukazuje průběh místo nehybného „Building terrain“                                                                                           |
 | `fixTinkersModelErrors` | vypnuto | V kategorii `compat`. Potlačí chyby „Could not load material model“ a „Could not load multimodel“, které Tinkers' Construct a Construct's Armory zapisují pro každý nástroj, součástku a kus zbroje. Nemění, který model se použije, a vyžaduje restart |
 

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.client.gui.CreateWorldPack;
+import mctmods.resourcedatapackloader.client.gui.HideRecipeBook;
 import mctmods.resourcedatapackloader.client.gui.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
@@ -39,6 +40,7 @@ public class ClientProxy {
         MinecraftForge.EVENT_BUS.register(SleepScreen.class);
         MinecraftForge.EVENT_BUS.register(BossBackgrounds.class);
         MinecraftForge.EVENT_BUS.register(CreateWorldPack.class);
+        MinecraftForge.EVENT_BUS.register(HideRecipeBook.class);
         MinecraftForge.EVENT_BUS.register(CardOverlay.class);
         MinecraftForge.EVENT_BUS.register(HeartsHud.class);
         MinecraftForge.EVENT_BUS.register(CenterCard.class);

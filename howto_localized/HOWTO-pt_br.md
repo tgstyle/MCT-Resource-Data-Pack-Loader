@@ -11118,6 +11118,7 @@ Mais duas ficam em outras categorias:
 
 | Opção                   | Padrão    | O que faz                                                                                                                                                                                                                                                     |
 | ----------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hideRecipeBookButton`  | desligado | Na categoria `client`. Remove o botão do livro de receitas das telas do inventário e da mesa de trabalho e mantém o painel do livro de receitas fechado, mesmo que tenha ficado aberto                                                                        |
 | `loadingScreenPercent`  | ligado    | Na categoria `client`. Acrescenta a porcentagem da área de spawn à tela de carregamento do mundo, para que um primeiro carregamento lento mostre progresso em vez de um "Building terrain" parado                                                             |
 | `fixTinkersModelErrors` | desligado | Na categoria `compat`. Silencia os erros "Could not load material model" e "Could not load multimodel" que o Tinkers' Construct e o Construct's Armory registram para cada ferramenta, peça e item de armadura. Não muda qual modelo é usado e exige reinício |
 

@@ -11118,6 +11118,7 @@ Two more sit in other categories:
 
 | Option                  | Default | What it does                                                                                                                                                                                                                                                     |
 | ----------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hideRecipeBookButton`  | off     | In the `client` category. Removes the Recipe Book button from the inventory and crafting table screens and keeps the recipe book panel closed there, even if it was left open                                                                                    |
 | `loadingScreenPercent`  | on      | In the `client` category. Adds the spawn area percentage to the world loading screen, so a slow first load shows progress instead of a motionless "Building terrain"                                                                                             |
 | `fixTinkersModelErrors` | off     | In the `compat` category. Silences the "Could not load material model" and "Could not load multimodel" errors Tinkers' Construct and Construct's Armory log for every tool, part and armor piece. It does not change which model is used, and it needs a restart |
 
