@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.client.gui.ContentWorldScreen;
+import mctmods.resourcedatapackloader.client.gui.HideRecipeBook;
 import mctmods.resourcedatapackloader.client.gui.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.gui.SleepScreen;
 import mctmods.resourcedatapackloader.client.gui.hud.BossBackgrounds;
@@ -59,6 +60,8 @@ public class ClientSetup {
         MinecraftForge.EVENT_BUS.addListener(PackOptionsButton::onInit);
         MinecraftForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPre);
         MinecraftForge.EVENT_BUS.addListener(PackOptionsButton::onRenderPost);
+        MinecraftForge.EVENT_BUS.addListener(HideRecipeBook::onInitPre);
+        MinecraftForge.EVENT_BUS.addListener(HideRecipeBook::onInitPost);
         MinecraftForge.EVENT_BUS.addListener(SleepScreen::onInit);
         MinecraftForge.EVENT_BUS.addListener(SleepScreen::onRenderPost);
         MinecraftForge.EVENT_BUS.addListener(ChatHistoryKeeper::onOpening);

@@ -9,6 +9,7 @@ public final class ConfigTweaks {
     private final ForgeConfigSpec.BooleanValue experimentalWarning;
     private final ForgeConfigSpec.BooleanValue privacy;
     private final ForgeConfigSpec.BooleanValue darkSplash;
+    private final ForgeConfigSpec.BooleanValue hideRecipeBookButton;
 
     ConfigTweaks(ForgeConfigSpec.Builder builder) {
         builder.comment("Small changes to how vanilla behaves").push("tweaks");
@@ -18,6 +19,7 @@ public final class ConfigTweaks {
         experimentalWarning = builder.comment("Show the game's experimental settings warning when a world is made or opened. Off answers it as if you had clicked proceed [Default=false]").define("experimentalWarning", false);
         privacy = builder.comment("Turn off the game's telemetry and chat reporting: no telemetry event is sent or logged, the client signs no chat message, the server keeps no chat session and does not require one, so no message anybody sends can be reported, and the client shows no warning toast that a server does not enforce secure chat. A pack can set this in a world template's settings when the server group's control is default. Takes effect on the next world or server joined [Default=true]").define("privacy", true);
         darkSplash = builder.comment("Draw the loading screen dark with the pack loader's logo in place of the game's: the logo is swapped as the screen is made, and the game's own Monochrome Logo option is turned on when it is still off, which takes effect at the next start. Off leaves the option as it is [Default=true]").define("darkSplash", true);
+        hideRecipeBookButton = builder.comment("Remove the Recipe Book button from the inventory and crafting table screens, and keep the recipe book panel closed there [Default=false]").define("hideRecipeBookButton", false);
         builder.pop();
     }
 
@@ -30,6 +32,8 @@ public final class ConfigTweaks {
     public boolean experimentalWarning() { return Config.loaded() ? experimentalWarning.get() : ConfigCore.flag("tweaks.experimentalWarning", false); }
 
     public boolean privacy() { return Config.loaded() ? privacy.get() : ConfigCore.flag("tweaks.privacy", true); }
+
+    public boolean hideRecipeBookButton() { return Config.loaded() ? hideRecipeBookButton.get() : ConfigCore.flag("tweaks.hideRecipeBookButton", false); }
 
     public boolean darkSplashOff() { return Config.loaded() ? !darkSplash.get() : !ConfigCore.flag("tweaks.darkSplash", true); }
 }
