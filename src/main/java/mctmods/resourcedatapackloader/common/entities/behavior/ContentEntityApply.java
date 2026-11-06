@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.entities.behavior;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ai.SwimmingMoveControl;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
-import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.ContentAttributes;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
@@ -18,7 +17,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -28,7 +26,6 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -44,8 +41,6 @@ import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.zombie.Zombie;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.npc.villager.VillagerProfession;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.pathfinder.PathType;
 
 public final class ContentEntityApply {
@@ -82,7 +77,7 @@ public final class ContentEntityApply {
         if (size != null && def.scale() != 1.0F) { size.setBaseValue(def.scale()); }
         if (!(entity instanceof Mob mob)) { return; }
         if (first) {
-            gear(mob, def);
+            MobGear.fixed(mob, def.equipment(), def.dropChance(), def.key().toString());
             if (def.baby() > 0.0F && rolledYoung(mob, def)) { child(mob); }
             if (mob instanceof Villager villager && !def.profession().isEmpty()) { profession(villager, def); }
         }
@@ -126,25 +121,6 @@ public final class ContentEntityApply {
             mob.addEffect(new MobEffectInstance(effect, MobEffectInstance.INFINITE_DURATION, entry.getValue(), false, false));
         }
     }
-
-    private static void gear(Mob mob, EntityVariantDef def) {
-        for (Map.Entry<String, String> entry : def.equipment().entrySet()) {
-            EquipmentSlot slot = slot(entry.getKey());
-            if (slot == null) {
-                ContentLog.LOGGER.error("Entity variant {} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", def.key(), entry.getKey());
-                continue;
-            }
-            Item item = ContentStacks.item(Identifier.tryParse(entry.getValue()));
-            if (item == null) {
-                ContentLog.LOGGER.error("Entity variant {} gives {}, which nothing registers", def.key(), entry.getValue());
-                continue;
-            }
-            mob.setItemSlot(slot, new ItemStack(item));
-            mob.setDropChance(slot, def.dropChance());
-        }
-    }
-
-    @Nullable private static EquipmentSlot slot(String name) { return Enums.byName(EquipmentSlot.class, name); }
 
     private static boolean rolledYoung(Mob mob, EntityVariantDef def) {
         CompoundTag held = mob.getPersistentData();

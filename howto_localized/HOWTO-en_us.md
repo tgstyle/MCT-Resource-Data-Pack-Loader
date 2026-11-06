@@ -4297,22 +4297,58 @@ The file's path is the rank's name, and several files stack. A rank is one possi
   "health": 2.0,
   "damage": 1.5,
   "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
-  "loot": 2.0
+  "loot": 2.0,
+  "equipment": {"head": "minecraft:iron_helmet"},
+  "dropChance": 0.0,
+  "picksUpLoot": true,
+  "digs": true,
+  "digItem": "minecraft:diamond_pickaxe",
+  "breaksDoors": true,
+  "steals": true,
+  "random": {"armor": 0.1, "armorPiece": 0.3, "weapon": 0.05, "offhand": 0.05, "enchant": 0.2, "exclude": ["conarm"]},
+  "scaling": {"difficulty": 0.5, "daysPerStep": 10, "distancePerStep": 500, "health": 0.1, "damage": 0.05, "armor": 0.02, "weapon": 0.02, "enchant": 0.02}
 }
 ```
 
-| Key          | Required | Value                       | Default         | What it does                                                                                                                                                       |
-| ------------ | -------- | --------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `entities`   | no       | list of entity ids or kinds | `["#monster"]`  | The mobs the rank can roll on: ids such as `minecraft:zombie`, or `#monster`, `#creature`, `#ambient`, `#water_creature`. An entity variant is named by its own id |
-| `weight`     | no       | int, 1 or more              | `1`             | How likely the rank is against the other ranks that name the same mob: its weight divided by the total                                                             |
-| `name`       | no       | string                      | none            | A name shown above the mob. `%s` becomes the mob's own name. A mob that already has a custom name keeps it                                                         |
-| `health`     | no       | number above 0              | `1`             | Multiplies the mob's maximum health. The mob spawns with full health                                                                                               |
-| `damage`     | no       | number, 0 or more           | `1`             | Multiplies the mob's melee attack damage                                                                                                                           |
-| `effects`    | no       | list                        | none            | Permanent effects, each an object with a `potion` id and an `amplifier`, default `0`. Their particles are hidden                                                   |
-| `loot`       | no       | number, 1 or more           | `1`             | Multiplies each stackable item the mob drops. The fraction is the chance of one more item per stack                                                                |
-| `dimensions` | no       | list of ids or names        | every dimension | The dimensions the rank can roll in, by id or name, such as `minecraft:the_nether` or `the_nether`. Empty means any dimension                                      |
+| Key                       | Required | Value                       | Default         | What it does                                                                                                                                                       |
+| ------------------------- | -------- | --------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities`                | no       | list of entity ids or kinds | `["#monster"]`  | The mobs the rank can roll on: ids such as `minecraft:zombie`, or `#monster`, `#creature`, `#ambient`, `#water_creature`. An entity variant is named by its own id |
+| `weight`                  | no       | int, 1 or more              | `1`             | How likely the rank is against the other ranks that name the same mob: its weight divided by the total                                                             |
+| `name`                    | no       | string                      | none            | A name shown above the mob. `%s` becomes the mob's own name. A mob that already has a custom name keeps it                                                         |
+| `health`                  | no       | number above 0              | `1`             | Multiplies the mob's maximum health. The mob spawns with full health                                                                                               |
+| `damage`                  | no       | number, 0 or more           | `1`             | Multiplies the mob's melee attack damage                                                                                                                           |
+| `effects`                 | no       | list                        | none            | Permanent effects, each an object with a `potion` id and an `amplifier`, default `0`. Their particles are hidden                                                   |
+| `loot`                    | no       | number, 1 or more           | `1`             | Multiplies each stackable item the mob drops. The fraction is the chance of one more item per stack                                                                |
+| `dimensions`              | no       | list of ids or names        | every dimension | The dimensions the rank can roll in, by id or name, such as `minecraft:the_nether` or `the_nether`. Empty means any dimension                                      |
+| `equipment`               | no       | map of slot to item id      | none            | Fixed gear for the slots `mainhand`, `offhand`, `head`, `chest`, `legs` and `feet`. An item id that nothing registers skips the rank                               |
+| `dropChance`              | no       | number, 0 to 1              | `0.0`           | Drop chance for every piece the rank gives (fixed, `digItem` and random), the same default as an entity variant                                                    |
+| `picksUpLoot`             | no       | true or false               | none            | Sets `canPickUpLoot`. Absent leaves the mob alone                                                                                                                  |
+| `digs`                    | no       | true or false               | `false`         | Digging as an entity variant has it: the dig goal and a player target found without sight                                                                          |
+| `digItem`                 | no       | item id                     | none            | Given to the mainhand when it is empty after the fixed and random gear. Read only with `digs`. An item id that nothing registers skips the rank                    |
+| `breaksDoors`             | no       | true or false               | `false`         | The `breakDoor` task                                                                                                                                               |
+| `random.armor`            | no       | number, 0 to 1              | `0`             | Chance the mob gets armor, the head piece first when empty                                                                                                         |
+| `random.armorPiece`       | no       | number, 0 to 1              | `0`             | Chance each other empty armor slot is filled, after `armor` succeeded                                                                                              |
+| `random.weapon`           | no       | number, 0 to 1              | `0`             | Chance of a mainhand weapon, only when the hand is empty, not for ranged mobs, not when `digs` is set                                                              |
+| `random.offhand`          | no       | number, 0 to 1              | `0`             | Chance of a shield, only when the offhand is empty                                                                                                                 |
+| `random.enchant`          | no       | number, 0 to 1              | `0`             | Chance each item this rank rolled is enchanted, at a fixed level                                                                                                   |
+| `random.exclude`          | no       | list of item ids or mod ids | empty           | Removes items or whole mods from the pool. An item id that nothing registers skips the rank. A bare mod id (no `:`) is fine when that mod is absent                |
+| `steals`                  | no       | true or false               | `false`         | The mob walks to a container a player has opened and drops one item at its feet, see below                                                                         |
+| `scaling.difficulty`      | no       | number, 0 or more           | `0`             | Steps per world difficulty level (peaceful 0, easy 1, normal 2, hard 3)                                                                                            |
+| `scaling.daysPerStep`     | no       | number, 0 or more           | `0` (off)       | One whole step per this many days of the world clock                                                                                                               |
+| `scaling.distancePerStep` | no       | number, 0 or more           | `0` (off)       | One whole step per this many blocks from the world spawn point                                                                                                     |
+| `scaling.health`          | no       | number, 0 or more           | `0`             | Added per step to the health multiplier, which never goes below 0.1                                                                                                |
+| `scaling.damage`          | no       | number, 0 or more           | `0`             | Added per step to the damage multiplier                                                                                                                            |
+| `scaling.armor`           | no       | number, 0 or more           | `0`             | Added per step to `random.armor` and `random.armorPiece`, clamped to 1                                                                                             |
+| `scaling.weapon`          | no       | number, 0 or more           | `0`             | Added per step to `random.weapon` and `random.offhand`, clamped to 1                                                                                               |
+| `scaling.enchant`         | no       | number, 0 or more           | `0`             | Added per step to `random.enchant`, clamped to 1                                                                                                                   |
 
 Tools, armor and the gear a mob carried are not multiplied, and mobs that carry an inventory, such as pack animals, are skipped. A mistake in a rank file, such as an unknown key, an entity id that does not exist or a value out of range, is logged and the whole file is skipped. Deleting a rank file leaves the mobs that already rolled it as they are, and a mob that no rank names is left alone. Only the server reads ranks, so vanilla clients can join.
+
+Scaling sets how much harder a rank gets over time and distance. Each spawn rolls a number of steps: the world difficulty times `scaling.difficulty`, plus one step per `daysPerStep` full days on the world clock (the overworld's), plus one step per `distancePerStep` full blocks from the world spawn point. Each step adds its `scaling` value to the matching multiplier or chance. The steps are rolled once, at spawn, and saved with the mob, so it keeps its strength when the clock moves on. Only whole steps count, and a value of zero turns that term off.
+
+A stealing mob walks to a container a player has opened, takes one item from it and drops that item at its own feet, where the player finds it on the ground. Only containers a player has opened count, so a chest nobody has touched is never raided. Setting the `mobGriefing` game rule to false stops the stealing.
+
+New keys on a rank behave exactly like the same key on an entity variant. That is why `digs` needs a held tool and `digItem` exists: without it, a mob that digs with an empty hand has nothing to dig with. A digging mob breaks any block its held tool is the correct tool for, and never an unbreakable one. The `breakDoor` task works on every ground mob with `breaksDoors` set, not only on zombies. To give a mob several traits on one roll, put them all on a single rank: each rank rolls on its own chance.
 
 ## Max health rewards
 
