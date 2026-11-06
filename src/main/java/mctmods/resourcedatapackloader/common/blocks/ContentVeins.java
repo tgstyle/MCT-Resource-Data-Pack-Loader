@@ -80,7 +80,7 @@ public final class ContentVeins {
     }
 
     public static void onBreak(BreakBlockEvent event) {
-        if (veining || ContentCarry.probing() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player)) { return; }
+        if (veining || ContentColumns.clearing() || ContentCarry.probing() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player)) { return; }
         if (player.isCreative() || player.isSpectator()) { return; }
         if (GENERATION.stale()) { reload(); }
         if (RULES.isEmpty()) { return; }

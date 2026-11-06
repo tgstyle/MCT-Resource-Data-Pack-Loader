@@ -72,6 +72,7 @@ Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres le
 - [Drops de bloques](#drops-de-bloques)
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Minería de vetas](#minería-de-vetas)
+- [Columnas que caen](#columnas-que-caen)
 - [Transporte](#transporte)
 - [Quitar botín](#quitar-botín)
 - [Botín de jugadores](#botín-de-jugadores)
@@ -221,6 +222,7 @@ Bajo `data/`:
 | `<namespace>/carries/*.json`                 | Bloques y mobs que un jugador agachado recoge y vuelve a dejar. [Transporte](#transporte)                                                                                                                                        |
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                                                                                              |
 | `<namespace>/diets/*.json`                   | Reglas que hacen que una comida repetida alimente menos y una dieta variada alimente más. [Variedad de comida](#variedad-de-comida)                                                                                              |
+| `<namespace>/columns/*.json`                 | Hileras de bloques que caen y se rompen juntas sobre el bloque que rompe el jugador. [Columnas que caen](#columnas-que-caen)                                                                                                     |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                                      |
 | `<namespace>/functions/*.mcfunction`         | Archivos de función. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                         |
 | `<namespace>/tags/<kind>/*.json`             | Etiquetas, en el formato propio del juego. [Materiales, pestañas, sonidos, etiquetas](#materiales-pestañas-sonidos-etiquetas)                                                                                                    |
@@ -3308,6 +3310,37 @@ Romper un mineral con un pico normalmente rompe solo ese bloque. Un archivo aqu�
 | `requires`    | no          | lista de cadenas                                                                                             | ninguno     | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición           |
 
 Tocar significa compartir cara, arista o esquina, así que un bloque tiene 26 vecinos. Solo en supervivencia: los jugadores en creativo y los espectadores rompen un solo bloque como siempre. Se detiene cuando la herramienta se rompe o la barra de comida del jugador llega a 0. Cada bloque extra suelta sus drops habituales, con la Fortuna de la herramienta en mano y todas las reglas de Drops de bloques, y desgasta la herramienta un uso. No actúa sobre un bloque que conserva un grupo de dureza. Son datos de pack solo de servidor y no necesitan nada en el cliente. Un archivo sin bloques ni herramientas válidos se ignora con una línea de error.
+
+## Columnas que caen
+
+*fabricación, botín y comercio*
+
+`<namespace>/columns/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan.
+
+Cuando un jugador rompe un bloque, la hilera de bloques que caen listados justo encima de él (grava, arena) también se rompe, hasta un límite. Cada bloque lanza su propio evento de rotura, así que las protecciones pueden detenerlo, y la columna no gasta la herramienta ni usa Fortuna, Toque de seda, fundición ni hambre, tenga lo que tenga en la mano.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand"}, "minecraft:red_sand"],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Clave            | Obligatorio | Valor                                                                                                        | Por defecto | Qué hace                                                                                                                                                          |
+| ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | no          | lista de cadenas                                                                                             | ninguno     | Ids de mod que deben estar cargados, como en el resto.                                                                                                            |
+| `blocks`         | sí          | lista de ids de bloque, con `meta` (1.12.2) o `properties` (1.20.1 y posteriores) como en un grupo de dureza |             | Coincidencias de bloque, con la misma forma que `blocks` de la minería de vetas.                                                                                  |
+| `limit`          | no          | int, de 1 a 256                                                                                              | `256`       | Máximo de bloques eliminados encima del roto.                                                                                                                     |
+| `includeSelf`    | no          | bool                                                                                                         | `false`     | Si es true, romper un bloque de la lista también elimina los de la lista que estén encima.                                                                        |
+| `unlessSneaking` | no          | bool                                                                                                         | `false`     | Si es true, un jugador agachado rompe solo ese bloque.                                                                                                            |
+| `alternate`      | no          | objeto con `item` y `chance` (de 0 a 1)                                                                      | ninguno     | Cada bloque de la columna suelta `item` si acierta la tirada, o su propio objeto de bloque si falla. Sin él, cada bloque suelta sus drops normales con Fortuna 0. |
+
+Los jugadores falsos nunca la activan, y los jugadores en creativo no reciben drops. Los archivos se acumulan; se usa el primero cuyos bloques contienen el bloque de encima del roto. Al cargar se escribe `Loaded N falling column group(s)`, y un archivo que nombre un bloque no registrado o tenga un `alternate` incorrecto escribe un error.
 
 ## Transporte
 
