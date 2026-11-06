@@ -72,6 +72,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Block drops](#block-drops)
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
+- [Falling columns](#falling-columns)
 - [Carrying](#carrying)
 - [Loot removals](#loot-removals)
 - [Player loot](#player-loot)
@@ -221,6 +222,7 @@ Under `data/`:
 | `<namespace>/carries/*.json`                 | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                                                          |
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                                            |
 | `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
+| `<namespace>/columns/*.json`                 | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                                  |
 | `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                                |
 | `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                      |
@@ -3313,6 +3315,37 @@ Breaking an ore with a pickaxe normally breaks that one block. A file here names
 | `requires`    | no       | list of strings                                                                                   | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                      |
 
 Connected means touching by face, edge or corner, so a block has 26 neighbors. Survival only: creative and spectator players break one block as usual. It stops when the tool breaks or the player's food level reaches 0. Every extra block gives its usual drops, with the Fortune of the held tool and every rule under Block drops, and wears the tool one use. It does not run on a block a hardness group keeps. This is server pack data and needs nothing on the client. A file with no valid blocks or tools is ignored with an error line.
+
+## Falling columns
+
+*crafting, loot and trade*
+
+`<namespace>/columns/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+When a player breaks a block, the run of listed falling blocks (gravel, sand) directly above it breaks too, up to a limit. Each block fires its own break event, so claims and protection can stop it, and the column takes no tool wear, Fortune, silk touch, smelting or hunger, whatever is held.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand"}, "minecraft:red_sand"],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Key              | Required | Value                                                                                             | Default | What it does                                                                                                                                     |
+| ---------------- | -------- | ------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `requires`       | no       | list of strings                                                                                   | none    | Mod ids that must be loaded, as elsewhere.                                                                                                       |
+| `blocks`         | yes      | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group |         | Block matches, the same form as vein mining's `blocks`.                                                                                          |
+| `limit`          | no       | int, 1 to 256                                                                                     | `256`   | Most blocks cleared above the broken one.                                                                                                        |
+| `includeSelf`    | no       | bool                                                                                              | `false` | When true, breaking a listed block also clears the listed blocks above it.                                                                       |
+| `unlessSneaking` | no       | bool                                                                                              | `false` | When true, a sneaking player breaks only the one block.                                                                                          |
+| `alternate`      | no       | object with `item` and `chance` (0 to 1)                                                          | none    | Each column block drops `item` on a successful roll, or its own block item on a miss. Without it each block drops its normal drops at Fortune 0. |
+
+Fake players never trigger a column, and creative players get no drops. Files stack; the first file whose blocks hold the block above the broken one is used. A load logs `Loaded N falling column group(s)`, and a file that names no registered block or has a bad `alternate` logs an error.
 
 ## Carrying
 

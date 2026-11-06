@@ -72,6 +72,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Dropy z bloků](#dropy-z-bloků)
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
+- [Padající sloupce](#padající-sloupce)
 - [Nošení](#nošení)
 - [Odstranění kořisti](#odstranění-kořisti)
 - [Kořist hráčů](#kořist-hráčů)
@@ -221,6 +222,7 @@ V `data/`:
 | `<namespace>/carries/*.json`                 | Bloky a moby, které hráč v plížení zvedne a položí. [Nošení](#nošení)                                                                                                                                |
 | `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
+| `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
 | `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
 | `<namespace>/functions/*.mcfunction`         | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                |
 | `<namespace>/tags/<kind>/*.json`             | Tagy, ve vlastním formátu hry. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                          |
@@ -3313,6 +3315,37 @@ Rozbití rudy krumpáčem normálně rozbije jen ten jeden blok. Soubor zde pojm
 | `requires`    | ne      | seznam řetězců                                                                                   | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice              |
 
 Dotýkat se znamená mít společnou stěnu, hranu nebo roh, takže blok má 26 sousedů. Funguje jen v přežití: hráči v kreativním režimu a diváci rozbíjejí jeden blok jako obvykle. Zastaví se, když se nástroj rozbije nebo hladina jídla hráče klesne na 0. Každý další blok dá své obvyklé dropy, s Fortunou drženého nástroje a všemi pravidly z části Dropy z bloků, a nástroj opotřebuje o jedno použití. Na blok, který drží skupina tvrdosti, se nespustí. Jsou to data balíčku jen pro server a na klientovi nepotřebují nic. Soubor bez platných bloků nebo nástrojů se ignoruje s řádkem chyby.
+
+## Padající sloupce
+
+*výroba, kořist a obchod*
+
+`<namespace>/columns/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Když hráč rozbije blok, rozbije se i řada vypsaných padajících bloků (štěrk, písek) těsně nad ním, a to až do limitu. Každý blok vyvolá vlastní událost rozbití, takže ji mohou zastavit ochrany pozemků, a sloupec nebere opotřebení nástroje, Štěstí, Hedvábný dotek, tavení ani hlad, ať drží cokoli.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand"}, "minecraft:red_sand"],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Klíč             | Povinný | Hodnota                                                                                          | Výchozí | Co dělá                                                                                                                                   |
+| ---------------- | ------- | ------------------------------------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | ne      | seznam řetězců                                                                                   | žádný   | ID modů, které musí být načtené, jako jinde.                                                                                              |
+| `blocks`         | ano     | seznam id bloků, s `meta` (1.12.2) nebo `properties` (1.20.1 a novější) jako ve skupině tvrdosti |         | Shody bloků, stejný tvar jako `blocks` u těžení žil.                                                                                      |
+| `limit`          | ne      | int, 1 až 256                                                                                    | `256`   | Nejvíc bloků odstraněných nad rozbitým blokem.                                                                                            |
+| `includeSelf`    | ne      | bool                                                                                             | `false` | Když je true, rozbití vypsaného bloku odstraní i vypsané bloky nad ním.                                                                   |
+| `unlessSneaking` | ne      | bool                                                                                             | `false` | Když je true, plížící se hráč rozbije jen ten jeden blok.                                                                                 |
+| `alternate`      | ne      | objekt s `item` a `chance` (0 až 1)                                                              | žádný   | Každý blok sloupce vydá `item` při úspěšném hodu, jinak svůj vlastní blokový předmět. Bez něj vydá každý blok běžnou kořist se Štěstím 0. |
+
+Falešní hráči sloupec nikdy nespustí a hráči v kreativním režimu nedostanou žádné dropy. Soubory se sčítají; použije se první soubor, jehož bloky drží blok nad rozbitým. Při načtení se zapíše `Loaded N falling column group(s)` a soubor, který nepojmenuje žádný registrovaný blok nebo má špatné `alternate`, zapíše chybu.
 
 ## Nošení
 

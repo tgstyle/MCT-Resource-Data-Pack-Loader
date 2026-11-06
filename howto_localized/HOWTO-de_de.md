@@ -72,6 +72,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Blockdrops](#blockdrops)
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
+- [Fallende Säulen](#fallende-säulen)
 - [Tragen](#tragen)
 - [Beute entfernen](#beute-entfernen)
 - [Spielerbeute](#spielerbeute)
@@ -221,6 +222,7 @@ Unter `data/`:
 | `<namespace>/carries/*.json`                 | Blöcke und Mobs, die ein Spieler schleichend aufhebt und wieder absetzt. [Tragen](#tragen)                                                                                                                                                                                             |
 | `<namespace>/player_loot/*.json`             | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                                                                                                        |
 | `<namespace>/diets/*.json`                   | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                                                                                                                                            |
+| `<namespace>/columns/*.json`                 | Reihen fallender Blöcke, die über einem vom Spieler gebrochenen Block mit abbrechen. [Fallende Säulen](#fallende-säulen)                                                                                                                                                               |
 | `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                              |
 | `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                          |
 | `<namespace>/tags/<kind>/*.json`             | Tags, im Format des Spiels selbst. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                                                                    |
@@ -3313,6 +3315,37 @@ Wer ein Erz mit einer Spitzhacke abbaut, bricht normalerweise nur diesen einen B
 | `advancement` | nein    | Text                                                                                                    | keine    | Ein Fortschritt, den der Spieler haben muss, damit die Gruppe für ihn gilt. Ohne ihn gilt sie für alle                    |
 
 Angrenzend heißt, sich an einer Fläche, Kante oder Ecke zu berühren, ein Block hat also 26 Nachbarn. Nur im Überlebensmodus: Spieler im Kreativ- oder Zuschauermodus brechen wie gewohnt einen Block. Es endet, wenn das Werkzeug kaputtgeht oder der Nahrungswert des Spielers 0 erreicht. Jeder zusätzliche Block gibt seine üblichen Drops, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und nutzt das Werkzeug um eine Verwendung ab. Auf einem Block, den eine Härtegruppe behält, läuft es nicht. Es sind reine Server-Packdaten, auf dem Client wird nichts gebraucht. Eine Datei ohne gültige Blöcke oder Werkzeuge wird mit einer Fehlerzeile ignoriert.
+
+## Fallende Säulen
+
+*herstellung, beute und handel*
+
+`<namespace>/columns/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Bricht ein Spieler einen Block, bricht auch die Reihe gelisteter fallender Blöcke (Kies, Sand) direkt darüber mit, bis zu einer Grenze. Jeder Block löst sein eigenes Bruch-Ereignis aus, sodass Claims und Schutz es stoppen können, und die Säule nimmt keine Werkzeugabnutzung, kein Glück, keine Behutsamkeit, kein Schmelzen und keinen Hunger, egal was in der Hand liegt.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand"}, "minecraft:red_sand"],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Schlüssel        | Pflicht | Wert                                                                                                    | Standard | Was er macht                                                                                                                                                     |
+| ---------------- | ------- | ------------------------------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | nein    | Liste von Strings                                                                                       | keine    | Mod-IDs, die geladen sein müssen, wie überall sonst.                                                                                                             |
+| `blocks`         | ja      | Liste von Block-IDs, mit `meta` (1.12.2) oder `properties` (1.20.1 und neuer) wie bei einer Härtegruppe |          | Blockangaben, in derselben Form wie `blocks` beim Adernabbau.                                                                                                    |
+| `limit`          | nein    | int, 1 bis 256                                                                                          | `256`    | Höchstzahl der Blöcke, die über dem gebrochenen Block entfernt werden.                                                                                           |
+| `includeSelf`    | nein    | bool                                                                                                    | `false`  | Ist der Wert true, entfernt das Brechen eines gelisteten Blocks auch die gelisteten Blöcke darüber.                                                              |
+| `unlessSneaking` | nein    | bool                                                                                                    | `false`  | Ist der Wert true, bricht ein schleichender Spieler nur den einen Block.                                                                                         |
+| `alternate`      | nein    | Objekt mit `item` und `chance` (0 bis 1)                                                                | keine    | Jeder Säulenblock droppt `item` bei einem erfolgreichen Wurf, sonst seinen eigenen Blockgegenstand. Ohne ihn droppt jeder Block seine normale Beute bei Glück 0. |
+
+Fake-Spieler lösen nie eine Säule aus, und Spieler im Kreativmodus erhalten keine Drops. Dateien stapeln sich; benutzt wird die erste Datei, deren Blöcke den Block über dem gebrochenen halten. Beim Laden steht im Log `Loaded N falling column group(s)`, und eine Datei, die keinen registrierten Block nennt oder ein fehlerhaftes `alternate` hat, meldet einen Fehler.
 
 ## Tragen
 
