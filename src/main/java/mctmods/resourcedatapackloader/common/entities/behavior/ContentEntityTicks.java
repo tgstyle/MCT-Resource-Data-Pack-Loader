@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
+import mctmods.resourcedatapackloader.common.entities.ai.RankBreakDoorGoal;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
@@ -99,6 +100,7 @@ public final class ContentEntityTicks {
 
     public static void onEntityTick(EntityTickEvent.Pre event) {
         Entity entity = event.getEntity();
+        RankBreakDoorGoal.holdDoors(entity);
         if (entity instanceof ItemEntity item && slowedNow(item)) {
             if (item.age != Short.MIN_VALUE) { item.age++; }
             event.setCanceled(true);

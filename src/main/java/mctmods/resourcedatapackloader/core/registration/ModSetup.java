@@ -40,6 +40,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTick
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
+import mctmods.resourcedatapackloader.common.entities.behavior.RankSteal;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
@@ -523,8 +524,12 @@ public class ModSetup {
                 }
                 if (ContentRanks.load()) {
                     NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ContentRanks::onJoin);
+                    NeoForge.EVENT_BUS.addListener(ContentRanks::onTick);
                     NeoForge.EVENT_BUS.addListener(ContentRanks::onDeath);
                     NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
+                    if (ContentRanks.stealing()) {
+                        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen);
+                    }
                 }
                 ContentOverrides.reload();
             });

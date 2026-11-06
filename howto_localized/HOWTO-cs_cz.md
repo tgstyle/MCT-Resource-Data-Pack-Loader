@@ -4292,22 +4292,58 @@ Cesta souboru je název hodnosti a více souborů se kombinuje. Hodnost je jedna
   "health": 2.0,
   "damage": 1.5,
   "effects": [{"potion": "minecraft:strength", "amplifier": 1}],
-  "loot": 2.0
+  "loot": 2.0,
+  "equipment": {"head": "minecraft:iron_helmet"},
+  "dropChance": 0.0,
+  "picksUpLoot": true,
+  "digs": true,
+  "digItem": "minecraft:diamond_pickaxe",
+  "breaksDoors": true,
+  "steals": true,
+  "random": {"armor": 0.1, "armorPiece": 0.3, "weapon": 0.05, "offhand": 0.05, "enchant": 0.2, "exclude": ["conarm"]},
+  "scaling": {"difficulty": 0.5, "daysPerStep": 10, "distancePerStep": 500, "health": 0.1, "damage": 0.05, "armor": 0.02, "weapon": 0.02, "enchant": 0.02}
 }
 ```
 
-| Klíč         | Povinný | Hodnota                    | Výchozí         | Co dělá                                                                                                                                                                    |
-| ------------ | ------- | -------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `entities`   | ne      | seznam id entit nebo druhů | `["#monster"]`  | Moby, na kterých může hodnost padnout: id jako `minecraft:zombie`, nebo `#monster`, `#creature`, `#ambient`, `#water_creature`. Varianta entity se uvádí vlastním id       |
-| `dimensions` | ne      | seznam id dimenzí          | všechny dimenze | Dimenze, ve kterých může hodnost padnout, podle id, například `minecraft:the_nether`; id bez jmenného prostoru se čte jako `minecraft:`. Prázdné znamená jakoukoli dimenzi |
-| `weight`     | ne      | celé číslo, 1 nebo více    | `1`             | Jak pravděpodobná je hodnost mezi ostatními, které uvádějí stejného moba: její váha dělená součtem                                                                         |
-| `name`       | ne      | text                       | žádný           | Jméno zobrazené nad mobem. `%s` se změní na vlastní jméno moba. Mob, který už vlastní jméno má, si ho ponechá                                                              |
-| `health`     | ne      | číslo větší než 0          | `1`             | Násobí maximální zdraví moba. Mob se objeví s plným zdravím                                                                                                                |
-| `damage`     | ne      | číslo, 0 nebo více         | `1`             | Násobí poškození moba při útoku zblízka                                                                                                                                    |
-| `effects`    | ne      | seznam                     | žádný           | Trvalé efekty, každý je objekt s id `potion` a `amplifier`, výchozí `0`. Jejich částice jsou skryté                                                                        |
-| `loot`       | ne      | číslo, 1 nebo více         | `1`             | Násobí každý stohovatelný předmět, který mob upustí. Zlomek je šance na jeden další předmět na stoh                                                                        |
+| Klíč                      | Povinný | Hodnota                         | Výchozí         | Co dělá                                                                                                                                                              |
+| ------------------------- | ------- | ------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                | ne      | seznam id entit nebo druhů      | `["#monster"]`  | Moby, na kterých může hodnost padnout: id jako `minecraft:zombie`, nebo `#monster`, `#creature`, `#ambient`, `#water_creature`. Varianta entity se uvádí vlastním id |
+| `weight`                  | ne      | celé číslo, 1 nebo více         | `1`             | Jak pravděpodobná je hodnost mezi ostatními, které uvádějí stejného moba: její váha dělená součtem                                                                   |
+| `name`                    | ne      | text                            | žádný           | Jméno zobrazené nad mobem. `%s` se změní na vlastní jméno moba. Mob, který už vlastní jméno má, si ho ponechá                                                        |
+| `health`                  | ne      | číslo větší než 0               | `1`             | Násobí maximální zdraví moba. Mob se objeví s plným zdravím                                                                                                          |
+| `damage`                  | ne      | číslo, 0 nebo více              | `1`             | Násobí poškození moba při útoku zblízka                                                                                                                              |
+| `effects`                 | ne      | seznam                          | žádný           | Trvalé efekty, každý je objekt s id `potion` a `amplifier`, výchozí `0`. Jejich částice jsou skryté                                                                  |
+| `loot`                    | ne      | číslo, 1 nebo více              | `1`             | Násobí každý stohovatelný předmět, který mob upustí. Zlomek je šance na jeden další předmět na stoh                                                                  |
+| `dimensions`              | ne      | seznam id nebo názvů            | všechny dimenze | Dimenze, ve kterých může hodnost padnout, podle id nebo názvu, například `minecraft:the_nether` nebo `the_nether`. Prázdné znamená jakoukoli dimenzi                 |
+| `equipment`               | ne      | slovník slotu na id předmětu    | žádný           | Pevná výbava pro sloty `mainhand`, `offhand`, `head`, `chest`, `legs` a `feet`. Id předmětu, které hra nezná, hodnost přeskočí                                       |
+| `dropChance`              | ne      | číslo 0 až 1                    | `0.0`           | Šance na pád pro každý kus, který hodnost dá (pevný, `digItem` i náhodný), stejný výchozí jako u varianty entity                                                     |
+| `picksUpLoot`             | ne      | true nebo false                 | žádný           | Nastavuje `canPickUpLoot`. Když chybí, mob zůstane beze změny                                                                                                        |
+| `digs`                    | ne      | true nebo false                 | `false`         | Kopání jako u varianty entity: cíl kopání a hráč vybraný bez výhledu                                                                                                 |
+| `digItem`                 | ne      | id předmětu                     | žádný           | Dostane ho hlavní ruka, když je po pevné a náhodné výbavě prázdná. Čte se jen s `digs`. Id předmětu, které hra nezná, hodnost přeskočí                               |
+| `breaksDoors`             | ne      | true nebo false                 | `false`         | Úkol `breakDoor`                                                                                                                                                     |
+| `random.armor`            | ne      | číslo 0 až 1                    | `0`             | Šance, že mob dostane brnění, nejdřív helmu, když je prázdná                                                                                                         |
+| `random.armorPiece`       | ne      | číslo 0 až 1                    | `0`             | Šance, že se doplní každý další prázdný slot brnění, poté co uspěl `armor`                                                                                           |
+| `random.weapon`           | ne      | číslo 0 až 1                    | `0`             | Šance na zbraň v hlavní ruce, jen když je prázdná, ne u střelců, ne když je nastaveno `digs`                                                                         |
+| `random.offhand`          | ne      | číslo 0 až 1                    | `0`             | Šance na štít, jen když je vedlejší ruka prázdná                                                                                                                     |
+| `random.enchant`          | ne      | číslo 0 až 1                    | `0`             | Šance, že každý předmět, který hodnost v losování dostala, bude začarován pevnou úrovní                                                                              |
+| `random.exclude`          | ne      | seznam id předmětů nebo id modů | prázdný         | Vyřadí předměty nebo celé mody z losování. Id předmětu, které hra nezná, hodnost přeskočí. Holé id modu (bez `:`) je v pořádku, když mod chybí                       |
+| `steals`                  | ne      | true nebo false                 | `false`         | Mob dojde k kontejneru, který hráč otevřel, a upustí jeden předmět u svých nohou, viz níže                                                                           |
+| `scaling.difficulty`      | ne      | číslo 0 nebo více               | `0`             | Kroky na úroveň obtížnosti světa (mírná 0, snadná 1, normální 2, těžká 3)                                                                                            |
+| `scaling.daysPerStep`     | ne      | číslo 0 nebo více               | `0` (vypnuto)   | Jeden celý krok na tolik dnů světových hodin                                                                                                                         |
+| `scaling.distancePerStep` | ne      | číslo 0 nebo více               | `0` (vypnuto)   | Jeden celý krok na tolik bloků od spawnu světa                                                                                                                       |
+| `scaling.health`          | ne      | číslo 0 nebo více               | `0`             | Přidá se za krok k násobiteli zdraví, který nikdy neklesne pod 0,1                                                                                                   |
+| `scaling.damage`          | ne      | číslo 0 nebo více               | `0`             | Přidá se za krok k násobiteli poškození                                                                                                                              |
+| `scaling.armor`           | ne      | číslo 0 nebo více               | `0`             | Přidá se za krok k `random.armor` a `random.armorPiece`, nejvýše 1                                                                                                   |
+| `scaling.weapon`          | ne      | číslo 0 nebo více               | `0`             | Přidá se za krok k `random.weapon` a `random.offhand`, nejvýše 1                                                                                                     |
+| `scaling.enchant`         | ne      | číslo 0 nebo více               | `0`             | Přidá se za krok k `random.enchant`, nejvýše 1                                                                                                                       |
 
 Nástroje, brnění a výbava, kterou mob nesl, se neznásobují a moby s inventářem, například soumaři, se přeskočí. Chyba v souboru hodnosti, například neznámý klíč, neexistující id entity nebo hodnota mimo rozsah, se zapíše do logu a celý soubor se přeskočí. Smazání souboru hodnosti nechá moby, kteří ji už získali, jak jsou, a mob, kterého žádná hodnost neuvádí, zůstane beze změny. Hodnosti čte jen server, takže se mohou připojit i vanilla klienti.
+
+Škálování určuje, jak moc hodnost s časem a vzdáleností sílí. Při každém spawnu se určí počet kroků: obtížnost světa krát `scaling.difficulty`, plus jeden krok za každých `daysPerStep` celých dnů světových hodin (hodin hlavního světa), plus jeden krok za každých `distancePerStep` celých bloků od spawnu světa. Každý krok přidá svou hodnotu `scaling` k odpovídajícímu násobiteli nebo šanci. Kroky se určí jednou, při spawnu, a uloží se s mobem, takže si mob sílu ponechá, i když hodiny běží dál. Počítají se jen celé kroky a hodnota nula danou složku vypne.
+
+Kradoucí mob dojde ke kontejneru, který hráč otevřel, vezme z něj jeden předmět a upustí ho u svých nohou, takže ho hráč najde na zemi. Počítají se jen kontejnery, které hráč otevřel, takže truhla, které se nikdo nedotkl, nebude nikdy vykradena. Herní pravidlo `mobGriefing` nastavené na false krádeže zastaví.
+
+Nové klíče hodnosti fungují stejně jako stejný klíč u varianty entity. Proto `digs` potřebuje drženou nástroj a existuje `digItem`: bez něj by kopající mob s prázdnou rukou neměl čím kopat. Kopající mob rozbije každý blok, pro který je jeho držený nástroj správným nástrojem, a nikdy ne blok nerozbitný. Úkol `breakDoor` funguje u každého pozemního moba, který má `breaksDoors`, nejen u zombií. Chcete-li dát mobovi více vlastností v jednom losování, uveďte je všechny na jedné hodnosti: každá hodnost losuje s vlastní šancí.
 
 ## Odměny za maximální zdraví
 

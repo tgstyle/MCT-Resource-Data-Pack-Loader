@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.entities.behavior;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.entities.ai.RankBreakDoorGoal;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.TaskDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
@@ -23,7 +24,6 @@ import java.util.WeakHashMap;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
 import net.minecraft.world.entity.EntityType;
@@ -136,7 +136,7 @@ public final class ContentTasks {
                     : new AvoidEntityGoal<>((PathfinderMob) m, avoided, only, t.distance(6.0F), t.speed(1.0D), t.nearSpeed(1.2D), EntitySelector.NO_CREATIVE_OR_SPECTATOR::test);
         });
         task("beg", Wolf.class, "a wolf", BegGoal.class, (m, t, d) -> new BegGoal((Wolf) m, t.distance(8.0F)));
-        task("breakDoor", Mob.class, ANY_NAME, BreakDoorGoal.class, (m, t, d) -> new BreakDoorGoal(m, difficulty -> difficulty == Difficulty.HARD));
+        task("breakDoor", Mob.class, ANY_NAME, BreakDoorGoal.class, (m, t, d) -> MobAbilities.breakDoor(m));
         task("creeperSwell", Creeper.class, "a creeper", SwellGoal.class, (m, t, d) -> new SwellGoal((Creeper) m));
         target("defendVillage", IronGolem.class, "an iron golem", DefendVillageTargetGoal.class, (m, t, d) -> new DefendVillageTargetGoal((IronGolem) m));
         task("eatGrass", Mob.class, ANY_NAME, EatBlockGoal.class, (m, t, d) -> new EatBlockGoal(m));
@@ -333,6 +333,7 @@ public final class ContentTasks {
             return KINDS.get("nearestattackabletarget");
         }
         if (type == LookAtPlayerGoal.class) { return KINDS.get("watchclosest"); }
+        if (type == RankBreakDoorGoal.class) { return KINDS.get("breakdoor"); }
         for (Kind kind : KINDS.values()) { if (kind.type() == type) { return kind; } }
         return null;
     }
