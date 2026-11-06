@@ -39,6 +39,7 @@ public final class PackReport {
         collect(off, Config.recipes.furnace(), "recipes.furnace", PackManager.JSON, PackManager.FURNACE);
         collect(off, Config.recipes.removals(), "recipes.removals", PackManager.JSON, PackManager.RECIPE_REMOVALS);
         collect(off, !Config.data.lootInjectionsOff(), "data.lootInjections", PackManager.JSON, PackManager.LOOT_INJECTIONS);
+        collect(off, !Config.data.lootRemovalsOff(), "data.lootRemovals", PackManager.JSON, PackManager.LOOT_REMOVALS);
         collect(off, !Config.data.blockDropsOff(), "data.blockDrops", PackManager.JSON, PackManager.BLOCK_DROPS);
         collect(off, !Config.data.anvilsOff(), "data.anvils", PackManager.JSON, PackManager.ANVILS);
         collect(off, !Config.data.affixesOff(), "data.affixes", PackManager.JSON, PackManager.AFFIXES, PackManager.GEMS);

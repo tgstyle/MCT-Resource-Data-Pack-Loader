@@ -203,13 +203,12 @@ hardness 檔案為一組方塊設定挖掘時間和爆炸抗性，exposures 檔�
     structure        recipe           recipe_removals  furnace
     fuels            brewing          potions          potion_types
     villagers        trades           loot_table       loot_injections
-    block_drops      player_loot      advancement      function
-    tags             registry_remap   cards            disabled
-    tooltips         harvests         carries          dialogs
-    veins            diets            enchantments     dice
-    games            orders           ranks            recipe_locks
-    spawn_locks
-    item_locks
+    loot_removals    block_drops      player_loot      advancement
+    function         tags             registry_remap   cards
+    disabled         tooltips         harvests         carries
+    dialogs          veins            diets            enchantments
+    dice             games            orders           ranks
+    recipe_locks     spawn_locks      item_locks
 
 方塊有以下幾種形態，由「type」欄位決定：
 

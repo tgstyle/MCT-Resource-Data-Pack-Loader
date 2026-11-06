@@ -206,13 +206,12 @@ assets 아래에 직접 제공해야 합니다.
     structure        recipe           recipe_removals  furnace
     fuels            brewing          potions          potion_types
     villagers        trades           loot_table       loot_injections
-    block_drops      player_loot      advancement      function
-    tags             registry_remap   cards            disabled
-    tooltips         harvests         carries          dialogs
-    veins            diets            enchantments     dice
-    games            orders           ranks            recipe_locks
-    spawn_locks
-    item_locks
+    loot_removals    block_drops      player_loot      advancement
+    function         tags             registry_remap   cards
+    disabled         tooltips         harvests         carries
+    dialogs          veins            diets            enchantments
+    dice             games            orders           ranks
+    recipe_locks     spawn_locks      item_locks
 
 블록은 "type" 필드로 정하는 다음 형태로 나뉩니다.
 

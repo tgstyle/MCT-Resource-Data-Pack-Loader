@@ -208,13 +208,12 @@ Each of these is a folder under data/<yourpack>:
     structure        recipe           recipe_removals  furnace
     fuels            brewing          potions          potion_types
     villagers        trades           loot_table       loot_injections
-    block_drops      player_loot      advancement      function
-    tags             registry_remap   cards            disabled
-    tooltips         harvests         carries          dialogs
-    veins            diets            enchantments     dice
-    games            orders           ranks            recipe_locks
-    spawn_locks
-    item_locks
+    loot_removals    block_drops      player_loot      advancement
+    function         tags             registry_remap   cards
+    disabled         tooltips         harvests         carries
+    dialogs          veins            diets            enchantments
+    dice             games            orders           ranks
+    recipe_locks     spawn_locks      item_locks
 
 Blocks come in these shapes, set by the "type" field:
 

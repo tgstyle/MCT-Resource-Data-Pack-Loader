@@ -73,6 +73,7 @@ Questa guida è per la build 26.x, che copre 26.1.2, 26.2 e 26.3; tutte e tre le
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
 - [Trasporto](#trasporto)
+- [Rimozioni di loot](#rimozioni-di-loot)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
 - [Varietà del cibo](#varietà-del-cibo)
 - [Villici e scambi](#villici-e-scambi)
@@ -213,6 +214,7 @@ Sotto `data/`:
 | `<namespace>/trades/*.json`                  | Cosa comprano e vendono le professioni. [Villici e scambi](#villici-e-scambi)                                                                                                                                                       |
 | `<namespace>/loot_tables/*.json`             | Loot table, sostituite. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                         |
 | `<namespace>/loot_injections/*.json`         | Un pool aggiunto a una tabella già esistente. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                   |
+| `<namespace>/loot_removals/*.json`           | Voci tolte da una tabella già esistente, o tabella intera svuotata. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                             |
 | `<namespace>/block_drops/*.json`             | Drop aggiuntivi o sostitutivi per blocchi che un pack non possiede. [Drop dei blocchi](#drop-dei-blocchi)                                                                                                                           |
 | `<namespace>/harvests/*.json`                | Colture che si raccolgono e si ripiantano con il clic destro. [Raccolta con clic destro](#raccolta-con-clic-destro)                                                                                                                 |
 | `<namespace>/veins/*.json`                   | Gruppi di blocchi che uno strumento estrae in un colpo solo, con un limite e un costo in fame. [Estrazione di filoni](#estrazione-di-filoni)                                                                                        |
@@ -569,6 +571,7 @@ Il genitore di una dimensione o di un bioma può essere un modello allo stesso m
 - **Rimozioni di ricette**: elimina una ricetta di crafting per nome, namespace o risultato
 - **Blocchi e oggetti disattivati**: togli dal gioco qualsiasi blocco o oggetto, vedi [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati)
 - **Iniezioni di loot**: aggiungi un pool a una loot table invece di sostituirla per intero
+- **Rimozioni di loot**: tolgono una voce o un oggetto da una loot table, oppure la svuotano, senza sostituirla
 - **Drop dei blocchi**: aggiungi o sostituisci ciò che qualsiasi blocco lascia cadere quando viene rotto, esperienza inclusa
 - **Bottino dei giocatori**: tira una loot table quando un giocatore muore, oltre a ciò che portava con sé oppure al suo posto
 - **Proprietà di blocchi, oggetti e pozioni esistenti**: durezza, luce, dimensioni delle pile, cibo su qualsiasi cosa, gli effetti di una pozione, vedi [Override delle proprietà](#override-delle-proprietà)
@@ -588,7 +591,7 @@ Un pack può stare solo sul server, con giocatori su client vanilla puri, a una 
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                 |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                                   |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                                  |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                                  |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (cartelle client: senza client, lasciale fuori) |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                        |                                                                                                                        |
 
@@ -676,7 +679,7 @@ Un pack creato per la linea 1.12.2 si carica così com'è. Il loader ne riconosc
 - Un blockstate 1.12.2 non viene servito affatto. Si leggono invece le sue texture, servite con i nomi che il generatore cerca, `textures/block/<variant>.png` con `_top` e `_bottom` dove il blockstate aveva `end`, `top` o `bottom`, così il blockstate e i modelli vengono generati per ogni variante come lo sarebbero per un pack scritto qui.
 - Le ricette perdono il loro `data` e ottengono id appiattiti, `forge:ore_shaped` diventa `minecraft:crafting_shaped` con gli ingredienti `ore` come `tag`, le loot table perdono `set_data` allo stesso modo e l'`item` con `data` di un progresso diventa `items`. Lo `background` di un progresso passa da `textures/blocks/` a `textures/block/`, e la sua icona indica l'oggetto come `id`.
 - Viene portato anche il vocabolario Forge 1.12.2 di una ricetta: un tipo di ingrediente `forge:ore_dict` o `minecraft:item` viene scartato, un ingrediente `minecraft:item_nbt` diventa `forge:nbt` (1.21.1: `neoforge:components`) con il suo nbt passato attraverso i data fixer, `minecraft:item_exists` diventa `forge:item_exists` (1.21.1: ogni condizione prende il proprio nome `neoforge`, sotto `neoforge:conditions`), un oggetto senza namespace prende quello della ricetta e `data` 32767 diventa un elenco di ogni variante. Una `#CONSTANT` dal `_constants.json` di una mod non può seguire, e il log la nomina. Ovunque un elenco nomini oggetti, `name:*` diventa ogni variante che l'oggetto aveva, e un valore singolo prende la prima; ciò raggiunge i risultati di `recipe_removals` e le rimozioni di `furnace`, che vengono portati anch'essi come oggetti. L'`item` o il `with` di un'incudine scritto come `name:*` diventa un elenco di ogni variante, e una qualsiasi risponde.
-- Le loot table rinominate dopo 1.12.2 vengono rinominate ovunque un pack ne nomini una: il bersaglio di un `loot_injections`, una tabella di `player_loot` e una voce `loot_table` (1.21.1: il suo `value`), così `minecraft:entities/zombie_pigman` diventa `minecraft:entities/zombified_piglin`. `killed_by_player` con `inverse` diventa una condizione `inverted`, `entity_properties` con `on_fire` diventa un predicato `flags`, e i nomi di `set_attributes` come `generic.maxHealth` diventano `generic.max_health` (1.21.1: l'operazione prende il suo nuovo nome, e il `name` del modificatore diventa il suo `id`).
+- Le loot table rinominate dopo 1.12.2 vengono rinominate ovunque un pack ne nomini una: il bersaglio di un `loot_injections`, il bersaglio di un `loot_removals` e i relativi id degli oggetti, una tabella di `player_loot` e una voce `loot_table` (1.21.1: il suo `value`), così `minecraft:entities/zombie_pigman` diventa `minecraft:entities/zombified_piglin`. `killed_by_player` con `inverse` diventa una condizione `inverted`, `entity_properties` con `on_fire` diventa un predicato `flags`, e i nomi di `set_attributes` come `generic.maxHealth` diventano `generic.max_health` (1.21.1: l'operazione prende il suo nuovo nome, e il `name` del modificatore diventa il suo `id`).
 - Un override di un blocco 1.12.2 che l'appiattimento ha diviso, come `overrides/minecraft/wool.json`, viene letto come override di ogni blocco che è diventato, tutte e sedici le lane, dato che 1.12.2 cambiava ogni variante in una volta.
 - Il `gameLoopFunction` di un file di regole di gioco diventa il tag di funzione `#minecraft:tick`, scritto come `data/minecraft/tags/function/tick.json`, dato che la regola di gioco non esiste più. I numeri di dimensione propri del pack vengono letti attraverso i suoi file `dimensions`, quindi `"id": 7` in `dimensions/verdant.json` fa di 7 `mypack:verdant` ovunque il pack lo nomini. Entrambi i lati di una coppia `villageBlocks` vengono corretti, la probabilità mantenuta, e un file `registry_remap` può conservare i plurali 1.12.2 `minecraft:blocks` e `minecraft:items`.
 - Un modello di mondo che disattiva ogni struttura che 1.12.2 aveva in una dimensione disattiva anche le strutture che solo questa versione ha lì: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` e `trial_chambers` nell'Overworld e `nether_fossils` nel Nether. Se lasci attivo uno dei nomi 1.12.2, le strutture nuove restano come sono. Le chiavi di controllo del generatore, `blockWorldGenerators` e le sue compagne, vengono lasciate fuori da un modello convertito con una riga nel log, dato che qui nulla le legge. I nomi di blocco degli strati `generatorOptions` di un modello piatto vengono corretti allo stesso modo, quindi `minecraft:grass` diventa `minecraft:grass_block`.
@@ -3510,6 +3513,43 @@ Uno scambio può dipendere anche dal giocatore che apre la finestra. Chi non sod
 `priceScale` cambia solo `buy`, mai `buySecondary`, e al costo scalato si applicano comunque anche la domanda e la reputazione del gioco. Il gioco distingue uno scambio condizionale dagli altri scambi del villico dalla sua professione e dai suoi oggetti (`buy`, `buySecondary` e `sell`), perciò dagli oggetti che nessun altro scambio di quella professione usa. Due scambi del pack con gli stessi oggetti: il secondo viene saltato e scritto nel log. I villici i cui scambi sono già stati generati li mantengono.
 
 ---
+
+## Rimozioni di loot
+
+*crafting, bottino e scambi*
+
+`<namespace>/loot_removals/*.json`
+
+Un file qui toglie voci da una loot table che esiste già, sia vanilla sia di una mod, oppure la svuota. A differenza di un file in `loot_tables/`, non sostituisce la tabella. Un file modifica una tabella, e più file per la stessa tabella si applicano tutti.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Chiave    | Tipo                          | Significato                                                                                          |
+| --------- | ----------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `target`  | stringa, obbligatorio         | La loot table che il file modifica. Un nome senza namespace riceve `minecraft:`.                     |
+| `clear`   | booleano, predefinito `false` | Rimuove tutti i pool. La tabella resta vuota, e `entries` e `items` vengono ignorati.                |
+| `entries` | array di `{pool, entry}`      | Rimuove le voci del pool `pool` che danno `entry`.                                                   |
+| `items`   | array di id di oggetti        | Rimuove ogni voce di quell'oggetto, in ogni pool, anche dentro `alternatives`, `group` e `sequence`. |
+
+- `pool` corrisponde prima al nome di un pool. Se nessun pool ha quel nome, `main` indica il primo pool e `pool<N>` il pool all'indice N, contando da 0.
+- Le voci non hanno nomi, quindi `entry` corrisponde a ciò che una voce dà: un id di oggetto, un id di tag o un id di loot table. Un pack 1.12.2 che indica una voce con un `entryName` personalizzato deve usare invece l'id dell'oggetto.
+- `items` ignora le funzioni di una voce, quindi rimuove la voce qualunque quantità, danno o componente avrebbe dato. Una voce `tag` che darebbe l'oggetto resta, quindi indica il tag in `entry`.
+- Una voce `alternatives`, `group` o `sequence` rimasta senza figli viene rimossa.
+- Le rimozioni girano prima di `loot_injections`, quindi un pool iniettato non viene mai rimosso. Una mod che aggiunge alla tabella dopo RDPL mantiene ciò che ha aggiunto.
+- Un pool, una voce o un oggetto che non corrisponde a nulla produce un avviso in `rdpl.log`, così un pack continua a funzionare quando una mod viene tolta.
+- `lootRemovals` nella config le disattiva. Le loot table sono dati del server, quindi basta il server.
 
 # Creature e pericoli
 
@@ -9481,6 +9521,7 @@ Bottino, funzioni e nomi di registro. Solo configurazione.
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9491,6 +9532,7 @@ functions = true
 | Impostazione     | Tipo     | Predefinito | Cosa fa                                                                                                                                                                                                                       |
 | ---------------- | -------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | booleano | `true`      | Applica i file loot_injections/*.json, che aggiungono pool alle loot table già esistenti invece di sostituire l'intera tabella                                                                                                |
+| `lootRemovals`   | booleano | `true`      | Applica i file loot_removals/*.json, che tolgono voci dalle loot table già esistenti, o svuotano una tabella intera                                                                                                           |
 | `playerLoot`     | booleano | `true`      | Applica i file player_loot/*.json, che estraggono una loot table quando un giocatore muore e lasciano cadere ciò che produce, in aggiunta all'inventario o al suo posto                                                       |
 | `registryRemaps` | booleano | `true`      | Applica i file registry_remap, che rinominano una voce di registro così i mondi salvati prima della ridenominazione mantengono i loro blocchi e oggetti invece di perderli                                                    |
 | `affixes`        | booleano | `true`      | Applica i file affixes/*.json e gems/*.json, che danno a un oggetto bonus di attributo casuali e castoni la prima volta che un giocatore lo tiene e permettono a un'incudine di incastonare una gemma                         |

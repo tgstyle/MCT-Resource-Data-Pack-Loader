@@ -73,6 +73,7 @@ Tento průvodce platí pro build 26.x, tedy pro 26.1.2, 26.2 a 26.3; všechny t�
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
 - [Nošení](#nošení)
+- [Odstranění kořisti](#odstranění-kořisti)
 - [Kořist hráčů](#kořist-hráčů)
 - [Pestrost jídla](#pestrost-jídla)
 - [Vesničané a obchody](#vesničané-a-obchody)
@@ -213,6 +214,7 @@ V `data/`:
 | `<namespace>/trades/*.json`                  | Co povolání kupují a prodávají. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                          |
 | `<namespace>/loot_tables/*.json`             | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                    |
 | `<namespace>/loot_injections/*.json`         | Pool přidaný do již existující tabulky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                        |
+| `<namespace>/loot_removals/*.json`           | Záznamy odebrané z již existující tabulky, nebo celá tabulka vyprázdněná. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                      |
 | `<namespace>/block_drops/*.json`             | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků)                                                                                                    |
 | `<namespace>/harvests/*.json`                | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                         |
 | `<namespace>/veins/*.json`                   | Skupiny bloků, které nástroj vytěží naráz, s limitem a cenou v hladu. [Těžení žil](#těžení-žil)                                                                                                      |
@@ -569,6 +571,7 @@ Rodičem dimenze nebo biomu může být šablona stejným způsobem, zablokovan�
 - **Odebrání receptů**, smaž recept na výrobu podle názvu, namespace nebo výstupu
 - **Zakázané bloky a předměty**, vyřaď ze hry libovolný blok nebo předmět, viz [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - **Vstřiky kořisti**, přidej pool do tabulky kořisti místo nahrazení celé
+- **Odstranění kořisti**, vezmi záznam nebo předmět z tabulky kořisti, nebo ji vyprázdni, bez nahrazení tabulky
 - **Dropy z bloků**, přidej k tomu, co libovolný blok dropne při rozbití, nebo to nahraď, včetně zkušeností
 - **Kořist hráčů**, losuj tabulku kořisti, když hráč zemře, navíc k tomu, co nesl, nebo místo toho
 - **Vlastnosti existujících bloků, předmětů a lektvarů**, tvrdost, světlo, velikosti stacků, jídlo na čemkoli, efekty lektvaru, viz [Přepsání vlastností](#přepsání-vlastností)
@@ -588,7 +591,7 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                             |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                  |
 
@@ -676,7 +679,7 @@ Balíček vytvořený pro řadu 1.12.2 se načte tak, jak je. Loader ho pozná p
 - Blockstate z 1.12.2 se neservíruje vůbec. Místo toho se čtou jeho textury a servírují se pod názvy, které generátor hledá, `textures/block/<variant>.png` s `_top` a `_bottom` tam, kde blockstate měl `end`, `top` nebo `bottom`, takže se blockstate a modely generují pro každou variantu tak, jak by se generovaly pro balíček psaný zde.
 - Recepty ztratí `data` a získají zploštěná id, `forge:ore_shaped` se stane `minecraft:crafting_shaped` s ingrediencemi `ore` jako `tag`, tabulky kořisti stejným způsobem ztratí `set_data` a `item` s `data` v pokroku se stane `items`. `background` pokroku se přesune z `textures/blocks/` do `textures/block/` a jeho ikona jmenuje předmět jako `id`.
 - Přenáší se i slovník Forge z 1.12.2 v receptu: typ ingredience `forge:ore_dict` nebo `minecraft:item` se zahodí, ingredience `minecraft:item_nbt` se stane `forge:nbt` (1.21.1: `neoforge:components`) s nbt proběhlým datovými opravami, `minecraft:item_exists` se stane `forge:item_exists` (1.21.1: každá podmínka dostane svůj název `neoforge` pod `neoforge:conditions`), předmět bez namespace převezme namespace receptu a `data` 32767 se stane seznamem všech variant. `#CONSTANT` z `_constants.json` módu se přenést nedá a log ji jmenuje. Všude, kde seznam jmenuje předměty, se `name:*` stane každou variantou, kterou předmět měl, a jedna hodnota vezme první; to platí pro výstupy `recipe_removals` a odebrání `furnace`, které se také přenášejí jako předměty. `item` nebo `with` kovadliny zapsané jako `name:*` se stane seznamem všech variant a odpovídá kterákoli z nich.
-- Tabulky kořisti přejmenované od 1.12.2 se přejmenují všude, kde je balíček jmenuje: cíl `loot_injections`, tabulka `player_loot` a záznam `loot_table` (1.21.1: jeho `value`), takže `minecraft:entities/zombie_pigman` se stane `minecraft:entities/zombified_piglin`. `killed_by_player` s `inverse` se stane podmínkou `inverted`, `entity_properties` s `on_fire` se stane predikátem `flags` a názvy `set_attributes` jako `generic.maxHealth` se stanou `generic.max_health` (1.21.1: operace dostane nový název a `name` modifikátoru se stane jeho `id`).
+- Tabulky kořisti přejmenované od 1.12.2 se přejmenují všude, kde je balíček jmenuje: cíl `loot_injections`, cíl `loot_removals` a jeho ID předmětů, tabulka `player_loot` a záznam `loot_table` (1.21.1: jeho `value`), takže `minecraft:entities/zombie_pigman` se stane `minecraft:entities/zombified_piglin`. `killed_by_player` s `inverse` se stane podmínkou `inverted`, `entity_properties` s `on_fire` se stane predikátem `flags` a názvy `set_attributes` jako `generic.maxHealth` se stanou `generic.max_health` (1.21.1: operace dostane nový název a `name` modifikátoru se stane jeho `id`).
 - Přepis bloku z 1.12.2, který flattening rozdělil, například `overrides/minecraft/wool.json`, se čte jako přepis každého bloku, kterým se stal, všech šestnácti vln, protože 1.12.2 měnilo každou variantu najednou.
 - `gameLoopFunction` souboru herních pravidel se stane tagem funkce `#minecraft:tick`, zapsaným jako `data/minecraft/tags/function/tick.json`, protože herní pravidlo zmizelo. Čísla dimenzí balíčku se čtou přes jeho soubory `dimensions`, takže `"id": 7` v `dimensions/verdant.json` udělá ze 7 `mypack:verdant` všude, kde ji balíček jmenuje. Obě strany dvojice `villageBlocks` se opraví, šance se zachová a soubor `registry_remap` smí ponechat množná čísla 1.12.2 `minecraft:blocks` a `minecraft:items`.
 - Šablona světa, která vypíná všechny struktury, které 1.12.2 v dimenzi mělo, vypíná i struktury, které má jen tato verze: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` a `trial_chambers` v Overworldu a `nether_fossils` v Netheru. Nech jeden z názvů z 1.12.2 zapnutý a ostatní se nechají být. Klíče ovládání generátorů, `blockWorldGenerators` a jeho společníci, se z převedené šablony vynechají jedním řádkem v logu, protože je tady nic nečte. Vrstvy `generatorOptions` ploché šablony mají názvy bloků opravené stejně, takže `minecraft:grass` se stane `minecraft:grass_block`.
@@ -3510,6 +3513,43 @@ Obchod může záviset i na hráči, který otevře okno. Hráč, který podmín
 `priceScale` mění jen `buy`, nikdy `buySecondary`, a na přepočtenou cenu se navíc použije poptávka a reputace ze hry. Podmíněný obchod hra odliší od ostatních obchodů vesničana podle povolání a jeho předmětů (`buy`, `buySecondary` a `sell`), takže mu dejte předměty, které žádný jiný obchod tohoto povolání nepoužívá. Dva obchody z packu se stejnými předměty: pozdější se přeskočí a zapíše do logu. Vesničané, kterým už byly obchody vygenerovány, si je ponechají.
 
 ---
+
+## Odstranění kořisti
+
+*výroba, kořist a obchod*
+
+`<namespace>/loot_removals/*.json`
+
+Soubor v této složce odebírá záznamy z již existující tabulky kořisti, ať vanilla nebo módové, nebo ji celou vyprázdní. Na rozdíl od souboru v `loot_tables/` tabulku nenahrazuje. Jeden soubor upravuje jednu tabulku a několik souborů pro stejnou tabulku se použijí všechny.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Klíč      | Typ                      | Význam                                                                                                 |
+| --------- | ------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `target`  | řetězec, povinný         | Tabulka kořisti, kterou soubor upravuje. Holý název dostane `minecraft:`.                              |
+| `clear`   | boolean, výchozí `false` | Odstraní všechny pooly. Tabulka zůstane prázdná a `entries` a `items` se ignorují.                     |
+| `entries` | pole `{pool, entry}`     | Odstraní záznamy poolu jménem `pool`, které dávají `entry`.                                            |
+| `items`   | pole ID předmětů         | Odstraní každý záznam tohoto předmětu ve všech poolech, i uvnitř `alternatives`, `group` a `sequence`. |
+
+- `pool` se nejdřív páruje s jménem poolu. Když žádný pool takové jméno nemá, `main` znamená první pool a `pool<N>` pool na indexu N, počítáno od 0.
+- Záznamy nemají jména, takže `entry` se páruje s tím, co záznam dává: ID předmětu, ID tagu nebo ID tabulky kořisti. Balíček z 1.12.2, který záznam pojmenovává vlastním `entryName`, musí místo toho použít ID předmětu.
+- `items` ignoruje funkce záznamu, takže odstraní záznam bez ohledu na počet, poškození nebo komponenty, které by dal. Záznam `tag`, který by předmět dal, zůstane, takže tag pojmenuj v `entry`.
+- Záznam `alternatives`, `group` nebo `sequence`, který zůstane bez potomků, se také odstraní.
+- Odstraňování běží před `loot_injections`, takže přidaný pool se nikdy neodstraní. Mod, který do tabulky přidá až po RDPL, si zachová, co přidal.
+- Pool, záznam nebo předmět, který nic nenajde, je v `rdpl.log` varování, takže balíček dál funguje, i když mod odeberete.
+- `lootRemovals` v configu je vypne. Tabulky kořisti jsou serverová data, takže stačí server.
 
 # Tvorové a nebezpečí
 
@@ -9481,6 +9521,7 @@ Kořist, funkce a názvy v registru. Jen konfigurace.
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9491,6 +9532,7 @@ functions = true
 | Nastavení        | Typ     | Výchozí | Co dělá                                                                                                                                                                                      |
 | ---------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | boolean | `true`  | Použít soubory loot_injections/*.json, které přidávají fondy do už existujících tabulek kořisti místo nahrazení celé tabulky                                                                 |
+| `lootRemovals`   | boolean | `true`  | Použít soubory loot_removals/*.json, které odebírají pojmenované záznamy z již existujících tabulek kořisti, nebo vyprázdní tabulku celou                                                    |
 | `playerLoot`     | boolean | `true`  | Použít soubory player_loot/*.json, které losují tabulku kořisti, když hráč zemře, a odhodí, co vytvoří, navíc k inventáři nebo místo něj                                                     |
 | `registryRemaps` | boolean | `true`  | Použít soubory registry_remap, které přejmenují položku registru, aby světy uložené před přejmenováním udržely své bloky a předměty místo jejich ztráty                                      |
 | `affixes`        | boolean | `true`  | Použít soubory affixes/*.json a gems/*.json, které dají předmětu náhodné bonusy atributů a patice při prvním podržení hráčem a nechají kovadlinu vložit drahokam do patice                   |
