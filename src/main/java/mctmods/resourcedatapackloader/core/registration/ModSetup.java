@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.anvils.ContentAnvils;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
+import mctmods.resourcedatapackloader.common.blocks.ContentColumns;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
 import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
@@ -186,6 +187,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(BlockDrops.class);
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
+        MinecraftForge.EVENT_BUS.register(ContentColumns.class);
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
         MinecraftForge.EVENT_BUS.register(PlayerWeights.class);
         MinecraftForge.EVENT_BUS.register(WeightEnforce.class);

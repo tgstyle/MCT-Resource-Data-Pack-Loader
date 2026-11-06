@@ -69,6 +69,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Drop dei blocchi](#drop-dei-blocchi)
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
+- [Colonne che cadono](#colonne-che-cadono)
 - [Trasporto](#trasporto)
 - [Rimozioni di loot](#rimozioni-di-loot)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
@@ -225,6 +226,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/carries/*.json`                                                                    | Blocchi e mob che un giocatore accovacciato raccoglie e rimette giù. [Trasporto](#trasporto)                                                                                                                                        |
 | `<namespace>/player_loot/*.json`                                                                | Una loot table tirata quando un giocatore muore. [Bottino dei giocatori](#bottino-dei-giocatori)                                                                                                                                    |
 | `<namespace>/diets/*.json`                                                                      | Regole per cui un cibo ripetuto sazia meno e una dieta varia sazia di più. [Varietà del cibo](#varietà-del-cibo)                                                                                                                    |
+| `<namespace>/columns/*.json`                                                                    | Serie di blocchi che cadono e si rompono insieme a quelli sopra il blocco rotto dal giocatore. [Colonne che cadono](#colonne-che-cadono)                                                                                            |
 | `<namespace>/advancements/*.json`                                                               | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                                      |
 | `<namespace>/functions/*.mcfunction`                                                            | File di funzione. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                               |
 | `<namespace>/registry_remap/*.json`                                                             | Vecchi nomi mappati sui nuovi. [Ridenominazioni nel registro](#ridenominazioni-nel-registro)                                                                                                                                        |
@@ -3431,6 +3433,37 @@ Rompere un minerale con un piccone normalmente rompe solo quel blocco. Un file q
 | `requires`    | no           | elenco di stringhe                                                                                             | nessuno     | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                     |
 
 Toccarsi significa condividere una faccia, uno spigolo o un angolo, quindi un blocco ha 26 vicini. Solo in sopravvivenza: i giocatori in creativa e gli spettatori rompono un solo blocco come sempre. Si ferma quando lo strumento si rompe o la barra del cibo del giocatore arriva a 0. Ogni blocco in più lascia i suoi drop abituali, con la Fortuna dello strumento in mano e tutte le regole di Drop dei blocchi, e consuma lo strumento di un uso. Non agisce su un blocco che un gruppo di durezza mantiene. Sono dati di pack solo lato server e non serve nulla sul client. Un file senza blocchi o strumenti validi viene ignorato con una riga di errore.
+
+## Colonne che cadono
+
+*crafting, bottino e scambi*
+
+`<namespace>/columns/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e più file si sommano.
+
+Quando un giocatore rompe un blocco, la serie di blocchi che cadono elencati subito sopra di esso si rompe anch'essa, fino a un limite. Ogni blocco lancia il proprio evento di rottura, quindi le protezioni possono fermarlo, e la colonna non consuma lo strumento né usa Fortuna, Tocco di seta, fusione o fame, qualunque cosa sia in mano.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand", "meta": 0}],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Chiave           | Obbligatorio | Valore                                                                                                         | Predefinito | Cosa fa                                                                                                                                                                 |
+| ---------------- | ------------ | -------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | no           | elenco di stringhe                                                                                             | nessuno     | Id di mod che devono essere caricati, come altrove.                                                                                                                     |
+| `blocks`         | sì           | elenco di id di blocchi, con `meta` (1.12.2) o `properties` (1.20.1 e successive) come in un gruppo di durezza |             | Corrispondenze di blocchi, nella stessa forma di `blocks` dell'estrazione di filoni.                                                                                    |
+| `limit`          | no           | int, da 1 a 256                                                                                                | `256`       | Numero massimo di blocchi rimossi sopra quello rotto.                                                                                                                   |
+| `includeSelf`    | no           | bool                                                                                                           | `false`     | Se true, rompere un blocco elencato rimuove anche i blocchi elencati sopra di esso.                                                                                     |
+| `unlessSneaking` | no           | bool                                                                                                           | `false`     | Se true, un giocatore accovacciato rompe solo quel blocco.                                                                                                              |
+| `alternate`      | no           | oggetto con `item` e `chance` (da 0 a 1)                                                                       | nessuno     | Ogni blocco della colonna fa cadere `item` con un tiro riuscito, o il proprio oggetto blocco in caso di fallimento. Senza, ogni blocco dà i drop normali con Fortuna 0. |
+
+I giocatori finti non la attivano mai e i giocatori in creativa non ricevono drop. I file si sommano; viene usato il primo file i cui blocchi contengono il blocco sopra quello rotto. Al caricamento il log scrive `Loaded N falling column group(s)`, e un file che nomina un blocco non registrato o un `alternate` errato scrive un errore.
 
 ## Trasporto
 

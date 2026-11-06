@@ -69,6 +69,7 @@ Catorze exemplos funcionais. Coloca qualquer um deles diretamente em `rdploader`
 - [Itens largados por blocos](#itens-largados-por-blocos)
 - [Colheita com o botão direito](#colheita-com-o-botão-direito)
 - [Mineração de filões](#mineração-de-filões)
+- [Colunas que caem](#colunas-que-caem)
 - [Transportar](#transportar)
 - [Remoções de saque](#remoções-de-saque)
 - [Saque de jogadores](#saque-de-jogadores)
@@ -225,6 +226,7 @@ Todos os caminhos deste guia estão escritos a partir de `assets/`, pelo que `<n
 | `<namespace>/carries/*.json`                                                                    | Blocos e mobs que um jogador agachado apanha e volta a pousar. [Transportar](#transportar)                                                                                                                               |
 | `<namespace>/player_loot/*.json`                                                                | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                                                           |
 | `<namespace>/diets/*.json`                                                                      | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                                                    |
+| `<namespace>/columns/*.json`                                                                    | Sequências de blocos que caem e partem juntamente com os blocos acima do bloco partido pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                               |
 | `<namespace>/advancements/*.json`                                                               | Progressos. [O que podes substituir](#o-que-podes-substituir)                                                                                                                                                            |
 | `<namespace>/functions/*.mcfunction`                                                            | Ficheiros de funções. [O que podes substituir](#o-que-podes-substituir)                                                                                                                                                  |
 | `<namespace>/registry_remap/*.json`                                                             | Nomes antigos mapeados para novos. [Renomeações de registo](#renomeações-de-registo)                                                                                                                                     |
@@ -3431,6 +3433,37 @@ Partir um minério com uma picareta normalmente parte só esse bloco. Um ficheir
 | `requires`    | não         | lista de strings                                                                                           | nenhum       | Ids de mod, espaços de nomes de pack ou opções `config:` que têm de estar presentes, como em qualquer definição      |
 
 Tocar significa partilhar uma face, uma aresta ou um canto, por isso cada bloco tem 26 vizinhos. Só em sobrevivência: jogadores em criativo e espectadores partem um bloco só, como sempre. Para quando a ferramenta parte ou a barra de comida do jogador chega a 0. Cada bloco extra larga os seus drops habituais, com a Fortuna da ferramenta na mão e todas as regras de Itens largados por blocos, e gasta um uso da ferramenta. Não atua sobre um bloco que um grupo de dureza mantém. São dados de pack só de servidor e não precisam de nada no cliente. Um ficheiro sem blocos ou ferramentas válidos é ignorado com uma linha de erro.
+
+## Colunas que caem
+
+*fabrico, saque e comércio*
+
+`<namespace>/columns/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se.
+
+Quando um jogador parte um bloco, a sequência de blocos que caem listados mesmo acima dele parte também, até um limite. Cada bloco dispara o seu próprio evento de quebra, pelo que as proteções podem impedi-lo, e a coluna não gasta a ferramenta nem usa Fortuna, Toque de Seda, fundição ou fome, seja o que for que esteja na mão.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand", "meta": 0}],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Chave            | Obrigatório | Valor                                                                                                      | Predefinição | O que faz                                                                                                                                                                   |
+| ---------------- | ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | não         | lista de strings                                                                                           | nenhum       | Ids de mod que têm de estar carregados, como em toda a parte.                                                                                                               |
+| `blocks`         | sim         | lista de ids de bloco, com `meta` (1.12.2) ou `properties` (1.20.1 e posteriores) como num grupo de dureza |              | Correspondências de bloco, na mesma forma de `blocks` na mineração de filões.                                                                                               |
+| `limit`          | não         | int, de 1 a 256                                                                                            | `256`        | Máximo de blocos removidos acima do partido.                                                                                                                                |
+| `includeSelf`    | não         | bool                                                                                                       | `false`      | Quando true, partir um bloco da lista também remove os blocos da lista acima dele.                                                                                          |
+| `unlessSneaking` | não         | bool                                                                                                       | `false`      | Quando true, um jogador agachado parte apenas esse bloco.                                                                                                                   |
+| `alternate`      | não         | objeto com `item` e `chance` (0 a 1)                                                                       | nenhum       | Cada bloco da coluna deixa cair `item` numa jogada bem-sucedida, ou o item do próprio bloco numa falha. Sem ele, cada bloco deixa cair os seus itens normais com Fortuna 0. |
+
+Jogadores falsos nunca a ativam, e os jogadores em criativo não recebem itens largados. Os ficheiros acumulam-se; usa-se o primeiro cujos blocos contêm o bloco acima do partido. Ao carregar, o registo mostra `Loaded N falling column group(s)`, e um ficheiro que nomeie um bloco não registado ou um `alternate` inválido regista um erro.
 
 ## Transportar
 
