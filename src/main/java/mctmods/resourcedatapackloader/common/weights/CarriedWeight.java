@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.weights;
 
 import mctmods.resourcedatapackloader.common.carry.ContentCarry;
+import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.items.ContentContainerItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurios;
@@ -59,7 +60,7 @@ public final class CarriedWeight {
 
     private static long contents(ItemStack stack, Scope scope, int depth) {
         if (WeightDef.CONTENTS_NONE.equals(scope.settings.countContents)) { return 0L; }
-        if (stack.getItem() instanceof ContentContainerItem) { return stacks(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyItems(), scope, depth); }
+        if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlockItem.holdsKept(stack)) { return stacks(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyItems(), scope, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(scope.settings.countContents)) { return 0L; }
         IItemHandler handler = stack.getCapability(Capabilities.ItemHandler.ITEM);
         if (handler != null) {

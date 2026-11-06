@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.common.items;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 
-import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
 import net.minecraft.core.NonNullList;
@@ -31,8 +30,8 @@ public final class ContentPouchInventory extends SimpleContainer {
     @Override public void setChanged() {
         super.setChanged();
         if (loading) { return; }
-        List<ItemStack> items = new ArrayList<>(getContainerSize());
-        for (int at = 0; at < getContainerSize(); at++) { items.add(getItem(at)); }
-        pouch.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        store(pouch, getItems());
     }
+
+    public static void store(ItemStack stack, List<ItemStack> items) { stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items)); }
 }

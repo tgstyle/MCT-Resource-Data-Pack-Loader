@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.blocks.container.logic;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.containers.IContentContainer;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
+import mctmods.resourcedatapackloader.common.items.ContentPouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -12,6 +13,7 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -20,9 +22,11 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -41,6 +45,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     private int rows;
     private int columns;
     private boolean stocked;
+    private boolean creative;
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
         super(ContentContainers.TYPE.get(), pos, state);
@@ -57,6 +62,8 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     public ContainerDef shape() { return def().sized(rows, columns); }
 
     @Override public int getContainerSize() { return items.size(); }
+
+    @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return !def().keepContents() || ContentContainerMenu.storable(stack); }
 
     @Override @Nonnull protected NonNullList<ItemStack> getItems() { return items; }
 
@@ -116,14 +123,49 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     @Override protected void saveAdditional(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         tag.putBoolean(STOCKED, stocked);
+        saveSize(tag);
+        if (!trySaveLootTable(tag)) { ContainerHelper.saveAllItems(tag, this.items, registries); }
+    }
+
+    private void saveSize(CompoundTag tag) {
         tag.putInt(ROWS, rows);
         tag.putInt(COLUMNS, columns);
-        if (!trySaveLootTable(tag)) { ContainerHelper.saveAllItems(tag, this.items, registries); }
     }
 
     public void placed() {
         stocked = true;
         setChanged();
+    }
+
+    public void brokenBy(Player player) {
+        creative = player.isCreative();
+        unpackLootTable(player);
+    }
+
+    public ItemStack kept(ItemStack block) {
+        if (level == null) { return block; }
+        unpackLootTable(null);
+        BlockPos at = getBlockPos();
+        for (int slot = 0; slot < items.size(); slot++) {
+            ItemStack stack = items.get(slot);
+            if (stack.isEmpty() || ContentContainerMenu.storable(stack)) { continue; }
+            Containers.dropItemStack(level, at.getX(), at.getY(), at.getZ(), stack);
+            items.set(slot, ItemStack.EMPTY);
+        }
+        Component named = getCustomName();
+        boolean empty = isEmpty();
+        if (creative && empty && named == null) { return ItemStack.EMPTY; }
+        if (!empty) {
+            ContentPouchInventory.store(block, items);
+        }
+        if (rows != def().rows() || columns != def().columns()) {
+            CompoundTag size = new CompoundTag();
+            saveSize(size);
+            BlockItem.setBlockEntityData(block, getType(), size);
+        }
+        if (named != null) { block.set(DataComponents.CUSTOM_NAME, named); }
+        clearContent();
+        return block;
     }
 
     public boolean watched() { return openers > 0; }
@@ -140,10 +182,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     }
 
     public void adopt(CompoundTag tag, HolderLookup.Provider registries) {
-        if (rows * columns >= tag.getInt(ROWS) * tag.getInt(COLUMNS)) {
-            tag.putInt(ROWS, rows);
-            tag.putInt(COLUMNS, columns);
-        }
+        if (rows * columns >= tag.getInt(ROWS) * tag.getInt(COLUMNS)) { saveSize(tag); }
         lootTable = null;
         loadWithComponents(tag, registries);
         setChanged();
