@@ -39,7 +39,7 @@ public abstract class RDPLPackResources implements PackResources {
         return json.toString();
     }
 
-    @Override public final boolean isBuiltin() { return false; }
+    @Override public final boolean isBuiltin() { return true; }
 
     @Override public final void close() {}
 }

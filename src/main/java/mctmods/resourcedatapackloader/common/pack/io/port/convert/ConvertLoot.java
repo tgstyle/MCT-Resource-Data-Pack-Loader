@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
 import java.util.Map;
 import net.minecraft.util.GsonHelper;
@@ -20,8 +21,21 @@ public final class ConvertLoot {
 
     public static String loot(JsonObject json, Ported pack) {
         if (GsonHelper.isValidPrimitive(json, "target")) { lootTable(json, "target", pack); }
+        removalIds(json, pack);
         lootWalk(json, pack);
         return Ported.GSON.toJson(json);
+    }
+
+    private static void removalIds(JsonObject json, Ported pack) {
+        if (GsonHelper.isArrayNode(json, "items")) {
+            JsonArray items = new JsonArray();
+            for (JsonElement element : json.getAsJsonArray("items")) { items.add(element.isJsonPrimitive() ? new JsonPrimitive(Convert.itemName(element.getAsString(), pack)) : element); }
+            json.add("items", items);
+        }
+        if (!GsonHelper.isArrayNode(json, "entries")) { return; }
+        for (JsonElement element : json.getAsJsonArray("entries")) {
+            if (element.isJsonObject() && GsonHelper.isValidPrimitive(element.getAsJsonObject(), "entry")) { element.getAsJsonObject().addProperty("entry", Convert.itemName(element.getAsJsonObject().get("entry").getAsString(), pack)); }
+        }
     }
 
     private static void lootWalk(JsonElement element, Ported pack) {

@@ -22,7 +22,7 @@ public final class Port {
     private static final String LANG_SUFFIX = ".lang";
     private static final String SOUNDS = "sounds";
     private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", PackManager.LANGGATES, "packlist", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
-    private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
+    private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"},  {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
     private static final int LAST_1_20_FORMAT = 26;
     private static final int FIRST_1_21_FORMAT = 41;
     private static final int LAST_1_21_DATA_FORMAT = 48;
@@ -183,7 +183,7 @@ public final class Port {
     private static Mapped data(String path, String head) {
         return switch (head) {
             case "recipes" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.RECIPE : Kind.RAW);
-            case "loot_tables", "loot_injections" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW);
+            case "loot_tables", "loot_injections", "loot_removals" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW);
             case "advancements" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.ADVANCEMENT : Kind.RAW);
             case "functions" -> new Mapped(PackType.SERVER_DATA, path, Kind.FUNCTION);
             case "oredict" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.OREDICT : Kind.DROPPED);

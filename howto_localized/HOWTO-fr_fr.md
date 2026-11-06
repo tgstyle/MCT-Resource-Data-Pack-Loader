@@ -73,6 +73,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
 - [Portage](#portage)
+- [Retrait de butin](#retrait-de-butin)
 - [Butin des joueurs](#butin-des-joueurs)
 - [Variété alimentaire](#variété-alimentaire)
 - [Villageois et échanges](#villageois-et-échanges)
@@ -213,6 +214,7 @@ Sous `data/` :
 | `<namespace>/trades/*.json`                  | Ce que les métiers achètent et vendent. [Villageois et échanges](#villageois-et-échanges)                                                                                                                                |
 | `<namespace>/loot_tables/*.json`             | Tables de butin, remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                             |
 | `<namespace>/loot_injections/*.json`         | Un groupe ajouté à une table qui existe déjà. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                            |
+| `<namespace>/loot_removals/*.json`           | Entrées retirées d'une table qui existe déjà, ou table entière vidée. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                    |
 | `<namespace>/block_drops/*.json`             | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                                                               |
 | `<namespace>/harvests/*.json`                | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                                                                       |
 | `<namespace>/veins/*.json`                   | Groupes de blocs qu'un outil mine d'un seul coup, avec une limite et un coût en faim. [Minage de filons](#minage-de-filons)                                                                                              |
@@ -569,6 +571,7 @@ Le parent d'une dimension ou d'un biome peut être un modèle de la même façon
 - **Suppressions de recettes**, supprimez une recette d'artisanat par nom, namespace ou résultat
 - **Blocs et objets désactivés**, retirez n'importe quel bloc ou objet du jeu, voir [Blocs et objets désactivés](#blocs-et-objets-désactivés)
 - **Injections de butin**, ajoutez un groupe à une table de butin au lieu de remplacer la table entière
+- **Retraits de butin**, retirez une entrée ou un objet d'une table de butin, ou videz-la, sans remplacer la table
 - **Butins des blocs**, ajoutez à ce que laisse n'importe quel bloc quand il est cassé, ou remplacez-le, expérience comprise
 - **Butin des joueurs**, tirez une table de butin à la mort d'un joueur, en plus de ce qu'il portait ou à sa place
 - **Propriétés des blocs, objets et potions existants**, dureté, lumière, tailles de pile, nourriture sur n'importe quoi, les effets d'une potion, voir [Surcharges de propriétés](#surcharges-de-propriétés)
@@ -588,7 +591,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                      |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                        |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                                       |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                                       |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (dossiers client : sans client, laissez-les de côté) |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                             |                                                                                                                             |
 
@@ -677,7 +680,7 @@ Un pack conçu pour la ligne 1.12.2 se charge tel quel. Le loader en reconnaît 
 - Un état de bloc 1.12.2 n'est pas servi du tout. Ses textures sont lues à la place et servies sous les noms que cherche le générateur, `textures/block/<variant>.png` avec `_top` et `_bottom` là où l'état de bloc avait `end`, `top` ou `bottom`, de sorte que l'état de bloc et les modèles sont générés pour chaque variante comme ils le seraient pour un pack écrit ici.
 - Les recettes perdent leur `data` et gagnent des ids aplatis, `forge:ore_shaped` devient `minecraft:crafting_shaped` avec les ingrédients `ore` en `tag`, les tables de butin perdent `set_data` de la même façon, et le `item` d'un progrès avec `data` devient `items`. Le `background` d'un progrès passe de `textures/blocks/` à `textures/block/`.
 - Le vocabulaire Forge 1.12.2 d'une recette est lui aussi repris : un type d'ingrédient `forge:ore_dict` ou `minecraft:item` est abandonné, un ingrédient `minecraft:item_nbt` devient `forge:nbt` (1.21.1 : `neoforge:components`) avec son nbt passé par les correcteurs de données, `minecraft:item_exists` devient `forge:item_exists` (1.21.1 : chaque condition prend son nom `neoforge`, sous `neoforge:conditions`), un objet sans namespace prend celui de la recette, et `data` 32767 devient une liste de toutes les variantes. Une `#CONSTANT` issue du `_constants.json` d'un mod ne peut pas suivre, et le journal la nomme. Partout où une liste nomme des objets, `name:*` devient toutes les variantes qu'avait l'objet, et une valeur unique prend la première ; cela touche les résultats de `recipe_removals` et les retraits de `furnace`, qui sont repris comme des objets aussi. Le `item` ou `with` d'une enclume écrit `name:*` devient une liste de toutes les variantes, et n'importe laquelle convient.
-- Les tables de butin renommées depuis 1.12.2 sont renommées partout où un pack en nomme une : une cible de `loot_injections`, une table de `player_loot` et une entrée `loot_table` (1.21.1 : son `value`), de sorte que `minecraft:entities/zombie_pigman` devient `minecraft:entities/zombified_piglin`. `killed_by_player` avec `inverse` devient une condition `inverted`, `entity_properties` avec `on_fire` devient un prédicat `flags`, et les noms de `set_attributes` comme `generic.maxHealth` deviennent `generic.max_health` (1.21.1 : l'opération prend son nouveau nom, et le `name` du modificateur devient son `id`).
+- Les tables de butin renommées depuis 1.12.2 sont renommées partout où un pack en nomme une : une cible de `loot_injections`, une cible de `loot_removals` et ses identifiants d'objets, une table de `player_loot` et une entrée `loot_table` (1.21.1 : son `value`), de sorte que `minecraft:entities/zombie_pigman` devient `minecraft:entities/zombified_piglin`. `killed_by_player` avec `inverse` devient une condition `inverted`, `entity_properties` avec `on_fire` devient un prédicat `flags`, et les noms de `set_attributes` comme `generic.maxHealth` deviennent `generic.max_health` (1.21.1 : l'opération prend son nouveau nom, et le `name` du modificateur devient son `id`).
 - Une surcharge d'un bloc 1.12.2 que l'aplatissement a scindé, comme `overrides/minecraft/wool.json`, est lue comme une surcharge de chaque bloc qu'il est devenu, les seize laines, puisque la 1.12.2 changeait toutes les variantes d'un coup.
 - Le `gameLoopFunction` d'un fichier de règles de jeu devient le tag de fonction `#minecraft:tick`, écrit dans `data/minecraft/tags/functions/tick.json`, puisque la règle de jeu n'existe plus. Les numéros de dimension propres au pack sont lus par ses fichiers `dimensions`, donc `"id": 7` dans `dimensions/verdant.json` fait de 7 `mypack:verdant` partout où le pack le nomme. Les deux côtés d'une paire `villageBlocks` sont corrigés, la chance conservée, et un fichier `registry_remap` peut garder les `minecraft:blocks` et `minecraft:items` au pluriel de 1.12.2.
 - Un modèle de monde qui désactive toutes les structures que 1.12.2 avait dans une dimension désactive aussi là les structures propres à cette version : `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks` et `trail_ruins` dans l'Overworld et `nether_fossils` dans le Nether. Laissez l'un des noms 1.12.2 actif et elles sont laissées tranquilles. Les clés de contrôle des générateurs, `blockWorldGenerators` et ses compagnes, sont omises d'un modèle converti avec une ligne dans le journal, puisque rien ici ne les lit. Les couches `generatorOptions` d'un modèle plat ont leurs noms de blocs corrigés de la même façon, donc `minecraft:grass` devient `minecraft:grass_block`.
@@ -3336,6 +3339,43 @@ Un joueur qui s'accroupit et fait un clic droit la main principale vide ramasse 
 | `requires` | non    | liste de chaînes                                  | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                                                                                                                                       |
 
 Ids seulement, pas de tags. Les structures de deux blocs, comme les portes, les grandes plantes et les lits, ne peuvent pas être portées, ni les blocs protégés ou de dureté inférieure à 0. Les passagers d'un mob descendent quand on le ramasse, la laisse n'a pas de traitement particulier et rien n'est dessiné sur le porteur. Les données portées ne passent pas par le data fixer lors des mises à jour du jeu, et une charge dont le bloc ou le mob ne se résout plus est effacée avec une ligne d'erreur dans le journal. Un mob de pack accroupi qui a une interface de stockage est ramassé au lieu de l'ouvrir.
+
+## Retrait de butin
+
+*artisanat, butin et commerce*
+
+`<namespace>/loot_removals/*.json`
+
+Un fichier placé ici retire des entrées d'une table de butin qui existe déjà, qu'elle vienne de vanilla ou d'un mod, ou la vide. Contrairement à un fichier de `loot_tables/`, il ne remplace pas la table. Un fichier modifie une table, et plusieurs fichiers pour une même table s'appliquent tous.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Clé       | Type                            | Rôle                                                                                                          |
+| --------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `target`  | chaîne, requis                  | La table de butin modifiée par le fichier. Un nom sans espace de noms reçoit `minecraft:`.                    |
+| `clear`   | booléen, défaut `false`         | Retire tous les pools. La table reste vide, et `entries` et `items` sont ignorés.                             |
+| `entries` | tableau de `{pool, entry}`      | Retire les entrées du pool `pool` qui donnent `entry`.                                                        |
+| `items`   | tableau d'identifiants d'objets | Retire chaque entrée de cet objet, dans tous les pools, y compris dans `alternatives`, `group` et `sequence`. |
+
+- `pool` correspond d'abord au nom d'un pool. Si aucun pool ne porte ce nom, `main` désigne le premier pool et `pool<N>` le pool d'index N, en comptant à partir de 0.
+- Les entrées n'ont pas de nom, donc `entry` correspond à ce que donne une entrée : un identifiant d'objet, un identifiant de tag ou un identifiant de table de butin. Un pack 1.12.2 qui nomme une entrée par un `entryName` personnalisé doit utiliser l'identifiant de l'objet à la place.
+- `items` ignore les fonctions d'une entrée, donc il retire l'entrée quels que soient la quantité, les dégâts ou les composants qu'elle aurait donnés. Une entrée `tag` qui donnerait l'objet reste, donc nommez le tag dans `entry`.
+- Une entrée `alternatives`, `group` ou `sequence` qui reste sans enfant est retirée aussi.
+- Les retraits s'exécutent avant `loot_injections`, donc un pool injecté n'est jamais retiré. Un mod qui ajoute à la table après RDPL garde ce qu'il a ajouté.
+- Un pool, une entrée ou un objet qui ne correspond à rien produit un avertissement dans `rdpl.log`, pour qu'un pack continue de fonctionner quand un mod est retiré.
+- `lootRemovals` dans la configuration les désactive. Les tables de butin sont des données serveur, donc le serveur seul suffit.
 
 ## Butin des joueurs
 
@@ -9496,6 +9536,7 @@ Le butin, les fonctions et les noms de registre. Configuration uniquement.
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9506,6 +9547,7 @@ functions = true
 | Réglage          | Type    | Défaut | Rôle                                                                                                                                                                                                                       |
 | ---------------- | ------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | booléen | `true` | Applique les fichiers loot_injections/*.json, qui ajoutent des pools à des tables de butin déjà existantes au lieu de remplacer la table entière                                                                           |
+| `lootRemovals`   | booléen | `true` | Applique les fichiers loot_removals/*.json, qui retirent des entrées nommées de tables de butin déjà existantes, ou vident une table entière                                                                               |
 | `playerLoot`     | booléen | `true` | Applique les fichiers player_loot/*.json, qui tirent une table de butin à la mort d'un joueur et font tomber ce qu'elle produit, en plus de l'inventaire ou à sa place                                                     |
 | `registryRemaps` | booléen | `true` | Applique les fichiers registry_remap, qui renomment une entrée de registre pour que les mondes sauvegardés avant le renommage conservent leurs blocs et objets au lieu de les perdre                                       |
 | `affixes`        | booléen | `true` | Applique les fichiers affixes/*.json et gems/*.json, qui donnent à un objet des bonus d'attribut aléatoires et des châsses la première fois qu'un joueur le tient, et permettent à une enclume d'enchâsser une gemme       |

@@ -60,6 +60,7 @@ import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
+import mctmods.resourcedatapackloader.common.loot.LootRemovals;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
@@ -459,6 +460,7 @@ public class ModSetup {
         BlockDrops.REGISTER.register(modBus);
         ContentLootSwitch.REGISTER.register(modBus);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
         MinecraftForge.EVENT_BUS.addListener(RegistryRemaps::onMissingMappings);
         MinecraftForge.EVENT_BUS.addListener(CompressedAliases::onMissingMappings);

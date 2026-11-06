@@ -73,6 +73,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
 - [Tragen](#tragen)
+- [Beute entfernen](#beute-entfernen)
 - [Spielerbeute](#spielerbeute)
 - [Nahrungsvielfalt](#nahrungsvielfalt)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
@@ -213,6 +214,7 @@ Unter `data/`:
 | `<namespace>/trades/*.json`                  | Was Berufe kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                                                                                                   |
 | `<namespace>/loot_tables/*.json`             | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                    |
 | `<namespace>/loot_injections/*.json`         | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                      |
+| `<namespace>/loot_removals/*.json`           | Einträge, die aus einer bestehenden Tabelle entfernt werden, oder eine ganz geleerte Tabelle. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                              |
 | `<namespace>/block_drops/*.json`             | Zusätzliche oder ersetzende Drops, Erfahrung eingeschlossen, für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops)                                                                                                                                                         |
 | `<namespace>/harvests/*.json`                | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                                                                                                     |
 | `<namespace>/veins/*.json`                   | Gruppen von Blöcken, die ein Werkzeug in einem Zug abbaut, mit Limit und Hungerkosten. [Adernabbau](#adernabbau)                                                                                                                                                                       |
@@ -569,6 +571,7 @@ Ein Dimensions- oder Biom-Elternteil kann ebenso eine Vorlage sein, gesperrt hin
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
 - **Deaktivierte Blöcke und Items**: jeden Block und jedes Item aus dem Spiel nehmen, siehe [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
+- **Beute-Entfernungen**: einen Eintrag oder ein Item aus einer Beutetabelle nehmen oder sie leeren, ohne die Tabelle zu ersetzen
 - **Blockdrops**: dem Drop eines beliebigen Blocks beim Abbau etwas hinzufügen oder ihn ersetzen, Erfahrung eingeschlossen
 - **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
 - **Eigenschaften vorhandener Blöcke, Items und Tränke**: Härte, Licht, Stapelgrößen, Essbarkeit für alles, die Effekte eines Tranks, siehe [Eigenschaften überschreiben](#eigenschaften-überschreiben)
@@ -588,7 +591,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                        |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                          |
-| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                         |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                         |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
 | die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                               |                                                                                                               |
 
@@ -677,7 +680,7 @@ Ein Pack, das für die 1.12.2-Linie gemacht wurde, lädt so, wie es ist. Der Loa
 - Ein 1.12.2-Blockstate wird gar nicht ausgeliefert. Stattdessen werden seine Texturen gelesen und unter den Namen ausgeliefert, nach denen der Generator sucht, `textures/block/<variante>.png` mit `_top` und `_bottom`, wo der Blockstate `end`, `top` oder `bottom` hatte, sodass Blockstate und Modelle für jede Variante generiert werden, wie sie es für ein hier geschriebenes Pack würden.
 - Rezepte verlieren ihr `data` und bekommen geglättete IDs, `forge:ore_shaped` wird zu `minecraft:crafting_shaped` mit `ore`-Zutaten als `tag`, Beutetabellen verlieren `set_data` auf dieselbe Weise, und das `item` mit `data` eines Fortschritts wird zu `items`. Der `background` eines Fortschritts wandert von `textures/blocks/` nach `textures/block/`.
 - Auch das Forge-Vokabular der Rezepte aus 1.12.2 kommt mit: Ein Zutatentyp `forge:ore_dict` oder `minecraft:item` fällt weg, eine Zutat `minecraft:item_nbt` wird zu `forge:nbt` (1.21.1: `neoforge:components`), ihr NBT durch die Datenfixer geschickt, `minecraft:item_exists` wird zu `forge:item_exists` (1.21.1: jede Bedingung bekommt ihren `neoforge`-Namen, unter `neoforge:conditions`), ein Item ohne Namespace bekommt den des Rezepts, und `data` 32767 wird zu einer Liste aller Varianten. Eine `#CONSTANT` aus der `_constants.json` eines Mods kann nicht mitkommen, und das Log nennt sie. Wo eine Liste Items nennt, wird `name:*` zu jeder Variante, die das Item hatte, und ein einzelner Wert nimmt die erste; das betrifft die `outputs` von `recipe_removals` und die Entfernungen in `furnace`, die ebenfalls als Items übertragen werden. Ein `item` oder `with` einer Amboss-Arbeit, als `name:*` geschrieben, wird zu einer Liste aller Varianten, und jede davon passt.
-- Beutetabellen, die seit 1.12.2 umbenannt wurden, werden überall umbenannt, wo ein Pack eine nennt: das Ziel einer `loot_injections`-Datei, die Tabelle in `player_loot` und ein `loot_table`-Eintrag (1.21.1: sein `value`), sodass `minecraft:entities/zombie_pigman` zu `minecraft:entities/zombified_piglin` wird. `killed_by_player` mit `inverse` wird zu einer `inverted`-Bedingung, `entity_properties` mit `on_fire` zu einem `flags`-Prädikat, und Namen in `set_attributes` wie `generic.maxHealth` werden zu `generic.max_health` (1.21.1: die Operation bekommt ihren neuen Namen, und der `name` des Modifikators wird zu seiner `id`).
+- Beutetabellen, die seit 1.12.2 umbenannt wurden, werden überall umbenannt, wo ein Pack eine nennt: das Ziel einer `loot_injections`-Datei, das Ziel einer `loot_removals`-Datei und seine Item-IDs, die Tabelle in `player_loot` und ein `loot_table`-Eintrag (1.21.1: sein `value`), sodass `minecraft:entities/zombie_pigman` zu `minecraft:entities/zombified_piglin` wird. `killed_by_player` mit `inverse` wird zu einer `inverted`-Bedingung, `entity_properties` mit `on_fire` zu einem `flags`-Prädikat, und Namen in `set_attributes` wie `generic.maxHealth` werden zu `generic.max_health` (1.21.1: die Operation bekommt ihren neuen Namen, und der `name` des Modifikators wird zu seiner `id`).
 - Ein Override eines 1.12.2-Blocks, den das Flattening aufgeteilt hat, etwa `overrides/minecraft/wool.json`, wird als Override jedes Blocks gelesen, der daraus wurde, also aller sechzehn Wollen, weil 1.12.2 jede Variante auf einmal änderte.
 - Das `gameLoopFunction` einer Spielregel-Datei wird zum Funktions-Tag `#minecraft:tick`, geschrieben als `data/minecraft/tags/functions/tick.json`, da es die Spielregel nicht mehr gibt. Die eigenen Dimensionsnummern des Packs werden über seine `dimensions`-Dateien gelesen, sodass `"id": 7` in `dimensions/verdant.json` die 7 überall, wo das Pack sie nennt, zu `mypack:verdant` macht. Beide Seiten eines `villageBlocks`-Paars werden repariert, die Chance bleibt, und eine `registry_remap`-Datei darf die Pluralnamen `minecraft:blocks` und `minecraft:items` aus 1.12.2 behalten.
 - Eine Weltvorlage, die in einer Dimension jede Struktur abschaltet, die es in 1.12.2 gab, schaltet dort auch die Strukturen ab, die es nur in dieser Version gibt: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks` und `trail_ruins` in der Oberwelt und `nether_fossils` im Nether. Bleibt einer der 1.12.2-Namen an, bleiben sie unberührt. Die Schlüssel der Generatorsteuerung, `blockWorldGenerators` und seine Begleiter, werden mit einer Zeile im Log aus einer portierten Vorlage entfernt, da hier nichts sie liest. Die Blocknamen in den Schichten von `generatorOptions` einer flachen Vorlage werden genauso berichtigt, aus `minecraft:grass` wird also `minecraft:grass_block`.
@@ -3336,6 +3339,43 @@ Wer schleicht und mit leerer Haupthand rechtsklickt, hebt einen aufgeführten Bl
 | `requires` | nein    | Liste von Strings                       | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                                                                                                                                         |
 
 Nur IDs, keine Tags. Zweiteilige Strukturen wie Türen, hohe Pflanzen und Betten lassen sich nicht tragen, ebenso wenig geschützte Blöcke oder Blöcke mit einer Härte unter 0. Passagiere eines Mobs werden beim Aufheben abgesetzt, eine Leine wird nicht gesondert behandelt, und am Träger wird nichts gezeichnet. Getragene Daten werden bei Spiel-Upgrades nicht per Data Fixer angepasst, und ein Getragenes, dessen Block oder Mob sich nicht mehr auflösen lässt, wird mit einer Fehlerzeile im Log gelöscht. Ein schleichendes Pack-Mob mit Lager-GUI wird aufgehoben, statt dass die GUI öffnet.
+
+## Beute entfernen
+
+*herstellung, beute und handel*
+
+`<namespace>/loot_removals/*.json`
+
+Eine Datei hier nimmt Einträge aus einer bestehenden Beutetabelle heraus, ob aus Vanilla oder einem Mod, oder leert sie. Anders als eine Datei in `loot_tables/` ersetzt sie die Tabelle nicht. Eine Datei bearbeitet eine Tabelle, und mehrere Dateien für dieselbe Tabelle werden alle angewendet.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Schlüssel | Typ                       | Bedeutung                                                                                                     |
+| --------- | ------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `target`  | Text, Pflicht             | Die Beutetabelle, die die Datei bearbeitet. Ein nackter Name bekommt `minecraft:`.                            |
+| `clear`   | boolean, Standard `false` | Entfernt jeden Pool. Die Tabelle bleibt leer, und `entries` und `items` werden ignoriert.                     |
+| `entries` | Array aus `{pool, entry}` | Entfernt die Einträge des Pools `pool`, die `entry` ergeben.                                                  |
+| `items`   | Array aus Item-IDs        | Entfernt jeden Eintrag dieses Items in jedem Pool, auch innerhalb von `alternatives`, `group` und `sequence`. |
+
+- `pool` passt zuerst auf den Namen eines Pools. Hat kein Pool diesen Namen, bezeichnet `main` den ersten Pool und `pool<N>` den Pool am Index N, gezählt ab 0.
+- Einträge haben keine Namen, daher passt `entry` auf das, was ein Eintrag ergibt: eine Item-ID, eine Tag-ID oder eine Loot-Table-ID. Ein Pack aus 1.12.2, das einen Eintrag über einen eigenen `entryName` benennt, muss stattdessen die Item-ID nutzen.
+- `items` ignoriert die Funktionen eines Eintrags und entfernt ihn daher unabhängig von Anzahl, Schaden oder Komponenten. Ein `tag`-Eintrag, der das Item ergeben würde, bleibt, also den Tag in `entry` nennen.
+- Ein `alternatives`-, `group`- oder `sequence`-Eintrag ohne Kinder wird ebenfalls entfernt.
+- Entfernungen laufen vor `loot_injections`, daher wird ein eingefügter Pool nie entfernt. Ein Mod, der nach RDPL zur Tabelle hinzufügt, behält, was er hinzugefügt hat.
+- Ein Pool, Eintrag oder Item ohne Treffer ist eine Warnung in `rdpl.log`, damit ein Pack weiterläuft, wenn ein Mod entfernt wird.
+- `lootRemovals` in der Config schaltet sie ab. Beutetabellen sind Serverdaten, daher reicht der Server allein.
 
 ## Spielerbeute
 
@@ -9496,6 +9536,7 @@ Beute, Funktionen und Registry-Namen. Nur Config.
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9506,6 +9547,7 @@ functions = true
 | Einstellung      | Typ     | Standard | Was sie macht                                                                                                                                                                                                     |
 | ---------------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | boolean | `true`   | loot_injections/*.json-Dateien anwenden, die Pools zu Beutetabellen hinzufügen, die es schon gibt, statt die ganze Tabelle zu ersetzen                                                                            |
+| `lootRemovals`   | boolean | `true`   | loot_removals/*.json-Dateien anwenden, die benannte Einträge aus bestehenden Beutetabellen entfernen oder eine Tabelle ganz leeren                                                                                |
 | `playerLoot`     | boolean | `true`   | player_loot/*.json-Dateien anwenden, die beim Tod eines Spielers eine Beutetabelle würfeln und das Ergebnis fallen lassen, zusätzlich zum oder anstelle des Inventars                                             |
 | `registryRemaps` | boolean | `true`   | registry_remap-Dateien anwenden, die einen Registry-Eintrag umbenennen, damit vor der Umbenennung gespeicherte Welten ihre Blöcke und Items behalten, statt sie zu verlieren                                      |
 | `affixes`        | boolean | `true`   | affixes/*.json- und gems/*.json-Dateien anwenden, die einem Item beim ersten Halten durch einen Spieler zufällige Attributboni und Fassungen geben und einen Amboss einen Edelstein in eine Fassung setzen lassen |

@@ -73,6 +73,7 @@
 - [右鍵收穫](#右鍵收穫)
 - [礦脈連鎖挖掘](#礦脈連鎖挖掘)
 - [搬運](#搬運)
+- [戰利品移除](#戰利品移除)
 - [玩家戰利品](#玩家戰利品)
 - [飲食多樣性](#飲食多樣性)
 - [村民與交易](#村民與交易)
@@ -213,6 +214,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/trades/*.json`                  | 職業收購與販售的物品。[村民與交易](#村民與交易)                                                                     |
 | `<namespace>/loot_tables/*.json`             | 被取代的戰利品表。[可以覆寫的內容](#可以覆寫的內容)                                                                 |
 | `<namespace>/loot_injections/*.json`         | 加入既有戰利品表的一個池。[可以覆寫的內容](#可以覆寫的內容)                                                         |
+| `<namespace>/loot_removals/*.json`           | 從既有戰利品表中移除的條目，或整張被清空的表。[可以覆寫的內容](#可以覆寫的內容)                                     |
 | `<namespace>/block_drops/*.json`             | 為資源包並不擁有的方塊新增或取代的掉落物。[方塊掉落物](#方塊掉落物)                                                 |
 | `<namespace>/harvests/*.json`                | 右鍵即可收穫並補種的作物。[右鍵收穫](#右鍵收穫)                                                                     |
 | `<namespace>/veins/*.json`                   | 工具一次挖完的方塊組，可設上限和飢餓消耗。[礦脈連鎖挖掘](#礦脈連鎖挖掘)                                             |
@@ -569,6 +571,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 - **配方移除**，依名稱、命名空間或產出刪除合成配方
 - **停用的方塊與物品**，讓任何方塊或物品退出遊戲，見[停用的方塊與物品](#停用的方塊與物品)
 - **戰利品注入**，在戰利品表中加入一個池，而不是取代整張表
+- **戰利品移除**，在戰利品表中移除一個條目或物品，或清空該表，而不是取代整張表
 - **方塊掉落物**，新增或取代任何方塊被破壞時掉落的內容，經驗值也包括在內
 - **玩家戰利品**，在玩家死亡時擲出戰利品表，可疊加在其所攜帶的物品之上，也可取而代之
 - **既有方塊、物品與藥水的屬性**，包括硬度、光照、堆疊數量、任何東西上的食物，以及藥水的效果，見[屬性覆寫](#屬性覆寫)
@@ -588,7 +591,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions` | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
 | `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`tags`、`disabled`                                | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`exposures`、`tooltips`                         |
-| `loot_tables`、`loot_injections`、`player_loot`、`advancements`、`functions`、`veins`、`weights`                                                          | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
+| `loot_tables`、`loot_injections`、`loot_removals`、`player_loot`、`advancements`、`functions`、`veins`、`weights`                                         | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
 | `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                            | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
 | 整個控制層、設定與預先生成                                                                                                                                |                                                                                                              |
 
@@ -677,7 +680,7 @@ thatmod.jar
 - 1.12.2 的方塊狀態完全不會被提供。改為讀取它的材質，並以產生器尋找的名稱提供，即 `textures/block/<variant>.png`，若方塊狀態中有 `end`、`top` 或 `bottom`，則加上 `_top` 與 `_bottom`，於是方塊狀態與模型會為每個變體產生，就像為在此編寫的資源包所做的一樣。
 - 配方會失去 `data` 並換成扁平化後的 id，`forge:ore_shaped` 變成 `minecraft:crafting_shaped`，其 `ore` 材料變成 `tag`；戰利品表以同樣方式失去 `set_data`；進度的 `item` 帶 `data` 時則變成 `items`。進度的 `background` 從 `textures/blocks/` 移到 `textures/block/`。
 - 配方的 1.12.2 Forge 詞彙也會一併轉換：`forge:ore_dict` 或 `minecraft:item` 材料類型會被捨棄，`minecraft:item_nbt` 材料變成 `forge:nbt`（1.21.1：`neoforge:components`），其 nbt 經過資料修正器處理，`minecraft:item_exists` 變成 `forge:item_exists`（1.21.1：每個條件都改用其 `neoforge` 名稱，置於 `neoforge:conditions` 下），沒有命名空間的物品會採用該配方的命名空間，`data` 為 32767 則變成包含每個變體的清單。模組 `_constants.json` 中的 `#CONSTANT` 無法一併轉換，日誌會指出它。凡是清單列出物品之處，`name:*` 會變成該物品曾有的每個變體，單一值則取第一個；這涵蓋 `recipe_removals` 的產出與 `furnace` 的移除，它們同樣以物品來轉換。鐵砧的 `item` 或 `with` 寫成 `name:*` 時，會變成包含每個變體的清單，其中任何一個都符合。
-- 自 1.12.2 以來改名的戰利品表，在資源包指定它們的任何地方都會被改名：`loot_injections` 的目標、`player_loot` 的表，以及 `loot_table` 項目（1.21.1：其 `value`），因此 `minecraft:entities/zombie_pigman` 變成 `minecraft:entities/zombified_piglin`。帶 `inverse` 的 `killed_by_player` 變成 `inverted` 條件，帶 `on_fire` 的 `entity_properties` 變成 `flags` 謂詞，`set_attributes` 的名稱如 `generic.maxHealth` 變成 `generic.max_health`（1.21.1：運算採用新名稱，修飾器的 `name` 變成其 `id`）。
+- 自 1.12.2 以來改名的戰利品表，在資源包指定它們的任何地方都會被改名：`loot_injections` 的目標、`loot_removals` 的目標及其物品 ID、`player_loot` 的表，以及 `loot_table` 項目（1.21.1：其 `value`），因此 `minecraft:entities/zombie_pigman` 變成 `minecraft:entities/zombified_piglin`。帶 `inverse` 的 `killed_by_player` 變成 `inverted` 條件，帶 `on_fire` 的 `entity_properties` 變成 `flags` 謂詞，`set_attributes` 的名稱如 `generic.maxHealth` 變成 `generic.max_health`（1.21.1：運算採用新名稱，修飾器的 `name` 變成其 `id`）。
 - 對被扁平化拆開的 1.12.2 方塊所做的覆寫，例如 `overrides/minecraft/wool.json`，會被當作對它變成的每個方塊的覆寫，也就是全部十六種羊毛，因為 1.12.2 是一次更改所有變體。
 - 遊戲規則檔案的 `gameLoopFunction` 會變成 `#minecraft:tick` 函數標籤，寫成 `data/minecraft/tags/functions/tick.json`，因為這項遊戲規則已不存在。資源包自己的維度編號會透過它的 `dimensions` 檔案讀取，所以 `dimensions/verdant.json` 中的 `"id": 7` 會讓資源包在任何指定處都把 7 當成 `mypack:verdant`。`villageBlocks` 配對的兩側都會被修正，機率保留，`registry_remap` 檔案則可以繼續使用 1.12.2 的複數 `minecraft:blocks` 與 `minecraft:items`。
 - 世界範本若關閉了 1.12.2 在某個維度中有的每種結構，也會一併關閉只有此版本才有的結構：主世界的 `ancient_cities`、`buried_treasures`、`ocean_ruins`、`pillager_outposts`、`ruined_portals`、`shipwrecks` 與 `trail_ruins`，以及地獄的 `nether_fossils`。只要有一個 1.12.2 名稱保持開啟，其餘就不動。產生器控制鍵 `blockWorldGenerators` 及其同類，會在轉換後的範本中被省略並在日誌留下一行，因為這裡沒有東西讀取它們。平坦範本 `generatorOptions` 圖層中的方塊名稱會以同樣方式修正，因此 `minecraft:grass` 變成 `minecraft:grass_block`。
@@ -3336,6 +3339,43 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `requires` | 否   | 字串清單                 | 無   | 必須存在的模組 ID、資源包命名空間或 `config:` 選項，與所有定義相同                                                                                                           |
 
 只能寫 ID，不能用標籤。門、高大的植物和床這類兩格結構無法搬運，受保護的方塊和硬度低於 0 的方塊也不能。拿起生物時，騎乘者會被甩下，拴繩不作特殊處理，搬運者身上不會繪製任何東西。搬運的資料在遊戲升級時不會經過資料修復，方塊或生物已無法解析的搬運狀態會被清除，並在記錄檔中記一行錯誤。帶有儲存介面的資源包生物，在潛行時會被拿起，而不是開啟介面。
+
+## 戰利品移除
+
+*合成、戰利品與交易*
+
+`<namespace>/loot_removals/*.json`
+
+此資料夾中的檔案會從既有的戰利品表中移除條目，可以是原版或模組的表，也可以清空整張表。與 `loot_tables/` 中的檔案不同，它不會取代整張表。一個檔案編輯一張表，同一張表的多個檔案都會生效。
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| 鍵        | 類型                 | 含義                                                                                  |
+| --------- | -------------------- | ------------------------------------------------------------------------------------- |
+| `target`  | 字串，必填           | 本檔案所編輯的戰利品表。只寫名稱時會補上 `minecraft:`。                               |
+| `clear`   | 布林值，預設 `false` | 移除所有獎勵池。表保持空白，`entries` 與 `items` 會被忽略。                           |
+| `entries` | `{pool, entry}` 陣列 | 移除名為 `pool` 的池中給出 `entry` 的條目。                                           |
+| `items`   | 物品 ID 陣列         | 移除所有池中給出該物品的條目，包括 `alternatives`、`group` 與 `sequence` 內部的條目。 |
+
+- `pool` 先比對池的名稱。若沒有池使用該名稱，則 `main` 指第一個池，`pool<N>` 指索引為 N 的池（從 0 開始計數）。
+- 條目沒有名稱，因此 `entry` 比對條目所給出的內容：物品 ID、標籤 ID 或戰利品表 ID。1.12.2 的資源包若用自訂 `entryName` 指定條目，則必須改用物品 ID。
+- `items` 會忽略條目的函式，因此無論數量、傷害或元件為何，都會移除該條目。會給出該物品的 `tag` 條目會保留，所以請在 `entry` 中寫出該標籤。
+- 失去所有子項的 `alternatives`、`group` 或 `sequence` 條目也會被移除。
+- 移除會在 `loot_injections` 之前執行，因此被注入的池永遠不會被移除。RDPL 之後再向表中加入內容的模組會保留它所加入的部分。
+- 沒有比對到任何池、條目或物品時，會在 `rdpl.log` 中給出警告，因此移除某個模組後資源包仍能正常運作。
+- 設定中的 `lootRemovals` 可關閉此功能。戰利品表屬於伺服器端資料，只需伺服器即可。
 
 ## 玩家戰利品
 
@@ -9496,6 +9536,7 @@ cactusMaxHeight = 3
 ```toml
 [data]
 lootInjections = true
+lootRemovals = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9506,6 +9547,7 @@ functions = true
 | 設定             | 類型   | 預設   | 作用                                                                                                               |
 | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------ |
 | `lootInjections` | 布林值 | `true` | 套用 loot_injections/*.json 檔案，這些檔案為已存在的戰利品表新增獎勵池，而不是取代整張表                           |
+| `lootRemovals`   | 布林值 | `true` | 套用 loot_removals/*.json 檔案，從已存在的戰利品表中移除指定條目，或整張清空該表                                   |
 | `playerLoot`     | 布林值 | `true` | 套用 player_loot/*.json 檔案，這些檔案在玩家死亡時抽取戰利品表並掉落其產物，疊加在物品欄之上或取而代之             |
 | `registryRemaps` | 布林值 | `true` | 套用 registry_remap 檔案，這些檔案重新命名登錄表項目，讓重新命名之前儲存的世界保留它們的方塊與物品，而不是遺失     |
 | `affixes`        | 布林值 | `true` | 套用 affixes/*.json 和 gems/*.json 檔案，讓物品在玩家第一次持有時獲得隨機屬性加成與插槽，並讓鐵砧把寶石嵌入插槽    |
