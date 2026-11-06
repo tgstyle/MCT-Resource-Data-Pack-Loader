@@ -65,6 +65,7 @@ import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.KilledName;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
+import mctmods.resourcedatapackloader.common.loot.LootRemovals;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
@@ -181,6 +182,7 @@ public class ModSetup {
         Rubic.init();
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
+        MinecraftForge.EVENT_BUS.register(LootRemovals.class);
         MinecraftForge.EVENT_BUS.register(BlockDrops.class);
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);

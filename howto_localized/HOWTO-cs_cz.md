@@ -70,6 +70,7 @@
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
 - [Nošení](#nošení)
+- [Odstranění z kořisti](#odstranění-z-kořisti)
 - [Kořist hráčů](#kořist-hráčů)
 - [Pestrost jídla](#pestrost-jídla)
 - [Vesničané a obchody](#vesničané-a-obchody)
@@ -210,6 +211,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/trades/*.json`                                                                     | Co které povolání nakupuje a prodává. [Vesničané a obchody](#vesničané-a-obchody)                                                                                                                                 |
 | `<namespace>/loot_tables/*.json`                                                                | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                 |
 | `<namespace>/loot_injections/*.json`                                                            | Pool přidaný do tabulky, která už existuje. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                 |
+| `<namespace>/loot_removals/*.json`                                                              | Položky vyjmuté z tabulky, která už existuje, nebo celá tabulka vyprázdněná. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                |
 | `<namespace>/block_drops/*.json`                                                                | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků)                                                                                                                 |
 | `<namespace>/anvils/*.json`                                                                     | Enchanty, které kovadlina dá pojmenovanému předmětu, advancement, který tím získá, a zámek do té doby. [Práce s kovadlinou](#práce-s-kovadlinou)                                                                  |
 | `<namespace>/affixes/*.json`                                                                    | Náhodné bonusy atributů a patice, které předmět vylosuje, když ho hráč poprvé drží. [Afixy a patice](#afixy-a-patice)                                                                                             |
@@ -556,6 +558,7 @@ Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože d�
 - **Odebrání receptů**, smaž recept na výrobu podle názvu, namespace nebo výstupu
 - **Zakázané bloky a předměty**, vyřaď ze hry libovolný blok nebo předmět, viz [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - **Vstřiky kořisti**, přidej pool do tabulky kořisti místo nahrazení celé
+- **Odstranění z kořisti**, vyjmi položku nebo předmět z tabulky kořisti, nebo ji vyprázdni, aniž bys tabulku nahradil
 - **Kořist hráčů**, losuj tabulku kořisti, když hráč zemře, navíc k tomu, co nesl, nebo místo toho
 - **Dropy z bloků**, přidej k tomu, co libovolný blok dropne po rozbití hráčem, nebo to nahraď
 - **Vlastnosti existujících bloků, předmětů a lektvarů**, tvrdost, světlo, velikosti stacků, jídlo na čemkoli, efekty lektvaru, viz [Přepsání vlastností](#přepsání-vlastností)
@@ -570,6 +573,7 @@ Každá z těchto složek má také přepínač v konfiguraci, takže modpack m�
 | `removals`         | `recipes`  | zapnuto | Použije `recipe_removals/*.json`                                                                                                                         |
 | `disableOverrides` | `recipes`  | vypnuto | Zabrání tomuto módu nahrazovat nebo přidávat recepty. Potřeba jen tehdy, když se jiný coremod hádá o načítání receptů                                    |
 | `lootInjections`   | `data`     | zapnuto | Použije `loot_injections/*.json`                                                                                                                         |
+| `lootRemovals`     | `data`     | zapnuto | Použije `loot_removals/*.json`                                                                                                                           |
 | `enchanting`       | `data`     | zapnuto | Použije `enchanting/*.json`                                                                                                                              |
 | `affixes`          | `data`     | zapnuto | Použije `affixes/*.json` a `gems/*.json`                                                                                                                 |
 | `blockDrops`       | `data`     | zapnuto | Použije `block_drops/*.json`                                                                                                                             |
@@ -584,15 +588,15 @@ RDPL se hodí k nahrazení jednoho nebo dvou receptů a recepty pro vlastní obs
 
 Balíček může žít jen na serveru, zatímco hráči hrají na čistých vanilla klientech, za jedné podmínky: **nic v něm nesmí nic registrovat**. Obě id módu přijmou jakéhokoli protějšku; rozhoduje balíček. Vanilla klient hraje s registry, se kterými byl dodán, takže balíček, který do nich přidává, musí být na obou stranách.
 
-| Stačí jen server                                                                                                                                           | Vyžaduje balíček i na klientu                                                                                                  |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                     | `blocks`, `items`, `fluids`, `materials`                                                                                       |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                  | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (řádky popisků předmětů a kouzel, názvy afixů a slotů) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                         | `biomes`, `dimensions`, `portalframes`                                                                                         |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                      |
-| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách)     | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)                                                  |
-| `teams`, `scoring`, `ranks`                                                                                                                                | `models`, `blockstates`, `textures`, `lang` (složky klienta, bez klienta je vynech)                                            |
-| celá vrstva ovládání, nastavení a předgenerování                                                                                                           |                                                                                                                                |
+| Stačí jen server                                                                                                                                                            | Vyžaduje balíček i na klientu                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                       |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (řádky popisků předmětů a kouzel, názvy afixů a slotů) |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                         |
+| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                      |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pro profese, které klient zná: vanilla nebo módu na obou stranách)                      | `entities`, `worldintro`, `texts` (úvod se vanilla klientovi nikdy nezobrazí)                                                  |
+| `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (složky klienta, bez klienta je vynech)                                            |
+| celá vrstva ovládání, nastavení a předgenerování                                                                                                                            |                                                                                                                                |
 
 Pravý sloupec je tvrdá zarážka: vanilla klient poslaný do neznámé dimenze se odpojí a neznámé bloky mu nelze popsat. Levý sloupec funguje, protože všechno v něm buď běží celé na straně serveru, nebo se ke klientovi dostane přes pakety, které vanilla už mluví (výsledkový slot výroby plněný serverem, běžné pakety advancementů, odmítnutí brány ve stavových zprávách a předgenerovací držení složené z vanilla paketů herního režimu, titulků a teleportu).
 
@@ -3453,6 +3457,42 @@ Hráč, který se plíží a klikne pravým tlačítkem s prázdnou hlavní ruko
 | `requires` | ne      | seznam řetězců                     | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice                                                                                                                   |
 
 Jen ID, žádné štítky. Dvoublokové stavby jako dveře, vysoké rostliny a postele nést nejde, stejně jako chráněné bloky a bloky s tvrdostí pod 0. Jezdci moba se při zvednutí shodí, vodítko se zvlášť neřeší a na nosiči se nic nevykresluje. Nesená data se při přechodu na novější verzi hry neopravují a náklad, jehož blok nebo mob už neexistuje, se smaže s chybovým řádkem v logu. Plížící se mob z balíčku s úložným rozhraním se zvedne místo otevření.
+
+## Odstranění z kořisti
+
+*výroba, kořist a obchod*
+
+`<namespace>/loot_removals/*.json`
+
+Soubor v této složce vyjme položky z tabulky kořisti, která už existuje, ať už vanilla nebo modová, nebo ji vyprázdní. Tabulku přitom nenahrazuje, na rozdíl od souboru v `loot_tables/`. Jeden soubor upravuje jednu tabulku a několik souborů pro stejnou tabulku se použije všech.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Klíč      | Hodnota                          | Co dělá                                                                            |
+| --------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| `target`  | řetězec, povinný                 | Tabulka kořisti, kterou soubor upravuje. Holé jméno dostane `minecraft:`.          |
+| `clear`   | logická hodnota, výchozí `false` | Odstraní všechny pooly. Tabulka zůstane prázdná a `entries` a `items` se ignorují. |
+| `entries` | pole `{pool, entry}`             | Odstraní položku `entry` z poolu `pool`.                                           |
+| `items`   | pole id předmětů                 | Odstraní každou položku daného předmětu ze všech poolů.                            |
+
+- `pool` nejdřív hledá podle jména poolu. Když žádný pool takové jméno nemá, `main` znamená první pool a `pool<N>` pool na indexu N, počítáno od 0.
+- `entry` je jméno položky, což je její id předmětu, pokud tabulka nenastaví `entryName`.
+- `items` ignoruje funkce položky, takže ji odstraní bez ohledu na počet, poškození nebo NBT, které by dala.
+- Odstranění běží před `loot_injections`, takže přidaný pool se nikdy neodstraní. Mod, který do tabulky přidá položky až po RDPL, si své přidané položky ponechá.
+- Pool, položka nebo předmět, který nic nenajde, je varování v `rdpl.log`, takže balíček funguje i poté, co se mod odebere.
+- `lootRemovals` v configu je vypne. Tabulky kořisti jsou serverová data, takže stačí samotný server.
 
 ## Kořist hráčů
 

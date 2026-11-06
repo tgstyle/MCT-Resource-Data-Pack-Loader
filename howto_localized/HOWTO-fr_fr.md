@@ -70,6 +70,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
 - [Portage](#portage)
+- [Retraits de butin](#retraits-de-butin)
 - [Butin des joueurs](#butin-des-joueurs)
 - [Variété alimentaire](#variété-alimentaire)
 - [Villageois et échanges](#villageois-et-échanges)
@@ -210,6 +211,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/trades/*.json`                                                                     | Ce que les métiers achètent et vendent. [Villageois et échanges](#villageois-et-échanges)                                                                                                                                |
 | `<namespace>/loot_tables/*.json`                                                                | Tables de butin, remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                             |
 | `<namespace>/loot_injections/*.json`                                                            | Une réserve ajoutée à une table de butin existante. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                      |
+| `<namespace>/loot_removals/*.json`                                                              | Entrées retirées d'une table de butin existante, ou table entière vidée. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                 |
 | `<namespace>/block_drops/*.json`                                                                | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                                                               |
 | `<namespace>/anvils/*.json`                                                                     | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle fait obtenir, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume)                                                              |
 | `<namespace>/affixes/*.json`                                                                    | Bonus d'attribut aléatoires et châsses qu'un objet tire la première fois qu'un joueur le tient. [Affixes et châsses](#affixes-et-châsses)                                                                                |
@@ -556,6 +558,7 @@ Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le m
 - **Suppressions de recettes**, supprimer une recette d'artisanat par nom, namespace ou résultat
 - **Blocs et objets désactivés**, retirer n'importe quel bloc ou objet du jeu, voir [Blocs et objets désactivés](#blocs-et-objets-désactivés)
 - **Injections de butin**, ajouter une réserve à une table de butin au lieu de remplacer l'ensemble
+- **Retraits de butin**, retirer une entrée ou un objet d'une table de butin, ou la vider, sans remplacer la table
 - **Butin des joueurs**, tirer une table de butin à la mort d'un joueur, en plus de ce qu'il portait ou à la place
 - **Butins des blocs**, ajouter à ce que laisse n'importe quel bloc lorsqu'un joueur le casse, ou le remplacer
 - **Propriétés des blocs, objets et potions existants**, dureté, lumière, tailles de pile, nourriture sur n'importe quoi, les effets d'une potion, voir [Surcharges de propriétés](#surcharges-de-propriétés)
@@ -570,6 +573,7 @@ Chacun de ces dossiers a aussi un interrupteur dans la configuration, afin qu'un
 | `removals`         | `recipes`  | activé    | Applique `recipe_removals/*.json`                                                                                                                                                      |
 | `disableOverrides` | `recipes`  | désactivé | Empêche ce mod de remplacer ou d'ajouter des recettes. Utile seulement si un autre coremod entre en conflit sur le chargement des recettes                                             |
 | `lootInjections`   | `data`     | activé    | Applique `loot_injections/*.json`                                                                                                                                                      |
+| `lootRemovals`     | `data`     | activé    | Applique `loot_removals/*.json`                                                                                                                                                        |
 | `enchanting`       | `data`     | activé    | Applique `enchanting/*.json`                                                                                                                                                           |
 | `affixes`          | `data`     | activé    | Applique `affixes/*.json` et `gems/*.json`                                                                                                                                             |
 | `blockDrops`       | `data`     | activé    | Applique `block_drops/*.json`                                                                                                                                                          |
@@ -589,7 +593,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                                                                                    |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                               | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (lignes d'info-bulle des objets et enchantements, noms des affixes et emplacements) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                      | `biomes`, `dimensions`, `portalframes`                                                                                                                      |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                              | `villagers`, `item_locks`                                                                                                                                   |
+| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`             | `villagers`, `item_locks`                                                                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pour les professions que le client connaît : celles de vanilla, ou d'un mod présent des deux côtés) | `entities`, `worldintro`, `texts` (l'introduction n'est jamais montrée à un client vanilla)                                                                 |
 | `teams`, `scoring`, `ranks`                                                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (dossiers client — sans client, ne les incluez pas)                                                             |
 | toute la couche de contrôle, les réglages et la prégénération                                                                                                                           |                                                                                                                                                             |
@@ -3453,6 +3457,42 @@ Un joueur qui s'accroupit et fait un clic droit la main principale vide ramasse 
 | `requires` | non    | liste de chaînes                                  | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                                                                                                                                                      |
 
 Ids seulement, pas de tags. Les structures de deux blocs, comme les portes, les grandes plantes et les lits, ne peuvent pas être portées, ni les blocs protégés ou de dureté inférieure à 0. Les passagers d'un mob descendent quand on le ramasse, la laisse n'a pas de traitement particulier et rien n'est dessiné sur le porteur. Les données portées ne passent pas par le data fixer lors des mises à jour du jeu, et une charge dont le bloc ou le mob ne se résout plus est effacée avec une ligne d'erreur dans le journal. Un mob de pack accroupi qui a une interface de stockage est ramassé au lieu de l'ouvrir.
+
+## Retraits de butin
+
+*artisanat, butin et commerce*
+
+`<namespace>/loot_removals/*.json`
+
+Un fichier placé ici retire des entrées d'une table de butin existante, qu'elle vienne de vanilla ou d'un mod, ou la vide. Il ne remplace pas la table, contrairement à un fichier de `loot_tables/`. Un fichier modifie une table, et plusieurs fichiers pour la même table s'appliquent tous.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Clé       | Valeur                          | Rôle                                                                                       |
+| --------- | ------------------------------- | ------------------------------------------------------------------------------------------ |
+| `target`  | chaîne, requis                  | La table de butin modifiée par le fichier. Un nom sans espace de noms reçoit `minecraft:`. |
+| `clear`   | booléen, défaut `false`         | Retire toutes les réserves. La table reste vide, et `entries` et `items` sont ignorés.     |
+| `entries` | tableau de `{pool, entry}`      | Retire l'entrée `entry` de la réserve `pool`.                                              |
+| `items`   | tableau d'identifiants d'objets | Retire chaque entrée de cet objet, dans toutes les réserves.                               |
+
+- `pool` correspond d'abord au nom d'une réserve. Si aucune réserve n'a ce nom, `main` désigne la première réserve et `pool<N>` la réserve à l'index N, en comptant à partir de 0.
+- `entry` est le nom de l'entrée, soit son identifiant d'objet, sauf si la table définit un `entryName`.
+- `items` ignore les fonctions d'une entrée : il la retire quels que soient le nombre, les dégâts ou le NBT qu'elle aurait donnés.
+- Les retraits s'exécutent avant `loot_injections`, donc une réserve injectée n'est jamais retirée. Un mod qui ajoute à la table après RDPL garde ce qu'il a ajouté.
+- Une réserve, une entrée ou un objet sans correspondance produit un avertissement dans `rdpl.log`, pour que le pack continue de fonctionner après la suppression d'un mod.
+- `lootRemovals` dans la configuration les désactive. Les tables de butin sont des données serveur, donc le serveur seul suffit.
 
 ## Butin des joueurs
 

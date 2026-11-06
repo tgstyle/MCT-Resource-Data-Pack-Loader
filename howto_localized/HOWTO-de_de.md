@@ -70,6 +70,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
 - [Tragen](#tragen)
+- [Beute-Entfernungen](#beute-entfernungen)
 - [Spielerbeute](#spielerbeute)
 - [Nahrungsvielfalt](#nahrungsvielfalt)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
@@ -210,6 +211,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/trades/*.json`                                                                     | Was Laufbahnen kaufen und verkaufen. [Dorfbewohner und Handel](#dorfbewohner-und-handel)                                                                                                                                                                                               |
 | `<namespace>/loot_tables/*.json`                                                                | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                    |
 | `<namespace>/loot_injections/*.json`                                                            | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                      |
+| `<namespace>/loot_removals/*.json`                                                              | Einträge, die aus einer bestehenden Tabelle entfernt werden, oder eine komplett geleerte Tabelle. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                          |
 | `<namespace>/block_drops/*.json`                                                                | Zusätzliche oder ersetzende Drops für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops)                                                                                                                                                                                    |
 | `<namespace>/anvils/*.json`                                                                     | Verzauberungen, die ein Amboss auf einen genannten Gegenstand legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk)                                                                                                                           |
 | `<namespace>/affixes/*.json`                                                                    | Zufällige Attributboni und Fassungen, die ein Gegenstand auswürfelt, wenn ein Spieler ihn zum ersten Mal hält. [Affixe und Fassungen](#affixe-und-fassungen)                                                                                                                           |
@@ -556,6 +558,7 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
 - **Deaktivierte Blöcke und Items**: jeden Block und jedes Item aus dem Spiel nehmen, siehe [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
+- **Beute-Entfernungen**: einen Eintrag oder ein Item aus einer Beutetabelle entfernen oder sie leeren, ohne die Tabelle zu ersetzen
 - **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
 - **Blockdrops**: dem Drop eines beliebigen Blocks beim Abbau durch einen Spieler etwas hinzufügen oder ihn ersetzen
 - **Eigenschaften vorhandener Blöcke, Items und Tränke**: Härte, Licht, Stapelgrößen, Essbarkeit für alles, die Effekte eines Tranks, siehe [Eigenschaften überschreiben](#eigenschaften-überschreiben)
@@ -570,6 +573,7 @@ Jeder dieser Ordner hat in der Config außerdem einen Schalter, sodass ein Modpa
 | `removals`         | `recipes`  | an       | Wendet `recipe_removals/*.json` an                                                                                                                                |
 | `disableOverrides` | `recipes`  | aus      | Hindert diesen Mod daran, Rezepte zu ersetzen oder hinzuzufügen. Nur nötig, wenn ein anderer Coremod beim Laden von Rezepten in Konflikt gerät                    |
 | `lootInjections`   | `data`     | an       | Wendet `loot_injections/*.json` an                                                                                                                                |
+| `lootRemovals`     | `data`     | an       | Wendet `loot_removals/*.json` an                                                                                                                                  |
 | `enchanting`       | `data`     | an       | Wendet `enchanting/*.json` an                                                                                                                                     |
 | `affixes`          | `data`     | an       | Wendet `affixes/*.json` und `gems/*.json` an                                                                                                                      |
 | `blockDrops`       | `data`     | an       | Wendet `block_drops/*.json` an                                                                                                                                    |
@@ -584,15 +588,15 @@ RDPL eignet sich gut dafür, ein oder zwei Rezepte zu ersetzen, und Rezepte für
 
 Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clients, unter einer Bedingung: **nichts darin darf irgendetwas registrieren**. Beide Mod-IDs akzeptieren jede Gegenstelle; das Pack entscheidet. Ein Vanilla-Client spielt mit den Registries, die er mitgebracht hat; ein Pack, das sie erweitert, muss also auf beide Seiten.
 
-| Server allein genügt                                                                                                                                                | Pack muss auch auf den Client                                                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                              | `blocks`, `items`, `fluids`, `materials`                                                                                                                            |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                           | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (Tooltip-Zeilen für Gegenstände und Verzauberungen, Namen von Affixen und Edelsteinplätzen) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                  | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`          | `villagers`, `item_locks`                                                                                                                                           |
-| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods) | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt)                                                                                 |
-| `teams`, `scoring`, `ranks`                                                                                                                                         | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen)                                                                                 |
-| die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                                         |                                                                                                                                                                     |
+| Server allein genügt                                                                                                                                                        | Pack muss auch auf den Client                                                                                                                                       |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                                                            |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (Tooltip-Zeilen für Gegenstände und Verzauberungen, Namen von Affixen und Edelsteinplätzen) |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
+| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                                                           |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods)         | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt)                                                                                 |
+| `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen)                                                                                 |
+| die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                                                 |                                                                                                                                                                     |
 
 Die rechte Spalte ist eine harte Grenze: Ein Vanilla-Client, der in eine unbekannte Dimension geschickt wird, fliegt sofort raus, und unbekannte Blöcke lassen sich ihm nicht beschreiben. Die linke Spalte funktioniert, weil alles darin entweder vollständig serverseitig läuft oder den Client über Netzwerkpakete erreicht, die Vanilla ohnehin spricht (vom Server gefülltes Ergebnisfeld der Werkbank, gewöhnliche Fortschritts-Netzwerkpakete, Statusmeldungen bei abgelehnten Toren, ein Vorgenerierungs-Halt aus Vanilla-Netzwerkpaketen für Spielmodus, Titel und Teleport).
 
@@ -3453,6 +3457,42 @@ Wer schleicht und mit leerer Haupthand rechtsklickt, hebt einen aufgeführten Bl
 | `requires` | nein    | Liste von Strings                       | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                                                                                                                                                       |
 
 Nur IDs, keine Tags. Zweiteilige Strukturen wie Türen, hohe Pflanzen und Betten lassen sich nicht tragen, ebenso wenig geschützte Blöcke oder Blöcke mit einer Härte unter 0. Passagiere eines Mobs werden beim Aufheben abgesetzt, eine Leine wird nicht gesondert behandelt, und am Träger wird nichts gezeichnet. Getragene Daten werden bei Spiel-Upgrades nicht per Data Fixer angepasst, und ein Getragenes, dessen Block oder Mob sich nicht mehr auflösen lässt, wird mit einer Fehlerzeile im Log gelöscht. Ein schleichendes Pack-Mob mit Lager-GUI wird aufgehoben, statt dass die GUI öffnet.
+
+## Beute-Entfernungen
+
+*herstellung, beute und handel*
+
+`<namespace>/loot_removals/*.json`
+
+Eine Datei in diesem Ordner entfernt Einträge aus einer bestehenden Beutetabelle, egal ob aus Vanilla oder von einem Mod, oder leert sie. Anders als eine Datei in `loot_tables/` ersetzt sie die Tabelle dabei nicht. Eine Datei bearbeitet eine Tabelle, und mehrere Dateien für dieselbe Tabelle werden alle angewendet.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Schlüssel | Wert                            | Was er macht                                                                               |
+| --------- | ------------------------------- | ------------------------------------------------------------------------------------------ |
+| `target`  | Text, Pflicht                   | Die Beutetabelle, die die Datei bearbeitet. Ein Name ohne Namensraum bekommt `minecraft:`. |
+| `clear`   | Wahrheitswert, Standard `false` | Entfernt alle Pools. Die Tabelle bleibt leer, und `entries` und `items` werden ignoriert.  |
+| `entries` | Liste aus `{pool, entry}`       | Entfernt den Eintrag `entry` aus dem Pool `pool`.                                          |
+| `items`   | Liste aus Item-IDs              | Entfernt jeden Eintrag dieses Items, in jedem Pool.                                        |
+
+- `pool` passt zuerst auf den Namen eines Pools. Hat kein Pool diesen Namen, bedeutet `main` den ersten Pool und `pool<N>` den Pool am Index N, gezählt ab 0.
+- `entry` ist der Name des Eintrags, also seine Item-ID, außer die Tabelle setzt einen `entryName`.
+- `items` ignoriert die Funktionen eines Eintrags und entfernt ihn daher unabhängig von Anzahl, Schaden oder NBT, die er sonst geben würde.
+- Entfernungen laufen vor `loot_injections`, daher wird ein injizierter Pool nie entfernt. Ein Mod, der nach RDPL zur Tabelle hinzufügt, behält, was er hinzugefügt hat.
+- Ein Pool, Eintrag oder Item ohne Treffer ist eine Warnung in `rdpl.log`, damit ein Pack weiter funktioniert, wenn ein Mod entfernt wird.
+- `lootRemovals` in der Config schaltet sie ab. Beutetabellen sind Serverdaten, daher reicht der Server allein.
 
 ## Spielerbeute
 

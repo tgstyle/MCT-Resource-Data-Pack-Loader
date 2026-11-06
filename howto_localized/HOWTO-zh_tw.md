@@ -70,6 +70,7 @@
 - [右鍵收穫](#右鍵收穫)
 - [礦脈連鎖挖掘](#礦脈連鎖挖掘)
 - [搬運](#搬運)
+- [戰利品移除](#戰利品移除)
 - [玩家戰利品](#玩家戰利品)
 - [飲食多樣性](#飲食多樣性)
 - [村民與交易](#村民與交易)
@@ -210,6 +211,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/trades/*.json`                                                                     | 各職業買進與賣出的東西。[村民與交易](#村民與交易)                                                                   |
 | `<namespace>/loot_tables/*.json`                                                                | 戰利品表，取代原有的。[可以覆寫的內容](#可以覆寫的內容)                                                             |
 | `<namespace>/loot_injections/*.json`                                                            | 加入既有戰利品表的一個池。[可以覆寫的內容](#可以覆寫的內容)                                                         |
+| `<namespace>/loot_removals/*.json`                                                              | 從既有戰利品表中移除的條目，或直接清空整張表。[可以覆寫的內容](#可以覆寫的內容)                                     |
 | `<namespace>/block_drops/*.json`                                                                | 資源包並不擁有的方塊所額外增加或取代的掉落物。[方塊掉落物](#方塊掉落物)                                             |
 | `<namespace>/anvils/*.json`                                                                     | 鐵砧為指定物品附加的附魔、由此獲得的進度，以及在此之前的鎖定。[鐵砧操作](#鐵砧操作)                                 |
 | `<namespace>/affixes/*.json`                                                                    | 物品在玩家第一次持有時隨機出的屬性加成與插槽。[詞綴與插槽](#詞綴與插槽)                                             |
@@ -556,6 +558,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 - **配方移除**，依名稱、命名空間或產出刪除合成配方
 - **停用的方塊與物品**，讓任何方塊或物品退出遊戲，見[停用的方塊與物品](#停用的方塊與物品)
 - **戰利品注入**，在戰利品表中加入一個池，而不是取代整張表
+- **戰利品移除**，從戰利品表中取出某個條目或某種物品，或清空該表，而不取代整張表
 - **玩家戰利品**，在玩家死亡時擲出戰利品表，可疊加在其所攜帶的物品之上，也可取而代之
 - **方塊掉落物**，在玩家破壞任何方塊時，為其增加或取代掉落的東西
 - **既有方塊、物品與藥水的屬性**，包括硬度、光照、堆疊數量、任何東西上的食物，以及藥水的效果，見[屬性覆寫](#屬性覆寫)
@@ -570,6 +573,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 | `removals`         | `recipes`  | 開   | 套用 `recipe_removals/*.json`                                                                                 |
 | `disableOverrides` | `recipes`  | 關   | 阻止本模組取代或新增配方。只有在另一個 coremod 與配方載入發生衝突時才需要                                     |
 | `lootInjections`   | `data`     | 開   | 套用 `loot_injections/*.json`                                                                                 |
+| `lootRemovals`     | `data`     | 開   | 套用 `loot_removals/*.json`                                                                                   |
 | `enchanting`       | `data`     | 開   | 套用 `enchanting/*.json`                                                                                      |
 | `affixes`          | `data`     | 開   | 套用 `affixes/*.json` 和 `gems/*.json`                                                                        |
 | `blockDrops`       | `data`     | 開   | 套用 `block_drops/*.json`                                                                                     |
@@ -584,15 +588,15 @@ RDPL 適合用來取代一兩個配方，而你自己內容的配方則應該加
 
 資源包可以只存在於伺服器上，讓玩家使用純原版用戶端，但有一項限制：**資源包中不得註冊任何東西**。兩個模組 id 都接受任何遠端；由資源包自行決定。原版用戶端使用它隨附的登錄表來遊玩，因此對登錄表有所新增的資源包必須兩端都安裝。
 
-| 只裝在伺服器就夠了                                                                                                                                         | 用戶端也需要資源包                                                                                                     |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                                     | `blocks`、`items`、`fluids`、`materials`                                                                               |
-| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                                  | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，詞綴和寶石槽的名稱） |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                                         | `biomes`、`dimensions`、`portalframes`                                                                                 |
-| `loot_tables`、`loot_injections`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`、`weights` | `villagers`, `item_locks`                                                                                              |
-| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（限用戶端認得的職業：原版的，或兩端都有的模組的）                       | `entities`、`worldintro`、`texts`（介紹永遠不會顯示給原版用戶端）                                                      |
-| `teams`、`scoring`、`ranks`                                                                                                                                | `models`、`blockstates`、`textures`、`lang`（用戶端資料夾，沒有用戶端時請省略）                                        |
-| 整個控制層、設定與預先生成                                                                                                                                 |                                                                                                                        |
+| 只裝在伺服器就夠了                                                                                                                                                          | 用戶端也需要資源包                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                                                      | `blocks`、`items`、`fluids`、`materials`                                                                               |
+| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                                                   | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，詞綴和寶石槽的名稱） |
+| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                                                          | `biomes`、`dimensions`、`portalframes`                                                                                 |
+| `loot_tables`、`loot_injections`、`loot_removals`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`、`weights` | `villagers`, `item_locks`                                                                                              |
+| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（限用戶端認得的職業：原版的，或兩端都有的模組的）                                        | `entities`、`worldintro`、`texts`（介紹永遠不會顯示給原版用戶端）                                                      |
+| `teams`、`scoring`、`ranks`                                                                                                                                                 | `models`、`blockstates`、`textures`、`lang`（用戶端資料夾，沒有用戶端時請省略）                                        |
+| 整個控制層、設定與預先生成                                                                                                                                                  |                                                                                                                        |
 
 右側欄是硬性限制：原版用戶端被送往未知的維度時會斷線，而未知的方塊也無法描述給它。左側欄之所以可行，是因為其中的一切不是完全在伺服端執行，就是透過原版已經支援的封包傳到用戶端（由伺服器填入的合成結果欄位、一般的進度封包、狀態訊息形式的閘門拒絕提示，以及由原版遊戲模式、標題與傳送封包組成的預先生成停留）。
 
@@ -3453,6 +3457,42 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `requires` | 否   | 字串清單                 | 無   | 必須存在的模組 ID、資源包命名空間或 `config:` 選項，與所有定義相同                                                                                                                         |
 
 只能寫 ID，不能用標籤。門、高大的植物和床這類兩格結構無法搬運，受保護的方塊和硬度低於 0 的方塊也不能。拿起生物時，騎乘者會被甩下，拴繩不作特殊處理，搬運者身上不會繪製任何東西。搬運的資料在遊戲升級時不會經過資料修復，方塊或生物已無法解析的搬運狀態會被清除，並在記錄檔中記一行錯誤。帶有儲存介面的資源包生物，在潛行時會被拿起，而不是開啟介面。
+
+## 戰利品移除
+
+*合成、戰利品與交易*
+
+`<namespace>/loot_removals/*.json`
+
+此目錄下的檔案會從既有的戰利品表（原版或模組的）中移除條目，或清空該表。它不像 `loot_tables/` 中的檔案那樣取代整張表。一個檔案編輯一張表，同一張表的多個檔案都會生效。
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| 鍵        | 值                     | 作用                                                    |
+| --------- | ---------------------- | ------------------------------------------------------- |
+| `target`  | 字串，必填             | 該檔案編輯的戰利品表。只寫名稱時會補上 `minecraft:`。   |
+| `clear`   | 布林值，預設 `false`   | 移除所有池。表保持為空，`entries` 和 `items` 會被忽略。 |
+| `entries` | `{pool, entry}` 的陣列 | 從名為 `pool` 的池中移除名為 `entry` 的條目。           |
+| `items`   | 物品 ID 的陣列         | 從所有池中移除該物品的每個條目。                        |
+
+- `pool` 先依池的名稱比對。若沒有池使用該名稱，`main` 指第一個池，`pool<N>` 指索引為 N 的池（從 0 計數）。
+- `entry` 是條目的名稱，除非戰利品表設定了 `entryName`，否則即其物品 ID。
+- `items` 忽略條目的函式，因此不論該條目會給出多少數量、損傷或 NBT，都會被移除。
+- 移除在 `loot_injections` 之前執行，所以被注入的池永遠不會被移除。RDPL 之後再向表中加入內容的模組會保留它加入的部分。
+- 沒有比對到的池、條目或物品會在 `rdpl.log` 中給出警告，因此移除某個模組後整合包仍能正常運作。
+- 設定中的 `lootRemovals` 可關閉此功能。戰利品表屬於伺服器資料，因此只需伺服器即可。
 
 ## 玩家戰利品
 

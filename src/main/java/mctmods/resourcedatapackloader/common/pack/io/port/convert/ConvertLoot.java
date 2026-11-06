@@ -30,6 +30,7 @@ public final class ConvertLoot {
 
     public static String loot(JsonObject json, String from, Ported pack) {
         if (JsonUtils.isJsonPrimitive(json, "target")) { json.addProperty("target", Ids.lootTable(json.get("target").getAsString())); }
+        removalIds(json, from, pack);
         json.remove("type");
         json.remove("random_sequence");
         if (json.has("functions")) { json.add("functions", lootFunctions(json.get("functions").getAsJsonArray(), from, pack)); }
@@ -58,6 +59,25 @@ public final class ConvertLoot {
             pool.add("entries", entries);
         }
         return Ported.GSON.toJson(json);
+    }
+
+    private static void removalIds(JsonObject json, String from, Ported pack) {
+        if (JsonUtils.isJsonArray(json, "items")) {
+            JsonArray items = new JsonArray();
+            for (JsonElement element : json.getAsJsonArray("items")) { items.add(element.isJsonPrimitive() ? new JsonPrimitive(itemId(element.getAsString(), from, pack)) : element); }
+            json.add("items", items);
+        }
+        if (!JsonUtils.isJsonArray(json, "entries")) { return; }
+        for (JsonElement element : json.getAsJsonArray("entries")) {
+            if (!element.isJsonObject() || !JsonUtils.isJsonPrimitive(element.getAsJsonObject(), "entry")) { continue; }
+            JsonObject held = element.getAsJsonObject();
+            held.addProperty("entry", itemId(held.get("entry").getAsString(), from, pack));
+        }
+    }
+
+    private static String itemId(String id, String from, Ported pack) {
+        Convert.Ref ref = Convert.item(id, pack, "'" + from + "'");
+        return ref == null ? id : ref.id;
     }
 
     private static void flattenEntries(JsonArray entries, JsonArray out, String from, Ported pack) {

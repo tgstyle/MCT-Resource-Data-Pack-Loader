@@ -169,7 +169,8 @@ public final class Port {
         switch (folder) {
             case "recipes": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.RECIPE : Kind.RAW, "");
             case "loot_tables":
-            case "loot_injections": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW, "");
+            case "loot_injections":
+            case "loot_removals": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW, "");
             case "advancements": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.ADVANCEMENT : Kind.RAW, "");
             case "functions": return new Mapped(moved, path.endsWith(".mcfunction") ? Kind.FUNCTION : Kind.RAW, "");
             case "structures": return new Mapped(moved, path.endsWith(".nbt") ? Kind.STRUCTURE : Kind.RAW, "");

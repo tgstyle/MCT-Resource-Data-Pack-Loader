@@ -70,6 +70,7 @@
 - [우클릭 수확](#우클릭-수확)
 - [광맥 채굴](#광맥-채굴)
 - [들기](#들기)
+- [전리품 제거](#전리품-제거)
 - [플레이어 전리품](#플레이어-전리품)
 - [음식 다양성](#음식-다양성)
 - [주민과 거래](#주민과-거래)
@@ -210,6 +211,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/trades/*.json`                                                                     | 직종이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                                          |
 | `<namespace>/loot_tables/*.json`                                                                | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                  |
 | `<namespace>/loot_injections/*.json`                                                            | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                          |
+| `<namespace>/loot_removals/*.json`                                                              | 이미 있는 테이블에서 제거하는 항목, 또는 테이블 전체를 비우는 항목. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                      |
 | `<namespace>/block_drops/*.json`                                                                | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                                              |
 | `<namespace>/anvils/*.json`                                                                     | 모루가 이름 있는 아이템에 부여하는 마법, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                                                                   |
 | `<namespace>/affixes/*.json`                                                                    | 플레이어가 처음 들었을 때 아이템이 굴리는 무작위 속성 보너스와 소켓. [접사와 소켓](#접사와-소켓)                                                                         |
@@ -556,6 +558,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 - **레시피 제거**: 이름, 네임스페이스, 결과물 기준으로 제작 레시피를 삭제합니다
 - **비활성화된 블록과 아이템**: 어떤 블록이나 아이템이든 사용에서 제외합니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템) 참고
 - **전리품 주입**: 전리품 테이블을 통째로 교체하는 대신 풀을 추가합니다
+- **전리품 제거**: 전리품 테이블을 교체하지 않고 항목이나 아이템을 빼거나, 테이블을 비웁니다
 - **플레이어 전리품**: 플레이어가 죽을 때 들고 있던 것에 더해, 또는 그 대신 전리품 테이블을 굴립니다
 - **블록 드롭**: 플레이어가 블록을 부술 때 떨어지는 것에 추가하거나 대체합니다
 - **기존 블록, 아이템, 물약의 속성**: 경도, 빛, 스택 크기, 무엇에든 붙이는 음식 속성, 물약의 효과. [속성 재정의](#속성-재정의) 참고
@@ -570,6 +573,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 | `removals`         | `recipes`  | 켜짐   | `recipe_removals/*.json`을 적용합니다                                                                                                   |
 | `disableOverrides` | `recipes`  | 꺼짐   | 이 모드가 레시피를 교체하거나 추가하지 못하게 합니다. 다른 코어모드가 레시피 로딩에서 충돌할 때만 필요합니다                            |
 | `lootInjections`   | `data`     | 켜짐   | `loot_injections/*.json`을 적용합니다                                                                                                   |
+| `lootRemovals`     | `data`     | 켜짐   | `loot_removals/*.json`을 적용합니다                                                                                                     |
 | `enchanting`       | `data`     | 켜짐   | `enchanting/*.json`을 적용합니다                                                                                                        |
 | `affixes`          | `data`     | 켜짐   | `affixes/*.json`과 `gems/*.json`을 적용합니다                                                                                           |
 | `blockDrops`       | `data`     | 켜짐   | `block_drops/*.json`을 적용합니다                                                                                                       |
@@ -584,15 +588,15 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 
 팩은 서버에만 둘 수 있고, 플레이어는 순정 바닐라 클라이언트를 쓸 수 있습니다. 단 한 가지 제약이 있습니다. **팩의 어느 것도 무언가를 등록해서는 안 됩니다.** 두 모드 id 모두 어떤 원격이든 받아들이며, 판단은 팩이 합니다. 바닐라 클라이언트는 자기에게 들어 있는 레지스트리로 플레이하므로, 레지스트리에 추가하는 팩은 양쪽에 있어야 합니다.
 
-| 서버에만 있어도 충분함                                                                                                                                            | 클라이언트에도 팩이 필요함                                                                                                      |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                            | `blocks`, `items`, `fluids`, `materials`                                                                                        |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                         | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                | `biomes`, `dimensions`, `portalframes`                                                                                          |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`        | `villagers`, `item_locks`                                                                                                       |
-| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업) | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
-| `teams`, `scoring`, `ranks`                                                                                                                                       | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
-| 제어 계층 전체, 설정, 사전 생성                                                                                                                                   |                                                                                                                                 |
+| 서버에만 있어도 충분함                                                                                                                                                      | 클라이언트에도 팩이 필요함                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                        |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                          |
+| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                       |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업)           | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
+| `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
+| 제어 계층 전체, 설정, 사전 생성                                                                                                                                             |                                                                                                                                 |
 
 오른쪽 열은 절대적인 한계입니다. 알 수 없는 차원으로 보내진 바닐라 클라이언트는 연결이 끊기고, 알 수 없는 블록은 클라이언트에 설명할 수 없습니다. 왼쪽 열이 동작하는 이유는 거기 있는 모든 것이 전부 서버 측에서 실행되거나 바닐라가 이미 쓰는 패킷으로 클라이언트에 전달되기 때문입니다(서버가 채우는 제작 결과 슬롯, 일반 발전 과제 패킷, 상태 메시지 형태의 게이트 거부 알림, 바닐라의 게임 모드/타이틀/순간이동 패킷으로 구성된 사전 생성 보류).
 
@@ -3453,6 +3457,42 @@ Quark's Matrix Enchanting이 켜져 있으면 Quark의 마법 부여대는 청�
 | `requires` | 아니요 | 문자열 목록                 | 없음   | 있어야 하는 모드 id, 팩 네임스페이스, `config:` 옵션이며 다른 정의와 같습니다                                                                                                                                               |
 
 id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 두 칸짜리 구조물은 들 수 없고, 보호된 블록이나 경도가 0보다 작은 블록도 들 수 없습니다. 몹을 들어 올리면 탄 개체는 내려지고, 끈은 따로 처리하지 않으며, 든 플레이어에게는 아무것도 그려지지 않습니다. 든 데이터는 게임을 업그레이드할 때 데이터 픽서를 거치지 않고, 블록이나 몹을 더 이상 찾을 수 없는 상태는 로그에 오류 한 줄을 남기고 지워집니다. 보관 화면이 있는 팩 몹은 웅크리고 있으면 화면을 여는 대신 들어 올립니다.
+
+## 전리품 제거
+
+*제작, 전리품, 거래*
+
+`<namespace>/loot_removals/*.json`
+
+이 폴더의 파일은 이미 있는 전리품 테이블에서 항목을 제거하거나 테이블을 비웁니다. 바닐라든 모드든 상관없고, `loot_tables/`의 파일처럼 테이블을 통째로 교체하지는 않습니다. 파일 하나는 테이블 하나를 편집하며, 같은 테이블을 대상으로 하는 여러 파일이 모두 적용됩니다.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| 키        | 값                     | 설명                                                                                  |
+| --------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| `target`  | 문자열, 필수           | 파일이 편집하는 전리품 테이블. 네임스페이스 없이 이름만 쓰면 `minecraft:`가 붙습니다. |
+| `clear`   | 불리언, 기본값 `false` | 모든 풀을 제거합니다. 테이블은 빈 상태로 남고, `entries`와 `items`는 무시됩니다.      |
+| `entries` | `{pool, entry}`의 배열 | `pool` 이름의 풀에서 `entry` 이름의 항목을 제거합니다.                                |
+| `items`   | 아이템 id의 배열       | 모든 풀에서 해당 아이템의 항목을 모두 제거합니다.                                     |
+
+- `pool`은 먼저 풀의 이름과 맞춰 봅니다. 어떤 풀도 그 이름이 없으면 `main`은 첫 번째 풀, `pool<N>`은 인덱스 N의 풀을 뜻합니다(0부터 셉니다).
+- `entry`는 항목의 이름이며, 테이블이 `entryName`을 설정하지 않았다면 아이템 id가 곧 이름입니다.
+- `items`는 항목의 함수를 무시하므로, 그 항목이 주는 개수, 손상도, NBT와 상관없이 제거합니다.
+- 제거는 `loot_injections`보다 먼저 실행되므로 주입된 풀은 제거되지 않습니다. RDPL 이후에 테이블에 추가하는 모드는 추가한 내용을 그대로 유지합니다.
+- 일치하는 풀, 항목, 아이템이 없으면 `rdpl.log`에 경고가 남으므로, 모드를 제거한 뒤에도 팩이 계속 동작합니다.
+- 설정의 `lootRemovals`로 끌 수 있습니다. 전리품 테이블은 서버 데이터이므로 서버만 있으면 충분합니다.
 
 ## 플레이어 전리품
 

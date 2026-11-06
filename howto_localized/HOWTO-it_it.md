@@ -70,6 +70,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
 - [Trasporto](#trasporto)
+- [Rimozioni di loot](#rimozioni-di-loot)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
 - [Varietà del cibo](#varietà-del-cibo)
 - [Villici e scambi](#villici-e-scambi)
@@ -210,6 +211,7 @@ Ogni percorso in questa guida è scritto a partire da `assets/`, quindi `<namesp
 | `<namespace>/trades/*.json`                                                                     | Cosa comprano e vendono le carriere. [Villici e scambi](#villici-e-scambi)                                                                                                                                                          |
 | `<namespace>/loot_tables/*.json`                                                                | Loot table, sostituite. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                         |
 | `<namespace>/loot_injections/*.json`                                                            | Un pool aggiunto a una tabella già esistente. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                   |
+| `<namespace>/loot_removals/*.json`                                                              | Voci tolte da una tabella già esistente, oppure tabella intera svuotata. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                        |
 | `<namespace>/block_drops/*.json`                                                                | Drop aggiuntivi o sostitutivi per blocchi che un pack non possiede. [Drop dei blocchi](#drop-dei-blocchi)                                                                                                                           |
 | `<namespace>/anvils/*.json`                                                                     | Incantesimi che un'incudine applica a un oggetto con nome, un progresso che ne deriva e un blocco fino ad allora. [Lavori all'incudine](#lavori-allincudine)                                                                        |
 | `<namespace>/affixes/*.json`                                                                    | Bonus di attributo casuali e castoni che un oggetto tira la prima volta che un giocatore lo tiene. [Affissi e castoni](#affissi-e-castoni)                                                                                          |
@@ -556,6 +558,7 @@ Il modello non si registra mai, mentre `jacks_ore` si registra con il materiale,
 - **Rimozioni di ricette**: elimina una ricetta di crafting per nome, namespace o risultato
 - **Blocchi e oggetti disattivati**: togli dal gioco qualsiasi blocco o oggetto, vedi [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati)
 - **Iniezioni di loot**: aggiungi un pool a una loot table invece di sostituirla per intero
+- **Rimozioni di loot**: togli una voce o un oggetto da una loot table, o svuotala, senza sostituire la tabella
 - **Bottino dei giocatori**: tira una loot table quando un giocatore muore, oltre a ciò che portava con sé oppure al suo posto
 - **Drop dei blocchi**: aggiungi o sostituisci ciò che qualsiasi blocco rilascia quando un giocatore lo rompe
 - **Proprietà di blocchi, oggetti e pozioni esistenti**: durezza, luce, dimensioni delle pile, cibo su qualsiasi cosa, gli effetti di una pozione, vedi [Override delle proprietà](#override-delle-proprietà)
@@ -570,6 +573,7 @@ Ognuna di queste cartelle ha anche un interruttore nella configurazione, così u
 | `removals`         | `recipes`  | attivo      | Applica `recipe_removals/*.json`                                                                                                                        |
 | `disableOverrides` | `recipes`  | disattivo   | Impedisce a questa mod di sostituire o aggiungere ricette. Serve solo se un altro coremod è in conflitto sul caricamento delle ricette                  |
 | `lootInjections`   | `data`     | attivo      | Applica `loot_injections/*.json`                                                                                                                        |
+| `lootRemovals`     | `data`     | attivo      | Applica `loot_removals/*.json`                                                                                                                          |
 | `enchanting`       | `data`     | attivo      | Applica `enchanting/*.json`                                                                                                                             |
 | `affixes`          | `data`     | attivo      | Applica `affixes/*.json` e `gems/*.json`                                                                                                                |
 | `blockDrops`       | `data`     | attivo      | Applica `block_drops/*.json`                                                                                                                            |
@@ -589,7 +593,7 @@ Un pack può stare solo sul server, con giocatori su normali client vanilla, a u
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                 | `blocks`, `items`, `fluids`, `materials`                                                                                                           |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                              | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (righe delle descrizioni di oggetti e incantesimi, nomi di affissi e slot) |
 | `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                     | `biomes`, `dimensions`, `portalframes`                                                                                                             |
-| `loot_tables`, `loot_injections`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                             | `villagers`, `item_locks`                                                                                                                          |
+| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`            | `villagers`, `item_locks`                                                                                                                          |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (per le professioni che il client conosce: quelle vanilla o di una mod presente su entrambi i lati) | `entities`, `worldintro`, `texts` (l'introduzione non viene mai mostrata a un client vanilla)                                                      |
 | `teams`, `scoring`, `ranks`                                                                                                                                                            | `models`, `blockstates`, `textures`, `lang` (cartelle del client: senza client, escludile)                                                         |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                                                     |                                                                                                                                                    |
@@ -3453,6 +3457,42 @@ Un giocatore che si accovaccia e fa clic destro con la mano principale vuota rac
 | `requires` | no           | elenco di stringhe                                 | nessuno     | Id di mod, namespace di pack od opzioni `config:` che devono essere presenti, come in ogni definizione                                                                                                                                                   |
 
 Solo id, niente tag. Le strutture da due blocchi, come porte, piante alte e letti, non si possono trasportare, né i blocchi protetti o con durezza inferiore a 0. I passeggeri di un mob scendono quando viene raccolto, il guinzaglio non ha un trattamento a parte e sul portatore non viene disegnato nulla. I dati trasportati non passano dal data fixer negli aggiornamenti del gioco, e un carico il cui blocco o mob non si risolve più viene cancellato con una riga di errore nel log. Un mob di un pack accovacciato con interfaccia di deposito viene raccolto invece di aprirla.
+
+## Rimozioni di loot
+
+*crafting, bottino e scambi*
+
+`<namespace>/loot_removals/*.json`
+
+Un file qui toglie voci da una loot table già esistente, che sia di vanilla o di un mod, oppure la svuota. Non sostituisce la tabella, a differenza di un file in `loot_tables/`. Un file modifica una tabella e più file per la stessa tabella si applicano tutti.
+
+```json
+{
+  "target": "minecraft:chests/simple_dungeon",
+  "entries": [
+    { "pool": "main", "entry": "minecraft:saddle" }
+  ],
+  "items": ["minecraft:golden_apple"]
+}
+```
+
+```json
+{ "target": "nyx:entities/example", "clear": true }
+```
+
+| Chiave    | Valore                        | Cosa fa                                                                              |
+| --------- | ----------------------------- | ------------------------------------------------------------------------------------ |
+| `target`  | stringa, obbligatorio         | La loot table modificata dal file. Un nome senza namespace riceve `minecraft:`.      |
+| `clear`   | booleano, predefinito `false` | Rimuove tutti i pool. La tabella resta vuota e `entries` e `items` vengono ignorati. |
+| `entries` | array di `{pool, entry}`      | Rimuove la voce `entry` dal pool `pool`.                                             |
+| `items`   | array di id di oggetti        | Rimuove ogni voce di quell'oggetto, in ogni pool.                                    |
+
+- `pool` corrisponde prima al nome di un pool. Se nessun pool ha quel nome, `main` indica il primo pool e `pool<N>` il pool all'indice N, contando da 0.
+- `entry` è il nome della voce, cioè il suo id oggetto a meno che la tabella non imposti un `entryName`.
+- `items` ignora le funzioni di una voce, quindi la rimuove qualunque siano il conteggio, il danno o l'NBT che avrebbe dato.
+- Le rimozioni girano prima di `loot_injections`, quindi un pool iniettato non viene mai rimosso. Una mod che aggiunge alla tabella dopo RDPL mantiene ciò che ha aggiunto.
+- Un pool, una voce o un oggetto che non corrisponde a nulla produce un avviso in `rdpl.log`, così il pacchetto continua a funzionare quando una mod viene tolta.
+- `lootRemovals` nella configurazione le disattiva. Le loot table sono dati del server, quindi basta il server.
 
 ## Bottino dei giocatori
 

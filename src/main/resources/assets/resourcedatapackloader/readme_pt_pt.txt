@@ -282,19 +282,19 @@ Cada um destes é uma pasta em assets/<yourpack>:
     blocks           items            fluids           materials
     worldgen         furnace          fuels            oredict
     sounds           tabs             recipes          recipe_removals
-    loot_tables      loot_injections  advancements     functions
-    structures       registry_remap   potions          potion_types
-    brewing          villagers        trades           biomes
-    villages         entities         gates            dimensions
-    gamerules        worldtemplates   worldintro       pathintersects
-    hardness         blastplaster     player_loot      overrides
-    teams            scoring          caveregions      exposures
-    structuremaps    citymaps         portalframes     block_drops
-    texts            anvils           cards            disabled
-    celestial        raids            tooltips         harvests
-    carries          dialogs          veins            diets
-    enchantments     dice             games            orders
-    ranks            recipe_locks     spawn_locks
+    loot_tables      loot_injections  loot_removals    advancements
+    functions        structures       registry_remap   potions
+    potion_types     brewing          villagers        trades
+    biomes           villages         entities         gates
+    dimensions       gamerules        worldtemplates   worldintro
+    pathintersects   hardness         blastplaster     player_loot
+    overrides        teams            scoring          caveregions
+    exposures        structuremaps    citymaps         portalframes
+    block_drops      texts            anvils           cards
+    disabled         celestial        raids            tooltips
+    harvests         carries          dialogs          veins
+    diets            enchantments     dice             games
+    orders           ranks            recipe_locks     spawn_locks
     item_locks
     weights
 
