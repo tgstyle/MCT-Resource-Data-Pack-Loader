@@ -3,14 +3,17 @@ package mctmods.resourcedatapackloader.common.blocks.container.logic;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.containers.IContentContainer;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
+import mctmods.resourcedatapackloader.common.items.ContentEnderInventory;
 import mctmods.resourcedatapackloader.common.items.ContentPouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -31,11 +34,17 @@ import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 
 public final class ContentContainerBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
     private static final String STOCKED = "RdplStocked";
     private static final String ROWS = "RdplRows";
     private static final String COLUMNS = "RdplColumns";
+    private static final String OWNER = "RdplOwner";
     private final ChestLidController lid = new ChestLidController();
     private NonNullList<ItemStack> items;
     private int openers;
@@ -43,6 +52,10 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     private int columns;
     private boolean stocked;
     private boolean creative;
+    @Nullable private UUID owner;
+    @Nullable private ContentEnderInventory pipes;
+    private LazyOptional<IItemHandler> piped = LazyOptional.empty();
+    private int seen;
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
         super(ContentContainers.TYPE.get(), pos, state);
@@ -56,7 +69,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
 
     public ContainerDef def() { return def(getBlockState()); }
 
-    public ContainerDef shape() { return def().sized(rows, columns); }
+    public ContainerDef shape() { return def().ender() ? def() : def().sized(rows, columns); }
 
     @Override public int getContainerSize() { return items.size(); }
 
@@ -66,7 +79,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
 
     @Override @Nonnull protected Component getDefaultName() { return getBlockState().getBlock().getName(); }
 
-    @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) { return new ContentContainerMenu(id, inventory, this, shape()); }
+    @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) { return new ContentContainerMenu(id, inventory, def().ender() ? new ContentEnderInventory(inventory.player.level(), inventory.player.getUUID(), def(), this) : this, shape()); }
 
     @Override public void startOpen(@Nonnull Player player) {
         if (player.isSpectator()) { return; }
@@ -108,6 +121,9 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     @Override public void load(@Nonnull CompoundTag tag) {
         super.load(tag);
         resize(tag);
+        this.owner = tag.hasUUID(OWNER) ? tag.getUUID(OWNER) : null;
+        this.pipes = null;
+        piped.invalidate();
         this.stocked = tag.getBoolean(STOCKED);
         if (!tryLoadLootTable(tag)) { ContainerHelper.loadAllItems(tag, this.items); }
     }
@@ -116,6 +132,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         super.saveAdditional(tag);
         tag.putBoolean(STOCKED, stocked);
         saveSize(tag);
+        if (owner != null) { tag.putUUID(OWNER, owner); }
         if (!trySaveLootTable(tag)) { ContainerHelper.saveAllItems(tag, this.items); }
     }
 
@@ -134,6 +151,44 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
     public void placed() {
         stocked = true;
         setChanged();
+    }
+
+    public void own(UUID placer) {
+        owner = placer;
+        pipes = null;
+        piped.invalidate();
+        setChanged();
+    }
+
+    @Nullable private ContentEnderInventory pipes() {
+        if (pipes == null && owner != null && level != null && !level.isClientSide() && def().ender() && def().enderAutomation()) { pipes = new ContentEnderInventory(level, owner, def(), null); }
+        return pipes;
+    }
+
+    public Container automation() {
+        ContentEnderInventory held = pipes();
+        return held == null ? this : held;
+    }
+
+    public static void storeTick(Level ignoredLevel, BlockPos ignoredPos, BlockState ignoredState, ContentContainerBlockEntity held) { held.signal(); }
+
+    private void signal() {
+        ContentEnderInventory held = pipes();
+        if (held == null || level == null || held.version() == seen) { return; }
+        seen = held.version();
+        level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
+    }
+
+    @Override @Nonnull public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction side) {
+        ContentEnderInventory held = capability == ForgeCapabilities.ITEM_HANDLER && !remove ? pipes() : null;
+        if (held == null) { return super.getCapability(capability, side); }
+        if (!piped.isPresent()) { piped = LazyOptional.of(() -> new InvWrapper(held)); }
+        return piped.cast();
+    }
+
+    @Override public void invalidateCaps() {
+        super.invalidateCaps();
+        piped.invalidate();
     }
 
     public boolean watched() { return openers > 0; }
@@ -191,7 +246,7 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         setChanged();
     }
 
-    @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return !def().keepContents() || ContentContainerMenu.storable(stack); }
+    @Override public boolean canPlaceItem(int slot, @Nonnull ItemStack stack) { return !def().ender() && (!def().keepContents() || ContentContainerMenu.storable(stack)); }
 
     @Override public boolean canOpen(@Nonnull Player player) { return true; }
 
@@ -213,5 +268,5 @@ public final class ContentContainerBlockEntity extends RandomizableContainerBloc
         StructureLoot.stock(this, table, seed);
     }
 
-    public static int comparatorOutput(BlockEntity held) { return held instanceof Container container ? AbstractContainerMenu.getRedstoneSignalFromContainer(container) : 0; }
+    public static int comparatorOutput(BlockEntity held) { return held instanceof ContentContainerBlockEntity pack ? AbstractContainerMenu.getRedstoneSignalFromContainer(pack.automation()) : held instanceof Container container ? AbstractContainerMenu.getRedstoneSignalFromContainer(container) : 0; }
 }
