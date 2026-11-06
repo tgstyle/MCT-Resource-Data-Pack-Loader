@@ -72,6 +72,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Drops de blocos](#drops-de-blocos)
 - [Colheita com clique direito](#colheita-com-clique-direito)
 - [Mineração de veios](#mineração-de-veios)
+- [Colunas que caem](#colunas-que-caem)
 - [Carregar](#carregar)
 - [Remoções de saque](#remoções-de-saque)
 - [Saque de jogadores](#saque-de-jogadores)
@@ -221,6 +222,7 @@ Em `data/`:
 | `<namespace>/carries/*.json`                 | Blocos e mobs que um jogador agachado pega e coloca de volta. [Carregar](#carregar)                                                                                                                                        |
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                                                            |
 | `<namespace>/diets/*.json`                   | Regras que fazem uma comida repetida alimentar menos e uma dieta variada alimentar mais. [Variedade de comida](#variedade-de-comida)                                                                                       |
+| `<namespace>/columns/*.json`                 | Sequências de blocos que caem e quebram junto com os blocos acima do bloco quebrado pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                                    |
 | `<namespace>/advancements/*.json`            | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                                                         |
 | `<namespace>/functions/*.mcfunction`         | Arquivos de função. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                                              |
 | `<namespace>/tags/<kind>/*.json`             | Tags, no formato do próprio jogo. [Materiais, abas, sons, tags](#materiais-abas-sons-tags)                                                                                                                                 |
@@ -3305,6 +3307,37 @@ Quebrar um minério com uma picareta normalmente quebra só aquele bloco. Um arq
 | `requires`    | não         | lista de strings                                                                                             | nenhum | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição          |
 
 Tocar significa dividir uma face, uma aresta ou um canto, então cada bloco tem 26 vizinhos. Só no modo sobrevivência: jogadores no criativo e espectadores quebram um bloco só, como sempre. Para quando a ferramenta quebra ou a barra de comida do jogador chega a 0. Cada bloco extra solta seus drops de sempre, com o Fortuna da ferramenta na mão e todas as regras de Drops de blocos, e gasta um uso da ferramenta. Não age sobre um bloco que um grupo de dureza mantém. São dados de pack só de servidor e não precisam de nada no cliente. Um arquivo sem blocos ou ferramentas válidos é ignorado com uma linha de erro.
+
+## Colunas que caem
+
+*criação, saque e comércio*
+
+`<namespace>/columns/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Quando um jogador quebra um bloco, a sequência de blocos que caem listados logo acima dele também quebra, até um limite. Cada bloco dispara o próprio evento de quebra, então proteções e terrenos podem impedi-lo, e a coluna não gasta a ferramenta nem usa Fortuna, Toque de Seda, fundição ou fome, seja o que for que esteja na mão.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand"}, "minecraft:red_sand"],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Chave            | Obrigatória | Valor                                                                                                        | Padrão  | O que faz                                                                                                                                                                 |
+| ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | não         | lista de strings                                                                                             | nenhum  | Ids de mod que precisam estar carregados, como em outros lugares.                                                                                                         |
+| `blocks`         | sim         | lista de ids de bloco, com `meta` (1.12.2) ou `properties` (1.20.1 e posteriores) como em um grupo de dureza |         | Correspondências de bloco, na mesma forma de `blocks` da mineração de veios.                                                                                              |
+| `limit`          | não         | int, de 1 a 256                                                                                              | `256`   | Máximo de blocos removidos acima do quebrado.                                                                                                                             |
+| `includeSelf`    | não         | bool                                                                                                         | `false` | Quando true, quebrar um bloco da lista também remove os blocos da lista acima dele.                                                                                       |
+| `unlessSneaking` | não         | bool                                                                                                         | `false` | Quando true, um jogador agachado quebra só esse bloco.                                                                                                                    |
+| `alternate`      | não         | objeto com `item` e `chance` (0 a 1)                                                                         | nenhum  | Cada bloco da coluna deixa cair `item` numa rolagem bem-sucedida, ou o próprio item do bloco numa falha. Sem ele, cada bloco deixa cair seus drops normais com Fortuna 0. |
+
+Jogadores falsos nunca a acionam, e jogadores no criativo não recebem drops. Os arquivos se acumulam; usa-se o primeiro cujos blocos contêm o bloco acima do quebrado. Ao carregar, o log mostra `Loaded N falling column group(s)`, e um arquivo que cite um bloco não registrado ou um `alternate` inválido registra um erro.
 
 ## Carregar
 

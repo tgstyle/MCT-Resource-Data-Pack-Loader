@@ -72,6 +72,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Butins des blocs](#butins-des-blocs)
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
+- [Colonnes qui tombent](#colonnes-qui-tombent)
 - [Portage](#portage)
 - [Retrait de butin](#retrait-de-butin)
 - [Butin des joueurs](#butin-des-joueurs)
@@ -221,6 +222,7 @@ Sous `data/` :
 | `<namespace>/carries/*.json`                 | Blocs et mobs qu'un joueur accroupi ramasse et repose. [Portage](#portage)                                                                                                                                                               |
 | `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                                                                  |
 | `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                                                                   |
+| `<namespace>/columns/*.json`                 | Suites de blocs qui tombent et cassent avec le bloc que le joueur casse, au-dessus de lui. [Colonnes qui tombent](#colonnes-qui-tombent)                                                                                                 |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                                                 |
 | `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                                   |
 | `<namespace>/tags/<kind>/*.json`             | Tags, au format propre au jeu. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                                                            |
@@ -3305,6 +3307,37 @@ Casser un minerai à la pioche ne casse normalement que ce seul bloc. Un fichier
 | `advancement` | non    | texte                                                                                                          | aucun  | Un progrès que le joueur doit avoir pour que le groupe s'applique à lui. Sans lui, le groupe vaut pour tous                 |
 
 Se toucher veut dire partager une face, une arête ou un coin, si bien qu'un bloc a 26 voisins. En survie seulement : les joueurs en créatif et les spectateurs cassent un seul bloc comme d'habitude. Cela s'arrête quand l'outil se brise ou que la barre de faim du joueur tombe à 0. Chaque bloc supplémentaire donne ses drops habituels, avec la Fortune de l'outil tenu et toutes les règles de Butins des blocs, et use l'outil d'une utilisation. Cela ne s'applique pas à un bloc qu'un groupe de dureté conserve. Ce sont des données de pack côté serveur seulement, sans rien à prévoir côté client. Un fichier sans blocs ni outils valides est ignoré avec une ligne d'erreur.
+
+## Colonnes qui tombent
+
+*artisanat, butin et commerce*
+
+`<namespace>/columns/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+Quand un joueur casse un bloc, la suite de blocs qui tombent listés juste au-dessus de lui casse aussi, jusqu'à une limite. Chaque bloc déclenche son propre événement de cassure, donc les protections peuvent l'arrêter, et la colonne ne subit aucune usure d'outil et ne tient compte ni de la Fortune, ni du Toucher de soie, ni de la fonte, ni de la faim, quoi que le joueur tienne en main.
+
+```json
+{
+  "blocks": ["minecraft:gravel", {"block": "minecraft:sand"}, "minecraft:red_sand"],
+  "limit": 256,
+  "includeSelf": false,
+  "unlessSneaking": false,
+  "alternate": {"item": "minecraft:flint", "chance": 0.1}
+}
+```
+
+| Clé              | Requis | Valeur                                                                                                         | Défaut  | Rôle                                                                                                                                                           |
+| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | non    | liste de chaînes                                                                                               | aucun   | Ids de mods qui doivent être chargés, comme ailleurs.                                                                                                          |
+| `blocks`         | oui    | liste d'id de blocs, avec `meta` (1.12.2) ou `properties` (1.20.1 et suivantes) comme dans un groupe de dureté |         | Correspondances de blocs, dans la même forme que `blocks` du minage de filons.                                                                                 |
+| `limit`          | non    | int, de 1 à 256                                                                                                | `256`   | Nombre maximal de blocs retirés au-dessus du bloc cassé.                                                                                                       |
+| `includeSelf`    | non    | bool                                                                                                           | `false` | Si vrai, casser un bloc listé retire aussi les blocs listés au-dessus de lui.                                                                                  |
+| `unlessSneaking` | non    | bool                                                                                                           | `false` | Si vrai, un joueur accroupi ne casse que ce seul bloc.                                                                                                         |
+| `alternate`      | non    | objet avec `item` et `chance` (0 à 1)                                                                          | aucun   | Chaque bloc de la colonne donne `item` à un jet réussi, ou son propre objet de bloc en cas d'échec. Sans lui, chaque bloc donne ses drops normaux à Fortune 0. |
+
+Les faux joueurs ne la déclenchent jamais, et les joueurs en créatif ne reçoivent aucun drop. Les fichiers se cumulent ; le premier fichier dont les blocs contiennent le bloc au-dessus du bloc cassé est utilisé. Au chargement, le journal affiche `Loaded N falling column group(s)`, et un fichier qui nomme un bloc non enregistré ou un `alternate` invalide signale une erreur.
 
 ## Portage
 
