@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.blocks.container.logic.ContentConta
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.containers.IContentContainer;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
+import mctmods.resourcedatapackloader.common.items.ContentEnderInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
@@ -24,6 +25,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.TriState;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.WorldlyContainerHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -51,8 +54,9 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.common.loot.LootTableIdCondition;
+import net.neoforged.neoforge.common.util.FakePlayer;
 
-public final class ContentContainerBlock extends LineCompat.ContainerBase implements IContentBlock, IContentContainer {
+public final class ContentContainerBlock extends LineCompat.ContainerBase implements IContentBlock, IContentContainer, WorldlyContainerHolder {
     private final ContainerDef container;
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
@@ -86,9 +90,12 @@ public final class ContentContainerBlock extends LineCompat.ContainerBase implem
     @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentContainerBlockEntity(pos, state); }
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
-        if (!level.isClientSide() || !container.chestModel()) { return null; }
+        if (!level.isClientSide()) { return container.ender() && container.enderAutomation() ? createTickerHelper(type, ContentContainers.TYPE.get(), ContentContainerBlockEntity::storeTick) : null; }
+        if (!container.chestModel()) { return null; }
         return createTickerHelper(type, ContentContainers.TYPE.get(), ContentContainerBlockEntity::lidTick);
     }
+
+    @Override @Nonnull public WorldlyContainer getContainer(@Nonnull BlockState state, @Nonnull LevelAccessor level, @Nonnull BlockPos pos) { return level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held ? held.automation() : ContentEnderInventory.NONE; }
 
     @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) {
         if (level.isClientSide()) { return InteractionResult.SUCCESS; }
@@ -99,7 +106,9 @@ public final class ContentContainerBlock extends LineCompat.ContainerBase implem
 
     @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (placer != null && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.placed(); }
+        if (!(level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held)) { return; }
+        if (placer != null) { held.placed(); }
+        if (container.ender() && placer instanceof Player player && !(player instanceof FakePlayer)) { held.own(player.getUUID()); }
     }
 
     @Override @Nonnull public BlockState playerWillDestroy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull Player player) {

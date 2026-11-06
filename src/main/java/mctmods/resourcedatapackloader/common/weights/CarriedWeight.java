@@ -70,6 +70,7 @@ public final class CarriedWeight {
 
     private static long contents(ItemStack stack, Scope scope, int depth) {
         if (WeightDef.CONTENTS_NONE.equals(scope.settings.countContents)) { return 0L; }
+        if (stack.getItem() instanceof ContentContainerItem pouch && pouch.holds().ender()) { return 0L; }
         if (stack.getItem() instanceof ContentContainerItem || ContentContainerBlockItem.holdsKept(stack)) { return listed(stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY), scope, depth); }
         if (!WeightDef.CONTENTS_ALL.equals(scope.settings.countContents)) { return 0L; }
         ResourceHandler<ItemResource> handler = ItemAccess.forHandlerIndex(VanillaContainerWrapper.of(new SimpleContainer(stack.copyWithCount(1))), 0).getCapability(Capabilities.Item.ITEM);
