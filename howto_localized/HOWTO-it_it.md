@@ -5197,6 +5197,7 @@ Un `sun` o `moon` che imposta soltanto una `texture` sostituisce l'immagine nel 
 | `fixedTime`        | no           | intero, tick                  | nessuno     | Blocca l'ora del giorno                                                                                                                                                                                                    |
 | `sunriseColors`    | no           | booleano                      | `true`      | Se alba e tramonto sono colorati                                                                                                                                                                                           |
 | `ambientLight`     | no           | decimale, da 0 a 1            | `0.0`       | Luce minima ovunque                                                                                                                                                                                                        |
+| `darkness`         | no           | oggetto JSON                  | nessuno     | Toglie la luce minima, così i luoghi non illuminati diventano neri. Vedi [Buio totale](#buio-totale)                                                                                                                       |
 | `lightSkyColor`    | no           | colore esadecimale            | nessuno     | Tinta della luce del giorno su blocchi e mob                                                                                                                                                                               |
 | `lightBlockColor`  | no           | colore esadecimale            | nessuno     | Tinta della luce delle torce e delle altre luci dei blocchi                                                                                                                                                                |
 | `skyFactor`        | no           | decimale, da 0 a 1            | `1.0`       | Quanto appare luminosa la luce del giorno. Disegnato solo sul client, quindi lo spawn dei mob non cambia                                                                                                                   |
@@ -5326,6 +5327,40 @@ Senza `cloudLayers`, `cloudSpeed` cambia la velocità dell'unico strato vanilla 
 | `heat.dayOnly`         | no           | booleano           | `true`        | Se attivo, l'ondulazione svanisce con la luce del giorno e di notte non c'è |
 | `heat.mode`            | no           | stringa            | `screen`      | Dove si posa l'ondulazione, `screen` o `world`                              |
 | `heat.startDistance`   | no           | decimale           | `32`          | In modalità `world`, a quanti blocchi di distanza inizia l'ondulazione      |
+
+### Buio totale
+
+*dimensioni*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` toglie la luce minima che il gioco aggiunge ovunque, così una grotta o una stanza senza torcia è nera e si vedono solo la luce dei blocchi e quella del cielo. Senza la chiave la dimensione resta com'è sempre stata. Vale per le dimensioni di RDPL e, con un file per una [dimensione esistente](#dimensioni-esistenti), per l'overworld, il Nether, l'End e le dimensioni di altre mod; una dimensione senza un file del genere mantiene la sua luce di sempre. È disegnata solo sul client, quindi il livello di luce che il server conta per la comparsa dei mob e per i raccolti resta lo stesso.
+
+`mode` decide cosa succede alla luce notturna del cielo. `full` porta a zero anche quella. `block` mantiene la luce notturna del cielo di vanilla e toglie solo il minimo sotto la luce dei blocchi. `moon` regola la luce notturna del cielo in base alla luna: `moonLight` contiene cinque valori per lo 0, 25, 50, 75 e 100% di luna visibile, da `0` (nero) a `1` (chiaro come di giorno), così con `0` la luna nuova è buio completo.
+
+Nel Nether `darkness` toglie anche il suo minimo di luce, più alto, a meno che il file non imposti `ambientLight`, che allora decide. Nell'End il bagliore uniforme, che rischiara un po' tutto, resta; con `endGlow` a `false` sparisce anche quello. La visione notturna continua a rischiarare il buio.
+
+`grayNight`, in modalità `block` e `moon`, disegna in grigio i luoghi illuminati dal cielo invece del leggero blu della notte vanilla; in modalità `block` li schiarisce anche un po'. In modalità `full` lo stesso grigio compare finché il giocatore ha la visione notturna. `gamma` blocca l'impostazione della luminosità su quel valore finché il giocatore è nella dimensione, e il cursore nelle impostazioni video lo mostra e non si può spostare.
+
+| Chiave               | Obbligatorio | Valore                        | Predefinito                      | Cosa fa                                                                            |
+| -------------------- | ------------ | ----------------------------- | -------------------------------- | ---------------------------------------------------------------------------------- |
+| `darkness.mode`      | no           | stringa                       | `full`                           | `full`, `block` o `moon`, come sopra                                               |
+| `darkness.moonLight` | no           | lista di 5 decimali, da 0 a 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | In modalità `moon`, la luce notturna del cielo con lo 0, 25, 50, 75 e 100% di luna |
+| `darkness.grayNight` | no           | booleano                      | `false`                          | Luce notturna del cielo grigia in modalità `block` e `moon`                        |
+| `darkness.endGlow`   | no           | booleano                      | `true`                           | Nell'End mantiene il bagliore uniforme; `false` lo toglie                          |
+| `darkness.gamma`     | no           | decimale, da 0 a 1            | nessuno                          | Blocca l'impostazione della luminosità in questa dimensione                        |
 
 ### Neve, fluidi, stelle e fulmini
 
