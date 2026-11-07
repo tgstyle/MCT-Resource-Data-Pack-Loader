@@ -57,6 +57,7 @@
 - [아이템 잠금](#아이템-잠금)
 - [아이템 무게](#아이템-무게)
 - [화로 레시피와 연료](#화로-레시피와-연료)
+- [레시피 교체](#레시피-교체)
 - [레시피 잠금](#레시피-잠금)
 - [툴팁](#툴팁)
 - [언어 게이트](#언어-게이트)
@@ -197,6 +198,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/structures/*.nbt`                                                                  | 묘목, `imprint`, 모드 재정의용 템플릿. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                   |
 | `<namespace>/recipes/*.json`                                                                    | 추가하거나 교체하는 제작 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                         |
 | `<namespace>/recipe_removals/*.json`                                                            | 이름, 네임스페이스, 결과물 기준으로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                     |
+| `<namespace>/recipe_swaps/*.json`                                                               | 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체)                                                                              |
 | `<namespace>/recipe_locks/*.json`                                                               | 플레이어가 발전 과제를 달성할 때까지 잠겨 있는 레시피. [레시피 잠금](#레시피-잠금)                                                                                       |
 | `<namespace>/spawn_locks/*.json`                                                                | 조건이 충족될 때까지 스폰되지 않는 몹. [스폰 잠금](#스폰-잠금)                                                                                                           |
 | `<namespace>/item_locks/*.json`                                                                 | 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 목록에서 숨기는 아이템. [아이템 잠금](#아이템-잠금)                                                                 |
@@ -560,6 +562,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 - **함수**: `<namespace>/functions/` 아래의 `.mcfunction` 파일
 - **레지스트리 이름 변경**: 모드가 블록이나 아이템의 이름을 바꿔도 기존 월드가 계속 동작하게 합니다
 - **레시피 제거**: 이름, 네임스페이스, 결과물 기준으로 제작 레시피를 삭제합니다
+- **레시피 교체**: 사용하는 모든 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체) 참고
 - **비활성화된 블록과 아이템**: 어떤 블록이나 아이템이든 사용에서 제외합니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템) 참고
 - **전리품 주입**: 전리품 테이블을 통째로 교체하는 대신 풀을 추가합니다
 - **전리품 제거**: 전리품 테이블을 교체하지 않고 항목이나 아이템을 빼거나, 테이블을 비웁니다
@@ -575,6 +578,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 | `load`             | `content`  | 켜짐   | `blocks/*.json`과 `items/*.json`의 블록과 아이템을 등록합니다. 끄면 그것들이 들어 있는 월드에 누락된 블록이 남으며, 재시작이 필요합니다 |
 | `oreDictionary`    | `content`  | 켜짐   | `oredict/*.json`을 적용합니다                                                                                                           |
 | `removals`         | `recipes`  | 켜짐   | `recipe_removals/*.json`을 적용합니다                                                                                                   |
+| `swaps`            | `recipes`  | 켜짐   | `recipe_swaps/*.json`을 적용합니다                                                                                                      |
 | `disableOverrides` | `recipes`  | 꺼짐   | 이 모드가 레시피를 교체하거나 추가하지 못하게 합니다. 다른 코어모드가 레시피 로딩에서 충돌할 때만 필요합니다                            |
 | `lootInjections`   | `data`     | 켜짐   | `loot_injections/*.json`을 적용합니다                                                                                                   |
 | `lootRemovals`     | `data`     | 켜짐   | `loot_removals/*.json`을 적용합니다                                                                                                     |
@@ -596,7 +600,7 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                        |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                          |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                          |
 | `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                       |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업)           | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
 | `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
@@ -2864,6 +2868,54 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `item`     | 둘 중 하나 | 아이템 이름    | 없음   | 연료로 타는 아이템                       |
 | `oreDict`  | 둘 중 하나 | 광석 사전 이름 | 없음   | 해당 이름에 속한 모든 것이 연료로 탑니다 |
 | `burnTime` | 예         | 정수, 틱       | `0`    | 석탄은 1600, 판자는 300                  |
+
+## 레시피 교체
+
+*제작, 전리품, 거래*
+
+`<namespace>/recipe_swaps/*.json`
+
+파일 이름은 마음대로 정하며 폴더만 읽히고, 여러 파일이 겹쳐 적용됩니다. 제작 레시피와 제련 레시피에서 아이템 하나를 다른 아이템으로 바꾸며, 레시피마다 손으로 고칠 필요가 없습니다.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermalfoundation:material:128"], "oreDict": ["ingotTin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermalfoundation:material:801",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermalfoundation:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| 키         | 필수   | 값             | 기본값 | 설명                                                  |
+| ---------- | ------ | -------------- | ------ | ----------------------------------------------------- |
+| `requires` | 아니요 | 모드 id의 목록 | 없음   | 나열된 모드가 모두 로드되어 있을 때만 파일을 읽습니다 |
+| `swaps`    | 예     | 목록           | 없음   | 교체 항목들이며, 순서대로 적용됩니다                  |
+
+`swaps` 아래의 항목:
+
+| 키        | 필수   | 값          | 기본값      | 설명                                                                                                                                                                                                                                                                                     |
+| --------- | ------ | ----------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | 예     | 오브젝트    | 없음        | 바꿀 대상입니다. `names`(메타데이터 값을 세 번째 부분으로 붙일 수 있고, `:*`는 모든 메타데이터를, 끝의 `*`는 그 텍스트로 시작하는 모든 이름을 뜻합니다), `namespaces`, `oreDict`가 있으며, 키는 [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)과 같습니다                         |
+| `to`      | 예     | 아이템 이름 | 없음        | 대신 들어갈 아이템입니다. `thermalfoundation:material:128`처럼 메타데이터 값을 붙일 수 있습니다. 와일드카드나 알 수 없는 아이템이면 항목을 건너뛰고 로그에 기록합니다                                                                                                                    |
+| `output`  | 아니요 | 불리언      | `false`     | 레시피가 만드는 결과물이 `from`인 경우에도 `from`을 바꿉니다. 개수는 유지됩니다                                                                                                                                                                                                          |
+| `recipes` | 아니요 | 오브젝트    | 모든 레시피 | 교체를 이 제작 레시피로 한정합니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다)와 `namespaces`가 있습니다. `recipes`가 있는 항목은 화로 레시피를 건드리지 않습니다. 화로 레시피에는 이름이 없기 때문입니다. 여기서는 `outputs`를 읽지 않으며, 로그에 기록합니다 |
+
+`from`만 받는 슬롯은 `to`가 됩니다. 다른 아이템도 받는 슬롯은 그 아이템을 유지하면서 `to`도 받지만, 광석 사전 연결을 잃으므로 나중에 그 이름에 추가된 아이템은 그 슬롯에 들어가지 않습니다. 크리에이티브 탭에서 숨겨진 아이템도 이런 슬롯에서 빠집니다.
+
+`to`가 자기 자신의 `from`과 일치하는 항목은 건너뛰고 로그에 기록합니다. 화로 재료는 `to`가 이미 무언가로 제련되는 경우 교체되지 않으며, 로그에 그 레시피를 기록합니다.
+
+교체는 로드가 끝난 뒤, 레시피 제거와 레시피 차단이 레시피를 고른 다음에 실행됩니다. 그래서 그 둘은 교체 전에 만들던 결과물로 레시피를 판단합니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)과 [레시피 잠금](#레시피-잠금)은 교체된 레시피를 봅니다.
+
+바닐라와 Forge의 모양 있는 레시피와 모양 없는 레시피, 그리고 화로 레시피가 다시 쓰입니다. 교체된 아이템을 가리키는 다른 모드 고유 형식의 레시피는 그대로 두며, 로그에 그 형식을 예시 레시피와 함께 한 번 기록합니다. 로그는 다음과 같이 요약합니다: `Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`, 그리고 남은 것이 있으면 `Left N recipe(s) of N type(s) alone`도 나옵니다.
 
 ## 레시피 잠금
 

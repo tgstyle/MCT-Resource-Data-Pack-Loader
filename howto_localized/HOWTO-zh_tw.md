@@ -57,6 +57,7 @@
 - [物品鎖](#物品鎖)
 - [物品重量](#物品重量)
 - [熔爐配方與燃料](#熔爐配方與燃料)
+- [配方替換](#配方替換)
 - [配方鎖](#配方鎖)
 - [工具提示](#工具提示)
 - [語言閘門](#語言閘門)
@@ -197,6 +198,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/structures/*.nbt`                                                                  | 供樹苗、`imprint` 與模組覆寫使用的範本。[可以覆寫的內容](#可以覆寫的內容)                                           |
 | `<namespace>/recipes/*.json`                                                                    | 合成配方，新增或取代。[可以覆寫的內容](#可以覆寫的內容)                                                             |
 | `<namespace>/recipe_removals/*.json`                                                            | 依名稱、命名空間或產出刪除的配方。[可以覆寫的內容](#可以覆寫的內容)                                                 |
+| `<namespace>/recipe_swaps/*.json`                                                               | 在合成和燒煉配方中將一種物品替換為另一種。[配方替換](#配方替換)                                                     |
 | `<namespace>/recipe_locks/*.json`                                                               | 玩家取得進度之前保持鎖定的配方。[配方鎖](#配方鎖)                                                                   |
 | `<namespace>/spawn_locks/*.json`                                                                | 條件滿足之前不會生成的生物。[生成鎖](#生成鎖)                                                                       |
 | `<namespace>/item_locks/*.json`                                                                 | 玩家取得進度之前，在其清單中隱藏的物品。[物品鎖](#物品鎖)                                                           |
@@ -560,6 +562,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 - **函數**，即位於 `<namespace>/functions/` 下的 `.mcfunction` 檔案
 - **登錄表重新命名**，在模組更改方塊或物品名稱時，讓舊世界仍能運作
 - **配方移除**，依名稱、命名空間或產出刪除合成配方
+- **配方替換**，在所有使用該物品的合成和燒煉配方中，把一種物品替換為另一種，見[配方替換](#配方替換)
 - **停用的方塊與物品**，讓任何方塊或物品退出遊戲，見[停用的方塊與物品](#停用的方塊與物品)
 - **戰利品注入**，在戰利品表中加入一個池，而不是取代整張表
 - **戰利品移除**，從戰利品表中取出某個條目或某種物品，或清空該表，而不取代整張表
@@ -575,6 +578,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 | `load`             | `content`  | 開   | 註冊 `blocks/*.json` 與 `items/*.json` 中的方塊和物品。關閉後，包含它們的世界會出現缺失的方塊，且需要重新啟動 |
 | `oreDictionary`    | `content`  | 開   | 套用 `oredict/*.json`                                                                                         |
 | `removals`         | `recipes`  | 開   | 套用 `recipe_removals/*.json`                                                                                 |
+| `swaps`            | `recipes`  | 開   | 套用 `recipe_swaps/*.json`                                                                                    |
 | `disableOverrides` | `recipes`  | 關   | 阻止本模組取代或新增配方。只有在另一個 coremod 與配方載入發生衝突時才需要                                     |
 | `lootInjections`   | `data`     | 開   | 套用 `loot_injections/*.json`                                                                                 |
 | `lootRemovals`     | `data`     | 開   | 套用 `loot_removals/*.json`                                                                                   |
@@ -596,7 +600,7 @@ RDPL 適合用來取代一兩個配方，而你自己內容的配方則應該加
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                                                      | `blocks`、`items`、`fluids`、`materials`                                                                               |
 | `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                                                   | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，詞綴和寶石槽的名稱） |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                                                          | `biomes`、`dimensions`、`portalframes`                                                                                 |
+| `recipes`、`recipe_removals`、`recipe_swaps`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                                          | `biomes`、`dimensions`、`portalframes`                                                                                 |
 | `loot_tables`、`loot_injections`、`loot_removals`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`、`weights` | `villagers`, `item_locks`                                                                                              |
 | `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（限用戶端認得的職業：原版的，或兩端都有的模組的）                                        | `entities`、`worldintro`、`texts`（介紹永遠不會顯示給原版用戶端）                                                      |
 | `teams`、`scoring`、`ranks`                                                                                                                                                 | `models`、`blockstates`、`textures`、`lang`（用戶端資料夾，沒有用戶端時請省略）                                        |
@@ -2864,6 +2868,54 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 | `item`     | 二擇一 | 物品名稱       | 無   | 會燃燒的物品            |
 | `oreDict`  | 二擇一 | 礦物辭典名稱   | 無   | 該名稱下的一切都會燃燒  |
 | `burnTime` | 是     | 整數，單位為刻 | `0`  | 煤炭是 1600，木板是 300 |
+
+## 配方替換
+
+*合成、戰利品與交易*
+
+`<namespace>/recipe_swaps/*.json`
+
+檔案名稱由你決定，只有資料夾會被讀取，而且多個檔案可以疊加。把一種物品替換成另一種，作用於合成配方和燒煉配方，不必逐一手動修改配方。
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermalfoundation:material:128"], "oreDict": ["ingotTin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermalfoundation:material:801",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermalfoundation:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| 鍵         | 必需 | 值                  | 預設值 | 作用                                 |
+| ---------- | ---- | ------------------- | ------ | ------------------------------------ |
+| `requires` | 否   | 清單，內容為模組 id | 無     | 只有這些模組全部載入時才會讀取該檔案 |
+| `swaps`    | 是   | 清單                | 無     | 替換項目，依序套用                   |
+
+`swaps` 下的項目：
+
+| 鍵        | 必需 | 值       | 預設值   | 作用                                                                                                                                                                                      |
+| --------- | ---- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | 是   | 物件     | 無       | 被替換的內容：`names`（可在第三段寫中繼資料值，`:*` 符合所有中繼資料，結尾的 `*` 符合所有以該文字開頭的名稱）、`namespaces` 和 `oreDict`，其鍵與[停用的方塊與物品](#停用的方塊與物品)相同 |
+| `to`      | 是   | 物品名稱 | 無       | 替換後的物品，可帶中繼資料值，例如 `thermalfoundation:material:128`。萬用字元或未知的物品會跳過該項目，日誌會說明                                                                         |
+| `output`  | 否   | 布林值   | `false`  | 當 `from` 是配方的產出時，也一併替換。數量維持不變                                                                                                                                        |
+| `recipes` | 否   | 物件     | 所有配方 | 將替換限定在這些合成配方內：`names`（結尾的 `*` 符合所有以該文字開頭的名稱）和 `namespaces`。帶有 `recipes` 的項目不影響燒煉配方，因為燒煉配方沒有名稱；此處不讀取 `outputs`，日誌會說明  |
+
+只接受 `from` 物品的槽位會變成 `to`。同時接受其他物品的槽位會保留那些物品並同時接受 `to`，但會失去礦物辭典的連結，因此之後加入該名稱的物品不會在此處被取用。在創造模式分頁中隱藏的物品也會從此類槽位中移除。
+
+`to` 與自身 `from` 相同的項目會被跳過，日誌會說明。當 `to` 已經會被燒煉成其他東西時，燒煉輸入不會被替換，日誌會指出該配方。
+
+替換會在載入完成後執行，此時配方移除和配方封鎖已經選定了各自的配方，因此它們仍依替換前的產出判定配方。[停用的方塊與物品](#停用的方塊與物品)和[配方鎖](#配方鎖)看到的是替換後的配方。
+
+原版與 Forge 的有形與無形合成配方，以及熔爐配方會被改寫。其他模組自訂類型中引用了被替換物品的配方維持不變，日誌會對該類型記錄一次並附上範例配方。日誌會彙總為：`Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`，若有剩餘則還會出現 `Left N recipe(s) of N type(s) alone`。
 
 ## 配方鎖
 

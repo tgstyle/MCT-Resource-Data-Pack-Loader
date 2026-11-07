@@ -57,6 +57,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Item-Sperren](#item-sperren)
 - [Item-Gewichte](#item-gewichte)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
+- [Rezepttausch](#rezepttausch)
 - [Rezeptsperren](#rezeptsperren)
 - [Tooltips](#tooltips)
 - [Sprachtore](#sprachtore)
@@ -197,6 +198,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/structures/*.nbt`                                                                  | Vorlagen, für Setzlinge, `imprint` und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                      |
 | `<namespace>/recipes/*.json`                                                                    | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                |
 | `<namespace>/recipe_removals/*.json`                                                            | Rezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                      |
+| `<namespace>/recipe_swaps/*.json`                                                               | Ein Item, das in Handwerks- und Ofenrezepten durch ein anderes ersetzt wird. [Rezepttausch](#rezepttausch)                                                                                                                                                                             |
 | `<namespace>/recipe_locks/*.json`                                                               | Rezepte, die gesperrt bleiben, bis ein Spieler einen Fortschritt erreicht. [Rezeptsperren](#rezeptsperren)                                                                                                                                                                             |
 | `<namespace>/spawn_locks/*.json`                                                                | Mobs, die nicht spawnen, solange die Bedingungen nicht gelten. [Spawn-Sperren](#spawn-sperren)                                                                                                                                                                                         |
 | `<namespace>/item_locks/*.json`                                                                 | Items, die in den Listen eines Spielers verborgen bleiben, bis er einen Fortschritt erreicht. [Item-Sperren](#item-sperren)                                                                                                                                                            |
@@ -560,6 +562,7 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 - **Funktionen**: die `.mcfunction`-Dateien unter `<namespace>/functions/`
 - **Registry-Umbenennungen**: alte Welten am Leben halten, wenn ein Mod einen Block oder ein Item umbenennt
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
+- **Rezept-Tausch**: ein Item durch ein anderes ersetzen, in jedem Handwerks- und Ofenrezept, das es nutzt, siehe [Rezepttausch](#rezepttausch)
 - **Deaktivierte Blöcke und Items**: jeden Block und jedes Item aus dem Spiel nehmen, siehe [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
 - **Beute-Entfernungen**: einen Eintrag oder ein Item aus einer Beutetabelle entfernen oder sie leeren, ohne die Tabelle zu ersetzen
@@ -575,6 +578,7 @@ Jeder dieser Ordner hat in der Config außerdem einen Schalter, sodass ein Modpa
 | `load`             | `content`  | an       | Registriert die Blöcke und Items aus `blocks/*.json` und `items/*.json`. Aus bleiben in Welten, die sie enthalten, fehlende Blöcke zurück; ein Neustart ist nötig |
 | `oreDictionary`    | `content`  | an       | Wendet `oredict/*.json` an                                                                                                                                        |
 | `removals`         | `recipes`  | an       | Wendet `recipe_removals/*.json` an                                                                                                                                |
+| `swaps`            | `recipes`  | an       | Wendet `recipe_swaps/*.json` an                                                                                                                                   |
 | `disableOverrides` | `recipes`  | aus      | Hindert diesen Mod daran, Rezepte zu ersetzen oder hinzuzufügen. Nur nötig, wenn ein anderer Coremod beim Laden von Rezepten in Konflikt gerät                    |
 | `lootInjections`   | `data`     | an       | Wendet `loot_injections/*.json` an                                                                                                                                |
 | `lootRemovals`     | `data`     | an       | Wendet `loot_removals/*.json` an                                                                                                                                  |
@@ -596,7 +600,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (Tooltip-Zeilen für Gegenstände und Verzauberungen, Namen von Affixen und Edelsteinplätzen) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
 | `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                                                           |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods)         | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt)                                                                                 |
 | `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen)                                                                                 |
@@ -2864,6 +2868,54 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 | `item`     | eines von beiden | Itemname            | keiner   | Das Item, das brennt            |
 | `oreDict`  | eines von beiden | Ore-Dictionary-Name | keiner   | Alles unter diesem Namen brennt |
 | `burnTime` | ja               | int, Ticks          | `0`      | Kohle ist 1600, ein Brett 300   |
+
+## Rezepttausch
+
+*herstellung, beute und handel*
+
+`<namespace>/recipe_swaps/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Ersetzt ein Item durch ein anderes in Handwerks- und Ofenrezepten, ohne jedes Rezept von Hand umzuschreiben.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermalfoundation:material:128"], "oreDict": ["ingotTin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermalfoundation:material:801",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermalfoundation:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Schlüssel  | Pflicht | Wert              | Standard | Was er macht                                                  |
+| ---------- | ------- | ----------------- | -------- | ------------------------------------------------------------- |
+| `requires` | nein    | Liste von Mod-IDs | keiner   | Die Datei wird nur gelesen, wenn alle diese Mods geladen sind |
+| `swaps`    | ja      | Liste             | keiner   | Die Tauschvorgänge, der Reihe nach angewendet                 |
+
+Einträge unter `swaps`:
+
+| Schlüssel | Pflicht | Wert     | Standard     | Was er macht                                                                                                                                                                                                                                                                                |
+| --------- | ------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | ja      | Objekt   | keiner       | Was ersetzt wird: `names` (mit einem Metadatenwert als drittem Teil, `:*` für jeden oder ein abschließendes `*`), `namespaces` und `oreDict`, die Schlüssel von [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                             |
+| `to`      | ja      | Itemname | keiner       | Was an seine Stelle tritt, mit optionalem Metadatenwert wie `thermalfoundation:material:128`. Ein Platzhalter oder ein unbekanntes Item überspringt den Eintrag, und das Log sagt es                                                                                                        |
+| `output`  | nein    | Boolean  | `false`      | Ersetzt `from` auch dort, wo es das ist, was ein Rezept herstellt. Die Anzahl bleibt                                                                                                                                                                                                        |
+| `recipes` | nein    | Objekt   | jedes Rezept | Begrenzt den Tausch auf diese Handwerksrezepte: `names`, mit einem abschließenden `*` für jeden Namen, der mit diesem Text beginnt, und `namespaces`. Ein Eintrag mit `recipes` lässt Ofenrezepte in Ruhe, da sie keine Namen haben; `outputs` wird hier nicht gelesen, und das Log sagt es |
+
+Ein Slot, der nur `from`-Items annimmt, wird zu `to`. Ein Slot, der auch andere Items annimmt, behält sie und nimmt `to` ebenfalls auf, verliert aber seine Verbindung zu den Ore-Dictionary-Namen, sodass ein Item, das später unter diesem Namen hinzukommt, dort nicht genommen wird. Ein Item, das in den Kreativ-Tabs versteckt ist, fällt aus einem solchen Slot ebenfalls heraus.
+
+Ein Eintrag, dessen `to` sein eigenes `from` trifft, wird übersprungen, und das Log sagt es. Ein Ofeneingang wird nicht getauscht, wenn `to` schon etwas anderes verschmilzt, und das Log nennt dieses Rezept.
+
+Der Tausch läuft, wenn das Laden abgeschlossen ist, nach Rezept-Entfernungen und dem Blockieren von Rezepten, die ihre Rezepte schon gewählt haben, sodass diese ein Rezept noch nach dem beurteilen, was es vor dem Tausch herstellte. [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items) und [Rezeptsperren](#rezeptsperren) sehen das getauschte Rezept.
+
+Handwerksrezepte der Vanilla- und Forge-Typen mit und ohne feste Form werden umgeschrieben, dazu der Ofen. Ein Rezept eines anderen Mods mit eigenem Typ, das ein ersetztes Item nennt, bleibt unverändert, und das Log nennt seinen Typ einmal mit einem Beispielrezept. Das Log fasst es dann zusammen: `Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`, und `Left N recipe(s) of N type(s) alone`, wenn welche übrig blieben.
 
 ## Rezeptsperren
 

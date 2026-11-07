@@ -96,7 +96,9 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceBlocking;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceRecipes;
+import mctmods.resourcedatapackloader.common.recipes.FurnaceSwaps;
 import mctmods.resourcedatapackloader.common.recipes.RecipeDisabled;
+import mctmods.resourcedatapackloader.common.recipes.RecipeSwaps;
 import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.CubicChunksWorld;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
@@ -350,8 +352,10 @@ public class ModSetup {
     }
 
     public static void loadComplete() {
+        RecipeSwaps.apply();
         RecipeDisabled.apply();
         FurnaceBlocking.apply();
+        FurnaceSwaps.apply();
         ContentSpawners.apply();
         ContentPortals.bind();
         ContentCelestial.loadComplete();
@@ -375,6 +379,7 @@ public class ModSetup {
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         FurnaceBlocking.apply();
+        FurnaceSwaps.apply();
         RecipeDisabled.furnace();
         ContentOverrides.reload();
         OwnershipSettings.reload();

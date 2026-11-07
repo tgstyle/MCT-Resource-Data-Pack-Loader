@@ -57,6 +57,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Verrous d'objets](#verrous-dobjets)
 - [Poids des objets](#poids-des-objets)
 - [Recettes de fourneau et combustibles](#recettes-de-fourneau-et-combustibles)
+- [Échanges de recettes](#échanges-de-recettes)
 - [Verrous de recettes](#verrous-de-recettes)
 - [Infobulles](#infobulles)
 - [Passages de langue](#passages-de-langue)
@@ -197,6 +198,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/structures/*.nbt`                                                                  | Modèles, pour les pousses, `imprint` et les surcharges de mods. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                          |
 | `<namespace>/recipes/*.json`                                                                    | Recettes d'artisanat, ajoutées ou remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                            |
 | `<namespace>/recipe_removals/*.json`                                                            | Recettes supprimées par nom, namespace ou résultat. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                      |
+| `<namespace>/recipe_swaps/*.json`                                                               | Un objet remplacé par un autre dans les recettes d'artisanat et de cuisson. [Échanges de recettes](#échanges-de-recettes)                                                                                                |
 | `<namespace>/recipe_locks/*.json`                                                               | Recettes qui restent fermées tant qu'un joueur n'a pas obtenu un progrès. [Verrous de recettes](#verrous-de-recettes)                                                                                                    |
 | `<namespace>/spawn_locks/*.json`                                                                | Créatures qui n'apparaissent pas tant que les conditions ne sont pas remplies. [Verrous d'apparition](#verrous-dapparition)                                                                                              |
 | `<namespace>/item_locks/*.json`                                                                 | Objets masqués dans les listes d'un joueur tant qu'il n'a pas obtenu un progrès. [Verrous d'objets](#verrous-dobjets)                                                                                                    |
@@ -560,6 +562,7 @@ Le modèle ne s'enregistre jamais, tandis que `jacks_ore` s'enregistre avec le m
 - **Fonctions**, les fichiers `.mcfunction` sous `<namespace>/functions/`
 - **Renommages du registre**, pour que les anciens mondes continuent de fonctionner lorsqu'un mod renomme un bloc ou un objet
 - **Suppressions de recettes**, supprimer une recette d'artisanat par nom, namespace ou résultat
+- **Échanges de recettes**, remplacer un objet par un autre dans chaque recette d'artisanat et de cuisson qui l'utilise, voir [Échanges de recettes](#échanges-de-recettes)
 - **Blocs et objets désactivés**, retirer n'importe quel bloc ou objet du jeu, voir [Blocs et objets désactivés](#blocs-et-objets-désactivés)
 - **Injections de butin**, ajouter une réserve à une table de butin au lieu de remplacer l'ensemble
 - **Retraits de butin**, retirer une entrée ou un objet d'une table de butin, ou la vider, sans remplacer la table
@@ -575,6 +578,7 @@ Chacun de ces dossiers a aussi un interrupteur dans la configuration, afin qu'un
 | `load`             | `content`  | activé    | Enregistre les blocs et objets de `blocks/*.json` et `items/*.json`. Désactivé, les mondes qui en contiennent se retrouvent avec des blocs manquants, et un redémarrage est nécessaire |
 | `oreDictionary`    | `content`  | activé    | Applique `oredict/*.json`                                                                                                                                                              |
 | `removals`         | `recipes`  | activé    | Applique `recipe_removals/*.json`                                                                                                                                                      |
+| `swaps`            | `recipes`  | activé    | Applique `recipe_swaps/*.json`                                                                                                                                                         |
 | `disableOverrides` | `recipes`  | désactivé | Empêche ce mod de remplacer ou d'ajouter des recettes. Utile seulement si un autre coremod entre en conflit sur le chargement des recettes                                             |
 | `lootInjections`   | `data`     | activé    | Applique `loot_injections/*.json`                                                                                                                                                      |
 | `lootRemovals`     | `data`     | activé    | Applique `loot_removals/*.json`                                                                                                                                                        |
@@ -596,7 +600,7 @@ Un pack peut vivre uniquement sur le serveur, avec des joueurs sur des clients v
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                  | `blocks`, `items`, `fluids`, `materials`                                                                                                                    |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                               | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (lignes d'info-bulle des objets et enchantements, noms des affixes et emplacements) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                                      | `biomes`, `dimensions`, `portalframes`                                                                                                                      |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                      | `biomes`, `dimensions`, `portalframes`                                                                                                                      |
 | `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights`             | `villagers`, `item_locks`                                                                                                                                   |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (pour les professions que le client connaît : celles de vanilla, ou d'un mod présent des deux côtés) | `entities`, `worldintro`, `texts` (l'introduction n'est jamais montrée à un client vanilla)                                                                 |
 | `teams`, `scoring`, `ranks`                                                                                                                                                             | `models`, `blockstates`, `textures`, `lang` (dossiers client — sans client, ne les incluez pas)                                                             |
@@ -2864,6 +2868,54 @@ Le nom du fichier est à vous de choisir, seul le dossier est lu, et plusieurs f
 | `item`     | l'un des deux | nom d'objet                      | aucun  | L'objet qui brûle                       |
 | `oreDict`  | l'un des deux | nom du dictionnaire des minerais | aucun  | Tout ce qui se trouve sous ce nom brûle |
 | `burnTime` | oui           | entier, ticks                    | `0`    | Le charbon vaut 1600, une planche 300   |
+
+## Échanges de recettes
+
+*artisanat, butin et commerce*
+
+`<namespace>/recipe_swaps/*.json`
+
+Le nom du fichier est à votre choix, seul le dossier est lu, et plusieurs fichiers s'empilent. Remplace un objet par un autre dans les recettes d'artisanat et de cuisson, sans réécrire chaque recette à la main.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermalfoundation:material:128"], "oreDict": ["ingotTin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermalfoundation:material:801",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermalfoundation:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Clé        | Requis | Valeur             | Défaut | Rôle                                                  |
+| ---------- | ------ | ------------------ | ------ | ----------------------------------------------------- |
+| `requires` | non    | liste d'ids de mod | aucun  | Le fichier n'est lu que si tous ces mods sont chargés |
+| `swaps`    | oui    | liste              | aucun  | Les échanges, appliqués dans l'ordre                  |
+
+Entrées sous `swaps` :
+
+| Clé       | Requis | Valeur      | Défaut         | Rôle                                                                                                                                                                                                                                                                                               |
+| --------- | ------ | ----------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | oui    | objet       | aucun          | Ce qui est remplacé : `names` (avec une valeur de métadonnées comme troisième partie, `:*` pour toutes, ou un `*` final), `namespaces` et `oreDict`, les clés de [Blocs et objets désactivés](#blocs-et-objets-désactivés)                                                                         |
+| `to`      | oui    | nom d'objet | aucun          | Ce qui le remplace, avec une valeur de métadonnées facultative comme `thermalfoundation:material:128`. Un joker ou un objet inconnu ignore l'entrée, et le journal le signale                                                                                                                      |
+| `output`  | non    | booléen     | `false`        | Remplace aussi `from` là où il s'agit de ce qu'une recette produit. Le nombre reste                                                                                                                                                                                                                |
+| `recipes` | non    | objet       | chaque recette | Limite l'échange à ces recettes d'artisanat : `names`, avec un `*` final qui correspond à chaque nom commençant par ce texte, et `namespaces`. Une entrée avec `recipes` laisse les recettes de cuisson intactes, car elles n'ont pas de nom ; `outputs` n'est pas lu ici et le journal le signale |
+
+Un emplacement qui n'accepte que des objets `from` devient `to`. Un emplacement qui accepte aussi d'autres objets les garde et accepte `to` également, mais perd son lien avec le dictionnaire des minerais, donc un objet ajouté plus tard à ce nom n'y est pas pris. Un objet masqué dans les onglets créatifs sort aussi d'un tel emplacement.
+
+Une entrée dont `to` correspond à son propre `from` est ignorée, et le journal le signale. Un ingrédient de cuisson n'est pas échangé quand `to` est déjà l'ingrédient d'une autre recette, et le journal nomme cette recette.
+
+Les échanges s'appliquent une fois le chargement terminé, après que les suppressions et le blocage de recettes ont choisi leurs recettes, de sorte qu'ils jugent encore une recette d'après ce qu'elle produisait avant l'échange. [Blocs et objets désactivés](#blocs-et-objets-désactivés) et [verrous de recettes](#verrous-de-recettes) voient la recette échangée.
+
+Les recettes d'artisanat des types vanilla et Forge, à forme et sans forme, sont réécrites, ainsi que la cuisson. Une recette d'un autre mod de son propre type qui nomme un objet remplacé est laissée telle quelle, et le journal nomme son type une fois avec un exemple de recette. Le journal résume ensuite : `Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`, et `Left N recipe(s) of N type(s) alone` quand il en reste.
 
 ## Verrous de recettes
 

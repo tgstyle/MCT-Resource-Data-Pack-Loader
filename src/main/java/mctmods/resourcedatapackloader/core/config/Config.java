@@ -85,6 +85,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
 
     public static class Recipes {
         @net.minecraftforge.common.config.Config.Comment("Apply furnace/*.json files, which add and remove furnace smelting recipes [Default=true]") public boolean furnace = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply recipe_swaps/*.json files, which replace an item with another in the ingredients and results of crafting and furnace recipes [Default=true]") public boolean swaps = true;
         @net.minecraftforge.common.config.Config.Comment("Apply recipe_removals/*.json files, which delete crafting recipes by name, namespace or output [Default=true]") public boolean removals = true;
         @net.minecraftforge.common.config.Config.Comment("Stop this mod from replacing or adding recipes. Only needed if another coremod conflicts over recipe loading [Default=false]") public boolean disableOverrides = false;
         @net.minecraftforge.common.config.Config.Comment("Skip recipes that use an item which is not registered, instead of letting them fail. The count is logged once [Default=true]") public boolean skipMissingItems = true;

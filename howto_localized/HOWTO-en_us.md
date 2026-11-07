@@ -57,6 +57,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Item locks](#item-locks)
 - [Item weights](#item-weights)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
+- [Recipe swaps](#recipe-swaps)
 - [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
 - [Language gates](#language-gates)
@@ -197,6 +198,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/structures/*.nbt`                                                                  | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                                          |
 | `<namespace>/recipes/*.json`                                                                    | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                                           |
 | `<namespace>/recipe_removals/*.json`                                                            | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                                  |
+| `<namespace>/recipe_swaps/*.json`                                                               | One item replaced by another in crafting and furnace recipes. [Recipe swaps](#recipe-swaps)                                                                                    |
 | `<namespace>/recipe_locks/*.json`                                                               | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                                    |
 | `<namespace>/spawn_locks/*.json`                                                                | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                                      |
 | `<namespace>/item_locks/*.json`                                                                 | Items hidden from a player's lists until they earn an advancement. [Item locks](#item-locks)                                                                                   |
@@ -560,6 +562,7 @@ The template never registers, while `jacks_ore` registers with the template's ma
 - **Functions**, the `.mcfunction` files under `<namespace>/functions/`
 - **Registry renames**, keep old worlds working when a mod renames a block or item
 - **Recipe removals**, delete a crafting recipe by name, namespace or output
+- **Recipe swaps**, put one item in place of another in every crafting and furnace recipe that uses it, see [Recipe swaps](#recipe-swaps)
 - **Disabled blocks and items**, take any block or item out of play, see [Disabled blocks and items](#disabled-blocks-and-items)
 - **Loot injections**, add a pool to a loot table instead of replacing the whole thing
 - **Loot removals**, take an entry or an item out of a loot table, or empty it, without replacing the table
@@ -575,6 +578,7 @@ Each of these folders also has a switch in the config, so a modpack can turn one
 | `load`             | `content`  | on      | Registers the blocks and items from `blocks/*.json` and `items/*.json`. Off leaves worlds that contain them with missing blocks, and it needs a restart |
 | `oreDictionary`    | `content`  | on      | Applies `oredict/*.json`                                                                                                                                |
 | `removals`         | `recipes`  | on      | Applies `recipe_removals/*.json`                                                                                                                        |
+| `swaps`            | `recipes`  | on      | Applies `recipe_swaps/*.json`                                                                                                                           |
 | `disableOverrides` | `recipes`  | off     | Stops this mod from replacing or adding recipes. Only needed if another coremod conflicts over recipe loading                                           |
 | `lootInjections`   | `data`     | on      | Applies `loot_injections/*.json`                                                                                                                        |
 | `lootRemovals`     | `data`     | on      | Applies `loot_removals/*.json`                                                                                                                          |
@@ -596,7 +600,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                             |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (item and enchantment tooltip lines, affix and socket names) |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                               |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                               |
 | `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                            |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (for professions the client knows: vanilla's, or a both-sided mod's)                     | `entities`, `worldintro`, `texts` (the intro is never shown to a vanilla client)                                                     |
 | `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (client folders — with no client, leave them out)                                        |
@@ -2864,6 +2868,54 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `item`     | one of the two | item name           | none    | The item that burns              |
 | `oreDict`  | one of the two | ore dictionary name | none    | Everything under that name burns |
 | `burnTime` | yes            | int, ticks          | `0`     | Coal is 1600, a plank 300        |
+
+## Recipe swaps
+
+*crafting, loot and trade*
+
+`<namespace>/recipe_swaps/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Puts one item in place of another in crafting and furnace recipes, without rewriting each recipe by hand.
+
+```json
+{
+  "requires": ["thermalfoundation"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermalfoundation:material:128"], "oreDict": ["ingotTin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermalfoundation:material:801",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermalfoundation:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Key        | Required | Value           | Default | What it does                                                 |
+| ---------- | -------- | --------------- | ------- | ------------------------------------------------------------ |
+| `requires` | no       | list of mod ids | none    | The file is read only when every one of these mods is loaded |
+| `swaps`    | yes      | list            | none    | The swaps, applied in order                                  |
+
+Entries under `swaps`:
+
+| Key       | Required | Value     | Default      | What it does                                                                                                                                                                                                                                                          |
+| --------- | -------- | --------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | yes      | object    | none         | What is replaced: `names` (with a metadata value as a third part, `:*` for every one, or a trailing `*`), `namespaces` and `oreDict`, the keys of [Disabled blocks and items](#disabled-blocks-and-items)                                                             |
+| `to`      | yes      | item name | none         | What takes its place, with an optional metadata value such as `thermalfoundation:material:128`. A wildcard or an unknown item skips the entry and the log says so                                                                                                     |
+| `output`  | no       | boolean   | `false`      | Also replaces `from` where it is what a recipe makes. The count stays                                                                                                                                                                                                 |
+| `recipes` | no       | object    | every recipe | Limits the swap to these crafting recipes: `names`, with a trailing `*` matching every name starting with that text, and `namespaces`. An entry with `recipes` leaves furnace recipes alone, since they have no names; `outputs` is not read here and the log says so |
+
+A slot that takes only `from` items becomes `to`. A slot that also takes other items keeps them and takes `to` as well, and loses its ore dictionary link, so an item added to that name later is not taken there; an item hidden from the creative tabs drops out of such a slot too.
+
+An entry whose `to` its own `from` matches is skipped, and the log says so. A furnace input is not swapped when `to` already smelts into something, and the log names that recipe.
+
+Swaps run when loading completes, after recipe removals and recipe blocking have chosen their recipes, so those still judge a recipe by what it made before the swap. [Disabled blocks and items](#disabled-blocks-and-items) and [recipe locks](#recipe-locks) see the swapped recipe.
+
+Crafting recipes of the vanilla and Forge shaped and shapeless types are rewritten, plus the furnace. A recipe of another mod's own type that names a replaced item is left as it is, and the log names its type once with an example recipe. The log then sums it up: `Replaced N ingredient(s) and N result(s) in N crafting and N furnace recipe(s)`, and `Left N recipe(s) of N type(s) alone` when any were left.
 
 ## Recipe locks
 
