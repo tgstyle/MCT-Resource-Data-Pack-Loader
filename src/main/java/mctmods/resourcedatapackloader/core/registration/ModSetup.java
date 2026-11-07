@@ -240,7 +240,7 @@ public class ModSetup {
         }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
         VanillaFluidRules.load();
-        if (VanillaFluidRules.wanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
+        if (VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
         if (FluidReactionQueue.wanted()) { MinecraftForge.EVENT_BUS.register(FluidReactionQueue.class); }
         if (ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(ContentCaveAmbience.class); }
         MinecraftForge.EVENT_BUS.register(ContentProspect.class);

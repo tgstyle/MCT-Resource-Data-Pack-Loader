@@ -2259,13 +2259,23 @@ Un fichier ici attache des réactions à l'eau ou à la lave vanilla, sans mixin
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:ocean", "#RIVER"],
+    "dimensions": ["overworld"]
+  }
 }
 ```
 
 Un fluide de pack n'a pas besoin de ce fichier pour ses propres contacts. Ses `reactions` nomment déjà le fluide vanilla qu'il rencontre.
 
 Ces règles fonctionnent avec `vanillaClients`. Elles ne concernent que l'état du serveur, donc un client simple n'a besoin de rien du pack. Une règle qui nomme un bloc que le serveur n'enregistre pas est écartée avec son erreur.
+
+| Clé                   | Requis | Valeur          | Défaut          | Rôle                                                                                                                                                                                                                                       |
+| --------------------- | ------ | --------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | non    | objet           | aucun (vanilla) | `fluid` doit être `minecraft:water`. Deux sources à côté d'un bloc qui coule en créent une troisième seulement aux endroits listés ; ailleurs, jamais. Clé omise : règle vanilla partout. Les fichiers de lave l'ignorent avec une erreur. |
+| `infinite.biomes`     | non    | liste de textes | tout biome      | Identifiants de biome, ou `#` suivi d'un type de BiomeDictionary, comme `#OCEAN`.                                                                                                                                                          |
+| `infinite.dimensions` | non    | liste de textes | toute dimension | Mêmes noms que `byDimension`. Si les deux listes sont données, le lieu doit correspondre aux deux.                                                                                                                                         |
 
 ### Notes par version
 

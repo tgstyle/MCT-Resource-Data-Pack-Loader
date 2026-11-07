@@ -2259,13 +2259,23 @@ Um arquivo aqui liga reações à água ou à lava vanilla, sem mixin. Sua chave
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:ocean", "#RIVER"],
+    "dimensions": ["overworld"]
+  }
 }
 ```
 
 Um fluido do pacote não precisa deste arquivo para os seus próprios contatos. Suas `reactions` já nomeiam o fluido vanilla que ele encontra.
 
 Estas regras funcionam com `vanillaClients`. São só estado do servidor, então um cliente simples não precisa de nada do pacote. Uma regra que nomeia um bloco que o servidor não registra é descartada com o seu erro.
+
+| Chave                 | Obrigatória | Valor           | Padrão            | O que faz                                                                                                                                                                                                                         |
+| --------------------- | ----------- | --------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | não         | objeto          | nenhum (vanilla)  | `fluid` precisa ser `minecraft:water`. Duas fontes ao lado de um bloco que flui criam uma terceira só nos lugares listados; em outros, nunca. Chave omitida: regra vanilla em todo lugar. Arquivos de lava a ignoram com um erro. |
+| `infinite.biomes`     | não         | lista de textos | qualquer bioma    | IDs de bioma, ou `#` seguido de um tipo do BiomeDictionary, como `#OCEAN`.                                                                                                                                                        |
+| `infinite.dimensions` | não         | lista de textos | qualquer dimensão | Mesmos nomes de `byDimension`. Quando as duas listas são dadas, o lugar precisa atender às duas.                                                                                                                                  |
 
 ### Notas de versão
 

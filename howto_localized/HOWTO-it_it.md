@@ -2259,13 +2259,23 @@ Un file qui collega reazioni all'acqua o alla lava vanilla, senza mixin. La sua 
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:ocean", "#RIVER"],
+    "dimensions": ["overworld"]
+  }
 }
 ```
 
 Un fluido del pack non ha bisogno di questo file per i propri contatti. Le sue `reactions` indicano già il fluido vanilla che incontra.
 
 Queste regole funzionano con `vanillaClients`. Sono solo stato del server, quindi un client semplice non ha bisogno di nulla dal pack. Una regola che nomina un blocco che il server non registra viene scartata con il suo errore.
+
+| Chiave                | Obbligatorio | Valore          | Predefinito          | Cosa fa                                                                                                                                                                                                                           |
+| --------------------- | ------------ | --------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no           | oggetto         | nessuno (vanilla)    | `fluid` deve essere `minecraft:water`. Due sorgenti accanto a un blocco che scorre ne creano una terza solo nei luoghi elencati; altrove mai. Chiave omessa: regola vanilla ovunque. I file della lava la ignorano con un errore. |
+| `infinite.biomes`     | no           | elenco di testi | qualsiasi bioma      | ID di bioma, oppure `#` seguito da un tipo di BiomeDictionary, come `#OCEAN`.                                                                                                                                                     |
+| `infinite.dimensions` | no           | elenco di testi | qualsiasi dimensione | Stessi nomi di `byDimension`. Se sono dati entrambi gli elenchi, il luogo deve corrispondere a entrambi.                                                                                                                          |
 
 ### Note sulla versione
 

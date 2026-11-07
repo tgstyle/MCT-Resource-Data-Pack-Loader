@@ -2259,13 +2259,23 @@ Eine Datei hier hängt Reaktionen an Vanilla-Wasser oder -Lava, ohne Mixin. Ihr 
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:ocean", "#RIVER"],
+    "dimensions": ["overworld"]
+  }
 }
 ```
 
 Eine Pack-Flüssigkeit braucht diese Datei nicht für ihre eigenen Kontakte. Ihre eigenen `reactions` nennen bereits die Vanilla-Flüssigkeit, auf die sie trifft.
 
 Diese Regeln funktionieren mit `vanillaClients`. Sie sind nur Serverzustand, daher braucht ein einfacher Client nichts aus dem Pack. Eine Regel, die einen Block nennt, den der Server nicht registriert, wird mit ihrem Fehler verworfen.
+
+| Schlüssel             | Pflicht | Wert           | Standard         | Was er macht                                                                                                                                                                                                                                |
+| --------------------- | ------- | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | nein    | Objekt         | keiner (Vanilla) | `fluid` muss `minecraft:water` sein. Zwei Quellen neben einem fließenden Block erzeugen nur an den genannten Orten eine dritte; sonst nie. Ohne den Schlüssel gilt überall die Vanilla-Regel. Lava-Dateien ignorieren ihn mit einem Fehler. |
+| `infinite.biomes`     | nein    | Liste aus Text | jeder Biom       | Biom-IDs, oder `#` gefolgt von einem BiomeDictionary-Typ, etwa `#OCEAN`.                                                                                                                                                                    |
+| `infinite.dimensions` | nein    | Liste aus Text | jede Dimension   | Gleiche Namen wie `byDimension`. Sind beide Listen angegeben, muss der Ort auf beide passen.                                                                                                                                                |
 
 ### Hinweise zu Versionen
 

@@ -2259,13 +2259,23 @@ Un archivo aquí asocia reacciones al agua o la lava de vanilla, sin mixin. Su c
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:ocean", "#RIVER"],
+    "dimensions": ["overworld"]
+  }
 }
 ```
 
 Un fluido de pack no necesita este archivo para sus propios contactos. Sus `reactions` ya nombran el fluido de vanilla con el que se encuentra.
 
 Estas reglas funcionan con `vanillaClients`. Son solo estado del servidor, así que un cliente normal no necesita nada del pack. Una regla que nombra un bloque que el servidor no registra se descarta con su error.
+
+| Clave                 | Obligatorio | Valor           | Por defecto         | Qué hace                                                                                                                                                                                                                                    |
+| --------------------- | ----------- | --------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no          | objeto          | ninguno (vanilla)   | `fluid` debe ser `minecraft:water`. Dos fuentes junto a un bloque que fluye crean una tercera solo en los lugares indicados; en otros nunca. Clave omitida: regla de vanilla en todas partes. Los archivos de lava la ignoran con un error. |
+| `infinite.biomes`     | no          | lista de textos | cualquier bioma     | IDs de bioma, o `#` seguido de un tipo de BiomeDictionary, como `#OCEAN`.                                                                                                                                                                   |
+| `infinite.dimensions` | no          | lista de textos | cualquier dimensión | Mismos nombres que `byDimension`. Si se dan ambas listas, el lugar debe cumplir las dos.                                                                                                                                                    |
 
 ### Notas por versión
 

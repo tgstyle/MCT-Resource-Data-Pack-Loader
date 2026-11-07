@@ -2259,13 +2259,23 @@ A file here attaches reactions to vanilla water or lava, with no mixin. Its `flu
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:ocean", "#RIVER"],
+    "dimensions": ["overworld"]
+  }
 }
 ```
 
 A pack fluid does not need this file for its own contacts. Its own `reactions` already name the vanilla fluid it meets.
 
 These rules work with `vanillaClients`. They are server state only, so a plain client needs nothing from the pack. A rule that names a block the server does not register is dropped with its error.
+
+| Key                   | Required | Value        | Default        | What it does                                                                                                                                                                                                      |
+| --------------------- | -------- | ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no       | object       | none (vanilla) | `fluid` must be `minecraft:water`. Two sources beside a flowing block make a third only in the listed places; elsewhere they never do. Key left out: vanilla rule everywhere. Lava files ignore it with an error. |
+| `infinite.biomes`     | no       | list of text | any biome      | Biome ids, or `#` followed by a BiomeDictionary type such as `#OCEAN`.                                                                                                                                            |
+| `infinite.dimensions` | no       | list of text | any dimension  | Same names as `byDimension`. When both lists are given the place must match both.                                                                                                                                 |
 
 ### Version notes
 
