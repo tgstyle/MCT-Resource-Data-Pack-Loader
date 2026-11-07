@@ -21,6 +21,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
+import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentClient;
@@ -29,6 +30,7 @@ import mctmods.resourcedatapackloader.client.util.FaceCacheReset;
 import mctmods.resourcedatapackloader.client.util.PouchKey;
 import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
+import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -88,7 +90,10 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(WeightHud::onHud);
         NeoForge.EVENT_BUS.addListener(WeightHud::onScreen);
         NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, event -> {
-            if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.CLIENT_PACKET_RECEIVED && Minecraft.getInstance().getSingleplayerServer() == null) { ContentWeights.load(); }
+            if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.CLIENT_PACKET_RECEIVED && Minecraft.getInstance().getSingleplayerServer() == null) {
+                ContentWeights.load();
+                ContentDiet.load();
+            }
         });
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             HoldView.reset();
@@ -100,6 +105,7 @@ public class ClientSetup {
             AnvilCosts.leave();
             ContentSkyGates.clear();
             ClientItemLocks.clear();
+            ClientDiet.clear();
             ClientWeights.clear();
             SleepScreen.clear();
         });

@@ -234,6 +234,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, ContentDiet::onTick);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onFinish);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onLogout);
+        NeoForge.EVENT_BUS.addListener(ContentDiet::onLogin);
         NeoForge.EVENT_BUS.addListener(ContentDiet::onClone);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onLogin);
         NeoForge.EVENT_BUS.addListener(ContentHearts::onLogout);

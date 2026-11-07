@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.intro.WorldIntroScreen;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
+import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
@@ -65,6 +66,7 @@ public final class RDPLNetwork {
         registrar.playToServer(TalkPickMessage.TYPE, TalkPickMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { DialogTalk.pick(player, message.index()); } });
         registrar.playToServer(PortwayFilterMessage.TYPE, PortwayFilterMessage.CODEC, (message, context) -> { if (context.player().containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
         registrar.playToClient(UnlocksMessage.TYPE, UnlocksMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientItemLocks.receive(message.open()); } });
+        registrar.playToClient(EatenMessage.TYPE, EatenMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientDiet.receive(message.eaten()); } });
         registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } });
         registrar.playToClient(BedStateMessage.TYPE, BedStateMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { SleepScreen.receive(message.state()); } });
         registrar.playToServer(SetSpawnMessage.TYPE, SetSpawnMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentSleep.setSpawnHere(player); } });
@@ -104,6 +106,8 @@ public final class RDPLNetwork {
     public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(StringListCodec.capped(open))); }
 
     public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return send(player, new UnlocksMessage(StringListCodec.capped(open))); }
+
+    public static void sendEaten(ServerPlayer player, Set<String> eaten) { send(player, new EatenMessage(StringListCodec.capped(eaten))); }
 
     private static List<Integer> boxed(int[] values) { return Arrays.stream(values).boxed().toList(); }
 
