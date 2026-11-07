@@ -41,8 +41,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD")) private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.begin(object, resourceManager, json -> !json.isJsonObject() || CraftingHelper.processConditions(json.getAsJsonObject(), "conditions", context), this::rdpl$parse); }
 
-    @SuppressWarnings("ConstantValue") @Unique private void rdpl$parse(ResourceLocation id, JsonElement json) {
-        if (RecipeManager.fromJson(id, GsonHelper.convertToJsonObject(json, "top element"), context) == null) { throw new JsonParseException("its serializer produced no recipe"); }
+    @SuppressWarnings("ConstantValue") @Unique private Recipe<?> rdpl$parse(ResourceLocation id, JsonElement json) {
+        Recipe<?> recipe = RecipeManager.fromJson(id, GsonHelper.convertToJsonObject(json, "top element"), context);
+        if (recipe == null) { throw new JsonParseException("its serializer produced no recipe"); }
+        return recipe;
     }
 
     @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN")) private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {

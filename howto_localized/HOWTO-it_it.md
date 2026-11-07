@@ -60,6 +60,7 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 - [Blocchi degli oggetti](#blocchi-degli-oggetti)
 - [Pesi degli oggetti](#pesi-degli-oggetti)
 - [Ricette e combustibili della fornace](#ricette-e-combustibili-della-fornace)
+- [Scambi di ricette](#scambi-di-ricette)
 - [Blocchi delle ricette](#blocchi-delle-ricette)
 - [Descrizioni comando](#descrizioni-comando)
 - [Voci di lingua condizionali](#voci-di-lingua-condizionali)
@@ -200,6 +201,7 @@ Sotto `data/`:
 | `<namespace>/structures/*.nbt`               | Modelli, per arboscelli, `imprint` e override delle mod. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                        |
 | `<namespace>/recipes/*.json`                 | Ricette di crafting, aggiunte o sostituite. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                     |
 | `<namespace>/recipe_removals/*.json`         | Ricette eliminate per nome, namespace o risultato. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                              |
+| `<namespace>/recipe_swaps/*.json`            | Oggetto sostituito con un altro nelle ricette di creazione e di cottura. [Scambi di ricette](#scambi-di-ricette)                                                                                                                    |
 | `<namespace>/item_locks/*.json`              | Oggetti nascosti nelle liste di un giocatore finché non ottiene un progresso. [Blocchi degli oggetti](#blocchi-degli-oggetti)                                                                                                       |
 | `<namespace>/weights/*.json`                 | Pesi degli oggetti, un limite di carico e livelli di sovraccarico. [Pesi degli oggetti](#pesi-degli-oggetti)                                                                                                                        |
 | `<namespace>/recipe_locks/*.json`            | Ricette che restano chiuse finché un giocatore non ottiene un progresso. [Blocchi delle ricette](#blocchi-delle-ricette)                                                                                                            |
@@ -573,6 +575,7 @@ Il genitore di una dimensione o di un bioma può essere un modello allo stesso m
 - **Modelli di struttura**, i file `.nbt` che le mod usano per gli edifici generati, sotto `<namespace>/structures/`
 - **Ridenominazioni nel registro**: mantieni funzionanti i vecchi mondi quando una mod rinomina un blocco o un oggetto
 - **Rimozioni di ricette**: elimina una ricetta di crafting per nome, namespace o risultato
+- **Scambi di ricette**: sostituisce un oggetto con un altro in ogni ricetta di creazione e di cottura che lo usa, vedi [Scambi di ricette](#scambi-di-ricette)
 - **Blocchi e oggetti disattivati**: togli dal gioco qualsiasi blocco o oggetto, vedi [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati)
 - **Iniezioni di loot**: aggiungi un pool a una loot table invece di sostituirla per intero
 - **Rimozioni di loot**: tolgono una voce o un oggetto da una loot table, oppure la svuotano, senza sostituirla
@@ -594,7 +597,7 @@ Un pack può stare solo sul server, con giocatori su client vanilla puri, a una 
 | Basta il solo server                                                                                                                                      | Serve il pack anche sul client                                                                                         |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                 |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                   |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                   |
 | `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                                  |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (cartelle client: senza client, lasciale fuori) |
 | l'intero livello di controllo, le impostazioni e la pregenerazione                                                                                        |                                                                                                                        |
@@ -2726,6 +2729,54 @@ Il nome del file lo scegli tu, viene letta solo la cartella, e più file si somm
 | `item`     | uno dei due  | nome dell'oggetto | nessuno     | L'oggetto che brucia                 |
 | `tag`      | uno dei due  | id del tag        | nessuno     | Tutto ciò che sta in quel tag brucia |
 | `burnTime` | sì           | intero, tick      | `0`         | Il carbone è 1600, un'asse 300       |
+
+## Scambi di ricette
+
+*crafting, bottino e scambi*
+
+`<namespace>/recipe_swaps/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella, e più file si sommano. Sostituisce un oggetto con un altro nelle ricette di creazione e di cottura, senza riscrivere ogni ricetta a mano.
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["forge:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Chiave     | Obbligatorio | Valore              | Predefinito | Cosa fa                                                    |
+| ---------- | ------------ | ------------------- | ----------- | ---------------------------------------------------------- |
+| `requires` | no           | elenco di id di mod | nessuno     | Il file viene letto solo se sono caricate tutte queste mod |
+| `swaps`    | sì           | elenco              | nessuno     | Gli scambi, applicati in ordine                            |
+
+Voci sotto `swaps`:
+
+| Chiave    | Obbligatorio | Valore            | Predefinito  | Cosa fa                                                                                                                                                                                                                                                                                                                      |
+| --------- | ------------ | ----------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | sì           | oggetto           | nessuno      | Ciò che viene sostituito: `names` (un `*` finale corrisponde a ogni nome che inizia con quel testo), `namespaces` e `tags`, le chiavi di [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati)                                                                                                                     |
+| `to`      | sì           | nome dell'oggetto | nessuno      | Ciò che lo sostituisce. Un oggetto sconosciuto salta la voce e il log lo segnala                                                                                                                                                                                                                                             |
+| `output`  | no           | booleano          | `false`      | Sostituisce anche `from` dove è ciò che una ricetta produce. Il conteggio resta, e i componenti del vecchio risultato vengono eliminati                                                                                                                                                                                      |
+| `recipes` | no           | oggetto           | ogni ricetta | Limita lo scambio a queste ricette di creazione: `names`, con un `*` finale che corrisponde a ogni nome che inizia con quel testo, e `namespaces`. Una voce con `recipes` lascia in pace le ricette di cottura, come su 1.12.2, dove le ricette di fornace non hanno nome; `outputs` qui non viene letto e il log lo segnala |
+
+Uno slot che accetta solo oggetti `from` diventa `to`. Uno slot che accetta anche altri oggetti li mantiene e accetta anche `to`, ma perde il suo tag, quindi un oggetto aggiunto in seguito a quel tag non vi viene preso. Un oggetto `from` raggiunge uno slot scritto come tag che lo contiene, e un tag `from` raggiunge uno slot che nomina uno dei suoi oggetti.
+
+Una voce il cui `to` coincide con il proprio `from` viene saltata, e il log lo segnala. Un ingrediente di cottura non viene scambiato quando `to` è già l'ingrediente di un'altra ricetta dello stesso tipo, fusione, altoforno, affumicatore o falò, e il log nomina quella ricetta.
+
+Gli scambi riscrivono i file delle ricette al caricamento, quindi girano di nuovo a ogni `/reload`. Le rimozioni e il blocco delle ricette giudicano una ricetta da ciò che produceva prima dello scambio, come su 1.12.2; [Blocchi e oggetti disattivati](#blocchi-e-oggetti-disattivati), i [file della fornace](#ricette-e-combustibili-della-fornace) e i [blocchi delle ricette](#blocchi-delle-ricette) vedono la ricetta già scambiata.
+
+Vengono riscritte le ricette di creazione e i quattro tipi di cottura. Qualsiasi altro tipo di ricetta, come quella di una macchina di un'altra mod, non viene mai toccato. Un oggetto ingrediente con una chiave `type` propria che nomina un oggetto sostituito resta com'è. Le ricette create da uno script, come uno script di ricette KubeJS, non vengono scambiate, e il log lo segnala una volta. Il log riassume poi: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, e `Left N recipe(s) alone` quando ne sono rimaste.
 
 ## Blocchi delle ricette
 
@@ -9535,6 +9586,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9550,6 +9602,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | elenco di id di mod         | vuoto           | Mod le cui ricette di fornace vengono rimosse del tutto                                                                                                                                                                                                                                   |
 | `logBlockedRecipes`   | booleano                    | `true`          | Registra nel log un conteggio per mod di ciò che è stato bloccato                                                                                                                                                                                                                         |
 | `furnace`             | booleano                    | `true`          | Applica i file furnace/*.json, che aggiungono e rimuovono ricette di cottura in fornace **Solo configurazione.**                                                                                                                                                                          |
+| `swaps`               | booleano                    | `true`          | Applica i file recipe_swaps/*.json, che sostituiscono un oggetto con un altro negli ingredienti e nei risultati delle ricette di creazione e di cottura **Solo configurazione.**                                                                                                          |
 | `removals`            | booleano                    | `true`          | Applica i file recipe_removals/*.json, che eliminano ricette di creazione per nome, namespace o risultato **Solo configurazione.**                                                                                                                                                        |
 | `skipMissingItems`    | booleano                    | `true`          | Salta le ricette che usano un oggetto non registrato, invece di lasciarle fallire. Il conteggio viene registrato una volta **Solo configurazione.**                                                                                                                                       |
 

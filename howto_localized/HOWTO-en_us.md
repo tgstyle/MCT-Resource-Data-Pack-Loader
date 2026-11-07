@@ -60,6 +60,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Item locks](#item-locks)
 - [Item weights](#item-weights)
 - [Furnace recipes and fuels](#furnace-recipes-and-fuels)
+- [Recipe swaps](#recipe-swaps)
 - [Recipe locks](#recipe-locks)
 - [Tooltips](#tooltips)
 - [Language gates](#language-gates)
@@ -200,6 +201,7 @@ Under `data/`:
 | `<namespace>/structures/*.nbt`               | Templates, for saplings, `imprint` and mod overrides. [What you can override](#what-you-can-override)                                                                          |
 | `<namespace>/recipes/*.json`                 | Crafting recipes, added or replaced. [What you can override](#what-you-can-override)                                                                                           |
 | `<namespace>/recipe_removals/*.json`         | Recipes deleted by name, namespace or output. [What you can override](#what-you-can-override)                                                                                  |
+| `<namespace>/recipe_swaps/*.json`            | One item replaced by another in crafting and cooking recipes. [Recipe swaps](#recipe-swaps)                                                                                    |
 | `<namespace>/item_locks/*.json`              | Items hidden from a player's lists until they earn an advancement. [Item locks](#item-locks)                                                                                   |
 | `<namespace>/weights/*.json`                 | Item weights, a carrying limit and encumbrance tiers. [Item weights](#item-weights)                                                                                            |
 | `<namespace>/recipe_locks/*.json`            | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                                    |
@@ -573,6 +575,7 @@ A dimension or biome parent can be a template in the same way, gated behind the 
 - **Structure templates**, the `.nbt` files mods use for generated buildings, under `<namespace>/structures/`
 - **Registry renames**, keep old worlds working when a mod renames a block or item
 - **Recipe removals**, delete a crafting recipe by name, namespace or output
+- **Recipe swaps**, put one item in place of another in every crafting and cooking recipe that uses it, see [Recipe swaps](#recipe-swaps)
 - **Disabled blocks and items**, take any block or item out of play, see [Disabled blocks and items](#disabled-blocks-and-items)
 - **Loot injections**, add a pool to a loot table instead of replacing the whole thing
 - **Loot removals**, take an entry or an item out of a loot table, or empty it, without replacing the table
@@ -594,7 +597,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | Server alone is enough                                                                                                                                    | Needs the pack on the client too                                                                                        |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                    |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `tags`, `disabled`                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `exposures`, `tooltips`                                    |
 | `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                                   |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                      |                                                                                                                         |
@@ -2726,6 +2729,54 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `item`     | one of the two | item name  | none    | The item that burns          |
 | `tag`      | one of the two | tag id     | none    | Everything in that tag burns |
 | `burnTime` | yes            | int, ticks | `0`     | Coal is 1600, a plank 300    |
+
+## Recipe swaps
+
+*crafting, loot and trade*
+
+`<namespace>/recipe_swaps/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Puts one item in place of another in crafting and cooking recipes, without rewriting each recipe by hand.
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["forge:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Key        | Required | Value           | Default | What it does                                                 |
+| ---------- | -------- | --------------- | ------- | ------------------------------------------------------------ |
+| `requires` | no       | list of mod ids | none    | The file is read only when every one of these mods is loaded |
+| `swaps`    | yes      | list            | none    | The swaps, applied in order                                  |
+
+Entries under `swaps`:
+
+| Key       | Required | Value     | Default      | What it does                                                                                                                                                                                                                                                                                   |
+| --------- | -------- | --------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | yes      | object    | none         | What is replaced: `names` (a trailing `*` matches every name starting with that text), `namespaces` and `tags`, the keys of [Disabled blocks and items](#disabled-blocks-and-items)                                                                                                            |
+| `to`      | yes      | item name | none         | What takes its place. An unknown item skips the entry and the log says so                                                                                                                                                                                                                      |
+| `output`  | no       | boolean   | `false`      | Also replaces `from` where it is what a recipe makes. The count stays, and the old result's components are dropped                                                                                                                                                                             |
+| `recipes` | no       | object    | every recipe | Limits the swap to these crafting recipes: `names`, with a trailing `*` matching every name starting with that text, and `namespaces`. An entry with `recipes` leaves cooking recipes alone, as on 1.12.2, where furnace recipes have no names; `outputs` is not read here and the log says so |
+
+A slot that takes only `from` items becomes `to`. A slot that also takes other items keeps them and takes `to` as well, and loses its tag, so an item added to that tag later is not taken there. A `from` item reaches a slot written as a tag that holds it, and a `from` tag reaches a slot that names one of its items.
+
+An entry whose `to` its own `from` matches is skipped, and the log says so. A cooking input is not swapped when `to` is already the input of another recipe of the same kind, smelting, blasting, smoking or campfire, and the log names that recipe.
+
+Swaps rewrite the recipe files as they load, so they run again on every `/reload`. Recipe removals and recipe blocking judge a recipe by what it made before the swap, as on 1.12.2; [Disabled blocks and items](#disabled-blocks-and-items), the [furnace files](#furnace-recipes-and-fuels) and [recipe locks](#recipe-locks) see the swapped recipe.
+
+Crafting recipes and the four cooking kinds are rewritten. Any other recipe type, such as a machine of another mod, is never touched. An ingredient object with a `type` key of its own that names a replaced item is left as it is. Recipes a script makes, such as a KubeJS recipe script, are not swapped, and the log says so once. The log then sums it up: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, and `Left N recipe(s) alone` when any were left.
 
 ## Recipe locks
 
@@ -9535,6 +9586,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9550,6 +9602,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | list of mod ids              | empty           | Mods whose furnace recipes are removed outright                                                                                                                                                                                    |
 | `logBlockedRecipes`   | boolean                      | `true`          | Logs a per-mod count of what was blocked                                                                                                                                                                                           |
 | `furnace`             | boolean                      | `true`          | Apply furnace/*.json files, which add and remove furnace smelting recipes **Config only.**                                                                                                                                         |
+| `swaps`               | boolean                      | `true`          | Apply recipe_swaps/*.json files, which replace an item with another in the ingredients and results of crafting and cooking recipes **Config only.**                                                                                |
 | `removals`            | boolean                      | `true`          | Apply recipe_removals/*.json files, which delete crafting recipes by name, namespace or output **Config only.**                                                                                                                    |
 | `skipMissingItems`    | boolean                      | `true`          | Skip recipes that use an item which is not registered, instead of letting them fail. The count is logged once **Config only.**                                                                                                     |
 
