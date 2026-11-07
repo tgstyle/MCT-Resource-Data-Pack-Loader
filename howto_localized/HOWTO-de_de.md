@@ -2130,6 +2130,24 @@ Eine Pack-Flüssigkeit braucht diese Datei nicht für ihre eigenen Kontakte. Ihr
 
 Diese Regeln funktionieren mit `vanillaClients`. Sie sind nur Serverzustand, daher braucht ein einfacher Client nichts aus dem Pack. Eine Regel, die einen Block nennt, den der Server nicht registriert, wird mit ihrem Fehler verworfen.
 
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_ocean"],
+    "dimensions": ["overworld"]
+  }
+}
+```
+
+| Schlüssel             | Pflicht | Wert      | Standard         | Was er macht                                                                                                                                                                                                                                            |
+| --------------------- | ------- | --------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | nein    | Objekt    | keiner (vanilla) | `fluid` muss `minecraft:water` sein. Zwei Quellen neben einem fließenden Block erzeugen nur an den aufgeführten Orten eine dritte, überall sonst nie. Fehlt der Schlüssel, gilt überall die Vanilla-Regel. Lava-Dateien ignorieren ihn mit einem Fehler |
+| `infinite.biomes`     | nein    | Textliste | jedes Biom       | Biom-IDs oder `#` gefolgt von einem Biom-Tag                                                                                                                                                                                                            |
+| `infinite.dimensions` | nein    | Textliste | jede Dimension   | Dieselben Namen wie bei `byDimension`. Sind beide Listen angegeben, muss der Ort auf beide passen                                                                                                                                                       |
+
+Die Spielregel `waterSourceConversion` gilt weiterhin, wo die Liste sie erlaubt. Der Ort wird an jeder benachbarten Quelle geprüft.
+
 ### Hinweise zu Versionen
 
 - **Reichweite.** 1.12.2 nimmt ein `spread` bis 15. Moderne Versionen bleiben bei 7 stehen und schreiben eine Warnung, da ihr Flüssigkeitsstand nur 8 Mengen hält.

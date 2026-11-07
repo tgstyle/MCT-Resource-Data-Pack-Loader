@@ -2130,6 +2130,24 @@ Tekutina z balíčku tento soubor pro své vlastní kontakty nepotřebuje. Její
 
 Tato pravidla fungují s `vanillaClients`. Jsou jen serverový stav, takže obyčejný klient od balíčku nic nepotřebuje. Pravidlo, které pojmenuje blok, jejž server neregistruje, se zahodí se svou chybou.
 
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_ocean"],
+    "dimensions": ["overworld"]
+  }
+}
+```
+
+| Klíč                  | Povinné | Hodnota      | Výchozí           | Co dělá                                                                                                                                                                                                       |
+| --------------------- | ------- | ------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | ne      | objekt       | žádné (vanilla)   | `fluid` musí být `minecraft:water`. Dva zdroje vedle tekoucího bloku udělají třetí jen na uvedených místech; jinde nikdy. Když klíč chybí, platí vanilla pravidlo všude. Soubory s lávou ho ignorují s chybou |
+| `infinite.biomes`     | ne      | seznam textu | libovolný biom    | Id biomů, nebo `#` následované tagem biomu                                                                                                                                                                    |
+| `infinite.dimensions` | ne      | seznam textu | libovolná dimenze | Stejné názvy jako `byDimension`. Když jsou dány oba seznamy, místo musí odpovídat oběma                                                                                                                       |
+
+Pravidlo hry `waterSourceConversion` se stále uplatní tam, kde to seznam dovolí. Místo se ověřuje u každého sousedního zdroje.
+
 ### Poznámky k verzím
 
 - **Dosah.** 1.12.2 přijme `spread` až 15. Moderní verze se zastaví na 7 a zaloguje jedno varování, protože jejich úroveň tekutiny drží jen 8 hodnot.

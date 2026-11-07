@@ -2130,6 +2130,24 @@ Um fluido do pacote não precisa deste arquivo para os seus próprios contatos. 
 
 Estas regras funcionam com `vanillaClients`. São só estado do servidor, então um cliente simples não precisa de nada do pacote. Uma regra que nomeia um bloco que o servidor não registra é descartada com o seu erro.
 
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_ocean"],
+    "dimensions": ["overworld"]
+  }
+}
+```
+
+| Chave                 | Obrigatória | Valor          | Padrão            | O que faz                                                                                                                                                                                                                       |
+| --------------------- | ----------- | -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | não         | objeto         | nenhum (vanilla)  | `fluid` deve ser `minecraft:water`. Duas fontes ao lado de um bloco que flui formam uma terceira só nos lugares listados; nos outros, nunca. Chave omitida: regra vanilla em todo lugar. Arquivos de lava a ignoram com um erro |
+| `infinite.biomes`     | não         | lista de texto | qualquer bioma    | IDs de bioma, ou `#` seguido de uma tag de bioma                                                                                                                                                                                |
+| `infinite.dimensions` | não         | lista de texto | qualquer dimensão | Mesmos nomes de `byDimension`. Quando as duas listas são dadas, o lugar precisa corresponder a ambas                                                                                                                            |
+
+A regra do jogo `waterSourceConversion` ainda vale onde a lista permite. O lugar é testado em cada fonte vizinha.
+
 ### Notas de versão
 
 - **Alcance.** A 1.12.2 aceita um `spread` de até 15. As versões modernas param em 7 e registram um aviso, já que o nível de fluido delas guarda só 8 quantidades.

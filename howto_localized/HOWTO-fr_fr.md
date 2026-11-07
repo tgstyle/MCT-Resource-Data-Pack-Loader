@@ -2130,6 +2130,24 @@ Un fluide de pack n'a pas besoin de ce fichier pour ses propres contacts. Ses `r
 
 Ces règles fonctionnent avec `vanillaClients`. Elles ne concernent que l'état du serveur, donc un client simple n'a besoin de rien du pack. Une règle qui nomme un bloc que le serveur n'enregistre pas est écartée avec son erreur.
 
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_ocean"],
+    "dimensions": ["overworld"]
+  }
+}
+```
+
+| Clé                   | Requis | Valeur         | Défaut          | Rôle                                                                                                                                                                                                                                   |
+| --------------------- | ------ | -------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | non    | objet          | aucun (vanilla) | `fluid` doit valoir `minecraft:water`. Deux sources à côté d'un bloc qui coule n'en font une troisième qu'aux endroits listés ; ailleurs, jamais. Clé absente : règle vanilla partout. Les fichiers de lave l'ignorent avec une erreur |
+| `infinite.biomes`     | non    | liste de texte | tout biome      | Ids de biome, ou `#` suivi d'un tag de biome                                                                                                                                                                                           |
+| `infinite.dimensions` | non    | liste de texte | toute dimension | Mêmes noms que `byDimension`. Si les deux listes sont données, l'endroit doit correspondre aux deux                                                                                                                                    |
+
+La règle de jeu `waterSourceConversion` s'applique toujours là où la liste le permet. L'endroit est testé à chaque source voisine.
+
 ### Notes par version
 
 - **Portée.** 1.12.2 accepte un `spread` jusqu'à 15. Les versions modernes s'arrêtent à 7 et écrivent un avertissement, car leur niveau de fluide ne tient que 8 quantités.

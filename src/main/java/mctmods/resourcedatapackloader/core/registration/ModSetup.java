@@ -415,6 +415,7 @@ public class ModSetup {
         if (ContentExposures.enabled()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
         if (ContentExposures.spreads()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
         if (VanillaFluidRules.wanted()) { NeoForge.EVENT_BUS.addListener(VanillaFluidRules::onNeighborNotify); }
+        if (VanillaFluidRules.sourcesWanted()) { NeoForge.EVENT_BUS.addListener(VanillaFluidRules::onCreateSource); }
         if (FluidReactionQueue.wanted()) {
             NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onTick);
             NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onUnload);

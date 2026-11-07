@@ -2130,6 +2130,24 @@ Um fluido do pacote não precisa deste ficheiro para os seus próprios contactos
 
 Estas regras funcionam com `vanillaClients`. São apenas estado do servidor, por isso um cliente simples não precisa de nada do pacote. Uma regra que nomeia um bloco que o servidor não regista é descartada com o seu erro.
 
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_ocean"],
+    "dimensions": ["overworld"]
+  }
+}
+```
+
+| Chave                 | Obrigatória | Valor          | Padrão            | O que faz                                                                                                                                                                                                                            |
+| --------------------- | ----------- | -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | não         | objeto         | nenhum (vanilla)  | `fluid` tem de ser `minecraft:water`. Duas fontes junto a um bloco que corre formam uma terceira só nos locais listados; nos outros, nunca. Chave omitida: regra vanilla em todo o lado. Os ficheiros de lava ignoram-na com um erro |
+| `infinite.biomes`     | não         | lista de texto | qualquer bioma    | IDs de bioma, ou `#` seguido de uma etiqueta de bioma                                                                                                                                                                                |
+| `infinite.dimensions` | não         | lista de texto | qualquer dimensão | Mesmos nomes de `byDimension`. Quando as duas listas são indicadas, o local tem de corresponder a ambas                                                                                                                              |
+
+A regra de jogo `waterSourceConversion` continua a aplicar-se onde a lista o permite. O local é testado em cada fonte vizinha.
+
 ### Notas de versão
 
 - **Alcance.** A 1.12.2 aceita um `spread` até 15. As versões modernas param em 7 e registam um aviso, já que o nível de fluido delas guarda apenas 8 quantidades.
