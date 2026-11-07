@@ -42,6 +42,7 @@ public final class HeartReward {
     public final Trigger trigger;
     @Nullable public final ResourceLocation advancement;
     public final int diet;
+    public final boolean lifetime;
     public final List<String> foods;
     public final List<ItemMatch> matches;
     public final int need;
@@ -68,7 +69,8 @@ public final class HeartReward {
         this.eatenKey = EATEN + key;
         this.trigger = trigger;
         this.advancement = trigger == Trigger.ADVANCEMENT ? new ResourceLocation(Json.getString(json, "advancement").trim()) : null;
-        this.diet = trigger == Trigger.DIET ? tier(json) : 0;
+        this.lifetime = trigger == Trigger.DIET && ContentDiet.lifetime(json, key);
+        this.diet = trigger == Trigger.DIET ? tier(json, lifetime) : 0;
         this.foods = trigger == Trigger.FOODS ? foodNames(json) : Collections.emptyList();
         this.matches = trigger == Trigger.FOODS ? foodMatches(owner, foods) : Collections.emptyList();
         this.need = trigger == Trigger.FOODS ? need(json, foods.size()) : 1;
@@ -119,9 +121,10 @@ public final class HeartReward {
         }
     }
 
-    private static int tier(JsonObject json) {
+    private static int tier(JsonObject json, boolean lifetime) {
         int distinct = Json.getInt(json, "diet");
-        if (!ContentDiet.hasTier(distinct)) { throw new IllegalArgumentException("diet " + distinct + " is no variety tier of a loaded diet file"); }
+        if (lifetime && (distinct < 1 || !ContentDiet.loaded())) { throw new IllegalArgumentException("diet with dietCount lifetime needs a diet file and a count of 1 or more"); }
+        if (!lifetime && !ContentDiet.hasTier(distinct)) { throw new IllegalArgumentException("diet " + distinct + " is no variety tier of a loaded diet file"); }
         return distinct;
     }
 

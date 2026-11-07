@@ -25,8 +25,9 @@ public final class DietDef {
     public final List<ItemMatch> exempt;
     public final String repeatMessage;
     public final String varietyMessage;
+    public final boolean tooltip;
 
-    private DietDef(int memory, float[] repeat, List<Tier> variety, List<Group> groups, List<ItemMatch> exempt, String repeatMessage, String varietyMessage) {
+    private DietDef(int memory, float[] repeat, List<Tier> variety, List<Group> groups, List<ItemMatch> exempt, String repeatMessage, String varietyMessage, boolean tooltip) {
         this.memory = memory;
         this.repeat = repeat;
         this.variety = variety;
@@ -34,6 +35,7 @@ public final class DietDef {
         this.exempt = exempt;
         this.repeatMessage = repeatMessage;
         this.varietyMessage = varietyMessage;
+        this.tooltip = tooltip;
     }
 
     public static final class Group {
@@ -106,7 +108,13 @@ public final class DietDef {
             repeatMessage = message(messages, "repeat", DEFAULT_REPEAT);
             varietyMessage = message(messages, "variety", DEFAULT_VARIETY);
         }
-        return new DietDef(memory, repeat, variety, groups, exempt, repeatMessage, varietyMessage);
+        boolean tooltip = json.has("tooltip") && flag(json.get("tooltip"));
+        return new DietDef(memory, repeat, variety, groups, exempt, repeatMessage, varietyMessage, tooltip);
+    }
+
+    private static boolean flag(JsonElement element) {
+        if (!element.isJsonPrimitive() || !element.getAsJsonPrimitive().isBoolean()) { throw new IllegalArgumentException("tooltip must be true or false"); }
+        return element.getAsBoolean();
     }
 
     public boolean exempts(ItemStack stack) {

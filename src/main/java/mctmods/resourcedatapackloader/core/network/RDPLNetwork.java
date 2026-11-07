@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.intro.IntroLandMadeHandler;
 import mctmods.resourcedatapackloader.client.gui.intro.IntroPlayHandler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
+import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
@@ -79,6 +80,7 @@ public final class RDPLNetwork {
         registerClient(() -> ClientWeights.Handler.class, WeightMessage.class);
         registerClient(() -> SleepScreen.Handler.class, BedStateMessage.class);
         registerMessage(SetSpawnMessage.Handler.class, SetSpawnMessage.class);
+        registerClient(() -> ClientDiet.Handler.class, EatenMessage.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -139,6 +141,8 @@ public final class RDPLNetwork {
     public static void sendBedState(EntityPlayerMP player, int state) { sendTo(new BedStateMessage(state), player); }
 
     public static void sendGates(EntityPlayerMP player, Collection<String> gates) { sendTo(new GatesMessage(gates), player); }
+
+    public static void sendEaten(EntityPlayerMP player, Collection<String> eaten) { sendTo(new EatenMessage(eaten), player); }
 
     public static boolean sendUnlocks(EntityPlayerMP player, Collection<String> open) {
         if (unreachable(player)) { return false; }

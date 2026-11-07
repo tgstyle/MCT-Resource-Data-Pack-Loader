@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class AbstractStringListMessage implements IMessage {
-    public static final int MOST = 256;
+    public static final int MOST = 4096;
     protected final List<String> values = new ArrayList<>();
 
     protected AbstractStringListMessage() {}

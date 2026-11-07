@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
+import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
@@ -15,6 +17,7 @@ import java.util.Map;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -51,11 +54,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (held != null && ContentContainerBlock.holdsKept(stack) && held.getTagList(ITEMS, COMPOUND).tagCount() > 0) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.container.kept", held.getTagList(ITEMS, COMPOUND).tagCount())); }
     }
 
+    private static void diet(ItemStack stack, List<String> tooltip) {
+        if (Config.content.vanillaClients || !ContentDiet.tooltip() || ClientDiet.waiting() || !(stack.getItem() instanceof ItemFood)) { return; }
+        String kind = ContentDiet.counted(stack);
+        if (kind.isEmpty()) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.diet.tooltip.ignored")); }
+        else if (ClientDiet.ate(kind)) { tooltip.add(TextFormatting.GREEN + I18n.format("rdpl.diet.tooltip.eaten")); }
+        else { tooltip.add(TextFormatting.YELLOW + I18n.format("rdpl.diet.tooltip.new")); }
+    }
+
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         List<String> tooltip = event.getToolTip();
         weight(stack, tooltip);
         kept(stack, tooltip);
+        diet(stack, tooltip);
         if (ContentTooltips.none()) { return; }
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(stack).entrySet()) {
             List<String> lines = ContentTooltips.forEnchantment(entry.getKey());
