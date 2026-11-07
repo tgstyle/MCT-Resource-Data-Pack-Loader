@@ -73,6 +73,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
 - [Colonnes qui tombent](#colonnes-qui-tombent)
+- [Propagation des fleurs](#propagation-des-fleurs)
 - [Portage](#portage)
 - [Retrait de butin](#retrait-de-butin)
 - [Butin des joueurs](#butin-des-joueurs)
@@ -223,6 +224,7 @@ Sous `data/` :
 | `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                                                                  |
 | `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                                                   |
 | `<namespace>/columns/*.json`                 | Suites de blocs qui tombent et cassent avec le bloc que le joueur casse, au-dessus de lui. [Colonnes qui tombent](#colonnes-qui-tombent)                                                                                 |
+| `<namespace>/flower_spreads/*.json`          | Fleurs supplémentaires placées autour de l'herbe ou d'un autre bloc quand on y utilise de la poudre d'os. [Propagation des fleurs](#propagation-des-fleurs)                                                              |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                                 |
 | `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                   |
 | `<namespace>/tags/<kind>/*.json`             | Tags, au format propre au jeu. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                                            |
@@ -3358,6 +3360,40 @@ Quand un joueur casse un bloc, la suite de blocs qui tombent listés juste au-de
 | `alternate`      | non    | objet avec `item` et `chance` (0 à 1)                                                                          | aucun   | Chaque bloc de la colonne donne `item` à un jet réussi, ou son propre objet de bloc en cas d'échec. Sans lui, chaque bloc donne ses drops normaux à Fortune 0. |
 
 Les faux joueurs ne la déclenchent jamais, et les joueurs en créatif ne reçoivent aucun drop. Les fichiers se cumulent ; le premier fichier dont les blocs contiennent le bloc au-dessus du bloc cassé est utilisé. Au chargement, le journal affiche `Loaded N falling column group(s)`, et un fichier qui nomme un bloc non enregistré ou un `alternate` invalide signale une erreur.
+
+## Propagation des fleurs
+
+*artisanat, butin et commerce*
+
+`<namespace>/flower_spreads/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+La poudre d'os sur l'herbe fait pousser de l'herbe haute et les fleurs propres au biome. Un fichier ici ajoute autour du bloc des fleurs de votre choix, de n'importe quel mod, qu'un joueur ou un distributeur utilise la poudre d'os. La pousse vanilla continue de fonctionner, donc ces fleurs viennent en plus. Sans fichier, rien ne change ; un pack qui veut que le choix revienne au joueur met une entrée `config:` dans `requires`, comme décrit dans Options de pack.
+
+```json
+{
+  "on": ["minecraft:grass_block"],
+  "flowers": ["minecraft:blue_orchid", {"block": "minecraft:dandelion"}],
+  "tag": ["minecraft:small_flowers"],
+  "everyMod": false,
+  "radius": 3,
+  "count": 4
+}
+```
+
+| Clé        | Requis | Valeur                                                                                                         | Défaut                                                                    | Rôle                                                                                                                                                             |
+| ---------- | ------ | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | non    | liste de chaînes                                                                                               | aucun                                                                     | Ids de mods qui doivent être chargés, ou options `config:`, comme ailleurs.                                                                                      |
+| `on`       | non    | liste d'id de blocs, avec `meta` (1.12.2) ou `properties` (1.20.1 et suivantes) comme dans un groupe de dureté | `minecraft:grass` (1.12.2), `minecraft:grass_block` (1.20.1 et suivantes) | Blocs sur lesquels la poudre d'os est utilisée. Tout bloc que la poudre d'os peut faire pousser convient, comme une culture.                                     |
+| `flowers`  | non    | liste d'id de blocs, avec `meta` ou `properties`                                                               | aucun                                                                     | Fleurs à placer. Un bloc sans `meta` ni `properties` place n'importe lequel de ses états.                                                                        |
+| `oreDict`  | non    | liste de noms de minerai (1.12.2 seulement)                                                                    | aucun                                                                     | Chaque bloc enregistré sous ces noms de minerai est ajouté aux fleurs.                                                                                           |
+| `tag`      | non    | liste de tags de blocs (1.20.1 et suivantes)                                                                   | aucun                                                                     | Chaque bloc de ces tags est ajouté aux fleurs.                                                                                                                   |
+| `everyMod` | non    | bool                                                                                                           | `false`                                                                   | Si vrai, chaque fleur de chaque mod est ajoutée : sur 1.12.2 chaque bloc de fleur, sur 1.20.1 et suivantes le tag `minecraft:small_flowers` sans la rose wither. |
+| `radius`   | non    | int, de 1 à 8                                                                                                  | `3`                                                                       | Distance maximale du bloc, en cercle, où les fleurs peuvent se trouver.                                                                                          |
+| `count`    | non    | int, de 1 à 64                                                                                                 | `4`                                                                       | Nombre maximal de fleurs placées par utilisation de poudre d'os.                                                                                                 |
+
+Une fleur ne va que dans l'air, à un bloc au-dessus du niveau du sol du bloc utilisé ou un bloc plus haut ou plus bas, et seulement là où cette fleur peut tenir, jamais dans le bloc juste au-dessus du bloc utilisé. La liste de fleurs est lue à chaque utilisation, donc les tags et noms de minerai que d'autres mods remplissent tard comptent quand même. Les fichiers se cumulent ; le premier fichier dont `on` contient le bloc est utilisé. Un fichier doit avoir au moins un de `flowers`, `oreDict`, `tag` ou `everyMod`. Au chargement, le journal affiche `Loaded N flower spread rule(s)`, et un fichier sans bloc `on` enregistré ou sans source de fleurs journalise une erreur et est ignoré. Sur 1.20.1 et suivantes, un fichier qui utilise `oreDict` journalise un avertissement pour utiliser `tag`. Ce sont des données serveur, et rien n'est nécessaire côté client.
 
 ## Portage
 
