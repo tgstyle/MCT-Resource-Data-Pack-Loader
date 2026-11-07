@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.client.gui.ContentWorldScreen;
+import mctmods.resourcedatapackloader.client.gui.GammaLock;
 import mctmods.resourcedatapackloader.client.gui.HideRecipeBook;
 import mctmods.resourcedatapackloader.client.gui.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.gui.SleepScreen;
@@ -68,6 +69,7 @@ public class ClientSetup {
         MinecraftForge.EVENT_BUS.addListener(HideRecipeBook::onInitPost);
         MinecraftForge.EVENT_BUS.addListener(SleepScreen::onInit);
         MinecraftForge.EVENT_BUS.addListener(SleepScreen::onRenderPost);
+        MinecraftForge.EVENT_BUS.addListener(GammaLock::onInit);
         MinecraftForge.EVENT_BUS.addListener(ChatHistoryKeeper::onOpening);
         MinecraftForge.EVENT_BUS.addListener(SeamSkyRenderer::onRenderStage);
         MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onFog);

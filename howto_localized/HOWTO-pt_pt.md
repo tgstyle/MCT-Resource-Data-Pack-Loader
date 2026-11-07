@@ -5207,6 +5207,7 @@ Um `sun` ou `moon` que defina apenas uma `texture` troca a imagem no céu da pr�
 | `fixedTime`        | não         | número inteiro, ticks       | nenhum       | Fixa a hora do dia                                                                                                                                                                                                                       |
 | `sunriseColors`    | não         | booleano                    | `true`       | Se o nascer e o pôr do sol são tingidos                                                                                                                                                                                                  |
 | `ambientLight`     | não         | número decimal, 0 a 1       | `0.0`        | Luz mínima em toda a parte                                                                                                                                                                                                               |
+| `darkness`         | não         | objeto                      | nenhum       | Retira o mínimo de luz para que os locais sem iluminação fiquem negros. Ver [Escuridão total](#escuridão-total)                                                                                                                          |
 | `lightSkyColor`    | não         | cor hexadecimal             | nenhum       | Tonalidade da luz do dia sobre blocos e mobs                                                                                                                                                                                             |
 | `lightBlockColor`  | não         | cor hexadecimal             | nenhum       | Tonalidade da luz de tochas e de outra luz de blocos                                                                                                                                                                                     |
 | `skyFactor`        | não         | número decimal, 0 a 1       | `1.0`        | Quão brilhante parece a luz do dia. Desenhada apenas no cliente, pelo que o spawn de mobs não muda                                                                                                                                       |
@@ -5336,6 +5337,40 @@ Sem `cloudLayers`, `cloudSpeed` altera a velocidade da única camada vanilla em 
 | `heat.dayOnly`         | não         | booleano              | `true`        | Ligado, a cintilação esbate-se com a luz do dia e desaparece à noite             |
 | `heat.mode`            | não         | texto                 | `screen`      | Onde a cintilação incide, `screen` ou `world`                                    |
 | `heat.startDistance`   | não         | número decimal        | `32`          | No modo `world`, a quantos blocos de distância a cintilação começa               |
+
+### Escuridão total
+
+*dimensões*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` retira a luz mínima que o jogo acrescenta em todo o lado, pelo que uma gruta ou uma divisão sem tocha fica negra e só se vê a luz dos blocos e a do céu. Sem a chave, a dimensão fica como sempre foi. Funciona nas dimensões do próprio RDPL e, através de um ficheiro para uma [dimensão existente](#dimensões-existentes), na Superfície, no Nether, no End e nas dimensões de outros mods; uma dimensão sem esse ficheiro mantém a luz habitual. É desenhada apenas no cliente, pelo que o nível de luz que o servidor conta para o aparecimento de mobs e para as culturas se mantém.
+
+`mode` decide o que acontece à luz do céu durante a noite. `full` reduz também essa luz a nada. `block` mantém a luz noturna do céu do vanilla e retira apenas o mínimo sob a luz dos blocos. `moon` define a luz noturna do céu pela lua: `moonLight` contém cinco valores para 0, 25, 50, 75 e 100% de lua visível, de `0` (negro) a `1` (claro como de dia), pelo que, com `0`, a lua nova é escuridão total.
+
+No Nether, `darkness` retira também o mínimo de luz próprio, mais alto, a menos que o ficheiro defina `ambientLight`, que então decide. No End, o brilho uniforme, que aclara tudo um pouco, mantém-se; com `endGlow` a `false`, também desaparece. A visão noturna continua a iluminar o escuro.
+
+`grayNight`, nos modos `block` e `moon`, desenha a cinzento os locais iluminados pelo céu em vez do ligeiro azul da noite do vanilla; no modo `block`, também os aclara um pouco. No modo `full`, o mesmo cinzento aparece enquanto o jogador tiver visão noturna. `gamma` fixa a definição de brilho nesse valor enquanto o jogador estiver na dimensão, e o controlo deslizante das definições de vídeo mostra-o e não se move.
+
+| Chave                | Obrigatório | Valor                              | Predefinição                     | O que faz                                                            |
+| -------------------- | ----------- | ---------------------------------- | -------------------------------- | -------------------------------------------------------------------- |
+| `darkness.mode`      | não         | texto                              | `full`                           | `full`, `block` ou `moon`, como acima                                |
+| `darkness.moonLight` | não         | lista de 5 números decimais, 0 a 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | No modo `moon`, a luz noturna do céu com 0, 25, 50, 75 e 100% de lua |
+| `darkness.grayNight` | não         | booleano                           | `false`                          | Luz noturna do céu cinzenta nos modos `block` e `moon`               |
+| `darkness.endGlow`   | não         | booleano                           | `true`                           | No End, mantém o brilho uniforme; `false` retira-o                   |
+| `darkness.gamma`     | não         | número decimal, 0 a 1              | nenhum                           | Fixa a definição de brilho nesta dimensão                            |
 
 ### Neve, fluidos, estrelas e relâmpagos
 

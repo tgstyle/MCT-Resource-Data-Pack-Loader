@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.client.util.RainSplash;
+import mctmods.resourcedatapackloader.client.util.TrueDarkness;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
@@ -221,14 +223,15 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     private static void tint(SkyLookDef look, ClientLevel level, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, Vector3f colors) {
-        float block = LightTexture.getBrightness(level.dimensionType(), pixelX) * blockLightRedFlicker;
+        DarknessDef dark = TrueDarkness.of(level);
+        float block = TrueDarkness.table(dark, level.dimensionType().ambientLight(), LightTexture.getBrightness(level.dimensionType(), pixelX)) * blockLightRedFlicker;
         float sky = skyLight * look.skyFactor();
         float skyRed = sky * Mth.lerp(SKY_FLOOR, skyDarken, 1.0F);
         float blockGreen = block * ((block * 0.6F + 0.4F) * 0.6F + 0.4F);
         float blockBlue = block * (block * block * 0.6F + 0.4F);
         colors.set(skyRed * channel(look.lightSkyColor(), 16) + block * channel(look.lightBlockColor(), 16), skyRed * channel(look.lightSkyColor(), 8) + blockGreen * channel(look.lightBlockColor(), 8),
                 sky * channel(look.lightSkyColor(), 0) + blockBlue * channel(look.lightBlockColor(), 0));
-        colors.lerp(GRAY, GRAY_PULL);
+        if (dark == null) { colors.lerp(GRAY, GRAY_PULL); }
         float darken = Minecraft.getInstance().gameRenderer.getDarkenWorldAmount(partialTicks);
         if (darken > 0.0F) { colors.lerp(new Vector3f(colors).mul(BOSS_SHADE), darken); }
     }

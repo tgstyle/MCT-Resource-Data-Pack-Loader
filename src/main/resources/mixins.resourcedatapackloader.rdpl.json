@@ -103,6 +103,7 @@
     "client": [
         "client.renderer.entity.EntityRendererMixin",
         "client.renderer.GameRendererMixin",
+        "client.renderer.LightTextureMixin",
         "client.MinecraftMixin",
         "client.OptionsPackListMixin",
         "client.gui.screens.packs.PackSelectionEntryMixin",

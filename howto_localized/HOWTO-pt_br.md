@@ -5207,6 +5207,7 @@ Um `sun` ou um `moon` que define só `texture` troca a imagem no céu da própri
 | `fixedTime`        | não         | int, ticks          | nenhum  | Trava a hora do dia                                                                                                                                                                                               |
 | `sunriseColors`    | não         | booleano            | `true`  | Se o nascer e o pôr do sol são tingidos                                                                                                                                                                           |
 | `ambientLight`     | não         | float, 0 a 1        | `0.0`   | Luz mínima em todo lugar                                                                                                                                                                                          |
+| `darkness`         | não         | objeto              | nenhum  | Remove o mínimo de luz para que lugares sem iluminação fiquem pretos. Veja [Escuridão total](#escuridão-total)                                                                                                    |
 | `lightSkyColor`    | não         | cor hex             | nenhum  | Tonalidade da luz do dia sobre blocos e mobs                                                                                                                                                                      |
 | `lightBlockColor`  | não         | cor hex             | nenhum  | Tonalidade da luz de tochas e de outras luzes de bloco                                                                                                                                                            |
 | `skyFactor`        | não         | float, 0 a 1        | `1.0`   | Quão brilhante a luz do dia parece. Desenhada apenas no cliente, então o spawn de mobs não muda                                                                                                                   |
@@ -5336,6 +5337,40 @@ Sem `cloudLayers`, `cloudSpeed` muda a velocidade da única camada vanilla em `c
 | `heat.dayOnly`         | não         | booleano     | `true`        | Ligado, a ondulação esmaece com a luz do dia e some à noite                     |
 | `heat.mode`            | não         | texto        | `screen`      | Onde a ondulação aparece, `screen` ou `world`                                   |
 | `heat.startDistance`   | não         | float        | `32`          | No modo `world`, a quantos blocos de distância a ondulação começa               |
+
+### Escuridão total
+
+*dimensões*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` remove a luz mínima que o jogo acrescenta em todo lugar, então uma caverna ou um cômodo sem tocha fica preto e só a luz dos blocos e a do céu aparecem. Sem a chave, a dimensão fica como sempre foi. Funciona nas dimensões do próprio RDPL e, por meio de um arquivo para uma [dimensão existente](#dimensões-existentes), no overworld, no Nether, no End e nas dimensões de outros mods; uma dimensão sem esse arquivo mantém a luz de sempre. É desenhada só no cliente, então o nível de luz que o servidor conta para o surgimento de mobs e para as plantações continua o mesmo.
+
+`mode` decide o que acontece com a luz do céu à noite. `full` também a reduz a nada. `block` mantém a luz noturna do céu do vanilla e remove só o mínimo sob a luz dos blocos. `moon` define a luz noturna do céu pela lua: `moonLight` traz cinco valores para 0, 25, 50, 75 e 100% de lua visível, de `0` (preto) a `1` (claro como o dia), então com `0` a lua nova é escuridão total.
+
+No Nether, `darkness` também remove o mínimo de luz próprio dele, que é mais alto, a não ser que o arquivo defina `ambientLight`, que então decide. No End, o brilho uniforme, que clareia tudo um pouco, continua; com `endGlow` em `false`, ele também some. A visão noturna continua iluminando o escuro.
+
+`grayNight`, nos modos `block` e `moon`, desenha em cinza os lugares iluminados pelo céu em vez do leve azul da noite do vanilla; no modo `block`, também os clareia um pouco. No modo `full`, o mesmo cinza aparece enquanto o jogador tem visão noturna. `gamma` trava o ajuste de brilho nesse valor enquanto o jogador está na dimensão, e o controle deslizante das configurações de vídeo o mostra e não se move.
+
+| Chave                | Obrigatória | Valor                    | Padrão                           | O que faz                                                            |
+| -------------------- | ----------- | ------------------------ | -------------------------------- | -------------------------------------------------------------------- |
+| `darkness.mode`      | não         | texto                    | `full`                           | `full`, `block` ou `moon`, como descrito acima                       |
+| `darkness.moonLight` | não         | lista de 5 floats, 0 a 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | No modo `moon`, a luz noturna do céu com 0, 25, 50, 75 e 100% de lua |
+| `darkness.grayNight` | não         | booleano                 | `false`                          | Luz noturna do céu cinza nos modos `block` e `moon`                  |
+| `darkness.endGlow`   | não         | booleano                 | `true`                           | No End, mantém o brilho uniforme; `false` o remove                   |
+| `darkness.gamma`     | não         | float, 0 a 1             | nenhum                           | Trava o ajuste de brilho nesta dimensão                              |
 
 ### Neve, fluidos, estrelas e raios
 

@@ -134,7 +134,7 @@ public final class ContentDimensionParser {
                 Json.getFloat(sky, "starBrightness", -1.0F), Json.getBoolean(sky, "renderSky", true), Json.getBoolean(sky, "renderClouds", true),
                 Json.getBoolean(sky, "renderWeather", true), respawnDimension, Json.getBoolean(sky, "respawn", true),
                 Json.getInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits,
-                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), ContentParserTimeWindows.windows(key, json, traits.precipitation()), Json.paths(json));
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), ContentParserTimeWindows.windows(key, json, traits.precipitation()), ContentParserDarkness.darkness(key, sky), Json.paths(json));
     }
 
     private static DimensionTraitsDef traits(ResourceLocation key, JsonObject json) {

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.DimensionPortalDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.TimeWindowDef;
 import mctmods.resourcedatapackloader.common.util.worldgen.LegacyTerrainShape;
@@ -17,7 +18,7 @@ public record DimensionDef(ResourceLocation key, String terrain, List<String> fl
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
                            @Nullable ResourceLocation respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options, DimensionTraitsDef traits,
-                           @Nullable SkyLookDef look, List<TimeWindowDef> windows, Set<String> given) {
+                           @Nullable SkyLookDef look, List<TimeWindowDef> windows, @Nullable DarknessDef darkness, Set<String> given) {
     public static final String OVERWORLD = "overworld";
     public static final String FLAT = "flat";
     public static final String VOID = "void";
