@@ -60,6 +60,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Zámky předmětů](#zámky-předmětů)
 - [Váha předmětů](#váha-předmětů)
 - [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
+- [Výměna receptů](#výměna-receptů)
 - [Zámky receptů](#zámky-receptů)
 - [Popisky předmětů](#popisky-předmětů)
 - [Jazykové brány](#jazykové-brány)
@@ -200,6 +201,7 @@ V `data/`:
 | `<namespace>/structures/*.nbt`               | Šablony pro sazenice, `imprint` a přepisy módů. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                |
 | `<namespace>/recipes/*.json`                 | Výrobní recepty, přidané nebo nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                       |
 | `<namespace>/recipe_removals/*.json`         | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                           |
+| `<namespace>/recipe_swaps/*.json`            | Předmět nahrazený jiným ve výrobních a pecních receptech. [Výměna receptů](#výměna-receptů)                                                                                                          |
 | `<namespace>/item_locks/*.json`              | Předměty skryté v seznamech hráče, dokud nezíská pokrok. [Zámky předmětů](#zámky-předmětů)                                                                                                           |
 | `<namespace>/weights/*.json`                 | Váha předmětů, limit nošení a stupně zatížení. [Váha předmětů](#váha-předmětů)                                                                                                                       |
 | `<namespace>/recipe_locks/*.json`            | Recepty, které zůstávají zavřené, dokud hráč nezíská pokrok. [Zámky receptů](#zámky-receptů)                                                                                                         |
@@ -571,6 +573,7 @@ Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože d�
 - **Šablony struktur**, soubory `.nbt`, které módy používají pro generované budovy, pod `<namespace>/structures/`
 - **Přejmenování v registru**, udrží staré světy funkční, když mód přejmenuje blok nebo předmět
 - **Odebrání receptů**, smaž recept na výrobu podle názvu, namespace nebo výstupu
+- **Výměna receptů**, nahraď jeden předmět jiným ve všech výrobních a pecních receptech, které ho používají, viz [Výměna receptů](#výměna-receptů)
 - **Zakázané bloky a předměty**, vyřaď ze hry libovolný blok nebo předmět, viz [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - **Vstřiky kořisti**, přidej pool do tabulky kořisti místo nahrazení celé
 - **Odstranění kořisti**, vezmi záznam nebo předmět z tabulky kořisti, nebo ji vyprázdni, bez nahrazení tabulky
@@ -589,13 +592,13 @@ RDPL se hodí k nahrazení jednoho nebo dvou receptů a recepty pro vlastní obs
 
 Balíček může žít jen na serveru, s hráči na čistých vanilla klientech, za jediné podmínky: **nic v něm nesmí nic registrovat**. Mód přijme jakéhokoli protějška; rozhoduje balíček. Vanilla klient hraje s registry, s nimiž byl dodán, takže balíček, který do nich přidává, musí být na obou stranách.
 
-| Stačí jen server                                                                                                                                          | Potřebuje balíček i na klientovi                                                                                                         |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                   |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (řádky popisků předmětů a kouzel, názvy afixů a slotů na drahokamy) |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots` (Curios odmítá vanilla klienty)                                                    |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech)                         |
-| celá vrstva ovládání, nastavení a předgenerování                                                                                                          |                                                                                                                                          |
+| Stačí jen server                                                                                                                                           | Potřebuje balíček i na klientovi                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                   |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (řádky popisků předmětů a kouzel, názvy afixů a slotů na drahokamy) |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots` (Curios odmítá vanilla klienty)                                                    |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech)                         |
+| celá vrstva ovládání, nastavení a předgenerování                                                                                                           |                                                                                                                                          |
 
 Pravý sloupec je tvrdá zarážka: bloky, předměty, typy entit, zvuky a efekty lektvarů, které vanilla klient nemá, mu nelze popsat a vlastní portál dimenze je jedním z bloků balíčku; expozice se načítají jen spolu s tímto obsahem. Levý sloupec funguje, protože všechno v něm buď běží zcela na straně serveru, dorazí ke klientovi jako položky datového balíčku, které vanilla už čte (biomy, oblasti jeskyní, typy dimenzí, kouzla), nebo dorazí přes pakety, kterými vanilla už mluví (výsledný slot výroby plněný serverem, běžné pakety pokroků, odmítnutí bran ve stavových zprávách a podržení při předgenerování složené z vanilla paketů herního režimu, titulku a teleportu).
 
@@ -2720,6 +2723,54 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 | `item`     | jedno ze dvou | název předmětu    | žádný   | Předmět, který hoří       |
 | `tag`      | jedno ze dvou | id tagu           | žádný   | Hoří všechno v tomto tagu |
 | `burnTime` | ano           | celé číslo, ticky | `0`     | Uhlí je 1600, prkno 300   |
+
+## Výměna receptů
+
+*výroba, kořist a obchod*
+
+`<namespace>/recipe_swaps/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá. Nahrazuje jeden předmět jiným ve výrobních a pecních receptech, aniž bys každý recept přepisoval ručně.
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["c:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Klíč       | Povinné | Hodnota        | Výchozí | Co dělá                                                  |
+| ---------- | ------- | -------------- | ------- | -------------------------------------------------------- |
+| `requires` | ne      | seznam id módů | žádný   | Soubor se načte, jen když jsou načteny všechny tyto módy |
+| `swaps`    | ano     | seznam         | žádný   | Výměny, provedené v pořadí                               |
+
+Položky pod klíčem `swaps`:
+
+| Klíč      | Povinné | Hodnota        | Výchozí      | Co dělá                                                                                                                                                                                                                                                 |
+| --------- | ------- | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | ano     | objekt         | žádný        | Co se nahrazuje: `names` (koncová `*` trefí každý název začínající tímto textem), `namespaces` a `tags`, klíče z [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                |
+| `to`      | ano     | název předmětu | žádný        | Co je nahradí. Neznámý předmět přeskočí položku a log to řekne                                                                                                                                                                                          |
+| `output`  | ne      | boolean        | `false`      | Nahradí `from` také tam, kde je to, co recept vyrábí. Počet zůstane a komponenty starého výsledku se zahodí                                                                                                                                             |
+| `recipes` | ne      | objekt         | každý recept | Omezí výměnu na tyto výrobní recepty: `names`, koncová `*` trefí každý název začínající tímto textem, a `namespaces`. Položka s `recipes` nechá pecní recepty být, jako na 1.12.2, kde pecní recepty nemají názvy; `outputs` se tu nečte a log to řekne |
+
+Slot, který přijímá jen předměty `from`, se změní na `to`. Slot, který přijímá i jiné předměty, si je ponechá a přijme i `to`, ale ztratí svůj tag, takže předmět přidaný do tagu později se tam nevezme. Předmět `from` dosáhne na slot zapsaný jako tag, který ho obsahuje, a tag `from` dosáhne na slot, který jmenuje některý z jeho předmětů.
+
+Položka, jejíž `to` odpovídá jejímu vlastnímu `from`, se přeskočí a log to řekne. Vstup pecního receptu se nevymění, pokud je `to` už vstupem jiného receptu stejného druhu, tavení, vysoké pece, udírny nebo ohniště, a log pojmenuje ten recept.
+
+Výměny přepisují soubory receptů při načítání, takže běží znovu při každém `/reload`. Odebírání a blokování receptů posuzují recept podle toho, co vyráběl před výměnou, jako na 1.12.2; [Zakázané bloky a předměty](#zakázané-bloky-a-předměty), [soubory pece](#recepty-pro-pec-a-paliva) a [zámky receptů](#zámky-receptů) vidí vyměněný recept.
+
+Výrobní recepty a čtyři druhy pecních receptů se přepisují. Jiný typ receptu, například stroj jiného módu, se nikdy nedotkne. Ingredience s vlastním klíčem `type`, který jmenuje nahrazený předmět, zůstane beze změny. Recepty, které vytvoří skript, například recept ze skriptu KubeJS, se nevymění a log to řekne jednou. Log to pak shrne: `Replaced N ingredient(s) and N result(s) in N recipe(s)` a `Left N recipe(s) alone`, pokud nějaké zůstaly.
 
 ## Zámky receptů
 
@@ -9526,6 +9577,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9541,6 +9593,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | seznam id módů                 | prázdný         | Módy, jejichž recepty pece se odstraní rovnou                                                                                                                                                                                                                     |
 | `logBlockedRecipes`   | boolean                        | `true`          | Zapíše do logu počet zablokovaných receptů podle módu                                                                                                                                                                                                             |
 | `furnace`             | boolean                        | `true`          | Použít soubory furnace/*.json, které přidávají a odebírají recepty tavení v peci **Jen konfigurace.**                                                                                                                                                             |
+| `swaps`               | boolean                        | `true`          | Použít soubory recipe_swaps/*.json, které nahrazují předmět jiným v surovinách a výsledcích výrobních a pecních receptů **Jen konfigurace.**                                                                                                                      |
 | `removals`            | boolean                        | `true`          | Použít soubory recipe_removals/*.json, které mažou recepty na výrobu podle názvu, namespace nebo výstupu **Jen konfigurace.**                                                                                                                                     |
 | `skipMissingItems`    | boolean                        | `true`          | Přeskočit recepty, které používají neregistrovaný předmět, místo aby selhaly. Počet se zapíše do logu jednou **Jen konfigurace.**                                                                                                                                 |
 

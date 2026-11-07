@@ -5,6 +5,7 @@ import java.util.List;
 
 public final class ConfigRecipes {
     private final ModConfigSpec.BooleanValue furnace;
+    private final ModConfigSpec.BooleanValue swaps;
     private final ModConfigSpec.BooleanValue removals;
     private final ModConfigSpec.BooleanValue skipMissingItems;
     private final ModConfigSpec.BooleanValue blockRecipes;
@@ -19,6 +20,7 @@ public final class ConfigRecipes {
     ConfigRecipes(ModConfigSpec.Builder builder) {
         builder.comment("Recipe files, removals and blocking").push("recipes");
         furnace = builder.comment("Apply furnace/*.json files, which add and remove furnace smelting recipes [Default=true]").define("furnace", true);
+        swaps = builder.comment("Apply recipe_swaps/*.json files, which replace an item with another in the ingredients and results of crafting and furnace recipes [Default=true]").define("swaps", true);
         removals = builder.comment("Apply recipe_removals/*.json files, which delete crafting recipes by name, namespace or output [Default=true]").define("removals", true);
         skipMissingItems = builder.comment("Skip recipes that use an item which is not registered, instead of letting them fail. The count is logged once [Default=true]").define("skipMissingItems", true);
         blockRecipes = builder.comment("Remove every crafting recipe, keeping only the mods in recipeWhitelist. Include your pack's namespace to keep its own recipes [Default=false]").define("blockRecipes", false);
@@ -33,6 +35,8 @@ public final class ConfigRecipes {
     }
 
     public boolean furnace() { return ConfigCore.flag(furnace); }
+
+    public boolean swaps() { return ConfigCore.flag(swaps); }
 
     public boolean removals() { return ConfigCore.flag(removals); }
 

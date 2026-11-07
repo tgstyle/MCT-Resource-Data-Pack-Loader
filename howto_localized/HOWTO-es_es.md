@@ -60,6 +60,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Bloqueos de ítems](#bloqueos-de-ítems)
 - [Pesos de ítems](#pesos-de-ítems)
 - [Recetas de horno y combustibles](#recetas-de-horno-y-combustibles)
+- [Intercambio de recetas](#intercambio-de-recetas)
 - [Bloqueos de recetas](#bloqueos-de-recetas)
 - [Descripciones emergentes](#descripciones-emergentes)
 - [Puertas de idioma](#puertas-de-idioma)
@@ -200,6 +201,7 @@ Bajo `data/`:
 | `<namespace>/structures/*.nbt`               | Plantillas, para brotes, `imprint` y sobrescrituras de mods. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                               |
 | `<namespace>/recipes/*.json`                 | Recetas de fabricación, añadidas o sustituidas. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                            |
 | `<namespace>/recipe_removals/*.json`         | Recetas eliminadas por nombre, espacio de nombres o resultado. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                             |
+| `<namespace>/recipe_swaps/*.json`            | Ítem sustituido por otro en recetas de fabricación y de horno. [Intercambio de recetas](#intercambio-de-recetas)                                                                                                               |
 | `<namespace>/item_locks/*.json`              | Ítems ocultos en las listas de un jugador hasta que consigue un logro. [Bloqueos de ítems](#bloqueos-de-ítems)                                                                                                                 |
 | `<namespace>/weights/*.json`                 | Pesos de ítems, un límite de carga y escalones de sobrecarga. [Pesos de ítems](#pesos-de-ítems)                                                                                                                                |
 | `<namespace>/recipe_locks/*.json`            | Recetas que siguen cerradas hasta que un jugador consigue un logro. [Bloqueos de recetas](#bloqueos-de-recetas)                                                                                                                |
@@ -571,6 +573,7 @@ La plantilla nunca se registra, mientras que `jacks_ore` se registra con el mate
 - **Plantillas de estructuras**: los archivos `.nbt` que usan los mods para los edificios generados, bajo `<namespace>/structures/`
 - **Renombrados de registro**: mantienen funcionando los mundos antiguos cuando un mod renombra un bloque o un ítem
 - **Eliminación de recetas**: borra una receta de fabricación por nombre, espacio de nombres o resultado
+- **Intercambio de recetas**: sustituye un ítem por otro en cada receta de fabricación y de horno que lo use, véase [Intercambio de recetas](#intercambio-de-recetas)
 - **Bloques e ítems desactivados**: retira del juego cualquier bloque o ítem, véase [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)
 - **Inyecciones de botín**: añaden una reserva a una tabla de botín en lugar de sustituirla entera
 - **Quitas de botín**: quitan una entrada o un ítem de una tabla de botín, o la vacían, sin sustituir la tabla
@@ -589,13 +592,13 @@ RDPL sirve para sustituir una o dos recetas, y las recetas de tu propio contenid
 
 Un pack puede vivir solo en el servidor, con jugadores en clientes de vanilla puro, bajo una restricción: **nada en él puede registrar nada**. El mod acepta cualquier remoto; el pack decide. Un cliente de vanilla juega con los registros con los que vino, así que un pack que añada a ellos debe estar en ambos lados.
 
-| Basta con el servidor                                                                                                                                     | Necesita el pack también en el cliente                                                                                                                         |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                                         |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (líneas de descripción de objetos y encantamientos, nombres de afijos y ranuras de gemas) |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots` (Curios rechaza los clientes de vanilla)                                                                 |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (carpetas de cliente: sin cliente, déjalas fuera)                                       |
-| toda la capa de control, los ajustes y la pregeneración                                                                                                   |                                                                                                                                                                |
+| Basta con el servidor                                                                                                                                      | Necesita el pack también en el cliente                                                                                                                         |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                                         |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (líneas de descripción de objetos y encantamientos, nombres de afijos y ranuras de gemas) |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots` (Curios rechaza los clientes de vanilla)                                                                 |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (carpetas de cliente: sin cliente, déjalas fuera)                                       |
+| toda la capa de control, los ajustes y la pregeneración                                                                                                    |                                                                                                                                                                |
 
 La columna de la derecha es un límite estricto: los bloques, ítems, tipos de entidad, sonidos y efectos de poción que un cliente de vanilla no tiene no se le pueden describir, y el portal propio de una dimensión es uno de los bloques del pack; las exposiciones se cargan solo junto a ese contenido. La columna de la izquierda funciona porque todo lo que contiene o se ejecuta íntegramente del lado del servidor, o llega al cliente como entradas de data pack que vanilla ya lee (biomas, regiones de cuevas, tipos de dimensión, encantamientos), o llega por paquetes que vanilla ya habla (casilla de resultado de fabricación rellenada por el servidor, paquetes de logros ordinarios, rechazos de portal mediante mensajes de estado y una retención de pregeneración hecha con paquetes de vanilla de modo de juego, título y teletransporte).
 
@@ -2720,6 +2723,54 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 | `item`     | uno de los dos | nombre de ítem | ninguno     | El ítem que arde                     |
 | `tag`      | uno de los dos | id de etiqueta | ninguno     | Todo lo que hay en esa etiqueta arde |
 | `burnTime` | sí             | entero, ticks  | `0`         | El carbón son 1600, un tablón 300    |
+
+## Intercambio de recetas
+
+*fabricación, botín y comercio*
+
+`<namespace>/recipe_swaps/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Sustituye un ítem por otro en las recetas de fabricación y de horno, sin reescribir cada receta a mano.
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["c:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Clave      | Obligatorio | Valor               | Por defecto | Qué hace                                                  |
+| ---------- | ----------- | ------------------- | ----------- | --------------------------------------------------------- |
+| `requires` | no          | lista de ids de mod | ninguno     | El archivo solo se lee si están cargados todos estos mods |
+| `swaps`    | sí          | lista               | ninguno     | Los intercambios, aplicados en orden                      |
+
+Entradas bajo `swaps`:
+
+| Clave     | Obligatorio | Valor          | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                                          |
+| --------- | ----------- | -------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | sí          | objeto         | ninguno     | Lo que se sustituye: `names` (un `*` final coincide con cada nombre que empieza por ese texto), `namespaces` y `tags`, las claves de [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)                                                                                                                                |
+| `to`      | sí          | nombre de ítem | ninguno     | Lo que ocupa su lugar. Un ítem desconocido omite la entrada y el registro lo indica                                                                                                                                                                                                                                               |
+| `output`  | no          | booleano       | `false`     | También sustituye `from` cuando es lo que produce una receta. La cantidad se mantiene y se descartan los componentes del resultado anterior                                                                                                                                                                                       |
+| `recipes` | no          | objeto         | cada receta | Limita el intercambio a estas recetas de fabricación: `names`, con un `*` final que coincide con cada nombre que empieza por ese texto, y `namespaces`. Una entrada con `recipes` deja en paz las recetas de horno, como en 1.12.2, donde las recetas de horno no tienen nombre; `outputs` no se lee aquí y el registro lo indica |
+
+Una ranura que solo admite ítems de `from` pasa a ser `to`. Una ranura que también admite otros ítems los conserva y admite `to` además, y pierde su etiqueta, así que un ítem añadido a esa etiqueta más tarde no entra allí. Un ítem de `from` llega a una ranura escrita como etiqueta que lo contiene, y una etiqueta de `from` llega a una ranura que nombra uno de sus ítems.
+
+Una entrada cuyo `to` coincide con su propio `from` se omite, y el registro lo indica. Una entrada de horno no se intercambia cuando `to` ya es la entrada de otra receta del mismo tipo (fundición, horno alto, ahumador o fogata), y el registro nombra esa receta.
+
+Los intercambios reescriben los archivos de recetas al cargarse, así que se vuelven a ejecutar con cada `/reload`. La eliminación y el bloqueo de recetas juzgan una receta por lo que fabricaba antes del intercambio, como en 1.12.2; [Bloques e ítems desactivados](#bloques-e-ítems-desactivados), los [archivos de horno](#recetas-de-horno-y-combustibles) y los [bloqueos de recetas](#bloqueos-de-recetas) ven la receta ya intercambiada.
+
+Se reescriben las recetas de fabricación y los cuatro tipos de horno. Cualquier otro tipo de receta, como la de una máquina de otro mod, nunca se toca. Un objeto de ingrediente con una clave `type` propia que nombra un ítem sustituido se deja tal cual. Las recetas que crea un script, como un script de recetas de KubeJS, no se intercambian, y el registro lo indica una vez. El registro lo resume: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, y `Left N recipe(s) alone` cuando quedó alguna.
 
 ## Bloqueos de recetas
 
@@ -9526,6 +9577,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9541,6 +9593,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | lista de ids de mod         | vacío           | Mods cuyas recetas de horno se eliminan sin más                                                                                                                                                                                                                                                              |
 | `logBlockedRecipes`   | booleano                    | `true`          | Registra un recuento por mod de lo que se bloqueó                                                                                                                                                                                                                                                            |
 | `furnace`             | booleano                    | `true`          | Aplica los archivos furnace/*.json, que añaden y eliminan recetas de fundición del horno **Solo configuración.**                                                                                                                                                                                             |
+| `swaps`               | booleano                    | `true`          | Aplica los archivos recipe_swaps/*.json, que sustituyen un ítem por otro en los ingredientes y resultados de las recetas de fabricación y de horno **Solo configuración.**                                                                                                                                   |
 | `removals`            | booleano                    | `true`          | Aplica los archivos recipe_removals/*.json, que eliminan recetas de fabricación por nombre, espacio de nombres o resultado **Solo configuración.**                                                                                                                                                           |
 | `skipMissingItems`    | booleano                    | `true`          | Omite las recetas que usan un ítem que no está registrado, en lugar de dejar que fallen. El recuento se registra una vez **Solo configuración.**                                                                                                                                                             |
 
