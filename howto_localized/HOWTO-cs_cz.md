@@ -2123,13 +2123,25 @@ Soubor zde připojuje reakce k vanilla vodě nebo lávě, bez mixinu. Jeho klí�
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:river", "#minecraft:is_ocean"],
+    "dimensions": ["minecraft:overworld"]
+  }
 }
 ```
 
 Tekutina z balíčku tento soubor pro své vlastní kontakty nepotřebuje. Její vlastní `reactions` už pojmenovávají vanilla tekutinu, kterou potkává.
 
 Tato pravidla fungují s `vanillaClients`. Jsou jen serverový stav, takže obyčejný klient od balíčku nic nepotřebuje. Pravidlo, které pojmenuje blok, jejž server neregistruje, se zahodí se svou chybou.
+
+| Klíč                  | Povinné | Hodnota      | Výchozí          | Co dělá                                                                                                                                                                                                |
+| --------------------- | ------- | ------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | ne      | objekt       | žádný (vanilla)  | `fluid` musí být `minecraft:water`. Dva zdroje vedle tekoucího bloku udělají třetí jen na uvedených místech; jinde nikdy. Klíč vynechán: vanilla pravidlo všude. Soubory s lávou ho ignorují s chybou. |
+| `infinite.biomes`     | ne      | seznam textů | jakýkoli biom    | ID biomů, nebo `#` následované tagem biomu.                                                                                                                                                            |
+| `infinite.dimensions` | ne      | seznam textů | jakákoli dimenze | Stejné názvy jako `byDimension`. Když jsou dané oba seznamy, místo musí odpovídat oběma.                                                                                                               |
+
+Herní pravidlo `water_source_conversion` stále platí tam, kde to seznam dovoluje. Místo se testuje u každého sousedního zdroje.
 
 ### Poznámky k verzím
 

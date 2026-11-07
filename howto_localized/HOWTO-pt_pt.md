@@ -2123,13 +2123,25 @@ Um ficheiro aqui liga reações à água ou à lava vanilla, sem mixin. A sua ch
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:river", "#minecraft:is_ocean"],
+    "dimensions": ["minecraft:overworld"]
+  }
 }
 ```
 
 Um fluido do pacote não precisa deste ficheiro para os seus próprios contactos. As suas `reactions` já nomeiam o fluido vanilla que encontra.
 
 Estas regras funcionam com `vanillaClients`. São apenas estado do servidor, por isso um cliente simples não precisa de nada do pacote. Uma regra que nomeia um bloco que o servidor não regista é descartada com o seu erro.
+
+| Chave                 | Obrigatória | Valor          | Padrão            | O que faz                                                                                                                                                                                                                            |
+| --------------------- | ----------- | -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | não         | objeto         | nenhum (vanilla)  | `fluid` tem de ser `minecraft:water`. Duas fontes ao lado de um bloco que corre formam uma terceira só nos sítios listados; noutros nunca. Chave omitida: regra vanilla em todo o lado. Os ficheiros de lava ignoram-na com um erro. |
+| `infinite.biomes`     | não         | lista de texto | qualquer bioma    | IDs de bioma, ou `#` seguido de uma tag de bioma.                                                                                                                                                                                    |
+| `infinite.dimensions` | não         | lista de texto | qualquer dimensão | Os mesmos nomes de `byDimension`. Quando se dão as duas listas, o sítio tem de coincidir com ambas.                                                                                                                                  |
+
+A regra de jogo `water_source_conversion` continua a aplicar-se onde a lista o permite. O sítio é testado em cada fonte vizinha.
 
 ### Notas de versão
 

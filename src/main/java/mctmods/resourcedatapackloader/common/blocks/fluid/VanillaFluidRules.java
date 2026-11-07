@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.common.blocks.fluid;
 
+import mctmods.resourcedatapackloader.common.cards.CardPlace;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidReactionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserFluids;
+import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.VanillaClients;
@@ -16,18 +18,24 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.CreateFluidSourceEvent;
 
 public final class VanillaFluidRules {
     private static final Identifier WATER_ID = Identifier.fromNamespaceAndPath("minecraft", "water");
     private static final Identifier LAVA_ID = Identifier.fromNamespaceAndPath("minecraft", "lava");
     private static final List<FluidReactionDef> WATER = new ArrayList<>();
     private static final List<FluidReactionDef> LAVA = new ArrayList<>();
+    private static final List<Place> SOURCES = new ArrayList<>();
     private static final Map<BlockState, Boolean> TOUCHED = new ConcurrentHashMap<>();
 
     private VanillaFluidRules() {}
@@ -37,6 +45,7 @@ public final class VanillaFluidRules {
     public static void load() {
         WATER.clear();
         LAVA.clear();
+        SOURCES.clear();
         if (Config.definitionsOff() || !Config.content.fluidRules()) { return; }
         Json.eachObject(PackManager.FLUID_RULES, "fluid rule", VanillaFluidRules::read);
     }
@@ -89,5 +98,45 @@ public final class VanillaFluidRules {
             if (sound != null && !"minecraft".equals(sound.getNamespace())) { VanillaClients.clientDrawn(key, "sound " + rule.sound); }
         }
         into.addAll(rules);
+        if (json.has("infinite")) { readInfinite(key, json, into == WATER); }
     }
+
+    private static void readInfinite(Identifier key, JsonObject json, boolean water) {
+        if (!water) {
+            ContentLog.LOGGER.error("Fluid rule {} has 'infinite' in a lava file, but only water takes infinite, so it is skipped", key);
+            return;
+        }
+        if (!GsonHelper.isObjectNode(json, "infinite")) {
+            ContentLog.LOGGER.error("Fluid rule {} has an infinite that is not an object, so it is ignored", key);
+            return;
+        }
+        JsonObject place = json.getAsJsonObject("infinite");
+        for (String member : place.keySet()) {
+            if (!"biomes".equals(member) && !"dimensions".equals(member)) {
+                ContentLog.LOGGER.error("Fluid rule {} has the unknown member '{}' in 'infinite', so the entry is ignored", key, member);
+                return;
+            }
+        }
+        List<String> biomes = Json.names(place, "biomes");
+        List<String> dimensions = Json.names(place, "dimensions");
+        if (biomes.isEmpty() && dimensions.isEmpty()) {
+            ContentLog.LOGGER.error("Fluid rule {} has an 'infinite' that names no biomes and no dimensions, so the entry is ignored", key);
+            return;
+        }
+        SOURCES.add(new Place(Collections.unmodifiableList(biomes), Collections.unmodifiableList(dimensions)));
+    }
+
+    public static boolean sourcesWanted() { return !SOURCES.isEmpty(); }
+
+    public static void onCreateSource(CreateFluidSourceEvent event) {
+        if (SOURCES.isEmpty() || !event.getFluidState().getType().isSame(Fluids.WATER)) { return; }
+        ServerLevel level = event.getLevel();
+        Holder<Biome> biome = level.getBiome(event.getPos());
+        for (Place place : SOURCES) {
+            if (BiomeNames.matches(place.biomes(), biome) && (place.dimensions().isEmpty() || CardPlace.inAny(place.dimensions(), level))) { return; }
+        }
+        event.setCanConvert(false);
+    }
+
+    private record Place(List<String> biomes, List<String> dimensions) {}
 }

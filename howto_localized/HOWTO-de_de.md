@@ -2123,13 +2123,25 @@ Eine Datei hier hängt Reaktionen an Vanilla-Wasser oder -Lava, ohne Mixin. Ihr 
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:river", "#minecraft:is_ocean"],
+    "dimensions": ["minecraft:overworld"]
+  }
 }
 ```
 
 Eine Pack-Flüssigkeit braucht diese Datei nicht für ihre eigenen Kontakte. Ihre eigenen `reactions` nennen bereits die Vanilla-Flüssigkeit, auf die sie trifft.
 
 Diese Regeln funktionieren mit `vanillaClients`. Sie sind nur Serverzustand, daher braucht ein einfacher Client nichts aus dem Pack. Eine Regel, die einen Block nennt, den der Server nicht registriert, wird mit ihrem Fehler verworfen.
+
+| Schlüssel             | Pflicht | Wert           | Standard         | Was er macht                                                                                                                                                                                                                               |
+| --------------------- | ------- | -------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | nein    | Objekt         | keiner (Vanilla) | `fluid` muss `minecraft:water` sein. Zwei Quellen neben einem fließenden Block erzeugen nur an den aufgelisteten Orten eine dritte; sonst nie. Schlüssel weggelassen: Vanilla-Regel überall. Lava-Dateien ignorieren ihn mit einem Fehler. |
+| `infinite.biomes`     | nein    | Liste aus Text | jedes Biom       | Biom-IDs oder `#` gefolgt von einem Biom-Tag.                                                                                                                                                                                              |
+| `infinite.dimensions` | nein    | Liste aus Text | jede Dimension   | Gleiche Namen wie bei `byDimension`. Wenn beide Listen angegeben sind, muss der Ort auf beide passen.                                                                                                                                      |
+
+Die Spielregel `water_source_conversion` gilt weiterhin, wo die Liste es erlaubt. Der Ort wird bei jeder benachbarten Quelle geprüft.
 
 ### Hinweise zu Versionen
 

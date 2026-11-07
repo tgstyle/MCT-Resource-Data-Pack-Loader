@@ -2123,13 +2123,25 @@ Un archivo aquí asocia reacciones al agua o la lava de vanilla, sin mixin. Su c
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:river", "#minecraft:is_ocean"],
+    "dimensions": ["minecraft:overworld"]
+  }
 }
 ```
 
 Un fluido de pack no necesita este archivo para sus propios contactos. Sus `reactions` ya nombran el fluido de vanilla con el que se encuentra.
 
 Estas reglas funcionan con `vanillaClients`. Son solo estado del servidor, así que un cliente normal no necesita nada del pack. Una regla que nombra un bloque que el servidor no registra se descarta con su error.
+
+| Clave                 | Obligatorio | Valor          | Por defecto         | Qué hace                                                                                                                                                                                                                                  |
+| --------------------- | ----------- | -------------- | ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no          | objeto         | ninguno (vanilla)   | `fluid` debe ser `minecraft:water`. Dos fuentes junto a un bloque que fluye forman una tercera solo en los lugares indicados; en otros nunca. Clave omitida: regla vanilla en todas partes. Los archivos de lava la ignoran con un error. |
+| `infinite.biomes`     | no          | lista de texto | cualquier bioma     | IDs de bioma, o `#` seguido de una etiqueta de bioma.                                                                                                                                                                                     |
+| `infinite.dimensions` | no          | lista de texto | cualquier dimensión | Mismos nombres que `byDimension`. Si se dan ambas listas, el lugar debe coincidir con las dos.                                                                                                                                            |
+
+La regla de juego `water_source_conversion` sigue aplicándose donde la lista lo permite. El lugar se comprueba en cada fuente vecina.
 
 ### Notas por versión
 

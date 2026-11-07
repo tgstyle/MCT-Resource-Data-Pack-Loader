@@ -2123,13 +2123,25 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
   "fluid": "minecraft:water",
   "reactions": [
     { "touching": "mypack:iron_grate", "becomes": "mypack:rusty_grate", "chance": 0.25 }
-  ]
+  ],
+  "infinite": {
+    "biomes": ["minecraft:river", "#minecraft:is_ocean"],
+    "dimensions": ["minecraft:overworld"]
+  }
 }
 ```
 
 整合包自己的流体无需此文件来处理自身接触。它自己的 `reactions` 已经指定了它所接触的原版流体。
 
 这些规则与 `vanillaClients` 一起工作。它们只是服务器端状态，因此普通客户端不需要整合包中的任何内容。指向服务器未注册方块的规则会连同其错误一起被丢弃。
+
+| 键                    | 必需 | 值       | 默认值       | 作用                                                                                                                                                           |
+| --------------------- | ---- | -------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | 否   | 对象     | 无（原版）   | `fluid` 必须是 `minecraft:water`。流动方块旁的两个源只会在列出的地点生成第三个源，其他地方永远不会。省略此键时在所有地方使用原版规则。岩浆文件会忽略它并报错。 |
+| `infinite.biomes`     | 否   | 文本列表 | 任意生物群系 | 生物群系 ID，或 `#` 加生物群系标签。                                                                                                                           |
+| `infinite.dimensions` | 否   | 文本列表 | 任意维度     | 与 `byDimension` 相同的名称。两个列表都给出时，地点必须同时符合两者。                                                                                          |
+
+`water_source_conversion` 游戏规则在列表允许的地方仍然有效。每个相邻的源都会检测该地点。
 
 ### 版本说明
 
