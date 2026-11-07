@@ -73,6 +73,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 - [Colheita com clique direito](#colheita-com-clique-direito)
 - [Mineração de veios](#mineração-de-veios)
 - [Colunas que caem](#colunas-que-caem)
+- [Propagação de flores](#propagação-de-flores)
 - [Carregar](#carregar)
 - [Remoções de saque](#remoções-de-saque)
 - [Saque de jogadores](#saque-de-jogadores)
@@ -223,6 +224,7 @@ Em `data/`:
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque sorteada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                                                        |
 | `<namespace>/diets/*.json`                   | Regras que fazem uma comida repetida alimentar menos e uma dieta variada alimentar mais. [Variedade de comida](#variedade-de-comida)                                                                                   |
 | `<namespace>/columns/*.json`                 | Sequências de blocos que caem e quebram junto com os blocos acima do bloco quebrado pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                                |
+| `<namespace>/flower_spreads/*.json`          | Flores extras colocadas ao redor da grama ou de outro bloco quando se usa farinha de osso nele. [Propagação de flores](#propagação-de-flores)                                                                          |
 | `<namespace>/advancements/*.json`            | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                                                     |
 | `<namespace>/functions/*.mcfunction`         | Arquivos de função. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                                          |
 | `<namespace>/tags/<kind>/*.json`             | Tags, no formato do próprio jogo. [Materiais, abas, sons, tags](#materiais-abas-sons-tags)                                                                                                                             |
@@ -3371,6 +3373,40 @@ Quando um jogador quebra um bloco, a sequência de blocos que caem listados logo
 | `alternate`      | não         | objeto com `item` e `chance` (0 a 1)                                                                         | nenhum  | Cada bloco da coluna deixa cair `item` numa rolagem bem-sucedida, ou o próprio item do bloco numa falha. Sem ele, cada bloco deixa cair seus drops normais com Fortuna 0. |
 
 Jogadores falsos nunca a acionam, e jogadores no criativo não recebem drops. Os arquivos se acumulam; usa-se o primeiro cujos blocos contêm o bloco acima do quebrado. Ao carregar, o log mostra `Loaded N falling column group(s)`, e um arquivo que cite um bloco não registrado ou um `alternate` inválido registra um erro.
+
+## Propagação de flores
+
+*criação, saque e comércio*
+
+`<namespace>/flower_spreads/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Farinha de osso na grama faz crescer grama alta e as flores próprias do bioma. Um arquivo aqui adiciona flores à sua escolha ao redor do bloco, de qualquer mod, quer um jogador ou um distribuidor use a farinha de osso. O crescimento vanilla continua funcionando, então essas flores vêm além dele. Sem arquivo nada muda; um pacote que quer que a escolha seja do jogador põe uma entrada `config:` em `requires`, como descrito em Opções de pacotes.
+
+```json
+{
+  "on": ["minecraft:grass_block"],
+  "flowers": ["minecraft:blue_orchid", {"block": "minecraft:dandelion"}],
+  "tag": ["minecraft:small_flowers"],
+  "everyMod": false,
+  "radius": 3,
+  "count": 4
+}
+```
+
+| Chave      | Obrigatória | Valor                                                                                                        | Padrão                                                                     | O que faz                                                                                                                                                 |
+| ---------- | ----------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | não         | lista de strings                                                                                             | nenhum                                                                     | Ids de mod que precisam estar carregados, ou opções `config:`, como em outros lugares.                                                                    |
+| `on`       | não         | lista de ids de bloco, com `meta` (1.12.2) ou `properties` (1.20.1 e posteriores) como em um grupo de dureza | `minecraft:grass` (1.12.2), `minecraft:grass_block` (1.20.1 e posteriores) | Blocos sobre os quais a farinha de osso é usada. Serve qualquer bloco que ela consiga fazer crescer, como uma plantação.                                  |
+| `flowers`  | não         | lista de ids de bloco, com `meta` ou `properties`                                                            | nenhum                                                                     | Flores a colocar. Um bloco sem `meta` ou `properties` coloca qualquer um dos seus estados.                                                                |
+| `oreDict`  | não         | lista de nomes de minério (somente 1.12.2)                                                                   | nenhum                                                                     | Cada bloco registrado com esses nomes de minério é adicionado às flores.                                                                                  |
+| `tag`      | não         | lista de tags de bloco (1.20.1 e posteriores)                                                                | nenhum                                                                     | Cada bloco nessas tags é adicionado às flores.                                                                                                            |
+| `everyMod` | não         | bool                                                                                                         | `false`                                                                    | Quando true, cada flor de cada mod é adicionada: no 1.12.2 cada bloco de flor, no 1.20.1 e posteriores a tag `minecraft:small_flowers` sem a rosa murcha. |
+| `radius`   | não         | int, de 1 a 8                                                                                                | `3`                                                                        | Até onde do bloco, em círculo, as flores podem ir.                                                                                                        |
+| `count`    | não         | int, de 1 a 64                                                                                               | `4`                                                                        | Máximo de flores colocadas por uso da farinha de osso.                                                                                                    |
+
+Uma flor só vai no ar, um bloco acima do nível do chão do bloco usado ou um bloco para cima ou para baixo, e só onde essa flor poderia ficar, nunca no bloco diretamente acima do usado. A lista de flores é lida a cada uso, então tags e nomes de minério que outros mods preenchem depois também contam. Os arquivos se acumulam; usa-se o primeiro cujo `on` contém o bloco. Um arquivo precisa de pelo menos um de `flowers`, `oreDict`, `tag` ou `everyMod`. Ao carregar, o log mostra `Loaded N flower spread rule(s)`, e um arquivo sem bloco `on` registrado ou sem fonte de flores registra um erro e é ignorado. No 1.20.1 e posteriores, um arquivo que usa `oreDict` registra um aviso para usar `tag`. São dados do servidor e não precisam de nada no cliente.
 
 ## Carregar
 

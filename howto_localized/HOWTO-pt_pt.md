@@ -73,6 +73,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Colheita com o botão direito](#colheita-com-o-botão-direito)
 - [Mineração de filões](#mineração-de-filões)
 - [Colunas que caem](#colunas-que-caem)
+- [Propagação de flores](#propagação-de-flores)
 - [Transportar](#transportar)
 - [Remoções de saque](#remoções-de-saque)
 - [Saque de jogadores](#saque-de-jogadores)
@@ -223,6 +224,7 @@ Em `data/`:
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                                                           |
 | `<namespace>/diets/*.json`                   | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                                                    |
 | `<namespace>/columns/*.json`                 | Sequências de blocos que caem e partem juntamente com os blocos acima do bloco partido pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                               |
+| `<namespace>/flower_spreads/*.json`          | Flores extra colocadas à volta da relva ou de outro bloco quando se usa pó de osso nele. [Propagação de flores](#propagação-de-flores)                                                                                   |
 | `<namespace>/advancements/*.json`            | Progressos. [O que podes substituir](#o-que-podes-substituir)                                                                                                                                                            |
 | `<namespace>/functions/*.mcfunction`         | Ficheiros de funções. [O que podes substituir](#o-que-podes-substituir)                                                                                                                                                  |
 | `<namespace>/tags/<kind>/*.json`             | Tags, no formato do próprio jogo. [Materiais, separadores, sons, tags](#materiais-separadores-sons-tags)                                                                                                                 |
@@ -3371,6 +3373,40 @@ Quando um jogador parte um bloco, a sequência de blocos que caem listados mesmo
 | `alternate`      | não         | objeto com `item` e `chance` (0 a 1)                                                                       | nenhum       | Cada bloco da coluna deixa cair `item` numa jogada bem-sucedida, ou o item do próprio bloco numa falha. Sem ele, cada bloco deixa cair os seus itens normais com Fortuna 0. |
 
 Jogadores falsos nunca a ativam, e os jogadores em criativo não recebem itens largados. Os ficheiros acumulam-se; usa-se o primeiro cujos blocos contêm o bloco acima do partido. Ao carregar, o registo mostra `Loaded N falling column group(s)`, e um ficheiro que nomeie um bloco não registado ou um `alternate` inválido regista um erro.
+
+## Propagação de flores
+
+*fabrico, saque e comércio*
+
+`<namespace>/flower_spreads/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se.
+
+Pó de osso na relva faz crescer relva alta e as flores próprias do bioma. Um ficheiro aqui acrescenta flores à tua escolha à volta do bloco, de qualquer mod, quer um jogador ou um distribuidor use o pó de osso. O crescimento vanilla continua a correr, pelo que estas flores vêm por cima dele. Sem ficheiro nada muda; um pacote que quer que a escolha seja do jogador põe uma entrada `config:` em `requires`, como descrito em Opções de pacotes.
+
+```json
+{
+  "on": ["minecraft:grass_block"],
+  "flowers": ["minecraft:blue_orchid", {"block": "minecraft:dandelion"}],
+  "tag": ["minecraft:small_flowers"],
+  "everyMod": false,
+  "radius": 3,
+  "count": 4
+}
+```
+
+| Chave      | Obrigatório | Valor                                                                                                      | Predefinição                                                               | O que faz                                                                                                                                                  |
+| ---------- | ----------- | ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | não         | lista de strings                                                                                           | nenhum                                                                     | Ids de mod que têm de estar carregados, ou opções `config:`, como em toda a parte.                                                                         |
+| `on`       | não         | lista de ids de bloco, com `meta` (1.12.2) ou `properties` (1.20.1 e posteriores) como num grupo de dureza | `minecraft:grass` (1.12.2), `minecraft:grass_block` (1.20.1 e posteriores) | Blocos sobre os quais se usa o pó de osso. Serve qualquer bloco que o pó de osso consiga fazer crescer, como uma cultura.                                  |
+| `flowers`  | não         | lista de ids de bloco, com `meta` ou `properties`                                                          | nenhum                                                                     | Flores a colocar. Um bloco sem `meta` ou `properties` coloca qualquer um dos seus estados.                                                                 |
+| `oreDict`  | não         | lista de nomes de minério (apenas 1.12.2)                                                                  | nenhum                                                                     | Cada bloco registado com estes nomes de minério é acrescentado às flores.                                                                                  |
+| `tag`      | não         | lista de tags de bloco (1.20.1 e posteriores)                                                              | nenhum                                                                     | Cada bloco nestas tags é acrescentado às flores.                                                                                                           |
+| `everyMod` | não         | bool                                                                                                       | `false`                                                                    | Quando true, acrescenta-se cada flor de cada mod: no 1.12.2 cada bloco de flor, no 1.20.1 e posteriores a tag `minecraft:small_flowers` sem a rosa murcha. |
+| `radius`   | não         | int, de 1 a 8                                                                                              | `3`                                                                        | Até onde do bloco, em círculo, podem ir as flores.                                                                                                         |
+| `count`    | não         | int, de 1 a 64                                                                                             | `4`                                                                        | Máximo de flores colocadas por cada uso do pó de osso.                                                                                                     |
+
+Uma flor só vai para o ar, um bloco acima do nível do chão do bloco usado ou um bloco para cima ou para baixo, e só onde essa flor poderia ficar, nunca no bloco diretamente acima do usado. A lista de flores é lida a cada uso, por isso as tags e os nomes de minério que outros mods preenchem tarde também contam. Os ficheiros acumulam-se; usa-se o primeiro cujo `on` contém o bloco. Um ficheiro precisa de pelo menos um de `flowers`, `oreDict`, `tag` ou `everyMod`. Ao carregar, o registo mostra `Loaded N flower spread rule(s)`, e um ficheiro sem bloco `on` registado ou sem fonte de flores regista um erro e é ignorado. No 1.20.1 e posteriores, um ficheiro que usa `oreDict` regista um aviso para usar `tag`. São dados do servidor e não precisam de nada no cliente.
 
 ## Transportar
 

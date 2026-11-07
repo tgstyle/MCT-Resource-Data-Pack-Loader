@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.common.blocks.compress.CompressedAliases;
 import mctmods.resourcedatapackloader.common.blocks.compress.CompressedFuel;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentBoneMealFlowers;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
@@ -259,6 +260,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentHarvests::onRightClick);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVeins::onBreak);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onPlayerTick);
