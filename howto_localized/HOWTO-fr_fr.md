@@ -2130,9 +2130,29 @@ Un fichier ici attache des réactions à l'eau ou à la lave vanilla, sans mixin
 }
 ```
 
+Un fichier d'eau peut aussi rendre l'eau vanilla infinie. Avec `infinite` défini, deux blocs source à côté d'un bloc qui coule en forment un troisième seulement aux endroits listés :
+
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_jungle"],
+    "dimensions": ["minecraft:overworld"]
+  }
+}
+```
+
 Un fluide de pack n'a pas besoin de ce fichier pour ses propres contacts. Ses `reactions` nomment déjà le fluide vanilla qu'il rencontre.
 
 Ces règles fonctionnent avec `vanillaClients`. Elles ne concernent que l'état du serveur, donc un client simple n'a besoin de rien du pack. Une règle qui nomme un bloc que le serveur n'enregistre pas est écartée avec son erreur.
+
+| Clé                   | Requis | Valeur          | Défaut          | Rôle                                                                                                                                                                                                                                       |
+| --------------------- | ------ | --------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | non    | objet           | aucun (vanilla) | `fluid` doit être `minecraft:water`. Deux sources à côté d'un bloc qui coule en font une troisième seulement aux endroits listés ; ailleurs, jamais. Clé absente : règle vanilla partout. Les fichiers de lave l'ignorent avec une erreur. |
+| `infinite.biomes`     | non    | liste de textes | tout biome      | Identifiants de biome, ou `#` suivi d'un tag de biome.                                                                                                                                                                                     |
+| `infinite.dimensions` | non    | liste de textes | toute dimension | Mêmes noms que `byDimension`. Quand les deux listes sont données, le lieu doit correspondre aux deux.                                                                                                                                      |
+
+La règle de jeu `waterSourceConversion` s'applique toujours là où la liste l'autorise. Le lieu est testé à chaque source voisine.
 
 ### Notes par version
 

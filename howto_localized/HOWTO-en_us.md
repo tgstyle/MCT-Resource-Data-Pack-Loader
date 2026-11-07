@@ -2130,9 +2130,29 @@ A file here attaches reactions to vanilla water or lava, with no mixin. Its `flu
 }
 ```
 
+A water file can also make vanilla water finite. With `infinite` set, two source blocks beside a flowing block make a third only in the listed places:
+
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_jungle"],
+    "dimensions": ["minecraft:overworld"]
+  }
+}
+```
+
 A pack fluid does not need this file for its own contacts. Its own `reactions` already name the vanilla fluid it meets.
 
 These rules work with `vanillaClients`. They are server state only, so a plain client needs nothing from the pack. A rule that names a block the server does not register is dropped with its error.
+
+| Key                   | Required | Value        | Default        | What it does                                                                                                                                                                                                      |
+| --------------------- | -------- | ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no       | object       | none (vanilla) | `fluid` must be `minecraft:water`. Two sources beside a flowing block make a third only in the listed places; elsewhere they never do. Key left out: vanilla rule everywhere. Lava files ignore it with an error. |
+| `infinite.biomes`     | no       | list of text | any biome      | Biome ids, or `#` followed by a biome tag.                                                                                                                                                                        |
+| `infinite.dimensions` | no       | list of text | any dimension  | Same names as `byDimension`. When both lists are given the place must match both.                                                                                                                                 |
+
+The `waterSourceConversion` gamerule still applies where the list allows it. The place is tested at each neighboring source.
 
 ### Version notes
 

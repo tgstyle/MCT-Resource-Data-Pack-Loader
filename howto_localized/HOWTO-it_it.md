@@ -2130,9 +2130,29 @@ Un file qui collega reazioni all'acqua o alla lava vanilla, senza mixin. La sua 
 }
 ```
 
+Un file dell'acqua può anche rendere infinita l'acqua vanilla. Con `infinite` impostato, due blocchi sorgente accanto a un blocco che scorre ne formano un terzo solo nei punti elencati:
+
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_jungle"],
+    "dimensions": ["minecraft:overworld"]
+  }
+}
+```
+
 Un fluido del pack non ha bisogno di questo file per i propri contatti. Le sue `reactions` indicano già il fluido vanilla che incontra.
 
 Queste regole funzionano con `vanillaClients`. Sono solo stato del server, quindi un client semplice non ha bisogno di nulla dal pack. Una regola che nomina un blocco che il server non registra viene scartata con il suo errore.
+
+| Chiave                | Obbligatorio | Valore         | Predefinito          | Cosa fa                                                                                                                                                                                                                                       |
+| --------------------- | ------------ | -------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no           | oggetto        | nessuno (vanilla)    | `fluid` deve essere `minecraft:water`. Due sorgenti accanto a un blocco che scorre ne generano una terza solo nei punti elencati; altrove non accade mai. Chiave omessa: regola vanilla ovunque. I file della lava la ignorano con un errore. |
+| `infinite.biomes`     | no           | lista di testi | qualsiasi bioma      | ID di bioma, oppure `#` seguito da un tag di bioma.                                                                                                                                                                                           |
+| `infinite.dimensions` | no           | lista di testi | qualsiasi dimensione | Stessi nomi di `byDimension`. Se sono dati entrambi gli elenchi, il punto deve corrispondere a entrambi.                                                                                                                                      |
+
+La regola di gioco `waterSourceConversion` continua ad applicarsi dove l'elenco lo consente. Il punto viene verificato a ogni sorgente vicina.
 
 ### Note sulla versione
 

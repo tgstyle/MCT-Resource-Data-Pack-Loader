@@ -414,6 +414,7 @@ public class ModSetup {
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
         if (ContentExposures.spreads()) { MinecraftForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
         if (VanillaFluidRules.wanted()) { MinecraftForge.EVENT_BUS.addListener(VanillaFluidRules::onNeighborNotify); }
+        if (VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.addListener(VanillaFluidRules::onCreateSource); }
         if (FluidReactionQueue.wanted()) {
             MinecraftForge.EVENT_BUS.addListener(FluidReactionQueue::onTick);
             MinecraftForge.EVENT_BUS.addListener(FluidReactionQueue::onUnload);

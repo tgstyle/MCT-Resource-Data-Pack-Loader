@@ -2130,9 +2130,29 @@ Soubor zde připojuje reakce k vanilla vodě nebo lávě, bez mixinu. Jeho klí�
 }
 ```
 
+Vodní soubor může také udělat vanilla vodu nekonečnou. S nastaveným `infinite` dva zdrojové bloky vedle tekoucího bloku vytvoří třetí jen na uvedených místech:
+
+```json
+{
+  "fluid": "minecraft:water",
+  "infinite": {
+    "biomes": ["minecraft:swamp", "#minecraft:is_jungle"],
+    "dimensions": ["minecraft:overworld"]
+  }
+}
+```
+
 Tekutina z balíčku tento soubor pro své vlastní kontakty nepotřebuje. Její vlastní `reactions` už pojmenovávají vanilla tekutinu, kterou potkává.
 
 Tato pravidla fungují s `vanillaClients`. Jsou jen serverový stav, takže obyčejný klient od balíčku nic nepotřebuje. Pravidlo, které pojmenuje blok, jejž server neregistruje, se zahodí se svou chybou.
+
+| Klíč                  | Povinné | Hodnota      | Výchozí           | Co dělá                                                                                                                                                                                               |
+| --------------------- | ------- | ------------ | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | ne      | objekt       | žádný (vanilla)   | `fluid` musí být `minecraft:water`. Dva zdroje vedle tekoucího bloku udělají třetí jen na uvedených místech; jinde nikdy. Klíč vynechán: vanilla pravidlo všude. Lávové soubory ho ignorují s chybou. |
+| `infinite.biomes`     | ne      | seznam textů | libovolný biom    | Id biomů, nebo `#` a za ním tag biomu.                                                                                                                                                                |
+| `infinite.dimensions` | ne      | seznam textů | libovolná dimenze | Stejné názvy jako `byDimension`. Když jsou zadané oba seznamy, místo musí odpovídat oběma.                                                                                                            |
+
+Herní pravidlo `waterSourceConversion` platí dál tam, kde seznam dovolí. Místo se zkouší u každého sousedního zdroje.
 
 ### Poznámky k verzím
 
