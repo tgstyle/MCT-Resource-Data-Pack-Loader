@@ -266,7 +266,7 @@ public final class ContentDimensionRules {
 
     @SideOnly(Side.CLIENT) public static void existingLightmap(World world, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {
         DimensionDef def = ContentDimensions.overlay(world);
-        if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); }
+        if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, def.darkness != null, partialTicks, sunBrightness, skyLight, blockLight, colors); }
     }
 
     @SideOnly(Side.CLIENT) public static ResourceLocation skyTexture(World world, ResourceLocation asked) {

@@ -4,15 +4,18 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.util.ContentReach;
 import mctmods.resourcedatapackloader.client.util.RainSplash;
+import mctmods.resourcedatapackloader.client.util.TrueDarkness;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldProvider;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -29,13 +32,17 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderer.class) public class MixinEntityRenderer {
     @Shadow public int rendererUpdateCount;
     @Shadow @Final private Minecraft mc;
+    @Shadow @Final private int[] lightmapColors;
+    @Unique @Nullable private DarknessDef rdpl$darkness;
     @Inject(method = "createWorldIcon", at = @At("HEAD"), cancellable = true) private void rdpl$iconAfterTheFog(CallbackInfo ci) {
         if (HoldView.showing()) { ci.cancel(); }
     }
@@ -75,5 +82,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @WrapOperation(method = "updateLightmap", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;getLightmapColors(FFFF[F)V", remap = false)) private void rdpl$existingLightmap(WorldProvider provider, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors, Operation<Void> original) {
         original.call(provider, partialTicks, sunBrightness, skyLight, blockLight, colors);
         ContentDimensionRules.existingLightmap(mc.world, partialTicks, sunBrightness, skyLight, blockLight, colors);
+        TrueDarkness.nightVision(rdpl$darkness, colors);
     }
+
+    @ModifyExpressionValue(method = "updateLightmap(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getSunBrightness(F)F")) private float rdpl$darkSun(float own) {
+        rdpl$darkness = TrueDarkness.of(mc.world);
+        return TrueDarkness.sun(rdpl$darkness, mc.world, own);
+    }
+
+    @ModifyConstant(method = "updateLightmap(F)V", constant = {@Constant(floatValue = 0.95F), @Constant(floatValue = 0.96F)}) private float rdpl$darkScale(float own) { return TrueDarkness.scale(rdpl$darkness, own); }
+
+    @ModifyConstant(method = "updateLightmap(F)V", constant = {@Constant(floatValue = 0.05F), @Constant(floatValue = 0.03F)}) private float rdpl$darkFloor(float own) { return TrueDarkness.floor(rdpl$darkness, own); }
+
+    @ModifyExpressionValue(method = "updateLightmap(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;getLightBrightnessTable()[F")) private float[] rdpl$darkTable(float[] own) { return TrueDarkness.table(rdpl$darkness, own); }
+
+    @ModifyExpressionValue(method = "updateLightmap(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/DimensionType;getId()I")) private int rdpl$darkEnd(int own) { return TrueDarkness.endLight(rdpl$darkness, own); }
+
+    @ModifyExpressionValue(method = "updateLightmap(F)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/settings/GameSettings;gammaSetting:F", opcode = Opcodes.GETFIELD)) private float rdpl$lockedGamma(float own) { return TrueDarkness.gamma(rdpl$darkness, own); }
+
+    @Inject(method = "updateLightmap(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/DynamicTexture;updateDynamicTexture()V")) private void rdpl$grayNight(float partialTicks, CallbackInfo ci) { TrueDarkness.gray(rdpl$darkness, lightmapColors); }
 }

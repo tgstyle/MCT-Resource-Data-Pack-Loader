@@ -87,7 +87,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return ContentDimensionRules.color(def.cloudColor);
     }
 
-    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); } }
+    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRulesClient.lightmap(def.look, def.darkness != null, partialTicks, sunBrightness, skyLight, blockLight, colors); } }
 
     @Override @Nonnull public float[] getLightBrightnessTable() { return ContentDimensionRules.lightBrightness(def, super.getLightBrightnessTable()); }
 

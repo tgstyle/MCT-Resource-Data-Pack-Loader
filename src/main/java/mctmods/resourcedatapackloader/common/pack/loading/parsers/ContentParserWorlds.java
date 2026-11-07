@@ -505,6 +505,7 @@ public final class ContentParserWorlds {
                 traits,
                 ContentParserSkyLook.look(key, sky, cloudHeight, clouds),
                 ContentParserTimeWindows.windows(key, json, traits.precipitation),
+                ContentParserDarkness.darkness(key, sky),
                 Json.paths(json));
     }
 

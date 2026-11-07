@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.worlds;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.DimensionPortalDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.GalacticraftDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.TimeWindowDef;
@@ -59,9 +60,10 @@ public final class DimensionDef {
     public final DimensionTraitsDef traits;
     @Nullable public final SkyLookDef look;
     public final List<TimeWindowDef> windows;
+    @Nullable public final DarknessDef darkness;
     private final Set<String> given;
 
-    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, List<String> biomeList, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, @Nullable GalacticraftDef galacticraft, DimensionTraitsDef traits, @Nullable SkyLookDef look, List<TimeWindowDef> windows, Set<String> given) {
+    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, List<String> biomeList, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, @Nullable GalacticraftDef galacticraft, DimensionTraitsDef traits, @Nullable SkyLookDef look, List<TimeWindowDef> windows, @Nullable DarknessDef darkness, Set<String> given) {
         this.registryName = registryName;
         this.id = id;
         this.suffix = suffix;
@@ -101,6 +103,7 @@ public final class DimensionDef {
         this.traits = traits;
         this.look = look;
         this.windows = windows;
+        this.darkness = darkness;
         this.given = given;
     }
 

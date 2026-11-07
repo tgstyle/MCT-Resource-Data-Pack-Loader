@@ -5361,6 +5361,7 @@ Un `sun` ou un `moon` qui ne définit que `texture` remplace l'image dans le cie
 | `fixedTime`        | non    | entier, ticks                    | aucun   | Verrouille l'heure de la journée                                                                                                                                                                                                                  |
 | `sunriseColors`    | non    | booléen                          | `true`  | Si le lever et le coucher du soleil sont teintés                                                                                                                                                                                                  |
 | `ambientLight`     | non    | flottant, 0 à 1                  | `0.0`   | Lumière minimale partout                                                                                                                                                                                                                          |
+| `darkness`         | non    | objet                            | aucun   | Retire le minimum de lumière pour que les lieux non éclairés deviennent noirs. Voir [Obscurité totale](#obscurité-totale)                                                                                                                         |
 | `lightSkyColor`    | non    | couleur hexadécimale             | aucun   | Teinte de la lumière du jour sur les blocs et les mobs                                                                                                                                                                                            |
 | `lightBlockColor`  | non    | couleur hexadécimale             | aucun   | Teinte de la lumière des torches et des autres sources de lumière de bloc                                                                                                                                                                         |
 | `skyFactor`        | non    | flottant, 0 à 1                  | `1.0`   | Luminosité apparente de la lumière du jour. Dessinée uniquement côté client, donc l'apparition des mobs ne change pas                                                                                                                             |
@@ -5482,6 +5483,40 @@ Sans `cloudLayers`, `cloudSpeed` modifie la vitesse de l'unique couche vanilla �
 | `heat.dayOnly`         | non    | booléen              | `true`        | Activé, le mirage s'estompe avec la lumière du jour et disparaît la nuit |
 | `heat.mode`            | non    | texte                | `screen`      | Où le mirage se pose, `screen` ou `world`                                |
 | `heat.startDistance`   | non    | flottant             | `32`          | En mode `world`, à combien de blocs de distance le mirage commence       |
+
+### Obscurité totale
+
+*dimensions*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` retire la lumière minimale que le jeu ajoute partout : une grotte ou une pièce sans torche est noire, et seules la lumière des blocs et celle du ciel restent visibles. Sans cette clé, la dimension garde son aspect habituel. Elle s'applique aux dimensions propres à RDPL et, au moyen d'un fichier pour une [dimension existante](#dimensions-existantes), à l'overworld, au Nether, à l'End et aux dimensions d'autres mods ; une dimension sans un tel fichier garde sa lumière habituelle. Elle est dessinée uniquement côté client : le niveau de lumière que le serveur compte pour l'apparition des mobs et les cultures ne change pas.
+
+`mode` décide du sort de la lumière du ciel la nuit. `full` la réduit elle aussi à rien. `block` garde la lumière nocturne du ciel de vanilla et retire seulement le plancher sous la lumière des blocs. `moon` règle la lumière nocturne du ciel selon la lune : `moonLight` contient cinq valeurs pour 0, 25, 50, 75 et 100 % de lune visible, de `0` (noir) à `1` (aussi clair qu'en plein jour), si bien qu'à `0` la nouvelle lune est d'un noir complet.
+
+Dans le Nether, `darkness` retire aussi son propre plancher de lumière, plus élevé, sauf si le fichier définit `ambientLight`, qui décide alors. Dans l'End, la lueur uniforme, qui éclaire un peu tout, reste en place ; avec `endGlow` à `false`, elle disparaît aussi. La vision nocturne éclaire toujours l'obscurité.
+
+`grayNight`, en mode `block` et `moon`, dessine en gris les lieux éclairés par le ciel au lieu du léger bleu de la nuit vanilla ; en mode `block`, elle les éclaircit aussi un peu. En mode `full`, le même gris apparaît tant que le joueur a la vision nocturne. `gamma` fixe le réglage de luminosité à cette valeur tant que le joueur est dans la dimension, et le curseur des paramètres vidéo l'affiche sans pouvoir être déplacé.
+
+| Clé                  | Requis | Valeur                      | Défaut                           | Rôle                                                                         |
+| -------------------- | ------ | --------------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| `darkness.mode`      | non    | texte                       | `full`                           | `full`, `block` ou `moon`, comme ci-dessus                                   |
+| `darkness.moonLight` | non    | liste de 5 flottants, 0 à 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | En mode `moon`, la lumière nocturne du ciel à 0, 25, 50, 75 et 100 % de lune |
+| `darkness.grayNight` | non    | booléen                     | `false`                          | Lumière nocturne du ciel grise en mode `block` et `moon`                     |
+| `darkness.endGlow`   | non    | booléen                     | `true`                           | Dans l'End, garde la lueur uniforme ; `false` la supprime                    |
+| `darkness.gamma`     | non    | flottant, 0 à 1             | aucun                            | Fixe le réglage de luminosité dans cette dimension                           |
 
 ### Neige, fluides, étoiles et éclairs
 

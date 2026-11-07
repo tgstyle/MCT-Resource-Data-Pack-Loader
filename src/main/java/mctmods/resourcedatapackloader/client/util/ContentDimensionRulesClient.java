@@ -19,17 +19,21 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT) public final class ContentDimensionRulesClient {
     private static final float BOSS_RED = 0.3F;
     private static final float BOSS_GREEN_BLUE = 0.4F;
+    private static final float SCALE = 0.96F;
+    private static final float FLOOR = 0.03F;
 
     private ContentDimensionRulesClient() {}
 
-    public static void lightmap(SkyLookDef look, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {
+    public static void lightmap(SkyLookDef look, boolean dark, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {
+        float scale = dark ? 1.0F : SCALE;
+        float floor = dark ? 0.0F : FLOOR;
         float sky = skyLight * look.skyFactor;
         float skyRed = sky * (sunBrightness * 0.65F + 0.35F);
         float blockGreen = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
         float blockBlue = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
-        colors[0] = (skyRed * channel(look.lightSkyColor, Colors::red) + blockLight * channel(look.lightBlockColor, Colors::red)) * 0.96F + 0.03F;
-        colors[1] = (skyRed * channel(look.lightSkyColor, Colors::green) + blockGreen * channel(look.lightBlockColor, Colors::green)) * 0.96F + 0.03F;
-        colors[2] = (sky * channel(look.lightSkyColor, Colors::blue) + blockBlue * channel(look.lightBlockColor, Colors::blue)) * 0.96F + 0.03F;
+        colors[0] = (skyRed * channel(look.lightSkyColor, Colors::red) + blockLight * channel(look.lightBlockColor, Colors::red)) * scale + floor;
+        colors[1] = (skyRed * channel(look.lightSkyColor, Colors::green) + blockGreen * channel(look.lightBlockColor, Colors::green)) * scale + floor;
+        colors[2] = (sky * channel(look.lightSkyColor, Colors::blue) + blockBlue * channel(look.lightBlockColor, Colors::blue)) * scale + floor;
         EntityRenderer renderer = Minecraft.getMinecraft().entityRenderer;
         float boss = renderer.bossColorModifierPrev + (renderer.bossColorModifier - renderer.bossColorModifierPrev) * partialTicks;
         if (boss <= 0.0F) { return; }
