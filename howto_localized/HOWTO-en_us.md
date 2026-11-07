@@ -73,6 +73,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
 - [Falling columns](#falling-columns)
+- [Flower spreading](#flower-spreading)
 - [Carrying](#carrying)
 - [Loot removals](#loot-removals)
 - [Player loot](#player-loot)
@@ -223,6 +224,7 @@ Under `data/`:
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                                            |
 | `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
 | `<namespace>/columns/*.json`                 | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
+| `<namespace>/flower_spreads/*.json`          | Extra flowers placed around grass or another block when bone meal is used on it. [Flower spreading](#flower-spreading)                                                         |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                                  |
 | `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                                                                |
 | `<namespace>/tags/<kind>/*.json`             | Tags, the game's own format. [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)                                                                                      |
@@ -3361,6 +3363,40 @@ When a player breaks a block, the run of listed falling blocks (gravel, sand) di
 | `alternate`      | no       | object with `item` and `chance` (0 to 1)                                                          | none    | Each column block drops `item` on a successful roll, or its own block item on a miss. Without it each block drops its normal drops at Fortune 0. |
 
 Fake players never trigger a column, and creative players get no drops. Files stack; the first file whose blocks hold the block above the broken one is used. A load logs `Loaded N falling column group(s)`, and a file that names no registered block or has a bad `alternate` logs an error.
+
+## Flower spreading
+
+*crafting, loot and trade*
+
+`<namespace>/flower_spreads/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+Bone meal on grass grows tall grass and the biome's own flowers. A file here adds flowers of your choosing around the block, from any mod, whether a player or a dispenser uses the bone meal. Vanilla growth still runs, so these flowers come on top of it. Without a file nothing changes; a pack that wants the choice to be the player's puts a `config:` entry in `requires`, as described under Pack options.
+
+```json
+{
+  "on": ["minecraft:grass_block"],
+  "flowers": ["minecraft:blue_orchid", {"block": "minecraft:dandelion"}],
+  "tag": ["minecraft:small_flowers"],
+  "everyMod": false,
+  "radius": 3,
+  "count": 4
+}
+```
+
+| Key        | Required | Value                                                                                             | Default                                                                | What it does                                                                                                                                               |
+| ---------- | -------- | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | no       | list of strings                                                                                   | none                                                                   | Mod ids that must be loaded, or `config:` options, as elsewhere.                                                                                           |
+| `on`       | no       | list of block ids, with `meta` (1.12.2) or `properties` (1.20.1 and later) as in a hardness group | `minecraft:grass` (1.12.2), `minecraft:grass_block` (1.20.1 and later) | Blocks the bone meal is used on. Any block bone meal can grow works, such as a crop.                                                                       |
+| `flowers`  | no       | list of block ids, with `meta` or `properties`                                                    | none                                                                   | Flowers to place. A block given without `meta` or `properties` places any of its states.                                                                   |
+| `oreDict`  | no       | list of ore names (1.12.2 only)                                                                   | none                                                                   | Every block registered under these ore names is added to the flowers.                                                                                      |
+| `tag`      | no       | list of block tags (1.20.1 and later)                                                             | none                                                                   | Every block in these tags is added to the flowers.                                                                                                         |
+| `everyMod` | no       | bool                                                                                              | `false`                                                                | When true, every flower of every mod is added: on 1.12.2 each flower block, on 1.20.1 and later the `minecraft:small_flowers` tag without the wither rose. |
+| `radius`   | no       | int, 1 to 8                                                                                       | `3`                                                                    | How far from the block, in a circle, flowers may go.                                                                                                       |
+| `count`    | no       | int, 1 to 64                                                                                      | `4`                                                                    | Most flowers placed per use of bone meal.                                                                                                                  |
+
+A flower goes only into air, one block above the ground level of the used block or a block up or down from it, and only where that flower could stay, never into the block directly above the used one. The flower list is read at each use, so tags and ore names other mods fill late still count. Files stack; the first file whose `on` holds the block is used. A file needs at least one of `flowers`, `oreDict`, `tag` or `everyMod`. A load logs `Loaded N flower spread rule(s)`, and a file with no registered `on` block or no flower source logs an error and is ignored. On 1.20.1 and later a file using `oreDict` logs a warning to use `tag`. It is server data and needs nothing on the client.
 
 ## Carrying
 

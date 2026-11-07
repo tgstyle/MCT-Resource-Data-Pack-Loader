@@ -73,6 +73,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
 - [Padající sloupce](#padající-sloupce)
+- [Šíření květin](#šíření-květin)
 - [Nošení](#nošení)
 - [Odstranění kořisti](#odstranění-kořisti)
 - [Kořist hráčů](#kořist-hráčů)
@@ -223,6 +224,7 @@ V `data/`:
 | `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
+| `<namespace>/flower_spreads/*.json`          | Další květiny kolem trávy nebo jiného bloku, když se na něj použije kostní moučka. [Šíření květin](#šíření-květin)                                                                                   |
 | `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
 | `<namespace>/functions/*.mcfunction`         | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                |
 | `<namespace>/tags/<kind>/*.json`             | Tagy, ve vlastním formátu hry. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                          |
@@ -3361,6 +3363,40 @@ Když hráč rozbije blok, rozbije se i řada vypsaných padajících bloků (š
 | `alternate`      | ne      | objekt s `item` a `chance` (0 až 1)                                                              | žádný   | Každý blok sloupce vydá `item` při úspěšném hodu, jinak svůj vlastní blokový předmět. Bez něj vydá každý blok běžnou kořist se Štěstím 0. |
 
 Falešní hráči sloupec nikdy nespustí a hráči v kreativním režimu nedostanou žádné dropy. Soubory se sčítají; použije se první soubor, jehož bloky drží blok nad rozbitým. Při načtení se zapíše `Loaded N falling column group(s)` a soubor, který nepojmenuje žádný registrovaný blok nebo má špatné `alternate`, zapíše chybu.
+
+## Šíření květin
+
+*výroba, kořist a obchod*
+
+`<namespace>/flower_spreads/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Když hráč použije kostní moučku na trávu, vyroste vysoká tráva a květiny vlastní pro daný biom. Soubor zde přidá kolem bloku květiny podle tvé volby z libovolného modu, ať moučku použije hráč, nebo dispenzer. Vanilkový růst běží dál, takže tyto květiny přibydou navíc. Bez souboru se nic nemění; balíček, který chce, aby volbu měl hráč, dá položku `config:` do `requires`, jak je popsáno v části Možnosti balíčku.
+
+```json
+{
+  "on": ["minecraft:grass_block"],
+  "flowers": ["minecraft:blue_orchid", {"block": "minecraft:dandelion"}],
+  "tag": ["minecraft:small_flowers"],
+  "everyMod": false,
+  "radius": 3,
+  "count": 4
+}
+```
+
+| Klíč       | Povinný | Hodnota                                                                                          | Výchozí                                                                | Co dělá                                                                                                                                                  |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | ne      | seznam řetězců                                                                                   | žádný                                                                  | ID modů, které musí být načtené, nebo možnosti `config:`, jako jinde.                                                                                    |
+| `on`       | ne      | seznam id bloků, s `meta` (1.12.2) nebo `properties` (1.20.1 a novější) jako ve skupině tvrdosti | `minecraft:grass` (1.12.2), `minecraft:grass_block` (1.20.1 a novější) | Bloky, na které se kostní moučka použije. Hodí se libovolný blok, který kostní moučka dokáže vypěstovat, třeba plodina.                                  |
+| `flowers`  | ne      | seznam id bloků, s `meta` nebo `properties`                                                      | žádný                                                                  | Květiny k položení. Blok bez `meta` nebo `properties` položí kterýkoli ze svých stavů.                                                                   |
+| `oreDict`  | ne      | seznam jmen rud (jen 1.12.2)                                                                     | žádný                                                                  | Každý blok zaregistrovaný pod těmito jmény rud se přidá ke květinám.                                                                                     |
+| `tag`      | ne      | seznam blokových tagů (1.20.1 a novější)                                                         | žádný                                                                  | Každý blok s těmito tagy se přidá ke květinám.                                                                                                           |
+| `everyMod` | ne      | bool                                                                                             | `false`                                                                | Když je true, přidá se každá květina každého modu: na 1.12.2 každý květinový blok, na 1.20.1 a novějším tag `minecraft:small_flowers` bez vadnoucí růže. |
+| `radius`   | ne      | int, 1 až 8                                                                                      | `3`                                                                    | Jak daleko od bloku v kruhu mohou květiny sahat.                                                                                                         |
+| `count`    | ne      | int, 1 až 64                                                                                     | `4`                                                                    | Nejvíc květin položených na jedno použití kostní moučky.                                                                                                 |
+
+Květina jde jen do vzduchu, o jednu výš nad úrovní země použitého bloku, nebo o blok výš či níž, a jen tam, kde se může udržet; nikdy do bloku přímo nad použitým. Seznam květin se čte při každém použití, takže tagy a jména rud, která další mody doplní později, se stále počítají. Soubory se sčítají; použije se první soubor, jehož `on` drží blok. Soubor potřebuje aspoň jedno z `flowers`, `oreDict`, `tag` nebo `everyMod`. Při načtení se zapíše `Loaded N flower spread rule(s)`, a soubor bez registrovaného bloku v `on` nebo bez zdroje květin zapíše chybu a bude ignorován. Na 1.20.1 a novějším soubor s `oreDict` zapíše varování, ať použije `tag`. Je to data na serveru a na klientovi nic nepotřebují.
 
 ## Nošení
 

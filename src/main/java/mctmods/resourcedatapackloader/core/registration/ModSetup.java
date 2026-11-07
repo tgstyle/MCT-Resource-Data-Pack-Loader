@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.common.blocks.compress.CompressedFuel;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentBoneMealFlowers;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
@@ -264,6 +265,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentHarvests::onRightClick);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVeins::onBreak);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onPlayerTick);

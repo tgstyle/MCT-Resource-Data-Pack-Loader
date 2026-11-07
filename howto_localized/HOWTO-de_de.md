@@ -73,6 +73,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
 - [Fallende Säulen](#fallende-säulen)
+- [Blumenausbreitung](#blumenausbreitung)
 - [Tragen](#tragen)
 - [Beute entfernen](#beute-entfernen)
 - [Spielerbeute](#spielerbeute)
@@ -223,6 +224,7 @@ Unter `data/`:
 | `<namespace>/player_loot/*.json`             | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                                                                                                                |
 | `<namespace>/diets/*.json`                   | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                                                                                                                                                    |
 | `<namespace>/columns/*.json`                 | Reihen fallender Blöcke, die über einem vom Spieler gebrochenen Block mit abbrechen. [Fallende Säulen](#fallende-säulen)                                                                                                                                                                       |
+| `<namespace>/flower_spreads/*.json`          | Zusätzliche Blumen, die um Gras oder einen anderen Block gesetzt werden, wenn Knochenmehl darauf benutzt wird. [Blumenausbreitung](#blumenausbreitung)                                                                                                                                         |
 | `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                                      |
 | `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                                  |
 | `<namespace>/tags/<kind>/*.json`             | Tags, im Format des Spiels selbst. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                                                                            |
@@ -3361,6 +3363,40 @@ Bricht ein Spieler einen Block, bricht auch die Reihe gelisteter fallender Blöc
 | `alternate`      | nein    | Objekt mit `item` und `chance` (0 bis 1)                                                                | keine    | Jeder Säulenblock droppt `item` bei einem erfolgreichen Wurf, sonst seinen eigenen Blockgegenstand. Ohne ihn droppt jeder Block seine normale Beute bei Glück 0. |
 
 Fake-Spieler lösen nie eine Säule aus, und Spieler im Kreativmodus erhalten keine Drops. Dateien stapeln sich; benutzt wird die erste Datei, deren Blöcke den Block über dem gebrochenen halten. Beim Laden steht im Log `Loaded N falling column group(s)`, und eine Datei, die keinen registrierten Block nennt oder ein fehlerhaftes `alternate` hat, meldet einen Fehler.
+
+## Blumenausbreitung
+
+*herstellung, beute und handel*
+
+`<namespace>/flower_spreads/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Knochenmehl auf Gras lässt hohes Gras und die eigenen Blumen des Bioms wachsen. Eine Datei hier fügt um den Block Blumen deiner Wahl aus einem beliebigen Mod hinzu, egal ob ein Spieler oder ein Spender das Knochenmehl benutzt. Das Vanilla-Wachstum läuft weiter, also kommen diese Blumen zusätzlich dazu. Ohne Datei ändert sich nichts; ein Paket, das die Wahl dem Spieler überlassen will, setzt einen `config:`-Eintrag in `requires`, wie unter Pack-Optionen beschrieben.
+
+```json
+{
+  "on": ["minecraft:grass_block"],
+  "flowers": ["minecraft:blue_orchid", {"block": "minecraft:dandelion"}],
+  "tag": ["minecraft:small_flowers"],
+  "everyMod": false,
+  "radius": 3,
+  "count": 4
+}
+```
+
+| Schlüssel  | Pflicht | Wert                                                                                                    | Standard                                                               | Was er macht                                                                                                                                                    |
+| ---------- | ------- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires` | nein    | Liste von Strings                                                                                       | keine                                                                  | Mod-IDs, die geladen sein müssen, oder `config:`-Optionen, wie überall sonst.                                                                                   |
+| `on`       | nein    | Liste von Block-IDs, mit `meta` (1.12.2) oder `properties` (1.20.1 und neuer) wie bei einer Härtegruppe | `minecraft:grass` (1.12.2), `minecraft:grass_block` (1.20.1 und neuer) | Blöcke, auf denen Knochenmehl benutzt wird. Jeder Block, den Knochenmehl wachsen lassen kann, etwa eine Feldfrucht, funktioniert.                               |
+| `flowers`  | nein    | Liste von Block-IDs, mit `meta` oder `properties`                                                       | keine                                                                  | Zu setzende Blumen. Ein Block ohne `meta` oder `properties` setzt jeden seiner Zustände.                                                                        |
+| `oreDict`  | nein    | Liste von Erznamen (nur 1.12.2)                                                                         | keine                                                                  | Jeder Block, der unter diesen Erznamen registriert ist, kommt zu den Blumen hinzu.                                                                              |
+| `tag`      | nein    | Liste von Block-Tags (1.20.1 und neuer)                                                                 | keine                                                                  | Jeder Block mit diesen Tags kommt zu den Blumen hinzu.                                                                                                          |
+| `everyMod` | nein    | bool                                                                                                    | `false`                                                                | Ist der Wert true, kommt jede Blume jedes Mods hinzu: auf 1.12.2 jeder Blumenblock, auf 1.20.1 und neuer der Tag `minecraft:small_flowers` ohne Verwelkte Rose. |
+| `radius`   | nein    | int, 1 bis 8                                                                                            | `3`                                                                    | Wie weit vom Block entfernt Blumen im Kreis liegen dürfen.                                                                                                      |
+| `count`    | nein    | int, 1 bis 64                                                                                           | `4`                                                                    | Höchstzahl der Blumen, die pro Verwendung von Knochenmehl gesetzt werden.                                                                                       |
+
+Eine Blume kommt nur in Luft, eine Ebene über dem Bodenniveau des benutzten Blocks oder einen Block höher oder tiefer, und nur dort, wo diese Blume bleiben kann, nie in den Block direkt über dem benutzten. Die Blumenliste wird bei jeder Verwendung gelesen, sodass Tags und Erznamen, die andere Mods spät füllen, trotzdem zählen. Dateien stapeln sich; benutzt wird die erste Datei, deren `on` den Block enthält. Eine Datei braucht mindestens eines von `flowers`, `oreDict`, `tag` oder `everyMod`. Beim Laden steht im Log `Loaded N flower spread rule(s)`, und eine Datei ohne registrierten `on`-Block oder ohne Blumenquelle erzeugt einen Fehler im Log und wird ignoriert. Auf 1.20.1 und neuer warnt eine Datei mit `oreDict` im Log, `tag` zu verwenden. Sie ist Serverdaten und braucht auf dem Client nichts.
 
 ## Tragen
 
