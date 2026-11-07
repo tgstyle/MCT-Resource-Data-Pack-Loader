@@ -5197,6 +5197,7 @@ Sobald `sun`, `moon`, `bodies` oder `stars` gesetzt ist, zeichnet die Dimension 
 | `fixedTime`        | nein    | int, Ticks              | keine    | Hält die Tageszeit fest. Auf 26.x wird eine Dimension mit fester Zeit zu einer Dimension ganz ohne Tageszyklus; `time query` antwortet dort, dass es keine Standarduhr gibt, und das ist richtig so                                                      |
 | `sunriseColors`    | nein    | boolean                 | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                                                                                                                                           |
 | `ambientLight`     | nein    | float, 0 bis 1          | `0.0`    | Mindestlicht überall                                                                                                                                                                                                                                     |
+| `darkness`         | nein    | Objekt                  | keiner   | Nimmt die Mindesthelligkeit weg, sodass unbeleuchtete Orte schwarz werden. Siehe [Echte Dunkelheit](#echte-dunkelheit)                                                                                                                                   |
 | `lightSkyColor`    | nein    | Hex-Farbe               | keine    | Färbung des Tageslichts auf Blöcken und Mobs                                                                                                                                                                                                             |
 | `lightBlockColor`  | nein    | Hex-Farbe               | keine    | Färbung von Fackel- und anderem Blocklicht                                                                                                                                                                                                               |
 | `skyFactor`        | nein    | float, 0 bis 1          | `1.0`    | Wie hell das Tageslicht wirkt. Nur auf dem Client gezeichnet, das Spawnen von Mobs ändert sich nicht                                                                                                                                                     |
@@ -5314,6 +5315,40 @@ Ohne `cloudLayers` ändert `cloudSpeed` das Tempo der einen Vanilla-Schicht auf 
 | `heat.dayOnly`         | nein    | boolean        | `true`        | An, das Flimmern schwindet mit dem Tageslicht und ist nachts weg                    |
 | `heat.mode`            | nein    | Text           | `screen`      | Wo das Flimmern liegt, `screen` oder `world`                                        |
 | `heat.startDistance`   | nein    | float          | `32`          | Im Modus `world` die Entfernung in Blöcken, ab der es flimmert                      |
+
+### Echte Dunkelheit
+
+*dimensionen*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` entfernt die Mindesthelligkeit, die das Spiel überall hinzufügt, sodass eine Höhle oder ein Raum ohne Fackel schwarz ist und nur Block- und Himmelslicht zu sehen sind. Ohne den Schlüssel sieht die Dimension aus wie immer. Er wirkt in RDPLs eigenen Dimensionen und über eine Datei für eine [bestehende Dimension](#bestehende-dimensionen) auch in der Oberwelt, im Nether, im End und in Dimensionen anderer Mods; eine Dimension ohne solche Datei behält ihr gewohntes Licht. Er wird nur auf dem Client gezeichnet, die Lichtstufe, die der Server für Spawns und Pflanzen zählt, bleibt also gleich.
+
+`mode` legt fest, was mit dem nächtlichen Himmelslicht geschieht. `full` nimmt auch das nächtliche Himmelslicht ganz weg. `block` behält das nächtliche Himmelslicht von Vanilla und nimmt nur die Untergrenze unter dem Blocklicht weg. `moon` richtet das nächtliche Himmelslicht nach dem Mond: `moonLight` enthält fünf Werte für 0, 25, 50, 75 und 100 % sichtbaren Mond, von `0` (schwarz) bis `1` (taghell), sodass der Neumond bei `0` völlig dunkel ist.
+
+Im Nether nimmt `darkness` auch dessen eigene, höhere Untergrenze weg, außer die Datei setzt `ambientLight`, das dann entscheidet. Im End bleibt das gleichmäßige Leuchten erhalten, das alles ein wenig erhellt; mit `endGlow` auf `false` verschwindet auch das, außer die Datei setzt `ambientLight`, das dann entscheidet. Nachtsicht erhellt die Dunkelheit weiterhin.
+
+`grayNight` zeichnet im Modus `block` und `moon` Orte unter Himmelslicht grau statt im leichten Blau der Vanilla-Nacht; im Modus `block` hellt es sie zudem etwas auf. Im Modus `full` zeigt sich dasselbe Grau, solange der Spieler Nachtsicht hat. `gamma` legt die Helligkeitseinstellung auf diesen Wert fest, solange der Spieler in der Dimension ist, und der Regler in den Grafikeinstellungen zeigt ihn an und lässt sich nicht verschieben.
+
+| Schlüssel            | Pflicht | Wert                        | Standard                         | Was er macht                                                                 |
+| -------------------- | ------- | --------------------------- | -------------------------------- | ---------------------------------------------------------------------------- |
+| `darkness.mode`      | nein    | Text                        | `full`                           | `full`, `block` oder `moon`, wie oben                                        |
+| `darkness.moonLight` | nein    | Liste mit 5 floats, 0 bis 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | Im Modus `moon` das nächtliche Himmelslicht bei 0, 25, 50, 75 und 100 % Mond |
+| `darkness.grayNight` | nein    | boolean                     | `false`                          | Graues nächtliches Himmelslicht im Modus `block` und `moon`                  |
+| `darkness.endGlow`   | nein    | boolean                     | `true`                           | Behält im End das gleichmäßige Leuchten; `false` nimmt es weg                |
+| `darkness.gamma`     | nein    | float, 0 bis 1              | keiner                           | Legt die Helligkeitseinstellung in dieser Dimension fest                     |
 
 ### Schnee, Flüssigkeiten, Sterne und Blitze
 

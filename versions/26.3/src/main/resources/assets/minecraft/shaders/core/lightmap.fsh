@@ -8,6 +8,8 @@ layout(std140) uniform LightmapInfo {
     float DarknessScale;
     float BossOverlayWorldDarkeningFactor;
     float BrightnessFactor;
+    float GrayLift;
+    float AmbientBlend;
     vec3 BlockLightTint;
     vec3 SkyLightColor;
     vec3 AmbientColor;
@@ -39,8 +41,8 @@ void main() {
     float block_level = floor(texCoord.x * 16) / 15;
     float sky_level = floor(texCoord.y * 16) / 15;
 
-    float block_brightness = get_brightness(block_level) * lightmapInfo.BlockFactor;
-    float sky_brightness = get_brightness(sky_level) * lightmapInfo.SkyFactor;
+    float block_brightness = mix(get_brightness(block_level), 1.0, lightmapInfo.AmbientBlend) * lightmapInfo.BlockFactor;
+    float sky_brightness = mix(get_brightness(sky_level), 1.0, lightmapInfo.AmbientBlend) * lightmapInfo.SkyFactor;
 
     vec3 nightVisionColor = lightmapInfo.NightVisionColor * lightmapInfo.NightVisionFactor;
     vec3 color = max(lightmapInfo.AmbientColor, nightVisionColor);
@@ -60,6 +62,10 @@ void main() {
     color = clamp(color, 0.0, 1.0);
     vec3 notGamma = notGamma(color);
     color = mix(color, notGamma, lightmapInfo.BrightnessFactor);
+
+    if (lightmapInfo.GrayLift >= 0.0 && sky_level > 0.0) {
+        color = vec3(min(1.0, color.r + lightmapInfo.GrayLift));
+    }
 
     fragColor = vec4(color, 1.0);
 }

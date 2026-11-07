@@ -5197,6 +5197,7 @@ Nastavení kteréhokoli z `sun`, `moon`, `bodies` nebo `stars` vykreslí oblohu 
 | `fixedTime`        | ne      | celé číslo, ticky                 | žádný   | Zamkne denní dobu. Na 26.x se typ dimenze s pevným časem stane dimenzí bez denního cyklu vůbec; `time query` tam odpoví, že neexistují výchozí hodiny, a to je správně                                 |
 | `sunriseColors`    | ne      | boolean                           | `true`  | Zda jsou východ a západ slunce zabarveny                                                                                                                                                               |
 | `ambientLight`     | ne      | desetinné číslo, 0 až 1           | `0.0`   | Minimální světlo všude                                                                                                                                                                                 |
+| `darkness`         | ne      | objekt                            | žádný   | Odstraní minimální světlo, takže neosvětlená místa zčernají. Viz [Skutečná tma](#skutečná-tma)                                                                                                         |
 | `lightSkyColor`    | ne      | hexadecimální barva               | žádný   | Odstín denního světla na blocích a mobech                                                                                                                                                              |
 | `lightBlockColor`  | ne      | hexadecimální barva               | žádný   | Odstín světla pochodní a jiného světla bloků                                                                                                                                                           |
 | `skyFactor`        | ne      | desetinné číslo, 0 až 1           | `1.0`   | Jak jasné denní světlo vypadá. Kreslí se jen na klientu, takže spawnování mobů se nemění                                                                                                               |
@@ -5314,6 +5315,40 @@ Bez `cloudLayers` mění `cloudSpeed` rychlost jediné vanilla vrstvy ve výšce
 | `heat.dayOnly`         | ne      | boolean                 | `true`        | Při zapnutí chvění slábne s denním světlem a v noci zmizí         |
 | `heat.mode`            | ne      | řetězec                 | `screen`      | Kam chvění dopadne, `screen` nebo `world`                         |
 | `heat.startDistance`   | ne      | desetinné číslo         | `32`          | V režimu `world` v jaké vzdálenosti v blocích chvění začíná       |
+
+### Skutečná tma
+
+*dimenze*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` odstraní minimální světlo, které hra přidává všude, takže jeskyně nebo místnost bez pochodně je černá a vidět je jen světlo bloků a oblohy. Bez tohoto klíče vypadá dimenze jako vždy. Funguje ve vlastních dimenzích RDPL a přes soubor pro [existující dimenzi](#existující-dimenze) i v Overworldu, netheru, Endu a dimenzích jiných módů; dimenze bez takového souboru si nechá své obvyklé světlo. Kreslí se jen na klientu, takže úroveň světla, kterou server počítá pro spawnování a růst plodin, zůstává stejná.
+
+`mode` určuje, co se stane s nočním světlem oblohy. `full` stáhne na nulu i noční světlo oblohy. `block` ponechá noční světlo oblohy z vanilly a odstraní jen spodní hranici pod světlem bloků. `moon` řídí noční světlo oblohy podle Měsíce: `moonLight` obsahuje pět hodnot pro 0, 25, 50, 75 a 100 % viditelného Měsíce, od `0` (černá) po `1` (jasno jako ve dne), takže při `0` je nov úplně tmavý.
+
+V netheru `darkness` odstraní i jeho vlastní, vyšší spodní hranici světla, pokud soubor nenastaví `ambientLight`, který pak rozhoduje. V Endu jeho rovnoměrná záře, která vše trochu prosvětluje, zůstává; nastavením `endGlow` na `false` zmizí i ona, pokud soubor nenastaví `ambientLight`, který pak rozhoduje. Noční vidění tmu dál prosvětlí.
+
+`grayNight` v režimech `block` a `moon` kreslí místa pod světlem oblohy šedě místo lehce modrého odstínu vanilla noci; v režimu `block` je navíc trochu zesvětlí. V režimu `full` se stejná šeď ukáže, dokud má hráč noční vidění. `gamma` uzamkne nastavení jasu na tuto hodnotu, dokud je hráč v dimenzi, a posuvník v nastavení grafiky ji ukazuje a nejde s ním pohnout.
+
+| Klíč                 | Povinné | Hodnota                            | Výchozí                          | Co dělá                                                              |
+| -------------------- | ------- | ---------------------------------- | -------------------------------- | -------------------------------------------------------------------- |
+| `darkness.mode`      | ne      | řetězec                            | `full`                           | `full`, `block` nebo `moon`, viz výše                                |
+| `darkness.moonLight` | ne      | seznam 5 desetinných čísel, 0 až 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | V režimu `moon` noční světlo oblohy při 0, 25, 50, 75 a 100 % Měsíce |
+| `darkness.grayNight` | ne      | boolean                            | `false`                          | Šedé noční světlo oblohy v režimech `block` a `moon`                 |
+| `darkness.endGlow`   | ne      | boolean                            | `true`                           | V Endu ponechá rovnoměrnou záři; `false` ji odstraní                 |
+| `darkness.gamma`     | ne      | desetinné číslo, 0 až 1            | žádný                            | Uzamkne nastavení jasu v této dimenzi                                |
 
 ### Sníh, tekutiny, hvězdy a blesky
 

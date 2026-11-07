@@ -5197,6 +5197,7 @@ Any `sun`, `moon`, `bodies` or `stars` draws the sky with [RDPL's own renderer](
 | `fixedTime`        | no       | int, ticks            | none    | Locks the time of day. On 26.x a dimension type with a fixed time becomes a dimension with no day cycle at all; `time query` there answers that there is no default clock, and that is correct            |
 | `sunriseColors`    | no       | boolean               | `true`  | Whether sunrise and sunset are tinted                                                                                                                                                                     |
 | `ambientLight`     | no       | float, 0 to 1         | `0.0`   | Minimum light everywhere                                                                                                                                                                                  |
+| `darkness`         | no       | object                | none    | Drops the light floors so unlit places go black. See [True darkness](#true-darkness)                                                                                                                      |
 | `lightSkyColor`    | no       | hex color             | none    | Tint of daylight on blocks and mobs                                                                                                                                                                       |
 | `lightBlockColor`  | no       | hex color             | none    | Tint of torchlight and other block light                                                                                                                                                                  |
 | `skyFactor`        | no       | float, 0 to 1         | `1.0`   | How bright daylight looks. Drawn on the client only, so mob spawning does not change                                                                                                                      |
@@ -5314,6 +5315,40 @@ Without `cloudLayers`, `cloudSpeed` changes the speed of the one vanilla layer a
 | `heat.dayOnly`         | no       | boolean       | `true`        | On, the shimmer fades with the daylight and is gone at night         |
 | `heat.mode`            | no       | string        | `screen`      | Where the shimmer lands, `screen` or `world`                         |
 | `heat.startDistance`   | no       | float         | `32`          | In `world` mode, how many blocks away the shimmer begins             |
+
+### True darkness
+
+*dimensions*
+
+```json
+{
+  "id": 0,
+  "sky": {
+    "darkness": {
+      "mode": "moon",
+      "moonLight": [0.0, 0.025, 0.05, 0.075, 0.1],
+      "grayNight": false,
+      "gamma": 0.0
+    }
+  }
+}
+```
+
+`darkness` removes the minimum light the game adds everywhere, so a cave or a room with no torch is black and only block light and skylight show. Leave it out and the dimension looks as it always has. It works in RDPL's own dimensions and, through a file for an [existing dimension](#existing-dimensions), in the overworld, the Nether, the End and other mods' dimensions; a dimension with no such file keeps its usual light. It is drawn on the client only, so the light level the server counts for spawning and crops stays the same.
+
+`mode` decides what happens to night skylight. `full` takes night skylight down to nothing as well. `block` keeps vanilla's night skylight and drops only the floor under block light. `moon` sets night skylight by the moon: `moonLight` holds five values for 0, 25, 50, 75 and 100% of the moon showing, from `0` (black) to `1` (as bright as day), so at `0` the new moon is fully dark.
+
+In the Nether, `darkness` also drops the Nether's own higher light floor, unless the file sets `ambientLight`, which then decides it. In the End it keeps the End's flat glow, which still lights everything a little; set `endGlow` to `false` to remove that too, unless the file sets `ambientLight`, which then decides it. Night vision still lights the dark.
+
+In `block` and `moon` mode, `grayNight` draws skylit places in gray instead of the slight blue of a vanilla night, and in `block` mode it lifts them a little as well. In `full` mode the same gray shows while the player has night vision. `gamma` locks the brightness setting to that value while the player is in the dimension, and the Video Settings slider shows it and cannot be moved.
+
+| Key                  | Required | Value                    | Default                          | What it does                                                  |
+| -------------------- | -------- | ------------------------ | -------------------------------- | ------------------------------------------------------------- |
+| `darkness.mode`      | no       | string                   | `full`                           | `full`, `block` or `moon`, as above                           |
+| `darkness.moonLight` | no       | list of 5 floats, 0 to 1 | `[0.0, 0.075, 0.15, 0.225, 0.3]` | In `moon` mode, night skylight at 0, 25, 50, 75 and 100% moon |
+| `darkness.grayNight` | no       | boolean                  | `false`                          | Gray night skylight in `block` and `moon` mode                |
+| `darkness.endGlow`   | no       | boolean                  | `true`                           | In the End, keeps the flat glow; `false` removes it           |
+| `darkness.gamma`     | no       | float, 0 to 1            | none                             | Locks the brightness setting in this dimension                |
 
 ### Snow, fluids, stars and lightning
 

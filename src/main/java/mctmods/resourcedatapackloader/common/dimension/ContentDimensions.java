@@ -200,6 +200,7 @@ public final class ContentDimensions {
         }
         rules(def, type);
         effects(def, type);
+        if (EXISTING.contains(def.key()) && def.gives("sky.ambientLight")) { attributes(type).addProperty(VISUAL + "ambient_light_color", "#0a0a0a"); }
         if (sets(def, "time.dayLength") || sets(def, "sky.fixedTime")) { ContentDimensionTime.time(def, type); }
     }
 

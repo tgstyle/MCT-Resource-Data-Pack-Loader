@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.dimension;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.util.dimension.SkyTime;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -15,17 +16,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.attribute.EnvironmentAttribute;
 import net.minecraft.world.attribute.EnvironmentAttributeSystem;
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public final class ContentEnvironmentLayers {
     private static final JsonElement NO_SUNRISE = new JsonPrimitive("#00000000");
     private static final String FOG_COLOR = "minecraft:visual/fog_color";
     private static final Map<Identifier, Long> VANILLA_FIXED_TIME = Map.of(Level.NETHER.identifier(), 18000L, Level.END.identifier(), 6000L);
+    private static final int NEW_MOON = 4;
+    private static float skyBase = 1.0F;
 
     private ContentEnvironmentLayers() {}
 
@@ -58,6 +63,7 @@ public final class ContentEnvironmentLayers {
             }
         }
         layer(builder, key, given);
+        if (level.isClientSide()) { builder.addTimeBasedLayer(EnvironmentAttributes.SKY_LIGHT_FACTOR, (value, _) -> keepBase(key, value)); }
     }
 
     private static long unlitTime(Level level, DimensionDef base) {
@@ -77,11 +83,30 @@ public final class ContentEnvironmentLayers {
         Identifier key = level.dimension().identifier();
         DimensionDef base = ContentDimensions.base(key);
         if (base == null) { return; }
+        if (level.isClientSide()) { builder.addTimeBasedLayer(EnvironmentAttributes.SKY_LIGHT_FACTOR, (value, _) -> darkSky(level, key, value)); }
         Map<DimensionDef, JsonElement> hidden = new IdentityHashMap<>();
         for (DimensionDef def : defs(key, base)) {
             if (!def.sunriseColors()) { hidden.put(def, NO_SUNRISE); }
         }
         if (!hidden.isEmpty()) { add(builder, EnvironmentAttributes.SUNRISE_SUNSET_COLOR, key, hidden); }
+    }
+
+    private static float keepBase(Identifier key, float value) {
+        if (nightDark(key) == null) { return value; }
+        skyBase = value;
+        return 1.0F;
+    }
+
+    private static float darkSky(Level level, Identifier key, float value) {
+        DarknessDef dark = nightDark(key);
+        if (dark == null) { return value; }
+        float moonFactor = Math.abs(NEW_MOON - level.environmentAttributes().getValue(EnvironmentAttributes.MOON_PHASE, Vec3.ZERO).index()) / (float) NEW_MOON;
+        return skyBase * dark.sky(value, moonFactor);
+    }
+
+    @Nullable private static DarknessDef nightDark(Identifier key) {
+        DimensionDef def = ContentDimensions.def(key);
+        return def == null || def.darkness() == null || DarknessDef.BLOCK.equals(def.darkness().mode) ? null : def.darkness();
     }
 
     private static List<DimensionDef> defs(Identifier key, DimensionDef base) {

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.gui.ContentWorldScreen;
+import mctmods.resourcedatapackloader.client.gui.GammaLock;
 import mctmods.resourcedatapackloader.client.gui.HideRecipeBook;
 import mctmods.resourcedatapackloader.client.gui.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.gui.SleepScreen;
@@ -75,6 +76,7 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(HideRecipeBook::onInitPost);
         NeoForge.EVENT_BUS.addListener(SleepScreen::onInit);
         NeoForge.EVENT_BUS.addListener(SleepScreen::onRender);
+        NeoForge.EVENT_BUS.addListener(GammaLock::onInit);
         NeoForge.EVENT_BUS.addListener(ChatHistoryKeeper::onOpening);
         NeoForge.EVENT_BUS.addListener(SeamSkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(ContentFogSampler::onFog);
