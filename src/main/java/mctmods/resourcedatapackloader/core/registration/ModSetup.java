@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentColumns;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
 import mctmods.resourcedatapackloader.common.blocks.compress.ContentCompressables;
 import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentBoneMealFlowers;
 import mctmods.resourcedatapackloader.common.blocks.bell.logic.TileEntityPackBell;
 import mctmods.resourcedatapackloader.common.blocks.container.logic.TileEntityPackContainer;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactionQueue;
@@ -189,6 +190,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentHarvests.class);
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
         MinecraftForge.EVENT_BUS.register(ContentColumns.class);
+        MinecraftForge.EVENT_BUS.register(ContentBoneMealFlowers.class);
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
         MinecraftForge.EVENT_BUS.register(PlayerWeights.class);
         MinecraftForge.EVENT_BUS.register(WeightEnforce.class);
