@@ -37,6 +37,7 @@ import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.item.crafting.RecipeMap;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.neoforged.neoforge.common.conditions.ICondition;
+import net.neoforged.neoforge.common.conditions.WithConditions;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -52,7 +53,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @WrapOperation(method = "prepare(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)Lnet/minecraft/world/item/crafting/RecipeMap;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/SimpleJsonResourceReloadListener;scanDirectoryWithModifier(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/FileToIdConverter;Lcom/mojang/serialization/DynamicOps;Lcom/mojang/serialization/Codec;Ljava/util/Map;Ljava/util/function/Consumer;)V")) private void rdpl$beforeRecipes(ResourceManager manager, FileToIdConverter lister, DynamicOps<JsonElement> ops, Codec<Recipe<?>> codec, Map<Identifier, Recipe<?>> result, Consumer<Map<Identifier, JsonElement>> jsonConsumer, Operation<Void> original) {
         Consumer<Map<Identifier, JsonElement>> loading = jsons -> {
-            RecipeLoading.begin(jsons, manager, json -> ICondition.conditionsMatched(ops, json), json -> Recipe.CONDITIONAL_CODEC.parse(ops, json).getOrThrow(JsonParseException::new));
+            RecipeLoading.begin(jsons, manager, json -> ICondition.conditionsMatched(ops, json), json -> Recipe.CONDITIONAL_CODEC.parse(ops, json).getOrThrow(JsonParseException::new).map(WithConditions<Recipe<?>>::carrier));
             jsonConsumer.accept(jsons);
         };
         original.call(manager, lister, ops, codec, result, loading);
@@ -77,7 +78,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.settle()) {
                 if (!named.add(addition.id())) { continue; }
                 SmeltingRecipe smelting = new SmeltingRecipe(new Recipe.CommonInfo(true), new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""), Ingredient.of(addition.input()), addition.output(), addition.output().count() * Math.min(addition.experience(), 1.0F), rdpl$COOKING_TIME);
-                kept.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, addition.id()), smelting));
+                ResourceKey<Recipe<?>> key = ResourceKey.create(Registries.RECIPE, addition.id());
+                kept.add(new RecipeHolder<>(key, smelting));
             }
         }
         recipes = RecipeMap.create(kept);

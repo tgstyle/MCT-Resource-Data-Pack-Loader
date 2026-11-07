@@ -35,7 +35,8 @@ import javax.annotation.Nullable;
 
 public final class RecipeFiles {
     private static final FileToIdConverter FILES = FileToIdConverter.registry(Registries.RECIPE);
-    private static final Codec<Optional<Recipe<?>>> CODEC = ConditionalOps.createConditionalCodec(NeoForgeExtraCodecs.decodeOnly(Recipe.DIRECT_CODEC));
+    private static final Codec<Recipe<?>> DECODER = NeoForgeExtraCodecs.decodeOnly(Recipe.DIRECT_CODEC);
+    private static final Codec<Optional<Recipe<?>>> CODEC = ConditionalOps.createConditionalCodec(DECODER);
 
     private RecipeFiles() {}
 

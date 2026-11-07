@@ -60,6 +60,7 @@
 - [物品鎖](#物品鎖)
 - [物品重量](#物品重量)
 - [熔爐配方與燃料](#熔爐配方與燃料)
+- [配方替換](#配方替換)
 - [配方鎖](#配方鎖)
 - [工具提示](#工具提示)
 - [語言門控](#語言門控)
@@ -200,6 +201,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/structures/*.nbt`               | 供樹苗、`imprint` 與模組覆寫使用的範本。[可以覆寫的內容](#可以覆寫的內容)                                           |
 | `<namespace>/recipes/*.json`                 | 合成配方，新增或取代。[可以覆寫的內容](#可以覆寫的內容)                                                             |
 | `<namespace>/recipe_removals/*.json`         | 依名稱、命名空間或產出刪除的配方。[可以覆寫的內容](#可以覆寫的內容)                                                 |
+| `<namespace>/recipe_swaps/*.json`            | 在合成和燒煉配方中將一種物品替換為另一種。[配方替換](#配方替換)                                                     |
 | `<namespace>/item_locks/*.json`              | 玩家取得進度之前，在其清單中隱藏的物品。[物品鎖](#物品鎖)                                                           |
 | `<namespace>/weights/*.json`                 | 物品重量、負重上限與負重階段。[物品重量](#物品重量)                                                                 |
 | `<namespace>/recipe_locks/*.json`            | 玩家取得進度之前保持鎖定的配方。[配方鎖](#配方鎖)                                                                   |
@@ -573,6 +575,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 - **結構範本**，即模組用於生成建築的 `.nbt` 檔案，位於 `<namespace>/structures/` 下
 - **登錄表重新命名**，在模組更改方塊或物品名稱時，讓舊世界仍能運作
 - **配方移除**，依名稱、命名空間或產出刪除合成配方
+- **配方替換**，在所有使用該物品的合成和燒煉配方中，把一種物品替換為另一種，見[配方替換](#配方替換)
 - **停用的方塊與物品**，讓任何方塊或物品退出遊戲，見[停用的方塊與物品](#停用的方塊與物品)
 - **戰利品注入**，在戰利品表中加入一個池，而不是取代整張表
 - **戰利品移除**，在戰利品表中移除一個條目或物品，或清空該表，而不是取代整張表
@@ -591,13 +594,13 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 
 資源包可以只放在伺服器上，玩家使用純原版用戶端，但有一項限制：**資源包中不得登錄任何東西**。本模組接受任何遠端；由資源包決定。原版用戶端使用的是自己附帶的登錄表，所以會往其中新增內容的資源包必須兩邊都有。
 
-| 只放伺服器即可                                                                                                                                            | 用戶端也需要資源包                                                                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions` | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
-| `recipes`、`recipe_removals`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`enchantments`、`tags`、`disabled`                | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`、`tooltips`                                         |
-| `loot_tables`、`loot_injections`、`loot_removals`、`player_loot`、`advancements`、`functions`、`veins`、`weights`                                         | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
-| `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                            | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
-| 整個控制層、設定與預先生成                                                                                                                                |                                                                                                              |
+| 只放伺服器即可                                                                                                                                             | 用戶端也需要資源包                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions`  | `blocks`、`items`、`fluids`、`materials`、`containers`                                                       |
+| `recipes`、`recipe_removals`、`recipe_swaps`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`enchantments`、`tags`、`disabled` | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`、`tooltips`                                         |
+| `loot_tables`、`loot_injections`、`loot_removals`、`player_loot`、`advancements`、`functions`、`veins`、`weights`                                          | `entities`、`villagers`、`portalframes`、`curioslots`                                                        |
+| `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                             | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放） |
+| 整個控制層、設定與預先生成                                                                                                                                 |                                                                                                              |
 
 右側欄是硬性限制：原版用戶端沒有的方塊、物品、實體類型、音效與藥水效果，無法向它描述，而維度自己的傳送門是資源包的方塊之一；曝露設定只會與那些內容一起載入。左側欄之所以可行，是因為其中的一切要嘛完全在伺服端執行，要嘛以原版本來就會讀取的資料包項目傳到用戶端（生態域、洞穴區域、維度類型、附魔），要嘛透過原版本來就能溝通的封包傳達（由伺服器填入的合成結果格、一般的進度封包、閘門拒絕時的狀態訊息，以及由原版遊戲模式、標題與傳送封包構成的預先生成停留）。
 
@@ -2717,6 +2720,54 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `item`     | 二選一 | 物品名稱       | 無   | 會燃燒的物品               |
 | `tag`      | 二選一 | 標籤 id        | 無   | 該標籤中的所有物品都會燃燒 |
 | `burnTime` | 是     | 整數，單位為刻 | `0`  | 煤炭是 1600，木板是 300    |
+
+## 配方替換
+
+*合成、戰利品與交易*
+
+`<namespace>/recipe_swaps/*.json`
+
+檔案名稱由你決定，只有資料夾會被讀取，而且多個檔案可以疊加。把一種物品替換成另一種，作用於合成配方和燒煉配方，不必逐一手動修改配方。
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["c:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| 鍵         | 必需 | 值                  | 預設值 | 作用                                 |
+| ---------- | ---- | ------------------- | ------ | ------------------------------------ |
+| `requires` | 否   | 清單，內容為模組 id | 無     | 只有這些模組全部載入時才會讀取該檔案 |
+| `swaps`    | 是   | 清單                | 無     | 替換項目，依序套用                   |
+
+`swaps` 下的項目：
+
+| 鍵        | 必需 | 值       | 預設值   | 作用                                                                                                                                                                                                               |
+| --------- | ---- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `from`    | 是   | 物件     | 無       | 被替換的內容：`names`（結尾的 `*` 符合所有以該文字開頭的名稱）、`namespaces` 和 `tags`，其鍵與[停用的方塊與物品](#停用的方塊與物品)相同                                                                            |
+| `to`      | 是   | 物品名稱 | 無       | 替換後的物品。未知的物品會跳過該項目，日誌會說明                                                                                                                                                                   |
+| `output`  | 否   | 布林值   | `false`  | 當 `from` 是配方的產出時，也一併替換。數量維持不變，舊產出的元件會被捨棄                                                                                                                                           |
+| `recipes` | 否   | 物件     | 所有配方 | 將替換限定在這些合成配方內：`names`（結尾的 `*` 符合所有以該文字開頭的名稱）和 `namespaces`。帶有 `recipes` 的項目不影響燒煉配方，與 1.12.2 一致，因為 1.12.2 的熔爐配方沒有名稱；此處不讀取 `outputs`，日誌會說明 |
+
+只接受 `from` 物品的槽位會變成 `to`。同時接受其他物品的槽位會保留那些物品並同時接受 `to`，但會失去其標籤，因此之後加入該標籤的物品不會在此處被取用。`from` 物品會作用於以包含它的標籤書寫的槽位，`from` 標籤則會作用於指定了其中某個物品的槽位。
+
+`to` 與自身 `from` 相同的項目會被跳過，日誌會說明。當 `to` 已經是另一個同類配方的輸入時（熔爐、高爐、燻爐或營火），燒煉輸入不會被替換，日誌會指出該配方。
+
+替換會在載入時改寫配方檔案，因此每次 `/reload` 都會重新執行。配方移除和配方封鎖依替換前的產出判定配方，與 1.12.2 一致；[停用的方塊與物品](#停用的方塊與物品)、[熔爐檔案](#熔爐配方與燃料)和[配方鎖](#配方鎖)看到的是替換後的配方。
+
+合成配方和四種燒煉配方會被改寫。其他任何配方類型，例如其他模組的機器配方，都不會被更動。帶有自己的 `type` 鍵且指向被替換物品的材料物件維持不變。腳本產生的配方（例如 KubeJS 配方腳本）不會被替換，日誌會說明一次。日誌隨後統計：`Replaced N ingredient(s) and N result(s) in N recipe(s)`，若有剩餘則還會顯示 `Left N recipe(s) alone`。
 
 ## 配方鎖
 
@@ -9512,6 +9563,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9527,6 +9579,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | 清單，內容為模組 id          | 空              | 其熔爐配方會被直接移除的模組                                                                                                                                                                    |
 | `logBlockedRecipes`   | 布林值                       | `true`          | 記錄每個模組被封鎖數量的統計                                                                                                                                                                    |
 | `furnace`             | 布林值                       | `true`          | 套用 furnace/*.json 檔案，這些檔案可新增及移除熔爐燒煉配方 **僅限設定。**                                                                                                                       |
+| `swaps`               | 布林值                       | `true`          | 套用 recipe_swaps/*.json 檔案，這些檔案會替換合成和燒煉配方的材料與產出中的物品 **僅限設定。**                                                                                                  |
 | `removals`            | 布林值                       | `true`          | 套用 recipe_removals/*.json 檔案，這些檔案依名稱、命名空間或產出刪除合成配方 **僅限設定。**                                                                                                     |
 | `skipMissingItems`    | 布林值                       | `true`          | 略過使用了未註冊物品的配方，而不是讓它們失敗。數量只會記錄一次 **僅限設定。**                                                                                                                   |
 

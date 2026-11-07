@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
@@ -34,6 +34,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.context.ContextMap;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
@@ -64,9 +65,10 @@ public final class RecipeLoading {
 
     private RecipeLoading() {}
 
-    public static void begin(Map<Identifier, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, Consumer<JsonElement> parse) {
+    public static void begin(Map<Identifier, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, Function<JsonElement, Optional<Recipe<?>>> parse) {
         rebuilt = false;
         RecipeRemovals.reload();
+        RecipeSwaps.reload();
         RecipeLocks.reload();
         FurnaceRecipes.reload();
         FurnaceRecipes.begin();
@@ -99,9 +101,10 @@ public final class RecipeLoading {
         LOADED.clear();
         LOADED.addAll(recipes.keySet());
         CompressedRecipes.register(recipes);
+        RecipeSwaps.apply(recipes, parse);
     }
 
-    @SuppressWarnings("resource") private static void keepOriginals(Map<Identifier, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, Consumer<JsonElement> parse) {
+    @SuppressWarnings("resource") private static void keepOriginals(Map<Identifier, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, Function<JsonElement, Optional<Recipe<?>>> parse) {
         for (Map.Entry<Identifier, List<Resource>> stack : manager.listResourceStacks("recipe", path -> path.getPath().endsWith(PackManager.JSON_SUFFIX)).entrySet()) {
             List<Resource> layers = stack.getValue();
             if (layers.size() < 2 || !(layers.getLast().source() instanceof RDPLResourcePack)) { continue; }
@@ -113,7 +116,7 @@ public final class RecipeLoading {
         }
     }
 
-    private static boolean failed(Identifier id, @Nullable JsonElement held, Predicate<JsonElement> conditions, Consumer<JsonElement> parse) {
+    private static boolean failed(Identifier id, @Nullable JsonElement held, Predicate<JsonElement> conditions, Function<JsonElement, Optional<Recipe<?>>> parse) {
         if (held == null) {
             ContentLog.LOGGER.error("Parsing error in recipe {} while reading it, leaving the original in place: it is not valid JSON", id);
             return true;
@@ -122,7 +125,7 @@ public final class RecipeLoading {
             ContentLog.LOGGER.debug("Recipe {} was skipped by its own conditions, leaving the original in place", id);
             return true;
         }
-        try { parse.accept(held); }
+        try { parse.apply(held); }
         catch (IllegalArgumentException | JsonParseException ex) {
             ContentLog.LOGGER.error("Parsing error in recipe {} while building it, leaving the original in place: {}", id, ex.getMessage());
             return true;
@@ -142,17 +145,24 @@ public final class RecipeLoading {
 
     public static boolean doomed(Identifier id, Recipe<?> recipe, ItemStack result) {
         if (spared(id)) { return false; }
-        if (recipe instanceof AbstractCookingRecipe cooking) { return (FurnaceRecipes.resolvedAtLoad() && FurnaceRecipes.removes(List.of(cooking.input()), result)) || FurnaceBlocking.blocks(result); }
+        ItemStack original = original(id, result);
+        if (recipe instanceof AbstractCookingRecipe cooking) { return (FurnaceRecipes.resolvedAtLoad() && FurnaceRecipes.removes(List.of(cooking.input()), result)) || FurnaceBlocking.blocks(original); }
         if (recipe.getType() != RecipeType.CRAFTING) { return false; }
         if (RecipeRemovals.removesName(id)) {
             removedByName++;
             return true;
         }
-        if (RecipeRemovals.removesOutput(result)) {
+        if (RecipeRemovals.removesOutput(original)) {
             removedByOutput++;
             return true;
         }
-        return RecipeBlocking.blocks(id, result);
+        return RecipeBlocking.blocks(id, original);
+    }
+
+    private static ItemStack original(Identifier id, ItemStack result) {
+        Identifier made = RecipeSwaps.originalResult(id);
+        Item item = made == null ? null : ContentStacks.item(made);
+        return item == null ? result : new ItemStack(item, result.getCount());
     }
 
     public static boolean late(Identifier id, Recipe<?> recipe, ItemStack result) { return RecipeDisabled.uses(recipe, result) || !FurnaceRecipes.resolvedAtLoad() && recipe instanceof AbstractCookingRecipe cooking && FurnaceRecipes.removesLate(id, List.of(cooking.input()), result, spared(id)); }
@@ -183,6 +193,7 @@ public final class RecipeLoading {
         if (rebuilt) { return; }
         ContentLog.LOGGER.info("The recipe pass did not run inside RecipeManager.apply (another mod took the method over), running it after the reload instead");
         attach(filter);
+        RecipeSwaps.scripted();
     }
 
     public static void componentsBound(IRecipeFilter filter) {
@@ -205,6 +216,7 @@ public final class RecipeLoading {
         if (skipped > 0) { Summary.info("recipes.skipped", "Skipped " + skipped + " recipe(s) that use items which are not registered, usually content a mod's config has disabled"); }
         int removed = removedByFile + removedByName + removedByOutput;
         if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " recipe(s): " + removedByFile + " by a remove file, " + removedByName + " by name, " + removedByOutput + " by output"); }
+        RecipeSwaps.report();
         RecipeBlocking.report();
         if (!FurnaceRecipes.resolvedAtLoad()) { return; }
         reportFurnaces();

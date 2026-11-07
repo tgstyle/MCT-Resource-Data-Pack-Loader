@@ -60,6 +60,7 @@
 - [物品锁](#物品锁)
 - [物品重量](#物品重量)
 - [熔炉配方与燃料](#熔炉配方与燃料)
+- [配方替换](#配方替换)
 - [配方锁](#配方锁)
 - [工具提示](#工具提示)
 - [语言门控](#语言门控)
@@ -200,6 +201,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/structures/*.nbt`               | 模板，用于树苗、`imprint` 和模组覆盖。[可以覆盖的内容](#可以覆盖的内容)                                               |
 | `<namespace>/recipes/*.json`                 | 合成配方，新增或替换。[可以覆盖的内容](#可以覆盖的内容)                                                               |
 | `<namespace>/recipe_removals/*.json`         | 按名称、命名空间或产物删除的配方。[可以覆盖的内容](#可以覆盖的内容)                                                   |
+| `<namespace>/recipe_swaps/*.json`            | 在合成和烧炼配方中将一种物品替换为另一种。[配方替换](#配方替换)                                                       |
 | `<namespace>/item_locks/*.json`              | 玩家获得进度之前，在其列表中隐藏的物品。[物品锁](#物品锁)                                                             |
 | `<namespace>/weights/*.json`                 | 物品重量、负重上限与负重阶段。[物品重量](#物品重量)                                                                   |
 | `<namespace>/recipe_locks/*.json`            | 玩家获得进度之前保持锁定的配方。[配方锁](#配方锁)                                                                     |
@@ -573,6 +575,7 @@ RDPL 自带的资源包和游戏自带的资源包始终保持启用；`required
 - **结构模板**，即模组用于生成建筑的 `.nbt` 文件，位于 `<namespace>/structures/` 下
 - **注册表重命名**，在模组重命名方块或物品时，让旧世界继续可用
 - **配方移除**，按名称、命名空间或产物删除合成配方
+- **配方替换**，在所有使用该物品的合成和烧炼配方中，把一种物品替换为另一种，参见[配方替换](#配方替换)
 - **禁用的方块与物品**，把任何方块或物品移出游戏，参见[禁用的方块与物品](#禁用的方块与物品)
 - **战利品注入**，向战利品表添加一个池，而不是替换整张表
 - **战利品移除**，从战利品表中移除一个条目或物品，或清空该表，而不替换整张表
@@ -591,13 +594,13 @@ RDPL 适合替换一两个配方，而你自己内容的配方则应随资源包
 
 资源包可以只放在服务器上，让玩家使用纯原版客户端，但有一个限制：**其中任何内容都不得注册任何东西**。本模组接受任何远端；由资源包来决定。原版客户端使用它自带的注册表，所以向注册表添加内容的资源包必须两端都有。
 
-| 只放服务器即可                                                                                                                                            | 客户端也需要该资源包                                                                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                         |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                           |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                          |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（客户端文件夹：没有客户端时，请不要放） |
-| 整个控制层、设置和预生成                                                                                                                                  |                                                                                                                |
+| 只放服务器即可                                                                                                                                             | 客户端也需要该资源包                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                         |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                           |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                          |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（客户端文件夹：没有客户端时，请不要放） |
+| 整个控制层、设置和预生成                                                                                                                                   |                                                                                                                |
 
 右列是硬性限制：原版客户端没有的方块、物品、实体类型、声音和药水效果，无法向它描述，而维度自己的传送门就是资源包的方块之一；暴露设置只会与那些内容一起加载。左列之所以可行，是因为其中的一切要么完全在服务端运行，要么以原版已能读取的数据包条目的形式传到客户端（生物群系、洞穴区域、维度类型、附魔），要么通过原版已经会说的数据包传到客户端（由服务器填充的合成结果槽、普通的进度数据包、状态消息形式的闸门拒绝提示，以及由原版游戏模式/标题/传送数据包构成的预生成等待）。
 
@@ -2717,6 +2720,54 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `item`     | 二选一 | 物品名称       | 无     | 会燃烧的物品               |
 | `tag`      | 二选一 | 标签 id        | 无     | 该标签中的所有物品都会燃烧 |
 | `burnTime` | 是     | 整数，单位为刻 | `0`    | 煤炭是 1600，木板是 300    |
+
+## 配方替换
+
+*合成、战利品与交易*
+
+`<namespace>/recipe_swaps/*.json`
+
+文件名可以自己定，只有文件夹会被读取，多个文件会叠加。把一种物品替换成另一种，作用于合成配方和烧炼配方，无需逐个修改配方。
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["c:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| 键         | 必需 | 值           | 默认值 | 作用                               |
+| ---------- | ---- | ------------ | ------ | ---------------------------------- |
+| `requires` | 否   | 模组 id 列表 | 无     | 仅当这些模组全部加载时才读取该文件 |
+| `swaps`    | 是   | 列表         | 无     | 替换项，按顺序应用                 |
+
+`swaps` 下的条目：
+
+| 键        | 必需 | 值       | 默认值   | 作用                                                                                                                                                                                                               |
+| --------- | ---- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `from`    | 是   | 对象     | 无       | 被替换的内容：`names`（结尾的 `*` 匹配所有以该文本开头的名称）、`namespaces` 和 `tags`，其键与[禁用的方块与物品](#禁用的方块与物品)相同                                                                            |
+| `to`      | 是   | 物品名称 | 无       | 替换后的物品。未知物品会跳过该条目，日志会说明                                                                                                                                                                     |
+| `output`  | 否   | 布尔值   | `false`  | 当 `from` 是配方的产物时，也将其替换。数量保持不变，旧产物的组件会被丢弃                                                                                                                                           |
+| `recipes` | 否   | 对象     | 所有配方 | 将替换限定在这些合成配方内：`names`（结尾的 `*` 匹配所有以该文本开头的名称）和 `namespaces`。带有 `recipes` 的条目不影响烧炼配方，与 1.12.2 一致，因为 1.12.2 的熔炉配方没有名称；此处不读取 `outputs`，日志会说明 |
+
+只接受 `from` 物品的槽位会变为 `to`。同时接受其他物品的槽位会保留这些物品并同时接受 `to`，但会失去其标签，因此之后加入该标签的物品不会在此处被取用。`from` 物品会作用于以包含它的标签书写的槽位，`from` 标签则会作用于指定了其中某个物品的槽位。
+
+`to` 与自身 `from` 相同的条目会被跳过，日志会说明。当 `to` 已经是另一个同类配方的输入时（熔炼、高炉、烟熏或营火），烧炼输入不会被替换，日志会指出该配方。
+
+替换会在加载时改写配方文件，因此每次 `/reload` 都会重新执行。配方移除和配方屏蔽按替换前的产物判断配方，与 1.12.2 一致；[禁用的方块与物品](#禁用的方块与物品)、[熔炉文件](#熔炉配方与燃料)和[配方锁](#配方锁)看到的是替换后的配方。
+
+合成配方和四种烧炼配方会被改写。其他任何配方类型，例如其他模组的机器配方，都不会被改动。带有自己的 `type` 键且指向被替换物品的原料对象保持不变。脚本生成的配方（例如 KubeJS 配方脚本）不会被替换，日志会说明一次。日志随后汇总：`Replaced N ingredient(s) and N result(s) in N recipe(s)`，若有剩余则还会显示 `Left N recipe(s) alone`。
 
 ## 配方锁
 
@@ -9512,6 +9563,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9527,6 +9579,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | 模组 id 列表                 | 空              | 其熔炉配方被彻底移除的模组                                                                                                                                                                  |
 | `logBlockedRecipes`   | 布尔值                       | `true`          | 按模组记录被屏蔽数量的日志                                                                                                                                                                  |
 | `furnace`             | 布尔值                       | `true`          | 应用 furnace/*.json 文件，用于添加和移除熔炉烧炼配方 **仅限配置。**                                                                                                                         |
+| `swaps`               | 布尔值                       | `true`          | 应用 recipe_swaps/*.json 文件，用于替换合成和烧炼配方的原料与产物中的物品 **仅限配置。**                                                                                                    |
 | `removals`            | 布尔值                       | `true`          | 应用 recipe_removals/*.json 文件，按名称、命名空间或产出删除合成配方 **仅限配置。**                                                                                                         |
 | `skipMissingItems`    | 布尔值                       | `true`          | 跳过使用了未注册物品的配方，而不是让它们失败。数量只会在日志中记录一次 **仅限配置。**                                                                                                       |
 

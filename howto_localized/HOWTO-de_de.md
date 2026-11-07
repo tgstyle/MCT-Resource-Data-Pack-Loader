@@ -60,6 +60,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Item-Sperren](#item-sperren)
 - [Item-Gewichte](#item-gewichte)
 - [Ofenrezepte und Brennstoffe](#ofenrezepte-und-brennstoffe)
+- [Rezepttausch](#rezepttausch)
 - [Rezeptsperren](#rezeptsperren)
 - [Tooltips](#tooltips)
 - [Sprachtore](#sprachtore)
@@ -200,6 +201,7 @@ Unter `data/`:
 | `<namespace>/structures/*.nbt`               | Vorlagen, für Setzlinge, `imprint`, Strukturkarten und Mod-Overrides. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                      |
 | `<namespace>/recipes/*.json`                 | Handwerksrezepte, hinzugefügt oder ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                |
 | `<namespace>/recipe_removals/*.json`         | Handwerksrezepte, gelöscht nach Name, Namespace oder Ergebnis. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                             |
+| `<namespace>/recipe_swaps/*.json`            | Ein Item, das in Handwerks- und Kochrezepten durch ein anderes ersetzt wird. [Rezepttausch](#rezepttausch)                                                                                                                                                                             |
 | `<namespace>/item_locks/*.json`              | Items, die in den Listen eines Spielers verborgen bleiben, bis er einen Fortschritt erreicht. [Item-Sperren](#item-sperren)                                                                                                                                                            |
 | `<namespace>/weights/*.json`                 | Itemgewichte, eine Tragegrenze und Belastungsstufen. [Item-Gewichte](#item-gewichte)                                                                                                                                                                                                   |
 | `<namespace>/recipe_locks/*.json`            | Rezepte, die gesperrt bleiben, bis ein Spieler einen Fortschritt erreicht. [Rezeptsperren](#rezeptsperren)                                                                                                                                                                             |
@@ -573,6 +575,7 @@ Ein Dimensions- oder Biom-Elternteil kann auf dieselbe Weise eine Vorlage sein, 
 - **Strukturvorlagen**: die `.nbt`-Dateien, die Mods für generierte Gebäude nutzen, unter `<namespace>/structures/`
 - **Registry-Umbenennungen**: alte Welten am Leben halten, wenn ein Mod einen Block oder ein Item umbenennt
 - **Rezept-Entfernungen**: ein Handwerksrezept nach Name, Namespace oder Ergebnis löschen
+- **Rezept-Tausch**: ein Item durch ein anderes ersetzen, in jedem Handwerks- und Kochrezept, das es nutzt, siehe [Rezepttausch](#rezepttausch)
 - **Deaktivierte Blöcke und Items**: jeden Block und jedes Item aus dem Spiel nehmen, siehe [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
 - **Beute-Entfernungen**: einen Eintrag oder ein Item aus einer Beutetabelle nehmen oder sie leeren, ohne die Tabelle zu ersetzen
@@ -591,13 +594,13 @@ RDPL eignet sich gut dafür, ein oder zwei Rezepte zu ersetzen, und Rezepte für
 
 Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clients, unter einer Bedingung: **nichts darin darf irgendetwas registrieren**. Der Mod akzeptiert jede Gegenstelle; das Pack entscheidet. Ein Vanilla-Client spielt mit den Registries, die er mitgebracht hat; ein Pack, das sie erweitert, muss also auf beide Seiten.
 
-| Server allein genügt                                                                                                                                      | Pack muss auch auf den Client                                                                                 |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                        |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                          |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                         |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
-| die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                               |                                                                                                               |
+| Server allein genügt                                                                                                                                       | Pack muss auch auf den Client                                                                                 |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                        |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                          |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                         |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (Client-Ordner: ohne Client weglassen) |
+| die ganze Steuerungsebene, Einstellungen und Vorgenerierung                                                                                                |                                                                                                               |
 
 Die rechte Spalte ist eine harte Grenze: Blöcke, Items, Entity-Typen, Sounds und Trankeffekte, die ein Vanilla-Client nicht hat, lassen sich ihm nicht beschreiben, und das eigene Portal einer Dimension ist einer der Blöcke des Packs; Expositionen werden nur zusammen mit diesen Inhalten geladen. Die linke Spalte funktioniert, weil alles darin entweder vollständig serverseitig läuft, den Client als Datenpaket-Einträge erreicht, die Vanilla ohnehin liest (Biome, Höhlenregionen, Dimensionstypen, Verzauberungen), oder ihn über Netzwerkpakete erreicht, die Vanilla ohnehin spricht (vom Server gefülltes Ergebnisfeld der Werkbank, gewöhnliche Fortschrittspakete, Statusmeldungen bei abgelehnten Toren, ein Vorgenerierungs-Halt aus Vanilla-Paketen für Spielmodus, Titel und Teleport).
 
@@ -2717,6 +2720,54 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 | `item`     | eines von beiden | Itemname   | keiner   | Das Item, das brennt          |
 | `tag`      | eines von beiden | Tag-ID     | keiner   | Alles in diesem Tag brennt    |
 | `burnTime` | ja               | int, Ticks | `0`      | Kohle ist 1600, ein Brett 300 |
+
+## Rezepttausch
+
+*herstellung, beute und handel*
+
+`<namespace>/recipe_swaps/*.json`
+
+Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien addieren sich. Ersetzt ein Item durch ein anderes in Handwerks- und Kochrezepten, ohne jedes Rezept von Hand umzuschreiben.
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["c:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| Schlüssel  | Pflicht | Wert              | Standard | Was er macht                                                  |
+| ---------- | ------- | ----------------- | -------- | ------------------------------------------------------------- |
+| `requires` | nein    | Liste von Mod-IDs | keiner   | Die Datei wird nur gelesen, wenn alle diese Mods geladen sind |
+| `swaps`    | ja      | Liste             | keiner   | Die Tauschvorgänge, der Reihe nach angewendet                 |
+
+Einträge unter `swaps`:
+
+| Schlüssel | Pflicht | Wert     | Standard     | Was er macht                                                                                                                                                                                                                                                                                                        |
+| --------- | ------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | ja      | Objekt   | keiner       | Was ersetzt wird: `names` (ein abschließendes `*` trifft jeden Namen, der mit diesem Text beginnt), `namespaces` und `tags`, die Schlüssel von [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items)                                                                                                      |
+| `to`      | ja      | Itemname | keiner       | Was an seine Stelle tritt. Ein unbekanntes Item überspringt den Eintrag, und das Log sagt es                                                                                                                                                                                                                        |
+| `output`  | nein    | Boolean  | `false`      | Ersetzt `from` auch dort, wo es das ist, was ein Rezept herstellt. Die Anzahl bleibt, und die Komponenten des alten Ergebnisses fallen weg                                                                                                                                                                          |
+| `recipes` | nein    | Objekt   | jedes Rezept | Begrenzt den Tausch auf diese Handwerksrezepte: `names`, mit einem abschließenden `*` für jeden Namen, der mit diesem Text beginnt, und `namespaces`. Ein Eintrag mit `recipes` lässt Kochrezepte in Ruhe, wie auf 1.12.2, wo Ofenrezepte keine Namen haben; `outputs` wird hier nicht gelesen, und das Log sagt es |
+
+Ein Slot, der nur `from`-Items annimmt, wird zu `to`. Ein Slot, der auch andere Items annimmt, behält sie und nimmt `to` ebenfalls auf, verliert aber seinen Tag, sodass ein Item, das später in diesen Tag kommt, dort nicht genommen wird. Ein `from`-Item erreicht jeden Slot, der als Tag geschrieben ist und es enthält, und ein `from`-Tag erreicht jeden Slot, der eines seiner Items nennt.
+
+Ein Eintrag, dessen `to` sein eigenes `from` trifft, wird übersprungen, und das Log sagt es. Eine Kochzutat wird nicht getauscht, wenn `to` schon die Eingabe eines anderen Rezepts derselben Art ist, Schmelzen, Hochofen, Räuchern oder Lagerfeuer, und das Log nennt dieses Rezept.
+
+Der Tausch schreibt die Rezeptdateien beim Laden um und läuft deshalb bei jedem `/reload` erneut. Rezept-Entfernungen und das Blockieren von Rezepten beurteilen ein Rezept nach dem, was es vor dem Tausch herstellte, wie auf 1.12.2; [Deaktivierte Blöcke und Items](#deaktivierte-blöcke-und-items), die [Ofendateien](#ofenrezepte-und-brennstoffe) und [Rezeptsperren](#rezeptsperren) sehen das getauschte Rezept.
+
+Handwerksrezepte und die vier Kochrezept-Arten werden umgeschrieben. Jeder andere Rezepttyp, etwa die Maschine eines anderen Mods, bleibt unberührt. Ein Zutatenobjekt mit einem eigenen `type`-Schlüssel, der ein ersetztes Item nennt, bleibt, wie es ist. Rezepte, die ein Skript erzeugt, etwa ein KubeJS-Rezeptskript, werden nicht getauscht, und das Log sagt es einmal. Das Log fasst es dann zusammen: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, und `Left N recipe(s) alone`, wenn welche übrig blieben.
 
 ## Rezeptsperren
 
@@ -9512,6 +9563,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9527,6 +9579,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | Liste von Mod-IDs              | leer            | Mods, deren Ofenrezepte rundweg entfernt werden                                                                                                                                                                                                                                    |
 | `logBlockedRecipes`   | boolean                        | `true`          | Protokolliert je Mod, was blockiert wurde                                                                                                                                                                                                                                          |
 | `furnace`             | boolean                        | `true`          | furnace/*.json-Dateien anwenden, die Ofenrezepte hinzufügen und entfernen **Nur Config.**                                                                                                                                                                                          |
+| `swaps`               | boolean                        | `true`          | recipe_swaps/*.json-Dateien anwenden, die ein Item durch ein anderes in den Zutaten und Ergebnissen von Handwerks- und Kochrezepten ersetzen **Nur Config.**                                                                                                                       |
 | `removals`            | boolean                        | `true`          | recipe_removals/*.json-Dateien anwenden, die Handwerksrezepte nach Name, Namespace oder Ergebnis löschen **Nur Config.**                                                                                                                                                           |
 | `skipMissingItems`    | boolean                        | `true`          | Rezepte überspringen, die ein nicht registriertes Item nutzen, statt sie scheitern zu lassen. Die Anzahl wird einmal protokolliert **Nur Config.**                                                                                                                                 |
 

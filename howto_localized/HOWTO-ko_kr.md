@@ -60,6 +60,7 @@
 - [아이템 잠금](#아이템-잠금)
 - [아이템 무게](#아이템-무게)
 - [화로 레시피와 연료](#화로-레시피와-연료)
+- [레시피 교체](#레시피-교체)
 - [레시피 잠금](#레시피-잠금)
 - [툴팁](#툴팁)
 - [언어 게이트](#언어-게이트)
@@ -200,6 +201,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/structures/*.nbt`               | 묘목, `imprint`, 모드 재정의용 템플릿. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                              |
 | `<namespace>/recipes/*.json`                 | 추가하거나 교체하는 제작 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                    |
 | `<namespace>/recipe_removals/*.json`         | 이름, 네임스페이스, 결과물로 삭제하는 레시피. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                       |
+| `<namespace>/recipe_swaps/*.json`            | 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체)                                                         |
 | `<namespace>/item_locks/*.json`              | 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 목록에서 숨기는 아이템. [아이템 잠금](#아이템-잠금)                                            |
 | `<namespace>/weights/*.json`                 | 아이템 무게, 짐 한도와 무게 단계. [아이템 무게](#아이템-무게)                                                                                       |
 | `<namespace>/recipe_locks/*.json`            | 플레이어가 발전 과제를 달성할 때까지 잠겨 있는 레시피. [레시피 잠금](#레시피-잠금)                                                                  |
@@ -573,6 +575,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 - **구조물 템플릿**: 모드가 생성되는 건물에 쓰는 `.nbt` 파일이며 `<namespace>/structures/` 아래에 있습니다
 - **레지스트리 이름 변경**: 모드가 블록이나 아이템의 이름을 바꿔도 기존 월드가 계속 동작하게 합니다
 - **레시피 제거**: 이름, 네임스페이스, 결과물 기준으로 제작 레시피를 삭제합니다
+- **레시피 교체**: 사용하는 모든 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체) 참고
 - **비활성화된 블록과 아이템**: 어떤 블록이나 아이템이든 사용에서 제외합니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템) 참고
 - **전리품 주입**: 전리품 테이블을 통째로 교체하는 대신 풀을 추가합니다
 - **전리품 제거**: 전리품 테이블을 통째로 교체하지 않고, 항목이나 아이템을 빼거나 테이블을 비웁니다
@@ -591,13 +594,13 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 
 팩은 서버에만 두고 플레이어는 순정 바닐라 클라이언트로 접속하게 할 수 있으며, 조건은 하나입니다. **팩의 어떤 것도 무언가를 등록해서는 안 됩니다.** 모드는 어떤 원격 상대든 받아들이고, 판단은 팩이 합니다. 바닐라 클라이언트는 자기가 가진 레지스트리로 플레이하므로, 레지스트리에 추가하는 팩은 양쪽에 있어야 합니다.
 
-| 서버만 있으면 충분                                                                                                                                        | 클라이언트에도 팩이 필요                                                                                             |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers`                                                               |
-| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled`                | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                                 |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                         | `entities`, `villagers`, `portalframes`, `curioslots`                                                                |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                            | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
-| 제어 계층 전체, 설정, 사전 생성                                                                                                                           |                                                                                                                      |
+| 서버만 있으면 충분                                                                                                                                         | 클라이언트에도 팩이 필요                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                               |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                                 |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                                |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요) |
+| 제어 계층 전체, 설정, 사전 생성                                                                                                                            |                                                                                                                      |
 
 오른쪽 열은 절대적인 한계입니다. 바닐라 클라이언트에 없는 블록, 아이템, 엔티티 유형, 소리, 물약 효과는 클라이언트에 설명할 수 없고, 차원의 자체 포털도 팩의 블록 중 하나이며, 노출은 그 콘텐츠와 함께일 때만 로드됩니다. 왼쪽 열이 동작하는 것은 거기 있는 모든 것이 전부 서버 측에서 돌거나, 바닐라가 이미 읽는 데이터 팩 항목(생물 군계, 동굴 지역, 차원 유형, 인챈트)으로 클라이언트에 전달되거나, 바닐라가 이미 쓰는 패킷(서버가 채우는 제작 결과 칸, 일반 발전 과제 패킷, 상태 메시지로 표시되는 게이트 거부, 바닐라의 게임 모드, 제목, 순간 이동 패킷으로 이루어진 사전 생성 대기)으로 전달되기 때문입니다.
 
@@ -2717,6 +2720,54 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `item`     | 둘 중 하나 | 아이템 이름 | 없음   | 연소하는 아이템                  |
 | `tag`      | 둘 중 하나 | 태그 id     | 없음   | 해당 태그의 모든 것이 연소합니다 |
 | `burnTime` | 예         | 정수, 틱    | `0`    | 석탄은 1600, 판자는 300          |
+
+## 레시피 교체
+
+*제작, 전리품, 거래*
+
+`<namespace>/recipe_swaps/*.json`
+
+파일 이름은 마음대로 정하며 폴더만 읽히고, 여러 파일이 겹쳐 적용됩니다. 제작 레시피와 제련 레시피에서 아이템 하나를 다른 아이템으로 바꾸며, 레시피마다 손으로 고칠 필요가 없습니다.
+
+```json
+{
+  "requires": ["thermal"],
+  "swaps": [
+    {
+      "from": { "names": ["minecraft:cobblestone", "thermal:tin_ingot"], "tags": ["c:ingots/tin"] },
+      "to": "minecraft:iron_ingot"
+    },
+    {
+      "from": { "names": ["minecraft:string"] },
+      "to": "thermal:cured_rubber",
+      "output": true,
+      "recipes": { "names": ["minecraft:bow", "thermal:*"], "namespaces": ["tconstruct"] }
+    }
+  ]
+}
+```
+
+| 키         | 필수   | 값             | 기본값 | 설명                                                  |
+| ---------- | ------ | -------------- | ------ | ----------------------------------------------------- |
+| `requires` | 아니요 | 모드 id의 목록 | 없음   | 나열된 모드가 모두 로드되어 있을 때만 파일을 읽습니다 |
+| `swaps`    | 예     | 목록           | 없음   | 교체 항목들이며, 순서대로 적용됩니다                  |
+
+`swaps` 아래의 항목:
+
+| 키        | 필수   | 값          | 기본값      | 설명                                                                                                                                                                                                                                                                                                |
+| --------- | ------ | ----------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `from`    | 예     | 오브젝트    | 없음        | 바꿀 대상입니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다), `namespaces`, `tags`가 있으며, 키는 [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)과 같습니다                                                                                                         |
+| `to`      | 예     | 아이템 이름 | 없음        | 대신 들어갈 아이템입니다. 알 수 없는 아이템이면 항목을 건너뛰고 로그에 기록합니다                                                                                                                                                                                                                   |
+| `output`  | 아니요 | 불리언      | `false`     | 레시피가 만드는 결과물이 `from`인 경우에도 `from`을 바꿉니다. 개수는 유지되고, 이전 결과물의 컴포넌트는 제거됩니다                                                                                                                                                                                  |
+| `recipes` | 아니요 | 오브젝트    | 모든 레시피 | 교체를 이 제작 레시피로 한정합니다. `names`(끝에 붙은 `*`는 그 텍스트로 시작하는 모든 이름과 일치합니다)와 `namespaces`가 있습니다. `recipes`가 있는 항목은 제련 레시피를 건드리지 않습니다. 1.12.2처럼 화로 레시피에는 이름이 없기 때문입니다. 여기서는 `outputs`를 읽지 않으며, 로그에 기록합니다 |
+
+`from`만 받는 슬롯은 `to`가 됩니다. 다른 아이템도 받는 슬롯은 그 아이템을 유지하면서 `to`도 받지만, 태그를 잃으므로 나중에 그 태그에 추가된 아이템은 그 슬롯에 들어가지 않습니다. `from` 아이템은 그것을 담고 있는 태그로 적힌 슬롯에 적용되고, `from` 태그는 그 태그의 아이템 중 하나를 지정한 슬롯에 적용됩니다.
+
+`to`가 자기 자신의 `from`과 일치하는 항목은 건너뛰고 로그에 기록합니다. 제련 재료는 `to`가 같은 종류의 다른 레시피(제련, 용광로, 훈연기, 모닥불)의 재료인 경우 교체되지 않으며, 로그에 그 레시피를 기록합니다.
+
+교체는 레시피 파일을 로드할 때 다시 쓰므로 `/reload`마다 다시 실행됩니다. 레시피 제거와 레시피 차단은 교체 전에 만들던 결과물로 레시피를 판단하며, 이는 1.12.2와 같습니다. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템), [화로 파일](#화로-레시피와-연료), [레시피 잠금](#레시피-잠금)은 교체된 레시피를 봅니다.
+
+제작 레시피와 제련 레시피 네 종류가 다시 쓰입니다. 다른 모드의 기계 레시피처럼 그 밖의 레시피 종류는 건드리지 않습니다. 교체된 아이템을 가리키는 자체 `type` 키를 가진 재료 오브젝트는 그대로 둡니다. KubeJS 레시피 스크립트처럼 스크립트가 만든 레시피는 교체되지 않으며, 로그에 한 번 기록됩니다. 로그는 다음과 같이 요약합니다: `Replaced N ingredient(s) and N result(s) in N recipe(s)`, 남은 것이 있으면 `Left N recipe(s) alone`도 나옵니다.
 
 ## 레시피 잠금
 
@@ -9512,6 +9563,7 @@ furnaceWhitelist = ["minecraft", "mypack"]
 blockedFurnaceMods = ["tconstruct"]
 logBlockedRecipes = true
 furnace = true
+swaps = true
 removals = true
 skipMissingItems = true
 ```
@@ -9527,6 +9579,7 @@ skipMissingItems = true
 | `blockedFurnaceMods`  | 모드 id의 목록             | 비어 있음       | 화로 레시피를 아예 제거하는 모드입니다                                                                                                                                                                                                                        |
 | `logBlockedRecipes`   | 불리언                     | `true`          | 차단된 것을 모드별 개수로 기록합니다                                                                                                                                                                                                                          |
 | `furnace`             | 불리언                     | `true`          | 화로 제련 레시피를 추가하고 제거하는 furnace/*.json 파일을 적용합니다 **설정 전용.**                                                                                                                                                                          |
+| `swaps`               | 불리언                     | `true`          | 제작 및 제련 레시피의 재료와 결과물에서 아이템 하나를 다른 아이템으로 바꾸는 recipe_swaps/*.json 파일을 적용합니다 **설정 전용.**                                                                                                                             |
 | `removals`            | 불리언                     | `true`          | 이름, 네임스페이스, 결과물로 제작 레시피를 삭제하는 recipe_removals/*.json 파일을 적용합니다 **설정 전용.**                                                                                                                                                   |
 | `skipMissingItems`    | 불리언                     | `true`          | 등록되지 않은 아이템을 쓰는 레시피를 실패하게 두지 않고 건너뜁니다. 개수는 한 번 기록됩니다 **설정 전용.**                                                                                                                                                    |
 
