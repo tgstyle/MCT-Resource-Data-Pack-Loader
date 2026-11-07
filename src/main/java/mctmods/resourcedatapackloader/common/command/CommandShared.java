@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
 import mctmods.resourcedatapackloader.common.cards.CardRules;
+import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
@@ -329,6 +330,7 @@ public final class CommandShared {
         ContentDialogs.load();
         ContentHearts.load();
         ContentHearts.refresh(server);
+        ContentDiet.refresh(server);
         SpawnLocks.load();
         ContentItemLocks.report(server);
         ItemLockSync.resendAll(server);

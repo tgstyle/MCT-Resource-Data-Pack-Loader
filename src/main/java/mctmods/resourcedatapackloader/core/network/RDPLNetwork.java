@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.client.gui.intro.WorldIntroScreen;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.BlastHush;
+import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.client.util.ContentRuleClient;
@@ -42,7 +43,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class RDPLNetwork {
     private static final ResourceLocation NAME = ResourceDataPackLoader.id("main");
-    private static final String VERSION = "3";
+    private static final String VERSION = "4";
     @Nullable private static SimpleChannel channel;
 
     private RDPLNetwork() {}
@@ -95,6 +96,7 @@ public final class RDPLNetwork {
             ServerPlayer player = context.get().getSender();
             if (player != null) { ContentSleep.setSpawnHere(player); }
         }).add();
+        channel.messageBuilder(EatenMessage.class, 21, NetworkDirection.PLAY_TO_CLIENT).encoder(EatenMessage::write).decoder(EatenMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientDiet.receive(message.eaten()); } }).add();
     }
 
     public static void setSpawnHere() { if (channel != null) { channel.sendToServer(new SetSpawnMessage()); } }
@@ -145,6 +147,8 @@ public final class RDPLNetwork {
     public static void sendGates(ServerPlayer player, Set<String> open) { toPlayer(player, new GatesMessage(List.copyOf(open))); }
 
     public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return toPlayer(player, new UnlocksMessage(List.copyOf(open))); }
+
+    public static void sendEaten(ServerPlayer player, Set<String> eaten) { toPlayer(player, new EatenMessage(List.copyOf(eaten))); }
 
     public static boolean sendWeight(ServerPlayer player, int total, int limit, int tier, boolean exempt) { return toPlayer(player, new WeightMessage(total, limit, tier, exempt)); }
 

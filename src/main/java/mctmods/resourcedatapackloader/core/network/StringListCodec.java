@@ -5,7 +5,7 @@ import java.util.List;
 import net.minecraft.network.FriendlyByteBuf;
 
 public final class StringListCodec {
-    public static final int MOST = 256;
+    public static final int MOST = 4096;
 
     private StringListCodec() {}
 

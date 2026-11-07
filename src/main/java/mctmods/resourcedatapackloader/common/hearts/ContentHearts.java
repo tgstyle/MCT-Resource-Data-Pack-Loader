@@ -221,9 +221,12 @@ public final class ContentHearts {
         }
     }
 
-    public static void onMeal(ServerPlayer player, int distinctBefore, int distinctAfter) {
+    public static void onMeal(ServerPlayer player, int distinctBefore, int distinctAfter, int everBefore, int everAfter) {
         for (HeartReward reward : REWARDS) {
-            if (reward.trigger == HeartReward.Trigger.DIET && distinctBefore < reward.diet && distinctAfter >= reward.diet) { grant(player, reward); }
+            if (reward.trigger != HeartReward.Trigger.DIET) { continue; }
+            int before = reward.lifetime ? everBefore : distinctBefore;
+            int after = reward.lifetime ? everAfter : distinctAfter;
+            if (before < reward.diet && after >= reward.diet) { grant(player, reward); }
         }
     }
 
@@ -275,7 +278,7 @@ public final class ContentHearts {
             boolean reached;
             switch (reward.trigger) {
                 case ADVANCEMENT: reached = done(player, reward.advancement); break;
-                case DIET: reached = ContentDiet.distinct(player) >= reward.diet; break;
+                case DIET: reached = (reward.lifetime ? ContentDiet.eatenEver(player) : ContentDiet.distinct(player)) >= reward.diet; break;
                 case FOODS: reached = marked(section, reward).size() >= reward.need; break;
                 case DEATH: reached = false; break;
                 default:
