@@ -8,7 +8,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 
 public final class StringListCodec {
-    public static final int MOST = 256;
+    public static final int MOST = 4096;
 
     private StringListCodec() {}
 

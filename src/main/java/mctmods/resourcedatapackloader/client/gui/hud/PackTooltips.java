@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.client.gui.hud;
 
+import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
@@ -77,11 +79,20 @@ public final class PackTooltips {
         if (held > 0L) { tooltip.add(grey("rdpl.container.kept", String.valueOf(held))); }
     }
 
+    private static void diet(ItemStack stack, List<Component> tooltip) {
+        if (Config.content.vanillaClients() || !ContentDiet.tooltip() || ClientDiet.waiting() || !stack.has(DataComponents.FOOD)) { return; }
+        String kind = ContentDiet.counted(stack);
+        if (kind.isEmpty()) { tooltip.add(Component.translatable("rdpl.diet.tooltip.ignored").withStyle(ChatFormatting.GRAY)); }
+        else if (ClientDiet.ate(kind)) { tooltip.add(Component.translatable("rdpl.diet.tooltip.eaten").withStyle(ChatFormatting.GREEN)); }
+        else { tooltip.add(Component.translatable("rdpl.diet.tooltip.new").withStyle(ChatFormatting.YELLOW)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         HolderLookup.Provider access = event.getContext().registries();
         if (access != null) { weight(event.getItemStack(), access, event.getToolTip()); }
         affixes(event.getItemStack(), event.getToolTip());
         kept(event.getItemStack(), event.getToolTip());
+        diet(event.getItemStack(), event.getToolTip());
         if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();

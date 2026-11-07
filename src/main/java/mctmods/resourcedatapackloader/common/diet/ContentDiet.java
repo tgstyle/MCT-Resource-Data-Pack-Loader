@@ -7,10 +7,12 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
+import mctmods.resourcedatapackloader.common.util.PlayerValueSync;
 import mctmods.resourcedatapackloader.common.util.entity.Functions;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
+import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -20,30 +22,42 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 public final class ContentDiet {
     private static final String SECTION = "rdplDiet";
     private static final String MEALS = "meals";
+    private static final String EATEN = "eaten";
+    private static final String MEMORY = "memory";
+    private static final String LIFETIME = "lifetime";
+    private static final List<String> COUNTS = Arrays.asList(MEMORY, LIFETIME);
+    private static final PlayerValueSync<Set<String>> SYNC = new PlayerValueSync<>(ContentDiet::eaten, ContentDiet::tooltip, RDPLNetwork::sendEaten);
     private static final Map<UUID, float[]> BEFORE = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final String KEEP_ON_DEATH = "keepOnDeath";
@@ -149,7 +163,21 @@ public final class ContentDiet {
         seen[1] = food.getSaturationLevel();
     }
 
-    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { BEFORE.remove(event.getEntity().getUUID()); }
+    public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
+        BEFORE.remove(event.getEntity().getUUID());
+        SYNC.forget(event.getEntity());
+    }
+
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
+        if (GENERATION.stale()) { reload(); }
+        SYNC.fresh(player);
+    }
+
+    public static void refresh(MinecraftServer server) {
+        if (GENERATION.stale()) { reload(); }
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { SYNC.fresh(player); }
+    }
 
     public static void onFinish(LivingEntityUseItemEvent.Finish event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
@@ -161,9 +189,10 @@ public final class ContentDiet {
         FoodData food = player.getFoodData();
         float foodGain = food.getFoodLevel() - seen[0];
         float satGain = food.getSaturationLevel() - seen[1];
-        if (foodGain <= 0 && satGain <= 0) { return; }
+        if (foodGain <= 0 && satGain <= 0 && notFood(event.getItem())) { return; }
         CompoundTag section = PlayerPersisted.section(player, SECTION);
         List<String> meals = meals(section);
+        Set<String> eaten = eaten(section, meals);
         String key = rules.kind(event.getItem(), ContentStacks.id(event.getItem().getItem()));
         int count = 0;
         for (String meal : meals) { if (meal.equals(key)) { count++; } }
@@ -171,6 +200,11 @@ public final class ContentDiet {
         meals.add(key);
         while (meals.size() > rules.memory()) { meals.removeFirst(); }
         int distinctAfter = new HashSet<>(meals).size();
+        int everBefore = eaten.size();
+        eaten.add(key);
+        ListTag ever = new ListTag();
+        for (String kind : eaten) { ever.add(StringTag.valueOf(kind)); }
+        section.put(EATEN, ever);
         float repeat = rules.repeatMultiplier(count);
         float variety = rules.varietyMultiplier(distinctAfter);
         float multiplier = repeat * variety;
@@ -182,7 +216,8 @@ public final class ContentDiet {
         ListTag written = new ListTag();
         for (String meal : meals) { written.add(StringTag.valueOf(meal)); }
         section.put(MEALS, written);
-        ContentHearts.onMeal(player, distinctBefore, distinctAfter);
+        SYNC.push(player);
+        ContentHearts.onMeal(player, distinctBefore, distinctAfter, everBefore, eaten.size());
         reward(player, rules.bestTier(distinctBefore), rules.bestTier(distinctAfter));
     }
 
@@ -203,10 +238,42 @@ public final class ContentDiet {
 
     public static int distinct(Player player) { return diet == null ? 0 : new HashSet<>(meals(PlayerPersisted.section(player, SECTION))).size(); }
 
+    public static int eatenEver(Player player) { return diet == null ? 0 : eaten(player).size(); }
+
+    public static boolean tooltip() {
+        DietDef rules = diet;
+        return rules != null && rules.tooltip();
+    }
+
+    public static String counted(ItemStack stack) {
+        DietDef rules = diet;
+        return rules == null || rules.exempts(stack) || notFood(stack) ? "" : rules.kind(stack, ContentStacks.id(stack.getItem()));
+    }
+
+    public static boolean lifetime(JsonObject json, Object owner) { return LIFETIME.equals(Json.choice(json, "dietCount", MEMORY, owner, COUNTS)); }
+
+    private static Set<String> eaten(Player player) {
+        CompoundTag section = PlayerPersisted.read(player, SECTION);
+        return eaten(section, meals(section));
+    }
+
+    private static Set<String> eaten(CompoundTag section, List<String> meals) {
+        Set<String> eaten = new LinkedHashSet<>();
+        if (!section.contains(EATEN)) { eaten.addAll(meals); }
+        ListTag stored = section.getListOrEmpty(EATEN);
+        for (int i = 0; i < stored.size(); i++) { eaten.add(stored.getStringOr(i, "")); }
+        return eaten;
+    }
+
     private static List<String> meals(CompoundTag section) {
         ListTag stored = section.getListOrEmpty(MEALS);
         List<String> meals = new ArrayList<>(stored.size());
         for (int i = 0; i < stored.size(); i++) { meals.add(stored.getStringOr(i, "")); }
         return meals;
+    }
+
+    private static boolean notFood(ItemStack stack) {
+        FoodProperties food = stack.get(DataComponents.FOOD);
+        return food == null || food.nutrition() < 1;
     }
 }
