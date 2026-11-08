@@ -265,6 +265,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onUseOn);
         NeoForge.EVENT_BUS.addListener(ContentHarvests::onRightClick);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVeins::onBreak);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentVeins::onNested);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
