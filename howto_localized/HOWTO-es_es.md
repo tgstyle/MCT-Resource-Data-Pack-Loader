@@ -3784,6 +3784,27 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 
 Una pila es `item` con `min` (`1`) y `max` (`min`), de modo que un precio fijo es solo `min`.
 
+Un array `clear` junto a `trades` elimina los comercios que una carrera ya tiene. Un archivo puede tener `clear` sin `trades`.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Clave                | Obligatorio | Valor               | Por defecto | Qué hace                                                                                          |
+| -------------------- | ----------- | ------------------- | ----------- | ------------------------------------------------------------------------------------------------- |
+| `clear`              | no          | array               | ninguno     | Las carreras que se vaciarán, cada una como objeto                                                |
+| `clear[].profession` | sí          | nombre de profesión |             | De quién se eliminan los comercios                                                                |
+| `clear[].career`     | no          | nombre de carrera   | todas       | Qué carrera dentro de ella; si se omite, todas las carreras de la profesión                       |
+| `clear[].level`      | no          | `1` a `5`           | todos       | Qué nivel de comercio se vacía; si se omite, todos los niveles                                    |
+| `clear[].requires`   | no          | lista de mods       | ninguno     | La entrada solo se aplica cuando estos mods están cargados, igual que `requires` en otros lugares |
+
+Vaciar elimina los comercios que el juego base y otros mods dieron a la carrera, una vez que cada mod ha añadido los suyos, y antes de que se añada cualquier comercio de tu paquete. Los comercios que un mod añade después, al iniciar el servidor, no se eliminan. Los aldeanos que ya tienen comercios los conservan. Vaciar el nivel 1 sin añadir nada deja un aldeano que no puede comerciar. Los comercios del paquete ahora van después de los de otros mods en el mismo nivel.
+
 Un comercio también puede depender del jugador que abre la ventana. Quien no cumple una condición no ve el comercio, y los demás jugadores no se ven afectados. Todas las condiciones deben cumplirse a la vez, y se comprueban cada vez que se abre la ventana.
 
 ```json

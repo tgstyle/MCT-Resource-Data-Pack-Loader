@@ -3784,6 +3784,27 @@ Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cu
 
 Une pile s'écrit `item` avec `min` (`1`) et `max` (`min`) : un prix fixe n'est donc que `min`.
 
+Un tableau `clear` à côté de `trades` retire les échanges qu'une carrière possède déjà. Un fichier peut contenir `clear` sans `trades`.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Clé                  | Requis | Valeur            | Défaut | Rôle                                                                                |
+| -------------------- | ------ | ----------------- | ------ | ----------------------------------------------------------------------------------- |
+| `clear`              | non    | tableau           | aucun  | Les carrières à vider, chacune sous forme d'objet                                   |
+| `clear[].profession` | oui    | nom de profession |        | Dont les échanges sont retirés                                                      |
+| `clear[].career`     | non    | nom de carrière   | toutes | Quelle carrière au sein de celle-ci ; toutes les carrières de la profession si omis |
+| `clear[].level`      | non    | `1` à `5`         | tous   | Quel palier d'échange vider ; tous les paliers si omis                              |
+| `clear[].requires`   | non    | liste de mods     | aucun  | L'entrée ne s'applique que lorsque ces mods sont chargés, comme `requires` ailleurs |
+
+Vider retire les échanges donnés à la carrière par vanilla et les autres mods, une fois que chaque mod a ajouté les siens, et avant l'ajout de tout échange de votre pack. Les échanges qu'un mod ajoute plus tard, au démarrage du serveur, ne sont pas retirés. Les villageois qui possèdent déjà des échanges les conservent. Vider le palier 1 sans rien ajouter laisse un villageois incapable d'échanger. Les échanges du pack passent désormais après ceux des autres mods au même palier.
+
 Un échange peut aussi dépendre du joueur qui ouvre la fenêtre. Un joueur qui ne remplit pas une condition ne voit pas l'échange, et les autres joueurs ne sont pas touchés. Toutes les conditions doivent être remplies, et elles sont vérifiées à chaque ouverture de la fenêtre.
 
 ```json

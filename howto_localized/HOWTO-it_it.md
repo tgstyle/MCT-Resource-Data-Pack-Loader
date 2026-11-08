@@ -3784,6 +3784,27 @@ Il nome del file lo scegli tu, viene letta solo la cartella e più file si somma
 
 Una pila è `item` con `min` (`1`) e `max` (`min`), quindi un prezzo fisso è semplicemente `min`.
 
+Un array `clear` accanto a `trades` rimuove gli scambi che un mestiere ha già. Un file può contenere `clear` senza `trades`.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Chiave               | Obbligatorio | Valore                 | Predefinito | Cosa fa                                                                          |
+| -------------------- | ------------ | ---------------------- | ----------- | -------------------------------------------------------------------------------- |
+| `clear`              | no           | array                  | nessuno     | I mestieri da svuotare, ciascuno come oggetto                                    |
+| `clear[].profession` | sì           | nome della professione |             | Di chi rimuovere gli scambi                                                      |
+| `clear[].career`     | no           | nome del mestiere      | tutti       | Quale mestiere al suo interno; se omesso, tutti i mestieri della professione     |
+| `clear[].level`      | no           | da `1` a `5`           | tutti       | Quale livello di scambio svuotare; se omesso, tutti i livelli                    |
+| `clear[].requires`   | no           | elenco di mod          | nessuno     | La voce si applica solo quando questi mod sono caricati, come `requires` altrove |
+
+Svuotare rimuove gli scambi che il gioco base e altri mod hanno dato al mestiere, dopo che ogni mod ha aggiunto i propri, e prima che venga aggiunto qualsiasi scambio del pacchetto. Gli scambi che un mod aggiunge più tardi, all'avvio del server, non vengono rimossi. I villici che hanno già degli scambi li conservano. Svuotare il livello 1 senza aggiungere nulla lascia un villico che non può commerciare. Gli scambi del pacchetto ora vengono dopo quelli degli altri mod allo stesso livello.
+
 Uno scambio può dipendere anche dal giocatore che apre la finestra. Chi non soddisfa una condizione non vede lo scambio, e gli altri giocatori non ne sono toccati. Tutte le condizioni devono valere insieme, e vengono controllate a ogni apertura della finestra.
 
 ```json

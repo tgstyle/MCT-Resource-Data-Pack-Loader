@@ -213,8 +213,6 @@ public class ModSetup {
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
         ContentRegistry.resolveItemPotions();
-        ContentVillagers.applyTrades();
-        if (ContentTradeGate.active()) { MinecraftForge.EVENT_BUS.register(ContentTradeGate.class); }
         ContentBiomes.applyPlacement();
         ContentWorldTemplates.load();
         ContentPathIntersects.load();
@@ -352,6 +350,8 @@ public class ModSetup {
     }
 
     public static void loadComplete() {
+        ContentVillagers.applyTrades();
+        if (ContentTradeGate.active()) { MinecraftForge.EVENT_BUS.register(ContentTradeGate.class); }
         RecipeSwaps.apply();
         RecipeDisabled.apply();
         FurnaceBlocking.apply();

@@ -3784,6 +3784,27 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 
 Stack je `item` s `min` (`1`) a `max` (`min`), takže pevná cena je prostě `min`.
 
+Pole `clear` vedle `trades` odstraní obchody, které kariéra už má. Soubor může obsahovat `clear` i bez `trades`.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Klíč                 | Povinný | Hodnota        | Výchozí | Co dělá                                                                     |
+| -------------------- | ------- | -------------- | ------- | --------------------------------------------------------------------------- |
+| `clear`              | ne      | pole           | žádné   | Kariéry, které se mají vyprázdnit, každá jako objekt                        |
+| `clear[].profession` | ano     | název povolání |         | Čí obchody odstranit                                                        |
+| `clear[].career`     | ne      | název kariéry  | vše     | Která kariéra v něm; když se vynechá, všechny kariéry povolání              |
+| `clear[].level`      | ne      | `1` až `5`     | vše     | Který stupeň obchodů vyprázdnit; když se vynechá, všechny stupně            |
+| `clear[].requires`   | ne      | seznam modů    | žádný   | Položka platí jen tehdy, když jsou tyto mody načtené, jako `requires` jinde |
+
+Vyprázdnění odstraní obchody, které kariéře dal základ hry a ostatní mody, až když každý mod přidá své vlastní, a dřív, než se přidá kterýkoli obchod z tvého balíčku. Obchody, které mod přidá později, při startu serveru, se nevyprázdní. Vesničané, kteří už obchody mají, si je ponechají. Vyprázdnění stupně 1 bez něčeho přidaného nechá vesničana, který nemůže obchodovat. Obchody balíčku nyní přicházejí až za obchody ostatních modů na stejném stupni.
+
 Obchod může záviset i na hráči, který otevře okno. Hráč, který podmínku nesplní, obchod nevidí, ostatních hráčů se to netýká. Platit musí všechny podmínky najednou a kontrolují se při každém otevření okna.
 
 ```json

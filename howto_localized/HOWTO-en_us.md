@@ -3784,6 +3784,27 @@ The file name is yours to choose, only the folder is read, and several files sta
 
 A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `min`.
 
+A `clear` array beside `trades` removes the trades a career already has. A file may hold `clear` without `trades`.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Key                  | Required | Value           | Default | What it does                                                            |
+| -------------------- | -------- | --------------- | ------- | ----------------------------------------------------------------------- |
+| `clear`              | no       | array           | none    | The careers to empty, each an object                                    |
+| `clear[].profession` | yes      | profession name |         | Whose trades to remove                                                  |
+| `clear[].career`     | no       | career name     | all     | Which career within it; every career of the profession when left out    |
+| `clear[].level`      | no       | `1` to `5`      | all     | Which trade tier to empty; every tier when left out                     |
+| `clear[].requires`   | no       | list of mods    | none    | The entry only applies when these are loaded, like `requires` elsewhere |
+
+Clearing removes the trades vanilla and other mods gave the career, once every mod has added its own, and before any trade in your pack is added. Trades a mod adds later, at server start, are not cleared. Villagers that already hold trades keep them. Clearing level 1 with nothing added leaves a villager that cannot trade. Pack trades now come after other mods' trades at the same level.
+
 A trade can also depend on the player who opens the window. A player who fails a condition does not see the trade, and other players are unaffected. Several conditions must all hold, and they are checked each time the window opens.
 
 ```json

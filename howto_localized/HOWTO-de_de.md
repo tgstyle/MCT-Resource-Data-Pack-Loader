@@ -3784,6 +3784,27 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 
 Ein Stapel ist `item` mit `min` (`1`) und `max` (`min`), ein fester Preis ist also einfach nur `min`.
 
+Ein `clear`-Array neben `trades` entfernt die Handel, die eine Laufbahn schon hat. Eine Datei darf `clear` auch ohne `trades` enthalten.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Schlüssel            | Pflicht | Wert           | Standard | Was er macht                                                                          |
+| -------------------- | ------- | -------------- | -------- | ------------------------------------------------------------------------------------- |
+| `clear`              | nein    | Array          | keiner   | Die Laufbahnen, die geleert werden, jeweils als Objekt                                |
+| `clear[].profession` | ja      | Berufsname     |          | Wessen Handel entfernt wird                                                           |
+| `clear[].career`     | nein    | Laufbahnname   | alle     | Welche Laufbahn darin; ohne Angabe alle Laufbahnen des Berufs                         |
+| `clear[].level`      | nein    | `1` bis `5`    | alle     | Welche Handelsstufe geleert wird; ohne Angabe alle Stufen                             |
+| `clear[].requires`   | nein    | Liste von Mods | keiner   | Der Eintrag gilt nur, wenn diese Mods geladen sind, wie `requires` an anderen Stellen |
+
+Das Leeren entfernt die Handel, die Vanilla und andere Mods der Laufbahn gegeben haben, sobald jeder Mod seine eigenen hinzugefügt hat, und noch bevor ein Handel aus deinem Pack hinzugefügt wird. Handel, die ein Mod erst beim Serverstart hinzufügt, werden nicht geleert. Dorfbewohner, die schon Handel haben, behalten sie. Wird Stufe 1 ohne etwas Neues geleert, kann der Dorfbewohner nicht mehr handeln. Die Handel deines Packs kommen jetzt nach denen anderer Mods auf derselben Stufe.
+
 Ein Handel kann auch von dem Spieler abhängen, der das Fenster öffnet. Wer eine Bedingung nicht erfüllt, sieht den Handel nicht, andere Spieler bleiben unberührt. Mehrere Bedingungen müssen alle zutreffen, und sie werden bei jedem Öffnen des Fensters geprüft.
 
 ```json

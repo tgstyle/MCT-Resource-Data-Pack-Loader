@@ -3784,6 +3784,27 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
 
 Uma pilha é `item` com `min` (`1`) e `max` (`min`), pelo que um preço fixo é apenas `min`.
 
+Um array `clear` ao lado de `trades` remove as trocas que uma carreira já tem. Um ficheiro pode ter `clear` sem `trades`.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "farmer", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack:library"] }
+  ]
+}
+```
+
+| Chave                | Obrigatório | Valor             | Predefinição | O que faz                                                                                 |
+| -------------------- | ----------- | ----------------- | ------------ | ----------------------------------------------------------------------------------------- |
+| `clear`              | não         | array             | nenhum       | As carreiras a esvaziar, cada uma como objeto                                             |
+| `clear[].profession` | sim         | nome da profissão |              | De quem remover as trocas                                                                 |
+| `clear[].career`     | não         | nome da carreira  | todas        | Que carreira dentro dela; se omitida, todas as carreiras da profissão                     |
+| `clear[].level`      | não         | `1` a `5`         | todos        | Que nível de troca esvaziar; se omitido, todos os níveis                                  |
+| `clear[].requires`   | não         | lista de mods     | nenhum       | A entrada só se aplica quando estes mods estão carregados, como `requires` noutros sítios |
+
+Esvaziar remove as trocas que o vanilla e outros mods deram à carreira, depois de cada mod ter adicionado as suas e antes de qualquer troca do teu pacote ser adicionada. As trocas que um mod adiciona mais tarde, no arranque do servidor, não são removidas. Os aldeões que já têm trocas mantêm-nas. Esvaziar o nível 1 sem adicionar nada deixa um aldeão que não consegue trocar. As trocas do pacote passam agora a vir depois das trocas dos outros mods no mesmo nível.
+
 Uma troca também pode depender do jogador que abre a janela. Quem não cumpre uma condição não vê a troca, e os outros jogadores não são afetados. Todas as condições têm de se verificar ao mesmo tempo, e são avaliadas sempre que a janela é aberta.
 
 ```json
