@@ -23,7 +23,7 @@ public final class ContentStacks {
 
     private static boolean plain(ItemStack stack) {
         CompoundTag tag = stack.getTag();
-        return tag == null || (tag.size() == 1 && tag.contains(ItemStack.TAG_DAMAGE) && tag.getInt(ItemStack.TAG_DAMAGE) == 0);
+        return tag == null || tag.equals(new ItemStack(stack.getItem()).getTag());
     }
 
     @Nullable public static Item find(ResourceLocation key, @Nullable String value) {

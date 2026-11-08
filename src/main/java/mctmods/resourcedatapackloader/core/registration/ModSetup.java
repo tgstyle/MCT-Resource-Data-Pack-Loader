@@ -260,6 +260,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentAnvils::onUseOn);
         MinecraftForge.EVENT_BUS.addListener(ContentHarvests::onRightClick);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVeins::onBreak);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentVeins::onNested);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);

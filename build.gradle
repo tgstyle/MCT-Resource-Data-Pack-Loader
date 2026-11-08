@@ -201,6 +201,8 @@ dependencies {
     if (companion('ftbchunks')) { modRuntimeOnly "curse.maven:ftb-chunks-forge-314906:8216874" }
     if (companion('ftblibrary')) { modRuntimeOnly "curse.maven:ftb-library-forge-404465:8226927" }
     if (companion('architectury')) { modRuntimeOnly "curse.maven:architectury-api-419699:4663010" }
+    if (companion('tconstruct')) { modRuntimeOnly "curse.maven:tinkers-construct-74072:7449219" }
+    if (companion('mantle')) { modRuntimeOnly "curse.maven:mantle-74924:9446748" }
 
     if (bpJar != null) {
         compileOnly files(bpJar)
