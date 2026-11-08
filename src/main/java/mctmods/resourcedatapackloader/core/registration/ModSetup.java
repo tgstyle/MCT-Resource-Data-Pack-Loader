@@ -195,7 +195,7 @@ public class ModSetup {
         modBus.addListener(ContentEvents::onBuildTab);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, CompressedFuel::onFuelBurnTime);
-        MinecraftForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVillagers::applyTrades);
         MinecraftForge.EVENT_BUS.addListener(ContentTeams::onLevelLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
         MinecraftForge.EVENT_BUS.addListener(ContentTeams::onLogin);

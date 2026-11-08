@@ -3670,6 +3670,27 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `maxUses`      | no       | int             | `12`    | Times it can be used before locking                                                                     |
 | `xp`           | no       | int             | `2`     | Experience the villager earns per trade toward its next level                                           |
 
+A file can also remove trades before it adds its own.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "fisherman", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack"] }
+  ]
+}
+```
+
+| Key                  | Required | Value                              | Default | What it does                                                                        |
+| -------------------- | -------- | ---------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `clear`              | no       | list                               | none    | Entries that remove trades, beside or instead of `trades`                           |
+| `clear[].profession` | yes      | profession name                    |         | Whose trades to remove. A vanilla 1.12.2 name is read too                           |
+| `clear[].career`     | no       | career name                        | all     | Limits a 1.12.2 profession to one career                                            |
+| `clear[].level`      | no       | int                                | all     | Which tier to empty, `1` to `5`. Any other number logs an error and skips the entry |
+| `clear[].requires`   | no       | list of mod ids or pack namespaces | none    | The entry is skipped unless all are present                                         |
+
+Clearing removes the trades vanilla and other mods gave, after every mod has added its own and before your pack's. A 1.12.2 profession without a career covers every profession its careers became, so `minecraft:farmer` clears the farmer, fisherman, shepherd and fletcher. Villagers that already hold trades keep them. Clearing level 1 with nothing added leaves a villager that cannot trade. Pack trades now come after other mods' at the same level.
+
 A stack is `item` with `min` (`1`) and `max` (`min`), so a fixed price is just `min`.
 
 A trade can also depend on the player who opens the window. A player who fails a condition does not see the trade, and other players are unaffected. Every condition must hold at once, and they are checked each time the window opens.

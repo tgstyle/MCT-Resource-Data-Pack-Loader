@@ -3670,6 +3670,27 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
 | `maxUses`      | não         | número inteiro    | `12`         | Vezes que pode ser usada antes de bloquear                                                                         |
 | `xp`           | não         | número inteiro    | `2`          | Experiência que o aldeão ganha por troca para o seu nível seguinte                                                 |
 
+Um ficheiro também pode remover trocas antes de adicionar as suas.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "fisherman", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack"] }
+  ]
+}
+```
+
+| Chave                | Obrigatório | Valor                                              | Predefinição | O que faz                                                                                  |
+| -------------------- | ----------- | -------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------ |
+| `clear`              | não         | lista                                              | nenhum       | Entradas que removem trocas, juntamente com `trades` ou em vez dele                        |
+| `clear[].profession` | sim         | nome de profissão                                  |              | De que profissão remover trocas. Também se lê um nome vanilla do 1.12.2                    |
+| `clear[].career`     | não         | nome de carreira                                   | todas        | Limita uma profissão do 1.12.2 a uma só carreira                                           |
+| `clear[].level`      | não         | número inteiro                                     | todos        | Que nível esvaziar, de `1` a `5`. Qualquer outro número regista um erro e ignora a entrada |
+| `clear[].requires`   | não         | lista de IDs de mods ou espaços de nomes do pacote | nenhum       | A entrada é ignorada a menos que todos estejam presentes                                   |
+
+Esvaziar remove as trocas dadas pelo vanilla e por outros mods, depois de cada mod adicionar as suas e antes das do seu pacote. Uma profissão do 1.12.2 sem carreira abrange todas as profissões em que as suas carreiras se tornaram, pelo que `minecraft:farmer` esvazia o agricultor, o pescador, o pastor e o fabricante de setas. Os aldeões que já têm trocas mantêm-nas. Esvaziar o nível 1 sem adicionar nada deixa um aldeão que não pode negociar. As trocas do pacote passam agora a vir depois das dos outros mods no mesmo nível.
+
 Uma pilha é `item` com `min` (`1`) e `max` (`min`), pelo que um preço fixo é apenas `min`.
 
 Uma troca também pode depender do jogador que abre a janela. Quem não cumpre uma condição não vê a troca, e os outros jogadores não são afetados. Todas as condições têm de se verificar ao mesmo tempo, e são avaliadas sempre que a janela é aberta.

@@ -3670,6 +3670,27 @@ Le nom du fichier est à votre choix, seul le dossier est lu, et plusieurs fichi
 | `maxUses`      | non    | entier            | `12`   | Nombre d'utilisations avant le verrouillage                                                                                     |
 | `xp`           | non    | entier            | `2`    | Expérience que le villageois gagne par échange vers son niveau suivant                                                          |
 
+Un fichier peut aussi retirer des échanges avant d'ajouter les siens.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "fisherman", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack"] }
+  ]
+}
+```
+
+| Clé                  | Requis | Valeur                                                    | Défaut | Rôle                                                                                        |
+| -------------------- | ------ | --------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| `clear`              | non    | liste                                                     | aucun  | Entrées qui retirent des échanges, en plus de `trades` ou à sa place                        |
+| `clear[].profession` | oui    | nom de profession                                         |        | Profession dont retirer les échanges. Un nom vanilla 1.12.2 est aussi lu                    |
+| `clear[].career`     | non    | nom de carrière                                           | tous   | Limite une profession 1.12.2 à une seule carrière                                           |
+| `clear[].level`      | non    | entier                                                    | tous   | Le palier à vider, de `1` à `5`. Tout autre nombre journalise une erreur et ignore l'entrée |
+| `clear[].requires`   | non    | liste d'identifiants de mods ou d'espaces de noms de pack | aucun  | L'entrée est ignorée sauf si toutes sont présentes                                          |
+
+Vider retire les échanges donnés par vanilla et les autres mods, après que chaque mod a ajouté les siens et avant ceux de votre pack. Une profession 1.12.2 sans carrière couvre toutes les professions que ses carrières sont devenues : `minecraft:farmer` vide donc le fermier, le pêcheur, le berger et le fabricant de flèches. Les villageois qui ont déjà des échanges les gardent. Vider le niveau 1 sans rien ajouter laisse un villageois qui ne peut pas échanger. Les échanges du pack passent désormais après ceux des autres mods au même niveau.
+
 Une pile est `item` avec `min` (`1`) et `max` (`min`) : un prix fixe n'est donc que `min`.
 
 Un échange peut aussi dépendre du joueur qui ouvre la fenêtre. Un joueur qui ne remplit pas une condition ne voit pas l'échange, et les autres joueurs ne sont pas touchés. Toutes les conditions doivent être remplies, et elles sont vérifiées à chaque ouverture de la fenêtre.
