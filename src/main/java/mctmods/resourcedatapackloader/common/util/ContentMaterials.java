@@ -2,7 +2,9 @@ package mctmods.resourcedatapackloader.common.util;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 
 import java.util.EnumMap;
@@ -12,6 +14,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -65,6 +68,12 @@ public final class ContentMaterials {
     }
 
     private static Ingredient repair(MaterialDef def) {
+        if (def.repairItem().startsWith("#")) {
+            ResourceLocation tag = ContentParser.location(def.repairItem().substring(1).trim());
+            if (tag != null) { return Ingredient.of(TagKey.create(Registries.ITEM, tag)); }
+            ContentLog.LOGGER.error("The material {} names the repair tag '{}', which is not a valid tag id, so it has no repair item", def.key(), def.repairItem());
+            return Ingredient.EMPTY;
+        }
         Item item = ContentStacks.find(def.key(), def.repairItem());
         return item == null ? Ingredient.EMPTY : Ingredient.of(item);
     }

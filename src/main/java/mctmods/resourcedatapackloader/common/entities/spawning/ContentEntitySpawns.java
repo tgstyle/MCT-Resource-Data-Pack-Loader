@@ -100,12 +100,19 @@ public record ContentEntitySpawns() implements BiomeModifier {
 
     private static boolean matches(Holder<Biome> biome, @Nullable ResourceLocation id, EntityVariantDef def) {
         if (def.biomes().isEmpty() && def.biomeTypes().isEmpty()) { return true; }
+        return inBiomes(id, def.biomes()) || ofTypes(biome, def.biomeTypes());
+    }
+
+    static boolean inBiomes(@Nullable ResourceLocation id, Collection<String> biomes) {
         String named = id == null ? "" : id.toString();
-        for (String wanted : def.biomes()) {
+        for (String wanted : biomes) {
             if (named.equals(biomeId(wanted))) { return true; }
         }
-        if (id != null && BiomeNames.named(id, def.biomes())) { return true; }
-        for (String type : def.biomeTypes()) {
+        return id != null && BiomeNames.named(id, biomes);
+    }
+
+    static boolean ofTypes(Holder<Biome> biome, Collection<String> types) {
+        for (String type : types) {
             TagKey<Biome> tag = BiomeNames.tag(type);
             if (tag != null && biome.is(tag)) { return true; }
         }

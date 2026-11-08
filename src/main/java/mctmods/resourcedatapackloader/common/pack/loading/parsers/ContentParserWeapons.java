@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.loading.parsers;
 
+import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -28,8 +29,32 @@ public final class ContentParserWeapons {
         }
         WeaponDef.Sweep sweep = sweep(key, json);
         WeaponDef.Combo combo = combo(key, json);
-        if (Float.isNaN(reach) && sweep == null && combo == null) { return null; }
-        return new WeaponDef(reach, sweep, combo);
+        int fire = json.has("fireSeconds") ? Math.max(0, Json.getInt(json, "fireSeconds", 0)) : 0;
+        WeaponDef.Finisher finisher = finisher(key, json);
+        if (Float.isNaN(reach) && sweep == null && combo == null && fire == 0 && finisher == null) { return null; }
+        return new WeaponDef(reach, sweep, combo, fire, finisher);
+    }
+
+    @Nullable private static WeaponDef.Finisher finisher(ResourceLocation key, JsonObject parent) {
+        if (!parent.has("finisher")) { return null; }
+        if (!parent.get("finisher").isJsonObject()) {
+            ContentLog.LOGGER.error("The finisher on {} is not an object, so the key is ignored", key);
+            return null;
+        }
+        JsonObject json = parent.getAsJsonObject("finisher");
+        String owner = "The finisher on " + key;
+        List<String> targets = json.has("targets") ? MobStats.entities(owner, "targets", json.get("targets")) : null;
+        if (targets == null || targets.isEmpty()) {
+            ContentLog.LOGGER.error("The finisher on {} lists no targets, so the key is ignored", key);
+            return null;
+        }
+        JsonObject push = json.has("push") && json.get("push").isJsonObject() ? json.getAsJsonObject("push") : new JsonObject();
+        return new WeaponDef.Finisher(Collections.unmodifiableList(targets),
+                Json.bounded(json, "health", Float.MIN_VALUE, Float.MAX_VALUE, owner),
+                Json.bounded(json, "damage", Float.MIN_VALUE, Float.MAX_VALUE, owner),
+                Json.getString(json, "damageType", "generic").trim(),
+                Json.ranged(push, "horizontal", 0.0F, 0.0F, 100.0F, owner),
+                Json.ranged(push, "vertical", 0.0F, 0.0F, 100.0F, owner));
     }
 
     @Nullable private static WeaponDef.Sweep sweep(ResourceLocation key, JsonObject parent) {

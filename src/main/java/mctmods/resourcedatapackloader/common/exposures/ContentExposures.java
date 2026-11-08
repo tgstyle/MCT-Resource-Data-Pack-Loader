@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
 import mctmods.resourcedatapackloader.common.util.dimension.ExposurePlaces;
 import mctmods.resourcedatapackloader.common.util.dimension.ExposureSpread;
+import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
@@ -29,11 +30,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -286,8 +285,7 @@ public final class ContentExposures {
     }
 
     private static DamageSource source(ExposureDef def, LivingEntity living, ServerLevel level) {
-        ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, def.key());
-        Holder<DamageType> type = level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(key).orElse(null);
+        Holder<DamageType> type = DamageSources.type(level, def.key());
         return type == null ? living.damageSources().magic() : new ExposureDamage(type);
     }
 

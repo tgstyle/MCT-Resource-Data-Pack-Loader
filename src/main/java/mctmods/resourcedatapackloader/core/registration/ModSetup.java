@@ -45,6 +45,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.RankSteal;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
@@ -68,6 +69,7 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
+import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
@@ -175,6 +177,7 @@ public class ModSetup {
         ContentCurioSlots.load();
         ContentEntities.load();
         SpawnLocks.load();
+        SpawnSwaps.load();
         ContentWorldTemplates.load();
         ContentBiomes.load();
         ContentCaveRegions.load();
@@ -306,6 +309,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentWeapons::onModifiers);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
+        NeoForge.EVENT_BUS.addListener(ContentWeapons::onTick);
         NeoForge.EVENT_BUS.addListener(ContentWeapons::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onServerStarted);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, ContentHardness::onBreak);
@@ -316,6 +320,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentHardness::onDrops);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onJoin);
+        NeoForge.EVENT_BUS.addListener(SpawnSwaps::onFinalizeSpawn);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onShot);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onLeave);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onInteract);
@@ -471,6 +476,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, MobDrops::onDrops);
         NeoForge.EVENT_BUS.addListener(ModSetup::onTagsUpdated);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ModSetup::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(ModSetup::onRegisterCommands);
@@ -487,15 +493,11 @@ public class ModSetup {
     private static void onConfig(ModConfigEvent event) {
         if (event.getConfig().getSpec() != Config.SPEC) { return; }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug());
-        ResourceDataPackLoader.LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",
-                Config.packs.rootDirectory(), Config.packs.overrideResourcePacks(), Config.packs.warnOnCaseMismatch(), Config.packs.logContents(), Config.packs.traceUnresolvedVariables());
-        ResourceDataPackLoader.LOGGER.info("Config content: load={} sounds={} fuels={} potions={} brewing={} villagers={} biomes={}",
-                !Config.content.loadOff(), Config.content.sounds(), Config.content.fuels(), Config.content.potions(), Config.content.brewing(), Config.content.villagers(), Config.content.biomes());
-        ResourceDataPackLoader.LOGGER.info("Config recipes: furnace={} removals={} skipMissingItems={} blockRecipes={} recipeMatch={} blockFurnaceRecipes={}",
-                Config.recipes.furnace(), Config.recipes.removals(), Config.recipes.skipMissingItems(), Config.recipes.blockRecipes(), Config.recipes.recipeMatch(), Config.recipes.blockFurnaceRecipes());
+        ResourceDataPackLoader.LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}", Config.packs.rootDirectory(), Config.packs.overrideResourcePacks(), Config.packs.warnOnCaseMismatch(), Config.packs.logContents(), Config.packs.traceUnresolvedVariables());
+        ResourceDataPackLoader.LOGGER.info("Config content: load={} sounds={} fuels={} potions={} brewing={} villagers={} biomes={}", !Config.content.loadOff(), Config.content.sounds(), Config.content.fuels(), Config.content.potions(), Config.content.brewing(), Config.content.villagers(), Config.content.biomes());
+        ResourceDataPackLoader.LOGGER.info("Config recipes: furnace={} removals={} skipMissingItems={} blockRecipes={} recipeMatch={} blockFurnaceRecipes={}", Config.recipes.furnace(), Config.recipes.removals(), Config.recipes.skipMissingItems(), Config.recipes.blockRecipes(), Config.recipes.recipeMatch(), Config.recipes.blockFurnaceRecipes());
         ResourceDataPackLoader.LOGGER.info("Config data: lootInjections={} functions={} registryRemaps={}", !Config.data.lootInjectionsOff(), !Config.data.functionsOff(), !Config.data.registryRemapsOff());
-        ResourceDataPackLoader.LOGGER.info("Config worldgen: load={} retrogen={} adoptExistingChunks={} retrogenKey='{}' retrogenChunksPerTick={} blockOres={} oreWhitelist={} oreTypes={} oreTypesAreBlacklist={} flatBedrock={} blockBiomes={} biomeNames={} biomeNamesAreBlacklist={} worldgenDebug={}",
-                !Config.worldgen.loadOff(), Config.worldgen.retrogen(), Config.worldgen.adoptExistingChunks(), Config.worldgen.retrogenKey(), Config.worldgen.retrogenChunksPerTick(), Config.worldgen.blockOres(), Config.worldgen.oreWhitelist(), Config.worldgen.oreTypes(), Config.worldgen.oreTypesAreBlacklist(), Config.worldgen.flatBedrock(), Config.worldgen.blockBiomes(), Config.worldgen.biomeNames(), Config.worldgen.biomeNamesAreBlacklist(), Config.worldgen.worldgenDebug());
+        ResourceDataPackLoader.LOGGER.info("Config worldgen: load={} retrogen={} adoptExistingChunks={} retrogenKey='{}' retrogenChunksPerTick={} blockOres={} oreWhitelist={} oreTypes={} oreTypesAreBlacklist={} flatBedrock={} blockBiomes={} biomeNames={} biomeNamesAreBlacklist={} worldgenDebug={}", !Config.worldgen.loadOff(), Config.worldgen.retrogen(), Config.worldgen.adoptExistingChunks(), Config.worldgen.retrogenKey(), Config.worldgen.retrogenChunksPerTick(), Config.worldgen.blockOres(), Config.worldgen.oreWhitelist(), Config.worldgen.oreTypes(), Config.worldgen.oreTypesAreBlacklist(), Config.worldgen.flatBedrock(), Config.worldgen.blockBiomes(), Config.worldgen.biomeNames(), Config.worldgen.biomeNamesAreBlacklist(), Config.worldgen.worldgenDebug());
         ResourceDataPackLoader.LOGGER.info("Config terrain: generatorOptions='{}'", Config.worldgen.generatorOptions());
         ResourceDataPackLoader.LOGGER.info("Config chunks: spawnChunkRadius={} spawnChunkRadii={}", Config.chunks.spawnChunkRadius(), Config.chunks.spawnChunkRadii());
         ResourceDataPackLoader.LOGGER.info("Config tweaks: promptLeafDecay={} lenientPaths={}", Config.tweaks.promptLeafDecay(), Config.tweaks.lenientPaths());
@@ -532,9 +534,7 @@ public class ModSetup {
                     NeoForge.EVENT_BUS.addListener(ContentRanks::onTick);
                     NeoForge.EVENT_BUS.addListener(ContentRanks::onDeath);
                     NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
-                    if (ContentRanks.stealing()) {
-                        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen);
-                    }
+                    if (ContentRanks.stealing()) { NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen); }
                 }
                 ContentOverrides.reload();
             });

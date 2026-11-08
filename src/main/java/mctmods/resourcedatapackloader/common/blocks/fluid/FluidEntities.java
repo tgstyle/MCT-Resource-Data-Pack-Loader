@@ -2,20 +2,10 @@ package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidBehaviorDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidDef;
-import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 
-import java.util.Locale;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -26,8 +16,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class FluidEntities {
-    private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
-
     private FluidEntities() {}
 
     public static void touch(Level level, BlockPos pos, BlockState state, Entity entity, FluidDef def) {
@@ -52,7 +40,7 @@ public final class FluidEntities {
         Integer fire = keys.fireSeconds();
         if (fire != null && fire > 0) { entity.igniteForSeconds(fire); }
         Float damage = keys.damage();
-        if (damage != null && damage > 0.0F && entity.tickCount % keys.damageEvery() == 0) { entity.hurt(source(level, keys.damageType()), damage); }
+        if (damage != null && damage > 0.0F && entity.tickCount % keys.damageEvery() == 0) { entity.hurt(DamageSources.source(level, keys.damageType(), "A fluid"), damage); }
     }
 
     private static void item(Level level, BlockPos pos, BlockState state, ItemEntity entity, FluidDef def) {
@@ -89,17 +77,5 @@ public final class FluidEntities {
     private static boolean immune(ItemEntity entity, FluidBehaviorDef.Items keys) {
         if (keys.immune().isEmpty() || entity.getItem().isEmpty()) { return false; }
         return keys.immune().contains(BuiltInRegistries.ITEM.getKey(entity.getItem().getItem()).toString());
-    }
-
-    private static DamageSource source(Level level, String name) {
-        ResourceLocation id = ResourceLocation.tryParse(name.toLowerCase(Locale.ROOT));
-        Holder<DamageType> held = id == null ? null : damageType(level, id);
-        if (held != null) { return new DamageSource(held); }
-        if (WARNED.add(name)) { ContentLog.LOGGER.error("A fluid names the damage type '{}', which is not registered, so generic damage is used instead", name); }
-        return level.damageSources().generic();
-    }
-
-    @Nullable private static Holder<DamageType> damageType(Level level, ResourceLocation id) {
-        return level.registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(ResourceKey.create(Registries.DAMAGE_TYPE, id)).orElse(null);
     }
 }

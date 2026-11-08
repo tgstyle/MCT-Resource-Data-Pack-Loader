@@ -77,6 +77,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Propagação de flores](#propagação-de-flores)
 - [Transportar](#transportar)
 - [Remoções de saque](#remoções-de-saque)
+- [Itens largados por mobs](#itens-largados-por-mobs)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Variedade alimentar](#variedade-alimentar)
 - [Aldeões e trocas](#aldeões-e-trocas)
@@ -205,6 +206,7 @@ Em `data/`:
 | `<namespace>/item_locks/*.json`              | Itens ocultos nas listas do jogador até ele obter um progresso. [Bloqueios de itens](#bloqueios-de-itens)                                                                                                              |
 | `<namespace>/weights/*.json`                 | Pesos de itens, um limite de carga e escalões de sobrecarga. [Pesos de itens](#pesos-de-itens)                                                                                                                         |
 | `<namespace>/recipe_locks/*.json`            | Receitas que continuam fechadas até o jogador obter um progresso. [Bloqueios de receitas](#bloqueios-de-receitas)                                                                                                      |
+| `<namespace>/spawn_swaps/*.json`             | Mobs trocados por outros ao surgirem. [Trocas de spawn](#trocas-de-spawn)                                                                                                                                              |
 | `<namespace>/spawn_locks/*.json`             | Mobs que não surgem até se cumprirem as condições. [Bloqueios de spawn](#bloqueios-de-spawn)                                                                                                                           |
 | `<namespace>/disabled/*.json`                | Blocos e itens retirados de jogo. [Blocos e itens desativados](#blocos-e-itens-desativados)                                                                                                                            |
 | `<namespace>/furnace/*.json`                 | Receitas de fornalha adicionadas e removidas. [Receitas de fornalha e combustíveis](#receitas-de-fornalha-e-combustíveis)                                                                                              |
@@ -224,6 +226,7 @@ Em `data/`:
 | `<namespace>/veins/*.json`                   | Grupos de blocos que uma ferramenta minera de uma vez, com limite e custo de fome. [Mineração de filões](#mineração-de-filões)                                                                                         |
 | `<namespace>/carries/*.json`                 | Blocos e mobs que um jogador agachado apanha e volta a pousar. [Transportar](#transportar)                                                                                                                             |
 | `<namespace>/player_loot/*.json`             | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                                                         |
+| `<namespace>/mob_drops/*.json`               | Itens retirados do que os mobs indicados largam, ou acrescentados a isso. [Itens largados por mobs](#itens-largados-por-mobs)                                                                                          |
 | `<namespace>/diets/*.json`                   | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                                                  |
 | `<namespace>/columns/*.json`                 | Sequências de blocos que caem e partem juntamente com os blocos acima do bloco partido pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                             |
 | `<namespace>/flower_spreads/*.json`          | Flores extra colocadas à volta da relva ou de outro bloco quando se usa pó de osso nele. [Propagação de flores](#propagação-de-flores)                                                                                 |
@@ -596,7 +599,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla simples,
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                                   |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (linhas de descrição de itens e encantamentos, nomes de afixos e encaixes de gemas) |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots` (o Curios recusa clientes vanilla)                                                                 |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `mob_drops`, `advancements`, `functions`, `veins`, `weights`, `spawn_swaps`              | `entities`, `villagers`, `portalframes`, `curioslots` (o Curios recusa clientes vanilla)                                                                 |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (pastas do cliente: sem cliente, deixa-as de fora)                                |
 | toda a camada de controlo, as definições e a pré-geração                                                                                                   |                                                                                                                                                          |
 
@@ -1774,6 +1777,8 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "attackReach": 3.0,
   "sweep": { "shape": "box", "damage": 0.5 },
   "combo": { "window": 30, "steps": [ { "damage": 1.0 }, { "damage": 2.0 } ] },
+  "fireSeconds": 5,
+  "finisher": { "targets": ["minecraft:skeleton"], "damage": 20.0 },
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
@@ -1870,6 +1875,8 @@ Um item simples com `sleepingBag` é um saco-cama. Com um clique direito na face
 | `attackReach`    | não           | número decimal, blocos                        | `3.0`                           | Até onde chega um golpe com o item na mão principal. Vale também para o clique direito em criaturas. Ver [Armas](#armas)                                                                                                                                                         |
 | `sweep`          | não           | objeto                                        | nenhum                          | Fere também outras criaturas à volta de um golpe com força total. Ver [Armas](#armas)                                                                                                                                                                                            |
 | `combo`          | não           | objeto                                        | nenhum                          | Golpes dados com no máximo `window` ticks entre si percorrem `steps`. Ver [Armas](#armas)                                                                                                                                                                                        |
+| `fireSeconds`    | não           | número inteiro, 0 ou mais                     | `0`                             | Põe em chamas a criatura atingida por este número de segundos. Ver [Armas](#armas)                                                                                                                                                                                               |
+| `finisher`       | não           | objeto                                        | nenhum                          | Um golpe de acabamento contra os mobs indicados, desferido depois do golpe do jogo. Ver [Armas](#armas)                                                                                                                                                                          |
 | `attackSpeed`    | não           | número decimal                                | conforme a classe de ferramenta | Em `tool`, o atributo de velocidade de ataque, como numa espada que é `-2.4`                                                                                                                                                                                                     |
 | `cooldown`       | não           | número inteiro, ticks                         | `0`                             | Em `food`, `drink` e `potion`, quanto tempo o item recusa nova utilização depois de consumido; num item com `rolls`, quanto tempo entre lançamentos                                                                                                                              |
 | `container`      | drink         | nome de item                                  | nenhum                          | O que fica para trás, como uma garrafa. Num item `container`, esta chave são antes as definições da própria bolsa, ver [Contentores](#contentores)                                                                                                                               |
@@ -1954,6 +1961,33 @@ Cada passo aceita estas chaves:
 | `sweep`  | não         | objeto                     | o `sweep` do item | Substitui o `sweep` do item neste golpe, com as mesmas chaves de cima |
 
 Só um golpe com força total avança um combo ou varre. Um golpe mais fraco reinicia o combo e não recebe nem o dano do passo nem uma varredura. O progresso fica guardado por jogador na memória e nunca é gravado. Sair do jogo, trocar de item ou deixar esgotar `window` reinicia-o. Uma varredura nunca fere o jogador, o alvo, aliados, espectadores nem suportes de armadura marcadores, e cada criatura sofre `damage` vezes o golpe depois do multiplicador do passo. Um golpe cujo dano base não supera o último dano do alvo é descartado pela resistência a dano antes de o multiplicador do passo ser aplicado, pelo que um passo não o pode aumentar; isto só importa com velocidade de ataque de 2 ou mais.
+
+`fireSeconds` põe em chamas a criatura que um golpe atinge por este número de segundos, do mesmo modo que o `fireSeconds` de um fluido.
+
+`finisher` desfere um segundo golpe no fim do mesmo tick, depois de o golpe do jogo ter acertado por completo, com o recuo, a varredura e o desgaste dele. Só age sobre um alvo que ainda esteja vivo nesse momento, e sobre um mob que a lista `targets` indica:
+
+```json
+{
+  "fireSeconds": 150,
+  "finisher": {
+    "targets": ["minecraft:skeleton", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:bogged"],
+    "health": 1.0,
+    "damage": 150.0,
+    "damageType": "fireworks",
+    "push": { "horizontal": 2.0, "vertical": 4.0 }
+  }
+}
+```
+
+| Chave        | Obrigatório | Valor                                | Predefinição | O que faz                                                                                                                                                  |
+| ------------ | ----------- | ------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `targets`    | sim         | lista de ids de entidade             |              | Os mobs que recebem o golpe de acabamento. Indica cada mob pelo id; as categorias `#monster`, `#creature`, `#ambient` e `#water_creature` também funcionam |
+| `health`     | não         | float acima de 0                     | nenhum       | Primeiro define a vida do alvo com este valor                                                                                                              |
+| `damage`     | não         | float acima de 0                     | nenhum       | Depois causa este dano, sem atacante                                                                                                                       |
+| `damageType` | não         | nome de tipo de dano                 | `generic`    | O tipo de dano desse dano. Um nome sem namespace quer dizer `minecraft:`, por isso os tipos de dano próprios de um pacote também funcionam                 |
+| `push`       | não         | `{ "horizontal": 0, "vertical": 0 }` | nenhum       | Um empurrão lateral aleatório de até `horizontal` para qualquer lado, e um empurrão para cima de até `vertical`, ambos de 0 a 100                          |
+
+O golpe do jogador fica como está, por isso um abate pelo golpe de acabamento conta como do jogador: dá experiência e drops de abate de jogador, e uma entrada `damageTypes` dos [itens largados por mobs](#itens-largados-por-mobs) vê o tipo de dano do acabamento. Um alvo que morra ou saia do mundo antes do fim do tick é ignorado.
 
 ## Fluidos
 
@@ -2185,18 +2219,18 @@ O caminho do ficheiro é o nome do material, que um item de ferramenta ou armadu
 }
 ```
 
-| Chave            | Obrigatório | Valor                    | Predefinição            | O que faz                                                                                                                   |
-| ---------------- | ----------- | ------------------------ | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `harvestLevel`   | não         | 0 a 4                    | `1`                     | Nível da ferramenta. 0 madeira, 1 pedra, 2 ferro, 3 diamante, 4 netherite                                                   |
-| `durability`     | não         | número inteiro           | `250`                   | Utilizações até partir                                                                                                      |
-| `efficiency`     | não         | número decimal           | `6.0`                   | Velocidade de mineração. O diamante é 8                                                                                     |
-| `damage`         | não         | número decimal           | `2.0`                   | Bónus de dano de ataque                                                                                                     |
-| `enchantability` | não         | número inteiro           | `14`                    | Quão bons são os encantamentos. O ouro é 22                                                                                 |
-| `repairItem`     | não         | nome de item             | nenhum                  | O que repara numa bigorna uma ferramenta feita com ele. A armadura feita com ele não é reparada desta forma, como na 1.12.2 |
-| `reduction`      | não         | lista de quatro inteiros | `[2, 5, 6, 2]`          | Pontos de armadura, pela ordem botas, calças, peitoral, capacete                                                            |
-| `toughness`      | não         | número decimal           | `0.0`                   | Resistência da armadura, como o diamante tem                                                                                |
-| `equipSound`     | não         | nome de som              | `item.armor.equip_iron` | Som ao vestir a armadura                                                                                                    |
-| `armorTexture`   | não         | prefixo de textura       | o nome do ficheiro      | A textura da armadura vestida, lida de `textures/models/armor/<name>_layer_1.png` e `_layer_2.png` sob esse namespace       |
+| Chave            | Obrigatório | Valor                    | Predefinição            | O que faz                                                                                                                                                                                                               |
+| ---------------- | ----------- | ------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `harvestLevel`   | não         | 0 a 4                    | `1`                     | Nível da ferramenta. 0 madeira, 1 pedra, 2 ferro, 3 diamante, 4 netherite                                                                                                                                               |
+| `durability`     | não         | número inteiro           | `250`                   | Utilizações até partir                                                                                                                                                                                                  |
+| `efficiency`     | não         | número decimal           | `6.0`                   | Velocidade de mineração. O diamante é 8                                                                                                                                                                                 |
+| `damage`         | não         | número decimal           | `2.0`                   | Bónus de dano de ataque                                                                                                                                                                                                 |
+| `enchantability` | não         | número inteiro           | `14`                    | Quão bons são os encantamentos. O ouro é 22                                                                                                                                                                             |
+| `repairItem`     | não         | nome de item ou `#tag`   | nenhum                  | O que repara numa bigorna uma ferramenta feita com ele: um item ou, com um `#` no início, qualquer item dessa tag de itens, como `#c:nether_stars`. A armadura feita com ele não é reparada desta forma, como na 1.12.2 |
+| `reduction`      | não         | lista de quatro inteiros | `[2, 5, 6, 2]`          | Pontos de armadura, pela ordem botas, calças, peitoral, capacete                                                                                                                                                        |
+| `toughness`      | não         | número decimal           | `0.0`                   | Resistência da armadura, como o diamante tem                                                                                                                                                                            |
+| `equipSound`     | não         | nome de som              | `item.armor.equip_iron` | Som ao vestir a armadura                                                                                                                                                                                                |
+| `armorTexture`   | não         | prefixo de textura       | o nome do ficheiro      | A textura da armadura vestida, lida de `textures/models/armor/<name>_layer_1.png` e `_layer_2.png` sob esse namespace                                                                                                   |
 
 ### Separadores criativos
 
@@ -3713,6 +3747,43 @@ Um ficheiro aqui retira entradas de uma tabela de saque que já existe, seja do 
 - As remoções correm antes de `loot_injections`, por isso um pool injetado nunca é removido. Um mod que acrescenta à tabela depois do RDPL mantém o que acrescentou.
 - Um pool, entrada ou item que não corresponde a nada produz um aviso no `rdpl.log`, para o pacote continuar a funcionar quando um mod é retirado.
 - `lootRemovals` na configuração desliga-as. As tabelas de saque são dados do servidor, por isso o servidor basta.
+- O equipamento que um mob larga (o arco de um esqueleto, a espada de ferro de um zumbi) não está em nenhuma tabela de saque, por isso `loot_removals` não o alcança. [Itens largados por mobs](#itens-largados-por-mobs) tira-o por item.
+
+## Itens largados por mobs
+
+*fabrico, saque e comércio*
+
+`<namespace>/mob_drops/*.json`
+
+Um ficheiro aqui muda o que os mobs indicados largam quando morrem: tira itens dos drops, venham de onde vierem (a tabela de saque ou o equipamento vestido e na mão), e acrescenta pilhas, opcionalmente conforme o que o assassino segura ou o dano que matou o mob. Funciona em qualquer mob, do vanilla ou de outro mod, o que a `dropChance` de uma variante de entidade não consegue. Vários ficheiros acumulam-se. Primeiro correm todas as remoções, depois cada acréscimo pela ordem dos ficheiros, por isso uma verificação `unlessDropped` vê os acréscimos anteriores.
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "stripTagged": false,
+  "adds": [
+    { "item": "minecraft:wither_skeleton_skull", "killerHolds": ["mypack:blade"], "damageTypes": ["fireworks"], "unlessDropped": ["minecraft:wither_skeleton_skull"] },
+    { "item": "mypack:fragment", "count": { "min": 1, "max": 2 }, "chance": 0.5, "unlessDropped": ["minecraft:wither_skeleton_skull"] }
+  ]
+}
+```
+
+| Chave                  | Obrigatório | Valor                             | Predefinição | O que faz                                                                                                                                                                 |
+| ---------------------- | ----------- | --------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`             | sim         | lista de ids de entidade ou tipos |              | Os mobs a que o ficheiro se aplica, pelo id de registo ou pelo tipo (`#monster`, `#creature`, `#ambient`, `#water_creature`)                                              |
+| `strip`                | não         | lista de ids de item ou `#tag`    | nenhum       | Retirados dos drops desses mobs                                                                                                                                           |
+| `stripTagged`          | não         | booleano                          | `false`      | Com `false`, uma pilha que tem componentes além do dano (encantada, com nome) fica                                                                                        |
+| `adds`                 | não         | lista de objetos                  | nenhum       | Pilhas acrescentadas aos drops                                                                                                                                            |
+| `adds[].item`          | sim         | id de item                        |              | O que é acrescentado                                                                                                                                                      |
+| `adds[].count`         | não         | número inteiro, ou `{min, max}`   | `1`          | Tamanho da pilha                                                                                                                                                          |
+| `adds[].chance`        | não         | número de 0 a 1                   | `1.0`        | Sorteado uma vez por abate                                                                                                                                                |
+| `adds[].killerHolds`   | não         | lista de ids de item ou `#tag`    | nenhum       | A mão principal do assassino segura um destes                                                                                                                             |
+| `adds[].damageTypes`   | não         | lista de ids de tipo de dano      | nenhum       | O dano que mata é um destes. Um nome sem namespace quer dizer `minecraft:`, por isso `fireworks` é dano de fogo de artifício, e os tipos de dano de mods também funcionam |
+| `adds[].requireAll`    | não         | booleano                          | `false`      | Com `false`, basta `killerHolds` ou `damageTypes`; com `true`, todos os indicados têm de se cumprir. Sem nenhum dos dois, o acréscimo aplica-se sempre                    |
+| `adds[].unlessDropped` | não         | lista de ids de item ou `#tag`    | nenhum       | Salta o acréscimo quando os drops, incluindo os acréscimos anteriores, já têm um destes                                                                                   |
+
+Os mobs só largam o equipamento vestido e na mão quando um jogador os matou ou quando a chance de drop do item passa de 1, por isso uma remoção de equipamento só aparece nesse tipo de abate. `mobDrops` na configuração, na categoria `data`, desliga a pasta. Os drops são dados do servidor, por isso o servidor basta.
 
 # Criaturas e perigos
 
@@ -4253,6 +4324,58 @@ O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros a
 | `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | não         | como nas condições de spawn         | nenhum       | As mesmas chaves, com o mesmo significado das condições de spawn. Um ficheiro que não define nenhuma delas é ignorado e o registo avisa                             |
 
 Um mob indicado em vários ficheiros, ou também numa variante, surge só onde e quando todas as condições se cumprem. Os surgimentos naturais são retidos, incluindo os que um chunk cria ao ser gerado; um ovo, `/summon` e um spawner não.
+
+### Trocas de spawn
+
+*variantes de entidades*
+
+`<namespace>/spawn_swaps/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, e vários ficheiros acumulam-se. Troca um mob no instante em que surge por outro escolhido por peso, e pode acrescentar mais ao lado dele. Só conta um surgimento novo: um mob carregado de um mundo guardado, saído de um ovo, invocado ou colocado por uma estrutura nunca é trocado. Vale o primeiro ficheiro cujas condições se cumprem, e o substituto e os mobs extra nunca são trocados outra vez.
+
+Este par de ficheiros transforma esqueletos e strays do Nether em esqueletos wither arqueiros, com mais três ao lado de cada um, faz o mesmo aos esqueletos no escuro da noite em qualquer outro sítio, com 15% de probabilidade, e acrescenta três esqueletos wither a cada esqueleto wither que surge no Nether. `mypack:wither_skeleton_bow` é uma variante do próprio pacote.
+
+`mypack/spawn_swaps/skeletons.json`
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "becomes": [{ "entity": "mypack:wither_skeleton_bow", "weight": 1 }],
+  "biomeTypes": ["NETHER"],
+  "blocks": ["minecraft:nether_bricks"],
+  "extra": 3,
+  "elsewhere": { "chance": 0.15, "lightBelow": 9, "night": true },
+  "fromSpawners": false
+}
+```
+
+`mypack/spawn_swaps/fortress_extras.json`
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "becomes": ["minecraft:wither_skeleton"],
+  "biomeTypes": ["NETHER"],
+  "extra": 3
+}
+```
+
+| Chave                                                                                                                        | Obrigatório | Valor                                                | Predefinição | O que faz                                                                                                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------- | ----------- | ---------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `entities`                                                                                                                   | sim         | lista de nomes de entidade ou tipos                  | nenhum       | Os mobs trocados, como em Bloqueios de spawn. Um ficheiro sem esta chave é ignorado e o `rdpl.log` avisa disso                                                                                                                                         |
+| `becomes`                                                                                                                    | sim         | lista de ids, ou objetos com `entity` e `weight`     | nenhum       | O que ocupa o lugar deles, escolhido por peso (`1` quando não é indicado). Pode ser um mob de origem, de outro mod ou uma variante do pacote. Um ficheiro sem esta chave é ignorado e o `rdpl.log` avisa disso                                         |
+| `biomes`, `biomeTypes`                                                                                                       | não         | como numa variante                                   | nenhum       | Os biomas onde a troca se cumpre                                                                                                                                                                                                                       |
+| `blocks`                                                                                                                     | não         | lista de nomes de bloco, como em Mineração de filões | nenhum       | A troca cumpre-se quando o bloco por baixo do ponto de surgimento corresponde                                                                                                                                                                          |
+| `requireAll`                                                                                                                 | não         | booleano                                             | `false`      | Com `false`, basta um de `biomes`, `biomeTypes` e `blocks`; com `true`, todos os indicados têm de se cumprir. Um ficheiro que não indique nenhum destes cumpre-se em todo o lado onde as outras condições se cumprem                                   |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | não         | como nas condições de spawn                          | nenhum       | As mesmas chaves, com o mesmo significado das condições de spawn. Todas têm de se cumprir, `elsewhere` incluído                                                                                                                                        |
+| `elsewhere`                                                                                                                  | não         | objeto                                               | desligado    | Onde `biomes`, `biomeTypes` e `blocks` não se cumprem, a troca acontece na mesma, com a probabilidade e as condições abaixo                                                                                                                            |
+| `elsewhere.chance`                                                                                                           | não         | float, `0` a `1`                                     | `1.0`        | A probabilidade de troca aí; `0.15` é uma em cerca de sete                                                                                                                                                                                             |
+| `elsewhere.lightBelow`                                                                                                       | não         | int, `1` a `16`                                      | nenhum       | Só onde a luz no ponto de surgimento está abaixo deste valor                                                                                                                                                                                           |
+| `elsewhere.night`                                                                                                            | não         | booleano                                             | `false`      | Só do tick `13000` ao `23000` do dia                                                                                                                                                                                                                   |
+| `extra`                                                                                                                      | não         | int, `0` a `16`                                      | `0`          | Quantos mobs a mais aparecem no ponto. Cada um tem o seu sorteio de `becomes`, recebe o equipamento inicial como qualquer surgimento, e é ignorado quando não cabe no espaço. Contam para o limite de mobs a partir da passagem de surgimento seguinte |
+| `fromSpawners`                                                                                                               | não         | booleano                                             | `false`      | Os surgimentos naturais, os mobs das fortalezas e os que um chunk cria ao ser gerado são trocados; `true` acrescenta blocos de spawner cujos dados de spawn têm só o id do mob                                                                         |
+
+Um pacote sem ficheiro aqui surge como antes, e o `becomes` de uma variante não muda. O substituto é o mob que então recebe os atributos e o equipamento de uma variante, por isso uma troca para uma variante funciona.
 
 ### Rede
 
@@ -9775,6 +9898,7 @@ Saque, funções e nomes de registo. Só na config.
 lootInjections = true
 lootRemovals = true
 playerLoot = true
+mobDrops = true
 registryRemaps = true
 anvils = true
 blockDrops = true
@@ -9786,6 +9910,7 @@ functions = true
 | `lootInjections` | booleano | `true`       | Aplica os ficheiros loot_injections/*.json, que acrescentam pools a tabelas de saque que já existem em vez de substituir a tabela inteira                                                              |
 | `lootRemovals`   | booleano | `true`       | Aplica os ficheiros loot_removals/*.json, que retiram entradas com nome de tabelas de saque que já existem, ou esvaziam uma tabela inteira                                                             |
 | `playerLoot`     | booleano | `true`       | Aplica os ficheiros player_loot/*.json, que sorteiam uma tabela de saque quando um jogador morre e largam o que ela produz, além do inventário ou em vez dele                                          |
+| `mobDrops`       | booleano | `true`       | Aplica os ficheiros mob_drops/*.json, que retiram itens do que os mobs indicados largam e acrescentam pilhas, conforme o item do assassino e o tipo de dano                                            |
 | `registryRemaps` | booleano | `true`       | Aplica os ficheiros registry_remap, que renomeiam uma entrada de registo para que os mundos guardados antes da renomeação mantenham os seus blocos e itens em vez de os perderem                       |
 | `affixes`        | booleano | `true`       | Aplica os ficheiros affixes/*.json e gems/*.json, que dão a um item bónus de atributo aleatórios e engastes na primeira vez que um jogador o segura e deixam uma bigorna encaixar uma gema num engaste |
 | `anvils`         | booleano | `true`       | Aplica os ficheiros anvils/*.json, que deixam uma bigorna pôr encantamentos indicados num item por um custo em níveis, conceder um progresso quando é retirado, e reter um item de uso até lá          |

@@ -77,6 +77,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Flower spreading](#flower-spreading)
 - [Carrying](#carrying)
 - [Loot removals](#loot-removals)
+- [Mob drops](#mob-drops)
 - [Player loot](#player-loot)
 - [Food variety](#food-variety)
 - [Villagers and trades](#villagers-and-trades)
@@ -205,6 +206,7 @@ Under `data/`:
 | `<namespace>/item_locks/*.json`              | Items hidden from a player's lists until they earn an advancement. [Item locks](#item-locks)                                                                                   |
 | `<namespace>/weights/*.json`                 | Item weights, a carrying limit and encumbrance tiers. [Item weights](#item-weights)                                                                                            |
 | `<namespace>/recipe_locks/*.json`            | Recipes that stay closed until a player earns an advancement. [Recipe locks](#recipe-locks)                                                                                    |
+| `<namespace>/spawn_swaps/*.json`             | Mobs replaced by others as they spawn. [Spawn swaps](#spawn-swaps)                                                                                                             |
 | `<namespace>/spawn_locks/*.json`             | Mobs that do not spawn until conditions hold. [Spawn locks](#spawn-locks)                                                                                                      |
 | `<namespace>/disabled/*.json`                | Blocks and items taken out of play. [Disabled blocks and items](#disabled-blocks-and-items)                                                                                    |
 | `<namespace>/furnace/*.json`                 | Furnace recipes added and removed. [Furnace recipes and fuels](#furnace-recipes-and-fuels)                                                                                     |
@@ -224,6 +226,7 @@ Under `data/`:
 | `<namespace>/veins/*.json`                   | Groups of blocks a tool mines in one go, with a limit and a hunger cost. [Vein mining](#vein-mining)                                                                           |
 | `<namespace>/carries/*.json`                 | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                                                          |
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                                            |
+| `<namespace>/mob_drops/*.json`               | Items stripped from or added to what named mobs drop. [Mob drops](#mob-drops)                                                                                                  |
 | `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
 | `<namespace>/columns/*.json`                 | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
 | `<namespace>/flower_spreads/*.json`          | Extra flowers placed around grass or another block when bone meal is used on it. [Flower spreading](#flower-spreading)                                                         |
@@ -596,7 +599,7 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                            |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (item and enchantment tooltip lines, affix and socket names) |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots` (Curios refuses vanilla clients)                                            |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `mob_drops`, `advancements`, `functions`, `veins`, `weights`, `spawn_swaps`              | `entities`, `villagers`, `portalframes`, `curioslots` (Curios refuses vanilla clients)                                            |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out)           |
 | the whole control layer, settings, and pregeneration                                                                                                       |                                                                                                                                   |
 
@@ -1774,6 +1777,8 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
   "attackReach": 3.0,
   "sweep": { "shape": "box", "damage": 0.5 },
   "combo": { "window": 30, "steps": [ { "damage": 1.0 }, { "damage": 2.0 } ] },
+  "fireSeconds": 5,
+  "finisher": { "targets": ["minecraft:skeleton"], "damage": 20.0 },
   "curioSlot": "ring",
   "wornEffects": [ { "potion": "minecraft:speed", "amplifier": 1 } ],
   "wornAttributes": [ { "attribute": "maxHealth", "amount": 10.0, "operation": 0 } ],
@@ -1870,6 +1875,8 @@ A plain item with `sleepingBag` is a sleeping bag. Right-click the top of a soli
 | `attackReach`    | no            | float, blocks                        | `3.0`                  | How far a blow with the item in the main hand reaches. It also holds for right-clicking creatures. See [Weapons](#weapons)                                                                                                                                    |
 | `sweep`          | no            | object                               | none                   | Also hurts other creatures around a full-strength blow. See [Weapons](#weapons)                                                                                                                                                                               |
 | `combo`          | no            | object                               | none                   | Blows struck within `window` ticks of each other step through `steps`. See [Weapons](#weapons)                                                                                                                                                                |
+| `fireSeconds`    | no            | int, 0 or more                       | `0`                    | Sets the creature it hits on fire for this many seconds. See [Weapons](#weapons)                                                                                                                                                                              |
+| `finisher`       | no            | object                               | none                   | A finishing blow against the listed mobs, struck after the game's own blow. See [Weapons](#weapons)                                                                                                                                                           |
 | `attackSpeed`    | no            | float                                | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                                                                                                                             |
 | `cooldown`       | no            | int, ticks                           | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed; for an item that `rolls`, how long between rolls                                                                                                                     |
 | `container`      | drink         | item name                            | none                   | What is left behind, such as a bottle. On a `container` item this key is the pouch's own settings instead, see [Containers](#containers)                                                                                                                      |
@@ -1954,6 +1961,33 @@ Each step takes these keys:
 | `sweep`  | no       | object          | the item's `sweep` | Replaces the item's `sweep` for this blow, with the same keys as above |
 
 Only a blow at full strength moves a combo on or sweeps. A weaker blow resets the combo and gets neither the step's damage nor a sweep. Progress is kept per player in memory and is never saved. Logging out, switching to another item, or letting `window` run out resets it. A sweep never hurts the player, the target, allies, spectators or marker armor stands, and each creature takes `damage` times the blow after the step's multiplier. A blow whose base damage is not above the target's last damage is dropped by the hurt resistance before the step's multiplier applies, so a step cannot raise it; this matters only at an attack speed of 2 or more.
+
+`fireSeconds` sets the creature a blow lands on on fire for that many seconds, the way a fluid's `fireSeconds` does.
+
+`finisher` strikes a second blow at the end of the same tick, after the game's own blow has landed in full, with its knockback, sweep and wear. It only acts on a target that is still alive then, and on a mob its `targets` list names:
+
+```json
+{
+  "fireSeconds": 150,
+  "finisher": {
+    "targets": ["minecraft:skeleton", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:bogged"],
+    "health": 1.0,
+    "damage": 150.0,
+    "damageType": "fireworks",
+    "push": { "horizontal": 2.0, "vertical": 4.0 }
+  }
+}
+```
+
+| Key          | Required | Value                                | Default   | What it does                                                                                                                              |
+| ------------ | -------- | ------------------------------------ | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `targets`    | yes      | list of entity ids                   |           | The mobs that get the finishing blow. List every mob by id; the kinds `#monster`, `#creature`, `#ambient` and `#water_creature` also work |
+| `health`     | no       | float above 0                        | none      | Sets the target's health to this first                                                                                                    |
+| `damage`     | no       | float above 0                        | none      | Then deals this much damage, with no attacker                                                                                             |
+| `damageType` | no       | damage type name                     | `generic` | The damage type of that damage. A name with no namespace means `minecraft:`, so a pack's own damage types work too                        |
+| `push`       | no       | `{ "horizontal": 0, "vertical": 0 }` | none      | A random sideways push up to `horizontal` either way, and an upward push up to `vertical`, both from 0 to 100                             |
+
+The player's own blow stays as it is, so a kill by the finisher counts as the player's: it gives experience and player-kill drops, and a [mob drops](#mob-drops) `damageTypes` entry sees the finisher's damage type. A target that dies or leaves the world before the end of the tick is skipped.
 
 ## Fluids
 
@@ -2185,18 +2219,18 @@ The file's path is the material's name, which a tool or armor item then names in
 }
 ```
 
-| Key              | Required | Value             | Default                 | What it does                                                                                                         |
-| ---------------- | -------- | ----------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `harvestLevel`   | no       | 0 to 4            | `1`                     | Tool tier. 0 wood, 1 stone, 2 iron, 3 diamond, 4 netherite                                                           |
-| `durability`     | no       | int               | `250`                   | Uses before it breaks                                                                                                |
-| `efficiency`     | no       | float             | `6.0`                   | Mining speed. Diamond is 8                                                                                           |
-| `damage`         | no       | float             | `2.0`                   | Attack damage bonus                                                                                                  |
-| `enchantability` | no       | int               | `14`                    | How good enchantments are. Gold is 22                                                                                |
-| `repairItem`     | no       | item name         | none                    | What repairs a tool made from it in an anvil. Armor made from it is not repaired this way, as on 1.12.2              |
-| `reduction`      | no       | list of four ints | `[2, 5, 6, 2]`          | Armor points, in the order feet, legs, chest, head                                                                   |
-| `toughness`      | no       | float             | `0.0`                   | Armor toughness, as diamond has                                                                                      |
-| `equipSound`     | no       | sound name        | `item.armor.equip_iron` | Sound when armor is put on                                                                                           |
-| `armorTexture`   | no       | texture prefix    | the file name           | The worn armor texture, read from `textures/models/armor/<name>_layer_1.png` and `_layer_2.png` under that namespace |
+| Key              | Required | Value               | Default                 | What it does                                                                                                                                                                                  |
+| ---------------- | -------- | ------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `harvestLevel`   | no       | 0 to 4              | `1`                     | Tool tier. 0 wood, 1 stone, 2 iron, 3 diamond, 4 netherite                                                                                                                                    |
+| `durability`     | no       | int                 | `250`                   | Uses before it breaks                                                                                                                                                                         |
+| `efficiency`     | no       | float               | `6.0`                   | Mining speed. Diamond is 8                                                                                                                                                                    |
+| `damage`         | no       | float               | `2.0`                   | Attack damage bonus                                                                                                                                                                           |
+| `enchantability` | no       | int                 | `14`                    | How good enchantments are. Gold is 22                                                                                                                                                         |
+| `repairItem`     | no       | item name or `#tag` | none                    | What repairs a tool made from it in an anvil: one item, or with a leading `#` any item of that item tag, such as `#c:nether_stars`. Armor made from it is not repaired this way, as on 1.12.2 |
+| `reduction`      | no       | list of four ints   | `[2, 5, 6, 2]`          | Armor points, in the order feet, legs, chest, head                                                                                                                                            |
+| `toughness`      | no       | float               | `0.0`                   | Armor toughness, as diamond has                                                                                                                                                               |
+| `equipSound`     | no       | sound name          | `item.armor.equip_iron` | Sound when armor is put on                                                                                                                                                                    |
+| `armorTexture`   | no       | texture prefix      | the file name           | The worn armor texture, read from `textures/models/armor/<name>_layer_1.png` and `_layer_2.png` under that namespace                                                                          |
 
 ### Creative tabs
 
@@ -3713,6 +3747,43 @@ A file here takes entries out of a loot table that already exists, whether vanil
 - Removals run before `loot_injections`, so an injected pool is never removed. A mod that adds to the table after RDPL keeps what it added.
 - A pool, entry or item that matches nothing is a warning in `rdpl.log`, so a pack keeps working after a mod is dropped.
 - `lootRemovals` in the config turns them off. Loot tables are server data, so the server alone is enough.
+- Equipment a mob drops (a skeleton's bow, a zombie's iron sword) is not in any loot table, so `loot_removals` cannot reach it. [Mob drops](#mob-drops) strips it by item.
+
+## Mob drops
+
+*crafting, loot and trade*
+
+`<namespace>/mob_drops/*.json`
+
+A file here changes what named mobs drop when they die: it takes items out of the drops, however they got there (the loot table or worn and held equipment), and adds stacks, optionally by what the killer holds or what damage killed the mob. It works on any mob, vanilla or from another mod, which an entity variant's `dropChance` cannot do. Several files stack. All strips run first, then every add in file order, so an `unlessDropped` check sees the adds before it.
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "stripTagged": false,
+  "adds": [
+    { "item": "minecraft:wither_skeleton_skull", "killerHolds": ["mypack:blade"], "damageTypes": ["fireworks"], "unlessDropped": ["minecraft:wither_skeleton_skull"] },
+    { "item": "mypack:fragment", "count": { "min": 1, "max": 2 }, "chance": 0.5, "unlessDropped": ["minecraft:wither_skeleton_skull"] }
+  ]
+}
+```
+
+| Key                    | Required | Value                         | Default | What it does                                                                                                                                      |
+| ---------------------- | -------- | ----------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`             | yes      | list of entity ids or kinds   |         | The mobs the file applies to, matched by registry id or by kind (`#monster`, `#creature`, `#ambient`, `#water_creature`)                          |
+| `strip`                | no       | list of item ids or `#tag`    | none    | Removed from the drops of those mobs                                                                                                              |
+| `stripTagged`          | no       | boolean                       | `false` | With `false` a stack that carries components other than damage (enchanted, named) is kept                                                         |
+| `adds`                 | no       | list of objects               | none    | Stacks added to the drops                                                                                                                         |
+| `adds[].item`          | yes      | item id                       |         | What is added                                                                                                                                     |
+| `adds[].count`         | no       | whole number, or `{min, max}` | `1`     | Stack size                                                                                                                                        |
+| `adds[].chance`        | no       | number from 0 to 1            | `1.0`   | Rolled once per kill                                                                                                                              |
+| `adds[].killerHolds`   | no       | list of item ids or `#tag`    | none    | The killer's main hand holds one of these                                                                                                         |
+| `adds[].damageTypes`   | no       | list of damage type ids       | none    | The killing damage is one of these. A name with no namespace means `minecraft:`, so `fireworks` is firework damage and mod damage types match too |
+| `adds[].requireAll`    | no       | boolean                       | `false` | With `false` either `killerHolds` or `damageTypes` is enough; with `true` every one given must hold. With neither given the add always applies    |
+| `adds[].unlessDropped` | no       | list of item ids or `#tag`    | none    | Skip the add when the drops, earlier adds included, already hold one of these                                                                     |
+
+Mobs drop their worn and held equipment only when a player killed them or the item's drop chance is above 1, so a strip of equipment shows only on such a kill. `mobDrops` in the `data` config category turns the folder off. Drops are server data, so the server alone is enough.
 
 # Creatures and hazards
 
@@ -4253,6 +4324,58 @@ The file name is yours to choose, only the folder is read, and several files sta
 | `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | no       | as in Spawn conditions        | none    | The same keys with the same meaning as under Spawn conditions. A file that sets none of them is skipped and the log says so                                                 |
 
 A mob named in several files, or in a variant too, spawns only where and when all of them hold. Natural spawns and the ones a chunk makes as it generates are held back; an egg, `/summon` and a spawner are not.
+
+### Spawn swaps
+
+*entity variants*
+
+`<namespace>/spawn_swaps/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. Replaces a mob the moment it spawns with another one picked by weight, and can add more beside it. A spawn is a fresh one only: a mob loaded from a save, hatched from an egg, summoned or placed by a structure is never swapped. The first file whose conditions hold decides, and the replacement and the extra mobs are never swapped again.
+
+This pair of files turns nether skeletons and strays into wither skeleton archers with three more beside each, does the same to skeletons in the dark at night everywhere else with a 15 percent chance, and adds three wither skeletons to every wither skeleton that spawns in the Nether. `mypack:wither_skeleton_bow` is a variant of the pack's own.
+
+`mypack/spawn_swaps/skeletons.json`
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "becomes": [{ "entity": "mypack:wither_skeleton_bow", "weight": 1 }],
+  "biomeTypes": ["NETHER"],
+  "blocks": ["minecraft:nether_bricks"],
+  "extra": 3,
+  "elsewhere": { "chance": 0.15, "lightBelow": 9, "night": true },
+  "fromSpawners": false
+}
+```
+
+`mypack/spawn_swaps/fortress_extras.json`
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "becomes": ["minecraft:wither_skeleton"],
+  "biomeTypes": ["NETHER"],
+  "extra": 3
+}
+```
+
+| Key                                                                                                                          | Required | Value                                              | Default | What it does                                                                                                                                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | yes      | list of entity names or kinds                      | none    | The mobs replaced, as in Spawn locks. A file without it is skipped and the log says so                                                                                                                                            |
+| `becomes`                                                                                                                    | yes      | list of ids, or objects with `entity` and `weight` | none    | What takes their place, picked by weight (`1` when left out). An id may be a vanilla mob, another mod's or a variant of the pack. A file without it is skipped and the log says so                                                |
+| `biomes`, `biomeTypes`                                                                                                       | no       | as on a variant                                    | none    | The biomes where the swap holds                                                                                                                                                                                                   |
+| `blocks`                                                                                                                     | no       | list of block names, as in Vein mining             | none    | The swap holds when the block under the spawn spot matches                                                                                                                                                                        |
+| `requireAll`                                                                                                                 | no       | boolean                                            | `false` | With `false` any one of `biomes`, `biomeTypes` and `blocks` is enough; with `true` every one given must hold. A file that gives none of them holds everywhere its other conditions hold                                           |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | no       | as in Spawn conditions                             | none    | The same keys with the same meaning as under Spawn conditions. All of them must hold, `elsewhere` included                                                                                                                        |
+| `elsewhere`                                                                                                                  | no       | object                                             | off     | Where `biomes`, `biomeTypes` and `blocks` do not hold, still swap, with the chance and conditions below                                                                                                                           |
+| `elsewhere.chance`                                                                                                           | no       | float, `0` to `1`                                  | `1.0`   | The chance of a swap there; `0.15` is one in about seven                                                                                                                                                                          |
+| `elsewhere.lightBelow`                                                                                                       | no       | int, `1` to `16`                                   | none    | Only where the light at the spawn spot is below this                                                                                                                                                                              |
+| `elsewhere.night`                                                                                                            | no       | boolean                                            | `false` | Only from tick `13000` to `23000` of the day                                                                                                                                                                                      |
+| `extra`                                                                                                                      | no       | int, `0` to `16`                                   | `0`     | How many more mobs appear at the spot. Each one is its own roll of `becomes`, gets its starting gear like any spawn, and is skipped when it does not fit in the space. They count against the mob cap from the next spawn pass on |
+| `fromSpawners`                                                                                                               | no       | boolean                                            | `false` | Natural spawns, fortress mobs and the ones a chunk makes as it generates are swapped; `true` adds spawner blocks whose spawn data holds only the mob's id                                                                         |
+
+A pack that has no file here spawns as before, and a variant's own `becomes` is unchanged. The replacement is the mob that then gets a variant's stats and gear, so a swap into a variant works.
 
 ### Network
 
@@ -9775,6 +9898,7 @@ Loot, functions and registry names. Config only.
 lootInjections = true
 lootRemovals = true
 playerLoot = true
+mobDrops = true
 registryRemaps = true
 anvils = true
 blockDrops = true
@@ -9786,6 +9910,7 @@ functions = true
 | `lootInjections` | boolean | `true`  | Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table                                                      |
 | `lootRemovals`   | boolean | `true`  | Apply loot_removals/*.json files, which take named entries out of loot tables that already exist, or empty a table whole                                                        |
 | `playerLoot`     | boolean | `true`  | Apply player_loot/*.json files, which roll a loot table when a player dies and drop what it makes, on top of or instead of the inventory                                        |
+| `mobDrops`       | boolean | `true`  | Apply mob_drops/*.json files, which strip items from what named mobs drop and add stacks to it, by killer item and damage type                                                  |
 | `registryRemaps` | boolean | `true`  | Apply registry_remap files, which rename a registry entry so worlds saved before the rename keep their blocks and items instead of losing them                                  |
 | `affixes`        | boolean | `true`  | Apply affixes/*.json and gems/*.json files, which give an item random attribute bonuses and sockets the first time a player holds it, and let an anvil put a gem in a socket    |
 | `anvils`         | boolean | `true`  | Apply anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then |

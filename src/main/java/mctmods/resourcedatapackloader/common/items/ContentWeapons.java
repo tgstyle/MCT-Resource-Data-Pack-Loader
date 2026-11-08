@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.common.items;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EquipmentSlotGroup;
@@ -30,6 +33,7 @@ import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 public final class ContentWeapons {
     private static final ResourceLocation REACH_ID = ResourceDataPackLoader.id("attack_reach");
@@ -38,6 +42,7 @@ public final class ContentWeapons {
     private static final double VERTICAL_SLACK = 1.0D;
     private static final Map<UUID, Progress> COMBOS = new HashMap<>();
     private static final Map<UUID, Blow> BLOWS = new HashMap<>();
+    private static final List<Finish> FINISHES = new ArrayList<>();
     private static boolean sweeping;
 
     private ContentWeapons() {}
@@ -51,6 +56,7 @@ public final class ContentWeapons {
     public static void clear() {
         COMBOS.clear();
         BLOWS.clear();
+        FINISHES.clear();
     }
 
     public static void onModifiers(ItemAttributeModifierEvent event) {
@@ -63,7 +69,7 @@ public final class ContentWeapons {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         ItemStack held = player.getMainHandItem();
         WeaponDef weapon = weapon(held);
-        if (weapon == null || (weapon.combo() == null && weapon.sweep() == null)) {
+        if (weapon == null || (weapon.combo() == null && weapon.sweep() == null && weapon.fireSeconds() == 0 && weapon.finisher() == null)) {
             COMBOS.remove(player.getUUID());
             BLOWS.remove(player.getUUID());
             return;
@@ -77,6 +83,9 @@ public final class ContentWeapons {
         Blow blow = BLOWS.remove(player.getUUID());
         LivingEntity target = event.getEntity();
         if (blow == null || blow.target() != target.getId() || blow.time() != player.level().getGameTime()) { return; }
+        WeaponDef.Finisher finisher = blow.weapon().finisher();
+        if (blow.weapon().fireSeconds() > 0) { target.igniteForSeconds(blow.weapon().fireSeconds()); }
+        if (finisher != null && MobStats.targets(finisher.targets(), target)) { FINISHES.add(new Finish(target, finisher)); }
         boolean full = blow.strength() > FULL_STRENGTH;
         WeaponDef.Sweep sweep = blow.weapon().sweep();
         WeaponDef.Combo combo = blow.weapon().combo();
@@ -90,6 +99,27 @@ public final class ContentWeapons {
             }
         }
         if (full && sweep != null) { strike(player, target, blow.weapon(), sweep, event.getAmount() * sweep.damage()); }
+    }
+
+    public static void onTick(ServerTickEvent.Post event) {
+        if (FINISHES.isEmpty() || !event.getServer().isRunning()) { return; }
+        List<Finish> queued = new ArrayList<>(FINISHES);
+        FINISHES.clear();
+        sweeping = true;
+        try {
+            for (Finish finish : queued) { finish(finish.target(), finish.finisher()); }
+        }
+        finally { sweeping = false; }
+    }
+
+    private static void finish(LivingEntity target, WeaponDef.Finisher finisher) {
+        if (!target.isAlive()) { return; }
+        target.invulnerableTime = 0;
+        if (!Float.isNaN(finisher.health())) { target.setHealth(finisher.health()); }
+        if (!Float.isNaN(finisher.damage())) { target.hurt(DamageSources.source(target.level(), finisher.damageType(), "A finisher"), finisher.damage()); }
+        if (!target.isAlive() || (finisher.horizontal() == 0.0F && finisher.vertical() == 0.0F)) { return; }
+        RandomSource random = target.getRandom();
+        target.push((random.nextDouble() * 2.0D - 1.0D) * finisher.horizontal(), random.nextDouble() * finisher.vertical(), (random.nextDouble() * 2.0D - 1.0D) * finisher.horizontal());
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -150,6 +180,8 @@ public final class ContentWeapons {
         double facing = (toX * -Mth.sin(yaw) + toZ * Mth.cos(yaw)) / length;
         return facing >= Math.cos(Math.toRadians(sweep.angle() / 2.0D));
     }
+
+    private record Finish(LivingEntity target, WeaponDef.Finisher finisher) {}
 
     private record Blow(int target, WeaponDef weapon, ResourceLocation item, float strength, long time) {}
 

@@ -215,7 +215,8 @@ assets, так само, як будь-який інший файл у цій т
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 Блоки бувають таких форм, їх задає поле "type":
 
