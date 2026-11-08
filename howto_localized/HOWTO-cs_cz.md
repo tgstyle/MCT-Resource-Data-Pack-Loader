@@ -77,6 +77,7 @@ Tento průvodce platí pro build 26.x, tedy pro 26.1.2, 26.2 a 26.3; všechny t�
 - [Šíření květin](#šíření-květin)
 - [Nošení](#nošení)
 - [Odstranění kořisti](#odstranění-kořisti)
+- [Kořist z mobů](#kořist-z-mobů)
 - [Kořist hráčů](#kořist-hráčů)
 - [Pestrost jídla](#pestrost-jídla)
 - [Vesničané a obchody](#vesničané-a-obchody)
@@ -206,6 +207,7 @@ V `data/`:
 | `<namespace>/weights/*.json`                 | Váha předmětů, limit nošení a stupně zatížení. [Váha předmětů](#váha-předmětů)                                                                                                                       |
 | `<namespace>/recipe_locks/*.json`            | Recepty, které zůstávají zavřené, dokud hráč nezíská pokrok. [Zámky receptů](#zámky-receptů)                                                                                                         |
 | `<namespace>/spawn_locks/*.json`             | Moby, které se neobjeví, dokud neplatí podmínky. [Zámky spawnu](#zámky-spawnu)                                                                                                                       |
+| `<namespace>/spawn_swaps/*.json`             | Moby, které se objeví jako něco jiného, a vedle nich další kopie. [Záměny při spawnu](#záměny-při-spawnu)                                                                                            |
 | `<namespace>/disabled/*.json`                | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)                                                                                                            |
 | `<namespace>/furnace/*.json`                 | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)                                                                                                            |
 | `<namespace>/tooltips/*.json`                | Další řádky popisků. [Popisky předmětů](#popisky-předmětů)                                                                                                                                           |
@@ -223,6 +225,7 @@ V `data/`:
 | `<namespace>/harvests/*.json`                | Plodiny, které se pravým klikem sklidí a znovu vysadí. [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)                                                                                         |
 | `<namespace>/veins/*.json`                   | Skupiny bloků, které nástroj vytěží naráz, s limitem a cenou v hladu. [Těžení žil](#těžení-žil)                                                                                                      |
 | `<namespace>/carries/*.json`                 | Bloky a moby, které hráč v plížení zvedne a položí. [Nošení](#nošení)                                                                                                                                |
+| `<namespace>/mob_drops/*.json`               | Předměty odebrané z toho, co pojmenované moby dropnou, nebo do toho přidané. [Kořist z mobů](#kořist-z-mobů)                                                                                         |
 | `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
@@ -579,6 +582,7 @@ Rodičem dimenze nebo biomu může být šablona stejným způsobem, zablokovan�
 - **Zakázané bloky a předměty**, vyřaď ze hry libovolný blok nebo předmět, viz [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - **Vstřiky kořisti**, přidej pool do tabulky kořisti místo nahrazení celé
 - **Odstranění kořisti**, vezmi záznam nebo předmět z tabulky kořisti, nebo ji vyprázdni, bez nahrazení tabulky
+- **Kořist z mobů**, odeber předměty z toho, co pojmenované moby dropnou, včetně výbavy, a přidej předměty podle zabijáka, předmětu v hlavní ruce a typu poškození
 - **Dropy z bloků**, přidej k tomu, co libovolný blok dropne při rozbití, nebo to nahraď, včetně zkušeností
 - **Kořist hráčů**, losuj tabulku kořisti, když hráč zemře, navíc k tomu, co nesl, nebo místo toho
 - **Vlastnosti existujících bloků, předmětů a lektvarů**, tvrdost, světlo, velikosti stacků, jídlo na čemkoli, efekty lektvaru, viz [Přepsání vlastností](#přepsání-vlastností)
@@ -598,8 +602,8 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                           |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                             |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                                          | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
-| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
+| `loot_tables`, `loot_injections`, `loot_removals`, `mob_drops`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                             | `entities`, `villagers`, `portalframes`, `curioslots`                                                            |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`, `spawn_swaps`                              | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                           |                                                                                                                  |
 
 Pravý sloupec je tvrdá zarážka: bloky, předměty, typy entit, zvuky a efekty lektvarů, které vanilla klient nemá, mu nelze popsat a vlastní portál dimenze je jedním z bloků balíčku; expozice se načítají jen spolu s tímto obsahem. Levý sloupec funguje, protože všechno v něm buď běží zcela na straně serveru, dorazí ke klientovi jako položky datového balíčku, které vanilla už čte (biomy, oblasti jeskyní, typy dimenzí, enchanty), nebo dorazí přes pakety, kterými vanilla už mluví (výsledný slot výroby plněný serverem, běžné pakety pokroků, odmítnutí bran ve stavových zprávách a podržení při předgenerování složené z vanilla paketů herního režimu, titulku a teleportu).
@@ -1871,6 +1875,8 @@ Obyčejný předmět s `sleepingBag` je spacák. Pravým kliknutím na horní st
 | `attackReach`    | ne            | desetinné číslo, bloky                     | `3.0`                | Jak daleko sahá úder s předmětem v hlavní ruce. Platí i pro pravé kliknutí na tvory. Viz [Zbraně](#zbraně)                                                                                                                                                     |
 | `sweep`          | ne            | objekt                                     | žádný                | Zraní i další tvory kolem úderu v plné síle. Viz [Zbraně](#zbraně)                                                                                                                                                                                             |
 | `combo`          | ne            | objekt                                     | žádný                | Údery do `window` ticků po sobě procházejí `steps`. Viz [Zbraně](#zbraně)                                                                                                                                                                                      |
+| `fireSeconds`    | ne            | celé číslo, sekundy                        | `0`                  | Zapálí tvora na tolik sekund, když úder zasáhne. Viz [Zbraně](#zbraně)                                                                                                                                                                                         |
+| `finisher`       | ne            | objekt                                     | žádný                | Dorážka proti odpovídajícím mobům po úderu. Viz [Zbraně](#zbraně)                                                                                                                                                                                              |
 | `attackSpeed`    | ne            | desetinné číslo                            | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4`                                                                                                                                                                                                    |
 | `cooldown`       | ne            | celé číslo, ticky                          | `0`                  | U `food`, `drink` a `potion`, jak dlouho předmět po spotřebování odmítá opětovné použití; u předmětu, který `rolls`, jak dlouho mezi hody                                                                                                                      |
 | `container`      | drink         | název předmětu                             | žádný                | Co zůstane, například láhev. U předmětu `container` je tento klíč místo toho vlastním nastavením váčku, viz [Kontejnery](#kontejnery)                                                                                                                          |
@@ -1955,6 +1961,31 @@ Každý krok má tyto klíče:
 | `sweep`  | ne      | objekt                    | `sweep` předmětu | Nahradí `sweep` předmětu pro tento úder, se stejnými klíči jako výše |
 
 Kombo se posouvá a vlna se spouští jen úderem v plné síle. Slabší úder kombo vynuluje a nedostane ani poškození kroku, ani vlnu. Postup se drží u každého hráče v paměti a nikdy se neukládá. Odhlášení, přepnutí na jiný předmět nebo vypršení `window` ho vynuluje. Vlna nikdy nezraní hráče, cíl, spojence, pozorovatele ani značkovací stojany na zbroj a každý tvor dostane `damage` násobek úderu po násobiči kroku. Úder, jehož základní poškození není vyšší než poslední poškození cíle, zahodí odolnost proti zranění dříve, než se použije násobič kroku, takže ho krok nemůže zvýšit; týká se to jen rychlosti útoku 2 a více.
+
+`fireSeconds` zapálí cíl na tolik sekund, když úder zasáhne. Je to stejný klíč a význam jako u tekutin a vyhozených předmětů.
+
+`finisher` zasadí druhý úder odpovídajícím mobům, až po vanilla úderu a na konci téhož ticku. Vanilla úder si tak zachová odhození, zametání a opotřebení výdrže a hráč dostane zkušenost i dropy. Cíl, který mezitím zemřel nebo se odnačetl, se přeskočí.
+
+```json
+{
+  "fireSeconds": 150,
+  "finisher": {
+    "targets": ["minecraft:skeleton", "minecraft:stray", "minecraft:bogged", "minecraft:wither_skeleton"],
+    "health": 1.0,
+    "damage": 150.0,
+    "damageType": "fireworks",
+    "push": { "horizontal": 2.0, "vertical": 4.0 }
+  }
+}
+```
+
+| Klíč         | Povinný | Hodnota                  | Výchozí   | Co dělá                                                                                                      |
+| ------------ | ------- | ------------------------ | --------- | ------------------------------------------------------------------------------------------------------------ |
+| `targets`    | ano     | seznam id entit a druhů  | žádný     | Moby, které to dostanou, jako u zámků spawnu. Každý kostlivec je vypsán podle id                             |
+| `health`     | ne      | desetinné číslo nad 0    | žádný     | Nejdřív nastaví zdraví cíle na tuto hodnotu                                                                  |
+| `damage`     | ne      | desetinné číslo nad 0    | žádný     | Pak způsobí toto pevné poškození bez útočníka                                                                |
+| `damageType` | ne      | název typu poškození     | `generic` | Zdroj toho poškození. Název bez jmenného prostoru znamená `minecraft:`; neznámý název spadne na `generic`    |
+| `push`       | ne      | `{horizontal, vertical}` | `0`, `0`  | Náhodný bočný impuls až do `horizontal` na každou stranu a impuls nahoru až do `vertical`, každý od 0 do 100 |
 
 ## Tekutiny
 
@@ -2182,18 +2213,18 @@ Na 26.x si hodnoty existujícího materiálu brnění půjčí jen materiál s n
 }
 ```
 
-| Klíč             | Povinné | Hodnota                  | Výchozí                 | Co dělá                                                                                                      |
-| ---------------- | ------- | ------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `harvestLevel`   | ne      | 0 až 4                   | `1`                     | Úroveň nástroje. 0 dřevo, 1 kámen, 2 železo, 3 diamant, 4 netherit                                           |
-| `durability`     | ne      | celé číslo               | `250`                   | Počet použití, než se rozbije                                                                                |
-| `efficiency`     | ne      | desetinné číslo          | `6.0`                   | Rychlost těžby. Diamant má 8                                                                                 |
-| `damage`         | ne      | desetinné číslo          | `2.0`                   | Bonus k poškození útokem                                                                                     |
-| `enchantability` | ne      | celé číslo               | `14`                    | Jak dobrá jsou kouzla. Zlato má 22                                                                           |
-| `repairItem`     | ne      | název předmětu           | žádný                   | Čím se v kovadlině opravuje z něj vyrobený nástroj. Zbroj z něj vyrobená se takto neopravuje, jako v 1.12.2  |
-| `reduction`      | ne      | seznam čtyř celých čísel | `[2, 5, 6, 2]`          | Body zbroje, v pořadí boty, kalhoty, hrudní plát, hlava                                                      |
-| `toughness`      | ne      | desetinné číslo          | `0.0`                   | Houževnatost zbroje, jakou má diamant                                                                        |
-| `equipSound`     | ne      | název zvuku              | `item.armor.equip_iron` | Zvuk při nasazení zbroje                                                                                     |
-| `armorTexture`   | ne      | předpona textury         | název souboru           | Textura nošené zbroje, čtená z `textures/models/armor/<name>_layer_1.png` a `_layer_2.png` pod tím namespace |
+| Klíč             | Povinné | Hodnota                    | Výchozí                 | Co dělá                                                                                                                                                                 |
+| ---------------- | ------- | -------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `harvestLevel`   | ne      | 0 až 4                     | `1`                     | Úroveň nástroje. 0 dřevo, 1 kámen, 2 železo, 3 diamant, 4 netherit                                                                                                      |
+| `durability`     | ne      | celé číslo                 | `250`                   | Počet použití, než se rozbije                                                                                                                                           |
+| `efficiency`     | ne      | desetinné číslo            | `6.0`                   | Rychlost těžby. Diamant má 8                                                                                                                                            |
+| `damage`         | ne      | desetinné číslo            | `2.0`                   | Bonus k poškození útokem                                                                                                                                                |
+| `enchantability` | ne      | celé číslo                 | `14`                    | Jak dobrá jsou kouzla. Zlato má 22                                                                                                                                      |
+| `repairItem`     | ne      | název předmětu nebo `#tag` | žádný                   | Čím se v kovadlině opravuje z něj vyrobený nástroj. Hodnota s `#` je tag předmětu, například `#c:nether_stars`. Zbroj z něj vyrobená se takto neopravuje, jako v 1.12.2 |
+| `reduction`      | ne      | seznam čtyř celých čísel   | `[2, 5, 6, 2]`          | Body zbroje, v pořadí boty, kalhoty, hrudní plát, hlava                                                                                                                 |
+| `toughness`      | ne      | desetinné číslo            | `0.0`                   | Houževnatost zbroje, jakou má diamant                                                                                                                                   |
+| `equipSound`     | ne      | název zvuku                | `item.armor.equip_iron` | Zvuk při nasazení zbroje                                                                                                                                                |
+| `armorTexture`   | ne      | předpona textury           | název souboru           | Textura nošené zbroje, čtená z `textures/models/armor/<name>_layer_1.png` a `_layer_2.png` pod tím namespace                                                            |
 
 ### Karty kreativního režimu
 
@@ -3713,6 +3744,45 @@ Soubor v této složce odebírá záznamy z již existující tabulky kořisti, 
 - Odstraňování běží před `loot_injections`, takže přidaný pool se nikdy neodstraní. Mod, který do tabulky přidá až po RDPL, si zachová, co přidal.
 - Pool, záznam nebo předmět, který nic nenajde, je v `rdpl.log` varování, takže balíček dál funguje, i když mod odeberete.
 - `lootRemovals` v configu je vypne. Tabulky kořisti jsou serverová data, takže stačí server.
+- Tabulka kořisti nemá slovo o výbavě, kterou mob dropne. Chceš-li, aby mob nedropl výstroj, kterou nosí nebo drží, použij [Kořist z mobů](#kořist-z-mobů).
+
+## Kořist z mobů
+
+*výroba, kořist a obchod*
+
+`<namespace>/mob_drops/*.json`
+
+Soubor v této složce mění, co pojmenovaný mob dropne, když zemře: odebere předměty z dropů, ať se tam dostaly jakkoli (výbavou nebo tabulkou kořisti), a přidá předměty podle toho, kdo zabil a jak. Funguje na vanilla i modových mobech stejně a běží po ostatních změnách dropů z módu. Bez souboru se nic neodebírá ani nepřidává.
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "adds": [
+    { "item": "minecraft:wither_skeleton_skull", "killerHolds": ["mypack:blade"], "damageTypes": ["fireworks"], "unlessDropped": ["minecraft:wither_skeleton_skull"] },
+    { "item": "mypack:fragment", "chance": 1.0, "unlessDropped": ["minecraft:wither_skeleton_skull"] }
+  ]
+}
+```
+
+| Klíč                   | Typ                                   | Význam                                                                                                                                                                    |
+| ---------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`             | seznam, povinný                       | Moby, na které soubor platí: id entit, nebo `#monster`, `#creature`, `#ambient` a `#water_creature` pro celý druh.                                                        |
+| `strip`                | seznam id předmětů nebo `#tag`        | Odebráno z dropů mobů.                                                                                                                                                    |
+| `stripTagged`          | boolean, výchozí `false`              | S `false` zůstane stack, který nese něco víc než poškození (začarování, jméno). S `true` se odebere i ten.                                                                |
+| `adds`                 | seznam objektů                        | Stacky přidané k dropům, v pořadí.                                                                                                                                        |
+| `adds[].item`          | id předmětu, povinný                  | Co se přidá.                                                                                                                                                              |
+| `adds[].count`         | int nebo `{min, max}`, výchozí `1`    | Velikost stacku.                                                                                                                                                          |
+| `adds[].chance`        | desetinné číslo 0 až 1, výchozí `1.0` | Losuje se jednou na zabití.                                                                                                                                               |
+| `adds[].killerHolds`   | seznam id předmětů nebo `#tag`        | Zabiják drží v hlavní ruce jeden z nich.                                                                                                                                  |
+| `adds[].damageTypes`   | seznam id typů poškození              | Smrtelné poškození je jedním z nich. Název bez jmenného prostoru znamená `minecraft:`, takže typy poškození z módů se také shodují. Poškození ohňostrojem je `fireworks`. |
+| `adds[].requireAll`    | boolean, výchozí `false`              | S `false` stačí buď `killerHolds`, nebo `damageTypes`. S `true` musí platit obojí. Když nejsou zadané ani jedno, přidání je bezpodmínečné.                                |
+| `adds[].unlessDropped` | seznam id předmětů nebo `#tag`        | Přidání se přeskočí, pokud dropy, včetně dřívějších přidání tohoto i jiného souboru, už některý z nich obsahují.                                                          |
+
+- Odebírání běží nejdřív pro každý odpovídající soubor, pak se přidání spouští soubor po souboru, takže přidání nikdy nesmaže pozdější soubor.
+- Odebrat lze jen předměty, které jsou v dropech. Mob dropne nošenou a drženou výbavu jen po zabití hráčem, nebo když je šance dropu pro daný slot vyšší než 1, takže bez obojího není co odebírat.
+- ID předmětu, který nic nezaregistruje, je jednou chyba v `rdpl.log` a to přidání se přeskočí.
+- `mobDrops` v kategorii `data` v configu složku vypne. Dropy jsou serverová data, takže stačí server.
 
 # Tvorové a nebezpečí
 
@@ -4253,6 +4323,54 @@ Název souboru si zvolíš sám, čte se jen složka a více souborů se sčít�
 | `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | ne      | jako v Podmínkách spawnu      | žádný   | Stejné klíče se stejným významem jako v Podmínkách spawnu. Soubor, který nenastaví žádný z nich, se přeskočí a log to uvede                                      |
 
 Mob uvedený ve více souborech nebo i ve variantě se objeví jen tam a tehdy, kdy platí všechny podmínky. Zadržují se přirozené spawny, i ty, které chunk vytvoří při generování; vejce, `/summon` a spawner ne.
+
+### Záměny při spawnu
+
+*varianty entit*
+
+`<namespace>/spawn_swaps/*.json`
+
+Název souboru si vybereš sám, čte se jen složka a několik souborů se skládá. Nahradí mob, který se právě objevil, něčím jiným, a může vedle něj přidat další kopie, takže kostlivec v Netheru se může objevit jako wither skeleton. Rozhodne první soubor, jehož mob, podmínky i místo sedí.
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "becomes": [ { "entity": "mypack:wither_skeleton_bow", "weight": 1 } ],
+  "biomeTypes": ["NETHER"],
+  "blocks": ["minecraft:nether_brick"],
+  "extra": 3,
+  "elsewhere": { "chance": 0.15, "lightBelow": 9, "night": true },
+  "fromSpawners": false
+}
+```
+
+Druhý soubor může přidat kopie mobovi, který zůstane tím, čím je:
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "becomes": ["minecraft:wither_skeleton"],
+  "biomeTypes": ["NETHER"],
+  "extra": 3
+}
+```
+
+| Klíč                                                                                                                         | Povinný | Hodnota                                       | Výchozí | Co dělá                                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------- | --------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | ano     | seznam názvů entit nebo druhů                 | žádný   | Moby k nahrazení: id jako `minecraft:skeleton`, nebo druh, `#monster`, `#creature`, `#ambient` či `#water_creature`. Soubor bez něj se přeskočí a log to uvede                                 |
+| `becomes`                                                                                                                    | ano     | seznam id, nebo objekty s `entity` a `weight` | žádný   | Co je nahradí, vybrané podle váhy: id entit nebo varianty entit, ve stejném tvaru jako `becomes` u varianty. Soubor, v němž nic nejde vytvořit, se přeskočí a log to uvede                     |
+| `biomes`, `biomeTypes`                                                                                                       | ne      | jako u varianty                               | žádný   | Biomy, kde záměna platí                                                                                                                                                                        |
+| `blocks`                                                                                                                     | ne      | seznam názvů bloků                            | žádný   | Záměna platí, když je blok pod místem spawnu jedním z nich, například `minecraft:nether_brick`                                                                                                 |
+| `requireAll`                                                                                                                 | ne      | boolean                                       | `false` | S `false` stačí jedno z `biomes`, `biomeTypes` a `blocks`; s `true` musí platit každé zadané. Když žádné není zadáno, záměna platí všude, kde platí její ostatní podmínky                      |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | ne      | jako v Podmínkách spawnu                      | žádný   | Stejné klíče se stejným významem jako v Podmínkách spawnu; všechny musí platit, včetně `elsewhere`                                                                                             |
+| `elsewhere`                                                                                                                  | ne      | objekt                                        | vypnuto | Tam, kde klíče místa výše neplatí, záměna se přesto stane s tímto `chance`                                                                                                                     |
+| `elsewhere.chance`                                                                                                           | ne      | číslo od `0` do `1`                           | `1.0`   | Podíl spawnů, které se zamění; `0.15` je asi jeden ze sedmi                                                                                                                                    |
+| `elsewhere.lightBelow`                                                                                                       | ne      | celé číslo od `1` do `16`                     | žádný   | Jen tam, kde je světlo na místě nižší než tato hodnota                                                                                                                                         |
+| `elsewhere.night`                                                                                                            | ne      | boolean                                       | `false` | Jen v noci, tick `13000` až `23000` dne                                                                                                                                                        |
+| `extra`                                                                                                                      | ne      | celé číslo od `0` do `16`                     | `0`     | Tolik dalších mobů na místě, každý jako samostatný výběr `becomes`. Nejsou znovu zaměňovány a ten, který se na místě nevejde, se přeskočí                                                      |
+| `fromSpawners`                                                                                                               | ne      | boolean                                       | `false` | Zamění se přirozené spawny, ty, které chunk vytvoří při generování, včetně těch v pevnosti. `true` přidá i moby ze spawnerů. Vejce, `/summon` a mob, který umístí struktura, se nikdy nezamění |
+
+Soubor, který nenastaví žádný klíč záměny, nic nemění, a stejně tak svět bez souboru. Zaměněný mob a extra mobové se objeví s výbavou a staty, které dostane čerstvý spawn jejich druhu. Spawner, jehož `SpawnData` obsahuje víc než `id` entity, záměnu nespustí.
 
 ### Síť
 
@@ -9761,6 +9879,7 @@ Kořist, funkce a názvy v registru. Jen konfigurace.
 [data]
 lootInjections = true
 lootRemovals = true
+mobDrops = true
 playerLoot = true
 registryRemaps = true
 anvils = true
@@ -9772,6 +9891,7 @@ functions = true
 | ---------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootInjections` | boolean | `true`  | Použít soubory loot_injections/*.json, které přidávají fondy do už existujících tabulek kořisti místo nahrazení celé tabulky                                                                 |
 | `lootRemovals`   | boolean | `true`  | Použít soubory loot_removals/*.json, které odebírají pojmenované záznamy z již existujících tabulek kořisti, nebo vyprázdní tabulku celou                                                    |
+| `mobDrops`       | boolean | `true`  | Použít soubory mob_drops/*.json, které odebírají předměty z toho, co pojmenované moby dropnou, a přidávají předměty podle zabijáka, předmětu v ruce a typu poškození                         |
 | `playerLoot`     | boolean | `true`  | Použít soubory player_loot/*.json, které losují tabulku kořisti, když hráč zemře, a odhodí, co vytvoří, navíc k inventáři nebo místo něj                                                     |
 | `registryRemaps` | boolean | `true`  | Použít soubory registry_remap, které přejmenují položku registru, aby světy uložené před přejmenováním udržely své bloky a předměty místo jejich ztráty                                      |
 | `affixes`        | boolean | `true`  | Použít soubory affixes/*.json a gems/*.json, které dají předmětu náhodné bonusy atributů a patice při prvním podržení hráčem a nechají kovadlinu vložit drahokam do patice                   |

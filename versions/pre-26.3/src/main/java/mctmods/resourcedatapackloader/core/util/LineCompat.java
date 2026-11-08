@@ -230,6 +230,8 @@ public final class LineCompat {
 
     public static void markVelocity(Entity entity) { entity.hurtMarked = true; }
 
+    public static void clearDamageCooldown(LivingEntity entity) { entity.invulnerableTime = 0; }
+
     public static void makeInvulnerable(Entity entity) { entity.setInvulnerable(true); }
 
     public static void drop(Player player, ItemStack stack) { player.drop(stack, false); }
@@ -254,7 +256,10 @@ public final class LineCompat {
 
     public static Item shovel(Item.Properties properties, ToolMaterial tool, float damage, float speed) { return new ShovelItem(tool, damage, speed, properties); }
 
-    public static TreeGrower treeGrower(Identifier id, Identifier tree) { return new TreeGrower(id.toString(), Optional.empty(), Optional.of(ResourceKey.create(Registries.CONFIGURED_FEATURE, tree)), Optional.empty()); }
+    public static TreeGrower treeGrower(Identifier id, Identifier tree) {
+        ResourceKey<ConfiguredFeature<?, ?>> feature = ResourceKey.create(Registries.CONFIGURED_FEATURE, tree);
+        return new TreeGrower(id.toString(), Optional.empty(), Optional.of(feature), Optional.empty());
+    }
 
     public static Component title(DisplayInfo shown) { return shown.getTitle(); }
 

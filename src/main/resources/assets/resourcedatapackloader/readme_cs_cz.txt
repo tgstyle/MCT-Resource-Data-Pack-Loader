@@ -214,7 +214,8 @@ Každé z těchto je složka pod data/<yourpack>:
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 Bloky se dodávají v těchto tvarech, určených polem "type":
 

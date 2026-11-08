@@ -253,6 +253,8 @@ public final class LineCompat {
 
     public static void markVelocity(Entity entity) { entity.syncVelocity = true; }
 
+    public static void clearDamageCooldown(LivingEntity entity) { entity.damageCooldownTime = 0; }
+
     public static void makeInvulnerable(Entity entity) { entity.setPermanentlyInvulnerable(true); }
 
     public static void drop(Player player, ItemStack stack) { player.drop(stack, false, Prediction.SERVER_ONLY); }

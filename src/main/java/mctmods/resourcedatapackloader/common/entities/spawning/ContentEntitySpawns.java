@@ -17,6 +17,7 @@ import mctmods.resourcedatapackloader.core.util.LineCompat;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.MapCodec;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -99,13 +100,16 @@ public record ContentEntitySpawns() implements LineCompat.IBiomeEdit {
     @Override @Nonnull public MapCodec<? extends BiomeModifier> codec() { return CODEC; }
 
     private static boolean matches(Holder<Biome> biome, @Nullable Identifier id, EntityVariantDef def) {
-        if (def.biomes().isEmpty() && def.biomeTypes().isEmpty()) { return true; }
+        return def.biomes().isEmpty() && def.biomeTypes().isEmpty() || inBiomes(biome, id, def.biomes(), def.biomeTypes());
+    }
+
+    public static boolean inBiomes(Holder<Biome> biome, @Nullable Identifier id, List<String> biomes, List<String> biomeTypes) {
         String named = id == null ? "" : id.toString();
-        for (String wanted : def.biomes()) {
+        for (String wanted : biomes) {
             if (named.equals(biomeId(wanted))) { return true; }
         }
-        if (id != null && BiomeNames.named(id, def.biomes())) { return true; }
-        for (String type : def.biomeTypes()) {
+        if (id != null && BiomeNames.named(id, biomes)) { return true; }
+        for (String type : biomeTypes) {
             TagKey<Biome> tag = BiomeNames.tag(type);
             if (tag != null && biome.is(tag)) { return true; }
         }

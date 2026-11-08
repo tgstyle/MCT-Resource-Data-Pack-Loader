@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.loading.parsers;
 
+import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -28,8 +29,40 @@ public final class ContentParserWeapons {
         }
         WeaponDef.Sweep sweep = sweep(key, json);
         WeaponDef.Combo combo = combo(key, json);
-        if (Float.isNaN(reach) && sweep == null && combo == null) { return null; }
-        return new WeaponDef(reach, sweep, combo);
+        int fire = json.has("fireSeconds") ? Json.getInt(json, "fireSeconds", 0) : 0;
+        if (fire < 0) {
+            ContentLog.LOGGER.error("The item {} sets fireSeconds to {}, which is below 0, so the key is ignored", key, fire);
+            fire = 0;
+        }
+        WeaponDef.Finisher finisher = finisher(key, json);
+        if (Float.isNaN(reach) && sweep == null && combo == null && fire == 0 && finisher == null) { return null; }
+        return new WeaponDef(reach, sweep, combo, fire, finisher);
+    }
+
+    @Nullable private static WeaponDef.Finisher finisher(Identifier key, JsonObject parent) {
+        if (!parent.has("finisher")) { return null; }
+        if (!parent.get("finisher").isJsonObject()) {
+            ContentLog.LOGGER.error("The finisher on {} is not an object, so the key is ignored", key);
+            return null;
+        }
+        JsonObject json = parent.getAsJsonObject("finisher");
+        String owner = "The finisher on " + key;
+        List<Identifier> ids = new ArrayList<>();
+        List<String> kinds = new ArrayList<>();
+        if (!json.has("targets") || !MobStats.entities(owner, "targets", json.get("targets"), ids, kinds) || ids.isEmpty() && kinds.isEmpty()) {
+            ContentLog.LOGGER.error("{} names no targets, so the key is ignored", owner);
+            return null;
+        }
+        float horizontal = 0.0F;
+        float vertical = 0.0F;
+        if (json.has("push") && json.get("push").isJsonObject()) {
+            JsonObject push = json.getAsJsonObject("push");
+            horizontal = Json.ranged(push, "horizontal", 0.0F, 0.0F, WeaponDef.MOST_PUSH, owner);
+            vertical = Json.ranged(push, "vertical", 0.0F, 0.0F, WeaponDef.MOST_PUSH, owner);
+        }
+        else if (json.has("push")) { ContentLog.LOGGER.error("{} gives a push that is not an object, so the push is ignored", owner); }
+        return new WeaponDef.Finisher(List.copyOf(ids), List.copyOf(kinds), Json.bounded(json, "health", Float.MIN_VALUE, Float.MAX_VALUE, owner), Json.bounded(json, "damage", Float.MIN_VALUE, Float.MAX_VALUE, owner),
+                Json.getString(json, "damageType", "generic").trim(), horizontal, vertical);
     }
 
     @Nullable private static WeaponDef.Sweep sweep(Identifier key, JsonObject parent) {

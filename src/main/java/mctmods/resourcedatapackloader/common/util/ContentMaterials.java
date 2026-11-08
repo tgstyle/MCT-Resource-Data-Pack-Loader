@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.util;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 
 import java.util.EnumMap;
@@ -9,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.core.Holder;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -43,7 +45,7 @@ public final class ContentMaterials {
 
     public static boolean customArmor(MaterialDef def) { return !VANILLA_ARMORS.containsKey(def.key().toString()); }
 
-    public static void repairWith(ResourceKey<Item> id, MaterialDef def) { BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.add(id, (components, _, _) -> components.set(DataComponents.REPAIRABLE, repair(def))); }
+    public static void repairWith(ResourceKey<Item> id, MaterialDef def) { BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.add(id, (components, lookup, _) -> components.set(DataComponents.REPAIRABLE, repair(def, lookup))); }
 
     private static ArmorMaterial armorMaterial(MaterialDef def) {
         int durability = def.durability() / 10;
@@ -70,7 +72,13 @@ public final class ContentMaterials {
         };
     }
 
-    @Nullable private static Repairable repair(MaterialDef def) {
+    @Nullable private static Repairable repair(MaterialDef def, HolderLookup.Provider lookup) {
+        if (def.repairItem().startsWith("#")) {
+            Identifier tag = Registered.tagId(def.repairItem());
+            Repairable found = tag == null ? null : lookup.lookupOrThrow(Registries.ITEM).get(TagKey.create(Registries.ITEM, tag)).map(Repairable::new).orElse(null);
+            if (found == null) { ContentLog.LOGGER.error("Material {} names the repair tag '{}', which is not a known item tag, so it repairs with nothing", def.key(), def.repairItem()); }
+            return found;
+        }
         Item item = ContentStacks.find(def.key(), def.repairItem());
         return item == null ? null : new Repairable(HolderSet.direct(BuiltInRegistries.ITEM.wrapAsHolder(item)));
     }

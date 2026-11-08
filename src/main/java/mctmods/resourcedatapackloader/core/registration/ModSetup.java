@@ -44,6 +44,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
@@ -66,6 +67,7 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
+import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
@@ -175,6 +177,8 @@ public class ModSetup {
         ContentFtbChunks.install();
         ContentEntities.load();
         SpawnLocks.load();
+        SpawnSwaps.load();
+        MobDrops.load();
         ContentWorldTemplates.load();
         ContentBiomes.load();
         ContentCaveRegions.load();
@@ -287,6 +291,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
         NeoForge.EVENT_BUS.addListener(ContentWeapons::onLogout);
+        NeoForge.EVENT_BUS.addListener(ContentWeapons::onTick);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onServerStarted);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, ContentHardness::onBreak);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onAdvancement);
@@ -295,6 +300,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentBlock::onDrops);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onDrops);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelLoad);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentEntities::onFinalize);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onShot);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onLeave);
@@ -478,6 +484,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOW, MobDrops::onDrops);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ModSetup::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(ModSetup::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(ModSetup::beforeServerStart);
@@ -489,15 +496,11 @@ public class ModSetup {
     private static void onConfig(ModConfigEvent event) {
         if (event.getConfig().getSpec() != Config.SPEC) { return; }
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug());
-        ResourceDataPackLoader.LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}",
-                Config.packs.rootDirectory(), Config.packs.overrideResourcePacks(), Config.packs.warnOnCaseMismatch(), Config.packs.logContents(), Config.packs.traceUnresolvedVariables());
-        ResourceDataPackLoader.LOGGER.info("Config content: load={} sounds={} fuels={} potions={} brewing={} villagers={} biomes={}",
-                !Config.content.loadOff(), Config.content.sounds(), Config.content.fuels(), Config.content.potions(), Config.content.brewing(), Config.content.villagers(), Config.content.biomes());
-        ResourceDataPackLoader.LOGGER.info("Config recipes: furnace={} removals={} skipMissingItems={} blockRecipes={} recipeMatch={} blockFurnaceRecipes={}",
-                Config.recipes.furnace(), Config.recipes.removals(), Config.recipes.skipMissingItems(), Config.recipes.blockRecipes(), Config.recipes.recipeMatch(), Config.recipes.blockFurnaceRecipes());
+        ResourceDataPackLoader.LOGGER.info("Config packs: rootDirectory={} overrideResourcePacks={} warnOnCaseMismatch={} logContents={} traceUnresolvedVariables={}", Config.packs.rootDirectory(), Config.packs.overrideResourcePacks(), Config.packs.warnOnCaseMismatch(), Config.packs.logContents(), Config.packs.traceUnresolvedVariables());
+        ResourceDataPackLoader.LOGGER.info("Config content: load={} sounds={} fuels={} potions={} brewing={} villagers={} biomes={}", !Config.content.loadOff(), Config.content.sounds(), Config.content.fuels(), Config.content.potions(), Config.content.brewing(), Config.content.villagers(), Config.content.biomes());
+        ResourceDataPackLoader.LOGGER.info("Config recipes: furnace={} removals={} skipMissingItems={} blockRecipes={} recipeMatch={} blockFurnaceRecipes={}", Config.recipes.furnace(), Config.recipes.removals(), Config.recipes.skipMissingItems(), Config.recipes.blockRecipes(), Config.recipes.recipeMatch(), Config.recipes.blockFurnaceRecipes());
         ResourceDataPackLoader.LOGGER.info("Config data: lootInjections={} functions={} registryRemaps={}", !Config.data.lootInjectionsOff(), !Config.data.functionsOff(), !Config.data.registryRemapsOff());
-        ResourceDataPackLoader.LOGGER.info("Config worldgen: load={} retrogen={} adoptExistingChunks={} retrogenKey='{}' retrogenChunksPerTick={} blockOres={} oreWhitelist={} oreTypes={} oreTypesAreBlacklist={} flatBedrock={} blockBiomes={} biomeNames={} biomeNamesAreBlacklist={} worldgenDebug={}",
-                !Config.worldgen.loadOff(), Config.worldgen.retrogen(), Config.worldgen.adoptExistingChunks(), Config.worldgen.retrogenKey(), Config.worldgen.retrogenChunksPerTick(), Config.worldgen.blockOres(), Config.worldgen.oreWhitelist(), Config.worldgen.oreTypes(), Config.worldgen.oreTypesAreBlacklist(), Config.worldgen.flatBedrock(), Config.worldgen.blockBiomes(), Config.worldgen.biomeNames(), Config.worldgen.biomeNamesAreBlacklist(), Config.worldgen.worldgenDebug());
+        ResourceDataPackLoader.LOGGER.info("Config worldgen: load={} retrogen={} adoptExistingChunks={} retrogenKey='{}' retrogenChunksPerTick={} blockOres={} oreWhitelist={} oreTypes={} oreTypesAreBlacklist={} flatBedrock={} blockBiomes={} biomeNames={} biomeNamesAreBlacklist={} worldgenDebug={}", !Config.worldgen.loadOff(), Config.worldgen.retrogen(), Config.worldgen.adoptExistingChunks(), Config.worldgen.retrogenKey(), Config.worldgen.retrogenChunksPerTick(), Config.worldgen.blockOres(), Config.worldgen.oreWhitelist(), Config.worldgen.oreTypes(), Config.worldgen.oreTypesAreBlacklist(), Config.worldgen.flatBedrock(), Config.worldgen.blockBiomes(), Config.worldgen.biomeNames(), Config.worldgen.biomeNamesAreBlacklist(), Config.worldgen.worldgenDebug());
         ResourceDataPackLoader.LOGGER.info("Config terrain: generatorOptions='{}'", Config.worldgen.generatorOptions());
         ResourceDataPackLoader.LOGGER.info("Config chunks: spawnChunkRadius={} spawnChunkRadii={}", Config.chunks.spawnChunkRadius(), Config.chunks.spawnChunkRadii());
         ResourceDataPackLoader.LOGGER.info("Config tweaks: promptLeafDecay={} lenientPaths={}", Config.tweaks.promptLeafDecay(), Config.tweaks.lenientPaths());
@@ -506,43 +509,39 @@ public class ModSetup {
     private static void onCommonSetup(FMLCommonSetupEvent event) {
         PackFinder.ensureScanned();
         PackManager.get().warnAboutDisabledFeatures();
-        event.enqueueWork(ContentRegistry::resolveStacks);
-        event.enqueueWork(ContentRegistry::resolveFluidReactions);
+        event.enqueueWork(() -> { ContentRegistry.resolveStacks(); ContentRegistry.resolveFluidReactions(); });
         Set<String> missing = PackRequirements.required();
-        if (missing.isEmpty()) {
-            RegistryRemaps.applyAliases();
-            CompressedAliases.apply();
-            event.enqueueWork(() -> {
-                ContentSpawners.apply();
-                ContentPortals.bind();
-                ContentVillagers.generateTrades();
-                ContentHardness.setup();
-                ContentAnvils.load();
-                ContentEnchanting.load();
-                ContentSleep.load();
-                if (ContentOrders.load()) {
-                    NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
-                    NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);
-                    NeoForge.EVENT_BUS.addListener(ContentOrders::onBreak);
-                    NeoForge.EVENT_BUS.addListener(ContentOrders::onChunkLoad);
-                    NeoForge.EVENT_BUS.addListener(ContentOrders::onInteract);
-                }
-                if (ContentRanks.load()) {
-                    NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ContentRanks::onJoin);
-                    NeoForge.EVENT_BUS.addListener(ContentRanks::onTick);
-                    NeoForge.EVENT_BUS.addListener(ContentRanks::onDeath);
-                    NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
-                    if (ContentRanks.stealing()) {
-                        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen);
-                    }
-                }
-                ContentOverrides.reload();
-            });
-            return;
+        if (!missing.isEmpty()) {
+            String message = "Packs require mods that are not installed: " + String.join(", ", missing) + ". Install them or remove the packs that need them";
+            ContentLog.LOGGER.fatal(message);
+            throw new IllegalStateException(message);
         }
-        String message = "Packs require mods that are not installed: " + String.join(", ", missing) + ". Install them or remove the packs that need them";
-        ContentLog.LOGGER.fatal(message);
-        throw new IllegalStateException(message);
+        RegistryRemaps.applyAliases();
+        CompressedAliases.apply();
+        event.enqueueWork(() -> {
+            ContentSpawners.apply();
+            ContentPortals.bind();
+            ContentVillagers.generateTrades();
+            ContentHardness.setup();
+            ContentAnvils.load();
+            ContentEnchanting.load();
+            ContentSleep.load();
+            if (ContentOrders.load()) {
+                NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
+                NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);
+                NeoForge.EVENT_BUS.addListener(ContentOrders::onBreak);
+                NeoForge.EVENT_BUS.addListener(ContentOrders::onChunkLoad);
+                NeoForge.EVENT_BUS.addListener(ContentOrders::onInteract);
+            }
+            if (ContentRanks.load()) {
+                NeoForge.EVENT_BUS.addListener(EventPriority.LOW, ContentRanks::onJoin);
+                NeoForge.EVENT_BUS.addListener(ContentRanks::onTick);
+                NeoForge.EVENT_BUS.addListener(ContentRanks::onDeath);
+                NeoForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
+                if (ContentRanks.stealing()) { NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen); }
+            }
+            ContentOverrides.reload();
+        });
     }
 
     private static void onAddReloadListeners(AddServerReloadListenersEvent event) {
@@ -552,7 +551,6 @@ public class ModSetup {
         event.addListener(ResourceDataPackLoader.id("recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
     private static void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
-
     private static void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); }
 
     private static void beforeServerStart(ServerAboutToStartEvent event) {

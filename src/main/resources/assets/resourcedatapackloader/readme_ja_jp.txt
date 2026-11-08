@@ -218,7 +218,8 @@ Modが優先され、自作のバリアントはスキップされます。
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 ブロックには、"type" フィールドで指定する次の形があります。
 

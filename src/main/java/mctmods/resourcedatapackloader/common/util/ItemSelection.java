@@ -21,6 +21,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -73,6 +74,15 @@ public final class ItemSelection {
         if (named(BuiltInRegistries.BLOCK.getKey(block))) { return true; }
         for (Identifier tag : tags) {
             if (block.defaultBlockState().is(TagKey.create(Registries.BLOCK, tag))) { return true; }
+        }
+        return false;
+    }
+
+    public boolean matches(ItemStack stack) {
+        if (stack.isEmpty()) { return false; }
+        if (named(BuiltInRegistries.ITEM.getKey(stack.getItem()))) { return true; }
+        for (Identifier tag : tags) {
+            if (stack.is(TagKey.create(Registries.ITEM, tag))) { return true; }
         }
         return false;
     }
