@@ -3622,6 +3622,28 @@ Le nom du fichier est à votre choix, seul le dossier est lu, et plusieurs fichi
 | `maxUses`      | non    | entier            | `12`   | Nombre d'utilisations avant le verrouillage                                                                                     |
 | `xp`           | non    | entier            | `2`    | Expérience que le villageois gagne par échange vers son niveau suivant                                                          |
 
+Un fichier peut aussi vider des échanges, avec ou sans une liste `trades` à côté.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "shepherd", "level": 1 },
+    { "profession": "minecraft:cleric" }
+  ],
+  "trades": []
+}
+```
+
+| Clé                  | Requis | Valeur            | Défaut | Rôle                                                                                                       |
+| -------------------- | ------ | ----------------- | ------ | ---------------------------------------------------------------------------------------------------------- |
+| `clear`              | non    | liste             | aucun  | Professions dont les listes d'échanges sont vidées                                                         |
+| `clear[].profession` | oui    | nom de profession |        | Dont les échanges sont à vider. Un nom vanilla 1.12.2 avec sa `career` est aussi lu                        |
+| `clear[].career`     | non    | texte             | tous   | Quelle carrière 1.12.2 de la profession est à vider                                                        |
+| `clear[].level`      | non    | entier            | tous   | Quel palier d'échange vider, de `1` à `5`. Un niveau hors de cette plage est consigné et l'entrée ignorée  |
+| `clear[].requires`   | non    | liste de textes   | aucun  | La même condition qu'un échange : l'entrée ne s'applique que tant que chaque mod ou pack nommé est présent |
+
+Le vidage vide la liste d'échanges de chaque profession et de chaque palier que vanilla et les mods fournissent dans leurs propres données, et les échanges de ton pack sont ajoutés ensuite. Un pack de données présent dans le dossier datapacks du monde qui ajoute des échanges continue de les ajouter. Une profession de style 1.12.2 sans carrière couvre toutes les professions issues de ses carrières, donc `minecraft:farmer` vide farmer, fisherman, shepherd et fletcher. Les villageois qui ont déjà des échanges les gardent. Vider le niveau 1 sans rien ajouter laisse un villageois qui ne peut pas commercer.
+
 Une pile est `item` avec `min` (`1`) et `max` (`min`) : un prix fixe n'est donc que `min`.
 
 Un échange peut aussi dépendre du joueur qui ouvre la fenêtre. Un joueur qui ne remplit pas une condition ne voit pas l'échange, et les autres joueurs ne sont pas touchés. Toutes les conditions doivent être remplies, et elles sont vérifiées à chaque ouverture de la fenêtre.

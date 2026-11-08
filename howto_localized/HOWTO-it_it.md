@@ -3622,6 +3622,28 @@ Il nome del file lo scegli tu, viene letta solo la cartella, e più file si somm
 | `maxUses`      | no           | intero                 | `12`        | Volte in cui può essere usato prima di bloccarsi                                                                             |
 | `xp`           | no           | intero                 | `2`         | Esperienza che il villico guadagna per scambio verso il livello successivo                                                   |
 
+Un file può anche cancellare degli scambi, con o senza un elenco `trades` accanto.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "shepherd", "level": 1 },
+    { "profession": "minecraft:cleric" }
+  ],
+  "trades": []
+}
+```
+
+| Chiave               | Obbligatorio | Valore                 | Predefinito | Cosa fa                                                                                                                    |
+| -------------------- | ------------ | ---------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `clear`              | no           | elenco                 | nessuno     | Professioni di cui vengono svuotati gli elenchi di scambi                                                                  |
+| `clear[].profession` | sì           | nome della professione |             | Di cui cancellare gli scambi. Viene letto anche un nome vanilla di 1.12.2 con la sua `career`                              |
+| `clear[].career`     | no           | testo                  | tutte       | Quale carriera 1.12.2 della professione svuotare                                                                           |
+| `clear[].level`      | no           | intero                 | tutti       | Quale livello di scambio svuotare, da `1` a `5`. Un livello fuori da questo intervallo viene registrato e la voce ignorata |
+| `clear[].requires`   | no           | elenco di testo        | nessuno     | Lo stesso vincolo di uno scambio: la voce si applica solo finché sono presenti tutte le mod o i pack indicati              |
+
+Lo svuotamento toglie l'elenco degli scambi di ogni professione e livello che vanilla e le mod hanno nei propri dati, e gli scambi del tuo pack vengono aggiunti dopo. Un data pack nella cartella datapacks del mondo che aggiunge scambi continua ad aggiungerli. Una professione in stile 1.12.2 senza carriera copre tutte le professioni in cui si sono trasformate le sue carriere, quindi `minecraft:farmer` svuota farmer, fisherman, shepherd e fletcher. I villici che hanno già degli scambi li conservano. Svuotare il livello 1 senza aggiungere nulla lascia un villico che non può commerciare.
+
 Una pila è `item` con `min` (`1`) e `max` (`min`), quindi un prezzo fisso è semplicemente `min`.
 
 Uno scambio può dipendere anche dal giocatore che apre la finestra. Chi non soddisfa una condizione non vede lo scambio, e gli altri giocatori non ne sono toccati. Tutte le condizioni devono valere insieme, e vengono controllate a ogni apertura della finestra.

@@ -3622,6 +3622,28 @@ Název souboru si volíš sám, čte se jen složka a více souborů se skládá
 | `maxUses`      | ne      | celé číslo     | `12`    | Kolikrát lze použít, než se zamkne                                                                               |
 | `xp`           | ne      | celé číslo     | `2`     | Zkušenosti, které vesničan získá za každý obchod směrem k další úrovni                                           |
 
+Soubor může také vyprázdnit obchody, s seznamem `trades` vedle nebo bez něj.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "shepherd", "level": 1 },
+    { "profession": "minecraft:cleric" }
+  ],
+  "trades": []
+}
+```
+
+| Klíč                 | Povinné | Hodnota        | Výchozí | Co dělá                                                                                                       |
+| -------------------- | ------- | -------------- | ------- | ------------------------------------------------------------------------------------------------------------- |
+| `clear`              | ne      | seznam         | žádný   | Povolání, jejichž seznamy obchodů se vyprázdní                                                                |
+| `clear[].profession` | ano     | název povolání |         | Čí obchody vyprázdnit. Čte se i vanilla název z 1.12.2 s jeho `career`                                        |
+| `clear[].career`     | ne      | text           | vše     | Která kariéra z 1.12.2 daného povolání se vyprázdní                                                           |
+| `clear[].level`      | ne      | celé číslo     | vše     | Který stupeň obchodů vyprázdnit, `1` až `5`. Stupeň mimo tento rozsah se zapíše do logu a položka se přeskočí |
+| `clear[].requires`   | ne      | seznam textů   | žádný   | Stejná brána, jakou má obchod: položka platí jen tehdy, jsou-li přítomny všechny uvedené mody nebo balíčky    |
+
+Vyprázdnění vyprázdní seznam obchodů každého povolání a stupně, které vanilla a mody mají ve vlastních datech, a obchody tvého balíčku se přidají až za ně. Datový balíček ve složce datapacks světa, který přidává obchody, je přidá i tak. Povolání ve stylu 1.12.2 bez kariéry pokrývá všechna povolání, na která se jeho kariéry proměnily, takže `minecraft:farmer` vyprázdní farmer, fisherman, shepherd a fletcher. Vesničané, kteří už nějaké obchody mají, si je ponechají. Vyprázdnění úrovně 1 bez něčeho přidaného nechá vesničana, který obchodovat nemůže.
+
 Stack je `item` s `min` (`1`) a `max` (`min`), takže pevná cena je prostě `min`.
 
 Obchod může záviset i na hráči, který otevře okno. Hráč, který podmínku nesplní, obchod nevidí, ostatních hráčů se to netýká. Platit musí všechny podmínky najednou a kontrolují se při každém otevření okna.

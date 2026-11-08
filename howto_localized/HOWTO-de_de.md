@@ -3622,6 +3622,28 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 | `maxUses`      | nein    | int        | `12`     | Wie oft er genutzt werden kann, bevor er sperrt                                                                                   |
 | `xp`           | nein    | int        | `2`      | Erfahrung, die der Dorfbewohner pro Handel auf seine nächste Stufe hin sammelt                                                    |
 
+Eine Datei kann auch Handel leeren, mit oder ohne eine `trades`-Liste daneben.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "shepherd", "level": 1 },
+    { "profession": "minecraft:cleric" }
+  ],
+  "trades": []
+}
+```
+
+| Schlüssel            | Pflicht | Wert       | Standard | Was er macht                                                                                                                    |
+| -------------------- | ------- | ---------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `clear`              | nein    | Liste      | keiner   | Berufe, deren Handelslisten geleert werden                                                                                      |
+| `clear[].profession` | ja      | Berufsname |          | Wessen Handel geleert wird. Ein Vanilla-Name aus 1.12.2 mit seiner `career` wird ebenfalls gelesen                              |
+| `clear[].career`     | nein    | Text       | alle     | Welche Laufbahn aus 1.12.2 des Berufs geleert wird                                                                              |
+| `clear[].level`      | nein    | int        | alle     | Welche Handelsstufe geleert wird, `1` bis `5`. Eine Stufe außerhalb davon wird protokolliert und der Eintrag übersprungen       |
+| `clear[].requires`   | nein    | Textliste  | keiner   | Dieselbe Bedingung wie bei einem Handel: Der Eintrag gilt nur, solange jede genannte Mod oder jedes genannte Pack vorhanden ist |
+
+Das Leeren entfernt die Handelsliste jedes Berufs und jeder Stufe, die Vanilla und Mods in ihren eigenen Daten mitbringen; die Handelseinträge deines Packs kommen danach hinzu. Ein Datenpaket im datapacks-Ordner der Welt, das Handel hinzufügt, fügt sie weiterhin hinzu. Ein Beruf aus 1.12.2 ohne Laufbahn deckt alle Berufe ab, zu denen seine Laufbahnen wurden, sodass `minecraft:farmer` farmer, fisherman, shepherd und fletcher leert. Dorfbewohner, die schon Handel haben, behalten ihn. Wird Stufe 1 geleert und nichts hinzugefügt, bleibt ein Dorfbewohner zurück, der nicht handeln kann.
+
 Ein Stapel ist `item` mit `min` (`1`) und `max` (`min`), ein fester Preis ist also einfach nur `min`.
 
 Ein Handel kann auch von dem Spieler abhängen, der das Fenster öffnet. Wer eine Bedingung nicht erfüllt, sieht den Handel nicht, andere Spieler bleiben unberührt. Mehrere Bedingungen müssen alle zutreffen, und sie werden bei jedem Öffnen des Fensters geprüft.

@@ -3622,6 +3622,28 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 | `maxUses`      | no          | entero              | `12`        | Veces que se puede usar antes de bloquearse                                                                       |
 | `xp`           | no          | entero              | `2`         | Experiencia que gana el aldeano por comercio hacia su siguiente nivel                                             |
 
+Un archivo también puede vaciar comercios, con o sin una lista `trades` junto a él.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "shepherd", "level": 1 },
+    { "profession": "minecraft:cleric" }
+  ],
+  "trades": []
+}
+```
+
+| Clave                | Obligatorio | Valor               | Por defecto | Qué hace                                                                                                                      |
+| -------------------- | ----------- | ------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `clear`              | no          | lista               | ninguno     | Profesiones cuyas listas de comercios se vacían                                                                               |
+| `clear[].profession` | sí          | nombre de profesión |             | Cuyos comercios se vacían. También se lee un nombre de vanilla de 1.12.2 con su `career`                                      |
+| `clear[].career`     | no          | texto               | todas       | Qué carrera de 1.12.2 de la profesión se vacía                                                                                |
+| `clear[].level`      | no          | entero              | todos       | Qué nivel de comercio se vacía, de `1` a `5`. Un nivel fuera de ese rango se registra en el log y la entrada se omite         |
+| `clear[].requires`   | no          | lista de texto      | ninguno     | La misma condición que tiene un comercio: la entrada solo se aplica mientras estén presentes todos los mods o packs indicados |
+
+Vaciar deja sin comercios la lista de cada profesión y nivel que vanilla y los mods traen en sus propios datos, y los comercios de tu pack se añaden después. Un paquete de datos en la carpeta datapacks del mundo que añada comercios los sigue añadiendo. Una profesión al estilo de 1.12.2 sin carrera abarca todas las profesiones en que se convirtieron sus carreras, así que `minecraft:farmer` vacía farmer, fisherman, shepherd y fletcher. Los aldeanos que ya tienen comercios los conservan. Vaciar el nivel 1 sin añadir nada deja a un aldeano que no puede comerciar.
+
 Una pila es `item` con `min` (`1`) y `max` (`min`), de modo que un precio fijo es simplemente `min`.
 
 Un comercio también puede depender del jugador que abre la ventana. Quien no cumple una condición no ve el comercio, y los demás jugadores no se ven afectados. Todas las condiciones deben cumplirse a la vez, y se comprueban cada vez que se abre la ventana.

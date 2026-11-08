@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.trades;
 
 import mctmods.resourcedatapackloader.common.generated.ContentGenerated;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.PriceScaleDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.villages.TradeClearDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.TradeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.TradeStackDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillagerDef;
@@ -60,6 +61,7 @@ public final class ContentVillagers {
     private static final byte[] PLAIN_SKIN = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAJ0lEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAIB3A0BAAAGveg7oAAAAAElFTkSuQmCC");
     private static final Map<Identifier, VillagerDef> VILLAGERS = new LinkedHashMap<>();
     private static final List<TradeDef> TRADES = new ArrayList<>();
+    private static final List<TradeClearDef> CLEARS = new ArrayList<>();
     private static final Set<Identifier> JOB_SITES = new LinkedHashSet<>();
     private static final Set<VillagerProfession> JOBLESS = new HashSet<>();
     private static final Set<Identifier> OWN = new LinkedHashSet<>();
@@ -126,7 +128,7 @@ public final class ContentVillagers {
     private static void readTrades(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "trade file");
         if (json == null) { return; }
-        for (JsonElement element : Json.getJsonArray(json, "trades")) {
+        for (JsonElement element : Json.getJsonArray(json, "trades", new JsonArray())) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
@@ -134,6 +136,45 @@ public final class ContentVillagers {
             TradeDef def = trade(key, element.getAsJsonObject());
             if (def != null) { TRADES.add(def); }
         }
+        for (JsonElement element : Json.getJsonArray(json, "clear", new JsonArray())) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A clear entry in {} is not an object, skipping it", key);
+                continue;
+            }
+            readClear(key, element.getAsJsonObject());
+        }
+    }
+
+    private static void readClear(Identifier key, JsonObject entry) {
+        String profession = Json.getString(entry, "profession", "").trim();
+        if (profession.isEmpty()) {
+            ContentLog.LOGGER.error("A clear entry in {} names no profession, skipping it", key);
+            return;
+        }
+        int level = TradeClearDef.ALL_LEVELS;
+        if (entry.has("level")) {
+            level = Json.getInt(entry, "level", TradeClearDef.ALL_LEVELS);
+            if (level < 1 || level > HIGHEST_LEVEL) {
+                ContentLog.LOGGER.error("A clear entry in {} has level {}, but levels run from 1 to {}, skipping it", key, level, HIGHEST_LEVEL);
+                return;
+            }
+        }
+        List<String> requires = Json.strings(entry, "requires");
+        for (String target : clearTargets(key, profession, Json.getString(entry, "career", "").trim())) { CLEARS.add(new TradeClearDef(key, target, level, requires)); }
+    }
+
+    private static List<String> clearTargets(Identifier key, String profession, String career) {
+        if (!CAREERED.contains(profession)) {
+            if (!career.isEmpty()) { ContentLog.LOGGER.warn("A clear entry in {} names a career, which this line does not read. Name the profession itself in 'profession'", key); }
+            return List.of(profession);
+        }
+        String prefix = profession + "/";
+        List<String> targets = new ArrayList<>();
+        for (Map.Entry<String, String> careers : CAREERS.entrySet()) {
+            if (career.isEmpty() ? careers.getKey().startsWith(prefix) : careers.getKey().equals(prefix + career)) { targets.add(careers.getValue()); }
+        }
+        if (targets.isEmpty()) { ContentLog.LOGGER.error("A clear entry in {} names career '{}' of profession '{}', which has no such career, skipping it", key, career, profession); }
+        return targets;
     }
 
     @Nullable public static TradeDef trade(Identifier key, JsonObject entry) {
@@ -288,13 +329,14 @@ public final class ContentVillagers {
                 tags.put(set, new ArrayList<>());
             }
         }
-        if (TRADES.isEmpty() && tags.isEmpty()) { return; }
+        if (TRADES.isEmpty() && CLEARS.isEmpty() && tags.isEmpty()) { return; }
         checkProfessions();
+        Set<Identifier> replaced = clearedSets(tags);
         Map<Identifier, Integer> made = new LinkedHashMap<>();
         Map<Identifier, Integer> numbered = new LinkedHashMap<>();
         for (TradeDef def : TRADES) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            Identifier named = professionId(def);
+            Identifier named = professionId(def.profession());
             VillagerProfession profession = named == null ? null : Registered.find(BuiltInRegistries.VILLAGER_PROFESSION, named);
             if (profession == null) { continue; }
             ContentTrade.Listing listing = items(def);
@@ -313,7 +355,7 @@ public final class ContentVillagers {
         }
         for (Map.Entry<Identifier, List<String>> tag : tags.entrySet()) {
             JsonObject json = new JsonObject();
-            json.addProperty("replace", false);
+            json.addProperty("replace", replaced.contains(tag.getKey()));
             JsonArray values = new JsonArray();
             for (String value : tag.getValue()) { values.add(value); }
             json.add("values", values);
@@ -323,9 +365,29 @@ public final class ContentVillagers {
         ContentTradeGate.summarize();
     }
 
-    @Nullable private static Identifier professionId(TradeDef def) {
-        Identifier named = Identifier.tryParse(def.profession());
-        return named == null || !named.toString().equals(def.profession()) ? null : named;
+    private static Set<Identifier> clearedSets(Map<Identifier, List<String>> tags) {
+        Set<Identifier> replaced = new LinkedHashSet<>();
+        for (TradeClearDef def : CLEARS) {
+            if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
+            Identifier named = professionId(def.profession());
+            VillagerProfession profession = named == null ? null : Registered.find(BuiltInRegistries.VILLAGER_PROFESSION, named);
+            if (profession == null) { continue; }
+            int first = def.level() == TradeClearDef.ALL_LEVELS ? 1 : def.level();
+            int last = def.level() == TradeClearDef.ALL_LEVELS ? HIGHEST_LEVEL : def.level();
+            for (int level = first; level <= last; level++) {
+                ResourceKey<TradeSet> set = profession.getTrades(level);
+                if (set == null) { continue; }
+                replaced.add(set.identifier());
+                tags.computeIfAbsent(set.identifier(), _ -> new ArrayList<>());
+            }
+        }
+        if (!replaced.isEmpty()) { Summary.info("content_trade_clears", "Cleared " + replaced.size() + " villager trade list(s) of vanilla and mod trades"); }
+        return replaced;
+    }
+
+    @Nullable private static Identifier professionId(String profession) {
+        Identifier named = Identifier.tryParse(profession);
+        return named == null || !named.toString().equals(profession) ? null : named;
     }
 
     private static void checkProfessions() {
@@ -334,12 +396,17 @@ public final class ContentVillagers {
         for (TradeDef def : TRADES) {
             if (ContentRegistry.available(def.requires(), def.key())) { known(def); }
         }
+        for (TradeClearDef def : CLEARS) {
+            if (ContentRegistry.available(def.requires(), def.key())) { known(def.key(), "Trade clear", def.profession()); }
+        }
     }
 
-    public static boolean known(TradeDef def) {
-        Identifier named = professionId(def);
+    public static boolean known(TradeDef def) { return known(def.key(), "Trade", def.profession()); }
+
+    private static boolean known(Identifier key, String what, String profession) {
+        Identifier named = professionId(profession);
         if (named != null && BuiltInRegistries.VILLAGER_PROFESSION.containsKey(named)) { return true; }
-        ContentLog.LOGGER.error("Trade in {} names profession '{}', which is not registered, skipping it", def.key(), def.profession());
+        ContentLog.LOGGER.error("{} in {} names profession '{}', which is not registered, skipping it", what, key, profession);
         return false;
     }
 

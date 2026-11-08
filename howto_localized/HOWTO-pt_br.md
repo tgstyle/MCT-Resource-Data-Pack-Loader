@@ -3622,6 +3622,28 @@ O nome do arquivo é de sua escolha, só a pasta é lida, e vários arquivos se 
 | `maxUses`      | não         | int               | `12`   | Vezes que pode ser usada antes de travar                                                                           |
 | `xp`           | não         | int               | `2`    | Experiência que o aldeão ganha por troca rumo ao próximo nível                                                     |
 
+Um arquivo também pode limpar trocas, com ou sem uma lista `trades` ao lado.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "shepherd", "level": 1 },
+    { "profession": "minecraft:cleric" }
+  ],
+  "trades": []
+}
+```
+
+| Chave                | Obrigatória | Valor             | Padrão | O que faz                                                                                                      |
+| -------------------- | ----------- | ----------------- | ------ | -------------------------------------------------------------------------------------------------------------- |
+| `clear`              | não         | lista             | nenhum | Profissões cujas listas de trocas são esvaziadas                                                               |
+| `clear[].profession` | sim         | nome de profissão |        | Cujas trocas limpar. Um nome vanilla da 1.12.2 com a sua `career` também é lido                                |
+| `clear[].career`     | não         | texto             | todas  | Qual carreira da 1.12.2 da profissão limpar                                                                    |
+| `clear[].level`      | não         | int               | todos  | Qual nível de troca limpar, de `1` a `5`. Um nível fora disso é registrado e a entrada é ignorada              |
+| `clear[].requires`   | não         | lista de texto    | nenhum | A mesma condição de uma troca: a entrada só vale enquanto todos os mods ou pacotes citados estiverem presentes |
+
+Limpar esvazia a lista de trocas de cada profissão e nível que o vanilla e os mods trazem nos próprios dados, e as trocas do seu pacote são adicionadas depois. Um pacote de dados na pasta datapacks do mundo que adiciona trocas continua adicionando. Uma profissão no estilo da 1.12.2 sem carreira cobre todas as profissões em que as suas carreiras viraram, então `minecraft:farmer` limpa farmer, fisherman, shepherd e fletcher. Aldeões que já têm trocas as mantêm. Limpar o nível 1 sem adicionar nada deixa um aldeão que não consegue negociar.
+
 Uma pilha é `item` com `min` (`1`) e `max` (`min`), então um preço fixo é apenas `min`.
 
 Uma troca também pode depender do jogador que abre a janela. Quem não cumpre uma condição não vê a troca, e os outros jogadores não são afetados. Todas as condições precisam valer ao mesmo tempo, e são verificadas toda vez que a janela é aberta.
