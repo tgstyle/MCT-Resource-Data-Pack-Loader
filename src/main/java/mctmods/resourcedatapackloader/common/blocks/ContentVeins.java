@@ -24,6 +24,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,6 +37,8 @@ public final class ContentVeins {
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean veining;
+    private static ServerPlayer veiner;
+    private static BlockPos veinPos;
 
     private ContentVeins() {}
 
@@ -87,15 +90,30 @@ public final class ContentVeins {
         BlockState state = event.getState();
         Rule rule = ruleFor(player, state, player.getMainHandItem());
         if (rule == null) { return; }
+        float speed = player.getMainHandItem().getDestroySpeed(state);
+        if (speed < 1.0F) { return; }
         veining = true;
+        veiner = player;
         try {
             for (BlockPos pos : connected(level, event.getPos(), state.getBlock(), rule)) {
-                if (!rule.holds(player.getMainHandItem()) || player.getFoodData().getFoodLevel() <= 0) { break; }
+                ItemStack held = player.getMainHandItem();
+                if (!rule.holds(held) || held.getDestroySpeed(state) < speed || player.getFoodData().getFoodLevel() <= 0) { break; }
+                veinPos = pos;
                 player.gameMode.destroyBlock(pos);
                 player.causeFoodExhaustion(rule.hunger() * EXHAUSTION_PER_POINT);
             }
         }
-        finally { veining = false; }
+        finally {
+            veining = false;
+            veiner = null;
+            veinPos = null;
+        }
+    }
+
+    public static boolean nested(Player player, BlockPos pos) { return veining && player == veiner && !pos.equals(veinPos); }
+
+    public static void onNested(BreakBlockEvent event) {
+        if (nested(event.getPlayer(), event.getPos())) { event.setCanceled(true); }
     }
 
     private static List<BlockPos> connected(ServerLevel level, BlockPos origin, Block block, Rule rule) {
