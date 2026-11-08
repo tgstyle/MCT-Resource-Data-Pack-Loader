@@ -21,6 +21,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
@@ -38,6 +39,8 @@ public final class ContentVeins {
     private static final List<Rule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static boolean veining;
+    private static EntityPlayerMP veiner;
+    private static BlockPos veinPos;
 
     private ContentVeins() {}
 
@@ -104,15 +107,35 @@ public final class ContentVeins {
         IBlockState state = event.getState();
         Rule rule = ruleFor(player, state, player.getHeldItemMainhand());
         if (rule == null) { return; }
+        ItemStack tool = player.getHeldItemMainhand();
+        float speed = tool.getDestroySpeed(state);
+        if (worn(tool, state, 1.0F)) { return; }
         veining = true;
+        veiner = player;
         try {
             for (BlockPos pos : connected(event.getWorld(), event.getPos(), state.getBlock(), rule)) {
-                if (!rule.holds(player.getHeldItemMainhand()) || player.getFoodStats().getFoodLevel() <= 0) { break; }
+                ItemStack held = player.getHeldItemMainhand();
+                if (!rule.holds(held) || worn(held, state, speed) || player.getFoodStats().getFoodLevel() <= 0) { break; }
+                veinPos = pos;
                 player.interactionManager.tryHarvestBlock(pos);
                 player.addExhaustion(rule.hunger * EXHAUSTION_PER_POINT);
             }
         }
-        finally { veining = false; }
+        finally {
+            veining = false;
+            veiner = null;
+            veinPos = null;
+        }
+    }
+
+    public static boolean veining(EntityPlayer player) { return veining && player == veiner; }
+
+    private static boolean worn(ItemStack held, IBlockState state, float speed) { return held.getDestroySpeed(state) < speed || (held.getMaxDamage() > 0 && held.getItemDamage() >= held.getMaxDamage()); }
+
+    public static boolean nested(EntityPlayer player, BlockPos pos) { return veining(player) && !pos.equals(veinPos); }
+
+    @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onNested(BlockEvent.BreakEvent event) {
+        if (nested(event.getPlayer(), event.getPos())) { event.setCanceled(true); }
     }
 
     private static List<BlockPos> connected(World world, BlockPos origin, Block block, Rule rule) {

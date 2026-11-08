@@ -22,6 +22,7 @@ import zone.rong.mixinbooter.ILateMixinLoader;
     static {
         QUEUED.put("jei", () -> Loader.isModLoaded("jei"));
         QUEUED.put("tconstruct", () -> tinkersFixEnabled() && Loader.isModLoaded("tconstruct"));
+        QUEUED.put("tconstructveins", () -> Loader.isModLoaded("tconstruct"));
         QUEUED.put("conarm", () -> tinkersFixEnabled() && Loader.isModLoaded("conarm"));
         QUEUED.put("bop", () -> Loader.isModLoaded("biomesoplenty"));
         QUEUED.put("crafttweaker", () -> Loader.isModLoaded("crafttweaker"));

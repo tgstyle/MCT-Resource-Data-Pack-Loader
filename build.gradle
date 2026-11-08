@@ -173,6 +173,8 @@ dependencies {
 
     clientRuntime deobf("curse.maven:${common.bf3r_version}")
     if (companion('vintagefix')) { runtimeOnly deobf("curse.maven:${common.vfix_version}") }
+    if (companion('tconstruct')) { runtimeOnly deobf("curse.maven:${common.tcon_version}") }
+    if (companion('mantle')) { runtimeOnly deobf("curse.maven:${common.mant_version}") }
     if (companion('ftblib')) { runtimeOnly deobf("curse.maven:${common.ftbl_version}") }
     if (companion('ftbutilities')) { runtimeOnly deobf("curse.maven:${common.ftbu_version}") }
 
