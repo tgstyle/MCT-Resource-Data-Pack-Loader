@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.generated.ContentPixelMaps;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
@@ -332,6 +333,7 @@ public final class CommandShared {
         ContentHearts.refresh(server);
         ContentDiet.refresh(server);
         SpawnLocks.load();
+        SpawnSwaps.load();
         ContentItemLocks.report(server);
         ItemLockSync.resendAll(server);
         for (ServerLevel level : server.getAllLevels()) {

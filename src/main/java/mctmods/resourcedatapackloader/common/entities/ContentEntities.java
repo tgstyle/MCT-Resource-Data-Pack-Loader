@@ -8,6 +8,8 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityPars
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityPhases;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityWatch;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
+import mctmods.resourcedatapackloader.common.entities.spawning.EntitySwap;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.TeamDef;
@@ -47,7 +49,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -57,7 +58,6 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
@@ -89,7 +89,6 @@ public final class ContentEntities {
     private static final String SIZED = "rdplSized";
     private static final int ROUSED = 60;
     private static final long CALM_STEP = 10L;
-    private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final ThreadLocal<Boolean> SPAWNER = ThreadLocal.withInitial(() -> Boolean.FALSE);
     public static final int AMBIENT = 0;
     public static final int HURT = 1;
@@ -295,6 +294,7 @@ public final class ContentEntities {
     public static void onTeleport(EntityTeleportEvent.EnderEntity event) { if (staysPut(event.getEntity())) { event.setCanceled(true); } }
 
     public static void onFinalizeSpawn(MobSpawnEvent.FinalizeSpawn event) {
+        SpawnSwaps.mark(event);
         if (event.getSpawnData() == null && event.getEntity() instanceof Zombie && baseBabyChance(event.getEntity(), 1.0F) <= 0.0F) { event.setSpawnData(new Zombie.ZombieGroupData(false, true)); }
     }
 
@@ -334,6 +334,7 @@ public final class ContentEntities {
     }
 
     public static void onJoin(EntityJoinLevelEvent event) {
+        if (SpawnSwaps.replace(event)) { return; }
         EntityVariantDef def = def(event.getEntity());
         if (def == null || !(event.getLevel() instanceof ServerLevel level)) { return; }
         if (swapped(level, event.getEntity(), def)) {
@@ -345,7 +346,7 @@ public final class ContentEntities {
     }
 
     private static boolean swapped(ServerLevel level, Entity was, EntityVariantDef def) {
-        if (def.becomes().isEmpty() || SWAPPING.get() == Boolean.TRUE || was.getPersistentData().getBoolean(ContentEntityApply.DRESSED)) { return false; }
+        if (def.becomes().isEmpty() || EntitySwap.active() || was.getPersistentData().getBoolean(ContentEntityApply.DRESSED)) { return false; }
         List<PickDef> choices = SPAWNER.get() == Boolean.TRUE ? kin(def) : def.becomes();
         String chosen = PickDef.pick(choices, level.getRandom());
         if (chosen == null || chosen.equals(def.key().toString())) { return false; }
@@ -354,16 +355,7 @@ public final class ContentEntities {
             ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.key(), chosen);
             return false;
         }
-        SWAPPING.set(Boolean.TRUE);
-        try {
-            Entity becomes = wanted.create(level);
-            if (becomes == null) { return false; }
-            becomes.moveTo(was.getX(), was.getY(), was.getZ(), was.getYRot(), was.getXRot());
-            if (becomes instanceof Mob mob) { ForgeEventFactory.onFinalizeSpawn(mob, level, level.getCurrentDifficultyAt(becomes.blockPosition()), MobSpawnType.EVENT, null, null); }
-            level.addFreshEntity(becomes);
-        }
-        finally { SWAPPING.set(Boolean.FALSE); }
-        return true;
+        return EntitySwap.spawn(level, wanted, was, false);
     }
 
     public static void tick(LivingEntity living) {

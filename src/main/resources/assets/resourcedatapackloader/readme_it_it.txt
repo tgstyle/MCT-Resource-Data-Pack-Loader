@@ -224,7 +224,8 @@ Ognuna di queste è una cartella sotto data/<yourpack>:
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 I blocchi hanno queste forme, impostate dal campo "type":
 

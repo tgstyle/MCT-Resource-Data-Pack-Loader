@@ -223,7 +223,8 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 

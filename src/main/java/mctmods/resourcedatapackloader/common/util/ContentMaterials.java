@@ -2,12 +2,14 @@ package mctmods.resourcedatapackloader.common.util;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
+import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.concurrent.Registered;
 
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -45,6 +47,13 @@ public final class ContentMaterials {
     }
 
     private static Ingredient repair(MaterialDef def) {
+        String asked = def.repairItem();
+        if (asked.startsWith("#")) {
+            ResourceLocation tag = ResourceLocation.tryParse(asked.substring(1));
+            if (tag != null) { return Ingredient.of(TagKey.create(Registries.ITEM, tag)); }
+            ContentLog.LOGGER.error("Material {} names repairItem '{}', which is not a tag name, so nothing repairs it", def.key(), asked);
+            return Ingredient.EMPTY;
+        }
         Item item = ContentStacks.find(def.key(), def.repairItem());
         return item == null ? Ingredient.EMPTY : Ingredient.of(item);
     }

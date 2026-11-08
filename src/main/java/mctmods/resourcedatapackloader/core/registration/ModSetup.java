@@ -42,6 +42,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.RankSteal;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
@@ -65,6 +66,7 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
+import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
@@ -175,6 +177,7 @@ public class ModSetup {
         ContentCurioSlots.load();
         ContentEntities.load();
         SpawnLocks.load();
+        SpawnSwaps.load();
         ContentWorldTemplates.load();
         ContentBiomes.load();
         ContentCaveRegions.load();
@@ -282,6 +285,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentWeapons::onModifiers);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
+        MinecraftForge.EVENT_BUS.addListener(ContentWeapons::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentWeapons::onLogout);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, true, ContentHardness::onBreak);
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onAdvancement);
@@ -472,6 +476,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, MobDrops::onDrops);
         MinecraftForge.EVENT_BUS.addListener(RegistryRemaps::onMissingMappings);
         MinecraftForge.EVENT_BUS.addListener(CompressedAliases::onMissingMappings);
         MinecraftForge.EVENT_BUS.addListener(ModSetup::onTagsUpdated);
@@ -530,9 +535,7 @@ public class ModSetup {
                     MinecraftForge.EVENT_BUS.addListener(ContentRanks::onTick);
                     MinecraftForge.EVENT_BUS.addListener(ContentRanks::onDeath);
                     MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, ContentRanks::onDrops);
-                    if (ContentRanks.stealing()) {
-                        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen);
-                    }
+                    if (ContentRanks.stealing()) { MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, RankSteal::onOpen); }
                 }
                 ContentOverrides.reload();
                 ContentWeights.load();

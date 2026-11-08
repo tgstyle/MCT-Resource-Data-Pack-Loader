@@ -207,7 +207,8 @@ hardness 文件为一组方块设定挖掘时间和爆炸抗性，exposures 文�
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 方块有以下几种形态，由“type”字段决定：
 

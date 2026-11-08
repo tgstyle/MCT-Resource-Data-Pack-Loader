@@ -220,7 +220,8 @@ Cada una de estas es una carpeta bajo data/<yourpack>:
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 Los bloques vienen en estas formas, fijadas por el campo "type":
 

@@ -85,12 +85,14 @@ public final class PackManager {
     public static final String RECIPE_LOCKS = "recipe_locks";
     public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
+    public static final String SPAWN_SWAPS = "spawn_swaps";
     public static final String WEIGHTS = "weights";
     public static final String DISABLED = "disabled";
     public static final String FURNACE = "furnace";
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String LOOT_REMOVALS = "loot_removals";
     public static final String PLAYER_LOOT = "player_loot";
+    public static final String MOB_DROPS = "mob_drops";
     public static final String BLOCK_DROPS = "block_drops";
     public static final String REGISTRY_REMAP = "registry_remap";
     public static final String SOUNDS = "sounds";

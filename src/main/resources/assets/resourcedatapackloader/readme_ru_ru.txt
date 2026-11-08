@@ -216,7 +216,8 @@ priority равным -1, чтобы он оставался под всем о�
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 Блоки бывают таких форм, их задаёт поле "type":
 

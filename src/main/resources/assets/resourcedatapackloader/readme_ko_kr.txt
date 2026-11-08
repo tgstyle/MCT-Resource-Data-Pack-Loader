@@ -211,7 +211,8 @@ assets 아래에 직접 제공해야 합니다.
     disabled         tooltips         harvests         carries
     dialogs          veins            diets            enchantments
     dice             games            orders           ranks
-    recipe_locks     spawn_locks      item_locks
+    recipe_locks     spawn_locks      item_locks       spawn_swaps
+    mob_drops
 
 블록은 "type" 필드로 정하는 다음 형태로 나뉩니다.
 

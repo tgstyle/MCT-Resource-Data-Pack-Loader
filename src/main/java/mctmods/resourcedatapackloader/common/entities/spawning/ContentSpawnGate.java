@@ -25,6 +25,8 @@ public final class ContentSpawnGate {
         return false;
     }
 
+    public static boolean holds(SpawnGateDef gate, Entity entity) { return entity.level() instanceof ServerLevel level && !fails(gate, level, entity); }
+
     private static boolean fails(SpawnGateDef gate, ServerLevel level, Entity entity) {
         if (!gate.dimensions().isEmpty() && !CardPlace.inAny(gate.dimensions(), level)) { return true; }
         if (gate.timed() && !CardPlace.within(CardPlace.timeOfDay(level), gate.timeFrom(), gate.timeTo())) { return true; }
