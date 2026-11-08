@@ -197,7 +197,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(event.getBuilder()));
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, CompressedFuel::onFuelBurnTime);
-        NeoForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVillagers::applyTrades);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLogin);

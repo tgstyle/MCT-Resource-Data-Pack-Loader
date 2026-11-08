@@ -3623,6 +3623,27 @@ Der Dateiname ist deine Wahl, gelesen wird nur der Ordner, und mehrere Dateien a
 | `maxUses`      | nein    | int        | `12`     | Wie oft er genutzt werden kann, bevor er sperrt                                                                                   |
 | `xp`           | nein    | int        | `2`      | Erfahrung, die der Dorfbewohner pro Handel auf seine nächste Stufe hin sammelt                                                    |
 
+Eine Datei kann außerdem Handel entfernen, bevor sie ihren eigenen hinzufügt.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "fisherman", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack"] }
+  ]
+}
+```
+
+| Schlüssel            | Pflicht | Wert                                     | Standard | Was er macht                                                                                                    |
+| -------------------- | ------- | ---------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `clear`              | nein    | Liste                                    | keiner   | Einträge, die Handel entfernen, neben `trades` oder anstelle von `trades`                                       |
+| `clear[].profession` | ja      | Berufsname                               |          | Wessen Handel entfernt wird. Ein Vanilla-Name aus 1.12.2 wird ebenfalls gelesen                                 |
+| `clear[].career`     | nein    | Karrierename                             | alle     | Begrenzt einen Beruf aus 1.12.2 auf eine Karriere                                                               |
+| `clear[].level`      | nein    | int                                      | alle     | Welche Stufe geleert wird, `1` bis `5`. Jede andere Zahl protokolliert einen Fehler und überspringt den Eintrag |
+| `clear[].requires`   | nein    | Liste von Mod-IDs oder Pack-Namensräumen | keiner   | Der Eintrag wird übersprungen, solange nicht alle vorhanden sind                                                |
+
+Das Entfernen nimmt den Handel weg, den Vanilla und andere Mods gegeben haben, nachdem jeder Mod seinen eigenen hinzugefügt hat, und bevor der Handel deines Packs kommt. Ein Beruf aus 1.12.2 ohne Karriere umfasst alle Berufe, zu denen seine Karrieren wurden, daher leert `minecraft:farmer` den Bauern, Fischer, Schäfer und Bogenbauer. Dorfbewohner, die schon Handel haben, behalten ihn. Das Leeren von Stufe 1 ohne etwas Hinzugefügtes lässt einen Dorfbewohner zurück, der nicht handeln kann. Handel aus dem Pack kommt nun nach dem anderer Mods auf derselben Stufe.
+
 Ein Stapel ist `item` mit `min` (`1`) und `max` (`min`), ein fester Preis ist also einfach nur `min`.
 
 Ein Handel kann auch von dem Spieler abhängen, der das Fenster öffnet. Wer eine Bedingung nicht erfüllt, sieht den Handel nicht, andere Spieler bleiben unberührt. Mehrere Bedingungen müssen alle zutreffen, und sie werden bei jedem Öffnen des Fensters geprüft.

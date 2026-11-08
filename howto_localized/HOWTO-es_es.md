@@ -3623,6 +3623,27 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 | `maxUses`      | no          | entero              | `12`        | Veces que se puede usar antes de bloquearse                                                                       |
 | `xp`           | no          | entero              | `2`         | Experiencia que gana el aldeano por comercio hacia su siguiente nivel                                             |
 
+Un archivo también puede quitar comercios antes de añadir los suyos.
+
+```json
+{
+  "clear": [
+    { "profession": "minecraft:farmer", "career": "fisherman", "level": 1 },
+    { "profession": "minecraft:librarian", "requires": ["mypack"] }
+  ]
+}
+```
+
+| Clave                | Obligatorio | Valor                                                  | Por defecto | Qué hace                                                                                   |
+| -------------------- | ----------- | ------------------------------------------------------ | ----------- | ------------------------------------------------------------------------------------------ |
+| `clear`              | no          | lista                                                  | ninguno     | Entradas que quitan comercios, además de `trades` o en lugar de él                         |
+| `clear[].profession` | sí          | nombre de profesión                                    |             | De qué profesión quitar los comercios. También se lee un nombre de vanilla de 1.12.2       |
+| `clear[].career`     | no          | nombre de carrera                                      | todas       | Limita una profesión de 1.12.2 a una sola carrera                                          |
+| `clear[].level`      | no          | entero                                                 | todos       | Qué nivel vaciar, de `1` a `5`. Cualquier otro número registra un error y omite la entrada |
+| `clear[].requires`   | no          | lista de IDs de mods o espacios de nombres del paquete | ninguno     | La entrada se omite a menos que estén presentes todos                                      |
+
+Vaciar quita los comercios que dieron vanilla y otros mods, después de que cada mod haya añadido los suyos y antes de los de tu paquete. Una profesión de 1.12.2 sin carrera abarca todas las profesiones en las que se convirtieron sus carreras, así que `minecraft:farmer` vacía al granjero, al pescador, al pastor y al flechero. Los aldeanos que ya tienen comercios los conservan. Vaciar el nivel 1 sin añadir nada deja un aldeano que no puede comerciar. Los comercios del paquete ahora van después de los de otros mods en el mismo nivel.
+
 Una pila es `item` con `min` (`1`) y `max` (`min`), de modo que un precio fijo es simplemente `min`.
 
 Un comercio también puede depender del jugador que abre la ventana. Quien no cumple una condición no ve el comercio, y los demás jugadores no se ven afectados. Todas las condiciones deben cumplirse a la vez, y se comprueban cada vez que se abre la ventana.
