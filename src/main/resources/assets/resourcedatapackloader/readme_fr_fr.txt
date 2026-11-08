@@ -303,8 +303,7 @@ Chacun de ceux-ci est un dossier sous assets/<yourpack> :
     harvests         carries          dialogs          veins
     diets            enchantments     dice             games
     orders           ranks            recipe_locks     spawn_locks
-    item_locks
-    weights
+    item_locks       weights          spawn_swaps      mob_drops
 
 Les blocs existent sous ces formes, fixées par le champ "type" :
 

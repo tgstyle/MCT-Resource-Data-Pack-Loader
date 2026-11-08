@@ -501,7 +501,7 @@ public final class ContentParser {
         return out;
     }
 
-    static AmountDef amount(JsonObject json, String key, int fallback, int floor) {
+    public static AmountDef amount(JsonObject json, String key, int fallback, int floor) {
         if (!json.has(key)) { return AmountDef.of(Math.max(floor, fallback)); }
         JsonElement element = json.get(key);
         if (!element.isJsonObject()) { return AmountDef.of(Math.max(floor, Json.asInt(element, key, floor))); }
@@ -520,7 +520,7 @@ public final class ContentParser {
         return new IntRange(minHeight, maxHeight);
     }
 
-    static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
+    public static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
         if (!entry.has(listKey)) { return Collections.emptyList(); }
         List<PickDef> picked = new ArrayList<>();
         for (JsonElement element : Json.getJsonArray(entry, listKey)) {

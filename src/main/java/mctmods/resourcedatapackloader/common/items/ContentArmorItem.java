@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.items;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
+import mctmods.resourcedatapackloader.common.util.ContentMaterials;
 
 import javax.annotation.Nonnull;
 import net.minecraft.inventory.EntityEquipmentSlot;
@@ -20,6 +21,8 @@ import net.minecraft.item.ItemStack;
         setTranslationKey(def.registryName.toString());
         ContentSetup.apply(this, def.creativeTab);
     }
+
+    @Override public boolean getIsRepairable(@Nonnull ItemStack toRepair, @Nonnull ItemStack repair) { return ContentMaterials.repairsByOre(getArmorMaterial().name(), repair) || super.getIsRepairable(toRepair, repair); }
 
     @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.singleKey(this, def); }
 

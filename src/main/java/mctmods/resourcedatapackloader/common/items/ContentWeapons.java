@@ -1,14 +1,18 @@
 package mctmods.resourcedatapackloader.common.items;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.entity.EntityLivingBase;
@@ -29,6 +33,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 @Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public final class ContentWeapons {
     private static final float FULL_STRENGTH = 0.9F;
@@ -36,6 +41,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
     private static final double VERTICAL_SLACK = 1.0D;
     private static final Map<UUID, Progress> COMBOS = new HashMap<>();
     private static final Map<UUID, Blow> BLOWS = new HashMap<>();
+    private static final Map<EntityLivingBase, WeaponDef.Finisher> FINISHES = new LinkedHashMap<>();
     private static boolean sweeping;
 
     private ContentWeapons() {}
@@ -57,6 +63,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
     public static void clear() {
         COMBOS.clear();
         BLOWS.clear();
+        FINISHES.clear();
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onAttack(AttackEntityEvent event) {
@@ -65,7 +72,7 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
         ItemStack held = player.getHeldItemMainhand();
         WeaponDef weapon = weapon(held);
         UUID id = player.getUniqueID();
-        if (weapon == null || (weapon.combo == null && weapon.sweep == null)) {
+        if (weapon == null || (weapon.combo == null && weapon.sweep == null && !weapon.onHit())) {
             COMBOS.remove(id);
             BLOWS.remove(id);
             return;
@@ -81,6 +88,9 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
         Blow blow = BLOWS.remove(player.getUniqueID());
         EntityLivingBase target = event.getEntityLiving();
         if (blow == null || blow.target != target.getEntityId() || blow.time != player.world.getTotalWorldTime()) { return; }
+        if (blow.weapon.fireSeconds > 0) { target.setFire(blow.weapon.fireSeconds); }
+        WeaponDef.Finisher finisher = blow.weapon.finisher;
+        if (finisher != null && MobStats.targets(finisher.targets, target)) { FINISHES.put(target, finisher); }
         boolean full = blow.strength > FULL_STRENGTH;
         WeaponDef.Sweep sweep = blow.weapon.sweep;
         WeaponDef.Combo combo = blow.weapon.combo;
@@ -95,6 +105,30 @@ import net.minecraftforge.fml.common.gameevent.PlayerEvent;
             }
         }
         if (full && sweep != null) { strike(player, target, blow.weapon, sweep, event.getAmount() * sweep.damage); }
+    }
+
+    @SubscribeEvent public static void onTick(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || FINISHES.isEmpty()) { return; }
+        List<Map.Entry<EntityLivingBase, WeaponDef.Finisher>> queued = new ArrayList<>(FINISHES.entrySet());
+        FINISHES.clear();
+        sweeping = true;
+        try {
+            for (Map.Entry<EntityLivingBase, WeaponDef.Finisher> each : queued) { finish(each.getKey(), each.getValue()); }
+        }
+        finally { sweeping = false; }
+    }
+
+    private static void finish(EntityLivingBase target, WeaponDef.Finisher finisher) {
+        if (!target.isEntityAlive() || !target.world.isBlockLoaded(target.getPosition())) { return; }
+        target.hurtResistantTime = 0;
+        if (!Float.isNaN(finisher.health)) { target.setHealth(finisher.health); }
+        if (!Float.isNaN(finisher.damage)) { target.attackEntityFrom(DamageSources.source(finisher.damageType), finisher.damage); }
+        if (!target.isEntityAlive() || finisher.pushHorizontal <= 0.0F && finisher.pushVertical <= 0.0F) { return; }
+        Random random = target.world.rand;
+        target.motionX += (random.nextDouble() * 2.0D - 1.0D) * finisher.pushHorizontal;
+        target.motionZ += (random.nextDouble() * 2.0D - 1.0D) * finisher.pushHorizontal;
+        target.motionY += random.nextDouble() * finisher.pushVertical;
+        target.velocityChanged = true;
     }
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {

@@ -16,20 +16,20 @@ public final class ContentSpawnGate {
 
     public static boolean barred(Entity entity) {
         SpawnGateDef gate = ContentEntities.spawnGate(entity);
-        if (gate != SpawnGateDef.NONE && fails(gate, entity)) { return true; }
+        if (gate != SpawnGateDef.NONE && !holds(gate, entity)) { return true; }
         for (SpawnGateDef lock : SpawnLocks.gates(entity)) {
-            if (fails(lock, entity)) { return true; }
+            if (!holds(lock, entity)) { return true; }
         }
         return false;
     }
 
-    private static boolean fails(SpawnGateDef gate, Entity entity) {
+    public static boolean holds(SpawnGateDef gate, Entity entity) {
         World world = entity.world;
-        if (!gate.dimensions.isEmpty() && !CardPlace.inAny(gate.dimensions, world.provider.getDimension())) { return true; }
-        if (gate.timed() && !CardPlace.within(CardPlace.timeOfDay(world), gate.timeFrom, gate.timeTo)) { return true; }
-        if (gate.dayAtLeast >= 0L && CardPlace.day(world) < gate.dayAtLeast) { return true; }
-        if (!gate.structures.isEmpty() && !CardPlace.inStructure(world, entity.getPosition(), gate.structures, gate.radius)) { return true; }
-        return gate.needsPlayer() && !playerNear(gate, entity);
+        if (!gate.dimensions.isEmpty() && !CardPlace.inAny(gate.dimensions, world.provider.getDimension())) { return false; }
+        if (gate.timed() && !CardPlace.within(CardPlace.timeOfDay(world), gate.timeFrom, gate.timeTo)) { return false; }
+        if (gate.dayAtLeast >= 0L && CardPlace.day(world) < gate.dayAtLeast) { return false; }
+        if (!gate.structures.isEmpty() && !CardPlace.inStructure(world, entity.getPosition(), gate.structures, gate.radius)) { return false; }
+        return !gate.needsPlayer() || playerNear(gate, entity);
     }
 
     private static boolean playerNear(SpawnGateDef gate, Entity entity) {

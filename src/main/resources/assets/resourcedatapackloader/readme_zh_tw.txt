@@ -264,8 +264,7 @@ RDPL 適合取代一兩個配方，而你自己內容的配方應當放在旁邊
     harvests         carries          dialogs          veins
     diets            enchantments     dice             games
     orders           ranks            recipe_locks     spawn_locks
-    item_locks
-    weights
+    item_locks       weights          spawn_swaps      mob_drops
 
 方塊有以下幾種型態，由「type」欄位決定：
 

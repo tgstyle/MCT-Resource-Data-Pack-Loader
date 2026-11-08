@@ -103,14 +103,16 @@ public final class ContentEntityTypes {
         return found;
     }
 
-    private static boolean matches(Biome biome, EntityVariantDef def) {
-        if (def.biomes.isEmpty() && def.biomeTypes.isEmpty()) { return true; }
+    private static boolean matches(Biome biome, EntityVariantDef def) { return matches(biome, def.biomes, def.biomeTypes); }
+
+    public static boolean matches(Biome biome, List<String> biomes, List<String> biomeTypes) {
+        if (biomes.isEmpty() && biomeTypes.isEmpty()) { return true; }
         ResourceLocation name = biome.getRegistryName();
-        for (String wanted : def.biomes) {
+        for (String wanted : biomes) {
             if (name != null && wanted.equalsIgnoreCase(name.toString())) { return true; }
             if (wanted.equalsIgnoreCase(ContentBiomeControl.shownName(biome))) { return true; }
         }
-        for (String wanted : def.biomeTypes) {
+        for (String wanted : biomeTypes) {
             for (BiomeDictionary.Type type : BiomeDictionary.getTypes(biome)) {
                 if (type.getName().equalsIgnoreCase(wanted)) { return true; }
             }

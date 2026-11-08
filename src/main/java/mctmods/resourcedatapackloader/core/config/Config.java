@@ -103,6 +103,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
     public static class Data {
         @net.minecraftforge.common.config.Config.Comment("Apply loot_injections/*.json files, which add pools to loot tables that already exist instead of replacing the whole table [Default=true]") public boolean lootInjections = true;
         @net.minecraftforge.common.config.Config.Comment("Apply loot_removals/*.json files, which delete named entries from loot tables that already exist, or empty a table whole [Default=true]") public boolean lootRemovals = true;
+        @net.minecraftforge.common.config.Config.Comment("Apply mob_drops/*.json files, which strip named items from what a mob drops and add stacks to it when it dies [Default=true]") public boolean mobDrops = true;
         @net.minecraftforge.common.config.Config.Comment("Apply block_drops/*.json files, which add to or replace what a block drops when a player breaks it, for blocks a pack does not own [Default=true]") public boolean blockDrops = true;
         @net.minecraftforge.common.config.Config.Comment("Apply anvils/*.json files, which let an anvil put named enchantments on an item for a level cost, earn an advancement as it is taken, and hold an item back from use until then [Default=true]") public boolean anvils = true;
         @net.minecraftforge.common.config.Config.Comment("Apply affixes/*.json and gems/*.json files, which give an item random attribute bonuses and sockets the first time a player holds it, and let an anvil put a gem in a socket [Default=true]") public boolean affixes = true;

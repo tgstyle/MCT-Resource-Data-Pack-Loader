@@ -9,12 +9,18 @@ public final class WeaponDef {
     public final float attackReach;
     @Nullable public final Sweep sweep;
     @Nullable public final Combo combo;
+    public final int fireSeconds;
+    @Nullable public final Finisher finisher;
 
-    public WeaponDef(float attackReach, @Nullable Sweep sweep, @Nullable Combo combo) {
+    public WeaponDef(float attackReach, @Nullable Sweep sweep, @Nullable Combo combo, int fireSeconds, @Nullable Finisher finisher) {
         this.attackReach = attackReach;
         this.sweep = sweep;
         this.combo = combo;
+        this.fireSeconds = fireSeconds;
+        this.finisher = finisher;
     }
+
+    public boolean onHit() { return fireSeconds > 0 || finisher != null; }
 
     public boolean hasReach() { return !Float.isNaN(attackReach); }
 
@@ -35,6 +41,24 @@ public final class WeaponDef {
             this.angle = angle;
             this.width = width;
             this.damage = damage;
+        }
+    }
+
+    public static final class Finisher {
+        public final List<String> targets;
+        public final float health;
+        public final float damage;
+        public final String damageType;
+        public final float pushHorizontal;
+        public final float pushVertical;
+
+        public Finisher(List<String> targets, float health, float damage, String damageType, float pushHorizontal, float pushVertical) {
+            this.targets = targets;
+            this.health = health;
+            this.damage = damage;
+            this.damageType = damageType;
+            this.pushHorizontal = pushHorizontal;
+            this.pushVertical = pushVertical;
         }
     }
 

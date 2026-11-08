@@ -201,6 +201,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/recipe_swaps/*.json`                                                               | 제작 및 제련 레시피에서 아이템 하나를 다른 아이템으로 바꿉니다. [레시피 교체](#레시피-교체)                                                                              |
 | `<namespace>/recipe_locks/*.json`                                                               | 플레이어가 발전 과제를 달성할 때까지 잠겨 있는 레시피. [레시피 잠금](#레시피-잠금)                                                                                       |
 | `<namespace>/spawn_locks/*.json`                                                                | 조건이 충족될 때까지 스폰되지 않는 몹. [스폰 잠금](#스폰-잠금)                                                                                                           |
+| `<namespace>/spawn_swaps/*.json`                                                                | 스폰되는 몹을 다른 몹으로 바꾸고, 추가 개체를 더 스폰합니다. [스폰 교체](#스폰-교체)                                                                                     |
 | `<namespace>/item_locks/*.json`                                                                 | 플레이어가 발전 과제를 달성할 때까지 해당 플레이어의 목록에서 숨기는 아이템. [아이템 잠금](#아이템-잠금)                                                                 |
 | `<namespace>/weights/*.json`                                                                    | 아이템 무게, 짐 한도와 무게 단계. [아이템 무게](#아이템-무게)                                                                                                            |
 | `<namespace>/disabled/*.json`                                                                   | 사용에서 제외한 블록과 아이템. [비활성화된 블록과 아이템](#비활성화된-블록과-아이템)                                                                                     |
@@ -215,6 +216,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/trades/*.json`                                                                     | 직종이 사고파는 것. [주민과 거래](#주민과-거래)                                                                                                                          |
 | `<namespace>/loot_tables/*.json`                                                                | 교체하는 전리품 테이블. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                                  |
 | `<namespace>/loot_injections/*.json`                                                            | 이미 있는 테이블에 추가하는 풀. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                                                          |
+| `<namespace>/mob_drops/*.json`                                                                  | 몹이 떨어뜨리는 아이템 중 일부를 제거하고 스택을 추가합니다. [몹 드롭](#몹-드롭)                                                                                         |
 | `<namespace>/loot_removals/*.json`                                                              | 이미 있는 테이블에서 제거하는 항목, 또는 테이블 전체를 비우는 항목. [재정의할 수 있는 항목](#재정의할-수-있는-항목)                                                      |
 | `<namespace>/block_drops/*.json`                                                                | 팩이 소유하지 않은 블록에 추가하거나 대체하는 드롭. [블록 드롭](#블록-드롭)                                                                                              |
 | `<namespace>/anvils/*.json`                                                                     | 모루가 이름 있는 아이템에 부여하는 마법, 그로 얻는 발전 과제, 그때까지의 잠금. [모루 작업](#모루-작업)                                                                   |
@@ -582,6 +584,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 | `disableOverrides` | `recipes`  | 꺼짐   | 이 모드가 레시피를 교체하거나 추가하지 못하게 합니다. 다른 코어모드가 레시피 로딩에서 충돌할 때만 필요합니다                            |
 | `lootInjections`   | `data`     | 켜짐   | `loot_injections/*.json`을 적용합니다                                                                                                   |
 | `lootRemovals`     | `data`     | 켜짐   | `loot_removals/*.json`을 적용합니다                                                                                                     |
+| `mobDrops`         | `data`     | 켜짐   | `mob_drops/*.json`을 적용합니다                                                                                                         |
 | `enchanting`       | `data`     | 켜짐   | `enchanting/*.json`을 적용합니다                                                                                                        |
 | `affixes`          | `data`     | 켜짐   | `affixes/*.json`과 `gems/*.json`을 적용합니다                                                                                           |
 | `blockDrops`       | `data`     | 켜짐   | `block_drops/*.json`을 적용합니다                                                                                                       |
@@ -596,15 +599,15 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 직접 만든 콘
 
 팩은 서버에만 둘 수 있고, 플레이어는 순정 바닐라 클라이언트를 쓸 수 있습니다. 단 한 가지 제약이 있습니다. **팩의 어느 것도 무언가를 등록해서는 안 됩니다.** 두 모드 id 모두 어떤 원격이든 받아들이며, 판단은 팩이 합니다. 바닐라 클라이언트는 자기에게 들어 있는 레지스트리로 플레이하므로, 레지스트리에 추가하는 팩은 양쪽에 있어야 합니다.
 
-| 서버에만 있어도 충분함                                                                                                                                                      | 클라이언트에도 팩이 필요함                                                                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                      | `blocks`, `items`, `fluids`, `materials`                                                                                        |
-| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                   | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
-| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`                                                                          | `biomes`, `dimensions`, `portalframes`                                                                                          |
-| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                       |
-| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업)           | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
-| `teams`, `scoring`, `ranks`                                                                                                                                                 | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
-| 제어 계층 전체, 설정, 사전 생성                                                                                                                                             |                                                                                                                                 |
+| 서버에만 있어도 충분함                                                                                                                                                                   | 클라이언트에도 팩이 필요함                                                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                   | `blocks`, `items`, `fluids`, `materials`                                                                                        |
+| `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 접두 속성과 소켓의 이름) |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`, `spawn_swaps`                                                                        | `biomes`, `dimensions`, `portalframes`                                                                                          |
+| `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `mob_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                       |
+| `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (클라이언트가 아는 직업의 경우: 바닐라의 직업, 또는 양쪽에 설치된 모드의 직업)                        | `entities`, `worldintro`, `texts` (소개는 바닐라 클라이언트에 표시되지 않음)                                                    |
+| `teams`, `scoring`, `ranks`                                                                                                                                                              | `models`, `blockstates`, `textures`, `lang` (클라이언트 폴더. 클라이언트가 없으면 빼세요)                                       |
+| 제어 계층 전체, 설정, 사전 생성                                                                                                                                                          |                                                                                                                                 |
 
 오른쪽 열은 절대적인 한계입니다. 알 수 없는 차원으로 보내진 바닐라 클라이언트는 연결이 끊기고, 알 수 없는 블록은 클라이언트에 설명할 수 없습니다. 왼쪽 열이 동작하는 이유는 거기 있는 모든 것이 전부 서버 측에서 실행되거나 바닐라가 이미 쓰는 패킷으로 클라이언트에 전달되기 때문입니다(서버가 채우는 제작 결과 슬롯, 일반 발전 과제 패킷, 상태 메시지 형태의 게이트 거부 알림, 바닐라의 게임 모드/타이틀/순간이동 패킷으로 구성된 사전 생성 보류).
 
@@ -1906,6 +1909,8 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
   "attackReach": 5.0,
   "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
   "combo": { "window": 40, "steps": [{ "damage": 1.0 }, { "damage": 1.5 }] },
+  "fireSeconds": 10,
+  "finisher": { "targets": ["minecraft:skeleton"], "health": 1.0, "damage": 150.0, "damageType": "fireworks", "push": { "horizontal": 2.0, "vertical": 4.0 } },
   "rollStore": "dice_total",
   "locates": "Village",
   "passesTurn": false,
@@ -2005,6 +2010,8 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `attackReach`    | 아니요            | 소수, 블록                                                   | `3.0`                | 주 손에 든 아이템으로 친 타격이 닿는 거리. 몹을 오른쪽 클릭할 때도 적용됩니다. [무기](#무기) 참고                                                                                                                                                     |
 | `sweep`          | 아니요            | 객체                                                         | 없음                 | 최대 강도의 타격 주변에 있는 다른 몹에게도 피해를 줍니다. [무기](#무기) 참고                                                                                                                                                                          |
 | `combo`          | 아니요            | 객체                                                         | 없음                 | `window`틱 이내에 이어서 친 타격이 `steps`를 차례로 밟습니다. [무기](#무기) 참고                                                                                                                                                                      |
+| `fireSeconds`    | 아니요            | 정수, 0 이상                                                 | `0`                  | 적중한 타격이 대상을 이 초 동안 불태웁니다. [무기](#무기) 참고                                                                                                                                                                                        |
+| `finisher`       | 아니요            | 객체                                                         | 없음                 | 나열한 몹에게 주는 마무리 타격. 게임의 타격 이후 틱이 끝날 때 적용됩니다. [무기](#무기) 참고                                                                                                                                                          |
 | `attackSpeed`    | 아니요            | 소수                                                         | 도구 종류에 맞게     | `tool`의 공격 속도 속성이며, 검은 `-2.4`입니다                                                                                                                                                                                                        |
 | `cooldown`       | 아니요            | 정수, 틱                                                     | `0`                  | `food`, `drink`, `potion`에서는 소비한 뒤 아이템을 다시 쓸 수 없는 시간이고, `rolls`가 있는 아이템에서는 굴림 사이의 시간입니다                                                                                                                       |
 | `container`      | drink             | 아이템 이름                                                  | 없음                 | 남는 것, 예를 들어 병                                                                                                                                                                                                                                 |
@@ -2092,6 +2099,30 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `sweep`  | 아니요 | 객체            | 아이템의 `sweep` | 이 타격에 한해 아이템의 `sweep`을 대체하며, 키는 위와 같습니다 |
 
 콤보가 진행되고 휩쓸기가 일어나는 것은 최대 강도의 타격뿐입니다. 더 약한 타격은 콤보를 초기화하고, 단계 피해도 휩쓸기도 받지 못합니다. 진행 상황은 플레이어마다 메모리에만 보관되며 저장되지 않습니다. 접속 종료, 다른 아이템으로 바꾸기, `window` 경과가 있으면 초기화됩니다. 휩쓸기는 플레이어, 대상, 아군, 관전자, 마커 갑옷 거치대에는 닿지 않으며, 각 몹은 단계 배율을 곱한 뒤의 타격에 `damage`를 곱한 만큼 피해를 받습니다. 기본 피해가 대상의 직전 피해보다 크지 않은 타격은 단계 배율이 적용되기 전에 피해 무적 시간에 막히므로 단계로 올릴 수 없습니다. 공격 속도가 2 이상일 때만 해당됩니다.
+
+`fireSeconds`는 아이템의 타격이 적중할 때마다 대상을 이 초 동안 불태웁니다. 단위는 정수 초이며, `0` 이상입니다.
+
+`finisher`는 게임 자체의 타격이 적중한 뒤에 마무리 타격을 추가합니다. 게임의 타격은 그대로 유지되어 넉백, 휩쓸기, 내구도 감소가 모두 일어나며, 처치는 여전히 플레이어에게 돌아가므로 경험치와 플레이어 처치 드롭도 평소처럼 나옵니다. 서버 틱이 끝날 때 아직 살아 있는 각 대상은 피해 무적 시간이 초기화되고, `health`와 `damage`를 받아 밀려납니다. 그 전에 죽었거나, 언로드되었거나, 제거된 대상은 건너뜁니다.
+
+```json
+{
+  "finisher": {
+    "targets": ["minecraft:skeleton", "minecraft:stray", "minecraft:wither_skeleton"],
+    "health": 1.0,
+    "damage": 150.0,
+    "damageType": "fireworks",
+    "push": { "horizontal": 2.0, "vertical": 4.0 }
+  }
+}
+```
+
+| 키           | 필수   | 값                                       | 기본값    | 설명                                                                                                                                     |
+| ------------ | ------ | ---------------------------------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `targets`    | 예     | 엔티티 ID 목록                           |           | 마무리 타격을 받을 몹. 스켈레톤은 ID로 하나씩 적습니다. `#monster`, `#creature`, `#ambient`, `#water_creature` 종류도 사용할 수 있습니다 |
+| `health`     | 아니요 | 0보다 큰 실수                            | 없음      | 먼저 대상의 체력을 이 값으로 설정합니다                                                                                                  |
+| `damage`     | 아니요 | 0보다 큰 실수                            | 없음      | 그다음 공격자 없이 이 고정 피해를 줍니다                                                                                                 |
+| `damageType` | 아니요 | 피해원 이름                              | `generic` | 그 피해의 출처: `lava`, `in_fire`, `on_fire`, `drown`, `magic`, `wither`, `hot_floor`, `generic`, `fireworks`, 또는 그 밖의 이름         |
+| `push`       | 아니요 | `{ "horizontal": 0.0, "vertical": 0.0 }` | `0`, `0`  | 좌우 어느 쪽으로든 `horizontal`까지, 위쪽으로 `vertical`까지 무작위 충격을 줍니다. 각각 0에서 64 사이입니다                              |
 
 ## 유체
 
@@ -2315,18 +2346,18 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 }
 ```
 
-| 키               | 필수   | 값                | 기본값                  | 설명                                        |
-| ---------------- | ------ | ----------------- | ----------------------- | ------------------------------------------- |
-| `harvestLevel`   | 아니요 | 0~3               | `1`                     | 도구 등급. 0 나무, 1 돌, 2 철, 3 다이아몬드 |
-| `durability`     | 아니요 | 정수              | `250`                   | 부서지기 전까지의 사용 횟수                 |
-| `efficiency`     | 아니요 | 소수              | `6.0`                   | 채굴 속도. 다이아몬드는 8                   |
-| `damage`         | 아니요 | 소수              | `2.0`                   | 공격 피해 보너스                            |
-| `enchantability` | 아니요 | 정수              | `14`                    | 마법 부여의 질. 금은 22                     |
-| `repairItem`     | 아니요 | 아이템 이름       | 없음                    | 모루에서 수리하는 데 쓰는 것                |
-| `reduction`      | 아니요 | 정수 네 개의 목록 |                         | 방어 점수, 부츠, 레깅스, 흉갑, 투구 순서    |
-| `toughness`      | 아니요 | 소수              | `0.0`                   | 다이아몬드처럼 방어 강도                    |
-| `equipSound`     | 아니요 | 소리 이름         | `item.armor.equip_iron` | 방어구를 착용할 때 나는 소리                |
-| `armorTexture`   | 아니요 | 텍스처 접두사     | 파일 이름               | 착용한 방어구 텍스처                        |
+| 키               | 필수   | 값                           | 기본값                  | 설명                                                                                                                                                  |
+| ---------------- | ------ | ---------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `harvestLevel`   | 아니요 | 0~3                          | `1`                     | 도구 등급. 0 나무, 1 돌, 2 철, 3 다이아몬드                                                                                                           |
+| `durability`     | 아니요 | 정수                         | `250`                   | 부서지기 전까지의 사용 횟수                                                                                                                           |
+| `efficiency`     | 아니요 | 소수                         | `6.0`                   | 채굴 속도. 다이아몬드는 8                                                                                                                             |
+| `damage`         | 아니요 | 소수                         | `2.0`                   | 공격 피해 보너스                                                                                                                                      |
+| `enchantability` | 아니요 | 정수                         | `14`                    | 마법 부여의 질. 금은 22                                                                                                                               |
+| `repairItem`     | 아니요 | 아이템 이름, 또는 `#oreName` | 없음                    | 모루에서 수리하는 데 쓰는 것. `#`으로 시작하는 값은 광석 사전 이름이므로, 그 이름으로 등록된 아이템이면 무엇이든 수리에 쓸 수 있습니다(`#netherStar`) |
+| `reduction`      | 아니요 | 정수 네 개의 목록            |                         | 방어 점수, 부츠, 레깅스, 흉갑, 투구 순서                                                                                                              |
+| `toughness`      | 아니요 | 소수                         | `0.0`                   | 다이아몬드처럼 방어 강도                                                                                                                              |
+| `equipSound`     | 아니요 | 소리 이름                    | `item.armor.equip_iron` | 방어구를 착용할 때 나는 소리                                                                                                                          |
+| `armorTexture`   | 아니요 | 텍스처 접두사                | 파일 이름               | 착용한 방어구 텍스처                                                                                                                                  |
 
 ### 크리에이티브 탭
 
@@ -3629,6 +3660,57 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 - 제거는 `loot_injections`보다 먼저 실행되므로 주입된 풀은 제거되지 않습니다. RDPL 이후에 테이블에 추가하는 모드는 추가한 내용을 그대로 유지합니다.
 - 일치하는 풀, 항목, 아이템이 없으면 `rdpl.log`에 경고가 남으므로, 모드를 제거한 뒤에도 팩이 계속 동작합니다.
 - 설정의 `lootRemovals`로 끌 수 있습니다. 전리품 테이블은 서버 데이터이므로 서버만 있으면 충분합니다.
+- 몹이 입고 있거나 들고 있던 것으로 그 몹의 드롭에서 아이템을 빼고 싶다면 [몹 드롭](#몹-드롭)을 씁니다. 장비는 전리품 테이블 밖에서 떨어지므로 여기의 `items`로는 닿지 않습니다.
+
+## 몹 드롭
+
+*제작, 전리품, 거래*
+
+`<namespace>/mob_drops/*.json`
+
+파일 이름은 자유롭게 정할 수 있습니다. 읽히는 것은 폴더뿐이며, 여러 파일은 겹쳐서 적용됩니다. 파일은 지정한 몹이 죽을 때 떨어뜨리는 것 중에서, 전리품 테이블에서 나온 것이든 입고 들고 있던 장비에서 나온 것이든 상관없이 이름으로 지정한 아이템을 빼고 스택을 추가합니다. 규칙은 처치한 플레이어가 들고 있는 것, 몹을 죽인 피해의 종류, 몹이 이미 아이템을 떨어뜨렸는지 여부에 따라 달라질 수 있습니다. 파일이 없으면 아무것도 빠지거나 추가되지 않습니다.
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "stripTagged": false,
+  "adds": [
+    { "item": "minecraft:skull:0", "count": 1, "chance": 1.0, "killerHolds": ["mypack:blade", "mypack:blade2"], "damageTypes": ["fireworks"] }
+  ]
+}
+```
+
+몹이 머리를 아직 떨어뜨리지 않았을 때만 위더 스켈레톤에게 전용 머리를 주는 두 번째 파일입니다:
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "adds": [
+    { "item": "minecraft:skull:1", "killerHolds": ["mypack:blade", "mypack:blade2"], "damageTypes": ["fireworks"], "unlessDropped": ["minecraft:skull:1"] },
+    { "item": "mypack:fragment", "chance": 1.0, "unlessDropped": ["minecraft:skull:1"] }
+  ]
+}
+```
+
+| 키                     | 필수   | 값                                                          | 기본값  | 설명                                                                                                                             |
+| ---------------------- | ------ | ----------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`             | 예     | 엔티티 이름 또는 종류 목록                                  | 없음    | 파일이 적용되는 몹. 바닐라든 어떤 모드든 상관없습니다                                                                            |
+| `strip`                | 아니요 | 아이템 ID(`id:meta`) 목록, 또는 `#`과 광석 사전 이름        | 없음    | 그 몹들의 드롭에서 뺍니다                                                                                                        |
+| `stripTagged`          | 아니요 | 불리언                                                      | `false` | `false`이면 피해값 외의 NBT(인챈트, 이름 등)가 붙은 스택은 남깁니다                                                              |
+| `adds`                 | 아니요 | 객체 목록                                                   | 없음    | 드롭에 순서대로 추가하는 스택                                                                                                    |
+| `adds[].item`          | 예     | 아이템 ID, `id:meta`                                        | 없음    | 추가할 것                                                                                                                        |
+| `adds[].count`         | 아니요 | 정수, 또는 `{min, max}`                                     | `1`     | 스택 크기                                                                                                                        |
+| `adds[].chance`        | 아니요 | 0에서 1 사이의 실수                                         | `1.0`   | 몹을 처치할 때마다 한 번 굴립니다                                                                                                |
+| `adds[].killerHolds`   | 아니요 | 아이템 ID 또는 `#`과 광석 사전 이름의 목록                  | 없음    | 처치한 플레이어의 주 손이 이 중 하나를 들고 있음                                                                                 |
+| `adds[].damageTypes`   | 아니요 | 피해원 이름 목록                                            | 없음    | 몹을 죽인 피해가 이 중 하나입니다. 폭죽 피해는 `fireworks`, 즉시 피해와 언데드의 즉시 회복은 `magic`                             |
+| `adds[].requireAll`    | 아니요 | 불리언                                                      | `false` | `false`이면 `killerHolds`나 `damageTypes` 중 하나만 있어도 충분합니다. `true`이면 둘 다 필요합니다. 둘 다 없으면 항상 적용됩니다 |
+| `adds[].unlessDropped` | 아니요 | 아이템 ID 목록(`id:meta`. meta를 생략하면 모든 meta와 일치) | 없음    | 앞선 추가분을 포함해 드롭에 이 중 하나가 이미 있으면 그 추가는 건너뜁니다                                                        |
+
+- 장비는 플레이어가 몹을 처치했을 때나 해당 슬롯의 드롭 확률이 1보다 클 때만 떨어집니다. 그래서 스켈레톤의 검을 제거하는 팩은 그 경우에만 검이 사라진 것으로 보입니다.
+- 제거가 먼저 실행되고, 이어서 추가가 순서대로 실행됩니다. 몹 자체의 드롭과 랭크 드롭 뒤에 실행됩니다.
+- 설정의 `mobDrops`로 폴더를 끌 수 있습니다. 드롭은 서버 데이터이므로 서버만 있으면 충분합니다.
 
 ## 플레이어 전리품
 
@@ -4375,6 +4457,54 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 | `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 아니요 | 스폰 조건과 같음             | 없음   | 스폰 조건과 같은 키이며 의미도 같습니다. 이 중 하나도 지정하지 않은 파일은 건너뛰며 로그에 기록됩니다                                                     |
 
 여러 파일에, 또는 변형에도 이름이 올라 있는 몹은 모든 조건이 충족되는 곳과 때에만 스폰됩니다. 막는 대상은 자연 스폰이며 청크가 생성되면서 만드는 것도 포함합니다. 알, `/summon`, 스포너는 막지 않습니다.
+
+### 스폰 교체
+
+*엔티티 변형*
+
+`<namespace>/spawn_swaps/*.json`
+
+파일 이름은 자유롭게 정할 수 있습니다. 읽히는 것은 폴더뿐이며, 여러 파일은 겹쳐서 적용됩니다. 스폰되는 몹을 무게로 고른 다른 몹으로 바꾸고, 같은 자리에 추가 개체를 더 스폰할 수 있습니다. 네더에서 스켈레톤을 위더 스켈레톤으로 스폰하게 하거나, 어디서든 밤에 몹을 바꾸는 데 쓰입니다. 조건이 맞는 첫 번째 파일이 결정하므로, 같은 스폰이 두 번 바뀌는 일은 없고, 바뀐 개체나 추가 복제본이 다시 바뀌는 일도 없습니다.
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "becomes": [ { "entity": "mypack:wither_skeleton_bow", "weight": 1 } ],
+  "biomeTypes": ["NETHER"],
+  "blocks": ["minecraft:nether_brick"],
+  "extra": 3,
+  "elsewhere": { "chance": 0.15, "lightBelow": 9, "night": true },
+  "fromSpawners": false
+}
+```
+
+네더 요새가 스폰하는 위더 스켈레톤에 더해 추가 위더 스켈레톤을 내보내는 두 번째 파일입니다:
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "becomes": ["minecraft:wither_skeleton"],
+  "biomeTypes": ["NETHER"],
+  "extra": 3
+}
+```
+
+| 키                                                                                                                           | 필수   | 값                                                   | 기본값  | 설명                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | 예     | 엔티티 이름 또는 종류 목록                           | 없음    | 교체할 몹. 스폰 잠금과 같습니다. 이 키가 없는 파일은 건너뛰고 로그에 기록됩니다                                                                                                                 |
+| `becomes`                                                                                                                    | 예     | 엔티티 ID 목록, 또는 `entity`와 `weight`를 가진 객체 | 없음    | 그 자리를 대신할 것. 무게에 따라 고르며, 등록된 엔티티나 엔티티 변형이면 무엇이든 가능합니다. 이 키가 없는 파일은 건너뛰고 로그에 기록됩니다                                                    |
+| `biomes`, `biomeTypes`                                                                                                       | 아니요 | 텍스트 목록                                          | 없음    | 교체가 성립하는 바이옴. 엔티티 변형과 같은 방식으로 씁니다                                                                                                                                      |
+| `blocks`                                                                                                                     | 아니요 | 블록 이름 목록                                       | 없음    | 스폰 지점 바로 아래의 블록이 이 중 하나일 때 교체가 성립합니다. 예: `minecraft:nether_brick`. 블록 이름은 다른 블록 목록과 같은 방식으로 쓰며, 등록된 블록을 지정하지 않은 파일은 건너뜁니다    |
+| `requireAll`                                                                                                                 | 아니요 | 불리언                                               | `false` | `false`이면 `biomes`, `biomeTypes`, `blocks` 중 하나만 있어도 충분합니다. `true`이면 지정한 것이 모두 성립해야 합니다. 아무것도 지정하지 않으면 다른 조건이 맞는 곳이면 어디서든 교체합니다     |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 아니요 | 스폰 조건과 같음                                     | 없음    | 스폰 조건과 같은 키이며 의미도 같습니다. 모두 성립해야 하며, `elsewhere`에도 적용됩니다                                                                                                         |
+| `elsewhere`                                                                                                                  | 아니요 | 객체                                                 | 꺼짐    | 위의 장소 키가 맞지 않는 곳에서도 `chance` 확률로, 아래 제한 안에서 교체합니다                                                                                                                  |
+| `elsewhere.chance`                                                                                                           | 아니요 | 0에서 1 사이의 실수                                  | `1.0`   | 스폰마다 교체할 확률                                                                                                                                                                            |
+| `elsewhere.lightBelow`                                                                                                       | 아니요 | 1에서 16 사이의 정수                                 | 없음    | 그 자리의 합성 빛 수준이 이 값보다 낮을 때만 교체합니다                                                                                                                                         |
+| `elsewhere.night`                                                                                                            | 아니요 | 불리언                                               | `false` | 시간 `13000`부터 `23000`까지의 밤에만 교체합니다                                                                                                                                                |
+| `extra`                                                                                                                      | 아니요 | 0에서 16 사이의 정수                                 | `0`     | 같은 자리에 이만큼 몹을 더 스폰합니다. 각각 `becomes`에서 자체 추첨으로 고르며, 자체 초기 장비를 받습니다. 공간에 맞지 않는 복제본은 건너뛰며, 복제본은 다음 스폰 주기부터 몹 상한에 포함됩니다 |
+| `fromSpawners`                                                                                                               | 아니요 | 불리언                                               | `false` | 기본값으로는 네더 요새의 몹을 포함한 자연 스폰과, 청크가 생성되며 만드는 것(크리처만)이 교체됩니다. `true`이면 스포너 블록도 포함합니다. 알, `/summon`, 구조물로 배치된 몹은 교체되지 않습니다  |
+
+파일이 없으면 아무것도 교체되지 않습니다. 다른 이유로 취소된 스폰은 월드에 들어오지 않으므로 교체되지도 않습니다. 등록되지 않은 엔티티를 가리키는 교체는 스폰을 그대로 두며, 로그에 기록됩니다.
 
 ### 네트워크
 

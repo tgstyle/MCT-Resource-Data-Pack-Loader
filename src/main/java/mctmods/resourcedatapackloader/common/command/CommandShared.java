@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.dialogs.ContentDialogs;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
@@ -93,6 +94,7 @@ public final class CommandShared {
         ContentHearts.refresh(server);
         ContentDiet.refresh(server);
         SpawnLocks.load();
+        SpawnSwaps.load();
         RecipeLocks.reload();
         ContentItemLocks.load();
         ContentWeights.load();

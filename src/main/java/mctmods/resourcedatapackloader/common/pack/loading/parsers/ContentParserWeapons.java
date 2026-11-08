@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.pack.loading.parsers;
 
+import mctmods.resourcedatapackloader.common.entities.behavior.MobStats;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.WeaponDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
@@ -16,6 +17,7 @@ import net.minecraft.util.ResourceLocation;
 
 public final class ContentParserWeapons {
     private static final int DEFAULT_WINDOW = 30;
+    private static final float MAX_PUSH = 64.0F;
 
     private ContentParserWeapons() {}
 
@@ -28,8 +30,41 @@ public final class ContentParserWeapons {
         }
         WeaponDef.Sweep sweep = sweep(key, json);
         WeaponDef.Combo combo = combo(key, json);
-        if (Float.isNaN(reach) && sweep == null && combo == null) { return null; }
-        return new WeaponDef(reach, sweep, combo);
+        int fire = Json.getInt(json, "fireSeconds", 0);
+        if (fire < 0) {
+            ContentLog.LOGGER.error("The item {} sets fireSeconds to {}, which is below 0, so the key is ignored", key, fire);
+            fire = 0;
+        }
+        WeaponDef.Finisher finisher = finisher(key, json);
+        if (Float.isNaN(reach) && sweep == null && combo == null && fire == 0 && finisher == null) { return null; }
+        return new WeaponDef(reach, sweep, combo, fire, finisher);
+    }
+
+    @Nullable private static WeaponDef.Finisher finisher(ResourceLocation key, JsonObject parent) {
+        if (!parent.has("finisher")) { return null; }
+        if (!parent.get("finisher").isJsonObject()) {
+            ContentLog.LOGGER.error("The finisher on {} is not an object, so the key is ignored", key);
+            return null;
+        }
+        JsonObject json = parent.getAsJsonObject("finisher");
+        String owner = "The finisher on " + key;
+        List<String> targets = json.has("targets") ? MobStats.entities(owner, "targets", json.get("targets")) : null;
+        if (targets == null || targets.isEmpty()) {
+            ContentLog.LOGGER.error("The finisher on {} has no targets, so the key is ignored", key);
+            return null;
+        }
+        float horizontal = 0.0F;
+        float vertical = 0.0F;
+        if (json.has("push") && json.get("push").isJsonObject()) {
+            JsonObject push = json.getAsJsonObject("push");
+            horizontal = Json.ranged(push, "horizontal", 0.0F, 0.0F, MAX_PUSH, owner);
+            vertical = Json.ranged(push, "vertical", 0.0F, 0.0F, MAX_PUSH, owner);
+        }
+        else if (json.has("push")) { ContentLog.LOGGER.error("The push of the finisher on {} is not an object, so the key is ignored", key); }
+        return new WeaponDef.Finisher(targets,
+                Json.ranged(json, "health", Float.NaN, Float.MIN_VALUE, Float.MAX_VALUE, owner),
+                Json.ranged(json, "damage", Float.NaN, Float.MIN_VALUE, Float.MAX_VALUE, owner),
+                Json.getString(json, "damageType", "generic"), horizontal, vertical);
     }
 
     @Nullable private static WeaponDef.Sweep sweep(ResourceLocation key, JsonObject parent) {

@@ -89,6 +89,8 @@ public final class PackManager {
     public static final String RECIPE_LOCKS = "recipe_locks";
     public static final String ITEM_LOCKS = "item_locks";
     public static final String SPAWN_LOCKS = "spawn_locks";
+    public static final String SPAWN_SWAPS = "spawn_swaps";
+    public static final String MOB_DROPS = "mob_drops";
     public static final String WEIGHTS = "weights";
     public static final String DISABLED = "disabled";
     public static final String MATERIALS = "materials";
@@ -127,7 +129,7 @@ public final class PackManager {
     public static final String JSON = "json";
     public static final String JSON_SUFFIX = "." + JSON;
     public static final String MCFUNCTION = "mcfunction";
-    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, FLUID_RULES, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, PACKLIST, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, SLEEPING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, HEARTS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, COLUMNS, FLOWER_SPREADS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_SWAPS, RECIPE_LOCKS, ITEM_LOCKS, SPAWN_LOCKS, WEIGHTS, LOOT_INJECTIONS, LOOT_REMOVALS, CARDS, DIALOGS, CELESTIAL, DISABLED)));
+    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, FLUID_RULES, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, PACKLIST, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, ENCHANTMENTS, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, AFFIXES, GEMS, ENCHANTING, SLEEPING, ORDERS, RANKS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DIETS, HEARTS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, HARVESTS, VEINS, COLUMNS, FLOWER_SPREADS, CARRIES, BREWING, FUELS, TOOLTIPS, LANGGATES, FURNACE, RECIPE_REMOVALS, RECIPE_SWAPS, RECIPE_LOCKS, ITEM_LOCKS, SPAWN_LOCKS, SPAWN_SWAPS, MOB_DROPS, WEIGHTS, LOOT_INJECTIONS, LOOT_REMOVALS, CARDS, DIALOGS, CELESTIAL, DISABLED)));
     private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
@@ -302,18 +304,13 @@ public final class PackManager {
         if (!matcher.find() || (matcher.group(1) == null && matcher.group(2) == null)) { return new RDPLPack(raw, -1, fallback, root, owned, archiveFile); }
         String clean = raw.substring(matcher.end());
         if (clean.isEmpty()) { clean = raw; }
-        boolean overriding = tier(matcher.group(2), fallback);
+        boolean overriding = matcher.group(2) == null ? fallback : matcher.group(2).equalsIgnoreCase("O");
         if (matcher.group(1) == null) { return new RDPLPack(clean, -1, overriding, root, owned, archiveFile); }
         try { return new RDPLPack(clean, Integer.parseInt(matcher.group(1)), overriding, root, owned, archiveFile); }
         catch (NumberFormatException ex) {
             ContentLog.LOGGER.warn("Pack '{}': priority number is too large, treating the pack as unprioritised", raw);
             return new RDPLPack(clean, -1, overriding, root, owned, archiveFile);
         }
-    }
-
-    private static boolean tier(@Nullable String marker, boolean fallback) {
-        if (marker == null) { return fallback; }
-        return marker.equalsIgnoreCase("O");
     }
 
     private static String stripExtension(String fileName) {

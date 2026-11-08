@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityBars
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityBehavior;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityPhases;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
+import mctmods.resourcedatapackloader.common.entities.spawning.EntitySwap;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnGateDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
@@ -49,7 +50,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -534,7 +534,7 @@ public final class ContentEntities {
     }
 
     private static boolean swapped(EntityJoinWorldEvent event, EntityVariantDef def) {
-        if (def.becomes.isEmpty() || SWAPPING.get() == Boolean.TRUE) { return false; }
+        if (def.becomes.isEmpty() || EntitySwap.active()) { return false; }
         List<PickDef> choices = SPAWNER.get() == Boolean.TRUE ? kin(def) : def.becomes;
         String chosen = PickDef.pick(choices, event.getWorld().rand, null);
         if (chosen == null || chosen.equals(def.registryName.toString())) { return false; }
@@ -543,16 +543,7 @@ public final class ContentEntities {
             ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.registryName, chosen);
             return false;
         }
-        Entity was = event.getEntity();
-        SWAPPING.set(Boolean.TRUE);
-        try {
-            Entity becomes = EntityList.createEntityByIDFromName(wanted, event.getWorld());
-            if (becomes == null) { return false; }
-            becomes.setLocationAndAngles(was.posX, was.posY, was.posZ, was.rotationYaw, was.rotationPitch);
-            if (becomes instanceof EntityLiving) { ((EntityLiving) becomes).onInitialSpawn(event.getWorld().getDifficultyForLocation(new BlockPos(becomes)), null); }
-            event.getWorld().spawnEntity(becomes);
-        }
-        finally { SWAPPING.set(Boolean.FALSE); }
+        if (!EntitySwap.spawn(event.getWorld(), event.getEntity(), wanted, false)) { return false; }
         event.setCanceled(true);
         return true;
     }
@@ -561,7 +552,6 @@ public final class ContentEntities {
     private static final String BORN = "rdplBorn";
     private static final String CALM = "rdplCalmAt";
     private static final long CALM_STEP = 10L;
-    private static final ThreadLocal<Boolean> SWAPPING = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final ThreadLocal<Boolean> SPAWNER = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private static boolean stillRoused(EntityLiving living) {

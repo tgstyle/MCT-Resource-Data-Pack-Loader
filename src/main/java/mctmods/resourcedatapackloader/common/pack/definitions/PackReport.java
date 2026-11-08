@@ -39,6 +39,7 @@ public final class PackReport {
         collect(off, Config.recipes.removals, "recipes.removals", PackManager.JSON, PackManager.RECIPE_REMOVALS);
         collect(off, Config.data.lootInjections, "data.lootInjections", PackManager.JSON, PackManager.LOOT_INJECTIONS);
         collect(off, Config.data.lootRemovals, "data.lootRemovals", PackManager.JSON, PackManager.LOOT_REMOVALS);
+        collect(off, Config.data.mobDrops, "data.mobDrops", PackManager.JSON, PackManager.MOB_DROPS);
         collect(off, Config.data.blockDrops, "data.blockDrops", PackManager.JSON, PackManager.BLOCK_DROPS);
         collect(off, Config.data.anvils, "data.anvils", PackManager.JSON, PackManager.ANVILS);
         collect(off, Config.data.affixes, "data.affixes", PackManager.JSON, PackManager.AFFIXES, PackManager.GEMS);

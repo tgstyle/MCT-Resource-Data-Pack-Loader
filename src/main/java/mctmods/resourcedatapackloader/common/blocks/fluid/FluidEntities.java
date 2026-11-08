@@ -1,11 +1,9 @@
 package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidBehaviorDef;
+import mctmods.resourcedatapackloader.common.util.entity.DamageSources;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -18,7 +16,6 @@ import net.minecraft.world.World;
 public final class FluidEntities {
     private static final float LAVA_DAMAGE = 4.0F;
     private static final int LAVA_FIRE_SECONDS = 15;
-    private static final Map<String, DamageSource> SOURCES = new ConcurrentHashMap<>();
 
     private FluidEntities() {}
 
@@ -41,7 +38,7 @@ public final class FluidEntities {
             entity.setFire(LAVA_FIRE_SECONDS);
         }
         if (keys.fireSeconds != null && keys.fireSeconds > 0) { entity.setFire(keys.fireSeconds); }
-        if (keys.damage != null && keys.damage > 0.0F && entity.ticksExisted % keys.damageEvery == 0) { entity.attackEntityFrom(source(keys.damageType), keys.damage); }
+        if (keys.damage != null && keys.damage > 0.0F && entity.ticksExisted % keys.damageEvery == 0) { entity.attackEntityFrom(DamageSources.source(keys.damageType), keys.damage); }
     }
 
     private static void item(World world, BlockPos pos, EntityItem entity, ContentFluidBlock block) {
@@ -86,19 +83,5 @@ public final class FluidEntities {
     private static boolean immune(EntityItem entity, List<String> immune) {
         if (immune.isEmpty() || entity.getItem().isEmpty() || entity.getItem().getItem().getRegistryName() == null) { return false; }
         return immune.contains(entity.getItem().getItem().getRegistryName().toString());
-    }
-
-    private static DamageSource source(String name) {
-        switch (name.toLowerCase(Locale.ROOT)) {
-            case "lava": return DamageSource.LAVA;
-            case "in_fire": return DamageSource.IN_FIRE;
-            case "on_fire": return DamageSource.ON_FIRE;
-            case "drown": return DamageSource.DROWN;
-            case "magic": return DamageSource.MAGIC;
-            case "wither": return DamageSource.WITHER;
-            case "hot_floor": return DamageSource.HOT_FLOOR;
-            case "generic": return DamageSource.GENERIC;
-            default: return SOURCES.computeIfAbsent(name, DamageSource::new);
-        }
     }
 }

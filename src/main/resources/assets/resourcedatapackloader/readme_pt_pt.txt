@@ -295,8 +295,7 @@ Cada um destes é uma pasta em assets/<yourpack>:
     harvests         carries          dialogs          veins
     diets            enchantments     dice             games
     orders           ranks            recipe_locks     spawn_locks
-    item_locks
-    weights
+    item_locks       weights          spawn_swaps      mob_drops
 
 Os blocos existem nestas formas, definidas pelo campo "type":
 

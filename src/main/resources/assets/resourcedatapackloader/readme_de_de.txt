@@ -299,8 +299,7 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     harvests         carries          dialogs          veins
     diets            enchantments     dice             games
     orders           ranks            recipe_locks     spawn_locks
-    item_locks
-    weights
+    item_locks       weights          spawn_swaps      mob_drops
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 

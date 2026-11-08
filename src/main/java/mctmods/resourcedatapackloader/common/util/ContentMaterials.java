@@ -12,19 +12,23 @@ import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.common.util.EnumHelper;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.oredict.OreDictionary;
 
 public final class ContentMaterials {
     private static final Map<String, MaterialDef> DEFS = new LinkedHashMap<>();
+    private static final Map<String, String> REPAIR_ORES = new HashMap<>();
     private static boolean loaded;
 
     private ContentMaterials() {}
@@ -76,10 +80,23 @@ public final class ContentMaterials {
     public static void resolveRepairItems() {
         for (MaterialDef def : DEFS.values()) {
             if (def.repairItem.isEmpty() || def.getTool() == null) { continue; }
+            if (def.repairItem.startsWith("#")) {
+                REPAIR_ORES.put(def.name, def.repairItem.substring(1));
+                continue;
+            }
             def.resolve(def.getTool(), def.getArmor(), ContentStacks.parse(def.registryName, def.repairItem, 1));
             def.getTool().setRepairItem(def.getRepair());
             if (def.getArmor() != null) { def.getArmor().setRepairItem(def.getRepair()); }
         }
+    }
+
+    public static boolean repairsByOre(String materialName, ItemStack repair) {
+        String ore = REPAIR_ORES.get(materialName);
+        if (ore == null || repair.isEmpty()) { return false; }
+        for (int id : OreDictionary.getOreIDs(repair)) {
+            if (OreDictionary.getOreName(id).equals(ore)) { return true; }
+        }
+        return false;
     }
 
     @Nullable public static MaterialDef find(String name, Object context) {

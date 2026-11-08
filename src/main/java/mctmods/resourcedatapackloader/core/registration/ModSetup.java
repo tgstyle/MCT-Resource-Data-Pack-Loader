@@ -44,6 +44,7 @@ import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
 import mctmods.resourcedatapackloader.common.entities.behavior.RankSteal;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
+import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
@@ -69,6 +70,7 @@ import mctmods.resourcedatapackloader.common.loot.BlockDrops;
 import mctmods.resourcedatapackloader.common.loot.KilledName;
 import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
+import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
 import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
@@ -260,6 +262,10 @@ public class ModSetup {
         if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
         if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBellBlock.class); }
         SpawnLocks.load();
+        SpawnSwaps.load();
+        MinecraftForge.EVENT_BUS.register(SpawnSwaps.class);
+        MobDrops.load();
+        MinecraftForge.EVENT_BUS.register(MobDrops.class);
         ContentDiet.load();
         MinecraftForge.EVENT_BUS.register(ContentDiet.class);
         if (ContentEntities.load()) {

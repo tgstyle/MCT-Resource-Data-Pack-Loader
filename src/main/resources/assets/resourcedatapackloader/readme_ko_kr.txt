@@ -281,8 +281,7 @@ mypack:copper_ore로 등록됩니다. 채우거나 잘못 쓸 이름 필드는 �
     harvests         carries          dialogs          veins
     diets            enchantments     dice             games
     orders           ranks            recipe_locks     spawn_locks
-    item_locks
-    weights
+    item_locks       weights          spawn_swaps      mob_drops
 
 블록은 "type" 필드로 정하는 다음 모양으로 나뉩니다:
 

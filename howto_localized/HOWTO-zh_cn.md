@@ -201,6 +201,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/recipe_swaps/*.json`                                                               | 在合成和烧炼配方中将一种物品替换为另一种。[配方替换](#配方替换)                                                       |
 | `<namespace>/recipe_locks/*.json`                                                               | 玩家获得进度之前保持锁定的配方。[配方锁](#配方锁)                                                                     |
 | `<namespace>/spawn_locks/*.json`                                                                | 条件满足之前不会生成的生物。[生成锁](#生成锁)                                                                         |
+| `<namespace>/spawn_swaps/*.json`                                                                | 生成时把生物替换成其他生物，并可额外生成更多个体。[生成替换](#生成替换)                                               |
 | `<namespace>/item_locks/*.json`                                                                 | 玩家获得进度之前，在其列表中隐藏的物品。[物品锁](#物品锁)                                                             |
 | `<namespace>/weights/*.json`                                                                    | 物品重量、负重上限与负重阶段。[物品重量](#物品重量)                                                                   |
 | `<namespace>/disabled/*.json`                                                                   | 被移出游戏的方块与物品。[禁用的方块与物品](#禁用的方块与物品)                                                         |
@@ -215,6 +216,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/trades/*.json`                                                                     | 各职业收购与出售的物品。[村民与交易](#村民与交易)                                                                     |
 | `<namespace>/loot_tables/*.json`                                                                | 战利品表，被替换。[可以覆盖的内容](#可以覆盖的内容)                                                                   |
 | `<namespace>/loot_injections/*.json`                                                            | 添加到已有战利品表中的一个战利品池。[可以覆盖的内容](#可以覆盖的内容)                                                 |
+| `<namespace>/mob_drops/*.json`                                                                  | 从生物掉落物中移除的物品，以及额外添加的物品堆。[生物掉落](#生物掉落)                                                 |
 | `<namespace>/loot_removals/*.json`                                                              | 从已有战利品表中移除的条目，或直接清空整张表。[可以覆盖的内容](#可以覆盖的内容)                                       |
 | `<namespace>/block_drops/*.json`                                                                | 资源包并不拥有的方块的额外或替换掉落物。[方块掉落物](#方块掉落物)                                                     |
 | `<namespace>/anvils/*.json`                                                                     | 铁砧为指定物品附加的附魔、由此获得的进度，以及在此之前的锁定。[铁砧操作](#铁砧操作)                                   |
@@ -582,6 +584,7 @@ RDPL 自带的资源包和游戏自带的资源包始终保持启用；`required
 | `disableOverrides` | `recipes`  | 关     | 阻止本模组替换或添加配方。仅当另一个核心模组在配方加载上冲突时才需要                                    |
 | `lootInjections`   | `data`     | 开     | 应用 `loot_injections/*.json`                                                                           |
 | `lootRemovals`     | `data`     | 开     | 应用 `loot_removals/*.json`                                                                             |
+| `mobDrops`         | `data`     | 开     | 应用 `mob_drops/*.json`                                                                                 |
 | `enchanting`       | `data`     | 开     | 应用 `enchanting/*.json`                                                                                |
 | `affixes`          | `data`     | 开     | 应用 `affixes/*.json` 和 `gems/*.json`                                                                  |
 | `blockDrops`       | `data`     | 开     | 应用 `block_drops/*.json`                                                                               |
@@ -596,15 +599,15 @@ RDPL 适合替换一两个配方，而你自己内容的配方应当添加在随
 
 资源包可以只放在服务器上，让玩家使用纯原版客户端，但有一个约束：**其中任何内容都不能注册任何东西**。两个模组 id 都接受任何远端；由资源包自己决定。原版客户端使用它自带的注册表进行游戏，所以向注册表添加内容的资源包必须两端都有。
 
-| 只放服务端就够                                                                                                                                                              | 客户端也需要该资源包                                                                                                   |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                                                      | `blocks`、`items`、`fluids`、`materials`                                                                               |
-| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                                                   | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，词缀和宝石槽的名称） |
-| `recipes`、`recipe_removals`、`recipe_swaps`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`                                                                          | `biomes`、`dimensions`、`portalframes`                                                                                 |
-| `loot_tables`、`loot_injections`、`loot_removals`、`block_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`、`weights` | `villagers`, `item_locks`                                                                                              |
-| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的）                                      | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                                                      |
-| `teams`、`scoring`、`ranks`                                                                                                                                                 | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放）                                      |
-| 整个控制层、设置和预生成                                                                                                                                                    |                                                                                                                        |
+| 只放服务端就够                                                                                                                                                                           | 客户端也需要该资源包                                                                                                   |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`、`worldtemplates`、`gamerules`、`structures`、`caveregions`                                                                                                                   | `blocks`、`items`、`fluids`、`materials`                                                                               |
+| `villages`、`pathintersects`、`structuremaps`、`citymaps`                                                                                                                                | `potions`、`potion_types`、`enchantments`、`sounds`、`tabs`、`tooltips` （物品和附魔的提示文字行，词缀和宝石槽的名称） |
+| `recipes`、`recipe_removals`、`recipe_swaps`、`furnace`、`fuels`、`brewing`、`oredict`、`disabled`、`spawn_swaps`                                                                        | `biomes`、`dimensions`、`portalframes`                                                                                 |
+| `loot_tables`、`loot_injections`、`loot_removals`、`block_drops`、`mob_drops`、`anvils`、`affixes`、`gems`、`enchanting`、`player_loot`、`advancements`、`functions`、`veins`、`weights` | `villagers`, `item_locks`                                                                                              |
+| `gates`、`cards`、`registry_remap`、`exposures`、`hardness`、`overrides`、`trades`（用于客户端已知的职业：原版的，或两端都有的模组的）                                                   | `entities`、`worldintro`、`texts`（介绍永远不会显示给原版客户端）                                                      |
+| `teams`、`scoring`、`ranks`                                                                                                                                                              | `models`、`blockstates`、`textures`、`lang`（客户端文件夹，没有客户端时请不要放）                                      |
+| 整个控制层、设置和预生成                                                                                                                                                                 |                                                                                                                        |
 
 右栏是硬性限制：原版客户端被送往未知维度时会断开连接，而未知方块也无法向它描述。左栏之所以可行，是因为其中的一切要么完全在服务端运行，要么通过原版本就能理解的数据包传到客户端（由服务端填充的合成结果槽、普通的进度数据包、状态消息形式的闸门拒绝提示，以及由原版游戏模式/标题/传送数据包构成的预生成等候）。
 
@@ -1906,6 +1909,8 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 同时存在，就使
   "attackReach": 5.0,
   "sweep": { "shape": "arc", "reach": 4.0, "angle": 90.0, "damage": 0.5 },
   "combo": { "window": 40, "steps": [{ "damage": 1.0 }, { "damage": 1.5 }] },
+  "fireSeconds": 10,
+  "finisher": { "targets": ["minecraft:skeleton"], "health": 1.0, "damage": 150.0, "damageType": "fireworks", "push": { "horizontal": 2.0, "vertical": 4.0 } },
   "rollStore": "dice_total",
   "locates": "Village",
   "passesTurn": false,
@@ -2005,6 +2010,8 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 同时存在，就使
 | `attackReach`    | 否                | 浮点数，格                                                   | `3.0`                | 用主手物品攻击时能打到的距离。对生物右键时同样适用。参见[武器](#武器)                                                                                                                    |
 | `sweep`          | 否                | 对象                                                         | 无                   | 同时伤害满力度一击周围的其他生物。参见[武器](#武器)                                                                                                                                      |
 | `combo`          | 否                | 对象                                                         | 无                   | 间隔不超过 `window` 刻的连续攻击依次走过 `steps`。参见[武器](#武器)                                                                                                                      |
+| `fireSeconds`    | 否                | 整数，0 或更大                                               | `0`                  | 命中的攻击会让目标着火，持续指定的秒数。参见[武器](#武器)                                                                                                                                |
+| `finisher`       | 否                | 对象                                                         | 无                   | 对列出的生物追加的一次补刀，在游戏自身的攻击之后、刻结束时造成。参见[武器](#武器)                                                                                                        |
 | `attackSpeed`    | 否                | 浮点数                                                       | 视工具类别而定       | 对 `tool` 而言，是攻击速度属性，剑的值是 `-2.4`                                                                                                                                          |
 | `cooldown`       | 否                | 整数，单位为刻                                               | `0`                  | 对 `food`、`drink` 和 `potion` 而言，物品被消耗后多长时间内拒绝再次使用；对带 `rolls` 的物品而言，两次掷骰之间的间隔                                                                     |
 | `container`      | drink             | 物品名称                                                     | 无                   | 留下什么，比如一个瓶子                                                                                                                                                                   |
@@ -2092,6 +2099,30 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 同时存在，就使
 | `sweep`  | 否   | 对象             | 物品的 `sweep` | 仅在这一击替换物品的 `sweep`，键与上文相同 |
 
 只有满力度的一击才会推进连击并触发横扫。力度较弱的一击会重置连击，既得不到该步的伤害，也不会横扫。进度按玩家保存在内存中，不会写入存档。退出游戏、换用其他物品或超过 `window` 都会将其重置。横扫不会伤害玩家、目标、盟友、旁观者和标记盔甲架，每个生物承受的是经过该步倍率之后的那一击乘以 `damage`。基础伤害不高于目标上一次所受伤害的一击，会在该步倍率生效之前被伤害冷却丢弃，因此某一步无法将其提高；这只在攻击速度为 2 或更高时才有影响。
+
+`fireSeconds` 会让物品每次命中的目标着火，持续指定的整数秒数，`0` 或更大。
+
+`finisher` 会在游戏自身的攻击命中之后追加一次补刀。游戏的攻击保持完整：击退、横扫和耐久损耗照常发生，击杀仍计入玩家，因此经验和玩家击杀掉落照常。服务端刻结束时，每个仍存活的目标会清除受伤冷却，承受 `finisher` 的 `health` 和 `damage`，并被推开。到那时已死亡、已卸载或已被移除的目标会被跳过。
+
+```json
+{
+  "finisher": {
+    "targets": ["minecraft:skeleton", "minecraft:stray", "minecraft:wither_skeleton"],
+    "health": 1.0,
+    "damage": 150.0,
+    "damageType": "fireworks",
+    "push": { "horizontal": 2.0, "vertical": 4.0 }
+  }
+}
+```
+
+| 键           | 必填 | 值                                       | 默认值    | 作用                                                                                                                        |
+| ------------ | ---- | ---------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `targets`    | 是   | 实体 ID 列表                             |           | 接受补刀的生物。骷髅需要逐个列出 ID；`#monster`、`#creature`、`#ambient` 和 `#water_creature` 这类种类也可以用              |
+| `health`     | 否   | 大于 0 的小数                            | 无        | 先把目标的生命值设为该值                                                                                                    |
+| `damage`     | 否   | 大于 0 的小数                            | 无        | 然后造成这一固定伤害，且无攻击者                                                                                            |
+| `damageType` | 否   | 伤害来源名称                             | `generic` | 该伤害的来源：`lava`、`in_fire`、`on_fire`、`drown`、`magic`、`wither`、`hot_floor`、`generic`、`fireworks`，或任意其他名称 |
+| `push`       | 否   | `{ "horizontal": 0.0, "vertical": 0.0 }` | `0`、`0`  | 随机的横向冲量，最大为 `horizontal`（左右任一方向），以及向上的冲量，最大为 `vertical`，各自取值范围为 0 到 64              |
 
 ## 流体
 
@@ -2315,18 +2346,18 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 同时存在，就使
 }
 ```
 
-| 键               | 是否必需 | 值             | 默认值                  | 作用                                 |
-| ---------------- | -------- | -------------- | ----------------------- | ------------------------------------ |
-| `harvestLevel`   | 否       | 0 到 3         | `1`                     | 工具等级。0 木、1 石、2 铁、3 钻石   |
-| `durability`     | 否       | 整数           | `250`                   | 损坏前的使用次数                     |
-| `efficiency`     | 否       | 浮点数         | `6.0`                   | 挖掘速度。钻石是 8                   |
-| `damage`         | 否       | 浮点数         | `2.0`                   | 攻击伤害加成                         |
-| `enchantability` | 否       | 整数           | `14`                    | 附魔的优劣程度。金是 22              |
-| `repairItem`     | 否       | 物品名称       | 无                      | 在铁砧中用什么修复它                 |
-| `reduction`      | 否       | 四个整数的列表 |                         | 护甲值，顺序为靴子、护腿、胸甲、头盔 |
-| `toughness`      | 否       | 浮点数         | `0.0`                   | 盔甲韧性，与钻石相同                 |
-| `equipSound`     | 否       | 音效名         | `item.armor.equip_iron` | 穿上盔甲时的音效                     |
-| `armorTexture`   | 否       | 纹理前缀       | 文件名                  | 穿戴时的盔甲纹理                     |
+| 键               | 是否必需 | 值                      | 默认值                  | 作用                                                                                                             |
+| ---------------- | -------- | ----------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `harvestLevel`   | 否       | 0 到 3                  | `1`                     | 工具等级。0 木、1 石、2 铁、3 钻石                                                                               |
+| `durability`     | 否       | 整数                    | `250`                   | 损坏前的使用次数                                                                                                 |
+| `efficiency`     | 否       | 浮点数                  | `6.0`                   | 挖掘速度。钻石是 8                                                                                               |
+| `damage`         | 否       | 浮点数                  | `2.0`                   | 攻击伤害加成                                                                                                     |
+| `enchantability` | 否       | 整数                    | `14`                    | 附魔的优劣程度。金是 22                                                                                          |
+| `repairItem`     | 否       | 物品名称，或 `#oreName` | 无                      | 在铁砧中用于修复的物品。以 `#` 开头的值是矿物词典名称，因此登记在该名称下的任意物品都可用于修复（`#netherStar`） |
+| `reduction`      | 否       | 四个整数的列表          |                         | 护甲值，顺序为靴子、护腿、胸甲、头盔                                                                             |
+| `toughness`      | 否       | 浮点数                  | `0.0`                   | 盔甲韧性，与钻石相同                                                                                             |
+| `equipSound`     | 否       | 音效名                  | `item.armor.equip_iron` | 穿上盔甲时的音效                                                                                                 |
+| `armorTexture`   | 否       | 纹理前缀                | 文件名                  | 穿戴时的盔甲纹理                                                                                                 |
 
 ### 创造模式标签页
 
@@ -3629,6 +3660,57 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 - 移除在 `loot_injections` 之前执行，所以被注入的池永远不会被移除。RDPL 之后再向表中添加内容的模组会保留它添加的部分。
 - 没有匹配到的池、条目或物品会在 `rdpl.log` 中给出警告，因此移除某个模组后整合包仍能正常工作。
 - 配置中的 `lootRemovals` 可关闭该功能。战利品表属于服务端数据，因此只需服务端即可。
+- 若想按生物穿戴或手持的物品，从该生物的掉落中移除物品，请使用[生物掉落](#生物掉落)：装备不经过战利品表掉落，因此这里的 `items` 够不到它。
+
+## 生物掉落
+
+*合成、战利品与交易*
+
+`<namespace>/mob_drops/*.json`
+
+文件名可自行选择，只读取文件夹，多个文件会叠加生效。文件会在指定生物死亡时，从其掉落物中移除指定的物品，并添加物品堆，无论掉落来自战利品表还是穿戴、手持的装备。规则可以取决于击杀者手持的物品、杀死生物的伤害类型，以及该生物是否已经掉落过某件物品。没有文件时，不会移除或添加任何内容。
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "stripTagged": false,
+  "adds": [
+    { "item": "minecraft:skull:0", "count": 1, "chance": 1.0, "killerHolds": ["mypack:blade", "mypack:blade2"], "damageTypes": ["fireworks"] }
+  ]
+}
+```
+
+第二个文件让凋灵骷髅在尚未掉落头颅时才掉落专属头颅：
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "strip": ["minecraft:stone_sword", "minecraft:bow"],
+  "adds": [
+    { "item": "minecraft:skull:1", "killerHolds": ["mypack:blade", "mypack:blade2"], "damageTypes": ["fireworks"], "unlessDropped": ["minecraft:skull:1"] },
+    { "item": "mypack:fragment", "chance": 1.0, "unlessDropped": ["minecraft:skull:1"] }
+  ]
+}
+```
+
+| 键                     | 必填 | 值                                                   | 默认值  | 作用                                                                                                           |
+| ---------------------- | ---- | ---------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `entities`             | 是   | 实体名称或种类列表                                   | 无      | 文件适用的生物，原版或任意模组的均可                                                                           |
+| `strip`                | 否   | 物品 ID 列表（`id:meta`），或 `#` 加矿物词典名称     | 无      | 从这些生物的掉落中移除                                                                                         |
+| `stripTagged`          | 否   | 布尔值                                               | `false` | 为 `false` 时，带有除耐久外 NBT 的物品堆（附魔、命名等）会保留                                                 |
+| `adds`                 | 否   | 对象列表                                             | 无      | 按顺序添加到掉落物中的物品堆                                                                                   |
+| `adds[].item`          | 是   | 物品 ID，`id:meta`                                   | 无      | 要添加的物品                                                                                                   |
+| `adds[].count`         | 否   | 整数，或 `{min, max}`                                | `1`     | 物品堆数量                                                                                                     |
+| `adds[].chance`        | 否   | 0 到 1 之间的小数                                    | `1.0`   | 每次击杀抽取一次                                                                                               |
+| `adds[].killerHolds`   | 否   | 物品 ID 列表，或 `#` 加矿物词典名称                  | 无      | 击杀者主手持有其中之一                                                                                         |
+| `adds[].damageTypes`   | 否   | 伤害来源名称列表                                     | 无      | 杀死生物的伤害为其中之一。烟花伤害为 `fireworks`，瞬间伤害和亡灵的瞬间治疗为 `magic`                           |
+| `adds[].requireAll`    | 否   | 布尔值                                               | `false` | 为 `false` 时，`killerHolds` 或 `damageTypes` 满足其一即可；为 `true` 时两者都必须满足。两者都未设置时始终适用 |
+| `adds[].unlessDropped` | 否   | 物品 ID 列表（`id:meta`；省略 meta 时匹配任意 meta） | 无      | 若掉落物（包括之前的添加）中已有其中之一，则跳过该添加                                                         |
+
+- 装备只有在玩家击杀该生物，或该槽位的掉落概率大于 1 时才会掉落，因此移除骷髅剑的整合包只会在这些情况下看到剑消失。
+- 先执行移除，然后按顺序执行添加，位于生物自身掉落和等级掉落之后。
+- 配置中的 `mobDrops` 可关闭该文件夹。掉落属于服务端数据，因此只需服务端即可。
 
 ## 玩家战利品
 
@@ -4375,6 +4457,54 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 | `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 否   | 与生成条件相同     | 无     | 与生成条件中相同的键，含义也相同。一个都没设置的文件会被跳过，日志会注明                                                                           |
 
 同时出现在多个文件、或还出现在变种中的生物，只会在所有条件都成立的地点和时间生成。被拦下的是自然生成，包括区块生成时产生的；刷怪蛋、`/summon` 和刷怪笼不受影响。
+
+### 生成替换
+
+*实体变种*
+
+`<namespace>/spawn_swaps/*.json`
+
+文件名可自行选择，只读取文件夹，多个文件会叠加生效。会在生物生成时用按权重选出的其他生物替换它，并可在同一位置额外生成更多个体。这就是整合包让骷髅在下界生成为凋灵骷髅、或者让它们在夜间任何地方生成的方式。第一个满足条件的文件生效，因此同一次生成不会被替换两次，替换后的生物或额外的副本也不会再次被替换。
+
+```json
+{
+  "entities": ["minecraft:skeleton", "minecraft:stray"],
+  "becomes": [ { "entity": "mypack:wither_skeleton_bow", "weight": 1 } ],
+  "biomeTypes": ["NETHER"],
+  "blocks": ["minecraft:nether_brick"],
+  "extra": 3,
+  "elsewhere": { "chance": 0.15, "lightBelow": 9, "night": true },
+  "fromSpawners": false
+}
+```
+
+第二个文件在下界要塞生成的凋灵骷髅之外，再额外生成凋灵骷髅：
+
+```json
+{
+  "entities": ["minecraft:wither_skeleton"],
+  "becomes": ["minecraft:wither_skeleton"],
+  "biomeTypes": ["NETHER"],
+  "extra": 3
+}
+```
+
+| 键                                                                                                                           | 必填 | 值                                               | 默认值  | 作用                                                                                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities`                                                                                                                   | 是   | 实体名称或种类列表                               | 无      | 要被替换的生物，同生成锁。缺少该键的文件会被跳过，并在日志中说明                                                                                            |
+| `becomes`                                                                                                                    | 是   | 实体 ID 列表，或带有 `entity` 和 `weight` 的对象 | 无      | 取代它们的生物，按权重选取，可以是任何已注册的实体或实体变种。缺少该键的文件会被跳过，并在日志中说明                                                        |
+| `biomes`, `biomeTypes`                                                                                                       | 否   | 文本列表                                         | 无      | 替换生效的群系，写法与实体变种相同                                                                                                                          |
+| `blocks`                                                                                                                     | 否   | 方块名称列表                                     | 无      | 生成位置下方的方块为其中之一时替换生效，例如 `minecraft:nether_brick`。方块名称的写法与其他方块列表相同，未指定任何已注册方块的文件会被跳过                 |
+| `requireAll`                                                                                                                 | 否   | 布尔值                                           | `false` | 为 `false` 时，`biomes`、`biomeTypes` 和 `blocks` 中任一满足即可；为 `true` 时，所有给出的条件都必须满足。若均未设置，则在其他条件成立的任何地方都替换      |
+| `dimensions`, `structures`, `radius`, `timeFrom`, `timeTo`, `dayAtLeast`, `advancement`, `team`, `objective`, `scoreAtLeast` | 否   | 同生成条件                                       | 无      | 与生成条件相同的键，含义相同。它们都必须成立，`elsewhere` 也同样适用                                                                                        |
+| `elsewhere`                                                                                                                  | 否   | 对象                                             | 关闭    | 在上面的地点键不成立时，仍以 `chance` 的概率替换，但受以下限制                                                                                              |
+| `elsewhere.chance`                                                                                                           | 否   | 0 到 1 之间的小数                                | `1.0`   | 每次生成时替换的概率                                                                                                                                        |
+| `elsewhere.lightBelow`                                                                                                       | 否   | 1 到 16 之间的整数                               | 无      | 仅在该位置的综合光照低于此值时替换                                                                                                                          |
+| `elsewhere.night`                                                                                                            | 否   | 布尔值                                           | `false` | 仅在夜间替换，时间为 `13000` 到 `23000`                                                                                                                     |
+| `extra`                                                                                                                      | 否   | 0 到 16 之间的整数                               | `0`     | 在同一位置额外生成这么多个生物，每个都从 `becomes` 中独立抽取，并拥有各自的初始装备。放不下的副本会被跳过，副本从下一轮生成起计入生物上限                   |
+| `fromSpawners`                                                                                                               | 否   | 布尔值                                           | `false` | 默认情况下，自然生成（包括下界要塞的生物）以及区块生成时产生的生物（仅生物类）会被替换。`true` 会加入刷怪笼方块。刷怪蛋、`/summon` 和结构放置的生物永不替换 |
+
+没有文件时，不会替换任何内容。被其他原因取消的生成不会进入世界，因此也不会被替换。指向未注册实体的替换会保留原生成，并在日志中说明。
 
 ### 网络
 
