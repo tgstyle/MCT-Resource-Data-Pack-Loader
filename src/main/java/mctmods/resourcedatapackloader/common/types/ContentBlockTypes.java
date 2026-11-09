@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.blocks.light.ContentTorchBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCaneBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentFlowerBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentPlantPartBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentVineBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
@@ -30,6 +31,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
 import mctmods.resourcedatapackloader.common.util.NamedRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -82,7 +84,14 @@ public final class ContentBlockTypes {
             @Override public int maxVariants() { return ContentPortalBlock.MAX_VARIANTS; }
         });
         register("flower", new IBlockType() {
-            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentFlowerBlock.create(def, GrowthDef.orBush(def))); }
+            @Override public List<Block> create(BlockDef def) {
+                List<Block> blocks = new ArrayList<>();
+                blocks.add(ContentFlowerBlock.create(def, GrowthDef.orBush(def)));
+                if (def.tall != null) {
+                    for (int part = 1; part < def.tall.parts; part++) { blocks.add(ContentPlantPartBlock.flower(def, def.registryName, part)); }
+                }
+                return blocks;
+            }
             @Override public int maxVariants() { return ContentFlowerBlock.MAX_VARIANTS; }
         });
         register("vine", new IBlockType() {
@@ -100,7 +109,14 @@ public final class ContentBlockTypes {
             @Override public int maxVariants() { return ContentCaneBlock.MAX_VARIANTS; }
         });
         register("crop", new IBlockType() {
-            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentCropBlock(def)); }
+            @Override public List<Block> create(BlockDef def) {
+                List<Block> blocks = new ArrayList<>();
+                blocks.add(new ContentCropBlock(def));
+                if (def.tall != null) {
+                    for (int part = 1; part < def.tall.parts; part++) { blocks.add(new ContentPlantPartBlock(def, def.registryName, part)); }
+                }
+                return blocks;
+            }
             @Override public int maxVariants() { return ContentCropBlock.MAX_VARIANTS; }
         });
         register("log", new IBlockType() {

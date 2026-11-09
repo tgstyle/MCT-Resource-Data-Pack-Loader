@@ -48,6 +48,7 @@ import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkDispensing;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
 import mctmods.resourcedatapackloader.common.functions.FunctionOverrides;
 import mctmods.resourcedatapackloader.common.gates.ContentGates;
@@ -187,6 +188,7 @@ public class ModSetup {
 
     public static void init() {
         Rubic.init();
+        FireworkDispensing.register();
         MinecraftForge.EVENT_BUS.register(RegistryRemaps.class);
         MinecraftForge.EVENT_BUS.register(LootInjections.class);
         MinecraftForge.EVENT_BUS.register(LootRemovals.class);

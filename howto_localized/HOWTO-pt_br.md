@@ -42,11 +42,13 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 
 **Blocos e itens**
 - [Blocos](#blocos)
+- [Plantas altas](#plantas-altas)
 - [Contêineres](#contêineres)
 - [Modelos, blockstates e texturas](#modelos-blockstates-e-texturas)
 - [Blockstates por tipo](#blockstates-por-tipo)
 - [Fazendo o vanilla tratar seu bloco corretamente](#fazendo-o-vanilla-tratar-seu-bloco-corretamente)
 - [Itens](#itens)
+- [Fogos de artifício](#fogos-de-artifício)
 - [Fluidos](#fluidos)
 - [Materiais, abas, sons, dicionário de minérios](#materiais-abas-sons-dicionário-de-minérios)
 - [Substituições de propriedades](#substituições-de-propriedades)
@@ -693,7 +695,7 @@ Um pacote de mod nunca entra no nível de substituição dos pacotes de recursos
 
 Um pacote feito para a linha 1.20.1, 1.21.1 ou 26.x deste mod também carrega aqui. O carregador reconhece um pelo `pack.mcmeta` com formato acima de 3, por uma pasta `data/` ao lado de `assets/`, ou por arquivos de idioma `.json` e `textures/block/` sem equivalente na 1.12.2, e o traz de volta do mesmo jeito, qualquer que seja a linha para a qual foi escrito. Um zip é convertido uma vez, dentro dele mesmo: todo arquivo que a 1.12.2 lê de forma diferente é gravado na pasta `versions/1.12.2/` do zip, e os arquivos modernos na raiz ficam como estavam, então o mesmo zip continua carregando no 1.20.1, 1.21.1 e 26.x, como descreve [um zip para todas as versões](#organizando-pacotes). A conversão marca a pasta que grava com um arquivo `port.stamp` contendo a versão do RDPL. Um zip que já tem uma pasta `versions/1.12.2/` é lido através dela; quando seu `port.stamp` nomeia outra versão do RDPL, a conversão grava a pasta de novo, substituindo todos os arquivos nela e nomeando cada um no log, e uma pasta sem `port.stamp`, como uma que o autor do pacote escreveu, nunca é convertida de novo. Dos arquivos da raiz, apenas aqueles que a conversão repassa sem alteração, como sons e texturas fora de `textures/block/` e `textures/item/`, ainda são lidos. O zip é gravado primeiro em um arquivo temporário e só substitui o original quando está completo. Arquivos soltos em `rdploader/assets` e `rdploader/data` não são reescritos; eles são lidos pela mesma conversão toda vez que a pasta é examinada.
 
-Um arquivo de bloco moderno volta com um `meta` para cada variante, na ordem em que as variantes são escritas, e suas tags como nomes do dicionário de minérios:
+Um arquivo de bloco moderno volta com um `meta` para cada variante, na ordem em que as variantes são escritas, e suas tags como nomes do dicionário de minérios. Os blocos de parte de uma planta alta são portados como a base: cada um recebe da mesma forma o seu blockstate e os seus modelos.
 
 ```json
 {
@@ -837,8 +839,8 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `log`        | Gira para a face contra a qual você o coloca e é registrado como `logWood` no dicionário de minérios, para que o corte de árvores e o Blast Plaster o tratem como tronco                                                                                           |
 | `leaves`     | Apodrece, é cortada com tesoura, é tingida e solta uma muda, e é registrada como `treeLeaves` no dicionário de minérios                                                                                                                                            |
 | `sapling`    | Cresce até virar uma árvore ou uma das suas estruturas                                                                                                                                                                                                             |
-| `crop`       | Cresce por estágios, solta uma semente e um item de colheita                                                                                                                                                                                                       |
-| `flower`     | Uma planta de um bloco em pé sobre o solo                                                                                                                                                                                                                          |
+| `crop`       | Cresce por estágios, solta uma semente e um item de colheita; com `tall`, vários blocos de altura                                                                                                                                                                  |
+| `flower`     | Uma planta de um bloco em pé sobre o solo; com `tall`, vários blocos de altura, colocada inteira de uma vez                                                                                                                                                        |
 | `cane`       | Cresce para cima em uma coluna, como cana ou cacto                                                                                                                                                                                                                 |
 | `vine`       | Escala e pende nos lados dos blocos                                                                                                                                                                                                                                |
 | `portal`     | Envia o que entrar nele para outra dimensão                                                                                                                                                                                                                        |
@@ -887,6 +889,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `produce`                    | apenas crop                              | nome de item                                      | `minecraft:wheat`                                                                                             | O que a colheita rende                                                                                                                                                                                                                                                                                                                                                  |
 | `maxAge`                     | apenas crop                              | int                                               | `7`                                                                                                           | Quantos estágios de crescimento                                                                                                                                                                                                                                                                                                                                         |
 | `growth`                     | apenas plantas                           | objeto                                            | nenhum                                                                                                        | Veja [Crescimento](#crescimento)                                                                                                                                                                                                                                                                                                                                        |
+| `tall`                       | crop, flower                             | objeto                                            | nenhum                                                                                                        | Vários blocos de altura. Veja [Plantas altas](#plantas-altas)                                                                                                                                                                                                                                                                                                           |
 | `sapling`                    | apenas sapling                           | objeto                                            | nenhum                                                                                                        | Veja [Mudas](#mudas)                                                                                                                                                                                                                                                                                                                                                    |
 | `needsOxygen`                | crop, flower, sapling, leaves            | booleano                                          | `true`                                                                                                        | Com o GalaxySpace, se um `crop`, `flower`, `sapling` ou `leaves` murcha onde não há oxigênio. Veja [Oxigênio](#oxigênio)                                                                                                                                                                                                                                                |
 | `portal`                     | apenas portal                            | objeto                                            | nenhum                                                                                                        | Veja [Portais e passagens](#portais-e-passagens)                                                                                                                                                                                                                                                                                                                        |
@@ -1016,6 +1019,52 @@ Para `crop`, `flower`, `cane` e `vine`.
 | `damage`          | não         | booleano              | `false` | Machuca o que o tocar                                                                                                                                                                                                                                                                                                                                          |
 | `damageAmount`    | não         | float, meios corações | `1.0`   | O quanto machuca                                                                                                                                                                                                                                                                                                                                               |
 | `breaksNeighbors` | não         | booleano              | `false` | Quebra blocos colocados ao lado, como o cacto                                                                                                                                                                                                                                                                                                                  |
+
+### Plantas altas
+
+*blocos*
+
+Um objeto `tall` faz de uma plantação ou de uma flor uma planta de vários blocos de altura. A plantação cresce subindo por suas partes conforme envelhece, e a flor é colocada inteira de uma vez, como uma planta dupla vanilla.
+
+```json
+{
+  "type": "crop",
+  "seed": "mypack:corn_seed",
+  "produce": "mypack:corn_cob",
+  "maxAge": 7,
+  "opaque": false,
+  "tall": {
+    "parts": 3,
+    "rise": [3, 5],
+    "produceFrom": "all",
+    "regrow": true
+  }
+}
+```
+
+| Chave         | Obrigatória | Valor                                                                             | Padrão                                      | O que faz                                                                                                                                                                                                                                                                                                     |
+| ------------- | ----------- | --------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tall`        | não         | objeto                                                                            | nenhum                                      | Presente: a planta tem `parts` blocos de altura quando crescida. Ausente: tem um bloco                                                                                                                                                                                                                        |
+| `parts`       | não         | inteiro de `2` a `4`                                                              | `3`                                         | Altura em blocos. Registra `<name>_part1` até `<name>_part<parts - 1>` ao lado da base. Um valor fora do intervalo é cortado para ele                                                                                                                                                                         |
+| `rise`        | não         | lista de `parts - 1` inteiros, cada um de `1` a `maxAge`, estritamente crescentes | `ceil(maxAge * n / parts)` para a parte `n` | Só plantação. A idade da base em que a parte `n` aparece. Uma lista inválida é um erro no log e o padrão é usado                                                                                                                                                                                              |
+| `produceFrom` | não         | `base` ou `all`                                                                   | `base`                                      | Só plantação. `base`: apenas a base solta colheita e sementes, e as partes não soltam nada. `all`: toda parte totalmente crescida também solta uma colheita                                                                                                                                                   |
+| `regrow`      | não         | booleano                                                                          | `false`                                     | Só plantação. `false`: quebrar qualquer parte destrói a planta toda. `true`: quebrar a parte `n` acima da base remove as partes `n` e acima e leva a idade da base a `rise[n-1] - 1`, para que cresçam de novo. Um corte nunca quebra a base, então combine com `produceFrom: all` ou o corte não dá colheita |
+
+`opaque: false` é obrigatório, pois uma plantação de conteúdo sem ele se solta sozinha, e as partes leem o mesmo arquivo de bloco. `seed` e `produce` mantêm o seu sentido, e `growth.soil` e o `soil` do item de semente ainda decidem em que a base se apoia. As partes não precisam de solo nem de luz.
+
+**Cada tipo reage a `tall` à sua maneira.**
+
+| Tipo                      | Com `tall`                                                                                                                                                                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crop`                    | As partes sobem com a idade da base, nas idades de `rise`                                                                                                                                                                               |
+| `flower`                  | Todas as partes são colocadas de uma vez, e `rise`, `regrow` e `produceFrom` são ignorados com um aviso no log. Colocar exige blocos livres acima, como numa planta dupla vanilla, ou a colocação falha. O item da base é solto uma vez |
+| `cane`, `vine`, `sapling` | Não suportado: `tall` é ignorado com um aviso. Uma cana e uma trepadeira já fazem crescer uma coluna até `growth.maxHeight`, e um sapling vira uma árvore                                                                               |
+
+**Como a plantação cresce.** Só a base recebe ticks e tira luz, solo e crescimento do ambiente como sem `tall`. Quando a idade dela muda, por um tick ou por farinha de ossos, ela para abaixo da primeira parte cujo bloco acima está ocupado, e tenta de novo nos ticks seguintes. Cada parte é então definida ou colocada com a idade da base assim que esta chega à sua idade de `rise`. Uma parte perdida na borda de um chunk ou por um comando volta no próximo tick da base. Uma base colocada pela geração do mundo ou por um comando numa idade crescida recebe suas partes da mesma forma.
+
+**Como ela quebra.** Uma parte só se apoia na base ou na parte abaixo. Quebrar qualquer coisa sob uma parte a derruba, seja qual for a causa, e cada parte solta o seu butim pela própria regra, uma vez. Com `regrow` desligado, o jogador que quebra uma parte quebra a base também; uma parte perdida de outro modo é refeita pela base. Quebrar no Criativo não solta nada. Farinha de ossos usada em qualquer parte age sobre a base.
+
+**Caixa e aparência.** Nenhuma parte tem colisão. A base mantém a caixa de plantação do vanilla por idade até a sua primeira idade de `rise`, depois é um bloco inteiro, e uma parte é um bloco inteiro recuado dois pixels de cada lado. Pegar bloco numa parte dá a semente, ou o item da base numa flor. Cada parte tem o próprio blockstate e os próprios modelos, veja [Blockstates por tipo](#blockstates-por-tipo); desenhe o caule na base e nas partes do meio, e a espiga no topo.
 
 ### Propagação
 
@@ -1523,33 +1572,35 @@ Quando o bloco tem propriedades próprias, elas são unidas por vírgulas na ord
 
 Duas coisas decidem o que um arquivo de blockstate precisa conter: se o tipo carrega a propriedade `blocks` e quais propriedades próprias ele tem.
 
-| Tipo                      | Registra                         | Propriedades do blockstate                                                                                                          | Variantes |
-| ------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `basic`, `ore`, `falling` | um bloco                         | `blocks`                                                                                                                            | 16        |
-| `container`               | um bloco                         | `blocks`                                                                                                                            | 16        |
-| `flower`                  | um bloco                         | `blocks`                                                                                                                            | 16        |
-| `portal`                  | um bloco                         | `blocks`                                                                                                                            | 16        |
-| `portway`                 | um bloco                         | `blocks`, mais `facing` se o bloco define `facing`, e `half` (`lower`, `upper`) se define `tall`                                    | 1         |
-| `fence`, `pane`           | um bloco                         | `blocks`, `north`, `east`, `south`, `west`                                                                                          | 16        |
-| `wall`                    | um bloco                         | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                    | 16        |
-| `slab`                    | dois, `<nome>` e `<nome>_double` | a meia laje `blocks` e `half`; a dupla apenas `blocks`                                                                              | 8         |
-| `log`                     | um bloco                         | `blocks`, `axis`, que é `x`, `y`, `z` ou `none`                                                                                     | 4         |
-| `leaves`                  | um bloco                         | `blocks`                                                                                                                            | 4         |
-| `stairs`                  | um bloco                         | `facing`, `half`, `shape`                                                                                                           | 1         |
-| `door`                    | um bloco                         | `facing`, `half`, `hinge`, `open`                                                                                                   | 1         |
-| `trapdoor`                | um bloco                         | `facing`, `half`, `open`                                                                                                            | 1         |
-| `fence_gate`              | um bloco                         | `facing`, `in_wall`, `open`                                                                                                         | 1         |
-| `banner`                  | dois, `<nome>` e `<nome>_wall`   | `rotation` em pé, de `0` a `15`; o de parede `facing`                                                                               | 1         |
-| `ladder`, `torch`         | um bloco                         | `facing`, e a tocha acrescenta `up` às quatro paredes                                                                               | 1         |
-| `bell`                    | um bloco                         | `facing` e `attachment`, que é `floor`, `ceiling`, `single_wall` ou `double_wall`, mais uma entrada `body` para a parte que balança | 1         |
-| `crop`                    | um bloco                         | `age`, sempre de `0` a `7`, independentemente do `maxAge`                                                                           | 1         |
-| `cane`                    | um bloco                         | `age`, de `0` a `15`                                                                                                                | 1         |
-| `sapling`                 | um bloco                         | `stage`, de `0` até um a menos que `stages`                                                                                         | 1         |
-| `vine`                    | um bloco                         | `up`, `north`, `east`, `south`, `west`, e somente multipart                                                                         | 1         |
+| Tipo                      | Registra                                         | Propriedades do blockstate                                                                                                          | Variantes |
+| ------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `basic`, `ore`, `falling` | um bloco                                         | `blocks`                                                                                                                            | 16        |
+| `container`               | um bloco                                         | `blocks`                                                                                                                            | 16        |
+| `flower`                  | um bloco                                         | `blocks`                                                                                                                            | 16        |
+| `portal`                  | um bloco                                         | `blocks`                                                                                                                            | 16        |
+| `portway`                 | um bloco                                         | `blocks`, mais `facing` se o bloco define `facing`, e `half` (`lower`, `upper`) se define `tall`                                    | 1         |
+| `fence`, `pane`           | um bloco                                         | `blocks`, `north`, `east`, `south`, `west`                                                                                          | 16        |
+| `wall`                    | um bloco                                         | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                    | 16        |
+| `slab`                    | dois, `<nome>` e `<nome>_double`                 | a meia laje `blocks` e `half`; a dupla apenas `blocks`                                                                              | 8         |
+| `log`                     | um bloco                                         | `blocks`, `axis`, que é `x`, `y`, `z` ou `none`                                                                                     | 4         |
+| `leaves`                  | um bloco                                         | `blocks`                                                                                                                            | 4         |
+| `stairs`                  | um bloco                                         | `facing`, `half`, `shape`                                                                                                           | 1         |
+| `door`                    | um bloco                                         | `facing`, `half`, `hinge`, `open`                                                                                                   | 1         |
+| `trapdoor`                | um bloco                                         | `facing`, `half`, `open`                                                                                                            | 1         |
+| `fence_gate`              | um bloco                                         | `facing`, `in_wall`, `open`                                                                                                         | 1         |
+| `banner`                  | dois, `<nome>` e `<nome>_wall`                   | `rotation` em pé, de `0` a `15`; o de parede `facing`                                                                               | 1         |
+| `ladder`, `torch`         | um bloco                                         | `facing`, e a tocha acrescenta `up` às quatro paredes                                                                               | 1         |
+| `bell`                    | um bloco                                         | `facing` e `attachment`, que é `floor`, `ceiling`, `single_wall` ou `double_wall`, mais uma entrada `body` para a parte que balança | 1         |
+| `crop`                    | um bloco                                         | `age`, sempre de `0` a `7`, independentemente do `maxAge`                                                                           | 1         |
+| `crop` com `tall`         | `<name>` e `<name>_part1` até `_part<parts - 1>` | `age`, sempre de `0` a `7`, em todos os blocos                                                                                      | 1         |
+| `flower` com `tall`       | `<name>` e `<name>_part1` até `_part<parts - 1>` | `blocks` em todos os blocos                                                                                                         | 16        |
+| `cane`                    | um bloco                                         | `age`, de `0` a `15`                                                                                                                | 1         |
+| `sapling`                 | um bloco                                         | `stage`, de `0` até um a menos que `stages`                                                                                         | 1         |
+| `vine`                    | um bloco                                         | `up`, `north`, `east`, `south`, `west`, e somente multipart                                                                         | 1         |
 
 Quatro propriedades são descartadas para você, então escreva as chaves sem elas: `powered` em portas e portões, `variant` em muros, e `check_decay` e `decayable` em folhas.
 
-Uma plantação mantém os oito valores de `age` do vanilla, qualquer que seja o `maxAge`, já que `maxAge` apenas decide até onde ela cresce; por isso seu blockstate sempre escreve de `age=0` a `age=7`.
+Uma plantação mantém os oito valores de `age` do vanilla, qualquer que seja o `maxAge`, já que `maxAge` apenas decide até onde ela cresce; por isso seu blockstate sempre escreve de `age=0` a `age=7`. Os blocos de parte de uma plantação alta seguem a mesma regra: cada `<name>_part1`, `<name>_part2` e assim por diante tem um blockstate próprio, com `age=0` a `age=7`, e modelos chamados `<name>_part<n>_stage<age>`. Veja [Plantas altas](#plantas-altas).
 
 Dois tipos registram um segundo bloco. O `<nome>_double` de uma laje precisa de um blockstate próprio, indexado por `blocks` sem `half`, e nunca ganha um item próprio. O `<nome>_wall` de um estandarte está explicado em [Estandartes](#estandartes).
 
@@ -2028,8 +2079,94 @@ Um item simples com `sleepingBag` é um saco de dormir. Com um clique direito na
 | `locates`        | não               | `Village`, `minecraft:river`                                 | nenhum                          | Em um item simples, o clique direito procura o lugar mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registrado com `locateAs`. O item empilha até 1. Veja o parágrafo da bússola localizadora acima |
 | `passesTurn`     | não               | booleano                                                     | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Veja [Turnos](#turnos)                                                                                                                                                         |
 | `sleepingBag`    | não               | booleano                                                     | `false`                         | Num item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e pula a noite como uma cama. Nunca muda o ponto de renascimento e não é consumido. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn`               |
+| `firework`       | não               | objeto                                                       | nenhum                          | Um clique direito lança ou explode um fogo de artifício, para qualquer tipo de item. Veja [Fogos de artifício](#fogos-de-artifício)                                                                                                                                                |
 | `requires`       | não               | lista de ids de mods ou namespaces de pacotes                | nenhum                          | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                           |
 | `weight`         | não               | número a partir de 0                                         | nenhum                          | Peso carregado de um item (para um bloco, do seu item), na unidade dos arquivos de pesos. Prevalece sobre cada entrada dos arquivos de pesos. Veja [Pesos de itens](#pesos-de-itens)                                                                                               |
+
+### Fogos de artifício
+
+*itens*
+
+Um objeto `firework` em qualquer item, seja qual for o seu `type`, faz o clique direito lançar um foguete. O foguete é um foguete vanilla, então o voo, a explosão vanilla e o dano funcionam como de costume, e as explosões de partículas do próprio item vêm por cima.
+
+```json
+{
+  "type": "basic",
+  "cooldown": 20,
+  "firework": {
+    "mode": "launch",
+    "on": "both",
+    "flight": 2,
+    "consume": true,
+    "explosions": [
+      { "shape": "large_ball", "colors": ["FFD060", "FFFFFF"], "fade": ["806040"], "trail": false, "twinkle": true }
+    ],
+    "dispense": true,
+    "burst": [
+      { "particle": "mypack:popcorn", "count": 60, "speed": 0.35, "pattern": "fountain", "sound": "minecraft:entity.firework.blast" },
+      { "particle": "mypack:kernel", "speed": 0.3, "delay": 4, "pattern": "points", "points": [[0, 1, 0], [0.7, 0.7, 0], [-0.7, 0.7, 0]] }
+    ]
+  }
+}
+```
+
+| Chave        | Obrigatória | Valor                      | Padrão   | O que faz                                                                                                                                                                                                                                                                                                       |
+| ------------ | ----------- | -------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firework`   | não         | objeto                     | nenhum   | Um clique direito com o item lança ou explode um fogo de artifício                                                                                                                                                                                                                                              |
+| `replaceUse` | não         | booleano                   | `false`  | `false`: um item que já tem um clique direito próprio (comida, bebida, ferramenta, `rolls`, `locates` e assim por diante) o mantém, e o fogo de artifício só dispara agachado. Um item sem uso próprio dispara com um clique simples. `true`: um clique simples sempre dispara e o uso próprio do item se perde |
+| `mode`       | não         | `launch` ou `burst`        | `launch` | `launch`: um foguete sobe durante `flight` e explode. `burst`: o foguete explode de imediato no alvo                                                                                                                                                                                                            |
+| `on`         | não         | `block`, `air` ou `both`   | `block`  | `block`: clique direito em um bloco, e o foguete fica de pé na face clicada como um vanilla. `air`: clique direito no ar, e ele parte 2 blocos adiante na direção do olhar. `both`: qualquer um dos dois                                                                                                        |
+| `flight`     | não         | inteiro de `0` a `3`       | `1`      | Tempo de voo como no vanilla, em que `1` é cerca de um segundo                                                                                                                                                                                                                                                  |
+| `consume`    | não         | booleano                   | `true`   | Um item é gasto a cada lançamento. No Criativo nunca se gasta nenhum                                                                                                                                                                                                                                            |
+| `dispense`   | não         | booleano                   | `true`   | Um dispensador dispara o item como um foguete: `launch` pelo lado para o qual aponta, `burst` no bloco à frente. `false`: o dispensador solta o item como faz sem `firework`                                                                                                                                    |
+| `explosions` | não         | lista                      | nenhum   | As explosões vanilla, cada uma com as chaves abaixo. Uma lista vazia significa nenhuma explosão vanilla e nenhum dano vanilla                                                                                                                                                                                   |
+| `burst`      | não         | objeto ou lista de objetos | nenhum   | As explosões do próprio item: partículas do item lançadas da posição do foguete quando ele detona. Um único objeto conta como uma lista de um                                                                                                                                                                   |
+
+**Chaves de uma entrada de `explosions`**
+
+| Chave              | Obrigatória | Valor                                                    | Padrão                         | O que faz                                                                 |
+| ------------------ | ----------- | -------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------- |
+| `shape`            | não         | `small_ball`, `large_ball`, `star`, `creeper` ou `burst` | `small_ball`                   | A forma vanilla dessa explosão                                            |
+| `colors`, `fade`   | não         | lista de cores hexadecimais                              | `colors` branco, `fade` nenhum | As cores e as cores para as quais elas esmaecem, como os corantes vanilla |
+| `trail`, `twinkle` | não         | booleano                                                 | `false`                        | O rastro e a cintilação do vanilla                                        |
+
+**Chaves de uma entrada de `burst`**
+
+| Chave      | Obrigatória           | Valor                                    | Padrão                                                  | O que faz                                                                                                                                  |
+| ---------- | --------------------- | ---------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `particle` | sim                   | nome de item                             | nenhum                                                  | O item cujo ícone as partículas mostram. Sem ele a entrada é descartada com um erro no log                                                 |
+| `count`    | não                   | inteiro de `1` a `200`                   | `40`                                                    | Quantas partículas                                                                                                                         |
+| `speed`    | não                   | decimal                                  | `0.3`                                                   | Velocidade das partículas, em blocos por tick                                                                                              |
+| `pattern`  | não                   | `sphere`, `ring`, `fountain` ou `points` | `sphere`                                                | `sphere`: em todas as direções. `ring`: um círculo horizontal plano. `fountain`: um cone para cima. `points`: a lista `points`             |
+| `points`   | com `pattern: points` | lista de `[x, y, z]`                     | nenhum                                                  | Uma partícula por ponto, lançada naquela direção escalada para `speed`. `count` é ignorado. Sem um ponto utilizável a entrada é descartada |
+| `spread`   | não                   | decimal de `0` a `1`                     | `0`                                                     | Variação aleatória somada a cada direção                                                                                                   |
+| `delay`    | não                   | inteiro de `0` a `40`                    | `0`                                                     | Ticks após a detonação em que esta entrada dispara, a partir de onde o foguete explodiu                                                    |
+| `sound`    | não                   | nome de som                              | a explosão quando `explosions` está vazia, senão nenhum | Um som que o servidor toca na detonação. A explosão vanilla toca o seu próprio                                                             |
+
+**Qualquer forma é um dado.** Um padrão `points` usa as direções que você escrever, então um coração, uma letra ou um anel de grãos dispensa código. Dê a ele quantas entradas a forma pedir, e use `delay` para desenhar uma depois da outra.
+
+```json
+{
+  "type": "basic",
+  "firework": {
+    "mode": "launch",
+    "on": "block",
+    "explosions": [],
+    "burst": [
+      { "particle": "mypack:kernel", "count": 30, "speed": 0.25, "pattern": "sphere" },
+      {
+        "particle": "mypack:corn_cob",
+        "speed": 0.3,
+        "delay": 10,
+        "pattern": "points",
+        "points": [[0, 0.6, 0], [0.35, 0.95, 0], [0.7, 0.85, 0], [0.85, 0.5, 0], [0.6, 0.05, 0], [0.3, -0.3, 0], [0, -0.6, 0], [-0.3, -0.3, 0], [-0.6, 0.05, 0], [-0.85, 0.5, 0], [-0.7, 0.85, 0], [-0.35, 0.95, 0]]
+      }
+    ]
+  }
+}
+```
+
+**O gatilho é um clique direito.** Arremessar e bater não são gatilhos, pois nenhuma chave de item os descreve. `cooldown` é a chave de item comum e vale depois de um lançamento. Um foguete com `explosions` fere as criaturas próximas exatamente como um foguete vanilla, e com uma lista vazia não causa dano algum. Estrelas de fogos de artifício, fabricação e o impulso do élitro não estão cobertos.
 
 ### Chaves de variantes de itens
 

@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.items.ContentBlockItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
 import mctmods.resourcedatapackloader.common.types.PropertyVariant;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -67,7 +68,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     @Override public int getLightValue(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).light; }
 
-    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return ContentSetup.placeable(this, world, pos); }
+    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return ContentSetup.placeable(this, world, pos) && TallPlants.canPlaceTall(world, pos, this); }
+
+    @Override public void onBlockAdded(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        super.onBlockAdded(world, pos, state);
+        if (!world.isRemote) { TallPlants.sync(world, pos); }
+    }
 
     @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }

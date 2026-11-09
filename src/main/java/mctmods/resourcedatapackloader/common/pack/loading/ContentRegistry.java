@@ -9,10 +9,12 @@ import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluid;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluidBlock;
 import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactions;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentPlantPartBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
 import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
+import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackOptions;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchDef;
@@ -303,6 +305,7 @@ public final class ContentRegistry {
                 for (Item item : ContentItemTypes.get(def.type, key).create(def)) {
                     event.getRegistry().register(item);
                     ITEMS_BY_NAME.put(key, item);
+                    if (def.firework != null) { ContentFireworks.index(item, def.firework); }
                 }
             });
         }
@@ -419,11 +422,14 @@ public final class ContentRegistry {
                 ((IContentSoil) entry.getValue()).soil().resolve();
                 continue;
             }
-            if (!(entry.getValue() instanceof ContentCropBlock)) { continue; }
-            ContentCropBlock crop = (ContentCropBlock) entry.getValue();
+            boolean base = entry.getValue() instanceof ContentCropBlock;
+            if (!base && !(entry.getValue() instanceof ContentPlantPartBlock)) { continue; }
             BlockDef def = DEF_BY_BLOCK.get(entry.getKey());
             if (def == null) { continue; }
-            crop.resolve(ContentStacks.parse(def.registryName, def.cropSeed, 1), ContentStacks.parse(def.registryName, def.cropProduce, 1));
+            ItemStack seed = ContentStacks.parse(def.registryName, def.cropSeed, 1);
+            ItemStack produce = ContentStacks.parse(def.registryName, def.cropProduce, 1);
+            if (base) { ((ContentCropBlock) entry.getValue()).resolve(seed, produce); }
+            else { ((ContentPlantPartBlock) entry.getValue()).resolve(seed, produce); }
         }
     }
 

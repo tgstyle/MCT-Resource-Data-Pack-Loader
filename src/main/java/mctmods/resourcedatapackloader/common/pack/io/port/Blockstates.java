@@ -1,7 +1,10 @@
 package mctmods.resourcedatapackloader.common.pack.io.port;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TallDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.core.util.IdNames;
+import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -12,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.util.JsonUtils;
+import net.minecraft.util.math.MathHelper;
 
 final class Blockstates {
     private static final String[] FACINGS = {"east", "south", "west", "north"};
@@ -264,12 +268,26 @@ final class Blockstates {
         }
 
         private void flower() {
+            state(flowerState(""));
+            int parts = tallParts();
+            for (int part = 1; part < parts; part++) { state(file + TallPlants.PART_SUFFIX + part, flowerState(TallPlants.PART_SUFFIX + part)); }
+        }
+
+        private JsonObject flowerState(String suffix) {
             JsonObject blocks = new JsonObject();
-            for (String variant : variants) { blocks.add(variant, obj("textures", obj("cross", face(variant), "layer0", face(variant)))); }
+            for (String variant : variants) {
+                String texture = suffix.isEmpty() ? face(variant) : tex(variant, suffix, face(variant));
+                blocks.add(variant, obj("textures", obj("cross", texture, "layer0", texture)));
+            }
             JsonObject json = forge(obj("model", "cross"), blocks, false);
             json.getAsJsonObject("variants").add("inventory", one(obj("model", "builtin/generated", "transform", "forge:default-item")));
             json.getAsJsonObject("variants").add("normal", one(new JsonObject()));
-            state(json);
+            return json;
+        }
+
+        private int tallParts() {
+            if (!def.has("tall") || !def.get("tall").isJsonObject()) { return 0; }
+            return MathHelper.clamp(Json.getInt(def.getAsJsonObject("tall"), "parts", TallDef.DEFAULT_PARTS), TallDef.MIN_PARTS, TallDef.MAX_PARTS);
         }
 
         private void cane(String variant) {
@@ -290,16 +308,30 @@ final class Blockstates {
         }
 
         private void crop(String variant) {
-            JsonObject json = new JsonObject();
             String plain = face(variant);
+            String[] stages = new String[CROP_AGES];
+            JsonObject json = new JsonObject();
             for (int age = 0; age < CROP_AGES; age++) {
                 String texture = texture(pack, namespace, "blocks", variant, file, "_stage" + age);
                 if (texture == null) { texture = texture(pack, namespace, "blocks", variant, file, "_" + age); }
+                stages[age] = texture == null ? plain : texture;
                 String name = file + "_stage" + age;
-                blockModel(name, obj("parent", "block/crop", "textures", obj("crop", texture == null ? plain : texture)));
+                blockModel(name, obj("parent", "block/crop", "textures", obj("crop", stages[age])));
                 json.add("age=" + age, obj("model", own(name)));
             }
             state(obj("variants", json));
+            int parts = tallParts();
+            for (int part = 1; part < parts; part++) {
+                String partName = file + TallPlants.PART_SUFFIX + part;
+                JsonObject partJson = new JsonObject();
+                for (int age = 0; age < CROP_AGES; age++) {
+                    String texture = texture(pack, namespace, "blocks", variant, file, TallPlants.PART_SUFFIX + part + "_stage" + age);
+                    String name = partName + "_stage" + age;
+                    blockModel(name, obj("parent", "block/crop", "textures", obj("crop", texture == null ? stages[age] : texture)));
+                    partJson.add("age=" + age, obj("model", own(name)));
+                }
+                state(partName, obj("variants", partJson));
+            }
         }
 
         private void door(String variant) {

@@ -42,11 +42,13 @@
 
 **Bloky a předměty**
 - [Bloky](#bloky)
+- [Vysoké rostliny](#vysoké-rostliny)
 - [Kontejnery](#kontejnery)
 - [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury)
 - [Stavy bloků podle typu](#stavy-bloků-podle-typu)
 - [Jak donutit vanillu zacházet s tvým blokem správně](#jak-donutit-vanillu-zacházet-s-tvým-blokem-správně)
 - [Předměty](#předměty)
+- [Ohňostroje](#ohňostroje)
 - [Tekutiny](#tekutiny)
 - [Materiály, karty, zvuky, slovník rud](#materiály-karty-zvuky-slovník-rud)
 - [Přepsání vlastností](#přepsání-vlastností)
@@ -693,7 +695,7 @@ Balíček módu se nikdy nezařadí do úrovně přepisu balíčků zdrojů, ať
 
 Balíček vytvořený pro řadu 1.20.1, 1.21.1 nebo 26.x tohoto módu se načte i zde. Loader ho pozná podle `pack.mcmeta` s formátem nad 3, podle složky `data/` vedle `assets/` nebo podle jazykových souborů `.json` a `textures/block/` bez protějšku v 1.12.2, a převede ho zpět stejným způsobem, ať byl napsán pro kteroukoli z těchto řad. Zip se převede jednou, sám v sobě: každý soubor, který 1.12.2 čte jinak, se zapíše do složky `versions/1.12.2/` zipu a moderní soubory v kořeni zůstanou, jak byly, takže se stejný zip dál načte na 1.20.1, 1.21.1 i 26.x, jak popisuje [jeden zip pro každou verzi](#organizace-balíčků). Port označí složku, kterou zapisuje, souborem `port.stamp` obsahujícím verzi RDPL. Zip, který už složku `versions/1.12.2/` má, se čte přes ni; když jeho `port.stamp` uvádí jinou verzi RDPL, port složku zapíše znovu, nahradí v ní každý soubor a v logu každý pojmenuje, a složka bez `port.stamp`, například taková, kterou napsal autor balíčku, se už nikdy nepřevádí. Z kořenových souborů se čtou stále jen ty, které port předává beze změny, například zvuky a textury mimo `textures/block/` a `textures/item/`. Zip se nejprve zapíše do dočasného souboru a původní nahradí, teprve až je kompletní. Volné soubory pod `rdploader/assets` a `rdploader/data` se nepřepisují; čtou se přes týž port při každém prohledání složky.
 
-Moderní soubor bloku se vrátí s `meta` pro každou variantu v pořadí, v jakém jsou varianty napsány, a jeho tagy jako názvy ze slovníku rud:
+Moderní soubor bloku se vrátí s `meta` pro každou variantu v pořadí, v jakém jsou varianty napsány, a jeho tagy jako názvy ze slovníku rud. Části vysoké rostliny se portují stejně jako základ: každá dostane svůj blockstate a modely stejným způsobem.
 
 ```json
 {
@@ -837,8 +839,8 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `log`        | Otáčí se ke straně, ke které ho pokládáš, a ve slovníku rud je registrován jako `logWood`, takže kácení stromů a Blast Plaster s ním zacházejí jako s kmenem                                                                                 |
 | `leaves`     | Opadává, stříhá se, barví a dropuje sazenici, a ve slovníku rud je registrován jako `treeLeaves`                                                                                                                                             |
 | `sapling`    | Vyroste ve strom nebo v jednu z tvých struktur                                                                                                                                                                                               |
-| `crop`       | Roste přes stadia, dropne semínko a produkt                                                                                                                                                                                                  |
-| `flower`     | Jednobloková rostlina stojící na půdě                                                                                                                                                                                                        |
+| `crop`       | Roste přes stadia, dropne semínko a produkt; s `tall` několik bloků vysoká                                                                                                                                                                   |
+| `flower`     | Jednobloková rostlina stojící na půdě; s `tall` několik bloků vysoká, pokládá se celá                                                                                                                                                        |
 | `cane`       | Roste nahoru ve sloupci, jako rákos nebo kaktus                                                                                                                                                                                              |
 | `vine`       | Šplhá a visí po stranách bloků                                                                                                                                                                                                               |
 | `portal`     | Pošle cokoli, co do něj vstoupí, do jiné dimenze                                                                                                                                                                                             |
@@ -887,6 +889,7 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `produce`                    | jen plodina                            | název předmětu                                    | `minecraft:wheat`                                                                                 | Co sklizeň přinese                                                                                                                                                                                                                                                                                                                    |
 | `maxAge`                     | jen plodina                            | celé číslo                                        | `7`                                                                                               | Kolik stadií růstu                                                                                                                                                                                                                                                                                                                    |
 | `growth`                     | jen rostliny                           | objekt                                            | žádný                                                                                             | Viz [Růst](#růst)                                                                                                                                                                                                                                                                                                                     |
+| `tall`                       | plodina, květina                       | objekt                                            | žádný                                                                                             | Několik bloků vysoká. Viz [Vysoké rostliny](#vysoké-rostliny)                                                                                                                                                                                                                                                                         |
 | `sapling`                    | jen sazenice                           | objekt                                            | žádný                                                                                             | Viz [Sazenice](#sazenice)                                                                                                                                                                                                                                                                                                             |
 | `needsOxygen`                | plodina, květina, sazenice, listí      | boolean                                           | `true`                                                                                            | S GalaxySpace určuje, zda `crop`, `flower`, `sapling` nebo `leaves` usychá tam, kde není kyslík. Viz [Kyslík](#kyslík)                                                                                                                                                                                                                |
 | `portal`                     | jen portál                             | objekt                                            | žádný                                                                                             | Viz [Portály a brány](#portály-a-brány)                                                                                                                                                                                                                                                                                               |
@@ -1016,6 +1019,52 @@ Pro `crop`, `flower`, `cane` a `vine`.
 | `damage`          | ne      | boolean                   | `false` | Zraňuje vše, co se ho dotkne                                                                                                                                                                                                                                                               |
 | `damageAmount`    | ne      | desetinné číslo, půlsrdce | `1.0`   | Jak moc zraňuje                                                                                                                                                                                                                                                                            |
 | `breaksNeighbors` | ne      | boolean                   | `false` | Láme bloky umístěné vedle sebe, jako kaktus                                                                                                                                                                                                                                                |
+
+### Vysoké rostliny
+
+*bloky*
+
+Objekt `tall` udělá z plodiny nebo květiny rostlinu o několika blocích. Plodina při stárnutí roste nahoru přes své části a květina se pokládá celá, jako vanilla dvojitá rostlina.
+
+```json
+{
+  "type": "crop",
+  "seed": "mypack:corn_seed",
+  "produce": "mypack:corn_cob",
+  "maxAge": 7,
+  "opaque": false,
+  "tall": {
+    "parts": 3,
+    "rise": [3, 5],
+    "produceFrom": "all",
+    "regrow": true
+  }
+}
+```
+
+| Klíč          | Povinný | Hodnota                                                              | Výchozí                                 | Co dělá                                                                                                                                                                                                                                                                                                        |
+| ------------- | ------- | -------------------------------------------------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tall`        | ne      | objekt                                                               | žádný                                   | Přítomný: rostlina je po dorostení vysoká `parts` bloků. Chybí: je to jeden blok                                                                                                                                                                                                                               |
+| `parts`       | ne      | int `2` až `4`                                                       | `3`                                     | Počet bloků na výšku. Vedle základu zaregistruje `<name>_part1` až `<name>_part<parts - 1>`. Hodnota mimo rozsah se ořízne na jeho okraj                                                                                                                                                                       |
+| `rise`        | ne      | seznam `parts - 1` čísel int, každé `1` až `maxAge`, přísně rostoucí | `ceil(maxAge * n / parts)` pro část `n` | Jen plodina. Věk základu, ve kterém se objeví část `n`. Špatný seznam je chyba v logu a použije se výchozí                                                                                                                                                                                                     |
+| `produceFrom` | ne      | `base` nebo `all`                                                    | `base`                                  | Jen plodina. `base`: produkt a semínka dropne jen základ, části nedropnou nic. `all`: každá plně dorostlá část dropne navíc jeden produkt                                                                                                                                                                      |
+| `regrow`      | ne      | boolean                                                              | `false`                                 | Jen plodina. `false`: rozbití kterékoli části zničí celou rostlinu. `true`: rozbití části `n` nad základem odstraní části `n` a výš a nastaví věk základu na `rise[n-1] - 1`, takže znovu dorostou. Seříznutí nikdy nerozbije základ, proto ho spáruj s `produceFrom: all`, jinak seříznutí nedá žádný produkt |
+
+`opaque: false` je povinné, protože obsahová plodina bez něj sama odpadne a části čtou stejný soubor bloku. `seed` a `produce` si drží svůj význam a o tom, na čem základ stojí, dál rozhodují `growth.soil` a `soil` semínkového předmětu. Části nepotřebují půdu ani světlo.
+
+**Každý typ reaguje na `tall` po svém.**
+
+| Typ                       | S `tall`                                                                                                                                                                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crop`                    | Části rostou s věkem základu, ve věcích z `rise`                                                                                                                                                                                               |
+| `flower`                  | Všechny části se pokládají naráz a `rise`, `regrow` a `produceFrom` se ignorují s varováním v logu. Pokládání potřebuje nahoře volné bloky, stejně jako u vanilla dvojité rostliny, jinak se pokládání nepovede. Předmět základu dropne jednou |
+| `cane`, `vine`, `sapling` | Nepodporováno: `tall` se ignoruje s varováním. Rákos a liána už rostou sloupec do `growth.maxHeight` a sazenice vyroste ve strom                                                                                                               |
+
+**Jak plodina roste.** Tiká jen základ a světlo, půdu i růst bere z okolí stejně jako bez `tall`. Když se jeho věk změní, tikem nebo kostní moučkou, zastaví se pod první částí, jejíž blok nad ní je obsazený, a zkusí to znovu při dalších ticcích. Každá část se pak nastaví nebo položí s věkem základu, jakmile základ dosáhne jejího věku z `rise`. Část ztracená na okraji chunku nebo příkazem se vrátí při dalším ticku základu. Základ položený worldgenem nebo příkazem v dorostlém věku dostane své části stejným způsobem.
+
+**Jak se láme.** Část stojí jen na základu nebo na části pod sebou. Rozbití čehokoli pod částí ji shodí, z jakékoli příčiny, a každá část dropne jednou podle svého pravidla. S vypnutým `regrow` hráč, který rozbije část, rozbije i základ; část ztracenou jinak základ dopěstuje zpět. Rozbití v kreativu nedropne nic. Kostní moučka použitá na kteroukoli část působí na základ.
+
+**Rámeček a vzhled.** Žádná část nemá kolizi. Základ si drží vanilla rámeček plodiny podle věku až do svého prvního věku z `rise`, pak je to plný blok, a část je plný blok zmenšený o dva pixely z každé strany. Výběr bloku na části dá semínko, u květiny předmět základu. Každá část má vlastní blockstate a modely, viz [Stavy bloků podle typu](#stavy-bloků-podle-typu); stonek nakresli na základ a střední části a klas na vrchní.
 
 ### Šíření
 
@@ -1523,33 +1572,35 @@ Tam, kde má blok vlastní vlastnosti, spojují se čárkami v pořadí, v jaké
 
 O tom, co musí soubor blockstate obsahovat, rozhodují dvě věci: zda typ nese vlastnost `blocks` a jaké má vlastní vlastnosti.
 
-| Typ                       | Registruje                      | Vlastnosti blockstate                                                                                                           | Varianty |
-| ------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `basic`, `ore`, `falling` | jeden blok                      | `blocks`                                                                                                                        | 16       |
-| `container`               | jeden blok                      | `blocks`                                                                                                                        | 16       |
-| `flower`                  | jeden blok                      | `blocks`                                                                                                                        | 16       |
-| `portal`                  | jeden blok                      | `blocks`                                                                                                                        | 16       |
-| `portway`                 | jeden blok                      | `blocks`, a pokud blok nastavuje `facing`, také `facing`; pokud nastavuje `tall`, také `half` (`lower`, `upper`)                | 1        |
-| `fence`, `pane`           | jeden blok                      | `blocks`, `north`, `east`, `south`, `west`                                                                                      | 16       |
-| `wall`                    | jeden blok                      | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                | 16       |
-| `slab`                    | dva, `<name>` a `<name>_double` | půlblok `blocks` a `half`; dvojitý jen `blocks`                                                                                 | 8        |
-| `log`                     | jeden blok                      | `blocks`, `axis`, což je `x`, `y`, `z` nebo `none`                                                                              | 4        |
-| `leaves`                  | jeden blok                      | `blocks`                                                                                                                        | 4        |
-| `stairs`                  | jeden blok                      | `facing`, `half`, `shape`                                                                                                       | 1        |
-| `door`                    | jeden blok                      | `facing`, `half`, `hinge`, `open`                                                                                               | 1        |
-| `trapdoor`                | jeden blok                      | `facing`, `half`, `open`                                                                                                        | 1        |
-| `fence_gate`              | jeden blok                      | `facing`, `in_wall`, `open`                                                                                                     | 1        |
-| `banner`                  | dva, `<name>` a `<name>_wall`   | stojící `rotation`, `0` až `15`; ten na zdi `facing`                                                                            | 1        |
-| `ladder`, `torch`         | jeden blok                      | `facing`, a pochodeň přidává `up` ke čtyřem zdem                                                                                | 1        |
-| `bell`                    | jeden blok                      | `facing` a `attachment`, což je `floor`, `ceiling`, `single_wall` nebo `double_wall`, plus položka `body` pro houpající se část | 1        |
-| `crop`                    | jeden blok                      | `age`, vždy `0` až `7`, ať `maxAge` říká cokoli                                                                                 | 1        |
-| `cane`                    | jeden blok                      | `age`, `0` až `15`                                                                                                              | 1        |
-| `sapling`                 | jeden blok                      | `stage`, `0` až o jedna méně než `stages`                                                                                       | 1        |
-| `vine`                    | jeden blok                      | `up`, `north`, `east`, `south`, `west`, a jen multipart                                                                         | 1        |
+| Typ                       | Registruje                                      | Vlastnosti blockstate                                                                                                           | Varianty |
+| ------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `basic`, `ore`, `falling` | jeden blok                                      | `blocks`                                                                                                                        | 16       |
+| `container`               | jeden blok                                      | `blocks`                                                                                                                        | 16       |
+| `flower`                  | jeden blok                                      | `blocks`                                                                                                                        | 16       |
+| `portal`                  | jeden blok                                      | `blocks`                                                                                                                        | 16       |
+| `portway`                 | jeden blok                                      | `blocks`, a pokud blok nastavuje `facing`, také `facing`; pokud nastavuje `tall`, také `half` (`lower`, `upper`)                | 1        |
+| `fence`, `pane`           | jeden blok                                      | `blocks`, `north`, `east`, `south`, `west`                                                                                      | 16       |
+| `wall`                    | jeden blok                                      | `blocks`, `up`, `north`, `east`, `south`, `west`                                                                                | 16       |
+| `slab`                    | dva, `<name>` a `<name>_double`                 | půlblok `blocks` a `half`; dvojitý jen `blocks`                                                                                 | 8        |
+| `log`                     | jeden blok                                      | `blocks`, `axis`, což je `x`, `y`, `z` nebo `none`                                                                              | 4        |
+| `leaves`                  | jeden blok                                      | `blocks`                                                                                                                        | 4        |
+| `stairs`                  | jeden blok                                      | `facing`, `half`, `shape`                                                                                                       | 1        |
+| `door`                    | jeden blok                                      | `facing`, `half`, `hinge`, `open`                                                                                               | 1        |
+| `trapdoor`                | jeden blok                                      | `facing`, `half`, `open`                                                                                                        | 1        |
+| `fence_gate`              | jeden blok                                      | `facing`, `in_wall`, `open`                                                                                                     | 1        |
+| `banner`                  | dva, `<name>` a `<name>_wall`                   | stojící `rotation`, `0` až `15`; ten na zdi `facing`                                                                            | 1        |
+| `ladder`, `torch`         | jeden blok                                      | `facing`, a pochodeň přidává `up` ke čtyřem zdem                                                                                | 1        |
+| `bell`                    | jeden blok                                      | `facing` a `attachment`, což je `floor`, `ceiling`, `single_wall` nebo `double_wall`, plus položka `body` pro houpající se část | 1        |
+| `crop`                    | jeden blok                                      | `age`, vždy `0` až `7`, ať `maxAge` říká cokoli                                                                                 | 1        |
+| `crop` s `tall`           | `<name>` a `<name>_part1` až `_part<parts - 1>` | `age`, vždy `0` až `7`, na každém bloku                                                                                         | 1        |
+| `flower` s `tall`         | `<name>` a `<name>_part1` až `_part<parts - 1>` | `blocks` na každém bloku                                                                                                        | 16       |
+| `cane`                    | jeden blok                                      | `age`, `0` až `15`                                                                                                              | 1        |
+| `sapling`                 | jeden blok                                      | `stage`, `0` až o jedna méně než `stages`                                                                                       | 1        |
+| `vine`                    | jeden blok                                      | `up`, `north`, `east`, `south`, `west`, a jen multipart                                                                         | 1        |
 
 Čtyři vlastnosti se vynechávají za tebe, takže klíče piš bez nich: `powered` u dveří a branek, `variant` u zdí a `check_decay` a `decayable` u listí.
 
-Plodina si ponechává osm vanilla hodnot `age`, ať je `maxAge` jakékoli, protože `maxAge` rozhoduje jen o tom, jak daleko vyroste, takže její blockstate vždy zapisuje `age=0` až `age=7`.
+Plodina si ponechává osm vanilla hodnot `age`, ať je `maxAge` jakékoli, protože `maxAge` rozhoduje jen o tom, jak daleko vyroste, takže její blockstate vždy zapisuje `age=0` až `age=7`. Stejné pravidlo platí pro části vysoké plodiny: každý `<name>_part1`, `<name>_part2` a tak dále má vlastní blockstate s `age=0` až `age=7` a modely pojmenované `<name>_part<n>_stage<age>`. Viz [Vysoké rostliny](#vysoké-rostliny).
 
 Dva typy registrují druhý blok. `<name>_double` u půlbloku potřebuje vlastní blockstate, klíčovaný podle `blocks` bez `half`, a nikdy nedostane vlastní předmět. `<name>_wall` u praporce pokrývají [Praporce](#praporce).
 
@@ -2028,8 +2079,94 @@ Obyčejný předmět s `sleepingBag` je spacák. Pravým kliknutím na horní st
 | `locates`        | ne                | `Village`, `minecraft:river`                                 | žádný                | U prostého předmětu najde pravé kliknutí nejbližší místo tohoto jména a namíří na ně předmět jako kompas. Název je vanilla struktura nebo biom, případně název zaregistrovaný přes `locateAs`. Předmět se skládá po 1. Viz odstavec o lokátorovém kompasu výše |
 | `passesTurn`     | ne                | boolean                                                      | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                                                                                                             |
 | `sleepingBag`    | ne                | boolean                                                      | `false`              | U obyčejného předmětu pravé kliknutí na horní stranu bloku uloží držitele ke spánku a noc se přeskočí jako u postele. Nenastavuje bod oživení a nespotřebuje se. Funguje jen tam, kde je spánek povolen. Ignoruje se s `locates`, `rolls` nebo `passesTurn`    |
+| `firework`       | ne                | objekt                                                       | žádný                | Pravé kliknutí odpálí nebo spustí ohňostroj, u předmětu jakéhokoli typu. Viz [Ohňostroje](#ohňostroje)                                                                                                                                                         |
 | `requires`       | ne                | seznam id módů nebo namespace balíčků                        | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                              |
 | `weight`         | ne                | číslo od 0                                                   | žádný                | Nesená váha jednoho tohoto předmětu (u bloku jeho předmětu) v jednotce souborů vah. Přebíjí všechny záznamy souborů vah. Viz [Váha předmětů](#váha-předmětů)                                                                                                   |
+
+### Ohňostroje
+
+*předměty*
+
+Objekt `firework` na jakémkoli předmětu, ať je jeho `type` jakýkoli, způsobí, že pravé kliknutí vypustí raketu. Raketa je vanilla, takže její let, vanilla výbuch i poškození fungují jako obvykle a vlastní částicové výbuchy předmětu přijdou navíc.
+
+```json
+{
+  "type": "basic",
+  "cooldown": 20,
+  "firework": {
+    "mode": "launch",
+    "on": "both",
+    "flight": 2,
+    "consume": true,
+    "explosions": [
+      { "shape": "large_ball", "colors": ["FFD060", "FFFFFF"], "fade": ["806040"], "trail": false, "twinkle": true }
+    ],
+    "dispense": true,
+    "burst": [
+      { "particle": "mypack:popcorn", "count": 60, "speed": 0.35, "pattern": "fountain", "sound": "minecraft:entity.firework.blast" },
+      { "particle": "mypack:kernel", "speed": 0.3, "delay": 4, "pattern": "points", "points": [[0, 1, 0], [0.7, 0.7, 0], [-0.7, 0.7, 0]] }
+    ]
+  }
+}
+```
+
+| Klíč         | Povinný | Hodnota                    | Výchozí  | Co dělá                                                                                                                                                                                                                                                                                        |
+| ------------ | ------- | -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firework`   | ne      | objekt                     | žádný    | Pravé kliknutí předmětem vypustí nebo odpálí ohňostroj                                                                                                                                                                                                                                         |
+| `replaceUse` | ne      | boolean                    | `false`  | `false`: předmět s vlastním pravým kliknutím (jídlo, pití, nástroj, `rolls`, `locates` a podobně) si ho ponechá a ohňostroj vystřelí jen při plížení. Předmět bez vlastního použití vystřelí obyčejným kliknutím. `true`: obyčejné kliknutí vždy vystřelí a vlastní použití předmětu se ztratí |
+| `mode`       | ne      | `launch` nebo `burst`      | `launch` | `launch`: raketa stoupá po dobu `flight` a pak vybuchne. `burst`: raketa vybuchne hned na cíli                                                                                                                                                                                                 |
+| `on`         | ne      | `block`, `air` nebo `both` | `block`  | `block`: pravý klik na blok a raketa stojí na kliknuté straně jako ta vanilla. `air`: pravý klik do vzduchu a začne 2 bloky ve směru pohledu. `both`: obojí                                                                                                                                    |
+| `flight`     | ne      | int `0` až `3`             | `1`      | Doba letu jako ve vanille, kde `1` je asi sekunda                                                                                                                                                                                                                                              |
+| `consume`    | ne      | boolean                    | `true`   | Při každém vypuštění se spotřebuje jeden předmět. V kreativu se nespotřebuje                                                                                                                                                                                                                   |
+| `dispense`   | ne      | boolean                    | `true`   | Dávkovač vystřelí předmět jako raketu: `launch` ze strany, kam míří, `burst` na blok před sebou. `false`: dávkovač předmět vyhodí jako bez `firework`                                                                                                                                          |
+| `explosions` | ne      | seznam                     | žádný    | Vanilla výbuchy, každý s klíči níže. Prázdný seznam znamená žádný vanilla výbuch a žádné vanilla poškození                                                                                                                                                                                     |
+| `burst`      | ne      | objekt nebo seznam objektů | žádný    | Vlastní výbuchy předmětu: částice předmětu vymrštěné z místa rakety při detonaci. Jeden objekt se počítá jako seznam o jednom prvku                                                                                                                                                            |
+
+**Klíče záznamu `explosions`**
+
+| Klíč               | Povinný | Hodnota                                                    | Výchozí                     | Co dělá                                                  |
+| ------------------ | ------- | ---------------------------------------------------------- | --------------------------- | -------------------------------------------------------- |
+| `shape`            | ne      | `small_ball`, `large_ball`, `star`, `creeper` nebo `burst` | `small_ball`                | Vanilla tvar toho výbuchu                                |
+| `colors`, `fade`   | ne      | seznam hex barev                                           | `colors` bílá, `fade` žádná | Barvy a barvy, do kterých přechází, jako vanilla barviva |
+| `trail`, `twinkle` | ne      | boolean                                                    | `false`                     | Vanilla stopa a třpyt                                    |
+
+**Klíče záznamu `burst`**
+
+| Klíč       | Povinný             | Hodnota                                    | Výchozí                                           | Co dělá                                                                                                                          |
+| ---------- | ------------------- | ------------------------------------------ | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `particle` | ano                 | název předmětu                             | žádný                                             | Předmět, jehož ikonu částice ukazují. Bez něj se záznam vynechá s chybou v logu                                                  |
+| `count`    | ne                  | int `1` až `200`                           | `40`                                              | Kolik částic                                                                                                                     |
+| `speed`    | ne                  | float                                      | `0.3`                                             | Rychlost částic v blocích za tick                                                                                                |
+| `pattern`  | ne                  | `sphere`, `ring`, `fountain` nebo `points` | `sphere`                                          | `sphere`: všemi směry. `ring`: plochý vodorovný kruh. `fountain`: kužel nahoru. `points`: seznam `points`                        |
+| `points`   | s `pattern: points` | seznam `[x, y, z]`                         | žádný                                             | Jedna částice na bod, vymrštěná tím směrem a přepočtená na `speed`. `count` se ignoruje. Bez použitelného bodu se záznam vynechá |
+| `spread`   | ne                  | float `0` až `1`                           | `0`                                               | Náhodný rozptyl přidaný ke každému směru                                                                                         |
+| `delay`    | ne                  | int `0` až `40`                            | `0`                                               | Ticky po detonaci, kdy se záznam spustí, z místa, kde raketa vybuchla                                                            |
+| `sound`    | ne                  | název zvuku                                | výbuch, když je `explosions` prázdné, jinak žádný | Zvuk, který server přehraje při detonaci. Vanilla výbuch přehraje svůj vlastní                                                   |
+
+**Libovolný tvar jsou data.** Vzor `points` bere směry, které napíšeš, takže srdce, písmeno nebo prstenec zrníček nepotřebuje žádný kód. Dej mu tolik záznamů, kolik tvar potřebuje, a pomocí `delay` kresli jeden po druhém.
+
+```json
+{
+  "type": "basic",
+  "firework": {
+    "mode": "launch",
+    "on": "block",
+    "explosions": [],
+    "burst": [
+      { "particle": "mypack:kernel", "count": 30, "speed": 0.25, "pattern": "sphere" },
+      {
+        "particle": "mypack:corn_cob",
+        "speed": 0.3,
+        "delay": 10,
+        "pattern": "points",
+        "points": [[0, 0.6, 0], [0.35, 0.95, 0], [0.7, 0.85, 0], [0.85, 0.5, 0], [0.6, 0.05, 0], [0.3, -0.3, 0], [0, -0.6, 0], [-0.3, -0.3, 0], [-0.6, 0.05, 0], [-0.85, 0.5, 0], [-0.7, 0.85, 0], [-0.35, 0.95, 0]]
+      }
+    ]
+  }
+}
+```
+
+**Spouštěčem je pravé kliknutí.** Házení a bití spouštěče nejsou, protože je žádný klíč předmětu nemodeluje. `cooldown` je obyčejný klíč předmětu a použije se po vypuštění. Raketa s `explosions` zraní okolní tvory přesně jako vanilla raketa a s prázdným seznamem nezpůsobí žádné poškození. Ohňostrojové hvězdy, craftění a zrychlení élytrou pokryty nejsou.
 
 ### Klíče variant předmětů
 

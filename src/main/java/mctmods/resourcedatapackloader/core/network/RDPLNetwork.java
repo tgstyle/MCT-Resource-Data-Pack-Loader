@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HeartsHud;
 import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.intro.IntroLandMadeHandler;
 import mctmods.resourcedatapackloader.client.gui.intro.IntroPlayHandler;
+import mctmods.resourcedatapackloader.client.renderer.FireworkBurstParticle;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientItemLocks;
@@ -32,8 +33,10 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
@@ -43,6 +46,7 @@ import net.minecraftforge.fml.relauncher.Side;
 
 public final class RDPLNetwork {
     public static final String CHANNEL = "rdpl";
+    private static final double NEAR_SQ = 1024.0;
     private static SimpleNetworkWrapper channel;
     private static byte packetId;
 
@@ -81,6 +85,7 @@ public final class RDPLNetwork {
         registerClient(() -> SleepScreen.Handler.class, BedStateMessage.class);
         registerMessage(SetSpawnMessage.Handler.class, SetSpawnMessage.class);
         registerClient(() -> ClientDiet.Handler.class, EatenMessage.class);
+        registerClient(() -> FireworkBurstParticle.Handler.class, FireworkBurstMessage.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -141,6 +146,13 @@ public final class RDPLNetwork {
     public static void sendBedState(EntityPlayerMP player, int state) { sendTo(new BedStateMessage(state), player); }
 
     public static void sendGates(EntityPlayerMP player, Collection<String> gates) { sendTo(new GatesMessage(gates), player); }
+
+    public static void sendFireworkBurst(WorldServer world, double x, double y, double z, int itemId, float[] velocities) {
+        FireworkBurstMessage message = new FireworkBurstMessage(itemId, x, y, z, velocities);
+        for (EntityPlayer player : world.playerEntities) {
+            if (player.getPosition().distanceSq(x, y, z) <= NEAR_SQ) { sendTo(message, (EntityPlayerMP) player); }
+        }
+    }
 
     public static void sendEaten(EntityPlayerMP player, Collection<String> eaten) { sendTo(new EatenMessage(eaten), player); }
 

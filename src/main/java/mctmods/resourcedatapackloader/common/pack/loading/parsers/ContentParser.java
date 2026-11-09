@@ -96,6 +96,7 @@ public final class ContentParser {
         for (int meta = 0; meta < byMeta.length; meta++) {
             if (byMeta[meta] == null) { byMeta[meta] = BlockVariant.placeholder(placeholderName(meta, 2), meta); }
         }
+        int maxAge = MathHelper.clamp(Json.getInt(json, "maxAge", 7), 1, 7);
         return new BlockDef(key, type, material, mapColor, soundType,
                 Json.getString(json, "creativeTab", ""),
                 Json.getString(json, "harvestTool", "pickaxe"),
@@ -120,7 +121,7 @@ public final class ContentParser {
                 ContentTypes.color(Json.getString(json, "particleColor", "FFFFFF"), key.toString()),
                 Json.getString(json, "seed", ""),
                 Json.getString(json, "produce", ""),
-                MathHelper.clamp(Json.getInt(json, "maxAge", 7), 1, 7),
+                maxAge,
                 sapling(json),
                 portal(json),
                 growth(json),
@@ -136,7 +137,8 @@ public final class ContentParser {
                 Collections.unmodifiableList(strings(json, "spreadsOnto")),
                 Json.getBoolean(json, "needsOxygen", true),
                 ContentParserPortways.portway(json),
-                ContentParserWeights.weight(json, key));
+                ContentParserWeights.weight(json, key),
+                ContentParserCrops.tall(json, key, maxAge));
     }
 
     @Nullable private static BellDef bell(JsonObject json) {
@@ -352,7 +354,8 @@ public final class ContentParser {
                 ContentParserPortways.item(json),
                 Json.getBoolean(json, "sleepingBag", false),
                 ContentParserContainers.upgrade(key, type, json),
-                ContentParserWeights.weight(json, key));
+                ContentParserWeights.weight(json, key),
+                ContentParserFireworks.firework(key, json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
