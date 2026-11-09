@@ -5576,9 +5576,9 @@ Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším k
 ```json
 {
   "sky": {
-    "sun": { "tilt": 10, "roll": 20, "spin": 6 },
+    "sun": { "tilt": 10, "roll": 20, "spin": 6, "flip": "horizontal" },
     "bodies": [
-      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12 },
+      { "texture": "mypack:textures/sky/ringworld.png", "size": 20, "angle": 120, "roll": 90, "spin": -12, "flip": "vertical" },
       { "texture": "mypack:textures/sky/mars.png", "size": 8, "angle": 60, "gate": "research_mars" }
     ]
   }
@@ -5605,11 +5605,13 @@ Těleso může počkat na výzkum. Dej mu `gate`, název [brány](#brány), a z�
 | `sun.tilt`             | ne      | desetinné číslo, stupně            | `0`            | Jak daleko leží slunce stranou od své dráhy, na sever nebo na jih, jako `bodies[].tilt` u tělesa                                                                                                                                                                     |
 | `sun.roll`             | ne      | desetinné číslo, stupně            | `0`            | Otáčí obrázkem slunce kolem jeho středu po směru hodinových ručiček                                                                                                                                                                                                  |
 | `sun.spin`             | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek dál otáčí, přičítá se k `roll`. Záporná hodnota ho otáčí na druhou stranu                                                                                                                                                                                    |
+| `sun.flip`             | ne      | `horizontal`, `vertical`, `both`   | žádný          | Zrcadlí obrázek zleva doprava, shora dolů, nebo obojí. Na velikosti písmen nezáleží. Neznámá hodnota se zapíše do logu a obrázek zůstane nezrcadlený                                                                                                                 |
 | `moon.texture`         | ne      | cesta k textuře                    | vanilla měsíc  | List osmi fází měsíce, čtyři vedle sebe a dvě pod sebou. Bez něj se kreslí vanilla měsíc                                                                                                                                                                             |
 | `moon.size`            | ne      | desetinné číslo                    | `20`           | Polovina šířky měsíce ze vzdálenosti 100. `0` ho skryje. S `bodies` se vynechá                                                                                                                                                                                       |
 | `moon.tilt`            | ne      | desetinné číslo, stupně            | `0`            | Jak daleko leží vanilkový měsíc stranou od své dráhy, jako `sun.tilt`. S `bodies` se vynechává                                                                                                                                                                       |
 | `moon.roll`            | ne      | desetinné číslo, stupně            | `0`            | Otáčí obrázkem měsíce kolem jeho středu po směru hodinových ručiček. S `bodies` se vynechává                                                                                                                                                                         |
 | `moon.spin`            | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek měsíce dál otáčí, jako `sun.spin`. S `bodies` se vynechává                                                                                                                                                                                                   |
+| `moon.flip`            | ne      | `horizontal`, `vertical`, `both`   | žádný          | Zrcadlí obrázek zleva doprava, shora dolů, nebo obojí. Na velikosti písmen nezáleží. Neznámá hodnota se zapíše do logu a obrázek zůstane nezrcadlený. Vynecháno s `bodies`                                                                                           |
 | `bodies[].texture`     | ano     | cesta k textuře                    |                | Obrázek tělesa                                                                                                                                                                                                                                                       |
 | `bodies[].size`        | ne      | desetinné číslo                    | `20`           | Polovina jeho šířky ze vzdálenosti 100. Vanilla měsíc má `20`                                                                                                                                                                                                        |
 | `bodies[].angle`       | ne      | desetinné číslo, stupně            | `180`          | Jak daleko po dráze slunce leží za sluncem. `180` je místo vanilla měsíce. Při vypnutém `followsTime` se měří od bodu přímo nad hlavou, takže `0` je zenit a `90` horizont                                                                                           |
@@ -5618,6 +5620,7 @@ Těleso může počkat na výzkum. Dej mu `gate`, název [brány](#brány), a z�
 | `bodies[].gate`        | ne      | název brány                        | žádný          | Skryje těleso každému hráči, dokud je pro něj tato brána otevřená. Název, který žádná brána nemá, zobrazí těleso a zaznamená chybu                                                                                                                                   |
 | `bodies[].roll`        | ne      | desetinné číslo, stupně            | `0`            | Otáčí jeho obrázkem kolem jeho středu po směru hodinových ručiček                                                                                                                                                                                                    |
 | `bodies[].spin`        | ne      | desetinné číslo, stupně za sekundu | `0`            | Obrázek dál otáčí, přičítá se k `roll`. Záporná hodnota ho otáčí na druhou stranu                                                                                                                                                                                    |
+| `bodies[].flip`        | ne      | `horizontal`, `vertical`, `both`   | žádný          | Zrcadlí obrázek zleva doprava, shora dolů, nebo obojí. Na velikosti písmen nezáleží. Neznámá hodnota se zapíše do logu a obrázek zůstane nezrcadlený                                                                                                                 |
 | `stars.count`          | ne      | celé číslo                         | `1500`         | Kolik je hvězd                                                                                                                                                                                                                                                       |
 | `stars.size`           | ne      | desetinné číslo                    | `0.15`         | Nejmenší hvězda; největší je o dvě třetiny větší                                                                                                                                                                                                                     |
 
@@ -5759,6 +5762,7 @@ Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
 {
   "sky": {
     "skybox": {
+      "flip": "both",
       "up": "mypack:textures/sky/up.png",
       "down": "mypack:textures/sky/down.png",
       "north": "mypack:textures/sky/north.png",
@@ -5795,19 +5799,20 @@ Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
 }
 ```
 
-| Klíč                 | Povinné | Hodnota                            | Výchozí  | Co dělá                                                                                   |
-| -------------------- | ------- | ---------------------------------- | -------- | ----------------------------------------------------------------------------------------- |
-| `skybox.<face>`      | ne      | cesta k textuře                    | žádný    | Jedna stěna krychle: `up`, `down`, `north`, `east`, `south` nebo `west`. Zadej všech šest |
-| `skybox.panorama`    | ne      | cesta k textuře                    | žádný    | Jeden obrázek omotaný kolem celé oblohy, použitý místo stěn                               |
-| `skybox.yaw`         | ne      | desetinné číslo, stupně            | `0`      | Otáčí skyboxem po směru hodinových ručiček při pohledu shora                              |
-| `skybox.pitch`       | ne      | desetinné číslo, stupně            | `0`      | Naklání skybox kolem osy východ–západ                                                     |
-| `skybox.roll`        | ne      | desetinné číslo, stupně            | `0`      | Naklání skybox kolem osy sever–jih                                                        |
-| `skybox.spin`        | ne      | desetinné číslo, stupně za sekundu | `0`      | Skybox dál otáčí kolem jeho vlastního pólu, po `pitch` a `roll`                           |
-| `skybox.followsTime` | ne      | boolean                            | `false`  | Zapnuto, skybox se během dne otáčí spolu s hvězdami                                       |
-| `aurora.color`       | ne      | hexadecimální barva                | `40FF90` | Barva u paty závěsů                                                                       |
-| `aurora.topColor`    | ne      | hexadecimální barva                | `8040FF` | Barva nahoře, kde závěsy mizí                                                             |
-| `aurora.yaw`         | ne      | desetinné číslo, stupně            | `0`      | Otáčí závoje po směru hodinových ručiček při pohledu shora. `0` je sever                  |
-| `rainbow`            | ne      | boolean                            | `false`  | Zobrazí duhu po dešti                                                                     |
+| Klíč                 | Povinné | Hodnota                            | Výchozí  | Co dělá                                                                                                                                                              |
+| -------------------- | ------- | ---------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skybox.<face>`      | ne      | cesta k textuře                    | žádný    | Jedna stěna krychle: `up`, `down`, `north`, `east`, `south` nebo `west`. Zadej všech šest                                                                            |
+| `skybox.panorama`    | ne      | cesta k textuře                    | žádný    | Jeden obrázek omotaný kolem celé oblohy, použitý místo stěn                                                                                                          |
+| `skybox.yaw`         | ne      | desetinné číslo, stupně            | `0`      | Otáčí skyboxem po směru hodinových ručiček při pohledu shora                                                                                                         |
+| `skybox.pitch`       | ne      | desetinné číslo, stupně            | `0`      | Naklání skybox kolem osy východ–západ                                                                                                                                |
+| `skybox.roll`        | ne      | desetinné číslo, stupně            | `0`      | Naklání skybox kolem osy sever–jih                                                                                                                                   |
+| `skybox.spin`        | ne      | desetinné číslo, stupně za sekundu | `0`      | Skybox dál otáčí kolem jeho vlastního pólu, po `pitch` a `roll`                                                                                                      |
+| `skybox.flip`        | ne      | `horizontal`, `vertical`, `both`   | žádný    | Zrcadlí každou stěnu i panorama zleva doprava, shora dolů, nebo obojí. Na velikosti písmen nezáleží. Neznámá hodnota se zapíše do logu a obrázek zůstane nezrcadlený |
+| `skybox.followsTime` | ne      | boolean                            | `false`  | Zapnuto, skybox se během dne otáčí spolu s hvězdami                                                                                                                  |
+| `aurora.color`       | ne      | hexadecimální barva                | `40FF90` | Barva u paty závěsů                                                                                                                                                  |
+| `aurora.topColor`    | ne      | hexadecimální barva                | `8040FF` | Barva nahoře, kde závěsy mizí                                                                                                                                        |
+| `aurora.yaw`         | ne      | desetinné číslo, stupně            | `0`      | Otáčí závoje po směru hodinových ručiček při pohledu shora. `0` je sever                                                                                             |
+| `rainbow`            | ne      | boolean                            | `false`  | Zobrazí duhu po dešti                                                                                                                                                |
 
 ### Blok `physics`
 

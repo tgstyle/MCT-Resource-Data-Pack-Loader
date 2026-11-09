@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.DarknessDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
@@ -132,7 +133,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     static Vec3 litFog(int rgb, float brightness) { return DAYLIT.getBrightnessDependentFogColor(Vec3.fromRGB24(rgb), brightness); }
 
-    public static void sunHaze(@Nullable ClientLevel level, float alpha, float size, Matrix4f pose, ResourceLocation texture) {
+    public static void sunHaze(@Nullable ClientLevel level, float alpha, float size, Matrix4f pose, ResourceLocation texture, SkyFlip flip) {
         int[] blend = {GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB), GL11.glGetInteger(GL14.GL_BLEND_DST_RGB), GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA), GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA)};
         float[] aura = ContentWindowLook.aura(level);
         SkyLookDef look = ContentFogSampler.look(level);
@@ -154,7 +155,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
         }
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
-        ContentSkyRenderer.quad(pose, texture, size);
+        ContentSkyRenderer.quad(pose, texture, size, flip);
         RenderSystem.blendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
         RenderSystem.setShaderColor(tint[0], tint[1], tint[2], alpha);
     }

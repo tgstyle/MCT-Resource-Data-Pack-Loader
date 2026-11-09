@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -51,7 +52,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
 
-    @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 0)) private void rdpl$sunHaze(PoseStack poseStack, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { if (level != null) { ContentDimensionEffects.sunHaze(level, (1.0F - level.getRainLevel(partialTick)) * ContentDimensionEffects.sun(level), DimensionTraitsDef.VANILLA_SUN, poseStack.last().pose(), ContentDimensionEffects.sunTexture(level, SUN_LOCATION)); } }
+    @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderTexture(ILnet/minecraft/resources/ResourceLocation;)V", ordinal = 0)) private void rdpl$sunHaze(PoseStack poseStack, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { if (level != null) { ContentDimensionEffects.sunHaze(level, (1.0F - level.getRainLevel(partialTick)) * ContentDimensionEffects.sun(level), DimensionTraitsDef.VANILLA_SUN, poseStack.last().pose(), ContentDimensionEffects.sunTexture(level, SUN_LOCATION), SkyFlip.NONE); } }
 
     @Redirect(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 1)) private void rdpl$tintStars(VertexBuffer buffer, Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {
         if (level == null || ContentStars.keepsVanilla(level)) {

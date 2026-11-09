@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.loading.parsers;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -59,7 +60,8 @@ public final class ContentParserSkyLook {
         float roll = finite(key, box, owner, "roll");
         float spin = finite(key, box, owner, "spin");
         boolean follows = Json.getBoolean(box, "followsTime", false);
-        if (box.has("panorama")) { return new SkyLookDef.Skybox(ResourceLocation.parse(Json.getString(box, "panorama").trim()), List.of(), yaw, pitch, roll, spin, follows); }
+        SkyFlip flip = flip(key, box, owner);
+        if (box.has("panorama")) { return new SkyLookDef.Skybox(ResourceLocation.parse(Json.getString(box, "panorama").trim()), List.of(), yaw, pitch, roll, spin, follows, flip); }
         List<ResourceLocation> faces = new ArrayList<>();
         for (String face : FACES) {
             if (!box.has(face)) {
@@ -68,7 +70,7 @@ public final class ContentParserSkyLook {
             }
             faces.add(ResourceLocation.parse(Json.getString(box, face).trim()));
         }
-        return new SkyLookDef.Skybox(null, List.copyOf(faces), yaw, pitch, roll, spin, follows);
+        return new SkyLookDef.Skybox(null, List.copyOf(faces), yaw, pitch, roll, spin, follows, flip);
     }
 
     private static SkyLookDef.Aurora aurora(ResourceLocation key, JsonObject aurora) {
@@ -91,7 +93,16 @@ public final class ContentParserSkyLook {
         return SkyLookDef.AURA_SIZE;
     }
 
-    static SkyPoseDef pose(ResourceLocation key, JsonObject json, String owner) { return new SkyPoseDef(finite(key, json, owner, "roll"), finite(key, json, owner, "spin")); }
+    static SkyFlip flip(ResourceLocation key, JsonObject json, String owner) {
+        if (!json.has("flip")) { return SkyFlip.NONE; }
+        String asked = Json.getString(json, "flip", "").trim();
+        SkyFlip flip = SkyFlip.parse(asked);
+        if (flip != null) { return flip; }
+        ContentLog.LOGGER.error("Dimension {} gives {}.flip of '{}', which is not horizontal, vertical or both, using none", key, owner, asked);
+        return SkyFlip.NONE;
+    }
+
+    static SkyPoseDef pose(ResourceLocation key, JsonObject json, String owner) { return new SkyPoseDef(finite(key, json, owner, "roll"), finite(key, json, owner, "spin"), flip(key, json, owner)); }
 
     static float unit(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " sky"); }
 

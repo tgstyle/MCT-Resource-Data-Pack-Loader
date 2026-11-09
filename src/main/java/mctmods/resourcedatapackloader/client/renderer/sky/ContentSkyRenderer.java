@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
@@ -94,8 +95,8 @@ final class ContentSkyRenderer {
             poseStack.pushPose();
             poseStack.mulPose(Axis.ZP.rotationDegrees(sky.sunTilt()));
             poseStack.mulPose(Axis.YP.rotationDegrees(sky.sunPose().degrees(ticks)));
-            ContentDimensionEffects.sunHaze(level, clear * ContentDimensionEffects.sun(level), sky.sunSize(), poseStack.last().pose(), sky.sunTexture());
-            quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize());
+            ContentDimensionEffects.sunHaze(level, clear * ContentDimensionEffects.sun(level), sky.sunSize(), poseStack.last().pose(), sky.sunTexture(), sky.sunPose().flip());
+            quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize(), sky.sunPose().flip());
             poseStack.popPose();
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
@@ -115,7 +116,7 @@ final class ContentSkyRenderer {
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(body.tilt()));
                 poseStack.mulPose(Axis.YP.rotationDegrees(body.pose().degrees(ticks)));
-                quad(poseStack.last().pose(), body.texture(), body.size());
+                quad(poseStack.last().pose(), body.texture(), body.size(), body.pose().flip());
                 poseStack.popPose();
             }
         }
@@ -176,10 +177,11 @@ final class ContentSkyRenderer {
         float size = moonSize;
         int column = phase % 4;
         int row = phase / 4 % 2;
-        float left = column / 4.0F;
-        float top = row / 2.0F;
-        float right = (column + 1) / 4.0F;
-        float bottom = (row + 1) / 2.0F;
+        SkyFlip flip = moonPose.flip();
+        float left = flip.horizontal() ? (column + 1) / 4.0F : column / 4.0F;
+        float top = flip.vertical() ? (row + 1) / 2.0F : row / 2.0F;
+        float right = flip.horizontal() ? column / 4.0F : (column + 1) / 4.0F;
+        float bottom = flip.vertical() ? row / 2.0F : (row + 1) / 2.0F;
         RenderSystem.setShaderTexture(0, moonTexture);
         BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.vertex(pose, -size, -SIZE, size).uv(right, bottom).endVertex();
@@ -189,13 +191,13 @@ final class ContentSkyRenderer {
         BufferUploader.drawWithShader(buffer.end());
     }
 
-    static void quad(Matrix4f pose, ResourceLocation texture, float size) {
+    static void quad(Matrix4f pose, ResourceLocation texture, float size, SkyFlip flip) {
         RenderSystem.setShaderTexture(0, texture);
         BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.vertex(pose, -size, SIZE, -size).uv(0.0F, 0.0F).endVertex();
-        buffer.vertex(pose, size, SIZE, -size).uv(1.0F, 0.0F).endVertex();
-        buffer.vertex(pose, size, SIZE, size).uv(1.0F, 1.0F).endVertex();
-        buffer.vertex(pose, -size, SIZE, size).uv(0.0F, 1.0F).endVertex();
+        buffer.vertex(pose, -size, SIZE, -size).uv(flip.u(0.0F), flip.v(0.0F)).endVertex();
+        buffer.vertex(pose, size, SIZE, -size).uv(flip.u(1.0F), flip.v(0.0F)).endVertex();
+        buffer.vertex(pose, size, SIZE, size).uv(flip.u(1.0F), flip.v(1.0F)).endVertex();
+        buffer.vertex(pose, -size, SIZE, size).uv(flip.u(0.0F), flip.v(1.0F)).endVertex();
         BufferUploader.drawWithShader(buffer.end());
     }
 
