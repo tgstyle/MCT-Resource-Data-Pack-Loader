@@ -12,7 +12,7 @@ public final class CompressedAssets {
     public static void generate() {
         for (CompressedSet set : ContentCompressables.sets()) {
             String namespace = set.def.key().getNamespace();
-            for (int layer = 1; layer <= set.layers; layer++) {
+            for (int layer = set.low(); layer <= set.layers; layer++) {
                 String path = "textures/block/" + set.assetName(layer) + ContentPixelMaps.PNG;
                 if (PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, path)) { continue; }
                 lazy(set, layer, namespace, path);

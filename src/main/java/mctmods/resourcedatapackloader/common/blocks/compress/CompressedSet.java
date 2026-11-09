@@ -33,20 +33,33 @@ public final class CompressedSet {
 
     public int layerOf(Item item) { return layerOf(BuiltInRegistries.ITEM.getKey(item)); }
 
+    public int low() { return source.fromItem ? 0 : 1; }
+
+    public int oreLevel(int layer) { return layer + 1 - low(); }
+
+    public int scale(int layer) { return layer + 2 - low(); }
+
+    public ItemStack source() { return stack(low() - 1); }
+
     private int layerOf(ResourceLocation id) {
-        for (int layer = 1; layer <= layers; layer++) {
+        for (int layer = low(); layer <= layers; layer++) {
             if (blockId(layer).equals(id)) { return layer; }
         }
-        return 0;
+        return low() - 1;
     }
 
     public ItemStack stack(int layer) {
-        if (layer > 0) {
+        if (layer >= low()) {
             Item item = Registered.find(BuiltInRegistries.ITEM, blockId(layer));
             return item == null ? ItemStack.EMPTY : new ItemStack(item);
         }
-        Block block = Registered.find(BuiltInRegistries.BLOCK, source.baseBlock);
-        Item item = block == null ? Items.AIR : block.asItem();
-        return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
+        Item item;
+        if (source.fromItem) {
+            item = Registered.find(BuiltInRegistries.ITEM, source.base);
+        } else {
+            Block block = Registered.find(BuiltInRegistries.BLOCK, source.base);
+            item = block == null ? null : block.asItem();
+        }
+        return item == null || item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
     }
 }

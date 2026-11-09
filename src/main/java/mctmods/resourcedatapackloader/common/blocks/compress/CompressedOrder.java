@@ -15,13 +15,13 @@ public final class CompressedOrder {
         Map<Item, ItemStack> last = new HashMap<>();
         for (CompressedSet set : ContentCompressables.sets()) {
             if (CompressedBase.failed(set)) { continue; }
-            ItemStack base = set.stack(0);
+            ItemStack base = set.source();
             boolean parent = event.getParentEntries().contains(base);
             boolean search = event.getSearchEntries().contains(base);
             if (!parent && !search) { continue; }
             CreativeModeTab.TabVisibility visibility = parent && search ? CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS : parent ? CreativeModeTab.TabVisibility.PARENT_TAB_ONLY : CreativeModeTab.TabVisibility.SEARCH_TAB_ONLY;
             ItemStack previous = last.getOrDefault(base.getItem(), base);
-            for (int layer = 1; layer <= set.layers; layer++) {
+            for (int layer = set.low(); layer <= set.layers; layer++) {
                 ItemStack stack = set.stack(layer);
                 if (stack.isEmpty()) { continue; }
                 boolean present = parent && event.getParentEntries().contains(stack) || search && event.getSearchEntries().contains(stack);
@@ -34,8 +34,8 @@ public final class CompressedOrder {
 
     public static void layers(Item item, Consumer<ItemStack> out) {
         for (CompressedSet set : ContentCompressables.sets()) {
-            if (set.stack(0).getItem() != item || CompressedBase.failed(set)) { continue; }
-            for (int layer = 1; layer <= set.layers; layer++) {
+            if (set.source().getItem() != item || CompressedBase.failed(set)) { continue; }
+            for (int layer = set.low(); layer <= set.layers; layer++) {
                 ItemStack stack = set.stack(layer);
                 if (!stack.isEmpty()) { out.accept(stack); }
             }

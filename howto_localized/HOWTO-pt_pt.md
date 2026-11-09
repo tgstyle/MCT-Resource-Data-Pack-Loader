@@ -866,9 +866,19 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 
 Cada camada recebe também a etiqueta de item e bloco `c:compressed/<name>/<n>x`, e uma textura mais escura do que a da camada de baixo, com uma moldura que cresce. Uma base que arde dá a cada camada dez vezes o tempo de combustão da camada abaixo. O tempo de combustão para em 2147483647.
 
+Um ficheiro sem bloco próprio pode comprimir um item em vez disso, com `item`. A camada 0 é então um bloco que o RDPL cria, `<name>_compressed_0`: nove do item formam-na, e ela volta a nove. A textura é a do próprio item sobre um fundo da cor do item, escurecida. Como em Additional Compression, a camada 0 tem dureza 6 e arde dez vezes mais do que um item, e as etiquetas começam em `1x` para a camada 0.
+
+Para desenhar as camadas tu próprio, coloca um PNG onde o RDPL desenharia um: `assets/<namespace>/textures/block/<name>_compressed_<n>.png`, em que `<namespace>` é o namespace do ficheiro e `<n>` é o número da camada. O RDPL desenha apenas as camadas que os teus packs não incluem, por isso podes substituir uma camada ou todas. Para manter o escurecimento e a moldura do RDPL mas partir de outra imagem, dá ao ficheiro uma `texture` em vez disso, e cada camada é construída a partir dela.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -882,12 +892,13 @@ Cada camada recebe também a etiqueta de item e bloco `c:compressed/<name>/<n>x`
 }
 ```
 
-| Chave     | Obrigatório       | Valor                              | Predefinição   | O que faz                                                                                                                                                                                |
-| --------- | ----------------- | ---------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | sim               | 1 a 20                             |                | Quantas camadas construir sobre a camada 0. Se o valor for reduzido mais tarde, os blocos colocados mantêm-se; os IDs das camadas removidas são lidos como a camada mais alta que restar |
-| `of`      | só sem `variants` | `id`, ex.: `minecraft:cobblestone` | nenhum         | O bloco a comprimir num ficheiro sem `variants`: um bloco de outro modo ou um bloco vanilla                                                                                              |
-| `texture` | não               | caminho da textura                 | modelo da base | A textura base a partir da qual as camadas são construídas, em vez da que o RDPL lê do modelo da base                                                                                    |
-| `recipes` | não               | booleano                           | `true`         | Adiciona as receitas `<name>_compress_<n>` e `<name>_decompress_<n>`: nove da camada n-1 numa grelha 3x3 dão uma da camada n, e uma volta a nove                                         |
+| Chave     | Obrigatório                | Valor                              | Predefinição   | O que faz                                                                                                                                                                                                                                         |
+| --------- | -------------------------- | ---------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`  | sim                        | 1 a 20                             |                | Quantas camadas construir sobre a camada 0. Se o valor for reduzido mais tarde, os blocos colocados mantêm-se; os IDs das camadas removidas são lidos como a camada mais alta que restar                                                          |
+| `of`      | só sem `variants` e `item` | `id`, ex.: `minecraft:cobblestone` | nenhum         | O bloco a comprimir num ficheiro sem `variants`: um bloco de outro modo ou um bloco vanilla                                                                                                                                                       |
+| `item`    | só sem `variants` e `of`   | `id`, ex.: `minecraft:flint`       | nenhum         | O item a comprimir num ficheiro sem `variants`: um item de outro modo ou um item vanilla. A camada 0 é um bloco que o RDPL cria a partir de nove deles                                                                                            |
+| `texture` | não                        | caminho da textura                 | modelo da base | A textura base a partir da qual as camadas são construídas, em vez da que o RDPL lê do modelo da base ou do item                                                                                                                                  |
+| `recipes` | não                        | booleano                           | `true`         | Adiciona as receitas `<name>_compress_<n>` e `<name>_decompress_<n>`: nove da camada n-1 numa grelha 3x3 dão uma da camada n, e uma volta a nove. Para um `item`, `_compress_0` e `_decompress_0` transformam nove itens na camada 0 e vice-versa |
 
 ### Chaves de variantes
 
