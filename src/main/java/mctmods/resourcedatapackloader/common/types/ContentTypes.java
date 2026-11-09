@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVarian
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
 import java.util.HashMap;
@@ -34,6 +35,8 @@ public final class ContentTypes {
     private ContentTypes() {}
 
     public static Identifier wallId(Identifier id) { return Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + WALL_SUFFIX); }
+
+    public static Identifier partId(Identifier id, int part) { return Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + TallPlants.PART_SUFFIX + part); }
 
     static {
         material("air", MapColor.NONE, false, false, false, true, LineCompat.PUSH_NORMAL);

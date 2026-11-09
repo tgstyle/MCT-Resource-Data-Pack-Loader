@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.blocks.fluid.FluidReactions;
 import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
 import mctmods.resourcedatapackloader.common.containers.ContentContainerUpgrades;
+import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.generated.ContentGenerated;
 import mctmods.resourcedatapackloader.common.items.ContentDrinkItem;
@@ -58,6 +59,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public final class ContentRegistry {
     public static final String MAIN = "";
     public static final String WALL = "wall";
+    public static final String PART = "part";
     private static final Map<Identifier, BlockDef> BLOCK_DEFS = new LinkedHashMap<>();
     private static final Map<Identifier, ItemDef> ITEM_DEFS = new LinkedHashMap<>();
     private static final Map<Identifier, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
@@ -207,6 +209,7 @@ public final class ContentRegistry {
     public static void addItem(Identifier id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {
         ItemEntry entry = new ItemEntry(id, item, def, variant, block, tabId(tab, id.getNamespace()));
         ITEMS.put(id, entry);
+        if (def != null && def.firework() != null) { ContentFireworks.index(item, def); }
     }
 
     private static String tabId(String named, String namespace) {

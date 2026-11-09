@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
 import com.google.gson.JsonArray;
@@ -35,6 +36,10 @@ public final class ContentGeneratedModels {
     static void models(ContentRegistry.BlockEntry entry, String namespace, String name, String type) {
         BlockDef def = entry.def();
         String main = namespace + ":block/" + name;
+        if (ContentRegistry.PART.equals(entry.role())) {
+            part(def, namespace, name, type);
+            return;
+        }
         String texture = texture(namespace, name);
         switch (type) {
             case ContentBlockTypes.CONTAINER -> {
@@ -237,6 +242,26 @@ public final class ContentGeneratedModels {
                 model(def, namespace, name, top == null && bottom == null ? cube(def, texture, "cube_all") : bottomTop(def, texture, top, bottom));
                 blockstate(namespace, name, ContentBlockTypes.PORTWAY.equals(type) ? portwayStates(def.portway(), main) : singleVariant(main));
             }
+        }
+    }
+
+    private static void part(BlockDef def, String namespace, String name, String type) {
+        String main = namespace + ":block/" + name;
+        String base = name.substring(0, name.lastIndexOf(TallPlants.PART_SUFFIX));
+        String baseTexture = texture(namespace, base);
+        if (ContentBlockTypes.CROP.equals(type)) {
+            JsonObject variants = new JsonObject();
+            int last = def.cropMaxAge();
+            for (int age = 0; age <= 7; age++) {
+                String stageTexture = textureOr(namespace, name + "_stage" + age, textureOr(namespace, base + "_stage" + Math.min(age, last), baseTexture));
+                model(def, namespace, name + "_stage" + age, parented(BLOCK + "crop", stageTexture == null ? null : Json.obj("crop", stageTexture)));
+                variants.add("age=" + age, Json.obj("model", main + "_stage" + age));
+            }
+            blockstate(namespace, name, Json.obj("variants", variants));
+        }
+        else {
+            model(def, namespace, name, textured(def, textureOr(namespace, name, baseTexture), "cross", "cross"));
+            blockstate(namespace, name, singleVariant(main));
         }
     }
 

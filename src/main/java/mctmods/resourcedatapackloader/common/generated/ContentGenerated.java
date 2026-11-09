@@ -7,12 +7,14 @@ import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentPlantPartBlock;
 import mctmods.resourcedatapackloader.common.items.ContentBucketItem;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.DropDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TallDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.CurioSlotDef;
@@ -27,6 +29,7 @@ import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.worldgen.WorldgenJson;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeTrunk;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurioSlots;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -93,7 +96,7 @@ public final class ContentGenerated {
 
     public static void cropLoot() {
         for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
-            if (!(entry.block() instanceof ContentCropBlock)) { continue; }
+            if (!(entry.block() instanceof ContentCropBlock || entry.block() instanceof ContentPlantPartBlock && ContentBlockTypes.CROP.equals(entry.def().type()))) { continue; }
             String path = lootPath(entry.id().getPath());
             if (!provided(PackType.SERVER_DATA, entry.id().getNamespace(), path)) { data(entry.id().getNamespace(), path, loot(entry, entry.def().type())); }
         }
@@ -169,6 +172,7 @@ public final class ContentGenerated {
 
     private static JsonObject loot(ContentRegistry.BlockEntry entry, String type) {
         BlockDef def = entry.def();
+        if (entry.block() instanceof ContentPlantPartBlock) { return partLoot(entry, def); }
         BlockVariant variant = entry.variant();
         String self = entry.isMain() ? entry.id().toString() : variant.id().toString();
         JsonArray pools = new JsonArray();
@@ -241,6 +245,15 @@ public final class ContentGenerated {
                 }
                 if (!weighted.isEmpty()) { pools.add(pool(weighted, unsilked)); }
             }
+        }
+        return Json.obj("type", "minecraft:block", "pools", pools);
+    }
+
+    private static JsonObject partLoot(ContentRegistry.BlockEntry entry, BlockDef def) {
+        JsonArray pools = new JsonArray();
+        TallDef tall = def.tall();
+        if (ContentBlockTypes.CROP.equals(def.type()) && tall != null && TallDef.ALL.equals(tall.produceFrom()) && TallPlants.baseBlockOf(entry.block()) instanceof ContentCropBlock crop) {
+            pools.add(pool(Json.arr(item(ContentStacks.id(crop.produce()))), Json.arr(stateCondition(entry, "age", String.valueOf(def.cropMaxAge())))));
         }
         return Json.obj("type", "minecraft:block", "pools", pools);
     }

@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.common.blocks.light.ContentWallTorchBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentBushBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCaneBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentPlantPartBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentVineBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
@@ -30,6 +31,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.LineCompat;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -139,8 +141,8 @@ public final class ContentBlockTypes {
                 }
                 yield List.of(new Created(id, ContentSaplingBlock.create(def, variant.id(), properties), ContentRegistry.MAIN));
             }
-            case CROP -> List.of(new Created(id, new ContentCropBlock(def, properties), ContentRegistry.MAIN));
-            case FLOWER -> List.of(new Created(id, new ContentBushBlock(def, GrowthDef.orBush(def), properties), ContentRegistry.MAIN));
+            case CROP -> withParts(def, variant, id, new ContentCropBlock(def, properties), false);
+            case FLOWER -> withParts(def, variant, id, new ContentBushBlock(def, GrowthDef.orBush(def), properties), true);
             case CANE -> {
                 if (def.growth() == null) {
                     ContentLog.LOGGER.error("Block {} is a cane but has no 'growth' section, so it has no height to grow to", variant.id());
@@ -160,7 +162,21 @@ public final class ContentBlockTypes {
         };
     }
 
+    private static List<Created> withParts(BlockDef def, BlockVariant variant, Identifier id, Block base, boolean flower) {
+        List<Created> made = new ArrayList<>();
+        made.add(new Created(id, base, ContentRegistry.MAIN));
+        if (def.tall() == null) { return made; }
+        for (int part = 1; part < def.tall().parts(); part++) {
+            Identifier partId = ContentTypes.partId(id, part);
+            BlockBehaviour.Properties properties = ContentTypes.properties(def, variant, def.type()).setId(ResourceKey.create(Registries.BLOCK, partId));
+            Block block = flower ? ContentPlantPartBlock.flower(def, part, properties) : ContentPlantPartBlock.crop(def, part, properties);
+            made.add(new Created(partId, block, ContentRegistry.PART));
+        }
+        return made;
+    }
+
     @Nullable public static Item item(ContentRegistry.BlockEntry entry) {
+        if (ContentRegistry.PART.equals(entry.role())) { return null; }
         BlockDef def = entry.def();
         BlockVariant variant = entry.variant();
         Item.Properties properties = new Item.Properties().setId(ResourceKey.create(Registries.ITEM, entry.id())).useBlockDescriptionPrefix().stacksTo(variant.maxSize()).rarity(ContentTypes.rarity(variant.rarity(), variant.id()));

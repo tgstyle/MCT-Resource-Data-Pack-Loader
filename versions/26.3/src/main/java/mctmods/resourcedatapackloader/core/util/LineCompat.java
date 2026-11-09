@@ -101,6 +101,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.BonemealSource;
 import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -500,6 +501,18 @@ public final class LineCompat {
         protected VegetationBase(Properties properties) { super(properties); }
     }
 
+    public abstract static class CropBase extends CropBlock {
+        protected CropBase(Properties properties) { super(properties); }
+
+        protected boolean bonemealAllowed(LevelReader level, BlockPos pos, BlockState state) { return true; }
+
+        protected boolean bonemealGrown(ServerLevel level, RandomSource random, BlockPos pos, BlockState state) { return false; }
+
+        @Override public boolean isValidBonemealTarget(@Nonnull LevelReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) { return super.isValidBonemealTarget(level, pos, state, source) && bonemealAllowed(level, pos, state); }
+
+        @Override public void performBonemeal(@Nonnull ServerLevel level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) { if (!bonemealGrown(level, random, pos, state)) { super.performBonemeal(level, random, pos, state, source); } }
+    }
+
     public abstract static class SaplingBase extends VegetationBase implements BonemealableBlock {
         protected SaplingBase(Properties properties) { super(properties); }
 
@@ -510,6 +523,27 @@ public final class LineCompat {
         @Override public boolean isBonemealSuccess(@Nonnull Level level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) { return true; }
 
         @Override public void performBonemeal(@Nonnull ServerLevel level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) { grow(level, pos, state, random); }
+    }
+
+    public abstract static class PartBase extends Block implements BonemealableBlock {
+        protected PartBase(Properties properties) { super(properties); }
+
+        @Nullable protected abstract BlockPos growBase(LevelReader level, BlockPos pos);
+
+        @Override public boolean isValidBonemealTarget(@Nonnull LevelReader level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) {
+            BlockPos base = growBase(level, pos);
+            return base != null && ((BonemealableBlock) level.getBlockState(base).getBlock()).isValidBonemealTarget(level, base, level.getBlockState(base), source);
+        }
+
+        @Override public boolean isBonemealSuccess(@Nonnull Level level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) {
+            BlockPos base = growBase(level, pos);
+            return base != null && ((BonemealableBlock) level.getBlockState(base).getBlock()).isBonemealSuccess(level, random, base, level.getBlockState(base), source);
+        }
+
+        @Override public void performBonemeal(@Nonnull ServerLevel level, @Nonnull RandomSource random, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nonnull BonemealSource source) {
+            BlockPos base = growBase(level, pos);
+            if (base != null) { ((BonemealableBlock) level.getBlockState(base).getBlock()).performBonemeal(level, random, base, level.getBlockState(base), source); }
+        }
     }
 
     public abstract static class LeavesBase extends LeavesBlock {

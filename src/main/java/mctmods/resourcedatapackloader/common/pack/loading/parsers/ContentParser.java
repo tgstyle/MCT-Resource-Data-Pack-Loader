@@ -81,6 +81,7 @@ public final class ContentParser {
         String harvestTool = Settings.lower(Json.getString(json, "harvestTool", "pickaxe"));
         if (!harvestTool.isEmpty() && !ContentToolTypes.HARVEST.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, ContentToolTypes.HARVEST, TAGS); }
         retiredPlantTypes(key, json);
+        int maxAge = Mth.clamp(Json.getInt(json, "maxAge", 7), 1, 7);
         return new BlockDef(key, type,
                 Settings.lower(Json.getString(json, "material", "rock")),
                 Settings.lower(Json.getString(json, "mapColor", "")),
@@ -107,7 +108,7 @@ public final class ContentParser {
                 color(Json.getString(json, "particleColor", "FFFFFF"), key),
                 Json.getString(json, "seed", "").trim(),
                 Json.getString(json, "produce", "").trim(),
-                Mth.clamp(Json.getInt(json, "maxAge", 7), 1, 7),
+                maxAge,
                 sapling(json),
                 growth(json),
                 behaviors(key, json),
@@ -121,7 +122,8 @@ public final class ContentParser {
                 bell(json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json),
-                ContentParserWeights.weight(json, key));
+                ContentParserWeights.weight(json, key),
+                ContentParserCrops.tall(json, key, maxAge));
     }
 
     private static String renderLayer(Identifier key, JsonObject json) {
@@ -338,7 +340,7 @@ public final class ContentParser {
                 ContentParserWeapons.weapon(key, json),
                 ContentParserPortways.item(key, json),
                 Json.getBoolean(json, "sleepingBag", false), ContentParserContainers.upgrade(key, json),
-                ContentParserWeights.weight(json, key));
+                ContentParserWeights.weight(json, key), ContentParserFireworks.firework(key, json));
     }
 
     public static String fluidName(Identifier key, JsonObject json) { return Json.getString(json, "name", key.getPath()).trim(); }

@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyGates;
 import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
+import mctmods.resourcedatapackloader.client.particle.FireworkBurstParticle;
 import mctmods.resourcedatapackloader.client.util.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.util.ClientCommands;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
@@ -32,6 +33,7 @@ import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkParticles;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -42,6 +44,7 @@ import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
@@ -54,6 +57,7 @@ public class ClientSetup {
 
     public static void registerClient(IEventBus modBus) {
         modBus.addListener((AddClientReloadListenersEvent held) -> held.addListener(ResourceDataPackLoader.id("face_cache_reset"), FaceCacheReset.INSTANCE));
+        modBus.addListener((RegisterParticleProvidersEvent held) -> held.registerSpecial(FireworkParticles.BURST_ITEM.get(), new FireworkBurstParticle.Provider()));
         NeoForge.EVENT_BUS.addListener(ClientCommands::register);
         NeoForge.EVENT_BUS.addListener(ToastFilter::onToastAdd);
         NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
