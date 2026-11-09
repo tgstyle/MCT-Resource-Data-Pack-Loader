@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
@@ -75,7 +76,9 @@ import org.lwjgl.opengl.GL14;
         return look == null ? 1.0F : look.sunBrightness;
     }
 
-    public static void sunHaze(World world, ResourceLocation texture, float alpha, float size, boolean rawColor) {
+    public static void sunHaze(World world, ResourceLocation texture, float alpha, float size, boolean rawColor) { sunHaze(world, texture, alpha, size, rawColor, SkyPoseDef.NONE); }
+
+    public static void sunHaze(World world, ResourceLocation texture, float alpha, float size, boolean rawColor, SkyPoseDef pose) {
         float[] aura = ContentWindowLook.aura(world, sunHeight());
         float[] tint = ContentWindowLook.sunTint(world);
         boolean hazed = aura != null && aura[3] > 0.0F;
@@ -94,7 +97,7 @@ import org.lwjgl.opengl.GL14;
                 GL11.glBlendFunc(GL11.GL_ZERO, GL11.GL_ONE_MINUS_SRC_COLOR);
                 color(alpha, alpha, alpha, 1.0F, rawColor);
                 Minecraft.getMinecraft().getTextureManager().bindTexture(texture);
-                quad(size);
+                quad(size, pose);
             }
             GL14.glBlendFuncSeparate(sourceRgb, destRgb, sourceAlpha, destAlpha);
         }
@@ -120,14 +123,18 @@ import org.lwjgl.opengl.GL14;
         else { GlStateManager.color(red, green, blue, alpha); }
     }
 
-    static void quad(float size) {
+    static void quad(float size, SkyPoseDef pose) {
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
+        double left = pose.flipU ? 1.0D : 0.0D;
+        double right = 1.0D - left;
+        double top = pose.flipV ? 1.0D : 0.0D;
+        double bottom = 1.0D - top;
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(-size, 100.0D, -size).tex(0.0D, 0.0D).endVertex();
-        buffer.pos(size, 100.0D, -size).tex(1.0D, 0.0D).endVertex();
-        buffer.pos(size, 100.0D, size).tex(1.0D, 1.0D).endVertex();
-        buffer.pos(-size, 100.0D, size).tex(0.0D, 1.0D).endVertex();
+        buffer.pos(-size, 100.0D, -size).tex(left, top).endVertex();
+        buffer.pos(size, 100.0D, -size).tex(right, top).endVertex();
+        buffer.pos(size, 100.0D, size).tex(right, bottom).endVertex();
+        buffer.pos(-size, 100.0D, size).tex(left, bottom).endVertex();
         tessellator.draw();
     }
 

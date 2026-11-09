@@ -1,13 +1,17 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.sky;
 
 public final class SkyPoseDef {
-    public static final SkyPoseDef NONE = new SkyPoseDef(0.0F, 0.0F);
+    public static final SkyPoseDef NONE = new SkyPoseDef(0.0F, 0.0F, false, false);
     public final float roll;
     public final float spin;
+    public final boolean flipU;
+    public final boolean flipV;
 
-    public SkyPoseDef(float roll, float spin) {
+    public SkyPoseDef(float roll, float spin, boolean flipU, boolean flipV) {
         this.roll = roll;
         this.spin = spin;
+        this.flipU = flipU;
+        this.flipV = flipV;
     }
 
     public boolean spins() { return spin != 0.0F; }

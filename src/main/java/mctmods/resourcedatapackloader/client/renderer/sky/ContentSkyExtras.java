@@ -53,6 +53,7 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.rotate(look.skybox.pitch, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(look.skybox.roll, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(-SkyPoseDef.spun(look.skybox.spin, world.getTotalWorldTime() + (double) partialTicks), 0.0F, 1.0F, 0.0F);
+        GlStateManager.scale(look.skybox.flipU ? -1.0F : 1.0F, look.skybox.flipV ? -1.0F : 1.0F, 1.0F);
         if (look.skybox.panorama != null) {
             mc.renderEngine.bindTexture(look.skybox.panorama);
             panorama(buffer, tessellator);

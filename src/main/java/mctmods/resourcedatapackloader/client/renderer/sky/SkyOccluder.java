@@ -29,6 +29,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private final double rollCos;
     private final double rollSin;
     private final boolean spins;
+    private final boolean flipU;
+    private final boolean flipV;
     private float turn;
     private boolean[] mask;
     private boolean[] rings;
@@ -41,6 +43,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         rollCos = Math.cos(Math.toRadians(pose.roll));
         rollSin = Math.sin(Math.toRadians(pose.roll));
         spins = pose.spins();
+        flipU = pose.flipU;
+        flipV = pose.flipV;
         this.angle = angle;
         this.tilt = tilt;
         this.size = size;
@@ -85,8 +89,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (spins) { return spunCovers(Math.hypot(sx, sz) / 2.0D, r); }
         double px = sx * rollCos - sz * rollSin;
         double pz = sx * rollSin + sz * rollCos;
-        double u = moon ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
-        double v = moon ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
+        double u = moon != flipU ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
+        double v = moon != flipV ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
         if (u + r < 0.0D || u - r > 1.0D || v + r < 0.0D || v - r > 1.0D) { return false; }
         int fromX = clamp((int) Math.floor((u - r) * width), width);
         int toX = clamp((int) Math.floor((u + r) * width), width);

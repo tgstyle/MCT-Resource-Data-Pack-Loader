@@ -99,15 +99,19 @@ public final class SkyLookDef {
         public final float pitch;
         public final float roll;
         public final float spin;
+        public final boolean flipU;
+        public final boolean flipV;
         public final boolean followsTime;
 
-        public Skybox(@Nullable ResourceLocation panorama, List<ResourceLocation> faces, float yaw, float pitch, float roll, float spin, boolean followsTime) {
+        public Skybox(@Nullable ResourceLocation panorama, List<ResourceLocation> faces, float yaw, float pitch, float roll, float spin, boolean flipU, boolean flipV, boolean followsTime) {
             this.panorama = panorama;
             this.faces = faces;
             this.yaw = yaw;
             this.pitch = pitch;
             this.roll = roll;
             this.spin = spin;
+            this.flipU = flipU;
+            this.flipV = flipV;
             this.followsTime = followsTime;
         }
     }
