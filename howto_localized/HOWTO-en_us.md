@@ -44,12 +44,14 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 
 **Blocks and items**
 - [Blocks](#blocks)
+- [Tall plants](#tall-plants)
 - [Containers](#containers)
 - [Curios slot types](#curios-slot-types)
 - [Bells](#bells)
 - [Models, blockstates and textures](#models-blockstates-and-textures)
 - [Making vanilla treat your block properly](#making-vanilla-treat-your-block-properly)
 - [Items](#items)
+- [Fireworks](#fireworks)
 - [Fluids](#fluids)
 - [Materials, tabs, sounds, tags](#materials-tabs-sounds-tags)
 - [Property overrides](#property-overrides)
@@ -799,8 +801,8 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `log`        | Rotates to the face you place it against, and carries the `minecraft:logs` tag so tree felling and Blast Plaster treat it as a trunk                                                                                                                  |
 | `leaves`     | Decays, shears, tints and drops a sapling, and carries the `minecraft:leaves` tag. Left `opaque`, they draw solid, like fast leaves; set `"opaque": false` to see through them                                                                        |
 | `sapling`    | Grows into a tree or into one of your structures                                                                                                                                                                                                      |
-| `crop`       | Grows through stages, drops a seed and a produce item, wheat seeds and wheat for whichever the file leaves out                                                                                                                                        |
-| `flower`     | A one-block plant standing on soil                                                                                                                                                                                                                    |
+| `crop`       | Grows through stages, drops a seed and a produce item, wheat seeds and wheat for whichever the file leaves out; with `tall`, several blocks tall                                                                                                      |
+| `flower`     | A one-block plant standing on soil; with `tall`, several blocks tall, placed whole                                                                                                                                                                    |
 | `cane`       | Grows upward in a column, like reeds or cactus                                                                                                                                                                                                        |
 | `vine`       | Climbs and hangs on the sides of blocks. With `growth` it grows down to `maxHeight` and, with `spread`, reaches sideways onto neighboring walls; without it, it stays as placed                                                                       |
 | `portal`     | Sends whatever walks in to another dimension                                                                                                                                                                                                          |
@@ -848,6 +850,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `produce`                    | crop only                             | item name                                         | `minecraft:wheat`                                                                                            | What harvesting yields                                                                                                                                                                                                                                                                                                                                                                                              |
 | `maxAge`                     | crop only                             | int                                               | `7`                                                                                                          | How many growth stages                                                                                                                                                                                                                                                                                                                                                                                              |
 | `growth`                     | plants only                           | object                                            | none                                                                                                         | See [Growth](#growth)                                                                                                                                                                                                                                                                                                                                                                                               |
+| `tall`                       | crop, flower                          | object                                            | none                                                                                                         | Several blocks tall. See [Tall plants](#tall-plants)                                                                                                                                                                                                                                                                                                                                                                |
 | `sapling`                    | sapling only                          | object                                            | none                                                                                                         | See [Saplings](#saplings)                                                                                                                                                                                                                                                                                                                                                                                           |
 | `portal`                     | portal only                           | object                                            | none                                                                                                         | See [Portals and gates](#portals-and-gates)                                                                                                                                                                                                                                                                                                                                                                         |
 | `container`                  | container only                        | object                                            | none                                                                                                         | See [Containers](#containers)                                                                                                                                                                                                                                                                                                                                                                                       |
@@ -977,6 +980,52 @@ For `crop`, `flower`, `cane` and `vine`.
 | `damage`          | no       | boolean             | `false`          | Hurts whatever touches it                                                                                                                                                                                                                                                                                            |
 | `damageAmount`    | no       | float, half hearts  | `1.0`            | How much it hurts                                                                                                                                                                                                                                                                                                    |
 | `breaksNeighbors` | no       | boolean             | `false`          | Breaks blocks placed beside it, like cactus                                                                                                                                                                                                                                                                          |
+
+### Tall plants
+
+*blocks*
+
+A `tall` object makes a crop or a flower several blocks tall. A crop grows up through its parts as it ages, and a flower is placed whole, like a vanilla double plant.
+
+```json
+{
+  "type": "crop",
+  "seed": "mypack:corn_seed",
+  "produce": "mypack:corn_cob",
+  "maxAge": 7,
+  "opaque": false,
+  "tall": {
+    "parts": 3,
+    "rise": [3, 5],
+    "produceFrom": "all",
+    "regrow": true
+  }
+}
+```
+
+| Key           | Required | Value                                                               | Default                                 | What it does                                                                                                                                                                                                                                                                                |
+| ------------- | -------- | ------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tall`        | no       | object                                                              | none                                    | Present: the plant is `parts` blocks tall when grown. Absent: it is one block                                                                                                                                                                                                               |
+| `parts`       | no       | int `2` to `4`                                                      | `3`                                     | Blocks tall. Registers `<name>_part1` up to `<name>_part<parts - 1>` beside the base. A value outside the range is cut to it                                                                                                                                                                |
+| `rise`        | no       | list of `parts - 1` ints, each `1` to `maxAge`, strictly increasing | `ceil(maxAge * n / parts)` for part `n` | Crop only. The base age at which part `n` appears. A bad list is an error in the log and the default is used                                                                                                                                                                                |
+| `produceFrom` | no       | `base` or `all`                                                     | `base`                                  | Crop only. `base`: only the base drops produce and seeds, and the parts drop nothing. `all`: every part that is fully grown also drops one produce                                                                                                                                          |
+| `regrow`      | no       | boolean                                                             | `false`                                 | Crop only. `false`: breaking any part destroys the whole plant. `true`: breaking part `n` above the base removes parts `n` and up and sets the base age to `rise[n-1] - 1`, so they grow again. A cut never breaks the base, so pair it with `produceFrom: all` or the cut gives no produce |
+
+`opaque: false` is required, since a content crop without it pops off on its own, and the parts read the same block file. `seed` and `produce` keep their meaning, and `growth.soil` and the seed item's `soil` still decide what the base stands on. The parts need no soil and no light.
+
+**Each type reacts to `tall` in its own way.**
+
+| Type                      | With `tall`                                                                                                                                                                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crop`                    | The parts rise with the base's age, at the ages in `rise`                                                                                                                                                                    |
+| `flower`                  | Every part is placed at once, and `rise`, `regrow` and `produceFrom` are ignored with a warning in the log. Placing needs free blocks above, as for a vanilla double plant, or the placing fails. The base's item drops once |
+| `cane`, `vine`, `sapling` | Not supported: `tall` is ignored with a warning. A cane and a vine already grow a column to `growth.maxHeight`, and a sapling grows into its tree                                                                            |
+
+**How a crop grows.** Only the base ticks and takes light, soil and growth from the environment as it does without `tall`. When its age changes, from a tick or from bone meal, it stops below the first part whose block above is taken, and tries again on later ticks. Each part is then set or placed with the base's age once the base reaches its `rise` age. A part lost to a chunk edge or a command returns on the base's next tick. A base placed by worldgen or a command at a grown age gets its parts the same way.
+
+**How it breaks.** A part stands only on the base or on the part below it. Breaking anything under a part drops it, for any cause, and each part drops by its own rule once. With `regrow` off, a player breaking a part also breaks the base; a part lost any other way is grown back by the base. Creative breaking drops nothing. Bone meal used on any part works the base.
+
+**Box and look.** No part has collision. The base keeps vanilla's crop box by age until its first `rise` age, then it is a full block, and a part is a full block inset by two pixels each side. Pick block on a part gives the seed, or the base's item on a flower. The parts are blocks of their own, and their blockstates and models are generated from the textures named in [Models, blockstates and textures](#models-blockstates-and-textures): `<name>_part<n>_stage<age>` for a crop, drawn by `age`, and `<name>_part<n>` for a flower, each falling back to the base's texture. Draw the stalk on the base and the middle parts and the ear on the top.
 
 ### Spreading
 
@@ -1510,6 +1559,8 @@ assets/mypack/lang/en_us.json
 | `ladder`, `vine`, `torch`                                          | `<name>`                                                                                               | the game's own template for each                                                                                                                                                                                              |
 | `bell`                                                             | `<name>`                                                                                               | the game's own bell frames as `<name>_floor`, `<name>_ceiling`, `<name>_wall` and `<name>_between_walls`, the mod's `pack_bell_body` as `<name>_body`, and a blockstate of sixteen `attachment` and `facing` states over them |
 | `crop`                                                             | `<name>_stage0` up to `<name>_stage<maxAge>`, or `<name>` for all                                      | one `crop` model per stage, `age=0` to `7` mapped onto them                                                                                                                                                                   |
+| `crop` with `tall`                                                 | for each part `<name>_part<n>_stage0` up to `<name>_part<n>_stage7`, or the base's textures            | one `crop` model per age on every part block, `age=0` to `7` mapped onto them                                                                                                                                                 |
+| `flower` with `tall`                                               | `<name>_part<n>`, or the base's texture                                                                | one `cross` model on every part block                                                                                                                                                                                         |
 | `portal`                                                           | `<name>`, or the nether portal's                                                                       | `cube_all` for a `fullCube` block, as a portal block is on 1.12.2; three portal slabs, one per axis, for one that is not, such as a dimension's frame portal                                                                  |
 | `banner`                                                           | its own sheet, see [Banners](#banners)                                                                 | the game's banner model                                                                                                                                                                                                       |
 | `container` with `chestModel`                                      | the chest sheet named in `chestModel`                                                                  | the mod's `pack_chest` model                                                                                                                                                                                                  |
@@ -1891,8 +1942,94 @@ A plain item with `sleepingBag` is a sleeping bag. Right-click the top of a soli
 | `curioSlot`      | no            | a Curios slot name                   | none                   | The Curios slot the item can be worn in, for any type of item. Ignored when Curios is not installed                                                                                                                                                           |
 | `wornEffects`    | no            | list of effects                      | none                   | Potion effects held on the wearer while the item is in its Curios slot, as `potion`, `amplifier`, `ambient` and `showParticles`                                                                                                                               |
 | `wornAttributes` | no            | list of attribute changes            | none                   | Attribute changes held on the wearer while the item is in its Curios slot, as `attribute`, `amount` and `operation`                                                                                                                                           |
+| `firework`       | no            | object                               | none                   | A right-click launches or bursts a firework, for any type of item. See [Fireworks](#fireworks)                                                                                                                                                                |
 | `requires`       | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                                                                                                                    |
 | `weight`         | no            | number from 0 up                     | none                   | Carried weight of one of this item (for a block, of its item), in the weights files' unit. Beats every weights file entry. See [Item weights](#item-weights)                                                                                                  |
+
+### Fireworks
+
+*items*
+
+A `firework` object on any item, whatever its `type`, makes a right-click launch a rocket. The rocket is a vanilla one, so its flight, its vanilla burst and its damage work as usual, and the item's own particle bursts come on top.
+
+```json
+{
+  "type": "basic",
+  "cooldown": 20,
+  "firework": {
+    "mode": "launch",
+    "on": "both",
+    "flight": 2,
+    "consume": true,
+    "explosions": [
+      { "shape": "large_ball", "colors": ["FFD060", "FFFFFF"], "fade": ["806040"], "trail": false, "twinkle": true }
+    ],
+    "dispense": true,
+    "burst": [
+      { "particle": "mypack:popcorn", "count": 60, "speed": 0.35, "pattern": "fountain", "sound": "minecraft:entity.firework_rocket.blast" },
+      { "particle": "mypack:kernel", "speed": 0.3, "delay": 4, "pattern": "points", "points": [[0, 1, 0], [0.7, 0.7, 0], [-0.7, 0.7, 0]] }
+    ]
+  }
+}
+```
+
+| Key          | Required | Value                     | Default  | What it does                                                                                                                                                                                                                                                                      |
+| ------------ | -------- | ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firework`   | no       | object                    | none     | A right-click with the item launches or bursts a firework                                                                                                                                                                                                                         |
+| `replaceUse` | no       | boolean                   | `false`  | `false`: an item with a right-click of its own (food, drink, a tool, `rolls`, `locates` and so on) keeps it, and the firework fires only while sneaking. An item with no use of its own fires on a plain click. `true`: a plain click always fires and the item's own use is lost |
+| `mode`       | no       | `launch` or `burst`       | `launch` | `launch`: a rocket rises for `flight` and bursts. `burst`: the rocket bursts at once at the target                                                                                                                                                                                |
+| `on`         | no       | `block`, `air` or `both`  | `block`  | `block`: right-click a block, and the rocket stands on the clicked face like a vanilla one. `air`: right-click in the air, and it starts 2 blocks along the look. `both`: either                                                                                                  |
+| `flight`     | no       | int `0` to `3`            | `1`      | Flight time as in vanilla, where `1` is about a second                                                                                                                                                                                                                            |
+| `consume`    | no       | boolean                   | `true`   | One item is used per launch. Creative never uses one                                                                                                                                                                                                                              |
+| `dispense`   | no       | boolean                   | `true`   | A dispenser fires the item as a rocket: `launch` from the side it faces, `burst` at the block in front. `false`: the dispenser drops the item as it does without `firework`                                                                                                       |
+| `explosions` | no       | list                      | none     | The vanilla bursts, each with the keys below. An empty list means no vanilla burst and no vanilla damage                                                                                                                                                                          |
+| `burst`      | no       | object or list of objects | none     | The item's own bursts: item particles thrown from the rocket's position when it detonates. A single object counts as a list of one                                                                                                                                                |
+
+**Keys of an `explosions` entry**
+
+| Key                | Required | Value                                                    | Default                     | What it does                                           |
+| ------------------ | -------- | -------------------------------------------------------- | --------------------------- | ------------------------------------------------------ |
+| `shape`            | no       | `small_ball`, `large_ball`, `star`, `creeper` or `burst` | `small_ball`                | The vanilla shape of that burst                        |
+| `colors`, `fade`   | no       | list of hex colors                                       | `colors` white, `fade` none | The colors and the colors it fades to, as vanilla dyes |
+| `trail`, `twinkle` | no       | boolean                                                  | `false`                     | Vanilla's trail and flicker                            |
+
+**Keys of a `burst` entry**
+
+| Key        | Required               | Value                                    | Default                                         | What it does                                                                                                                            |
+| ---------- | ---------------------- | ---------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `particle` | yes                    | item name                                | none                                            | The item whose icon the particles show. Without it the entry is left out with an error in the log                                       |
+| `count`    | no                     | int `1` to `200`                         | `40`                                            | How many particles                                                                                                                      |
+| `speed`    | no                     | float                                    | `0.3`                                           | Particle speed, in blocks per tick                                                                                                      |
+| `pattern`  | no                     | `sphere`, `ring`, `fountain` or `points` | `sphere`                                        | `sphere`: every direction. `ring`: a flat horizontal circle. `fountain`: an upward cone. `points`: the `points` list                    |
+| `points`   | with `pattern: points` | list of `[x, y, z]`                      | none                                            | One particle per point, thrown along that direction scaled to `speed`. `count` is ignored. Without a usable point the entry is left out |
+| `spread`   | no                     | float `0` to `1`                         | `0`                                             | Random jitter added to each direction                                                                                                   |
+| `delay`    | no                     | int `0` to `40`                          | `0`                                             | Ticks after the detonation that this entry fires, from where the rocket burst                                                           |
+| `sound`    | no                     | sound name                               | the blast when `explosions` is empty, else none | A sound the server plays at the detonation. The vanilla burst plays its own                                                             |
+
+**Any shape is data.** A `points` pattern takes the directions you write, so a heart, a letter or a ring of kernels needs no code. Give it as many entries as the shape needs, and use `delay` to draw one after another.
+
+```json
+{
+  "type": "basic",
+  "firework": {
+    "mode": "launch",
+    "on": "block",
+    "explosions": [],
+    "burst": [
+      { "particle": "mypack:kernel", "count": 30, "speed": 0.25, "pattern": "sphere" },
+      {
+        "particle": "mypack:corn_cob",
+        "speed": 0.3,
+        "delay": 10,
+        "pattern": "points",
+        "points": [[0, 0.6, 0], [0.35, 0.95, 0], [0.7, 0.85, 0], [0.85, 0.5, 0], [0.6, 0.05, 0], [0.3, -0.3, 0], [0, -0.6, 0], [-0.3, -0.3, 0], [-0.6, 0.05, 0], [-0.85, 0.5, 0], [-0.7, 0.85, 0], [-0.35, 0.95, 0]]
+      }
+    ]
+  }
+}
+```
+
+**The trigger is a right-click.** Throwing and hitting are not triggers, since no item key models them. `cooldown` is the ordinary item key and is applied after a launch. A rocket with `explosions` hurts nearby creatures exactly like a vanilla rocket, and with an empty list it does no damage. Firework stars, crafting and the elytra boost are not covered.
 
 ### Item variant keys
 

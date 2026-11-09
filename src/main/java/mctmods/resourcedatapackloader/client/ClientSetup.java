@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.hud.PackTooltips;
 import mctmods.resourcedatapackloader.client.gui.hud.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.gui.hud.WeightHud;
+import mctmods.resourcedatapackloader.client.renderer.particle.FireworkBurstParticle;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionAmbience;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
@@ -33,6 +34,7 @@ import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkParticles;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.config.Config;
@@ -44,6 +46,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.TagsUpdatedEvent;
 
@@ -54,6 +57,7 @@ public class ClientSetup {
     }
 
     public static void register(IEventBus modBus) {
+        modBus.addListener((RegisterParticleProvidersEvent held) -> held.registerSpecial(FireworkParticles.BURST.get(), new FireworkBurstParticle.Provider()));
         modBus.addListener((RegisterClientReloadListenersEvent held) -> held.registerReloadListener(FaceCacheReset.INSTANCE));
         NeoForge.EVENT_BUS.addListener(ClientCommands::register);
         NeoForge.EVENT_BUS.addListener(ToastFilter::onToastAdd);

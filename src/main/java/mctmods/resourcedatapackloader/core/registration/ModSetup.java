@@ -49,6 +49,11 @@ import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
+import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkBursts;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkDetonations;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkDispensing;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkParticles;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
 import mctmods.resourcedatapackloader.common.gates.ContentGates;
 import mctmods.resourcedatapackloader.common.gates.GateEvents;
@@ -198,6 +203,8 @@ public class ModSetup {
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
         NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(event.getBuilder()));
+        NeoForge.EVENT_BUS.addListener(ContentFireworks::onUseBlock);
+        NeoForge.EVENT_BUS.addListener(ContentFireworks::onUseAir);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, CompressedFuel::onFuelBurnTime);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVillagers::applyTrades);
@@ -378,6 +385,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, DialogEvents::onInteract);
         NeoForge.EVENT_BUS.addListener(DialogEvents::onLogout);
         NeoForge.EVENT_BUS.addListener(CardScan::onTick);
+        NeoForge.EVENT_BUS.addListener(FireworkBursts::onTick);
+        NeoForge.EVENT_BUS.addListener(FireworkDetonations::onGameEvent);
         NeoForge.EVENT_BUS.addListener(VanillaPortalLink::onTravel);
         NeoForge.EVENT_BUS.addListener(VanillaPortalLink::onDimensionChange);
         NeoForge.EVENT_BUS.addListener(VanillaPortalLink::onJoin);
@@ -473,6 +482,7 @@ public class ModSetup {
         ContentTreeTrunk.REGISTER.register(modBus);
         BlockDrops.REGISTER.register(modBus);
         ContentLootSwitch.REGISTER.register(modBus);
+        FireworkParticles.REGISTER.register(modBus);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
@@ -522,6 +532,7 @@ public class ModSetup {
                 ContentAffixes.load();
                 ContentEnchanting.load();
                 ContentSleep.load();
+                FireworkDispensing.register();
                 if (ContentOrders.load()) {
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);

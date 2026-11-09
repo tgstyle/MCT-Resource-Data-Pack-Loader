@@ -44,12 +44,14 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 
 **Blocchi e oggetti**
 - [Blocchi](#blocchi)
+- [Piante alte](#piante-alte)
 - [Contenitori](#contenitori)
 - [Tipi di slot Curios](#tipi-di-slot-curios)
 - [Campane](#campane)
 - [Modelli, blockstate e texture](#modelli-blockstate-e-texture)
 - [Far sì che vanilla gestisca correttamente il tuo blocco](#far-sì-che-vanilla-gestisca-correttamente-il-tuo-blocco)
 - [Oggetti](#oggetti)
+- [Fuochi d'artificio](#fuochi-dartificio)
 - [Fluidi](#fluidi)
 - [Materiali, schede, suoni, tag](#materiali-schede-suoni-tag)
 - [Override delle proprietà](#override-delle-proprietà)
@@ -799,8 +801,8 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `log`        | Ruota in base alla faccia contro cui lo piazzi e porta il tag `minecraft:logs`, così l'abbattimento degli alberi e Blast Plaster lo trattano come un tronco                                                                                                                                          |
 | `leaves`     | Marcisce, si cesoia, si colora e rilascia un arboscello, e porta il tag `minecraft:leaves`. Se lasciata `opaque`, si disegna piena, come le foglie veloci; imposta `"opaque": false` per vederci attraverso                                                                                          |
 | `sapling`    | Cresce in un albero o in una delle tue strutture                                                                                                                                                                                                                                                     |
-| `crop`       | Cresce per stadi, rilascia un seme e un prodotto, semi di grano e grano per quello che il file omette                                                                                                                                                                                                |
-| `flower`     | Una pianta di un blocco che sta sul terreno                                                                                                                                                                                                                                                          |
+| `crop`       | Cresce per stadi, rilascia un seme e un prodotto, semi di grano e grano per quello che il file omette; con `tall`, alta più blocchi                                                                                                                                                                  |
+| `flower`     | Una pianta di un blocco che sta sul terreno; con `tall`, alta più blocchi, piazzata tutta insieme                                                                                                                                                                                                    |
 | `cane`       | Cresce verso l'alto in colonna, come le canne o il cactus                                                                                                                                                                                                                                            |
 | `vine`       | Si arrampica e pende ai lati dei blocchi. Con `growth` cresce verso il basso fino a `maxHeight` e, con `spread`, si estende lateralmente sulle pareti vicine; senza, resta com'è stata piazzata                                                                                                      |
 | `portal`     | Manda ciò che vi entra in un'altra dimensione                                                                                                                                                                                                                                                        |
@@ -848,6 +850,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `produce`                    | solo crop                                      | nome di oggetto                                     | `minecraft:wheat`                                                                                                | Ciò che dà il raccolto                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `maxAge`                     | solo crop                                      | intero                                              | `7`                                                                                                              | Quante fasi di crescita                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `growth`                     | solo piante                                    | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Crescita](#crescita)                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `tall`                       | crop, flower                                   | oggetto JSON                                        | nessuno                                                                                                          | Alta più blocchi. Vedi [Piante alte](#piante-alte)                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `sapling`                    | solo sapling                                   | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Arboscelli](#arboscelli)                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `portal`                     | solo portal                                    | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Portali e varchi](#portali-e-varchi)                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `container`                  | solo container                                 | oggetto JSON                                        | nessuno                                                                                                          | Vedi [Contenitori](#contenitori)                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -977,6 +980,52 @@ Per `crop`, `flower`, `cane` e `vine`.
 | `damage`          | no           | booleano                 | `false`                  | Ferisce ciò che lo tocca                                                                                                                                                                                                                                                                                                                       |
 | `damageAmount`    | no           | decimale, mezzi cuori    | `1.0`                    | Quanto fa male                                                                                                                                                                                                                                                                                                                                 |
 | `breaksNeighbors` | no           | booleano                 | `false`                  | Rompe i blocchi piazzati accanto a sé, come il cactus                                                                                                                                                                                                                                                                                          |
+
+### Piante alte
+
+*blocchi*
+
+Un oggetto `tall` rende una coltura o un fiore una pianta alta più blocchi. Una coltura cresce salendo attraverso le sue parti man mano che invecchia, e un fiore viene piazzato tutto insieme, come una pianta doppia vanilla.
+
+```json
+{
+  "type": "crop",
+  "seed": "mypack:corn_seed",
+  "produce": "mypack:corn_cob",
+  "maxAge": 7,
+  "opaque": false,
+  "tall": {
+    "parts": 3,
+    "rise": [3, 5],
+    "produceFrom": "all",
+    "regrow": true
+  }
+}
+```
+
+| Chiave        | Richiesta | Valore                                                                           | Predefinito                                 | Cosa fa                                                                                                                                                                                                                                                                                                                     |
+| ------------- | --------- | -------------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tall`        | no        | oggetto                                                                          | nessuno                                     | Presente: la pianta è alta `parts` blocchi da adulta. Assente: è un solo blocco                                                                                                                                                                                                                                             |
+| `parts`       | no        | intero da `2` a `4`                                                              | `3`                                         | Altezza in blocchi. Registra `<name>_part1` fino a `<name>_part<parts - 1>` accanto alla base. Un valore fuori dall'intervallo viene riportato ai suoi estremi                                                                                                                                                              |
+| `rise`        | no        | elenco di `parts - 1` interi, ciascuno da `1` a `maxAge`, strettamente crescenti | `ceil(maxAge * n / parts)` per la parte `n` | Solo coltura. L'età della base a cui compare la parte `n`. Un elenco errato è un errore nel log e si usa il valore predefinito                                                                                                                                                                                              |
+| `produceFrom` | no        | `base` o `all`                                                                   | `base`                                      | Solo coltura. `base`: solo la base rilascia prodotto e semi, le parti non rilasciano nulla. `all`: ogni parte del tutto cresciuta rilascia anche un prodotto                                                                                                                                                                |
+| `regrow`      | no        | booleano                                                                         | `false`                                     | Solo coltura. `false`: rompere una parte qualsiasi distrugge tutta la pianta. `true`: rompere la parte `n` sopra la base rimuove le parti da `n` in su e porta l'età della base a `rise[n-1] - 1`, così ricrescono. Un taglio non rompe mai la base, quindi abbinalo a `produceFrom: all` o il taglio non dà alcun prodotto |
+
+`opaque: false` è obbligatorio, dato che una coltura di contenuto senza di esso si stacca da sola, e le parti leggono lo stesso file di blocco. `seed` e `produce` mantengono il loro significato, e `growth.soil` e il `soil` dell'oggetto seme decidono ancora su cosa sta la base. Le parti non hanno bisogno né di terreno né di luce.
+
+**Ogni tipo reagisce a `tall` a modo suo.**
+
+| Tipo                      | Con `tall`                                                                                                                                                                                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crop`                    | Le parti salgono con l'età della base, alle età di `rise`                                                                                                                                                                                                           |
+| `flower`                  | Ogni parte viene piazzata subito, e `rise`, `regrow` e `produceFrom` vengono ignorati con un avviso nel log. Il piazzamento richiede blocchi liberi sopra, come per una pianta doppia vanilla, altrimenti fallisce. L'oggetto della base viene rilasciato una volta |
+| `cane`, `vine`, `sapling` | Non supportato: `tall` viene ignorato con un avviso. Una canna e una liana fanno già crescere una colonna fino a `growth.maxHeight`, e un sapling diventa un albero                                                                                                 |
+
+**Come cresce una coltura.** Solo la base riceve i tick e prende luce, terreno e crescita dall'ambiente come senza `tall`. Quando la sua età cambia, per un tick o con la farina d'ossa, si ferma sotto la prima parte il cui blocco sopra è occupato, e riprova ai tick successivi. Ogni parte viene poi impostata o piazzata con l'età della base appena questa raggiunge la sua età di `rise`. Una parte persa al bordo di un chunk o per un comando torna al tick successivo della base. Una base piazzata dalla generazione del mondo o da un comando a un'età adulta riceve le sue parti allo stesso modo.
+
+**Come si rompe.** Una parte sta in piedi solo sulla base o sulla parte sotto di essa. Rompere qualsiasi cosa sotto una parte la fa cadere, per qualunque causa, e ogni parte rilascia il suo bottino secondo la propria regola, una volta. Con `regrow` disattivato, un giocatore che rompe una parte rompe anche la base; una parte persa in altro modo viene rifatta dalla base. Rompere in Creativa non rilascia nulla. La farina d'ossa usata su una parte qualsiasi agisce sulla base.
+
+**Riquadro e aspetto.** Nessuna parte ha collisione. La base mantiene il riquadro della coltura vanilla per età fino alla sua prima età di `rise`, poi è un blocco pieno, e una parte è un blocco pieno rientrato di due pixel per lato. Prendi blocco su una parte dà il seme, o l'oggetto della base su un fiore. Le parti sono blocchi a sé, e i loro blockstate e modelli sono generati dalle texture indicate in [Modelli, blockstate e texture](#modelli-blockstate-e-texture): `<name>_part<n>_stage<age>` per una coltura, disegnata in base a `age`, e `<name>_part<n>` per un fiore, ciascuna con la texture della base come ripiego. Disegna lo stelo sulla base e sulle parti di mezzo, e la spiga in cima.
 
 ### Diffusione
 
@@ -1510,6 +1559,8 @@ assets/mypack/lang/en_us.json
 | `ladder`, `vine`, `torch`                                      | `<name>`                                                                                                 | il modello del gioco per ciascuno                                                                                                                                                                                                |
 | `bell`                                                         | `<name>`                                                                                                 | i telai di campana del gioco come `<name>_floor`, `<name>_ceiling`, `<name>_wall` e `<name>_between_walls`, il `pack_bell_body` della mod come `<name>_body`, e un blockstate di sedici stati `attachment` e `facing` su di essi |
 | `crop`                                                         | `<name>_stage0` fino a `<name>_stage<maxAge>`, oppure `<name>` per tutti                                 | un modello `crop` per fase, con `age=0` fino a `7` mappati su di essi                                                                                                                                                            |
+| `crop` con `tall`                                              | per ogni parte `<name>_part<n>_stage0` fino a `<name>_part<n>_stage7`, oppure le texture della base      | un modello `crop` per età su ogni blocco di parte, con `age=0` fino a `7` mappati su di essi                                                                                                                                     |
+| `flower` con `tall`                                            | `<name>_part<n>`, oppure la texture della base                                                           | un modello `cross` su ogni blocco di parte                                                                                                                                                                                       |
 | `portal`                                                       | `<name>`, oppure quella del portale del Nether                                                           | `cube_all` per un blocco `fullCube`, come è un blocco portale in 1.12.2; tre lastre di portale, una per asse, per uno che non lo è, come il portale a telaio di una dimensione                                                   |
 | `banner`                                                       | il suo foglio proprio, vedi [Stendardi](#stendardi)                                                      | il modello di stendardo del gioco                                                                                                                                                                                                |
 | `container` con `chestModel`                                   | il foglio del baule indicato in `chestModel`                                                             | il modello `pack_chest` della mod                                                                                                                                                                                                |
@@ -1888,11 +1939,97 @@ Un oggetto semplice con `sleepingBag` è un sacco a pelo. Con un clic destro sul
 | `curioSlot`      | no            | nome di uno slot Curios                        | nessuno                            | Lo slot Curios in cui l'oggetto può essere indossato, per qualsiasi tipo di oggetto. Viene ignorato se Curios non è installato                                                                                                                                                                        |
 | `wornEffects`    | no            | elenco di effetti                              | nessuno                            | Effetti di pozione mantenuti su chi lo indossa finché l'oggetto è nel suo slot Curios, come `potion`, `amplifier`, `ambient` e `showParticles`                                                                                                                                                        |
 | `wornAttributes` | no            | elenco di modifiche agli attributi             | nessuno                            | Modifiche agli attributi mantenute su chi lo indossa finché l'oggetto è nel suo slot Curios, come `attribute`, `amount` e `operation`                                                                                                                                                                 |
+| `firework`       | no            | oggetto JSON                                   | nessuno                            | Un clic destro lancia o fa esplodere un fuoco d'artificio, per qualsiasi tipo di oggetto. Vedi [Fuochi d'artificio](#fuochi-dartificio)                                                                                                                                                               |
 | `locates`        | no            | `Village`, `minecraft:river`                   | nessuno                            | Su un oggetto semplice, un clic destro cerca il luogo più vicino con quel nome e punta l'oggetto verso di esso, come una bussola. Il nome è una struttura o un bioma vanilla, oppure uno registrato con `locateAs`. L'oggetto si impila a 1. Vedi il paragrafo sulla bussola localizzatrice qui sopra |
 | `passesTurn`     | no            | booleano                                       | `false`                            | Per un oggetto semplice, un clic destro passa il turno di chi lo tiene come fa `/rdplserver game pass`. Vedi [A turno](#a-turno)                                                                                                                                                                      |
 | `sleepingBag`    | no            | booleano                                       | `false`                            | Per un oggetto semplice, un clic destro sulla faccia superiore di un blocco fa sdraiare chi lo tiene per dormire e salta la notte come un letto. Non cambia mai il punto di rigenerazione e non si consuma. Funziona solo dove si può dormire. Ignorato con `locates`, `rolls` o `passesTurn`         |
 | `requires`       | no            | elenco di id di mod o namespace di pack        | nessuno                            | Il file viene saltato a meno che tutti siano presenti                                                                                                                                                                                                                                                 |
 | `weight`         | no            | numero da 0 in su                              | nessuno                            | Peso portato di un oggetto (per un blocco, del suo oggetto), nell'unità dei file dei pesi. Prevale su ogni voce dei file dei pesi. Vedi [Pesi degli oggetti](#pesi-degli-oggetti)                                                                                                                     |
+
+### Fuochi d'artificio
+
+*oggetti*
+
+Un oggetto `firework` su qualsiasi oggetto, qualunque sia il suo `type`, fa lanciare un razzo con il clic destro. Il razzo è un razzo vanilla, quindi volo, esplosione vanilla e danni funzionano come al solito, e le esplosioni di particelle proprie dell'oggetto si aggiungono sopra.
+
+```json
+{
+  "type": "basic",
+  "cooldown": 20,
+  "firework": {
+    "mode": "launch",
+    "on": "both",
+    "flight": 2,
+    "consume": true,
+    "explosions": [
+      { "shape": "large_ball", "colors": ["FFD060", "FFFFFF"], "fade": ["806040"], "trail": false, "twinkle": true }
+    ],
+    "dispense": true,
+    "burst": [
+      { "particle": "mypack:popcorn", "count": 60, "speed": 0.35, "pattern": "fountain", "sound": "minecraft:entity.firework_rocket.blast" },
+      { "particle": "mypack:kernel", "speed": 0.3, "delay": 4, "pattern": "points", "points": [[0, 1, 0], [0.7, 0.7, 0], [-0.7, 0.7, 0]] }
+    ]
+  }
+}
+```
+
+| Chiave       | Richiesta | Valore                      | Predefinito | Cosa fa                                                                                                                                                                                                                                                                                                               |
+| ------------ | --------- | --------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firework`   | no        | oggetto                     | nessuno     | Un clic destro con l'oggetto lancia o fa esplodere un fuoco d'artificio                                                                                                                                                                                                                                               |
+| `replaceUse` | no        | booleano                    | `false`     | `false`: un oggetto che ha già un clic destro suo (cibo, bevanda, strumento, `rolls`, `locates` e così via) lo mantiene, e il fuoco d'artificio parte solo stando accovacciati. Un oggetto senza un uso proprio spara con un clic normale. `true`: un clic normale spara sempre e l'uso proprio dell'oggetto va perso |
+| `mode`       | no        | `launch` o `burst`          | `launch`    | `launch`: un razzo sale per `flight` ed esplode. `burst`: il razzo esplode subito sul bersaglio                                                                                                                                                                                                                       |
+| `on`         | no        | `block`, `air` o `both`     | `block`     | `block`: clic destro su un blocco, e il razzo si pianta sulla faccia cliccata come uno vanilla. `air`: clic destro in aria, e parte 2 blocchi avanti nella direzione dello sguardo. `both`: l'uno o l'altro                                                                                                           |
+| `flight`     | no        | intero da `0` a `3`         | `1`         | Tempo di volo come in vanilla, dove `1` è circa un secondo                                                                                                                                                                                                                                                            |
+| `consume`    | no        | booleano                    | `true`      | Un oggetto viene usato a ogni lancio. In Creativa non se ne usa mai nessuno                                                                                                                                                                                                                                           |
+| `dispense`   | no        | booleano                    | `true`      | Un distributore spara l'oggetto come un razzo: `launch` dal lato verso cui è rivolto, `burst` sul blocco davanti. `false`: il distributore lascia cadere l'oggetto come fa senza `firework`                                                                                                                           |
+| `explosions` | no        | elenco                      | nessuno     | Le esplosioni vanilla, ciascuna con le chiavi qui sotto. Un elenco vuoto significa nessuna esplosione vanilla e nessun danno vanilla                                                                                                                                                                                  |
+| `burst`      | no        | oggetto o elenco di oggetti | nessuno     | Le esplosioni proprie dell'oggetto: particelle dell'oggetto lanciate dalla posizione del razzo quando detona. Un singolo oggetto vale come un elenco di uno                                                                                                                                                           |
+
+**Chiavi di una voce di `explosions`**
+
+| Chiave             | Richiesta | Valore                                                  | Predefinito                     | Cosa fa                                                        |
+| ------------------ | --------- | ------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------- |
+| `shape`            | no        | `small_ball`, `large_ball`, `star`, `creeper` o `burst` | `small_ball`                    | La forma vanilla di quell'esplosione                           |
+| `colors`, `fade`   | no        | elenco di colori esadecimali                            | `colors` bianco, `fade` nessuno | I colori e i colori verso cui sfumano, come le tinture vanilla |
+| `trail`, `twinkle` | no        | booleano                                                | `false`                         | La scia e lo scintillio di vanilla                             |
+
+**Chiavi di una voce di `burst`**
+
+| Chiave     | Richiesta             | Valore                                  | Predefinito                                                  | Cosa fa                                                                                                                                              |
+| ---------- | --------------------- | --------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `particle` | sì                    | nome di oggetto                         | nessuno                                                      | L'oggetto la cui icona mostrano le particelle. Senza di esso la voce viene scartata con un errore nel log                                            |
+| `count`    | no                    | intero da `1` a `200`                   | `40`                                                         | Quante particelle                                                                                                                                    |
+| `speed`    | no                    | decimale                                | `0.3`                                                        | Velocità delle particelle, in blocchi per tick                                                                                                       |
+| `pattern`  | no                    | `sphere`, `ring`, `fountain` o `points` | `sphere`                                                     | `sphere`: in ogni direzione. `ring`: un cerchio orizzontale piatto. `fountain`: un cono verso l'alto. `points`: l'elenco `points`                    |
+| `points`   | con `pattern: points` | elenco di `[x, y, z]`                   | nessuno                                                      | Una particella per punto, lanciata in quella direzione scalata a `speed`. `count` viene ignorato. Senza un punto utilizzabile la voce viene scartata |
+| `spread`   | no                    | decimale da `0` a `1`                   | `0`                                                          | Variazione casuale aggiunta a ogni direzione                                                                                                         |
+| `delay`    | no                    | intero da `0` a `40`                    | `0`                                                          | Tick dopo la detonazione a cui parte questa voce, dal punto in cui il razzo è esploso                                                                |
+| `sound`    | no                    | nome di suono                           | l'esplosione quando `explosions` è vuoto, altrimenti nessuno | Un suono che il server riproduce alla detonazione. L'esplosione vanilla riproduce il proprio                                                         |
+
+**Qualsiasi forma è un dato.** Uno schema `points` prende le direzioni che scrivi, quindi un cuore, una lettera o un anello di chicchi non richiede alcun codice. Dagli tante voci quante ne servono alla forma, e usa `delay` per disegnarne una dopo l'altra.
+
+```json
+{
+  "type": "basic",
+  "firework": {
+    "mode": "launch",
+    "on": "block",
+    "explosions": [],
+    "burst": [
+      { "particle": "mypack:kernel", "count": 30, "speed": 0.25, "pattern": "sphere" },
+      {
+        "particle": "mypack:corn_cob",
+        "speed": 0.3,
+        "delay": 10,
+        "pattern": "points",
+        "points": [[0, 0.6, 0], [0.35, 0.95, 0], [0.7, 0.85, 0], [0.85, 0.5, 0], [0.6, 0.05, 0], [0.3, -0.3, 0], [0, -0.6, 0], [-0.3, -0.3, 0], [-0.6, 0.05, 0], [-0.85, 0.5, 0], [-0.7, 0.85, 0], [-0.35, 0.95, 0]]
+      }
+    ]
+  }
+}
+```
+
+**L'innesco è un clic destro.** Lanciare e colpire non sono inneschi, perché nessuna chiave dell'oggetto li descrive. `cooldown` è la normale chiave dell'oggetto e si applica dopo un lancio. Un razzo con `explosions` ferisce le creature vicine esattamente come un razzo vanilla, e con un elenco vuoto non fa alcun danno. Le stelle dei fuochi d'artificio, la fabbricazione e la spinta dell'elitra non sono coperte.
 
 ### Chiavi delle varianti degli oggetti
 

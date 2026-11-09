@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatchD
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -120,7 +121,7 @@ public final class ContentBoneMealFlowers {
             if (dx == 0 && dz == 0 || dx * dx + dz * dz > radius * radius) { continue; }
             BlockPos pos = origin.offset(dx, random.nextInt(3), dz);
             BlockState flower = pool.get(random.nextInt(pool.size()));
-            if (level.isLoaded(pos) && level.getBlockState(pos).isAir() && flower.canSurvive(level, pos) && level.setBlock(pos, flower, Block.UPDATE_ALL)) { placed++; }
+            if (level.isLoaded(pos) && level.getBlockState(pos).isAir() && flower.canSurvive(level, pos) && TallPlants.canPlaceTall(level, pos, flower.getBlock()) && level.setBlock(pos, flower, Block.UPDATE_ALL)) { placed++; }
         }
     }
 }
