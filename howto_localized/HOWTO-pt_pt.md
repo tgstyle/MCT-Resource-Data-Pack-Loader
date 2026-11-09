@@ -44,12 +44,14 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 
 **Blocos e itens**
 - [Blocos](#blocos)
+- [Plantas altas](#plantas-altas)
 - [Contentores](#contentores)
 - [Tipos de ranhura do Curios](#tipos-de-ranhura-do-curios)
 - [Sinos](#sinos)
 - [Modelos, blockstates e texturas](#modelos-blockstates-e-texturas)
 - [Fazer o vanilla tratar bem o teu bloco](#fazer-o-vanilla-tratar-bem-o-teu-bloco)
 - [Itens](#itens)
+- [Fogos de artifício](#fogos-de-artifício)
 - [Fluidos](#fluidos)
 - [Materiais, separadores, sons, tags](#materiais-separadores-sons-tags)
 - [Substituições de propriedades](#substituições-de-propriedades)
@@ -801,8 +803,8 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 | `log`        | Roda para a face contra a qual o colocas, e traz a tag `minecraft:logs` para que o abate de árvores e o Blast Plaster o tratem como tronco                                                                                                                                       |
 | `leaves`     | Decai, tosquia-se, tinge-se e larga um rebento, e traz a tag `minecraft:leaves`. Deixadas `opaque`, desenham-se sólidas, como folhas rápidas; define `"opaque": false` para ver através delas                                                                                    |
 | `sapling`    | Cresce numa árvore ou numa das tuas estruturas                                                                                                                                                                                                                                   |
-| `crop`       | Cresce por fases, larga uma semente e um item de produção, sementes de trigo e trigo para o que o ficheiro deixar de fora                                                                                                                                                        |
-| `flower`     | Uma planta de um bloco que assenta em solo                                                                                                                                                                                                                                       |
+| `crop`       | Cresce por fases, larga uma semente e um item de produção, sementes de trigo e trigo para o que o ficheiro deixar de fora; com `tall`, vários blocos de altura                                                                                                                   |
+| `flower`     | Uma planta de um bloco que assenta em solo; com `tall`, vários blocos de altura, posta inteira                                                                                                                                                                                   |
 | `cane`       | Cresce para cima numa coluna, como as canas ou o cato                                                                                                                                                                                                                            |
 | `vine`       | Trepa e pende dos lados dos blocos. Com `growth` cresce para baixo até `maxHeight` e, com `spread`, alcança lateralmente as paredes vizinhas; sem ele, fica como foi colocada                                                                                                    |
 | `portal`     | Envia para outra dimensão tudo o que entra                                                                                                                                                                                                                                       |
@@ -850,6 +852,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 | `produce`                    | só crop                                    | nome de item                                      | `minecraft:wheat`                                                                                              | O que a colheita rende                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `maxAge`                     | só crop                                    | número inteiro                                    | `7`                                                                                                            | Quantas fases de crescimento                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `growth`                     | só plantas                                 | objeto                                            | nenhum                                                                                                         | Ver [Crescimento](#crescimento)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `tall`                       | crop, flower                               | objeto                                            | nenhum                                                                                                         | Vários blocos de altura. Ver [Plantas altas](#plantas-altas)                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `sapling`                    | só sapling                                 | objeto                                            | nenhum                                                                                                         | Ver [Rebentos](#rebentos)                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `portal`                     | só portal                                  | objeto                                            | nenhum                                                                                                         | Ver [Portais e passagens](#portais-e-passagens)                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `container`                  | só container                               | objeto                                            | nenhum                                                                                                         | Ver [Contentores](#contentores)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -979,6 +982,52 @@ Para `crop`, `flower`, `cane` e `vine`.
 | `damage`          | não         | booleano                       | `false`            | Fere o que lhe tocar                                                                                                                                                                                                                                                                                                                        |
 | `damageAmount`    | não         | número decimal, meios corações | `1.0`              | Quanto fere                                                                                                                                                                                                                                                                                                                                 |
 | `breaksNeighbors` | não         | booleano                       | `false`            | Parte blocos colocados ao lado, como o cato                                                                                                                                                                                                                                                                                                 |
+
+### Plantas altas
+
+*blocos*
+
+Um objeto `tall` faz de uma colheita ou de uma flor uma planta de vários blocos de altura. Uma colheita sobe pelas suas partes à medida que envelhece, e uma flor é posta inteira, como uma planta dupla do vanilla.
+
+```json
+{
+  "type": "crop",
+  "seed": "mypack:corn_seed",
+  "produce": "mypack:corn_cob",
+  "maxAge": 7,
+  "opaque": false,
+  "tall": {
+    "parts": 3,
+    "rise": [3, 5],
+    "produceFrom": "all",
+    "regrow": true
+  }
+}
+```
+
+| Chave         | Obrigatória | Valor                                                                            | Predefinição                                | O que faz                                                                                                                                                                                                                                                                                                           |
+| ------------- | ----------- | -------------------------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tall`        | não         | objeto                                                                           | nenhum                                      | Presente: a planta tem `parts` blocos de altura quando crescida. Ausente: tem um bloco                                                                                                                                                                                                                              |
+| `parts`       | não         | inteiro de `2` a `4`                                                             | `3`                                         | Blocos de altura. Regista `<name>_part1` até `<name>_part<parts - 1>` ao lado da base. Um valor fora do intervalo é cortado para ele                                                                                                                                                                                |
+| `rise`        | não         | lista de `parts - 1` inteiros, cada um de `1` a `maxAge`, estritamente crescente | `ceil(maxAge * n / parts)` para a parte `n` | Só colheita. A idade da base em que a parte `n` aparece. Uma lista inválida é um erro no registo e usa-se a predefinição                                                                                                                                                                                            |
+| `produceFrom` | não         | `base` ou `all`                                                                  | `base`                                      | Só colheita. `base`: só a base larga colheita e sementes, e as partes não largam nada. `all`: cada parte totalmente crescida larga também uma colheita                                                                                                                                                              |
+| `regrow`      | não         | booleano                                                                         | `false`                                     | Só colheita. `false`: partir qualquer parte destrói a planta toda. `true`: partir a parte `n` acima da base remove as partes `n` e seguintes e põe a idade da base em `rise[n-1] - 1`, para que voltem a crescer. Um corte nunca parte a base, por isso combina-o com `produceFrom: all` ou o corte não dá colheita |
+
+`opaque: false` é obrigatório, porque uma colheita de conteúdo sem ele salta sozinha, e as partes leem o mesmo ficheiro de bloco. `seed` e `produce` mantêm o seu significado, e `growth.soil` e o `soil` do item de semente continuam a decidir onde a base assenta. As partes não precisam de solo nem de luz.
+
+**Cada tipo reage a `tall` à sua maneira.**
+
+| Tipo                      | Com `tall`                                                                                                                                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crop`                    | As partes sobem com a idade da base, nas idades de `rise`                                                                                                                                                                                    |
+| `flower`                  | Todas as partes são postas de uma vez, e `rise`, `regrow` e `produceFrom` são ignorados com um aviso no registo. Pôr exige blocos livres por cima, como numa planta dupla do vanilla, ou a colocação falha. O item da base é largado uma vez |
+| `cane`, `vine`, `sapling` | Não suportado: `tall` é ignorado com um aviso. Uma cana e uma trepadeira já crescem uma coluna até `growth.maxHeight`, e um rebento cresce até uma árvore                                                                                    |
+
+**Como cresce uma colheita.** Só a base faz tick e tira luz, solo e crescimento do ambiente, como sem `tall`. Quando a sua idade muda, por um tick ou por farinha de ossos, pára abaixo da primeira parte cujo bloco por cima esteja ocupado, e tenta de novo nos ticks seguintes. Cada parte é então posta ou colocada com a idade da base quando a base chega à sua idade de `rise`. Uma parte perdida por um limite de chunk ou por um comando volta no tick seguinte da base. Uma base posta por geração do mundo ou por um comando numa idade crescida recebe as suas partes da mesma maneira.
+
+**Como parte.** Uma parte só assenta na base ou na parte de baixo. Partir qualquer coisa debaixo de uma parte larga-a, seja qual for a causa, e cada parte larga uma vez pela sua própria regra. Com `regrow` desligado, um jogador que parta uma parte parte também a base; uma parte perdida de outra maneira é recriada pela base. Partir em criativo não larga nada. A farinha de ossos usada em qualquer parte atua na base.
+
+**Caixa e aspeto.** Nenhuma parte tem colisão. A base mantém a caixa de colheita do vanilla por idade até à sua primeira idade de `rise`, depois é um bloco inteiro, e uma parte é um bloco inteiro recuado dois píxeis de cada lado. Escolher bloco numa parte dá a semente, ou o item da base numa flor. As partes são blocos próprios, e os seus blockstates e modelos são gerados a partir das texturas indicadas em [Modelos, blockstates e texturas](#modelos-blockstates-e-texturas): `<name>_part<n>_stage<age>` para uma cultura, desenhada por `age`, e `<name>_part<n>` para uma flor, cada uma com a textura da base como alternativa. Desenha o caule na base e nas partes do meio e a espiga no topo.
 
 ### Propagação
 
@@ -1512,6 +1561,8 @@ assets/mypack/lang/en_us.json
 | `ladder`, `vine`, `torch`                                  | `<name>`                                                                                                 | o modelo do próprio jogo para cada um                                                                                                                                                                                                    |
 | `bell`                                                     | `<name>`                                                                                                 | as armações de sino do próprio jogo como `<name>_floor`, `<name>_ceiling`, `<name>_wall` e `<name>_between_walls`, o `pack_bell_body` do mod como `<name>_body`, e um blockstate de dezasseis estados `attachment` e `facing` sobre elas |
 | `crop`                                                     | `<name>_stage0` até `<name>_stage<maxAge>`, ou `<name>` para todos                                       | um modelo `crop` por fase, com `age=0` a `7` mapeado nelas                                                                                                                                                                               |
+| `crop` com `tall`                                          | para cada parte `<name>_part<n>_stage0` até `<name>_part<n>_stage7`, ou as texturas da base              | um modelo `crop` por idade em cada bloco de parte, com `age=0` a `7` mapeado nelas                                                                                                                                                       |
+| `flower` com `tall`                                        | `<name>_part<n>`, ou a textura da base                                                                   | um modelo `cross` em cada bloco de parte                                                                                                                                                                                                 |
 | `portal`                                                   | `<name>`, ou o do portal do Nether                                                                       | `cube_all` para um bloco `fullCube`, como um bloco de portal é na 1.12.2; três lajes de portal, uma por eixo, para um que não o seja, como a moldura de portal de uma dimensão                                                           |
 | `banner`                                                   | a sua própria folha, ver [Estandartes](#estandartes)                                                     | o modelo de estandarte do jogo                                                                                                                                                                                                           |
 | `container` com `chestModel`                               | a folha de baú indicada em `chestModel`                                                                  | o modelo `pack_chest` do mod                                                                                                                                                                                                             |
@@ -1888,12 +1939,98 @@ Um item simples com `sleepingBag` é um saco-cama. Com um clique direito na face
 | `curioSlot`      | não           | nome de uma ranhura do Curios                 | nenhum                          | A ranhura do Curios em que o item pode ser usado, para qualquer tipo de item. Ignorada se o Curios não estiver instalado                                                                                                                                                         |
 | `wornEffects`    | não           | lista de efeitos                              | nenhum                          | Efeitos de poção mantidos em quem usa o item enquanto ele estiver na sua ranhura do Curios, como `potion`, `amplifier`, `ambient` e `showParticles`                                                                                                                              |
 | `wornAttributes` | não           | lista de alterações de atributos              | nenhum                          | Alterações de atributos mantidas em quem usa o item enquanto ele estiver na sua ranhura do Curios, como `attribute`, `amount` e `operation`                                                                                                                                      |
+| `firework`       | não           | objeto                                        | nenhum                          | Um clique direito lança ou rebenta um fogo de artifício, com qualquer tipo de item. Ver [Fogos de artifício](#fogos-de-artifício)                                                                                                                                                |
 | `locates`        | não           | `Village`, `minecraft:river`                  | nenhum                          | Num item simples, o clique direito procura o local mais próximo com esse nome e aponta o item para ele, como uma bússola. O nome é uma estrutura ou um bioma vanilla, ou um nome registado com `locateAs`. O item empilha só até 1. Vê o parágrafo da bússola localizadora acima |
 | `passesTurn`     | não           | booleano                                      | `false`                         | Num item simples, um clique direito passa a vez de quem o segura, como o `/rdplserver game pass` faz. Ver [Por turnos](#por-turnos)                                                                                                                                              |
 | `portway`        | portway       | objeto                                        | nenhum                          | As definições de um item de viagem: as [chaves de rota](#rotas) que valem para uma viagem, mais `consume` e `bind`. Ver [Itens de viagem](#itens-de-viagem)                                                                                                                      |
 | `sleepingBag`    | não           | booleano                                      | `false`                         | Para um item simples, um clique direito na face de cima de um bloco deita quem o segura para dormir e salta a noite como uma cama. Nunca altera o ponto de reaparecimento e não se gasta. Só funciona onde se pode dormir. Ignorado com `locates`, `rolls` ou `passesTurn`       |
 | `requires`       | não           | lista de ids de mods ou namespaces de pacotes | nenhum                          | O ficheiro é ignorado, a menos que todos estejam presentes                                                                                                                                                                                                                       |
 | `weight`         | não           | número a partir de 0                          | nenhum                          | Peso transportado de um item (para um bloco, do seu item), na unidade dos ficheiros de pesos. Prevalece sobre cada entrada dos ficheiros de pesos. Ver [Pesos de itens](#pesos-de-itens)                                                                                         |
+
+### Fogos de artifício
+
+*itens*
+
+Um objeto `firework` em qualquer item, seja qual for o seu `type`, faz de um clique direito o lançamento de um foguete. O foguete é um do vanilla, por isso o seu voo, o seu rebentamento vanilla e o seu dano funcionam como de costume, e os rebentamentos de partículas do próprio item vêm por cima.
+
+```json
+{
+  "type": "basic",
+  "cooldown": 20,
+  "firework": {
+    "mode": "launch",
+    "on": "both",
+    "flight": 2,
+    "consume": true,
+    "explosions": [
+      { "shape": "large_ball", "colors": ["FFD060", "FFFFFF"], "fade": ["806040"], "trail": false, "twinkle": true }
+    ],
+    "dispense": true,
+    "burst": [
+      { "particle": "mypack:popcorn", "count": 60, "speed": 0.35, "pattern": "fountain", "sound": "minecraft:entity.firework_rocket.blast" },
+      { "particle": "mypack:kernel", "speed": 0.3, "delay": 4, "pattern": "points", "points": [[0, 1, 0], [0.7, 0.7, 0], [-0.7, 0.7, 0]] }
+    ]
+  }
+}
+```
+
+| Chave        | Obrigatória | Valor                      | Predefinição | O que faz                                                                                                                                                                                                                                                                                                      |
+| ------------ | ----------- | -------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `firework`   | não         | objeto                     | nenhum       | Um clique direito com o item lança ou rebenta um fogo de artifício                                                                                                                                                                                                                                             |
+| `replaceUse` | não         | booleano                   | `false`      | `false`: um item com um clique direito próprio (comida, bebida, uma ferramenta, `rolls`, `locates` e assim por diante) conserva-o, e o fogo de artifício só dispara agachado. Um item sem uso próprio dispara com um clique simples. `true`: um clique simples dispara sempre e o uso próprio do item perde-se |
+| `mode`       | não         | `launch` ou `burst`        | `launch`     | `launch`: um foguete sobe durante `flight` e rebenta. `burst`: o foguete rebenta logo no alvo                                                                                                                                                                                                                  |
+| `on`         | não         | `block`, `air` ou `both`   | `block`      | `block`: clique direito num bloco, e o foguete fica na face clicada como um do vanilla. `air`: clique direito no ar, e começa 2 blocos ao longo do olhar. `both`: qualquer um                                                                                                                                  |
+| `flight`     | não         | inteiro de `0` a `3`       | `1`          | Tempo de voo como no vanilla, onde `1` é cerca de um segundo                                                                                                                                                                                                                                                   |
+| `consume`    | não         | booleano                   | `true`       | Gasta-se um item por lançamento. O criativo nunca gasta nenhum                                                                                                                                                                                                                                                 |
+| `dispense`   | não         | booleano                   | `true`       | Um dispensador dispara o item como foguete: `launch` do lado para onde está virado, `burst` no bloco à frente. `false`: o dispensador larga o item como faz sem `firework`                                                                                                                                     |
+| `explosions` | não         | lista                      | nenhuma      | Os rebentamentos vanilla, cada um com as chaves abaixo. Uma lista vazia significa nenhum rebentamento vanilla e nenhum dano vanilla                                                                                                                                                                            |
+| `burst`      | não         | objeto ou lista de objetos | nenhum       | Os rebentamentos do próprio item: partículas do item lançadas da posição do foguete quando detona. Um único objeto conta como uma lista de um                                                                                                                                                                  |
+
+**Chaves de uma entrada de `explosions`**
+
+| Chave              | Obrigatória | Valor                                                    | Predefinição                    | O que faz                                                              |
+| ------------------ | ----------- | -------------------------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| `shape`            | não         | `small_ball`, `large_ball`, `star`, `creeper` ou `burst` | `small_ball`                    | A forma vanilla desse rebentamento                                     |
+| `colors`, `fade`   | não         | lista de cores hexadecimais                              | `colors` branco, `fade` nenhuma | As cores e as cores para que se desvanece, como os corantes do vanilla |
+| `trail`, `twinkle` | não         | booleano                                                 | `false`                         | O rasto e a cintilação do vanilla                                      |
+
+**Chaves de uma entrada de `burst`**
+
+| Chave      | Obrigatória           | Valor                                    | Predefinição                                            | O que faz                                                                                                                             |
+| ---------- | --------------------- | ---------------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `particle` | sim                   | nome de item                             | nenhum                                                  | O item cujo ícone as partículas mostram. Sem ele a entrada é omitida, com um erro no registo                                          |
+| `count`    | não                   | inteiro de `1` a `200`                   | `40`                                                    | Quantas partículas                                                                                                                    |
+| `speed`    | não                   | decimal                                  | `0.3`                                                   | Velocidade das partículas, em blocos por tick                                                                                         |
+| `pattern`  | não                   | `sphere`, `ring`, `fountain` ou `points` | `sphere`                                                | `sphere`: todas as direções. `ring`: um círculo horizontal plano. `fountain`: um cone para cima. `points`: a lista `points`           |
+| `points`   | com `pattern: points` | lista de `[x, y, z]`                     | nenhum                                                  | Uma partícula por ponto, lançada nessa direção escalada para `speed`. `count` é ignorado. Sem um ponto utilizável a entrada é omitida |
+| `spread`   | não                   | decimal de `0` a `1`                     | `0`                                                     | Variação aleatória somada a cada direção                                                                                              |
+| `delay`    | não                   | inteiro de `0` a `40`                    | `0`                                                     | Ticks depois da detonação em que esta entrada dispara, a partir de onde o foguete rebentou                                            |
+| `sound`    | não                   | nome de som                              | o estrondo quando `explosions` está vazio, senão nenhum | Um som que o servidor toca na detonação. O rebentamento vanilla toca o seu                                                            |
+
+**Qualquer forma são dados.** Um padrão `points` aceita as direções que escreveres, por isso um coração, uma letra ou um anel de grãos não precisa de código. Dá-lhe as entradas que a forma pedir, e usa `delay` para desenhar uma depois da outra.
+
+```json
+{
+  "type": "basic",
+  "firework": {
+    "mode": "launch",
+    "on": "block",
+    "explosions": [],
+    "burst": [
+      { "particle": "mypack:kernel", "count": 30, "speed": 0.25, "pattern": "sphere" },
+      {
+        "particle": "mypack:corn_cob",
+        "speed": 0.3,
+        "delay": 10,
+        "pattern": "points",
+        "points": [[0, 0.6, 0], [0.35, 0.95, 0], [0.7, 0.85, 0], [0.85, 0.5, 0], [0.6, 0.05, 0], [0.3, -0.3, 0], [0, -0.6, 0], [-0.3, -0.3, 0], [-0.6, 0.05, 0], [-0.85, 0.5, 0], [-0.7, 0.85, 0], [-0.35, 0.95, 0]]
+      }
+    ]
+  }
+}
+```
+
+**O gatilho é um clique direito.** Atirar e bater não são gatilhos, porque nenhuma chave de item os modela. `cooldown` é a chave de item habitual e aplica-se depois de um lançamento. Um foguete com `explosions` fere as criaturas próximas exatamente como um foguete vanilla, e com uma lista vazia não faz dano. Estrelas de fogo de artifício, fabrico e o impulso do élitro não estão cobertos.
 
 ### Chaves de variantes de itens
 

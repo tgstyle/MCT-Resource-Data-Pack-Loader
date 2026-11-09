@@ -78,6 +78,7 @@ public final class ContentParser {
         }
         String harvestTool = Settings.lower(Json.getString(json, "harvestTool", "pickaxe"));
         if (!harvestTool.isEmpty() && !ContentToolTypes.HARVEST.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, ContentToolTypes.HARVEST, TAGS); }
+        int maxAge = Mth.clamp(Json.getInt(json, "maxAge", 7), 1, 7);
         return new BlockDef(key, type,
                 Settings.lower(Json.getString(json, "material", "rock")),
                 Settings.lower(Json.getString(json, "mapColor", "")),
@@ -104,7 +105,7 @@ public final class ContentParser {
                 color(Json.getString(json, "particleColor", "FFFFFF"), key),
                 Json.getString(json, "seed", "").trim(),
                 Json.getString(json, "produce", "").trim(),
-                Mth.clamp(Json.getInt(json, "maxAge", 7), 1, 7),
+                maxAge,
                 sapling(json),
                 growth(json),
                 Settings.lowered(Json.strings(json, "plantTypes")),
@@ -119,7 +120,8 @@ public final class ContentParser {
                 bell(json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json),
-                ContentParserWeights.weight(json, key));
+                ContentParserWeights.weight(json, key),
+                ContentParserCrops.tall(json, key, maxAge));
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {
@@ -335,7 +337,8 @@ public final class ContentParser {
                 ContentParserPortways.item(key, json),
                 Json.getBoolean(json, "sleepingBag", false),
                 ContentParserContainers.upgrade(key, Settings.lower(Json.getString(json, "type", DEFAULT_TYPE)), json),
-                ContentParserWeights.weight(json, key));
+                ContentParserWeights.weight(json, key),
+                ContentParserFireworks.firework(key, json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

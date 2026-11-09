@@ -46,6 +46,11 @@ import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
+import mctmods.resourcedatapackloader.common.fireworks.BurstParticles;
+import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkBursts;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkDetonations;
+import mctmods.resourcedatapackloader.common.fireworks.FireworkDispensing;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
 import mctmods.resourcedatapackloader.common.gates.ContentGates;
 import mctmods.resourcedatapackloader.common.gates.GateEvents;
@@ -196,6 +201,8 @@ public class ModSetup {
         ContentWorldgen.load();
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
+        MinecraftForge.EVENT_BUS.addListener(ContentFireworks::onUseBlock);
+        MinecraftForge.EVENT_BUS.addListener(ContentFireworks::onUseAir);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, CompressedFuel::onFuelBurnTime);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVillagers::applyTrades);
@@ -248,6 +255,8 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentEnvironments::onLogin);
         MinecraftForge.EVENT_BUS.addListener(ContentSeasons::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onTick);
+        MinecraftForge.EVENT_BUS.addListener(FireworkBursts::onTick);
+        MinecraftForge.EVENT_BUS.addListener(FireworkDetonations::onGameEvent);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onJoin);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onAttack);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onTouch);
@@ -469,6 +478,7 @@ public class ModSetup {
         modBus.addListener(ModSetup::onConfig);
         modBus.addListener(ModSetup::onCommonSetup);
         modBus.addListener(ModSetup::onAddPackFinders);
+        BurstParticles.REGISTER.register(modBus);
         LootFunctions.REGISTER.register(modBus);
         ContentTreeTrunk.REGISTER.register(modBus);
         BlockDrops.REGISTER.register(modBus);
@@ -523,6 +533,7 @@ public class ModSetup {
                 ContentAffixes.load();
                 ContentEnchanting.load();
                 ContentSleep.load();
+                FireworkDispensing.register();
                 if (ContentOrders.load()) {
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
                     MinecraftForge.EVENT_BUS.addListener(ContentOrders::onPlace);

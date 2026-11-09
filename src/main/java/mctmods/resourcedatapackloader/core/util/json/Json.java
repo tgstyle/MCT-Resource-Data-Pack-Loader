@@ -122,6 +122,16 @@ public final class Json {
         return values;
     }
 
+    public static List<Integer> ints(JsonArray array, String key) {
+        List<Integer> values = new ArrayList<>(array.size());
+        for (JsonElement entry : array) {
+            if (unusable(entry, key)) { continue; }
+            try { values.add(entry.getAsInt()); }
+            catch (RuntimeException bad) { ContentLog.LOGGER.error("{}: key '{}' has bad value {}, using no entry", where(), key, entry); }
+        }
+        return values;
+    }
+
     private static boolean unusable(JsonElement element, String member) {
         if (element.isJsonPrimitive()) { return false; }
         ContentLog.LOGGER.error("{}: key '{}' has bad value {}, using no entry", where(), member, element);
