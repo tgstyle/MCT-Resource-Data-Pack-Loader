@@ -78,8 +78,8 @@ public final class SkyOccluder {
         if (pose.spins()) { return swept(Math.hypot(px, pz) / 2.0D, r); }
         double rx = px * rollCos - pz * rollSin;
         double rz = px * rollSin + pz * rollCos;
-        double u = moon ? (1.0D - rx) / 2.0D : (rx + 1.0D) / 2.0D;
-        double v = moon ? (1.0D - rz) / 2.0D : (rz + 1.0D) / 2.0D;
+        double u = moon ^ pose.flip().horizontal() ? (1.0D - rx) / 2.0D : (rx + 1.0D) / 2.0D;
+        double v = moon ^ pose.flip().vertical() ? (1.0D - rz) / 2.0D : (rz + 1.0D) / 2.0D;
         if (u + r < 0.0D || u - r > 1.0D || v + r < 0.0D || v - r > 1.0D) { return false; }
         if (mask == null || loaded != generation) { load(); }
         int fromX = clamp((int) Math.floor((u - r) * width), width);

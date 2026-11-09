@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
@@ -39,8 +40,8 @@ public final class ContentSkyRenderer {
     private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> RENDERERS = new IdentityHashMap<>();
     private static final int PHASES = 8;
     private static final float[] UNTINTED = {1.0F, 1.0F, 1.0F};
-    @Nullable private static GpuBuffer quadBuffer;
-    @Nullable private static GpuBuffer phaseBuffer;
+    private static final GpuBuffer[] QUADS = new GpuBuffer[SkyFlip.values().length];
+    private static final GpuBuffer[] PHASE_QUADS = new GpuBuffer[SkyFlip.values().length];
     private final RenderSystem.AutoStorageIndexBuffer quadIndices = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
     private final DimensionTraitsDef.Sky sky;
     private final ContentStars stars;
@@ -93,15 +94,20 @@ public final class ContentSkyRenderer {
 
     private static float quantized(float angle) { return Math.round(Mth.positiveModulo(angle, Mth.TWO_PI) * 1.0E4F) / 1.0E4F; }
 
-    public void prepare(float sunAngle, float moonAngle, float starAngle, float starBrightness) {
-        if (quadBuffer == null) { quadBuffer = corners(); }
-        if (phaseBuffer == null) { phaseBuffer = phases(); }
+    @SuppressWarnings("resource") public void prepare(float sunAngle, float moonAngle, float starAngle, float starBrightness) {
+        for (SkyFlip flip : SkyFlip.values()) {
+            if (QUADS[flip.ordinal()] == null) { QUADS[flip.ordinal()] = corners(flip); }
+            if (PHASE_QUADS[flip.ordinal()] == null) { PHASE_QUADS[flip.ordinal()] = phases(flip); }
+        }
         stars.hide(angles(sunAngle, moonAngle, starAngle));
         stars.prepare();
         if (starBrightness > 0.0F) { stars.retime(); }
         TextureManager textures = Minecraft.getInstance().getTextureManager();
         if (sky.sunSize() > 0.0F) { textures.getTexture(sky.sunTexture()); }
         if (moonTexture != null) { textures.getTexture(moonTexture); }
+        else if (moonPose.flip() != SkyFlip.NONE) {
+            for (Identifier texture : MOONS) { textures.getTexture(texture); }
+        }
         if (sky.bodies() == null) { return; }
         for (DimensionTraitsDef.Body body : sky.bodies()) { textures.getTexture(body.texture()); }
     }
@@ -122,7 +128,8 @@ public final class ContentSkyRenderer {
                 poseStack.rotate(Axis.XP, moonAngle);
                 poseStack.rotateDegrees(Axis.ZP, moonTilt);
                 poseStack.rotateDegrees(Axis.YP, moonPose.degrees(ticks));
-                if (moonTexture != null) { draw(renderPass, poseStack, moonTexture, moonSize, UNTINTED, rainBrightness, phaseBuffer, Math.floorMod(phase, PHASES) * 4); }
+                if (moonTexture != null) { draw(renderPass, poseStack, moonTexture, moonSize, UNTINTED, rainBrightness, PHASE_QUADS[moonPose.flip().ordinal()], Math.floorMod(phase, PHASES) * 4); }
+                else if (moonPose.flip() != SkyFlip.NONE) { quad(renderPass, poseStack, MOONS[Math.floorMod(phase, PHASES)], moonSize, rainBrightness * ContentFogSampler.moon(Minecraft.getInstance().level), QUADS[moonPose.flip().inverse().ordinal()]); }
                 else {
                     poseStack.scale(moonSize / DimensionTraitsDef.VANILLA_MOON, 1.0F, moonSize / DimensionTraitsDef.VANILLA_MOON);
                     moon.accept(poseStack);
@@ -138,7 +145,7 @@ public final class ContentSkyRenderer {
                 poseStack.rotateDegrees(Axis.XP, body.angle());
                 poseStack.rotateDegrees(Axis.ZP, body.tilt());
                 poseStack.rotateDegrees(Axis.YP, body.pose().degrees(ticks));
-                quad(renderPass, poseStack, body.texture(), body.size(), rainBrightness * ContentFogSampler.moon(Minecraft.getInstance().level));
+                quad(renderPass, poseStack, body.texture(), body.size(), rainBrightness * ContentFogSampler.moon(Minecraft.getInstance().level), QUADS[body.pose().flip().ordinal()]);
                 poseStack.popPose();
             }
         }
@@ -152,11 +159,12 @@ public final class ContentSkyRenderer {
     }
 
     private void sun(RenderPass renderPass, PoseStack poseStack, float rainBrightness) {
-        float[] tint = ContentSkyExtras.underSun(renderPass, poseStack, sky.sunSize(), rainBrightness, Minecraft.getInstance().getTextureManager().getTexture(sky.sunTexture()), quadBuffer);
-        draw(renderPass, poseStack, sky.sunTexture(), sky.sunSize(), tint == null ? UNTINTED : tint, rainBrightness, quadBuffer, 0);
+        GpuBuffer vertices = QUADS[sky.sunPose().flip().ordinal()];
+        float[] tint = ContentSkyExtras.underSun(renderPass, poseStack, sky.sunSize(), rainBrightness, Minecraft.getInstance().getTextureManager().getTexture(sky.sunTexture()), vertices);
+        draw(renderPass, poseStack, sky.sunTexture(), sky.sunSize(), tint == null ? UNTINTED : tint, rainBrightness, vertices, 0);
     }
 
-    private void quad(RenderPass renderPass, PoseStack poseStack, Identifier texture, float size, float rainBrightness) { draw(renderPass, poseStack, texture, size, UNTINTED, rainBrightness, quadBuffer, 0); }
+    private void quad(RenderPass renderPass, PoseStack poseStack, Identifier texture, float size, float rainBrightness, @Nullable GpuBuffer vertices) { draw(renderPass, poseStack, texture, size, UNTINTED, rainBrightness, vertices, 0); }
 
     private void draw(RenderPass renderPass, PoseStack poseStack, Identifier texture, float size, float[] tint, float rainBrightness, @Nullable GpuBuffer vertices, int baseVertex) {
         if (vertices == null) { return; }
@@ -179,28 +187,36 @@ public final class ContentSkyRenderer {
         renderPass.popDebugGroup();
     }
 
-    private static GpuBuffer phases() {
+    private static GpuBuffer phases(SkyFlip flip) {
         try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(PHASES * 4 * DefaultVertexFormat.POSITION_TEX.getVertexSize())) {
             BufferBuilder buffer = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION_TEX);
             for (int phase = 0; phase < PHASES; phase++) {
                 float u0 = (phase % 4) * 0.25F;
                 float v0 = phase < 4 ? 0.0F : 0.5F;
-                buffer.addVertex(-1.0F, 0.0F, -1.0F).setUv(u0 + 0.25F, v0 + 0.5F);
-                buffer.addVertex(1.0F, 0.0F, -1.0F).setUv(u0, v0 + 0.5F);
-                buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(u0, v0);
-                buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(u0 + 0.25F, v0);
+                float left = flip.horizontal() ? u0 : u0 + 0.25F;
+                float right = flip.horizontal() ? u0 + 0.25F : u0;
+                float top = flip.vertical() ? v0 : v0 + 0.5F;
+                float bottom = flip.vertical() ? v0 + 0.5F : v0;
+                buffer.addVertex(-1.0F, 0.0F, -1.0F).setUv(left, top);
+                buffer.addVertex(1.0F, 0.0F, -1.0F).setUv(right, top);
+                buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(right, bottom);
+                buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(left, bottom);
             }
             try (MeshData mesh = buffer.buildOrThrow()) { return RenderSystem.getDevice().createBuffer(() -> "RDPL moon phases", GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer()); }
         }
     }
 
-    private static GpuBuffer corners() {
+    private static GpuBuffer corners(SkyFlip flip) {
         try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(4 * DefaultVertexFormat.POSITION_TEX.getVertexSize())) {
             BufferBuilder buffer = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION_TEX);
-            buffer.addVertex(-1.0F, 0.0F, -1.0F).setUv(0.0F, 0.0F);
-            buffer.addVertex(1.0F, 0.0F, -1.0F).setUv(1.0F, 0.0F);
-            buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(1.0F, 1.0F);
-            buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(0.0F, 1.0F);
+            float left = flip.horizontal() ? 1.0F : 0.0F;
+            float right = 1.0F - left;
+            float top = flip.vertical() ? 1.0F : 0.0F;
+            float bottom = 1.0F - top;
+            buffer.addVertex(-1.0F, 0.0F, -1.0F).setUv(left, top);
+            buffer.addVertex(1.0F, 0.0F, -1.0F).setUv(right, top);
+            buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(right, bottom);
+            buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(left, bottom);
             try (MeshData mesh = buffer.buildOrThrow()) { return RenderSystem.getDevice().createBuffer(() -> "RDPL sky body", GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer()); }
         }
     }

@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.sky;
 
-public record SkyPoseDef(float roll, float spin) {
-    public static final SkyPoseDef NONE = new SkyPoseDef(0.0F, 0.0F);
+public record SkyPoseDef(float roll, float spin, SkyFlip flip) {
+    public static final SkyPoseDef NONE = new SkyPoseDef(0.0F, 0.0F, SkyFlip.NONE);
 
     public boolean spins() { return spin != 0.0F; }
 

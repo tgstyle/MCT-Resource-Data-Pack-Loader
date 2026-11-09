@@ -72,7 +72,7 @@ public final class ContentSkyShapes {
 
     public static Matrix4f oriented(Matrix4f pose, SkyLookDef.Skybox box, double ticks, float turn) {
         if (box.followsTime()) { pose.rotateZ(turn); }
-        return pose.rotateY(-box.yaw() * Mth.DEG_TO_RAD).rotateX(box.pitch() * Mth.DEG_TO_RAD).rotateZ(box.roll() * Mth.DEG_TO_RAD).rotateY(-SkyPoseDef.spun(box.spin(), ticks) * Mth.DEG_TO_RAD);
+        return pose.rotateY(-box.yaw() * Mth.DEG_TO_RAD).rotateX(box.pitch() * Mth.DEG_TO_RAD).rotateZ(box.roll() * Mth.DEG_TO_RAD).rotateY(-SkyPoseDef.spun(box.spin(), ticks) * Mth.DEG_TO_RAD).scale(box.flip().horizontal() ? -1.0F : 1.0F, box.flip().vertical() ? -1.0F : 1.0F, 1.0F);
     }
 
     public static Matrix4f yawed(Matrix4f pose, float yaw) { return pose.rotateY(-yaw * Mth.DEG_TO_RAD); }
