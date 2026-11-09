@@ -78,10 +78,10 @@ public final class ContentCompressables {
     private static BlockDef blockDef(CompressedSet set) {
         CompressedSource source = set.source;
         List<BlockVariant> variants = new ArrayList<>();
-        for (int layer = 1; layer <= set.layers; layer++) {
+        for (int layer = set.low(); layer <= set.layers; layer++) {
             Identifier id = set.blockId(layer);
             DropDef self = new DropDef(id, null, AmountDef.of(1), 100, 0, new int[0]);
-            variants.add(new BlockVariant(id, set.variantName(layer), "common", 64, List.of("c:compressed/" + set.name + "/" + layer + "x"), source.hardness * (layer + 1), source.resistance * (layer + 1), source.harvestLevel, 0, List.of(self), null));
+            variants.add(new BlockVariant(id, set.variantName(layer), "common", 64, List.of("c:compressed/" + set.name + "/" + set.oreLevel(layer) + "x"), source.hardness * set.scale(layer), source.resistance * set.scale(layer), source.harvestLevel, 0, List.of(self), null));
         }
         Identifier key = Identifier.fromNamespaceAndPath(set.def.key().getNamespace(), set.name + "_compressed");
         return new BlockDef(key, ContentBlockTypes.BASIC, source.material, source.mapColor, source.sound, "", source.tool, source.toolLevel, true, 0, 0, 1.0F, Collections.unmodifiableList(variants), source.requires, "", true, true, 255, 0.6F, null, 0, 0, "minecraft:stone", false, BlockDef.PARTICLE_FLAME, true, 0xFFFFFF, "", "", 7, null, null, Collections.emptyList(), "", "", 5, null, "", null, null, null, Collections.emptyList(), null, -1, null);

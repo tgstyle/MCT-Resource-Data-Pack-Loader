@@ -869,9 +869,19 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 
 Každá vrstva dostane také tag položky a bloku `c:compressed/<name>/<n>x` a texturu tmavší než vrstva pod ní, s rostoucím rámečkem. Základ, který hoří, dává každé vrstvě desetinásobek doby hoření vrstvy pod ní, nejvýše 2147483647.
 
+Soubor bez vlastního bloku může místo toho komprimovat položku, pomocí `item`. Vrstva 0 je pak blok, který RDPL vytvoří, `<name>_compressed_0`: devět položek z něj vyrobí jeden a ten se vyrobí zpět na devět. Jeho textura je vlastní textura položky na pozadí v barvě položky, ztmavená. Jako u Additional Compression má vrstva 0 tvrdost 6 a hoří desetkrát déle než jedna položka, a tagy začínají na `1x` pro vrstvu 0.
+
+Chcete-li vrstvy nakreslit sami, přidejte PNG na místo, kde by je RDPL nakreslil: `assets/<namespace>/textures/block/<name>_compressed_<n>.png`, kde `<namespace>` je jmenný prostor souboru a `<n>` je číslo vrstvy. RDPL kreslí jen vrstvy, které vaše balíčky nedodávají, takže můžete nahradit jednu vrstvu nebo všechny. Chcete-li zachovat ztmavení a rámeček RDPL, ale začít z jiného obrázku, dejte souboru místo toho `texture` a každá vrstva se z něj sestaví.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -882,12 +892,13 @@ Každá vrstva dostane také tag položky a bloku `c:compressed/<name>/<n>x` a t
 }
 ```
 
-| Klíč      | Povinné            | Hodnota                                 | Výchozí       | Co dělá                                                                                                                                  |
-| --------- | ------------------ | --------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | ano                | 1 až 20                                 |               | Kolik vrstev postavit nad vrstvu 0. Snížení později ponechá položené bloky; ID odebraných vrstev se čtou jako nejvyšší zbývající vrstva  |
-| `of`      | jen bez `variants` | `id`, například `minecraft:cobblestone` | žádný         | Blok, který se komprimuje v souboru bez `variants`: blok jiného modu nebo vanilla blok                                                   |
-| `texture` | ne                 | cesta k textuře                         | model základu | Základní textura, ze které se vrstvy staví, použitá místo textury, kterou RDPL čte z modelu základu                                      |
-| `recipes` | ne                 | boolean                                 | `true`        | Přidá recepty `<name>_compress_<n>` a `<name>_decompress_<n>`: devět z vrstvy n-1 ve tvaru 3x3 na jednu z vrstvy n a jedna zpět na devět |
+| Klíč      | Povinné                     | Hodnota                                 | Výchozí       | Co dělá                                                                                                                                                                                                                  |
+| --------- | --------------------------- | --------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `layers`  | ano                         | 1 až 20                                 |               | Kolik vrstev postavit nad vrstvu 0. Snížení později ponechá položené bloky; ID odebraných vrstev se čtou jako nejvyšší zbývající vrstva                                                                                  |
+| `of`      | jen bez `variants` a `item` | `id`, například `minecraft:cobblestone` | žádný         | Blok, který se komprimuje v souboru bez `variants`: blok jiného modu nebo vanilla blok                                                                                                                                   |
+| `item`    | jen bez `variants` a `of`   | `id`, například `minecraft:flint`       | žádný         | Položka, která se komprimuje v souboru bez `variants`: položka jiného modu nebo vanilla položka. Vrstva 0 je blok, který RDPL vytvoří z devíti kusů                                                                      |
+| `texture` | ne                          | cesta k textuře                         | model základu | Základní textura, ze které se vrstvy staví, použitá místo textury, kterou RDPL čte z modelu základu nebo položky                                                                                                         |
+| `recipes` | ne                          | boolean                                 | `true`        | Přidá recepty `<name>_compress_<n>` a `<name>_decompress_<n>`: devět z vrstvy n-1 ve tvaru 3x3 na jednu z vrstvy n a jedna zpět na devět. U `item` mění `_compress_0` a `_decompress_0` devět položek na vrstvu 0 a zpět |
 
 ### Klíče variant
 

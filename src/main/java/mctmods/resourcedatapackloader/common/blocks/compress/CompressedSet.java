@@ -34,18 +34,30 @@ public final class CompressedSet {
     public int layerOf(Item item) { return layerOf(BuiltInRegistries.ITEM.getKey(item)); }
 
     private int layerOf(Identifier id) {
-        for (int layer = 1; layer <= layers; layer++) {
+        for (int layer = low(); layer <= layers; layer++) {
             if (blockId(layer).equals(id)) { return layer; }
         }
-        return 0;
+        return low() - 1;
     }
 
+    public int low() { return source.fromItem ? 0 : 1; }
+
+    public int oreLevel(int layer) { return layer + 1 - low(); }
+
+    public int scale(int layer) { return layer + 2 - low(); }
+
+    public ItemStack source() { return stack(low() - 1); }
+
     public Item item(int layer) {
-        if (layer > 0) {
+        if (layer >= low()) {
             Item item = Registered.find(BuiltInRegistries.ITEM, blockId(layer));
             return item == null ? Items.AIR : item;
         }
-        Block block = Registered.find(BuiltInRegistries.BLOCK, source.baseBlock);
+        if (source.fromItem) {
+            Item item = Registered.find(BuiltInRegistries.ITEM, source.base);
+            return item == null ? Items.AIR : item;
+        }
+        Block block = Registered.find(BuiltInRegistries.BLOCK, source.base);
         return block == null ? Items.AIR : block.asItem();
     }
 

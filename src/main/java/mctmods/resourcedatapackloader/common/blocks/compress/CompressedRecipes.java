@@ -26,7 +26,7 @@ public final class CompressedRecipes {
         Set<Identifier> added = new HashSet<>();
         for (CompressedSet set : ContentCompressables.sets()) {
             if (!set.def.recipes()) { continue; }
-            for (int layer = 1; layer <= set.layers; layer++) {
+            for (int layer = set.low(); layer <= set.layers; layer++) {
                 Item lower = set.item(layer - 1);
                 Item upper = set.item(layer);
                 if (lower == Items.AIR || upper == Items.AIR) {

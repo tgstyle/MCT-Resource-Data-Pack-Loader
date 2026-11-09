@@ -12,20 +12,20 @@ public final class CompressedFuel {
 
     public static boolean layer(Item item) {
         CompressedSet set = owner(item);
-        return set != null && set.layerOf(item) > 0;
+        return set != null && set.layerOf(item) >= set.low();
     }
 
     public static int burnTime(ItemStack stack, ToIntFunction<ItemStack> base) {
         CompressedSet set = owner(stack.getItem());
         if (set == null) { return -1; }
         int layer = set.layerOf(stack.getItem());
-        if (layer < 1) { return -1; }
-        ItemStack source = set.stack(0);
+        if (layer < set.low()) { return -1; }
+        ItemStack source = set.source();
         if (source.isEmpty()) { return 0; }
         int burn = base.applyAsInt(source);
         if (burn <= 0) { return 0; }
         long total = burn;
-        for (int step = 0; step < layer && total < Integer.MAX_VALUE; step++) { total *= FACTOR; }
+        for (int step = 0; step < layer - set.low() + 1 && total < Integer.MAX_VALUE; step++) { total *= FACTOR; }
         return (int) Math.min(total, Integer.MAX_VALUE);
     }
 
