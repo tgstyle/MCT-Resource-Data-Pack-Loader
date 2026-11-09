@@ -868,9 +868,19 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 
 Chaque couche reçoit aussi le tag d'objet et de bloc `forge:compressed/<name>/<n>x`, et une texture plus sombre que la couche inférieure, avec un cadre qui grandit. Une base qui brûle donne à chaque couche dix fois le temps de combustion de la couche en dessous, sans dépasser 2147483647.
 
+Un fichier sans bloc propre peut compresser un objet à la place, avec `item`. La couche 0 est alors un bloc que RDPL crée, `<name>_compressed_0` : neuf de l'objet le fabriquent, et il se refait en neuf. Sa texture est celle de l'objet lui-même sur un fond de la couleur de l'objet, assombrie. Comme dans Additional Compression, la couche 0 a une dureté de 6 et brûle dix fois plus longtemps qu'un objet, et les tags de la couche 0 commencent à `1x`.
+
+Pour dessiner les couches vous-même, fournissez un PNG à l'endroit où RDPL en dessinerait un : `assets/<namespace>/textures/block/<name>_compressed_<n>.png`, où `<namespace>` est l'espace de noms du fichier et `<n>` le numéro de la couche. RDPL ne dessine que les couches que vos packs ne fournissent pas, vous pouvez donc remplacer une couche ou toutes. Pour garder l'assombrissement et le cadre de RDPL tout en partant d'une autre image, donnez plutôt au fichier une `texture` : chaque couche est alors construite à partir de celle-ci.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -884,12 +894,13 @@ Chaque couche reçoit aussi le tag d'objet et de bloc `forge:compressed/<name>/<
 }
 ```
 
-| Clé       | Requis                    | Valeur                                    | Défaut            | Rôle                                                                                                                                                                                               |
-| --------- | ------------------------- | ----------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | oui                       | 1 à 20                                    |                   | Nombre de couches à construire au-dessus de la couche 0. Si on le baisse plus tard, les blocs posés sont conservés ; les ids des couches retirées se lisent comme la couche la plus haute restante |
-| `of`      | seulement sans `variants` | `id`, par exemple `minecraft:cobblestone` | aucun             | Le bloc à compresser dans un fichier sans `variants` : un bloc d'un autre mod ou un bloc vanilla                                                                                                   |
-| `texture` | non                       | chemin de texture                         | modèle de la base | La texture de base dont les couches sont construites, à la place de celle que RDPL lit dans le modèle de la base                                                                                   |
-| `recipes` | non                       | booléen                                   | `true`            | Ajoute les recettes `<name>_compress_<n>` et `<name>_decompress_<n>` : neuf de la couche n-1 en grille 3x3 vers une de la couche n, et une vers neuf                                               |
+| Clé       | Requis                              | Valeur                                    | Défaut            | Rôle                                                                                                                                                                                                                                                       |
+| --------- | ----------------------------------- | ----------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`  | oui                                 | 1 à 20                                    |                   | Nombre de couches à construire au-dessus de la couche 0. Si on le baisse plus tard, les blocs posés sont conservés ; les ids des couches retirées se lisent comme la couche la plus haute restante                                                         |
+| `of`      | seulement sans `variants` et `item` | `id`, par exemple `minecraft:cobblestone` | aucun             | Le bloc à compresser dans un fichier sans `variants` : un bloc d'un autre mod ou un bloc vanilla                                                                                                                                                           |
+| `item`    | seulement sans `variants` et `of`   | `id`, par exemple `minecraft:flint`       | aucun             | L'objet à compresser dans un fichier sans `variants` : un objet d'un autre mod ou un objet vanilla. La couche 0 est un bloc que RDPL crée à partir de neuf de cet objet                                                                                    |
+| `texture` | non                                 | chemin de texture                         | modèle de la base | La texture de base dont les couches sont construites, à la place de celle que RDPL lit dans le modèle de la base ou de l'objet                                                                                                                             |
+| `recipes` | non                                 | booléen                                   | `true`            | Ajoute les recettes `<name>_compress_<n>` et `<name>_decompress_<n>` : neuf de la couche n-1 en grille 3x3 vers une de la couche n, et une vers neuf. Pour un `item`, `_compress_0` et `_decompress_0` transforment neuf objets en couche 0 et inversement |
 
 ### Clés de variantes
 

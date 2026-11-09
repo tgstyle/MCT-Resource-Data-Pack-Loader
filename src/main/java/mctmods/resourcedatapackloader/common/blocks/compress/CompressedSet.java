@@ -33,19 +33,31 @@ public final class CompressedSet {
 
     public int layerOf(Item item) { return layerOf(ForgeRegistries.ITEMS.getKey(item)); }
 
+    public int low() { return source.fromItem ? 0 : 1; }
+
+    public int oreLevel(int layer) { return layer + 1 - low(); }
+
+    public int scale(int layer) { return layer + 2 - low(); }
+
+    public ItemStack source() { return stack(low() - 1); }
+
     private int layerOf(ResourceLocation id) {
-        for (int layer = 1; layer <= layers; layer++) {
+        for (int layer = low(); layer <= layers; layer++) {
             if (blockId(layer).equals(id)) { return layer; }
         }
-        return 0;
+        return low() - 1;
     }
 
     public ItemStack stack(int layer) {
-        if (layer > 0) {
+        if (layer >= low()) {
             Item item = Registered.find(ForgeRegistries.ITEMS, blockId(layer));
             return item == null ? ItemStack.EMPTY : new ItemStack(item);
         }
-        Block block = Registered.find(ForgeRegistries.BLOCKS, source.baseBlock);
+        if (source.fromItem) {
+            Item item = Registered.find(ForgeRegistries.ITEMS, source.base);
+            return item == null ? ItemStack.EMPTY : new ItemStack(item);
+        }
+        Block block = Registered.find(ForgeRegistries.BLOCKS, source.base);
         Item item = block == null ? Items.AIR : block.asItem();
         return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
     }

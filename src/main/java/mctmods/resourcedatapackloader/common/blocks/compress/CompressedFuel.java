@@ -18,12 +18,12 @@ public final class CompressedFuel {
         CompressedSet set = ContentCompressables.owner(name);
         if (set == null) { return; }
         int layer = set.layerOf(fuel.getItem());
-        ItemStack base = set.stack(0);
-        if (layer < 1 || base.isEmpty()) { return; }
+        ItemStack base = set.source();
+        if (layer < set.low() || base.isEmpty()) { return; }
         int burn = ForgeHooks.getBurnTime(base, event.getRecipeType());
         if (burn <= 0) { return; }
         long total = burn;
-        for (int step = 0; step < layer && total < Integer.MAX_VALUE; step++) { total *= FACTOR; }
+        for (int step = 0; step < set.oreLevel(layer) && total < Integer.MAX_VALUE; step++) { total *= FACTOR; }
         event.setBurnTime((int) Math.min(total, Integer.MAX_VALUE));
     }
 }

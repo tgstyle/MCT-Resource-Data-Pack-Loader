@@ -29,29 +29,42 @@ public final class ContentParserCompressable {
             return null;
         }
         String of = Json.getString(held, "of", "").trim();
+        String item = Json.getString(held, "item", "").trim();
         boolean variants = json.has("variants");
+        if (!of.isEmpty() && !item.isEmpty()) {
+            ContentLog.LOGGER.error("The 'compressable' member of {} names both 'of' and 'item', skipping its compressed blocks", key);
+            return null;
+        }
         if (!of.isEmpty() && variants) {
             ContentLog.LOGGER.error("The 'compressable' member of {} names 'of' but the file also has 'variants'. 'of' is only for a standalone file with no block of its own, skipping its compressed blocks", key);
             return null;
         }
-        if (of.isEmpty() && !variants) {
-            ContentLog.LOGGER.error("The 'compressable' member of {} has no 'of' and the file has no 'variants', so there is nothing to compress, skipping its compressed blocks", key);
+        if (!item.isEmpty() && variants) {
+            ContentLog.LOGGER.error("The 'compressable' member of {} names 'item' but the file also has 'variants'. 'item' is only for a standalone file with no block of its own, skipping its compressed blocks", key);
+            return null;
+        }
+        if (of.isEmpty() && item.isEmpty() && !variants) {
+            ContentLog.LOGGER.error("The 'compressable' member of {} has no 'of' or 'item' and the file has no 'variants', so there is nothing to compress, skipping its compressed blocks", key);
             return null;
         }
         ResourceLocation block = null;
         if (!of.isEmpty()) {
-            block = block(of);
-            if (block == null) {
-                ContentLog.LOGGER.error("The 'of' value '{}' in {} is not 'id', skipping its compressed blocks", of, key);
-                return null;
-            }
+            block = id(key, "of", of, "'id'");
+            if (block == null) { return null; }
+        }
+        ResourceLocation base = null;
+        if (!item.isEmpty()) {
+            base = id(key, "item", item, "an item id");
+            if (base == null) { return null; }
         }
         String texture = Json.getString(held, "texture", "").trim();
-        return new CompressableDef(key, block, layers, texture.isEmpty() ? null : texture, Json.getBoolean(held, "recipes", true));
+        return new CompressableDef(key, block, base, layers, texture.isEmpty() ? null : texture, Json.getBoolean(held, "recipes", true));
     }
 
-    @Nullable private static ResourceLocation block(String of) {
-        String[] parts = of.split(":", -1);
-        return parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty() ? ResourceLocation.tryParse(of) : null;
+    @Nullable private static ResourceLocation id(ResourceLocation key, String member, String text, String expected) {
+        String[] parts = text.split(":", -1);
+        ResourceLocation id = parts.length == 2 && !parts[0].isEmpty() && !parts[1].isEmpty() ? ResourceLocation.tryParse(text) : null;
+        if (id == null) { ContentLog.LOGGER.error("The '{}' value '{}' in {} is not {}, skipping its compressed blocks", member, text, key, expected); }
+        return id;
     }
 }

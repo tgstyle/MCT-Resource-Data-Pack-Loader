@@ -868,9 +868,19 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 Each layer also gets the item and block tag `forge:compressed/<name>/<n>x`, and a texture that is darker than the one below with a growing frame. A base that burns gives each layer ten times the burn time of the layer below, stopping at 2147483647.
 
+A file with no block of its own can compress an item instead, with `item`. Layer 0 is then a block RDPL makes, `<name>_compressed_0`: nine of the item craft it, and it crafts back into nine. Its texture is the item's own on a backdrop of the item's color, darkened. As in Additional Compression, layer 0 has hardness 6 and burns ten times as long as one item, and the tags start at `1x` for layer 0.
+
+To draw the layers yourself, ship a PNG where RDPL would draw one: `assets/<namespace>/textures/block/<name>_compressed_<n>.png`, where `<namespace>` is the file's namespace and `<n>` is the layer number. RDPL draws only the layers your packs don't ship, so you can replace one layer or all of them. To keep RDPL's darkening and frame but start from a different picture, give the file a `texture` instead, and every layer is built from it.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -884,12 +894,13 @@ Each layer also gets the item and block tag `forge:compressed/<name>/<n>x`, and 
 }
 ```
 
-| Key       | Required                | Value                                 | Default          | What it does                                                                                                                                    |
-| --------- | ----------------------- | ------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | yes                     | 1 to 20                               |                  | How many layers to build on top of layer 0. Lowering it later keeps placed blocks; the ids of removed layers are read as the highest layer left |
-| `of`      | only without `variants` | `id`, such as `minecraft:cobblestone` | none             | The block to compress in a file with no `variants`: another mod's block or a vanilla one                                                        |
-| `texture` | no                      | texture path                          | the base's model | The base texture the layers are built from, used in place of the one RDPL reads from the base's model                                           |
-| `recipes` | no                      | boolean                               | `true`           | Adds the recipes `<name>_compress_<n>` and `<name>_decompress_<n>`: nine of layer n-1 shaped 3x3 into one of layer n, and one back into nine    |
+| Key       | Required                           | Value                                 | Default          | What it does                                                                                                                                                                                                                         |
+| --------- | ---------------------------------- | ------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `layers`  | yes                                | 1 to 20                               |                  | How many layers to build on top of layer 0. Lowering it later keeps placed blocks; the ids of removed layers are read as the highest layer left                                                                                      |
+| `of`      | only without `variants` and `item` | `id`, such as `minecraft:cobblestone` | none             | The block to compress in a file with no `variants`: another mod's block or a vanilla one                                                                                                                                             |
+| `item`    | only without `variants` and `of`   | `id`, such as `minecraft:flint`       | none             | The item to compress in a file with no `variants`: another mod's item or a vanilla one. Layer 0 is a block RDPL makes from nine of it                                                                                                |
+| `texture` | no                                 | texture path                          | the base's model | The base texture the layers are built from, used in place of the one RDPL reads from the base's or the item's model                                                                                                                  |
+| `recipes` | no                                 | boolean                               | `true`           | Adds the recipes `<name>_compress_<n>` and `<name>_decompress_<n>`: nine of layer n-1 shaped 3x3 into one of layer n, and one back into nine. For an `item`, `_compress_0` and `_decompress_0` turn nine items into layer 0 and back |
 
 ### Variant keys
 

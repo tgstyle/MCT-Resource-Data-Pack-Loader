@@ -868,9 +868,19 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 
 Jede Schicht bekommt außerdem das Item- und Block-Tag `forge:compressed/<name>/<n>x` und eine Textur, die dunkler ist als die darunter, mit wachsendem Rahmen. Eine Basis, die brennt, gibt jeder Schicht die zehnfache Brenndauer der Schicht darunter, höchstens 2147483647.
 
+Eine Datei ohne eigenen Block kann stattdessen ein Item komprimieren, mit `item`. Schicht 0 ist dann ein Block, den RDPL selbst anlegt, `<name>_compressed_0`: neun des Items ergeben ihn, und er ergibt zurück neun. Seine Textur ist die des Items selbst auf einem Hintergrund in der Farbe des Items, abgedunkelt. Wie bei Additional Compression hat Schicht 0 Härte 6 und brennt zehnmal so lange wie ein Item, und die Tags beginnen für Schicht 0 bei `1x`.
+
+Wenn du die Schichten selbst zeichnen willst, lege eine PNG dort ab, wo RDPL sonst eine zeichnen würde: `assets/<namespace>/textures/block/<name>_compressed_<n>.png`, wobei `<namespace>` der Namespace der Datei und `<n>` die Schichtnummer ist. RDPL zeichnet nur die Schichten, die deine Packs nicht mitliefern, du kannst also eine Schicht oder alle ersetzen. Wenn du die Abdunkelung und den Rahmen von RDPL behalten, aber von einem anderen Bild ausgehen willst, gib der Datei stattdessen eine `texture`, dann wird jede Schicht daraus gebaut.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -884,12 +894,13 @@ Jede Schicht bekommt außerdem das Item- und Block-Tag `forge:compressed/<name>/
 }
 ```
 
-| Schlüssel | Pflicht             | Wert                               | Standard         | Was er macht                                                                                                                                                                                       |
-| --------- | ------------------- | ---------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | ja                  | 1 bis 20                           |                  | Wie viele Schichten über Schicht 0 gebaut werden. Wird der Wert später gesenkt, bleiben gesetzte Blöcke erhalten; die IDs entfernter Schichten werden als die höchste verbleibende Schicht gelesen |
-| `of`      | nur ohne `variants` | `id`, etwa `minecraft:cobblestone` | keine            | Der Block, der in einer Datei ohne `variants` komprimiert wird: ein Block eines anderen Mods oder ein Vanilla-Block                                                                                |
-| `texture` | nein                | Texturpfad                         | Modell der Basis | Die Basistextur, aus der die Schichten gebaut werden, statt der Textur, die RDPL aus dem Modell der Basis liest                                                                                    |
-| `recipes` | nein                | boolean                            | `true`           | Fügt die Rezepte `<name>_compress_<n>` und `<name>_decompress_<n>` hinzu: neun aus Schicht n-1 im 3x3-Raster zu einer aus Schicht n, und eine zurück zu neun                                       |
+| Schlüssel | Pflicht                        | Wert                               | Standard         | Was er macht                                                                                                                                                                                                                                         |
+| --------- | ------------------------------ | ---------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`  | ja                             | 1 bis 20                           |                  | Wie viele Schichten über Schicht 0 gebaut werden. Wird der Wert später gesenkt, bleiben gesetzte Blöcke erhalten; die IDs entfernter Schichten werden als die höchste verbleibende Schicht gelesen                                                   |
+| `of`      | nur ohne `variants` und `item` | `id`, etwa `minecraft:cobblestone` | keine            | Der Block, der in einer Datei ohne `variants` komprimiert wird: ein Block eines anderen Mods oder ein Vanilla-Block                                                                                                                                  |
+| `item`    | nur ohne `variants` und `of`   | `id`, etwa `minecraft:flint`       | keine            | Das Item, das in einer Datei ohne `variants` komprimiert wird: ein Item eines anderen Mods oder ein Vanilla-Item. Schicht 0 ist ein Block, den RDPL aus neun davon macht                                                                             |
+| `texture` | nein                           | Texturpfad                         | Modell der Basis | Die Basistextur, aus der die Schichten gebaut werden, statt der Textur, die RDPL aus dem Modell der Basis oder des Items liest                                                                                                                       |
+| `recipes` | nein                           | boolean                            | `true`           | Fügt die Rezepte `<name>_compress_<n>` und `<name>_decompress_<n>` hinzu: neun aus Schicht n-1 im 3x3-Raster zu einer aus Schicht n, und eine zurück zu neun. Bei `item` machen `_compress_0` und `_decompress_0` neun Items zu Schicht 0 und zurück |
 
 ### Variantenschlüssel
 

@@ -52,13 +52,61 @@ public final class CompressedBase {
         if (texture == null) { return null; }
         int[][] image = ContentPixelImages.read(texture.getNamespace(), "textures/" + texture.getPath() + ".png");
         if (image == null) { ContentLog.LOGGER.error("The compressable {} builds on the texture {}, which no pack or the game provides, so its layers are drawn grey", set.def.key(), texture); }
-        return image;
+        return image == null || !set.source.fromItem ? image : opaque(image);
+    }
+
+    private static int[][] opaque(int[][] image) {
+        int side = image[0][0];
+        int[] pixels = image[1];
+        int count = Math.min(pixels.length, side * side);
+        long red = 0;
+        long green = 0;
+        long blue = 0;
+        long seen = 0;
+        for (int index = 0; index < count; index++) {
+            int color = pixels[index];
+            if ((color >>> 24) == 0) { continue; }
+            red += (color >> 16) & 0xFF;
+            green += (color >> 8) & 0xFF;
+            blue += color & 0xFF;
+            seen++;
+        }
+        int fill = seen == 0 ? 0 : (int) (red / seen / 2) << 16 | (int) (green / seen / 2) << 8 | (int) (blue / seen / 2);
+        int[] result = new int[pixels.length];
+        for (int index = 0; index < pixels.length; index++) { result[index] = (pixels[index] >>> 24) == 0 ? 0xFF000000 | fill : pixels[index] | 0xFF000000; }
+        return new int[][] { image[0], result };
+    }
+
+    @Nullable private static ResourceLocation itemTexture(CompressedSet set) {
+        ResourceLocation name = set.source.base;
+        Map<String, String> textures = new HashMap<>();
+        follow(textures, name.getNamespace(), "item/" + name.getPath());
+        String value = resolved(textures, "layer0");
+        if (value == null) { value = resolved(textures, "particle"); }
+        if (value == null) { return missing(set, "its item model has no 'layer0' or 'particle' texture"); }
+        return located(set, value);
+    }
+
+    private static void follow(Map<String, String> textures, String namespace, String path) {
+        String at = namespace;
+        String model = path;
+        for (int hop = 0; hop < HOPS; hop++) {
+            JsonObject json = ContentResourceText.json(at, "models/" + model + ".json");
+            if (json == null) { break; }
+            merge(textures, json);
+            String parent = text(json, "parent");
+            ResourceLocation next = parent == null ? null : ResourceLocation.tryParse(parent);
+            if (next == null) { break; }
+            at = next.getNamespace();
+            model = next.getPath();
+        }
     }
 
     @Nullable private static ResourceLocation texture(CompressedSet set) {
         String override = set.def.texture();
         if (override != null) { return located(set, override.indexOf(':') < 0 ? set.def.key().getNamespace() + ":" + override : override); }
-        ResourceLocation name = set.source.baseBlock;
+        if (set.source.fromItem) { return itemTexture(set); }
+        ResourceLocation name = set.source.base;
         Block block = Registered.find(ForgeRegistries.BLOCKS, name);
         if (block == null) { return missing(set, "its block is not registered"); }
         JsonObject state = ContentResourceText.json(name.getNamespace(), "blockstates/" + name.getPath() + ".json");
@@ -73,16 +121,7 @@ public final class CompressedBase {
         if (at == null) { return missing(set, "its model name '" + model + "' is not valid"); }
         String namespace = at.getNamespace();
         String path = at.getPath().indexOf('/') < 0 ? "block/" + at.getPath() : at.getPath();
-        for (int hop = 0; hop < HOPS; hop++) {
-            JsonObject json = ContentResourceText.json(namespace, "models/" + path + ".json");
-            if (json == null) { break; }
-            merge(textures, json);
-            String parent = text(json, "parent");
-            ResourceLocation next = parent == null ? null : ResourceLocation.tryParse(parent);
-            if (next == null) { break; }
-            namespace = next.getNamespace();
-            path = next.getPath();
-        }
+        follow(textures, namespace, path);
         String value = resolved(textures, "all");
         if (value == null) { value = resolved(textures, "particle"); }
         if (value == null) { return missing(set, "its model has no 'all' or 'particle' texture"); }
@@ -95,7 +134,7 @@ public final class CompressedBase {
     }
 
     @Nullable private static ResourceLocation missing(CompressedSet set, String why) {
-        ContentLog.LOGGER.error("The compressable {} cannot find a texture to build on for {}: {}. Give the file a \"texture\", so its layers are drawn grey until then", set.def.key(), set.source.baseBlock, why);
+        ContentLog.LOGGER.error("The compressable {} cannot find a texture to build on for {}: {}. Give the file a \"texture\", so its layers are drawn grey until then", set.def.key(), set.source.base, why);
         return null;
     }
 
