@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.core.util.math.Rgb;
@@ -55,12 +56,12 @@ public final class ContentSkyExtras {
         RenderSystem.disableCull();
         if (look.skybox().panorama() != null) {
             RenderSystem.setShaderTexture(0, look.skybox().panorama());
-            panorama(pose);
+            panorama(pose, look.skybox().flip());
         }
         else {
             for (int face = 0; face < FACES.length; ++face) {
                 RenderSystem.setShaderTexture(0, look.skybox().faces().get(face));
-                face(pose, FACES[face]);
+                face(pose, FACES[face], look.skybox().flip());
             }
         }
         RenderSystem.enableCull();
@@ -109,16 +110,16 @@ public final class ContentSkyExtras {
         return Math.min(1.0F, (RAINBOW_TICKS - (tick - wetAt)) / RAINBOW_FADE) * (1.0F - level.getRainLevel(partialTick));
     }
 
-    private static void face(Matrix4f pose, float[][] corners) {
+    private static void face(Matrix4f pose, float[][] corners, SkyFlip flip) {
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.addVertex(pose, corners[0][0] * SIZE, corners[0][1] * SIZE, corners[0][2] * SIZE).setUv(0.0F, 0.0F);
-        buffer.addVertex(pose, corners[1][0] * SIZE, corners[1][1] * SIZE, corners[1][2] * SIZE).setUv(1.0F, 0.0F);
-        buffer.addVertex(pose, corners[2][0] * SIZE, corners[2][1] * SIZE, corners[2][2] * SIZE).setUv(1.0F, 1.0F);
-        buffer.addVertex(pose, corners[3][0] * SIZE, corners[3][1] * SIZE, corners[3][2] * SIZE).setUv(0.0F, 1.0F);
+        buffer.addVertex(pose, corners[0][0] * SIZE, corners[0][1] * SIZE, corners[0][2] * SIZE).setUv(flip.u(0.0F), flip.v(0.0F));
+        buffer.addVertex(pose, corners[1][0] * SIZE, corners[1][1] * SIZE, corners[1][2] * SIZE).setUv(flip.u(1.0F), flip.v(0.0F));
+        buffer.addVertex(pose, corners[2][0] * SIZE, corners[2][1] * SIZE, corners[2][2] * SIZE).setUv(flip.u(1.0F), flip.v(1.0F));
+        buffer.addVertex(pose, corners[3][0] * SIZE, corners[3][1] * SIZE, corners[3][2] * SIZE).setUv(flip.u(0.0F), flip.v(1.0F));
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
-    private static void panorama(Matrix4f pose) {
+    private static void panorama(Matrix4f pose, SkyFlip flip) {
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         for (int row = 0; row < LATITUDES; ++row) {
             float top = (float) row / LATITUDES;
@@ -126,20 +127,20 @@ public final class ContentSkyExtras {
             for (int column = 0; column < LONGITUDES; ++column) {
                 float left = (float) column / LONGITUDES;
                 float right = (float) (column + 1) / LONGITUDES;
-                sphere(buffer, pose, left, top);
-                sphere(buffer, pose, right, top);
-                sphere(buffer, pose, right, bottom);
-                sphere(buffer, pose, left, bottom);
+                sphere(buffer, pose, left, top, flip);
+                sphere(buffer, pose, right, top, flip);
+                sphere(buffer, pose, right, bottom, flip);
+                sphere(buffer, pose, left, bottom, flip);
             }
         }
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
-    private static void sphere(BufferBuilder buffer, Matrix4f pose, float u, float v) {
+    private static void sphere(BufferBuilder buffer, Matrix4f pose, float u, float v, SkyFlip flip) {
         float around = u * Mth.TWO_PI;
         float down = v * Mth.PI;
         float ring = Mth.sin(down) * SIZE;
-        buffer.addVertex(pose, Mth.sin(around) * ring, Mth.cos(down) * SIZE, -Mth.cos(around) * ring).setUv(u, v);
+        buffer.addVertex(pose, Mth.sin(around) * ring, Mth.cos(down) * SIZE, -Mth.cos(around) * ring).setUv(flip.u(u), flip.v(v));
     }
 
     private static void aurora(Matrix4f pose, SkyLookDef.Aurora aurora, float strength, float time) {

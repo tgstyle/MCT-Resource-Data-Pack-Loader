@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
@@ -101,7 +102,7 @@ final class ContentSkyRenderer {
             ContentSunHaze.aura(level, pose, sunAlpha, sky.sunSize(), modelView);
             ContentSunHaze.lines(level, pose, sunAlpha, sky.sunSize());
             RenderSystem.setShaderTexture(0, sky.sunTexture());
-            ContentSunHaze.sun(level, pose, sunAlpha, sky.sunSize(), () -> ContentSunHaze.quad(pose, sky.sunSize()));
+            ContentSunHaze.sun(level, pose, sunAlpha, sky.sunSize(), sky.sunPose().flip(), () -> ContentSunHaze.quad(pose, sky.sunSize(), sky.sunPose().flip()));
             poseStack.popPose();
         }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
@@ -119,7 +120,7 @@ final class ContentSkyRenderer {
                 if (body.followsTime()) { poseStack.mulPose(Axis.XP.rotationDegrees(turn)); }
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));
                 orient(poseStack, body.tilt(), body.pose().degrees(ticks));
-                quad(poseStack.last().pose(), body.texture(), body.size());
+                quad(poseStack.last().pose(), body.texture(), body.size(), body.pose().flip());
                 poseStack.popPose();
             }
         }
@@ -185,10 +186,11 @@ final class ContentSkyRenderer {
         float size = moonSize;
         int column = phase % 4;
         int row = phase / 4 % 2;
-        float left = column / 4.0F;
-        float top = row / 2.0F;
-        float right = (column + 1) / 4.0F;
-        float bottom = (row + 1) / 2.0F;
+        SkyFlip flip = moonPose.flip();
+        float left = flip.horizontal() ? (column + 1) / 4.0F : column / 4.0F;
+        float top = flip.vertical() ? (row + 1) / 2.0F : row / 2.0F;
+        float right = flip.horizontal() ? column / 4.0F : (column + 1) / 4.0F;
+        float bottom = flip.vertical() ? row / 2.0F : (row + 1) / 2.0F;
         RenderSystem.setShaderTexture(0, moonTexture);
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.addVertex(pose, -size, -SIZE, size).setUv(right, bottom);
@@ -198,9 +200,9 @@ final class ContentSkyRenderer {
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
-    private static void quad(Matrix4f pose, ResourceLocation texture, float size) {
+    private static void quad(Matrix4f pose, ResourceLocation texture, float size, SkyFlip flip) {
         RenderSystem.setShaderTexture(0, texture);
-        ContentSunHaze.quad(pose, size);
+        ContentSunHaze.quad(pose, size, flip);
     }
 
     private static void draw(VertexBuffer buffer, PoseStack poseStack, Matrix4f projection, @Nullable ShaderInstance shader) {

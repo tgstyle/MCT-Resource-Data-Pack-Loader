@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSunHaze;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -60,7 +61,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @WrapOperation(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/BufferUploader;drawWithShader(Lcom/mojang/blaze3d/vertex/MeshData;)V", ordinal = 1)) private void rdpl$sunTint(MeshData meshData, Operation<Void> original, @Local(argsOnly = true, ordinal = 0) Matrix4f frustumMatrix, @Local(argsOnly = true) float partialTick) {
         if (level == null) { original.call(meshData); }
-        else { ContentSunHaze.sun(level, ContentSunHaze.sunPose(level, frustumMatrix, partialTick), RenderSystem.getShaderColor()[3], DimensionTraitsDef.VANILLA_SUN, () -> original.call(meshData)); }
+        else { ContentSunHaze.sun(level, ContentSunHaze.sunPose(level, frustumMatrix, partialTick), RenderSystem.getShaderColor()[3], DimensionTraitsDef.VANILLA_SUN, SkyFlip.NONE, () -> original.call(meshData)); }
     }
 
     @Redirect(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 1)) private void rdpl$tintStars(VertexBuffer buffer, Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 
 import com.mojang.blaze3d.platform.NativeImage;
@@ -20,6 +21,7 @@ public final class SkyOccluder {
     private final double cosRoll;
     private final double sinRoll;
     private final boolean spins;
+    private final SkyFlip flip;
     private final float size;
     private final boolean moon;
     private final boolean fixed;
@@ -40,6 +42,7 @@ public final class SkyOccluder {
         cosRoll = Math.cos(Math.toRadians(pose.roll()));
         sinRoll = Math.sin(Math.toRadians(pose.roll()));
         spins = pose.spins();
+        flip = pose.flip();
         this.size = size;
         this.moon = moon;
         this.fixed = fixed;
@@ -77,8 +80,8 @@ public final class SkyOccluder {
         if (spins) { return spun(Math.hypot(flatX, flatZ) / 2.0D, r); }
         double px = flatX * cosRoll - flatZ * sinRoll;
         double pz = flatX * sinRoll + flatZ * cosRoll;
-        double u = moon ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D;
-        double v = moon ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D;
+        double u = flip.u(moon ? (1.0D - px) / 2.0D : (px + 1.0D) / 2.0D);
+        double v = flip.v(moon ? (1.0D - pz) / 2.0D : (pz + 1.0D) / 2.0D);
         if (u + r < 0.0D || u - r > 1.0D || v + r < 0.0D || v - r > 1.0D) { return false; }
         if (mask == null || loaded != generation) { load(); }
         int fromX = clamp((int) Math.floor((u - r) * width), width);

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import static mctmods.resourcedatapackloader.client.renderer.sky.SkyMesh.SIZE;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.core.util.math.Rgb;
@@ -95,7 +96,7 @@ public final class ContentSunHaze {
         return 1.0F - Mth.clamp(Math.abs(elevation) / look.sunAuraHorizon(), 0.0F, 1.0F);
     }
 
-    public static void sun(@Nullable ClientLevel level, Matrix4f pose, float alpha, float size, Runnable plain) {
+    public static void sun(@Nullable ClientLevel level, Matrix4f pose, float alpha, float size, SkyFlip flip, Runnable plain) {
         float[] tint = ContentWindowLook.sunTint(ContentDimensions.def(level));
         if (tint == null) {
             plain.run();
@@ -103,19 +104,19 @@ public final class ContentSunHaze {
         }
         RenderSystem.blendFunc(GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
         RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
-        quad(pose, size);
+        quad(pose, size, flip);
         additive();
         RenderSystem.setShaderColor(tint[0], tint[1], tint[2], alpha);
         plain.run();
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
     }
 
-    static void quad(Matrix4f pose, float size) {
+    static void quad(Matrix4f pose, float size, SkyFlip flip) {
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.addVertex(pose, -size, SIZE, -size).setUv(0.0F, 0.0F);
-        buffer.addVertex(pose, size, SIZE, -size).setUv(1.0F, 0.0F);
-        buffer.addVertex(pose, size, SIZE, size).setUv(1.0F, 1.0F);
-        buffer.addVertex(pose, -size, SIZE, size).setUv(0.0F, 1.0F);
+        buffer.addVertex(pose, -size, SIZE, -size).setUv(flip.u(0.0F), flip.v(0.0F));
+        buffer.addVertex(pose, size, SIZE, -size).setUv(flip.u(1.0F), flip.v(0.0F));
+        buffer.addVertex(pose, size, SIZE, size).setUv(flip.u(1.0F), flip.v(1.0F));
+        buffer.addVertex(pose, -size, SIZE, size).setUv(flip.u(0.0F), flip.v(1.0F));
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
