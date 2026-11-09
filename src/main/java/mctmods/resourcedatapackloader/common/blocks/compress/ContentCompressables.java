@@ -69,7 +69,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
             if (source == null || !ContentRegistry.available(source.requires, def.key)) { continue; }
             CompressedSet set = new CompressedSet(def, source);
             Map<ResourceLocation, BlockDef> made = new LinkedHashMap<>();
-            for (int index = 0; index < set.blockCount(); index++) { made.put(set.blockName(index * BlockDef.MAX_META + 1), blockDef(set, index)); }
+            for (int index = 0; index < set.blockCount(); index++) { made.put(set.blockName(index * BlockDef.MAX_META + set.low()), blockDef(set, index)); }
             ResourceLocation taken = null;
             for (ResourceLocation name : made.keySet()) {
                 if (defs.containsKey(name)) { taken = name; }
@@ -87,7 +87,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
     private static BlockDef blockDef(CompressedSet set, int index) {
         CompressedSource source = set.source;
-        int first = index * BlockDef.MAX_META + 1;
+        int first = index * BlockDef.MAX_META + set.low();
         int last = Math.min(set.layers, first + BlockDef.MAX_META - 1);
         ResourceLocation name = set.blockName(first);
         BlockVariant[] byMeta = new BlockVariant[BlockDef.MAX_META];
@@ -96,7 +96,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
         for (int layer = first; layer <= last; layer++) {
             int meta = set.meta(layer);
             DropDef own = new DropDef(name, null, meta, AmountDef.of(1), 100, 0, new int[0]);
-            BlockVariant variant = new BlockVariant(set.variantName(layer), meta, EnumRarity.COMMON, 64, Collections.singletonList("compressed" + ore + layer + "x"), source.hardness * (layer + 1), source.resistance * (layer + 1), source.harvestLevel, 0, null, Collections.singletonList(own), false);
+            BlockVariant variant = new BlockVariant(set.variantName(layer), meta, EnumRarity.COMMON, 64, Collections.singletonList("compressed" + ore + set.oreLevel(layer) + "x"), source.hardness * set.scale(layer), source.resistance * set.scale(layer), source.harvestLevel, 0, null, Collections.singletonList(own), false);
             byMeta[meta] = variant;
             visible.add(variant);
         }

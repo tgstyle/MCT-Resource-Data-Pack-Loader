@@ -24,14 +24,22 @@ public final class CompressedSet {
         this.layers = def.layers;
     }
 
-    public int blockCount() { return (layers + BlockDef.MAX_META - 1) / BlockDef.MAX_META; }
+    public int low() { return source.fromItem ? 0 : 1; }
+
+    public int oreLevel(int layer) { return layer + 1 - low(); }
+
+    public int scale(int layer) { return layer + 2 - low(); }
+
+    public ItemStack source() { return stack(low() - 1); }
+
+    public int blockCount() { return (layers - low() + BlockDef.MAX_META) / BlockDef.MAX_META; }
 
     public ResourceLocation blockName(int layer) {
-        int index = (layer - 1) / BlockDef.MAX_META;
+        int index = (layer - low()) / BlockDef.MAX_META;
         return new ResourceLocation(def.key.getNamespace(), name + "_compressed" + (index == 0 ? "" : "_" + (index + 1)));
     }
 
-    public int meta(int layer) { return (layer - 1) % BlockDef.MAX_META; }
+    public int meta(int layer) { return (layer - low()) % BlockDef.MAX_META; }
 
     public String variantName(int layer) { return "layer_" + layer; }
 
@@ -39,17 +47,21 @@ public final class CompressedSet {
 
     public int layerOf(ResourceLocation block, int meta) {
         for (int index = 0; index < blockCount(); index++) {
-            if (blockName(index * BlockDef.MAX_META + 1).equals(block)) { return Math.min(layers, index * BlockDef.MAX_META + Math.max(0, meta) + 1); }
+            if (blockName(index * BlockDef.MAX_META + low()).equals(block)) { return Math.min(layers, index * BlockDef.MAX_META + Math.max(0, meta) + low()); }
         }
-        return 0;
+        return low() - 1;
     }
 
     public ItemStack stack(int layer) {
-        if (layer > 0) {
+        if (layer >= low()) {
             Item item = Registries.find(ForgeRegistries.ITEMS, blockName(layer));
             return item == null ? ItemStack.EMPTY : new ItemStack(item, 1, meta(layer));
         }
-        Block block = Registries.find(ForgeRegistries.BLOCKS, source.baseBlock);
+        if (source.fromItem) {
+            Item item = Registries.find(ForgeRegistries.ITEMS, source.base);
+            return item == null ? ItemStack.EMPTY : new ItemStack(item, 1, source.baseMeta);
+        }
+        Block block = Registries.find(ForgeRegistries.BLOCKS, source.base);
         Item item = block == null ? Items.AIR : Item.getItemFromBlock(block);
         return item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item, 1, source.baseMeta);
     }

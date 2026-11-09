@@ -26,18 +26,29 @@ public final class CompressedOrder {
             CompressedSet set = ContentCompressables.owner(name);
             if (set != null) { found.computeIfAbsent(set, key -> new ArrayList<>()).add(stack); }
         }
+        for (CompressedSet set : ContentCompressables.sets()) {
+            if (set.source.fromItem) { found.computeIfAbsent(set, key -> new ArrayList<>()); }
+        }
         for (Map.Entry<CompressedSet, List<ItemStack>> entry : found.entrySet()) {
             CompressedSet set = entry.getKey();
             List<ItemStack> layers = entry.getValue();
-            ItemStack base = set.stack(0);
+            ItemStack base = set.source();
             boolean failed = CompressedBase.failed(set);
             if (!failed && (base.isEmpty() || indexOf(list, base) < 0)) { continue; }
+            if (set.source.fromItem) { addMissing(set, layers); }
             Set<ItemStack> moved = Collections.newSetFromMap(new IdentityHashMap<>());
             moved.addAll(layers);
             list.removeIf(moved::contains);
             if (failed) { continue; }
             layers.sort(Comparator.comparingInt(stack -> layer(set, stack)));
             list.addAll(indexOf(list, base) + 1, layers);
+        }
+    }
+
+    private static void addMissing(CompressedSet set, List<ItemStack> layers) {
+        for (int layer = set.low(); layer <= set.layers; layer++) {
+            ItemStack stack = set.stack(layer);
+            if (!stack.isEmpty() && indexOf(layers, stack) < 0) { layers.add(stack); }
         }
     }
 

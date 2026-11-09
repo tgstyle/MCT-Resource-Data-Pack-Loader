@@ -59,7 +59,7 @@ public final class CompressedAssets {
             Map<String, Asset> built = new HashMap<>();
             for (CompressedSet set : ContentCompressables.sets()) {
                 String namespace = set.def.key.getNamespace() + ":";
-                for (int layer = 1; layer <= set.layers; layer++) {
+                for (int layer = set.low(); layer <= set.layers; layer++) {
                     built.put(namespace + MODEL_FOLDER + set.assetName(layer) + JSON, new Asset(set, Kind.MODEL, layer));
                     built.put(namespace + TEXTURE_FOLDER + set.assetName(layer) + ContentPixelMaps.PNG, new Asset(set, Kind.TEXTURE, layer));
                     if (set.meta(layer) == 0) { built.put(namespace + STATE_FOLDER + set.blockName(layer).getPath() + JSON, new Asset(set, Kind.STATE, layer)); }

@@ -906,9 +906,19 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 
 Ogni strato riceve anche un nome nel dizionario dei minerali, `compressed<Name><n>x`, e una texture più scura di quella sotto, con una cornice che cresce. Una base che brucia dà a ogni strato dieci volte il tempo di combustione dello strato sottostante.
 
+Un file senza un blocco proprio può comprimere un oggetto, con `item`. Lo strato 0 è allora un blocco che RDPL crea: nove oggetti lo creano con la craftatura, e da lui si ottengono di nuovo nove. Prende i metadati 0 di `<name>_compressed`, quindi quel blocco contiene gli strati da 0 a 15 e `<name>_compressed_2` il resto. La sua texture è quella dell'oggetto stesso su uno sfondo del colore dell'oggetto, scurita. Come in Additional Compression, lo strato 0 ha durezza 6 e brucia dieci volte più a lungo di un oggetto, e i nomi nel dizionario dei minerali partono da `compressed<Name>1x` per lo strato 0, così un file con il nome dell'oggetto riceve gli stessi nomi usati da Additional Compression.
+
+Per disegnare tu stesso gli strati, inserisci un PNG dove RDPL ne disegnerebbe uno: `assets/<namespace>/textures/blocks/<name>_compressed_<n>.png`, dove `<namespace>` è il namespace del file e `<n>` è il numero dello strato. RDPL disegna solo gli strati che i tuoi pacchetti non forniscono, quindi puoi sostituire uno strato o tutti. Per mantenere l'oscuramento e la cornice di RDPL ma partire da un'immagine diversa, assegna invece al file una `texture`: ogni strato viene costruito a partire da essa.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -922,12 +932,13 @@ Ogni strato riceve anche un nome nel dizionario dei minerali, `compressed<Name><
 }
 ```
 
-| Chiave    | Obbligatorio          | Valore                           | Predefinito        | Cosa fa                                                                                                                                                        |
-| --------- | --------------------- | -------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | sì                    | da 1 a 20                        |                    | Quanti strati costruire sopra lo strato 0. Abbassarlo più tardi lascia i blocchi piazzati; i loro metadati scendono allo strato più alto rimasto               |
-| `of`      | solo senza `variants` | `id` o `id:meta`, meta da 0 a 15 | nessuno            | Il blocco da comprimere in un file senza `variants`: un blocco di un altro mod o un blocco vanilla                                                             |
-| `texture` | no                    | percorso della texture           | modello della base | La texture di base da cui sono costruiti gli strati, al posto di quella che RDPL legge dal modello della base                                                  |
-| `recipes` | no                    | booleano                         | `true`             | Aggiunge le ricette `<name>_compress_<n>` e `<name>_decompress_<n>`: nove dello strato n-1 in una griglia 3x3 diventano uno dello strato n, e uno torna a nove |
+| Chiave    | Obbligatorio                   | Valore                              | Predefinito        | Cosa fa                                                                                                                                                                                                                                                            |
+| --------- | ------------------------------ | ----------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `layers`  | sì                             | da 1 a 20                           |                    | Quanti strati costruire sopra lo strato 0. Abbassarlo più tardi lascia i blocchi piazzati; i loro metadati scendono allo strato più alto rimasto                                                                                                                   |
+| `of`      | solo senza `variants` e `item` | `id` o `id:meta`, meta da 0 a 15    | nessuno            | Il blocco da comprimere in un file senza `variants`: un blocco di un altro mod o un blocco vanilla                                                                                                                                                                 |
+| `item`    | solo senza `variants` e `of`   | `id` o `id:meta`, meta da 0 a 32766 | nessuno            | L'oggetto da comprimere in un file senza `variants`: un oggetto di un altro mod o un oggetto vanilla. Lo strato 0 è un blocco che RDPL crea con nove di essi                                                                                                       |
+| `texture` | no                             | percorso della texture              | modello della base | La texture di base da cui sono costruiti gli strati, al posto di quella che RDPL legge dal modello della base o dell'oggetto. Necessaria per un `item` con una meta diversa da 0                                                                                   |
+| `recipes` | no                             | booleano                            | `true`             | Aggiunge le ricette `<name>_compress_<n>` e `<name>_decompress_<n>`: nove dello strato n-1 in una griglia 3x3 diventano uno dello strato n, e uno torna a nove. Per un `item`, `_compress_0` e `_decompress_0` trasformano nove oggetti nello strato 0 e viceversa |
 
 ### Chiavi delle varianti
 

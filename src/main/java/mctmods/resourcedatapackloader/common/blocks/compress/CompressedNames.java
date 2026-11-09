@@ -10,8 +10,9 @@ import net.minecraft.item.ItemStack;
 
     public static String of(CompressedSet set, int layer, String ownKey) {
         if (net.minecraft.util.text.translation.I18n.canTranslate(ownKey)) { return net.minecraft.util.text.translation.I18n.translateToLocal(ownKey).trim(); }
-        ItemStack base = set.stack(0);
+        ItemStack base = set.source();
         String name = base.isEmpty() ? set.name : base.getDisplayName();
-        return layer <= 1 ? net.minecraft.util.text.translation.I18n.translateToLocalFormatted(FIRST, name) : net.minecraft.util.text.translation.I18n.translateToLocalFormatted(LAYERED, name, layer);
+        int level = set.oreLevel(layer);
+        return level <= 1 ? net.minecraft.util.text.translation.I18n.translateToLocalFormatted(FIRST, name) : net.minecraft.util.text.translation.I18n.translateToLocalFormatted(LAYERED, name, level);
     }
 }

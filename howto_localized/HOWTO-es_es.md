@@ -906,9 +906,19 @@ Todas las claves, mostradas de una vez. Un archivo real escribe solo las que nec
 
 Cada capa recibe además un nombre del diccionario de minerales, `compressed<Name><n>x`, y una textura más oscura que la de la capa inferior, con un marco que crece. Una base que arde da a cada capa diez veces el tiempo de combustión de la capa de abajo.
 
+Un archivo sin bloque propio puede comprimir un objeto en su lugar, con `item`. La capa 0 es entonces un bloque que RDPL crea: nueve objetos se combinan para formarlo, y de él salen otra vez nueve. Toma los metadatos 0 de `<name>_compressed`, así que ese bloque contiene las capas 0 a 15 y `<name>_compressed_2` el resto. Su textura es la del propio objeto sobre un fondo del color del objeto, oscurecida. Como en Additional Compression, la capa 0 tiene dureza 6 y diez veces el tiempo de combustión de un objeto, y los nombres del diccionario de minerales empiezan en `compressed<Name>1x` para la capa 0, así que un archivo con el nombre del objeto recibe los mismos nombres que usa Additional Compression.
+
+Para dibujar las capas tú mismo, incluye un PNG donde RDPL dibujaría uno: `assets/<namespace>/textures/blocks/<name>_compressed_<n>.png`, donde `<namespace>` es el espacio de nombres del archivo y `<n>` es el número de capa. RDPL dibuja solo las capas que tus packs no incluyen, así que puedes reemplazar una capa o todas. Para mantener el oscurecimiento y el marco de RDPL pero partir de otra imagen, da al archivo una `texture` en su lugar, y cada capa se construye a partir de ella.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -922,12 +932,13 @@ Cada capa recibe además un nombre del diccionario de minerales, `compressed<Nam
 }
 ```
 
-| Clave     | Obligatorio         | Valor                         | Por defecto       | Qué hace                                                                                                                                               |
-| --------- | ------------------- | ----------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `layers`  | sí                  | 1 a 20                        |                   | Cuántas capas construir sobre la capa 0. Si se reduce después, los bloques colocados se conservan; sus metadatos bajan a la capa más alta que quede    |
-| `of`      | solo sin `variants` | `id` o `id:meta`, meta 0 a 15 | ninguno           | El bloque que se comprime en un archivo sin `variants`: un bloque de otro mod o uno de vanilla                                                         |
-| `texture` | no                  | ruta de textura               | modelo de la base | La textura base de la que se construyen las capas, en lugar de la que RDPL lee del modelo de la base                                                   |
-| `recipes` | no                  | booleano                      | `true`            | Añade las recetas `<name>_compress_<n>` y `<name>_decompress_<n>`: nueve de la capa n-1 en forma de 3x3 para una de la capa n, y una de vuelta a nueve |
+| Clave     | Obligatorio                  | Valor                            | Por defecto       | Qué hace                                                                                                                                                                                                                                               |
+| --------- | ---------------------------- | -------------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `layers`  | sí                           | 1 a 20                           |                   | Cuántas capas construir sobre la capa 0. Si se reduce después, los bloques colocados se conservan; sus metadatos bajan a la capa más alta que quede                                                                                                    |
+| `of`      | solo sin `variants` y `item` | `id` o `id:meta`, meta 0 a 15    | ninguno           | El bloque que se comprime en un archivo sin `variants`: un bloque de otro mod o uno de vanilla                                                                                                                                                         |
+| `item`    | solo sin `variants` y `of`   | `id` o `id:meta`, meta 0 a 32766 | ninguno           | El objeto que se comprime en un archivo sin `variants`: un objeto de otro mod o de vanilla. La capa 0 es un bloque que RDPL crea con nueve de ellos                                                                                                    |
+| `texture` | no                           | ruta de textura                  | modelo de la base | La textura base de la que se construyen las capas, en lugar de la que RDPL lee del modelo de la base o del objeto. Necesaria para un `item` con una meta distinta de 0                                                                                 |
+| `recipes` | no                           | booleano                         | `true`            | Añade las recetas `<name>_compress_<n>` y `<name>_decompress_<n>`: nueve de la capa n-1 en forma de 3x3 para una de la capa n, y una de vuelta a nueve. Para un `item`, `_compress_0` y `_decompress_0` pasan de nueve objetos a la capa 0 y de vuelta |
 
 ### Claves de variantes
 

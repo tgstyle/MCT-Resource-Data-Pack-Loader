@@ -23,8 +23,10 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 
 @SuppressWarnings("deprecation") public final class CompressedSource {
-    public final ResourceLocation baseBlock;
+    private static final float ITEM_STRENGTH = 3.0F;
+    public final ResourceLocation base;
     public final int baseMeta;
+    public final boolean fromItem;
     public final Material material;
     public final MapColor mapColor;
     @Nullable public final SoundType sound;
@@ -36,9 +38,10 @@ import net.minecraftforge.fml.relauncher.Side;
     public final String creativeTab;
     public final List<String> requires;
 
-    private CompressedSource(ResourceLocation baseBlock, int baseMeta, Material material, MapColor mapColor, @Nullable SoundType sound, String tool, int toolLevel, int harvestLevel, float hardness, float resistance, String creativeTab, List<String> requires) {
-        this.baseBlock = baseBlock;
+    private CompressedSource(ResourceLocation base, int baseMeta, boolean fromItem, Material material, MapColor mapColor, @Nullable SoundType sound, String tool, int toolLevel, int harvestLevel, float hardness, float resistance, String creativeTab, List<String> requires) {
+        this.base = base;
         this.baseMeta = baseMeta;
+        this.fromItem = fromItem;
         this.material = material;
         this.mapColor = mapColor;
         this.sound = sound;
@@ -51,7 +54,21 @@ import net.minecraftforge.fml.relauncher.Side;
         this.requires = requires;
     }
 
-    @Nullable static CompressedSource of(CompressableDef def, Map<ResourceLocation, BlockDef> defs) { return def.of == null ? pack(def, defs) : foreign(def, def.of); }
+    @Nullable static CompressedSource of(CompressableDef def, Map<ResourceLocation, BlockDef> defs) {
+        if (def.item != null) { return item(def, def.item); }
+        return def.of == null ? pack(def, defs) : foreign(def, def.of);
+    }
+
+    @Nullable private static CompressedSource item(CompressableDef def, ResourceLocation name) {
+        List<String> requires = requires(name);
+        if (!ContentRegistry.holds(requires, def.key)) { return null; }
+        return new CompressedSource(name, def.itemMeta, true, Material.ROCK, MapColor.STONE, SoundType.STONE, "pickaxe", 0, 0, ITEM_STRENGTH, ITEM_STRENGTH, "", requires);
+    }
+
+    private static List<String> requires(ResourceLocation name) {
+        String namespace = name.getNamespace();
+        return "minecraft".equals(namespace) ? Collections.emptyList() : Collections.singletonList(namespace);
+    }
 
     @Nullable private static CompressedSource pack(CompressableDef def, Map<ResourceLocation, BlockDef> defs) {
         BlockDef base = defs.get(def.key);
@@ -67,7 +84,7 @@ import net.minecraftforge.fml.relauncher.Side;
             ContentLog.LOGGER.error("The compressable block {} has no variants, so it gets no compressed layers", def.key);
             return null;
         }
-        return new CompressedSource(def.key, first.meta, base.material, base.mapColor, base.soundType, base.harvestTool, base.harvestToolLevel, first.harvestLevel, first.hardness, first.resistance / base.explosionResistanceDivisor, base.creativeTab, base.requires);
+        return new CompressedSource(def.key, first.meta, false, base.material, base.mapColor, base.soundType, base.harvestTool, base.harvestToolLevel, first.harvestLevel, first.hardness, first.resistance / base.explosionResistanceDivisor, base.creativeTab, base.requires);
     }
 
     private static String tab(Block block) {
@@ -76,8 +93,7 @@ import net.minecraftforge.fml.relauncher.Side;
     }
 
     @Nullable private static CompressedSource foreign(CompressableDef def, ResourceLocation name) {
-        String namespace = name.getNamespace();
-        List<String> requires = "minecraft".equals(namespace) ? Collections.emptyList() : Collections.singletonList(namespace);
+        List<String> requires = requires(name);
         if (!ContentRegistry.holds(requires, def.key)) { return null; }
         Block block = Registries.find(ForgeRegistries.BLOCKS, name);
         if (block == null) {
@@ -86,6 +102,6 @@ import net.minecraftforge.fml.relauncher.Side;
         }
         IBlockState state = block.getStateFromMeta(def.ofMeta);
         String tool = block.getHarvestTool(state);
-        return new CompressedSource(name, def.ofMeta, state.getMaterial(), state.getMaterial().getMaterialMapColor(), block.blockSoundType, tool == null ? "" : tool, Math.max(0, block.getHarvestLevel(state)), Math.max(0, block.getHarvestLevel(state)), block.blockHardness, block.blockResistance / 5.0F, tab(block), requires);
+        return new CompressedSource(name, def.ofMeta, false, state.getMaterial(), state.getMaterial().getMaterialMapColor(), block.blockSoundType, tool == null ? "" : tool, Math.max(0, block.getHarvestLevel(state)), Math.max(0, block.getHarvestLevel(state)), block.blockHardness, block.blockResistance / 5.0F, tab(block), requires);
     }
 }

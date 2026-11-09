@@ -52,13 +52,14 @@ import net.minecraftforge.fml.relauncher.Side;
         if (texture == null) { return null; }
         int[][] image = ContentPixelImages.read(texture.getNamespace(), "textures/" + texture.getPath() + ".png");
         if (image == null) { ContentLog.LOGGER.error("The compressable {} builds on the texture {}, which no pack or the game provides, so its layers are drawn grey", set.def.key, texture); }
-        return image;
+        return image == null || !set.source.fromItem ? image : opaque(image);
     }
 
     @Nullable private static ResourceLocation texture(CompressedSet set) {
         String override = set.def.texture;
         if (override != null) { return override.indexOf(':') < 0 ? new ResourceLocation(set.def.key.getNamespace(), override) : new ResourceLocation(override); }
-        ResourceLocation name = set.source.baseBlock;
+        if (set.source.fromItem) { return itemTexture(set); }
+        ResourceLocation name = set.source.base;
         Block block = Registries.find(ForgeRegistries.BLOCKS, name);
         if (block == null) { return missing(set, "its block is not registered"); }
         JsonObject state = ContentResourceText.json(name.getNamespace(), "blockstates/" + name.getPath() + ".json");
@@ -74,7 +75,27 @@ import net.minecraftforge.fml.relauncher.Side;
         if (model == null) { return missing(set, "its blockstate names no model"); }
         ResourceLocation at = new ResourceLocation(model);
         String namespace = at.getNamespace();
-        String path = at.getPath().indexOf('/') < 0 ? "block/" + at.getPath() : at.getPath();
+        follow(textures, namespace, at.getPath().indexOf('/') < 0 ? "block/" + at.getPath() : at.getPath());
+        String value = resolved(textures, "all");
+        if (value == null) { value = resolved(textures, "particle"); }
+        if (value == null) { return missing(set, "its model has no 'all' or 'particle' texture"); }
+        return new ResourceLocation(value);
+    }
+
+    @Nullable private static ResourceLocation itemTexture(CompressedSet set) {
+        ResourceLocation name = set.source.base;
+        if (set.source.baseMeta != 0) { return missing(set, "an item with a meta has no model RDPL can find, give it a \"texture\""); }
+        Map<String, String> textures = new HashMap<>();
+        follow(textures, name.getNamespace(), "item/" + name.getPath());
+        String value = resolved(textures, "layer0");
+        if (value == null) { value = resolved(textures, "particle"); }
+        if (value == null) { return missing(set, "its item model " + name.getNamespace() + ":models/item/" + name.getPath() + ".json has no 'layer0' or 'particle' texture"); }
+        return new ResourceLocation(value);
+    }
+
+    private static void follow(Map<String, String> textures, String start, String first) {
+        String namespace = start;
+        String path = first;
         for (int hop = 0; hop < HOPS; hop++) {
             JsonObject json = ContentResourceText.json(namespace, "models/" + path + ".json");
             if (json == null) { break; }
@@ -85,14 +106,29 @@ import net.minecraftforge.fml.relauncher.Side;
             namespace = next.getNamespace();
             path = next.getPath();
         }
-        String value = resolved(textures, "all");
-        if (value == null) { value = resolved(textures, "particle"); }
-        if (value == null) { return missing(set, "its model has no 'all' or 'particle' texture"); }
-        return new ResourceLocation(value);
+    }
+
+    private static int[][] opaque(int[][] image) {
+        int[] pixels = image[1];
+        long red = 0;
+        long green = 0;
+        long blue = 0;
+        int count = 0;
+        for (int pixel : pixels) {
+            if ((pixel >>> 24) == 0) { continue; }
+            red += (pixel >> 16) & 0xFF;
+            green += (pixel >> 8) & 0xFF;
+            blue += pixel & 0xFF;
+            count++;
+        }
+        int fill = count == 0 ? 0 : (int) (red / count / 2) << 16 | (int) (green / count / 2) << 8 | (int) (blue / count / 2);
+        int[] made = new int[pixels.length];
+        for (int index = 0; index < pixels.length; index++) { made[index] = (pixels[index] >>> 24) == 0 ? 0xFF000000 | fill : pixels[index] | 0xFF000000; }
+        return new int[][] {image[0], made};
     }
 
     @Nullable private static ResourceLocation missing(CompressedSet set, String why) {
-        ContentLog.LOGGER.error("The compressable {} cannot find a texture to build on for {}: {}. Give the file a \"texture\", so its layers are drawn grey until then", set.def.key, set.source.baseBlock, why);
+        ContentLog.LOGGER.error("The compressable {} cannot find a texture to build on for {}: {}. Give the file a \"texture\", so its layers are drawn grey until then", set.def.key, set.source.base, why);
         return null;
     }
 

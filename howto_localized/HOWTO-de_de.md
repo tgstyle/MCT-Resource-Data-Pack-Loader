@@ -906,9 +906,19 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
 
 Jede Schicht bekommt außerdem einen Ore-Dictionary-Namen, `compressed<Name><n>x`, und eine Textur, die dunkler ist als die darunter, mit wachsendem Rahmen. Eine Basis, die brennt, gibt jeder Schicht die zehnfache Brenndauer der Schicht darunter.
 
+Eine Datei ohne eigenen Block kann stattdessen einen Gegenstand komprimieren, mit `item`. Schicht 0 ist dann ein Block, den RDPL erzeugt: neun Gegenstände ergeben im Crafting diesen Block, und aus ihm werden zurück neun. Er nimmt den Metadatenwert 0 von `<name>_compressed`, sodass dieser Block die Schichten 0 bis 15 enthält und `<name>_compressed_2` den Rest. Seine Textur ist die des Gegenstands selbst, auf einem Hintergrund in dessen Farbe und abgedunkelt. Wie bei Additional Compression hat Schicht 0 die Härte 6 und brennt zehnmal so lange wie ein Gegenstand, und die Ore-Dictionary-Namen beginnen bei `compressed<Name>1x` für Schicht 0, sodass eine nach dem Gegenstand benannte Datei dieselben Namen bekommt wie Additional Compression.
+
+Wenn du die Schichten selbst zeichnen willst, lege eine PNG dort ab, wo RDPL sonst eine zeichnen würde: `assets/<namespace>/textures/blocks/<name>_compressed_<n>.png`, wobei `<namespace>` der Namespace der Datei und `<n>` die Schichtnummer ist. RDPL zeichnet nur die Schichten, die deine Packs nicht mitliefern, du kannst also eine Schicht oder alle ersetzen. Wenn du die Abdunkelung und den Rahmen von RDPL behalten, aber von einem anderen Bild ausgehen willst, gib der Datei stattdessen eine `texture`, dann wird jede Schicht daraus gebaut.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -922,12 +932,13 @@ Jede Schicht bekommt außerdem einen Ore-Dictionary-Namen, `compressed<Name><n>x
 }
 ```
 
-| Schlüssel | Pflicht             | Wert                               | Standard         | Was er macht                                                                                                                                                                        |
-| --------- | ------------------- | ---------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `layers`  | ja                  | 1 bis 20                           |                  | Wie viele Schichten über Schicht 0 gebaut werden. Wird der Wert später gesenkt, bleiben gesetzte Blöcke erhalten; ihre Metadatenwerte rutschen auf die höchste verbleibende Schicht |
-| `of`      | nur ohne `variants` | `id` oder `id:meta`, Meta 0 bis 15 | keine            | Der Block, der in einer Datei ohne `variants` komprimiert wird: ein Block eines anderen Mods oder ein Vanilla-Block                                                                 |
-| `texture` | nein                | Texturpfad                         | Modell der Basis | Die Basistextur, aus der die Schichten gebaut werden, statt der Textur, die RDPL aus dem Modell der Basis liest                                                                     |
-| `recipes` | nein                | boolean                            | `true`           | Fügt die Rezepte `<name>_compress_<n>` und `<name>_decompress_<n>` hinzu: neun aus Schicht n-1 im 3x3-Raster zu einer aus Schicht n, und eine zurück zu neun                        |
+| Schlüssel | Pflicht                        | Wert                                  | Standard         | Was er macht                                                                                                                                                                                                                                                     |
+| --------- | ------------------------------ | ------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`  | ja                             | 1 bis 20                              |                  | Wie viele Schichten über Schicht 0 gebaut werden. Wird der Wert später gesenkt, bleiben gesetzte Blöcke erhalten; ihre Metadatenwerte rutschen auf die höchste verbleibende Schicht                                                                              |
+| `of`      | nur ohne `variants` und `item` | `id` oder `id:meta`, Meta 0 bis 15    | keine            | Der Block, der in einer Datei ohne `variants` komprimiert wird: ein Block eines anderen Mods oder ein Vanilla-Block                                                                                                                                              |
+| `item`    | nur ohne `variants` und `of`   | `id` oder `id:meta`, Meta 0 bis 32766 | keine            | Der Gegenstand, der in einer Datei ohne `variants` komprimiert wird: ein Gegenstand eines anderen Mods oder ein Vanilla-Gegenstand. Schicht 0 ist ein Block, den RDPL aus neun davon macht                                                                       |
+| `texture` | nein                           | Texturpfad                            | Modell der Basis | Die Basistextur, aus der die Schichten gebaut werden, statt der Textur, die RDPL aus dem Modell der Basis oder des Gegenstands liest. Nötig für ein `item` mit einer anderen Meta als 0                                                                          |
+| `recipes` | nein                           | boolean                               | `true`           | Fügt die Rezepte `<name>_compress_<n>` und `<name>_decompress_<n>` hinzu: neun aus Schicht n-1 im 3x3-Raster zu einer aus Schicht n, und eine zurück zu neun. Bei einem `item` machen `_compress_0` und `_decompress_0` neun Gegenstände zu Schicht 0 und zurück |
 
 ### Variantenschlüssel
 

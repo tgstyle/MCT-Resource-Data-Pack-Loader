@@ -22,7 +22,7 @@ public final class CompressedRecipes {
         int added = 0;
         for (CompressedSet set : ContentCompressables.sets()) {
             if (!set.def.recipes) { continue; }
-            for (int layer = 1; layer <= set.layers; layer++) {
+            for (int layer = set.low(); layer <= set.layers; layer++) {
                 ItemStack lower = set.stack(layer - 1);
                 ItemStack upper = set.stack(layer);
                 if (lower.isEmpty() || upper.isEmpty()) {

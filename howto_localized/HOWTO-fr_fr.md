@@ -906,9 +906,19 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 
 Chaque couche reçoit aussi un nom du dictionnaire des minerais, `compressed<Name><n>x`, et une texture plus sombre que la couche inférieure, avec un cadre qui grandit. Une base qui brûle donne à chaque couche dix fois le temps de combustion de la couche en dessous.
 
+Un fichier sans bloc propre peut compresser un objet à la place, avec `item`. La couche 0 est alors un bloc que RDPL crée : neuf objets permettent de le fabriquer, et il redonne neuf objets en retour. Il prend la métadonnée 0 de `<name>_compressed`, si bien que ce bloc contient les couches 0 à 15 et `<name>_compressed_2` le reste. Sa texture est celle de l'objet lui-même sur un fond de la couleur de l'objet, assombrie. Comme dans Additional Compression, la couche 0 a une dureté de 6 et brûle dix fois plus longtemps qu'un objet, et les noms du dictionnaire des minerais commencent à `compressed<Name>1x` pour la couche 0, si bien qu'un fichier nommé d'après l'objet reçoit les mêmes noms qu'Additional Compression.
+
+Pour dessiner les couches vous-même, fournissez un PNG à l'endroit où RDPL en dessinerait un : `assets/<namespace>/textures/blocks/<name>_compressed_<n>.png`, où `<namespace>` est l'espace de noms du fichier et `<n>` le numéro de la couche. RDPL ne dessine que les couches que vos packs ne fournissent pas, vous pouvez donc remplacer une couche ou toutes. Pour garder l'assombrissement et le cadre de RDPL tout en partant d'une autre image, donnez plutôt au fichier une `texture` : chaque couche est alors construite à partir de celle-ci.
+
 ```json
 {
   "compressable": { "of": "minecraft:cobblestone", "layers": 9 }
+}
+```
+
+```json
+{
+  "compressable": { "item": "minecraft:flint", "layers": 3 }
 }
 ```
 
@@ -922,12 +932,13 @@ Chaque couche reçoit aussi un nom du dictionnaire des minerais, `compressed<Nam
 }
 ```
 
-| Clé       | Requis                    | Valeur                         | Défaut            | Rôle                                                                                                                                                                                 |
-| --------- | ------------------------- | ------------------------------ | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `layers`  | oui                       | 1 à 20                         |                   | Nombre de couches à construire au-dessus de la couche 0. Si on le baisse plus tard, les blocs posés sont conservés ; leurs métadonnées descendent à la couche la plus haute restante |
-| `of`      | seulement sans `variants` | `id` ou `id:meta`, meta 0 à 15 | aucun             | Le bloc à compresser dans un fichier sans `variants` : un bloc d'un autre mod ou un bloc vanilla                                                                                     |
-| `texture` | non                       | chemin de texture              | modèle de la base | La texture de base dont les couches sont construites, à la place de celle que RDPL lit dans le modèle de la base                                                                     |
-| `recipes` | non                       | booléen                        | `true`            | Ajoute les recettes `<name>_compress_<n>` et `<name>_decompress_<n>` : neuf de la couche n-1 en grille 3x3 vers une de la couche n, et une vers neuf                                 |
+| Clé       | Requis                              | Valeur                            | Défaut            | Rôle                                                                                                                                                                                                                                                        |
+| --------- | ----------------------------------- | --------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layers`  | oui                                 | 1 à 20                            |                   | Nombre de couches à construire au-dessus de la couche 0. Si on le baisse plus tard, les blocs posés sont conservés ; leurs métadonnées descendent à la couche la plus haute restante                                                                        |
+| `of`      | seulement sans `variants` et `item` | `id` ou `id:meta`, meta 0 à 15    | aucun             | Le bloc à compresser dans un fichier sans `variants` : un bloc d'un autre mod ou un bloc vanilla                                                                                                                                                            |
+| `item`    | seulement sans `variants` et `of`   | `id` ou `id:meta`, meta 0 à 32766 | aucun             | L'objet à compresser dans un fichier sans `variants` : un objet d'un autre mod ou un objet vanilla. La couche 0 est un bloc que RDPL crée à partir de neuf de ces objets                                                                                    |
+| `texture` | non                                 | chemin de texture                 | modèle de la base | La texture de base dont les couches sont construites, à la place de celle que RDPL lit dans le modèle de la base ou de l'objet. Nécessaire pour un `item` avec une meta autre que 0                                                                         |
+| `recipes` | non                                 | booléen                           | `true`            | Ajoute les recettes `<name>_compress_<n>` et `<name>_decompress_<n>` : neuf de la couche n-1 en grille 3x3 vers une de la couche n, et une vers neuf. Pour un `item`, `_compress_0` et `_decompress_0` transforment neuf objets en couche 0, et inversement |
 
 ### Clés de variantes
 
