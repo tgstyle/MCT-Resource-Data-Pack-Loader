@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.anvils.ContentAnvils;
 import mctmods.resourcedatapackloader.common.blocks.ContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.ContentColumns;
+import mctmods.resourcedatapackloader.common.blocks.ContentPairedDoors;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
@@ -169,6 +170,7 @@ import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.resource.VanillaServerListeners;
 
 public class ModSetup {
@@ -276,6 +278,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVeins::onBreak);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentVeins::onNested);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentPairedDoors::onUse);
+        NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post _) -> ContentPairedDoors.clearActors());
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);

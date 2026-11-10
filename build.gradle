@@ -193,6 +193,11 @@ subprojects {
         if (companion('ftblibrary')) {
             runtimeOnly "curse.maven:ftb-library-404465:9361489"
         }
+        if (companion('biomesoplenty')) {
+            runtimeOnly "curse.maven:biomes-o-plenty-220318:8239932"
+            runtimeOnly "curse.maven:terrablender-940057:8384529"
+            runtimeOnly "curse.maven:glitchcore-955399:8109770"
+        }
         if (version_curios != null) {
             runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
         }

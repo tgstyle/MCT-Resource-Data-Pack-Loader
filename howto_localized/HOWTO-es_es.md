@@ -78,6 +78,7 @@ Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres le
 - [Columnas que caen](#columnas-que-caen)
 - [Propagación de flores](#propagación-de-flores)
 - [Transporte](#transporte)
+- [Puertas emparejadas](#puertas-emparejadas)
 - [Quitar botín](#quitar-botín)
 - [Botín de mobs](#botín-de-mobs)
 - [Botín de jugadores](#botín-de-jugadores)
@@ -232,6 +233,7 @@ Bajo `data/`:
 | `<namespace>/diets/*.json`                   | Reglas que hacen que una comida repetida alimente menos y una dieta variada alimente más. [Variedad de comida](#variedad-de-comida)                                                                                              |
 | `<namespace>/columns/*.json`                 | Hileras de bloques que caen y se rompen juntas sobre el bloque que rompe el jugador. [Columnas que caen](#columnas-que-caen)                                                                                                     |
 | `<namespace>/flower_spreads/*.json`          | Flores extra colocadas alrededor de la hierba u otro bloque cuando se usa polvo de hueso sobre él. [Propagación de flores](#propagación-de-flores)                                                                               |
+| `<namespace>/paired_doors/*.json`            | Una puerta junto a su vecina en espejo se abre y cierra con ella. [Puertas emparejadas](#puertas-emparejadas)                                                                                                                    |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                                      |
 | `<namespace>/functions/*.mcfunction`         | Archivos de función. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                         |
 | `<namespace>/tags/<kind>/*.json`             | Etiquetas, en el formato propio del juego. [Materiales, pestañas, sonidos, etiquetas](#materiales-pestañas-sonidos-etiquetas)                                                                                                    |
@@ -3650,6 +3652,38 @@ Un jugador que se agacha y hace clic derecho con la mano principal vacía recoge
 | `requires` | no          | lista de cadenas                                 | ninguno     | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en cualquier definición                                                                                                                              |
 
 Solo ids, sin etiquetas. Las estructuras de dos bloques, como puertas, plantas altas y camas, no se pueden transportar, ni tampoco los bloques protegidos o con dureza inferior a 0. Los jinetes de un mob se bajan al recogerlo, la correa no recibe trato especial y no se dibuja nada en quien carga. Los datos transportados no pasan por el data fixer al actualizar el juego, y una carga cuyo bloque o mob ya no se resuelve se borra con una línea de error en el registro. Un mob de un pack con interfaz de almacenamiento, estando agachado, se recoge en vez de abrirla.
+
+## Puertas emparejadas
+
+*fabricación, botín y comercio*
+
+`<namespace>/paired_doors/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan.
+
+Una puerta que está junto a otra, con las bisagras en espejo, se mueve con ella. Cuando un jugador usa una, una señal de redstone la cambia o un mob la abre o cierra, su pareja se abre o cierra igual, de modo que una puerta doble se comporta como una sola. Sin archivo no cambia nada; un pack que quiera que el emparejado sea decisión del jugador pone una entrada `config:` en `requires`, como se describe en Opciones del pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:oak_door", {"block": "mypack:gate_door"}],
+  "tag": ["minecraft:wooden_doors"],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Clave            | Obligatorio | Valor                                        | Por defecto | Qué hace                                                                                                                                                                                                                                                                                      |
+| ---------------- | ----------- | -------------------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | no          | lista de cadenas                             | ninguno     | Ids de mod, espacios de nombres de pack u opciones `config:` que deben estar presentes, como en el resto.                                                                                                                                                                                     |
+| `blocks`         | no          | lista de ids de bloque u objetos con `block` | ninguno     | Las puertas que cubre esta regla. Escribe solo ids: el estado de bloque de una puerta guarda su orientación, su bisagra y su estado abierto, no su tipo, así que no sirve para elegir una puerta. Una regla necesita `blocks`, `tag` o `all`; si no, registra una línea de error y se ignora. |
+| `tag`            | no          | lista de ids de etiqueta de bloque           | ninguno     | Etiquetas de bloque cuyas puertas cubre esta regla. Una etiqueta que no es un id de etiqueta válido registra una línea de error y se omite.                                                                                                                                                   |
+| `all`            | no          | booleano                                     | `false`     | Si es verdadero, cuenta cada puerta de cualquier mod, sin lista.                                                                                                                                                                                                                              |
+| `unlessSneaking` | no          | booleano                                     | `true`      | Si es verdadero, un jugador agachado mueve solo la puerta que usó.                                                                                                                                                                                                                            |
+| `mobs`           | no          | booleano                                     | `false`     | Si es verdadero, una puerta que cambia un mob, un comando u otro código de mod mueve también a su pareja. Apagado mantiene el comportamiento actual.                                                                                                                                          |
+
+Dos puertas se emparejan cuando la pareja está justo al lado de la puerta, tiene la bisagra en espejo y la misma orientación, la cubre la misma regla, está en el mismo estado abierto que tenía la puerta antes del cambio y se puede abrir a mano de la misma forma. Una puerta que no se puede abrir a mano, como la puerta de hierro, solo se empareja con otra de su tipo y sigue al redstone y a los mobs, pero un clic a mano nunca mueve una. Una señal de redstone en cualquiera de las dos mueve ambas, y una pareja que el redstone mantiene activada nunca se cierra por el par. Todo lo que no es un clic de jugador ni redstone cuenta como cambio de mob, y la pareja lo sigue solo si `mobs` es verdadero. Un clic mueve la pareja solo si el jugador puede usar las dos puertas según las reglas de claim, y un cambio de redstone o de mob solo si ambas puertas tienen el mismo dueño de claim. Los jugadores falsos nunca mueven un par, y las trampillas y las puertas de valla no están incluidas. Una carga registra `Loaded N paired door rule(s)`, y un archivo que no nombra ningún bloque registrado ni una etiqueta válida registra una línea de error y se ignora.
 
 ## Botín de jugadores
 

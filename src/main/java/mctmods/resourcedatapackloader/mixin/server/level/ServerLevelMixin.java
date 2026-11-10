@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.server.level;
 
+import mctmods.resourcedatapackloader.common.blocks.ContentPairedDoors;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
@@ -167,4 +168,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (!animals && (entity instanceof Animal || entity instanceof WaterAnimal || entity instanceof AgeableWaterCreature)) { return true; }
         return !npcs && entity instanceof Npc;
     }
+
+    @Inject(method = "sendBlockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;I)V", at = @At("TAIL")) private void rdpl$pairedDoors(BlockPos pos, BlockState old, BlockState current, int updateFlags, CallbackInfo ci) { ContentPairedDoors.onBlockChanged((ServerLevel) (Object) this, pos, old, current); }
 }

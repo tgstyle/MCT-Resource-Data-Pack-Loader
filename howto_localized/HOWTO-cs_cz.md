@@ -78,6 +78,7 @@ Tento průvodce platí pro build 26.x, tedy pro 26.1.2, 26.2 a 26.3; všechny t�
 - [Padající sloupce](#padající-sloupce)
 - [Šíření květin](#šíření-květin)
 - [Nošení](#nošení)
+- [Spárované dveře](#spárované-dveře)
 - [Odstranění kořisti](#odstranění-kořisti)
 - [Kořist z mobů](#kořist-z-mobů)
 - [Kořist hráčů](#kořist-hráčů)
@@ -232,6 +233,7 @@ V `data/`:
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
 | `<namespace>/flower_spreads/*.json`          | Další květiny kolem trávy nebo jiného bloku, když se na něj použije kostní moučka. [Šíření květin](#šíření-květin)                                                                                   |
+| `<namespace>/paired_doors/*.json`            | Dveře vedle zrcadlového souseda se otevírají a zavírají spolu s ním. [Spárované dveře](#spárované-dveře)                                                                                             |
 | `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
 | `<namespace>/functions/*.mcfunction`         | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                |
 | `<namespace>/tags/<kind>/*.json`             | Tagy, ve vlastním formátu hry. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)                                                                                                          |
@@ -3650,6 +3652,38 @@ Hráč, který se plíží a klikne pravým tlačítkem s prázdnou hlavní ruko
 | `requires` | ne      | seznam řetězců                     | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako u každé definice                                                                                                       |
 
 Jen ID, žádné štítky. Dvoublokové stavby jako dveře, vysoké rostliny a postele nést nejde, stejně jako chráněné bloky a bloky s tvrdostí pod 0. Jezdci moba se při zvednutí shodí, vodítko se zvlášť neřeší a na nosiči se nic nevykresluje. Nesená data se při přechodu na novější verzi hry neopravují a náklad, jehož blok nebo mob už neexistuje, se smaže s chybovým řádkem v logu. Plížící se mob z balíčku s úložným rozhraním se zvedne místo otevření.
+
+## Spárované dveře
+
+*výroba, kořist a obchod*
+
+`<namespace>/paired_doors/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Dveře, které stojí vedle jiných dveří se zrcadlově otočenými panty, se pohybují společně s nimi. Když hráč jedny použije, redstonový signál je změní nebo je mob otevře či zavře, jejich protějšek se otevře nebo zavře stejně, takže dvoje dveře se chovají jako jedny. Bez souboru se nic nemění; balíček, který chce, aby spárování bylo na volbě hráče, dá položku `config:` do `requires`, jak je popsáno pod Možnosti balíčku.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:oak_door", {"block": "mypack:gate_door"}],
+  "tag": ["minecraft:wooden_doors"],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Klíč             | Povinný | Hodnota                                | Výchozí | Co dělá                                                                                                                                                                                                                                   |
+| ---------------- | ------- | -------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | ne      | seznam řetězců                         | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako jinde.                                                                                                                                               |
+| `blocks`         | ne      | seznam ID bloků nebo objektů s `block` | žádný   | Dveře, které tohle pravidlo pokrývá. Piš jen ID: stav bloku dveří nese orientaci, panty a stav otevření, ne druh, takže jimi dveře nevyberete. Pravidlo potřebuje `blocks`, `tag` nebo `all`, jinak zapíše chybový řádek a je přeskočeno. |
+| `tag`            | ne      | seznam ID štítků bloků                 | žádný   | Štítky bloků, jejichž dveře pravidlo pokrývá. Štítek, který není platným ID štítku, zapíše chybový řádek a je vynechán.                                                                                                                   |
+| `all`            | ne      | bool                                   | `false` | Pravda: počítají se všechny dveře všech modů, bez seznamu.                                                                                                                                                                                |
+| `unlessSneaking` | ne      | bool                                   | `true`  | Pravda: hráč v plížení posune jen dveře, které použil.                                                                                                                                                                                    |
+| `mobs`           | ne      | bool                                   | `false` | Pravda: dveře, které změní mob, příkaz nebo kód jiného modu, posunou i svůj protějšek. Nepravda zachová dnešní chování.                                                                                                                   |
+
+Dvoje dveře se spárují, když protějšek stojí přímo vedle dveří, má zrcadlově otočené panty a stejnou orientaci, pokrývá je stejné pravidlo, je ve stejném stavu otevření, v jakém dveře byly před změnou, a dá se otevřít rukou stejným způsobem. Dveře, které rukou otevřít nejde, například železné, se páří jen s dalšími dveřmi stejného druhu a řídí se redstonem a moby, ale kliknutí rukou je nikdy nepohne. Redstonový signál na kterýchkoli z nich pohne oběma a protějšek, který redstone drží napájený, pár nikdy nezavře. Vše, co není kliknutí hráče ani redstone, se počítá jako změna moba a protějšek ji sleduje jen tehdy, je-li `mobs` pravda. Kliknutí pohne protějškem jen tehdy, když hráč smí použít oboje dveře podle pravidel claimů, a změna redstonem nebo mobem jen tehdy, když obojí dveře patří stejnému vlastníkovi claimu. Falešní hráči pár nikdy nepohnou a padací dvířka a branky nejsou zahrnuty. Načtení zapíše `Loaded N paired door rule(s)` a soubor, který nepojmenuje žádný zaregistrovaný blok ani platný štítek, zapíše chybový řádek a je přeskočen.
 
 ## Kořist hráčů
 

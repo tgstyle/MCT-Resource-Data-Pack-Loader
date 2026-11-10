@@ -78,6 +78,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 - [Colonnes qui tombent](#colonnes-qui-tombent)
 - [Propagation des fleurs](#propagation-des-fleurs)
 - [Portage](#portage)
+- [Portes appariées](#portes-appariées)
 - [Retrait de butin](#retrait-de-butin)
 - [Butin des mobs](#butin-des-mobs)
 - [Butin des joueurs](#butin-des-joueurs)
@@ -232,6 +233,7 @@ Sous `data/` :
 | `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                                                   |
 | `<namespace>/columns/*.json`                 | Suites de blocs qui tombent et cassent avec le bloc que le joueur casse, au-dessus de lui. [Colonnes qui tombent](#colonnes-qui-tombent)                                                                                 |
 | `<namespace>/flower_spreads/*.json`          | Fleurs supplémentaires placées autour de l'herbe ou d'un autre bloc quand on y utilise de la poudre d'os. [Propagation des fleurs](#propagation-des-fleurs)                                                              |
+| `<namespace>/paired_doors/*.json`            | Une porte voisine de son partenaire en miroir s'ouvre et se ferme avec elle. [Portes appariées](#portes-appariées)                                                                                                       |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                                 |
 | `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                   |
 | `<namespace>/tags/<kind>/*.json`             | Tags, au format propre au jeu. [Matériaux, onglets, sons, tags](#matériaux-onglets-sons-tags)                                                                                                                            |
@@ -3650,6 +3652,38 @@ Un joueur qui s'accroupit et fait un clic droit la main principale vide ramasse 
 | `requires` | non    | liste de chaînes                                  | aucun  | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                                                                                                                                       |
 
 Ids seulement, pas de tags. Les structures de deux blocs, comme les portes, les grandes plantes et les lits, ne peuvent pas être portées, ni les blocs protégés ou de dureté inférieure à 0. Les passagers d'un mob descendent quand on le ramasse, la laisse n'a pas de traitement particulier et rien n'est dessiné sur le porteur. Les données portées ne passent pas par le data fixer lors des mises à jour du jeu, et une charge dont le bloc ou le mob ne se résout plus est effacée avec une ligne d'erreur dans le journal. Un mob de pack accroupi qui a une interface de stockage est ramassé au lieu de l'ouvrir.
+
+## Portes appariées
+
+*artisanat, butin et commerce*
+
+`<namespace>/paired_doors/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+Une porte placée à côté d'une autre, avec des gonds en miroir, bouge avec elle. Quand un joueur en utilise une, qu'un signal de redstone la change, ou qu'un mob l'ouvre ou la ferme, son partenaire s'ouvre ou se ferme à l'identique, si bien qu'une double porte se comporte comme une seule porte. Sans fichier rien ne change ; un pack qui veut que l'appariement soit un choix du joueur met une entrée `config:` dans `requires`, comme décrit sous Options de pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:oak_door", {"block": "mypack:gate_door"}],
+  "tag": ["minecraft:wooden_doors"],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Clé              | Requis | Valeur                                       | Défaut  | Rôle                                                                                                                                                                                                                                                                                           |
+| ---------------- | ------ | -------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | non    | liste de chaînes                             | aucun   | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme ailleurs.                                                                                                                                                                                            |
+| `blocks`         | non    | liste d'ids de bloc ou d'objets avec `block` | aucun   | Les portes que cette règle couvre. N'écrire que des ids : l'état de bloc d'une porte porte son orientation, ses gonds et son état ouvert, pas son type, donc il ne peut pas isoler une porte. Une règle a besoin de `blocks`, `tag` ou `all`, sinon elle journalise une erreur et est ignorée. |
+| `tag`            | non    | liste d'ids de tag de bloc                   | aucun   | Tags de blocs dont les portes sont couvertes par cette règle. Un tag qui n'est pas un id de tag valide journalise une erreur et est laissé de côté.                                                                                                                                            |
+| `all`            | non    | booléen                                      | `false` | Vrai : chaque porte de chaque mod compte, sans liste.                                                                                                                                                                                                                                          |
+| `unlessSneaking` | non    | booléen                                      | `true`  | Vrai : un joueur accroupi ne bouge que la porte qu'il a utilisée.                                                                                                                                                                                                                              |
+| `mobs`           | non    | booléen                                      | `false` | Vrai : une porte changée par un mob, une commande ou du code d'un autre mod entraîne aussi son partenaire. Faux garde le comportement actuel.                                                                                                                                                  |
+
+Deux portes s'apparient quand le partenaire se trouve juste à côté de la porte, a des gonds en miroir et la même orientation, est couvert par la même règle, est dans le même état ouvert que la porte avant le changement, et peut être ouvert à la main de la même façon. Une porte qu'on ne peut pas ouvrir à la main, comme la porte en fer, ne s'apparie qu'avec une autre porte de ce genre et suit le redstone et les mobs, mais un clic à la main ne bouge jamais l'une d'elles. Un signal de redstone sur l'une des deux les bouge toutes les deux, et un partenaire que le redstone maintient alimenté n'est jamais refermé par la paire. Tout ce qui n'est ni un clic de joueur ni du redstone compte comme un changement de mob, et le partenaire le suit seulement si `mobs` est vrai. Un clic ne bouge le partenaire que si le joueur peut utiliser les deux portes selon les règles de claim, et un changement de redstone ou de mob seulement si les deux portes ont le même propriétaire de claim. Les faux joueurs ne bougent jamais une paire, et les trappes et portillons ne sont pas inclus. Un chargement journalise `Loaded N paired door rule(s)`, et un fichier qui ne nomme aucun bloc enregistré ni aucun tag valide journalise une ligne d'erreur et est ignoré.
 
 ## Butin des joueurs
 
