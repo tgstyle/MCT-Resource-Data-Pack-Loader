@@ -76,6 +76,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Sklizeň pravým tlačítkem](#sklizeň-pravým-tlačítkem)
 - [Těžení žil](#těžení-žil)
 - [Padající sloupce](#padající-sloupce)
+- [Rychlé opadávání listí](#rychlé-opadávání-listí)
 - [Šíření květin](#šíření-květin)
 - [Nošení](#nošení)
 - [Spárované dveře](#spárované-dveře)
@@ -231,6 +232,7 @@ V `data/`:
 | `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
+| `<namespace>/leaf_decay/*.json`              | Listí u změněného bloku opadá po krátké prodlevě. [Rychlé opadávání listí](#rychlé-opadávání-listí)                                                                                                  |
 | `<namespace>/flower_spreads/*.json`          | Další květiny kolem trávy nebo jiného bloku, když se na něj použije kostní moučka. [Šíření květin](#šíření-květin)                                                                                   |
 | `<namespace>/paired_doors/*.json`            | Dveře vedle zrcadlového souseda se otevírají a zavírají spolu s ním. [Spárované dveře](#spárované-dveře)                                                                                             |
 | `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
@@ -3603,6 +3605,40 @@ Když hráč rozbije blok, rozbije se i řada vypsaných padajících bloků (š
 | `alternate`      | ne      | objekt s `item` a `chance` (0 až 1)                                                              | žádný   | Každý blok sloupce vydá `item` při úspěšném hodu, jinak svůj vlastní blokový předmět. Bez něj vydá každý blok běžnou kořist se Štěstím 0. |
 
 Falešní hráči sloupec nikdy nespustí a hráči v kreativním režimu nedostanou žádné dropy. Soubory se sčítají; použije se první soubor, jehož bloky drží blok nad rozbitým. Při načtení se zapíše `Loaded N falling column group(s)` a soubor, který nepojmenuje žádný registrovaný blok nebo má špatné `alternate`, zapíše chybu.
+
+## Rychlé opadávání listí
+
+*výroba, kořist a obchod*
+
+`<namespace>/leaf_decay/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka, jeden soubor drží jedno pravidlo a více souborů se sčítá. První soubor vyžaduje restart, protože háčky rozpadu se při startu registrují jen tehdy, když soubor existuje.
+
+Když se změní blok vedle listí, každý list, který aktualizace zasáhne a který by vanilla nechala rozpadnout, se zařadí na rozpadový tik po náhodné prodlevě mezi `minTicks` a `maxTicks`, místo aby se čekalo na náhodné tiky vanilly. O tom, zda list opravdu spadne, pak rozhodne rozpad z vanilly: listí stále spojené s kmenem zůstane a listí, které položil hráč, se nikdy nedotkne.
+
+```json
+{
+  "blocks": ["minecraft:oak_leaves", {"block": "minecraft:birch_leaves"}],
+  "tag": ["minecraft:leaves"],
+  "except": {"blocks": ["minecraft:azalea_leaves"]},
+  "dimensions": ["minecraft:overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Klíč         | Povinný      | Hodnota                                                                                       | Výchozí         | Co dělá                                                                                     |
+| ------------ | ------------ | --------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------- |
+| `requires`   | ne           | seznam řetězců                                                                                | žádný           | ID modů, které musí být načtené, jako jinde.                                                |
+| `blocks`     | jeden ze tří | seznam id bloků, nebo objekty s `block` a volitelnou mapou `properties` jmen stavů na hodnoty |                 | Bloky listí, které pravidlo pokrývá.                                                        |
+| `tag`        | jeden ze tří | seznam id značek bloků                                                                        |                 | Značky bloků, jejichž bloky pravidlo pokrývá, například `minecraft:leaves`.                 |
+| `all`        | jeden ze tří | bool                                                                                          | `false`         | Při true se pokryje každý blok listí, který vanilla nechá rozpadat.                         |
+| `except`     | ne           | objekt s `blocks` a `tag`                                                                     | žádný           | Listí, které pravidlo nepokrývá, i když ho výše uvedené klíče jmenují, ve stejných tvarech. |
+| `dimensions` | ne           | seznam id dimenzí, například `minecraft:overworld` nebo `minecraft:the_nether`                | všechny dimenze | Dimenze, ve kterých pravidlo platí. Názvy a čísla se neshodují.                             |
+| `minTicks`   | ne           | int, 1 až 1200                                                                                | `10`            | Nejkratší prodleva před rozpadovým tikem listu.                                             |
+| `maxTicks`   | ne           | int, 1 až 1200                                                                                | `60`            | Nejdelší prodleva. Nesmí být menší než `minTicks`.                                          |
+
+Pravidlo potřebuje aspoň jeden z klíčů `blocks`, `tag` nebo `all`; soubor bez nich se ignoruje a zapíše chybu, stejně jako soubor, jehož `maxTicks` je menší než `minTicks`. Prodlevu určí první pravidlo v pořadí souborů, které pokrývá list i dimenzi a nevyjímá ho. Pokrývá se jen listí, které vanilla nechává rozpadat. Listí z Dynamic Trees se nikdy nedotkne, ani když ho soubor uvádí. Jsou to serverová data balíčku a na klientovi nic nevyžadují; bez souboru se nedělá nic navíc a listí se chová jako dosud. Při načtení se zapíše `Loaded N leaf decay rule(s)` a soubor, který nepojmenuje žádný registrovaný blok ani značku, zapíše `Leaf decay <key> names no registered blocks, ignoring it`.
 
 ## Šíření květin
 

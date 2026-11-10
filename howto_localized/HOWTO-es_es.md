@@ -76,6 +76,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Cosecha con clic derecho](#cosecha-con-clic-derecho)
 - [Minería de vetas](#minería-de-vetas)
 - [Columnas que caen](#columnas-que-caen)
+- [Caída de hojas](#caída-de-hojas)
 - [Propagación de flores](#propagación-de-flores)
 - [Transporte](#transporte)
 - [Puertas emparejadas](#puertas-emparejadas)
@@ -231,6 +232,7 @@ Bajo `data/`:
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                                                                                              |
 | `<namespace>/diets/*.json`                   | Reglas que hacen que una comida repetida alimente menos y una dieta variada alimente más. [Variedad de comida](#variedad-de-comida)                                                                                              |
 | `<namespace>/columns/*.json`                 | Hileras de bloques que caen y se rompen juntas sobre el bloque que rompe el jugador. [Columnas que caen](#columnas-que-caen)                                                                                                     |
+| `<namespace>/leaf_decay/*.json`              | Las hojas cerca de un bloque cambiado decaen en poco tiempo. [Caída de hojas](#caída-de-hojas)                                                                                                                                   |
 | `<namespace>/flower_spreads/*.json`          | Flores extra colocadas alrededor de la hierba u otro bloque cuando se usa polvo de hueso sobre él. [Propagación de flores](#propagación-de-flores)                                                                               |
 | `<namespace>/paired_doors/*.json`            | Una puerta junto a su vecina en espejo se abre y cierra con ella. [Puertas emparejadas](#puertas-emparejadas)                                                                                                                    |
 | `<namespace>/advancements/*.json`            | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir)                                                                                                                                                                      |
@@ -3603,6 +3605,40 @@ Cuando un jugador rompe un bloque, la hilera de bloques que caen listados justo 
 | `alternate`      | no          | objeto con `item` y `chance` (de 0 a 1)                                                                      | ninguno     | Cada bloque de la columna suelta `item` si acierta la tirada, o su propio objeto de bloque si falla. Sin él, cada bloque suelta sus drops normales con Fortuna 0. |
 
 Los jugadores falsos nunca la activan, y los jugadores en creativo no reciben drops. Los archivos se acumulan; se usa el primero cuyos bloques contienen el bloque de encima del roto. Al cargar se escribe `Loaded N falling column group(s)`, y un archivo que nombre un bloque no registrado o tenga un `alternate` incorrecto escribe un error.
+
+## Caída de hojas
+
+*fabricación, botín y comercio*
+
+`<namespace>/leaf_decay/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta, cada archivo contiene una regla y varios archivos se acumulan. Un primer archivo necesita un reinicio, ya que los hooks de decaimiento solo se registran al arrancar si existe un archivo en ese momento.
+
+Cuando cambia un bloque junto a hojas, cada hoja que la actualización alcanza y que vanilla dejaría decaer se programa para un tick de decaimiento tras una espera aleatoria entre `minTicks` y `maxTicks`, en lugar de esperar a los ticks aleatorios de vanilla. Después, el propio decaimiento de vanilla decide si cada hoja cae de verdad: las hojas que siguen unidas a un tronco se quedan y las que puso un jugador nunca se tocan.
+
+```json
+{
+  "blocks": ["minecraft:oak_leaves", {"block": "minecraft:birch_leaves"}],
+  "tag": ["minecraft:leaves"],
+  "except": {"blocks": ["minecraft:azalea_leaves"]},
+  "dimensions": ["minecraft:overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Clave        | Obligatorio     | Valor                                                                                                        | Por defecto           | Qué hace                                                                                    |
+| ------------ | --------------- | ------------------------------------------------------------------------------------------------------------ | --------------------- | ------------------------------------------------------------------------------------------- |
+| `requires`   | no              | lista de cadenas                                                                                             | ninguno               | Ids de mod que deben estar cargados, como en el resto.                                      |
+| `blocks`     | uno de los tres | lista de ids de bloque, u objetos con `block` y un mapa opcional `properties` de nombres de estado a valores |                       | Bloques de hojas que cubre la regla.                                                        |
+| `tag`        | uno de los tres | lista de ids de etiqueta de bloque                                                                           |                       | Etiquetas de bloque cuyos bloques cubre la regla, como `minecraft:leaves`.                  |
+| `all`        | uno de los tres | bool                                                                                                         | `false`               | Si es true, se cubre todo bloque de hojas que vanilla deja decaer.                          |
+| `except`     | no              | objeto con `blocks` y `tag`                                                                                  | ninguno               | Hojas que la regla no cubre aunque las claves de arriba las nombren, con las mismas formas. |
+| `dimensions` | no              | lista de ids de dimensión, como `minecraft:overworld` o `minecraft:the_nether`                               | todas las dimensiones | Las dimensiones en las que se aplica la regla. Los nombres y los números no coinciden.      |
+| `minTicks`   | no              | int, de 1 a 1200                                                                                             | `10`                  | Espera mínima antes del tick de decaimiento de una hoja.                                    |
+| `maxTicks`   | no              | int, de 1 a 1200                                                                                             | `60`                  | Espera máxima. No puede ser menor que `minTicks`.                                           |
+
+Una regla necesita al menos una de las claves `blocks`, `tag` o `all`; un archivo sin ninguna se ignora con una línea de error, igual que uno cuyo `maxTicks` sea menor que `minTicks`. La primera regla, en el orden de los archivos, que cubre la hoja y la dimensión y no la exceptúa fija la espera. Solo se cubren las hojas que vanilla deja decaer. Las hojas de Dynamic Trees nunca se tocan, aunque un archivo las liste. Son datos de paquete del servidor y no necesitan nada en el cliente; sin archivo no hay trabajo extra y las hojas se comportan como hasta ahora. Al cargar se escribe `Loaded N leaf decay rule(s)`, y un archivo que no nombre ningún bloque registrado ni etiqueta escribe `Leaf decay <key> names no registered blocks, ignoring it`.
 
 ## Propagación de flores
 

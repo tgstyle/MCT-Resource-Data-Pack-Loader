@@ -76,6 +76,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 - [Right-click harvest](#right-click-harvest)
 - [Vein mining](#vein-mining)
 - [Falling columns](#falling-columns)
+- [Leaf decay](#leaf-decay)
 - [Flower spreading](#flower-spreading)
 - [Carrying](#carrying)
 - [Paired doors](#paired-doors)
@@ -231,6 +232,7 @@ Under `data/`:
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                                            |
 | `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
 | `<namespace>/columns/*.json`                 | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
+| `<namespace>/leaf_decay/*.json`              | Leaves near a changed block decay on a short timer. [Leaf decay](#leaf-decay)                                                                                                  |
 | `<namespace>/flower_spreads/*.json`          | Extra flowers placed around grass or another block when bone meal is used on it. [Flower spreading](#flower-spreading)                                                         |
 | `<namespace>/paired_doors/*.json`            | A door's mirrored neighbor opens and closes with it. [Paired doors](#paired-doors)                                                                                             |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                                  |
@@ -3603,6 +3605,40 @@ When a player breaks a block, the run of listed falling blocks (gravel, sand) di
 | `alternate`      | no       | object with `item` and `chance` (0 to 1)                                                          | none    | Each column block drops `item` on a successful roll, or its own block item on a miss. Without it each block drops its normal drops at Fortune 0. |
 
 Fake players never trigger a column, and creative players get no drops. Files stack; the first file whose blocks hold the block above the broken one is used. A load logs `Loaded N falling column group(s)`, and a file that names no registered block or has a bad `alternate` logs an error.
+
+## Leaf decay
+
+*crafting, loot and trade*
+
+`<namespace>/leaf_decay/*.json`
+
+The file name is yours to choose, only the folder is read, one file holds one rule, and several files stack. A first file needs a restart, since the decay hooks are only registered at startup when a file exists then.
+
+When a block near leaves changes, each leaf the update reaches that vanilla would let decay is queued for a decay tick after a random delay between `minTicks` and `maxTicks`, instead of waiting for vanilla's random ticks. Vanilla's own decay then decides whether each leaf really falls: leaves still connected to a log stay, and leaves a player placed are never touched.
+
+```json
+{
+  "blocks": ["minecraft:oak_leaves", {"block": "minecraft:birch_leaves"}],
+  "tag": ["minecraft:leaves"],
+  "except": {"blocks": ["minecraft:azalea_leaves"]},
+  "dimensions": ["minecraft:overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Key          | Required         | Value                                                                                                | Default         | What it does                                                                          |
+| ------------ | ---------------- | ---------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------- |
+| `requires`   | no               | list of strings                                                                                      | none            | Mod ids that must be loaded, as elsewhere.                                            |
+| `blocks`     | one of the three | list of block ids, or objects with `block` and an optional `properties` map of state names to values | none            | Leaf blocks the rule covers.                                                          |
+| `tag`        | one of the three | list of block tag ids                                                                                | none            | Block tags whose blocks the rule covers, such as `minecraft:leaves`.                  |
+| `all`        | one of the three | bool                                                                                                 | `false`         | When true, every leaf block that vanilla lets decay is covered.                       |
+| `except`     | no               | object with `blocks` and `tag`                                                                       | none            | Leaves the rule does not cover even when the keys above name them, in the same forms. |
+| `dimensions` | no               | list of dimension ids, such as `minecraft:overworld` or `minecraft:the_nether`                       | every dimension | The dimensions the rule applies in. Names and numbers do not match.                   |
+| `minTicks`   | no               | int, 1 to 1200                                                                                       | `10`            | Shortest delay before a leaf's decay tick.                                            |
+| `maxTicks`   | no               | int, 1 to 1200                                                                                       | `60`            | Longest delay. It must not be below `minTicks`.                                       |
+
+A rule needs at least one of `blocks`, `tag` or `all`; a file with none is ignored with an error line, and so is one whose `maxTicks` is below `minTicks`. The first rule, in file order, that covers the leaf and the dimension and does not except it sets the delay. Only leaves that vanilla lets decay are covered. Dynamic Trees leaves are never touched, even when a file lists them. This is server pack data and needs nothing on the client; with no file there is no extra work and leaves behave as they do today. A load logs `Loaded N leaf decay rule(s)`, and a file that names no registered block and no tag logs `Leaf decay <key> names no registered blocks, ignoring it`.
 
 ## Flower spreading
 

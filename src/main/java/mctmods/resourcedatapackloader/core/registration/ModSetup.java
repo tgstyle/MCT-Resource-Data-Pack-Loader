@@ -67,6 +67,7 @@ import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.items.ContentWeapons;
 import mctmods.resourcedatapackloader.common.items.ContentWorn;
+import mctmods.resourcedatapackloader.common.leafdecay.LeafDecayQueue;
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.loot.BlockDrops;
@@ -441,6 +442,11 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.addListener(FluidReactionQueue::onTick);
             MinecraftForge.EVENT_BUS.addListener(FluidReactionQueue::onUnload);
         }
+        if (LeafDecayQueue.wanted()) {
+            MinecraftForge.EVENT_BUS.addListener(LeafDecayQueue::onNeighborNotify);
+            MinecraftForge.EVENT_BUS.addListener(LeafDecayQueue::onTick);
+            MinecraftForge.EVENT_BUS.addListener(LeafDecayQueue::onUnload);
+        }
         if (ContentCaveRegions.ambient()) { MinecraftForge.EVENT_BUS.addListener(ContentCaveAmbience::onPlayerTick); }
         MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPlacementCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);
@@ -608,6 +614,7 @@ public class ModSetup {
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
+        LeafDecayQueue.clear();
         DissolvePass.clear();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
         PackManager.get().close();

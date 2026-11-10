@@ -203,6 +203,7 @@ dependencies {
     if (companion('architectury')) { modRuntimeOnly "curse.maven:architectury-api-419699:4663010" }
     if (companion('tconstruct')) { modRuntimeOnly "curse.maven:tinkers-construct-74072:7449219" }
     if (companion('mantle')) { modRuntimeOnly "curse.maven:mantle-74924:9446748" }
+    if (companion('dynamictrees')) { modRuntimeOnly "curse.maven:dynamictrees-252818:7340373" }
     if (companion('biomesoplenty')) {
         modRuntimeOnly "curse.maven:biomes-o-plenty-220318:4617259"
         modRuntimeOnly "curse.maven:terrablender-563928:4647094"
