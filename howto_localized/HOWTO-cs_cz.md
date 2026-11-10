@@ -75,6 +75,7 @@
 - [Padající sloupce](#padající-sloupce)
 - [Šíření květin](#šíření-květin)
 - [Nošení](#nošení)
+- [Spárované dveře](#spárované-dveře)
 - [Odstranění z kořisti](#odstranění-z-kořisti)
 - [Kořist hráčů](#kořist-hráčů)
 - [Pestrost jídla](#pestrost-jídla)
@@ -235,6 +236,7 @@ Každá cesta v tomto průvodci je psaná od `assets/` dál, takže `<namespace>
 | `<namespace>/diets/*.json`                                                                      | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                                       |
 | `<namespace>/columns/*.json`                                                                    | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                                    |
 | `<namespace>/flower_spreads/*.json`                                                             | Další květiny kolem trávy nebo jiného bloku, když se na něj použije kostní moučka. [Šíření květin](#šíření-květin)                                                                                                |
+| `<namespace>/paired_doors/*.json`                                                               | Dveře vedle zrcadlového souseda se otevírají a zavírají spolu s ním. [Spárované dveře](#spárované-dveře)                                                                                                          |
 | `<namespace>/advancements/*.json`                                                               | Advancementy. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                               |
 | `<namespace>/functions/*.mcfunction`                                                            | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                             |
 | `<namespace>/registry_remap/*.json`                                                             | Staré názvy přiřazené k novým. [Přejmenování v registru](#přejmenování-v-registru)                                                                                                                                |
@@ -3773,6 +3775,36 @@ Hráč, který se plíží a klikne pravým tlačítkem s prázdnou hlavní ruko
 
 Jen ID, žádné štítky. Dvoublokové stavby jako dveře, vysoké rostliny a postele nést nejde, stejně jako chráněné bloky a bloky s tvrdostí pod 0. Jezdci moba se při zvednutí shodí, vodítko se zvlášť neřeší a na nosiči se nic nevykresluje. Nesená data se při přechodu na novější verzi hry neopravují a náklad, jehož blok nebo mob už neexistuje, se smaže s chybovým řádkem v logu. Plížící se mob z balíčku s úložným rozhraním se zvedne místo otevření.
 
+## Spárované dveře
+
+*výroba, kořist a obchod*
+
+`<namespace>/paired_doors/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá.
+
+Dveře, které stojí vedle jiných dveří se zrcadlově otočenými panty, se pohybují společně s nimi. Když hráč jedny použije, redstonový signál je změní nebo je mob otevře či zavře, jejich protějšek se otevře nebo zavře stejně, takže dvoje dveře se chovají jako jedny. Bez souboru se nic nemění; balíček, který chce, aby spárování bylo na volbě hráče, dá položku `config:` do `requires`, jak je popsáno pod Možnosti balíčku.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:wooden_door", {"block": "mypack:gate_door"}],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Klíč             | Povinný | Hodnota                                | Výchozí | Co dělá                                                                                                                                                                                                               |
+| ---------------- | ------- | -------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | ne      | seznam řetězců                         | žádný   | ID modů, jmenné prostory balíčků nebo volby `config:`, které musí být přítomné, jako jinde.                                                                                                                           |
+| `blocks`         | ne      | seznam ID bloků nebo objektů s `block` | žádný   | Dveře, které tohle pravidlo pokrývá. Piš jen ID: meta dveří nese orientaci a stav otevření, ne druh, takže jimi dveře nevyberete. Pravidlo potřebuje `blocks` nebo `all`, jinak zapíše chybový řádek a je přeskočeno. |
+| `all`            | ne      | bool                                   | `false` | Pravda: počítají se všechny dveře všech modů, bez seznamu.                                                                                                                                                            |
+| `unlessSneaking` | ne      | bool                                   | `true`  | Pravda: hráč v plížení posune jen dveře, které použil.                                                                                                                                                                |
+| `mobs`           | ne      | bool                                   | `false` | Pravda: dveře, které změní mob, příkaz nebo kód jiného modu, posunou i svůj protějšek. Nepravda zachová dnešní chování.                                                                                               |
+
+Dvoje dveře se spárují, když protějšek stojí přímo vedle dveří, má zrcadlově otočené panty a stejnou orientaci, pokrývá je stejné pravidlo, před změnou byl ve stejném stavu otevření jako dveře a dá se otevřít rukou stejným způsobem. Železné dveře se párují se železnými dveřmi a řídí se redstonem a moby, ale kliknutí rukou je nikdy nepohne. Redstonový signál na kterýchkoli z nich pohne oběma a protějšek, který redstone drží napájený, pár nikdy nezavře. Vše, co není kliknutí hráče ani redstone, se na 1.12.2 počítá jako změna moba a protějšek ji sleduje jen tehdy, je-li `mobs` pravda. Kliknutí pohne protějškem jen tehdy, když hráč smí použít oboje dveře podle pravidel claimů, a změna redstonem nebo mobem jen tehdy, když obojí dveře patří stejnému vlastníkovi claimu. Falešní hráči pár nikdy nepohnou a padací dvířka a branky nejsou zahrnuty. Načtení zapíše `Loaded N paired door rule(s)` a soubor, který nepojmenuje žádný zaregistrovaný blok, zapíše chybový řádek a je přeskočen. Na 1.12.2 klíč `tag` neexistuje; štítky jsou od 1.20.1 výš.
+
 ## Odstranění z kořisti
 
 *výroba, kořist a obchod*
@@ -6156,7 +6188,7 @@ Prostředí může nést také blok `loot`, který zaměňuje jednu tabulku koř
 
 Prostředí může nést i blok `rules`, který mění chod světa, dokud je zapnuté. `dayLength` natáhne den stejně jako [`time.dayLength`](#blok-time), `weather` drží počasí na `clear`, `rain` nebo `thunder` a `weatherSpeed` způsobí, že počasí dimenze přichází a odchází rychleji či pomaleji, přičemž `0` ho nechá, jak je; bez `weather.cycle` zrychluje počasí v Overworldu, které sdílejí ostatní dimenze. `difficulty` zde nahradí obtížnost světa, a to před `worldDifficulty`, a `localDifficulty` nastaví místní obtížnost od `0` do `6.75`, podle které se rozhoduje, jak často se moby objevují s brněním nebo sbírají předměty. Při vypnutém `sleep` nikdo nemůže spát a kdo spí, se probudí; `wakeAt` určuje denní dobu, kdy končí noční spánek, a posouvá hodiny jen v Overworldu, stejně jako přeskočení noci ve vanille. `sleep`, `localDifficulty` a `snow` se řídí `biomes` a překryvy jako u oblohy; ostatní klíče pokrývají celou dimenzi, takže prostředí s `biomes`, které nějaký z nich uvede, se zapíše do logu a klíč se ignoruje. Vypnutí prostředí vše vrátí naráz; počasí odezní během několika sekund.
 
-Uvnitř `rules` určuje `snow`, kde sníh zůstává ležet a kde voda zamrzá, dokud je prostředí zapnuté. `place` a `freeze` nabývají každý jedné ze čtyř hodnot. `default` ponechá `weather.snow`, resp. `weather.freeze` dimenze a vanilkový test studeného biomu. `biome` ponechá test studeného biomu, ale ignoruje `false` v bloku `weather` dimenze. `any` nechá sníh nebo led přijmout každý biom, bez ohledu na to, jak teplý je, a také ignoruje tento `false`. `never` to zastaví. Sníh padá jen za deště a voda zamrzá i za jasného počasí, jako ve vanille; i nadále je potřeba otevřená obloha, světlo bloků pod 10 a podklad, na který může sníh dosednout. S `whenDry` sníh zůstává ležet i bez deště, kolem každého hráče, v oblasti, kde hra tická bloky, zhruba rychlostí, jakou by jej přidával déšť. `melt: always` roztaví bloky z `meltBlocks` na vrcholu každého sloupce v téže oblasti, ať je světlo nebo biom jakékoli. Vrstva sněhu ztrácí vždy jednu vrstvu, led se mění na vodu, nebo zmizí, je-li v dimenzi zapnuto `waterVaporizes`. Každý jiný blok v seznamu, například `minecraft:snow`, se odstraní. `meltChance` udává, jak pravděpodobné je, že zkontrolovaný sloupec roztaje: při `1` roztaje sloupec blízko hráče zhruba tak často, jak by mu déšť přidal vrstvu, a výchozí hodnota je šestnáctkrát pomalejší. S `melt: always` `whenDry` nedělá nic. Nic se neukládá: když se prostředí vypne, tání se zastaví tam, kde je, a co už roztálo nebo zůstalo ležet, zůstane.
+Uvnitř `rules` určuje `snow`, kde sníh zůstává ležet a kde voda zamrzá, dokud je prostředí zapnuté. `place` a `freeze` nabývají každý jedné ze čtyř hodnot. `default` ponechá `weather.snow`, resp. `weather.freeze` dimenze a vanilkový test studeného biomu. `biome` ponechá test studeného biomu, ale ignoruje `false` v bloku `weather` dimenze. `any` nechá sníh nebo led přijmout každý biom, bez ohledu na to, jak teplý je, a také ignoruje tento `false`. `never` to zastaví. Sníh padá jen za deště a voda zamrzá i za jasného počasí, jako ve vanille; i nadále je potřeba otevřená obloha, světlo bloků pod 10 a podklad, na který může sníh dosednout. S `whenDry` sníh zůstává ležet i bez deště, kolem každého hráče, v oblasti, kde hra provádí tiky bloků, zhruba rychlostí, jakou by jej přidával déšť. `melt: always` roztaví bloky z `meltBlocks` na vrcholu každého sloupce v téže oblasti, ať je světlo nebo biom jakékoli. Vrstva sněhu ztrácí vždy jednu vrstvu, led se mění na vodu, nebo zmizí, je-li v dimenzi zapnuto `waterVaporizes`. Každý jiný blok v seznamu, například `minecraft:snow`, se odstraní. `meltChance` udává, jak pravděpodobné je, že zkontrolovaný sloupec roztaje: při `1` roztaje sloupec blízko hráče zhruba tak často, jak by mu déšť přidal vrstvu, a výchozí hodnota je šestnáctkrát pomalejší. S `melt: always` `whenDry` nedělá nic. Nic se neukládá: když se prostředí vypne, tání se zastaví tam, kde je, a co už roztálo nebo zůstalo ležet, zůstane.
 
 Prostředí může nést také blok `raids`, který mění [nájezdy](#nájezdy) v dimenzi, dokud je zapnuté. S `every` si každý hráč drží počet ticků, které stráví tam, kde je prostředí zapnuté. Jakmile počet dosáhne `every`, začne u něj jeden z nájezdů uvedených v `start`, jako by nesl jeho `omen`: ve vesnici, ve které stojí, nebo kolem něj, má-li nájezd `anywhere`. Nemůže-li nájezd začít, počet zůstane plný a hodiny to zkusí znovu každou sekundu. Každý nájezd, který začne, vrátí počet na 0 všem hráčům v dosahu jeho `reach`, takže `every` je nejkratší doba mezi nájezdy. `waves` a `points` násobí počet vln a body každého nájezdu, který začne v prostředí, včetně nájezdů spuštěných pomocí `omen` a příkazem `/rdplserver raid`. Obě hodnoty se zaokrouhlují a nájezd má vždy aspoň jednu vlnu; za koncem vlastního seznamu nájezdu přichází znovu jeho poslední vlna. Nájezd si nechá vlny a body, se kterými začal, i když se prostředí vypne, a ukládají se s ním. S `biomes` se hodiny posuzují tam, kde hráč stojí, a vlny s body ve středu nájezdu. Kde se prostředí překrývají, rozhoduje to, které bylo zapnuto naposledy. Kde žádné prostředí `every` nedává, počet se zastaví; ukládá se s hráčem, jeden počet na dimenzi.
 

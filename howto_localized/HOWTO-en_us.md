@@ -75,6 +75,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Falling columns](#falling-columns)
 - [Flower spreading](#flower-spreading)
 - [Carrying](#carrying)
+- [Paired doors](#paired-doors)
 - [Loot removals](#loot-removals)
 - [Player loot](#player-loot)
 - [Food variety](#food-variety)
@@ -235,6 +236,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/diets/*.json`                                                                      | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
 | `<namespace>/columns/*.json`                                                                    | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
 | `<namespace>/flower_spreads/*.json`                                                             | Extra flowers placed around grass or another block when bone meal is used on it. [Flower spreading](#flower-spreading)                                                         |
+| `<namespace>/paired_doors/*.json`                                                               | A door's mirrored neighbor opens and closes with it. [Paired doors](#paired-doors)                                                                                             |
 | `<namespace>/advancements/*.json`                                                               | Advancements. [What you can override](#what-you-can-override)                                                                                                                  |
 | `<namespace>/functions/*.mcfunction`                                                            | Function files. [What you can override](#what-you-can-override)                                                                                                                |
 | `<namespace>/registry_remap/*.json`                                                             | Old names mapped to new ones. [Registry renames](#registry-renames)                                                                                                            |
@@ -3772,6 +3774,36 @@ A player who sneaks and right-clicks with an empty main hand picks up a listed b
 | `requires` | no       | list of strings                    | none    | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                                                                                                                                                |
 
 Ids only, no tags. Two-block structures such as doors, tall plants and beds cannot be carried, nor can protected blocks or blocks with a hardness below 0. A mob's riders are set off when it is picked up, a leash is not special-cased, and nothing is drawn on the carrier. Carried data is not data-fixed across game upgrades, and a carry whose block or mob no longer resolves is cleared with an error line in the log. A sneaking pack mob that has a storage GUI is picked up instead of opening it.
+
+## Paired doors
+
+*crafting, loot and trade*
+
+`<namespace>/paired_doors/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+A door that stands beside another door, with the hinges mirrored, moves with it. When a player uses one, a redstone signal changes it, or a mob opens or closes it, its partner opens or closes to match, so a double door behaves like one door. Without a file nothing changes; a pack that wants the pairing to be the player's choice puts a `config:` entry in `requires`, as described under Pack options.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:wooden_door", {"block": "mypack:gate_door"}],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Key              | Required | Value                                      | Default | What it does                                                                                                                                                                                                      |
+| ---------------- | -------- | ------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | no       | list of strings                            | none    | Mod ids, pack namespaces or `config:` options that must be present, as elsewhere.                                                                                                                                 |
+| `blocks`         | no       | list of block ids, or objects with `block` | none    | The doors this rule covers. Write ids only: a door's meta holds its facing and open state, not its kind, so it cannot pick a door out. A rule needs `blocks` or `all`, otherwise it logs an error and is ignored. |
+| `all`            | no       | bool                                       | `false` | When true, every door of every mod counts, with no list needed.                                                                                                                                                   |
+| `unlessSneaking` | no       | bool                                       | `true`  | When true, a sneaking player moves only the door they used.                                                                                                                                                       |
+| `mobs`           | no       | bool                                       | `false` | When true, a door changed by a mob, a command or another mod's code also moves its partner. Off keeps today's behavior.                                                                                           |
+
+Two doors pair when the partner stands directly beside the door, has the mirrored hinge and the same facing, is covered by the same rule, is in the same open state the door was in before the change, and can be opened by hand the same way. Iron doors pair with iron doors and follow redstone and mobs, but a hand click never moves one. A redstone signal on either door moves both, and a partner that redstone holds powered is never closed by its pair. Anything that is not a player click and not redstone counts as a mob change on 1.12.2, and the partner follows it only when `mobs` is true. A click moves the partner only when the player may use both doors under the claim rules, and a redstone or mob change moves it only when both doors have the same claim owner. Fake players never move a pair, and trapdoors and fence gates are not included. A load logs `Loaded N paired door rule(s)`, and a file that names no registered block logs an error line and is ignored. There is no `tag` key on 1.12.2; tags are 1.20.1 and later.
 
 ## Loot removals
 

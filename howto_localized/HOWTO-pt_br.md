@@ -75,6 +75,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Colunas que caem](#colunas-que-caem)
 - [Propagação de flores](#propagação-de-flores)
 - [Carregar](#carregar)
+- [Portas pareadas](#portas-pareadas)
 - [Remoções de saque](#remoções-de-saque)
 - [Saque de jogadores](#saque-de-jogadores)
 - [Variedade de comida](#variedade-de-comida)
@@ -235,6 +236,7 @@ Todo caminho neste guia é escrito a partir de `assets/`, de modo que `<namespac
 | `<namespace>/diets/*.json`                                                                      | Regras que fazem uma comida repetida alimentar menos e uma dieta variada alimentar mais. [Variedade de comida](#variedade-de-comida)                                                                                   |
 | `<namespace>/columns/*.json`                                                                    | Sequências de blocos que caem e quebram junto com os blocos acima do bloco quebrado pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                                |
 | `<namespace>/flower_spreads/*.json`                                                             | Flores extras colocadas ao redor da grama ou de outro bloco quando se usa farinha de osso nele. [Propagação de flores](#propagação-de-flores)                                                                          |
+| `<namespace>/paired_doors/*.json`                                                               | Uma porta ao lado de sua vizinha espelhada abre e fecha com ela. [Portas pareadas](#portas-pareadas)                                                                                                                   |
 | `<namespace>/advancements/*.json`                                                               | Avanços. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                                                     |
 | `<namespace>/functions/*.mcfunction`                                                            | Arquivos de função. [O que você pode substituir](#o-que-você-pode-substituir)                                                                                                                                          |
 | `<namespace>/registry_remap/*.json`                                                             | Nomes antigos mapeados para novos. [Renomeações de registro](#renomeações-de-registro)                                                                                                                                 |
@@ -3772,6 +3774,36 @@ Um jogador que se agacha e clica com o botão direito com a mão principal vazia
 | `requires` | não         | lista de strings                                    | nenhum | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como em qualquer definição                                                                                                                                                   |
 
 Só ids, sem tags. Estruturas de dois blocos, como portas, plantas altas e camas, não podem ser carregadas, nem blocos protegidos ou com dureza abaixo de 0. Os passageiros de um mob são soltos quando ele é pego, a guia não recebe tratamento especial e nada é desenhado em quem carrega. Os dados carregados não passam pelo data fixer ao atualizar o jogo, e uma carga cujo bloco ou mob não é mais encontrado é apagada com uma linha de erro no log. Um mob de pack agachado que tenha interface de armazenamento é pego em vez de abri-la.
+
+## Portas pareadas
+
+*criação, saque e comércio*
+
+`<namespace>/paired_doors/*.json`
+
+Você escolhe o nome do arquivo; apenas a pasta é lida, e vários arquivos se acumulam.
+
+Uma porta que fica ao lado de outra, com as dobradiças espelhadas, se move junto com ela. Quando um jogador usa uma, um sinal de redstone a muda, ou um mob a abre ou fecha, a outra abre ou fecha do mesmo jeito, então uma porta dupla se comporta como uma porta só. Sem arquivo nada muda; um pack que quer que o pareamento seja escolha do jogador coloca uma entrada `config:` em `requires`, como descrito em Opções de pacotes.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:wooden_door", {"block": "mypack:gate_door"}],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Chave            | Obrigatória | Valor                                        | Padrão  | O que faz                                                                                                                                                                                                                              |
+| ---------------- | ----------- | -------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | não         | lista de strings                             | nenhum  | Ids de mod, namespaces de pack ou opções `config:` que precisam estar presentes, como nos demais.                                                                                                                                      |
+| `blocks`         | não         | lista de ids de bloco ou objetos com `block` | nenhum  | As portas que esta regra cobre. Escreva só ids: o meta de uma porta guarda a direção e o estado aberto, não o tipo, então não separa uma porta. Uma regra precisa de `blocks` ou `all`, senão registra uma linha de erro e é ignorada. |
+| `all`            | não         | booleano                                     | `false` | Se verdadeiro, conta cada porta de qualquer mod, sem lista.                                                                                                                                                                            |
+| `unlessSneaking` | não         | booleano                                     | `true`  | Se verdadeiro, um jogador agachado move só a porta que usou.                                                                                                                                                                           |
+| `mobs`           | não         | booleano                                     | `false` | Se verdadeiro, uma porta alterada por um mob, por um comando ou por código de outro mod também move a sua par. Desligado mantém o comportamento atual.                                                                                 |
+
+Duas portas se pareiam quando a par fica logo ao lado da porta, tem a dobradiça espelhada e a mesma direção, é coberta pela mesma regra, estava no mesmo estado aberto da porta antes da mudança, e pode ser aberta à mão do mesmo jeito. Portas de ferro se pareiam com portas de ferro e seguem redstone e mobs, mas um clique com a mão nunca move uma delas. Um sinal de redstone em qualquer uma das duas move as duas, e uma par que o redstone mantém energizada nunca é fechada pelo par. Tudo que não é clique de jogador nem redstone conta como mudança de mob no 1.12.2, e a par só a segue se `mobs` for verdadeiro. Um clique move a par só se o jogador pode usar as duas portas pelas regras de claim, e uma mudança de redstone ou de mob só se as duas portas têm o mesmo dono de claim. Jogadores falsos nunca movem um par, e alçapões e portões de cerca não entram. Um carregamento registra `Loaded N paired door rule(s)`, e um arquivo que não nomeia nenhum bloco registrado registra uma linha de erro e é ignorado. No 1.12.2 não existe a chave `tag`; tags são da 1.20.1 em diante.
 
 ## Remoções de saque
 
