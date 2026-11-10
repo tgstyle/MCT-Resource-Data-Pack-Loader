@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.server.level;
 
+import mctmods.resourcedatapackloader.common.blocks.ContentPairedDoors;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
@@ -137,4 +138,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         }
         connection.send(new ClientboundLevelParticlesPacket(radius < 2.0F ? ParticleTypes.EXPLOSION : ParticleTypes.EXPLOSION_EMITTER, true, x, y, z, 0.0F, 0.0F, 0.0F, 0.0F, 1));
     }
+
+    @Inject(method = "sendBlockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;I)V", at = @At("TAIL")) private void rdpl$pairedDoors(BlockPos pos, BlockState oldState, BlockState newState, int flags, CallbackInfo ci) { ContentPairedDoors.onBlockChanged((ServerLevel) (Object) this, pos, oldState, newState); }
 }

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.anvils.ContentAnvils;
 import mctmods.resourcedatapackloader.common.blocks.ContentColumns;
+import mctmods.resourcedatapackloader.common.blocks.ContentPairedDoors;
 import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.blocks.ContentSpawners;
 import mctmods.resourcedatapackloader.common.blocks.ContentVeins;
@@ -276,6 +277,8 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentVeins::onBreak);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentVeins::onNested);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentPairedDoors::onUse);
+        MinecraftForge.EVENT_BUS.addListener(ContentPairedDoors::onTick);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         MinecraftForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);

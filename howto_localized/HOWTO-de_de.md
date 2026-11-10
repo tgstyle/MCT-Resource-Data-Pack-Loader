@@ -78,6 +78,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Fallende Säulen](#fallende-säulen)
 - [Blumenausbreitung](#blumenausbreitung)
 - [Tragen](#tragen)
+- [Gepaarte Türen](#gepaarte-türen)
 - [Beute entfernen](#beute-entfernen)
 - [Spielerbeute](#spielerbeute)
 - [Nahrungsvielfalt](#nahrungsvielfalt)
@@ -231,6 +232,7 @@ Unter `data/`:
 | `<namespace>/diets/*.json`                   | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                                                                                                                                            |
 | `<namespace>/columns/*.json`                 | Reihen fallender Blöcke, die über einem vom Spieler gebrochenen Block mit abbrechen. [Fallende Säulen](#fallende-säulen)                                                                                                                                                               |
 | `<namespace>/flower_spreads/*.json`          | Zusätzliche Blumen, die um Gras oder einen anderen Block gesetzt werden, wenn Knochenmehl darauf benutzt wird. [Blumenausbreitung](#blumenausbreitung)                                                                                                                                 |
+| `<namespace>/paired_doors/*.json`            | Eine Tür neben ihrem gespiegelten Nachbarn öffnet und schließt sich mit ihr. [Gepaarte Türen](#gepaarte-türen)                                                                                                                                                                         |
 | `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                              |
 | `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                          |
 | `<namespace>/tags/<kind>/*.json`             | Tags, im Format des Spiels selbst. [Materialien, Tabs, Sounds, Tags](#materialien-tabs-sounds-tags)                                                                                                                                                                                    |
@@ -3661,6 +3663,38 @@ Wer schleicht und mit leerer Haupthand rechtsklickt, hebt einen aufgeführten Bl
 | `requires` | nein    | Liste von Strings                       | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                                                                                                                                         |
 
 Nur IDs, keine Tags. Zweiteilige Strukturen wie Türen, hohe Pflanzen und Betten lassen sich nicht tragen, ebenso wenig geschützte Blöcke oder Blöcke mit einer Härte unter 0. Passagiere eines Mobs werden beim Aufheben abgesetzt, eine Leine wird nicht gesondert behandelt, und am Träger wird nichts gezeichnet. Getragene Daten werden bei Spiel-Upgrades nicht per Data Fixer angepasst, und ein Getragenes, dessen Block oder Mob sich nicht mehr auflösen lässt, wird mit einer Fehlerzeile im Log gelöscht. Ein schleichendes Pack-Mob mit Lager-GUI wird aufgehoben, statt dass die GUI öffnet.
+
+## Gepaarte Türen
+
+*herstellung, beute und handel*
+
+`<namespace>/paired_doors/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Eine Tür, die neben einer anderen Tür mit gespiegelten Scharnieren steht, bewegt sich mit ihr. Benutzt ein Spieler eine davon, ändert ein Redstone-Signal sie oder öffnet bzw. schließt ein Mob sie, öffnet oder schließt ihr Partner sich passend, so dass sich eine Doppeltür wie eine einzige Tür verhält. Ohne Datei ändert sich nichts; ein Pack, das die Paarung zur Wahl des Spielers machen will, setzt einen `config:`-Eintrag in `requires`, wie unter Pack-Optionen beschrieben.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:oak_door", {"block": "mypack:gate_door"}],
+  "tag": ["minecraft:wooden_doors"],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Schlüssel        | Pflicht | Wert                                          | Standard | Was er macht                                                                                                                                                                                                                                                                                              |
+| ---------------- | ------- | --------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | nein    | Liste von Strings                             | keine    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie überall.                                                                                                                                                                                                                |
+| `blocks`         | nein    | Liste von Block-IDs oder Objekten mit `block` | keine    | Die Türen, die diese Regel abdeckt. Nur IDs schreiben: der Blockzustand einer Tür speichert Ausrichtung, Scharnier und Offen-Zustand, nicht die Art, also lässt sich damit keine Tür herausgreifen. Eine Regel braucht `blocks`, `tag` oder `all`, sonst wird eine Fehlerzeile geloggt und sie ignoriert. |
+| `tag`            | nein    | Liste von Block-Tag-IDs                       | keine    | Block-Tags, deren Türen diese Regel abdeckt. Ein Tag, das keine gültige Tag-ID ist, meldet eine Fehlerzeile und wird ausgelassen.                                                                                                                                                                         |
+| `all`            | nein    | bool                                          | `false`  | Wahr: jede Tür jeder Mod zählt, ohne Liste.                                                                                                                                                                                                                                                               |
+| `unlessSneaking` | nein    | bool                                          | `true`   | Wahr: ein schleichender Spieler bewegt nur die Tür, die er benutzt hat.                                                                                                                                                                                                                                   |
+| `mobs`           | nein    | bool                                          | `false`  | Wahr: eine Tür, die ein Mob, ein Befehl oder fremder Modcode verändert, bewegt auch ihren Partner. Aus lässt das heutige Verhalten.                                                                                                                                                                       |
+
+Zwei Türen paaren sich, wenn der Partner direkt neben der Tür steht, das gespiegelte Scharnier und dieselbe Ausrichtung hat, von derselben Regel abgedeckt wird, vor der Änderung im selben Offen-Zustand war wie die Tür und sich per Hand gleich öffnen lässt. Eine Tür, die sich nicht per Hand öffnen lässt, etwa die Eisentür, paart sich nur mit einer Tür derselben Art und folgt Redstone und Mobs, aber ein Handklick bewegt nie eine. Ein Redstone-Signal an einer der beiden bewegt beide, und ein Partner, den Redstone eingeschaltet hält, wird durch das Paar nie geschlossen. Alles, was kein Spielerklick und kein Redstone ist, gilt als Mob-Änderung, und der Partner folgt nur, wenn `mobs` wahr ist. Ein Klick bewegt den Partner nur, wenn der Spieler beide Türen nach den Claim-Regeln benutzen darf, und eine Redstone- oder Mob-Änderung nur, wenn beide Türen denselben Claim-Besitzer haben. Fake-Spieler bewegen nie ein Paar, und Falltüren und Zauntore sind nicht enthalten. Ein Laden meldet `Loaded N paired door rule(s)`, und eine Datei, die keinen registrierten Block und keinen gültigen Tag nennt, meldet eine Fehlerzeile und wird ignoriert.
 
 ## Beute entfernen
 
