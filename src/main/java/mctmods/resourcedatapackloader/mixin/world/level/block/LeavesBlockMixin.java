@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.world.level.block;
 
+import mctmods.resourcedatapackloader.common.leafdecay.ContentLeafDecay;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import net.minecraft.core.BlockPos;
@@ -22,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (!Config.tweaks.promptLeafDecay()) { return; }
         Block self = (Block) (Object) this;
         BlockState now = level.getBlockState(pos);
-        if (!now.is(self) || !decaying(now)) { return; }
+        if (!now.is(self) || !decaying(now) || ContentLeafDecay.covered(now, level)) { return; }
         if (decaying(state)) {
             Block.dropResources(now, level, pos);
             level.removeBlock(pos, false);

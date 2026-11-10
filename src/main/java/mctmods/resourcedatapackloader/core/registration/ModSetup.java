@@ -68,6 +68,8 @@ import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.items.ContentWeapons;
 import mctmods.resourcedatapackloader.common.items.ContentWorn;
+import mctmods.resourcedatapackloader.common.leafdecay.ContentLeafDecay;
+import mctmods.resourcedatapackloader.common.leafdecay.LeafDecayQueue;
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.loot.BlockDrops;
@@ -280,6 +282,12 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentColumns::onBreak);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentPairedDoors::onUse);
         NeoForge.EVENT_BUS.addListener((ServerTickEvent.Post _) -> ContentPairedDoors.clearActors());
+        if (ContentLeafDecay.wanted()) {
+            NeoForge.EVENT_BUS.addListener(LeafDecayQueue::onNeighborNotify);
+            NeoForge.EVENT_BUS.addListener(LeafDecayQueue::onTick);
+            NeoForge.EVENT_BUS.addListener(LeafDecayQueue::onUnload);
+            NeoForge.EVENT_BUS.addListener((ServerStoppedEvent _) -> LeafDecayQueue.clear());
+        }
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentBoneMealFlowers::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onRightClickBlock);
         NeoForge.EVENT_BUS.addListener(ContentCarry::onEntityInteract);

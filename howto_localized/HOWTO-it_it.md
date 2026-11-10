@@ -76,6 +76,7 @@ Questa guida è per la build 26.x, che copre 26.1.2, 26.2 e 26.3; tutte e tre le
 - [Raccolta con clic destro](#raccolta-con-clic-destro)
 - [Estrazione di filoni](#estrazione-di-filoni)
 - [Colonne che cadono](#colonne-che-cadono)
+- [Decadimento delle foglie](#decadimento-delle-foglie)
 - [Diffusione dei fiori](#diffusione-dei-fiori)
 - [Trasporto](#trasporto)
 - [Porte accoppiate](#porte-accoppiate)
@@ -232,6 +233,7 @@ Sotto `data/`:
 | `<namespace>/player_loot/*.json`             | Una loot table tirata quando un giocatore muore. [Bottino dei giocatori](#bottino-dei-giocatori)                                                                                                                                    |
 | `<namespace>/diets/*.json`                   | Regole per cui un cibo ripetuto sazia meno e una dieta varia sazia di più. [Varietà del cibo](#varietà-del-cibo)                                                                                                                    |
 | `<namespace>/columns/*.json`                 | Serie di blocchi che cadono e si rompono insieme a quelli sopra il blocco rotto dal giocatore. [Colonne che cadono](#colonne-che-cadono)                                                                                            |
+| `<namespace>/leaf_decay/*.json`              | Foglie vicine a un blocco che cambia, che decadono dopo un breve ritardo. [Decadimento delle foglie](#decadimento-delle-foglie)                                                                                                     |
 | `<namespace>/flower_spreads/*.json`          | Fiori extra piazzati intorno all'erba o a un altro blocco quando vi si usa la farina d'ossa. [Diffusione dei fiori](#diffusione-dei-fiori)                                                                                          |
 | `<namespace>/paired_doors/*.json`            | Una porta accanto alla sua porta speculare si apre e si chiude con lei. [Porte accoppiate](#porte-accoppiate)                                                                                                                       |
 | `<namespace>/advancements/*.json`            | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                                      |
@@ -3592,6 +3594,40 @@ Quando un giocatore rompe un blocco, la serie di blocchi che cadono elencati sub
 | `alternate`      | no           | oggetto con `item` e `chance` (da 0 a 1)                                                                       | nessuno     | Ogni blocco della colonna fa cadere `item` con un tiro riuscito, o il proprio oggetto blocco in caso di fallimento. Senza, ogni blocco dà i drop normali con Fortuna 0. |
 
 I giocatori finti non la attivano mai e i giocatori in creativa non ricevono drop. I file si sommano; viene usato il primo file i cui blocchi contengono il blocco sopra quello rotto. Al caricamento il log scrive `Loaded N falling column group(s)`, e un file che nomina un blocco non registrato o un `alternate` errato scrive un errore.
+
+## Decadimento delle foglie
+
+*crafting, bottino e scambi*
+
+`<namespace>/leaf_decay/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella, ogni file contiene una regola e più file si sommano.
+
+Quando un blocco accanto a una foglia cambia, ad esempio quando viene rimosso un tronco, quella foglia viene programmata per decadere dopo un ritardo casuale tra `minTicks` e `maxTicks`, invece di aspettare i tick casuali di vanilla. Poi è il decadimento di vanilla a decidere se la foglia cade davvero: le foglie ancora collegate a un tronco restano, e quelle contrassegnate come persistenti, come quelle piazzate da un giocatore, non vengono mai toccate.
+
+```json
+{
+  "blocks": ["minecraft:oak_leaves", "minecraft:birch_leaves"],
+  "tag": ["minecraft:leaves"],
+  "except": {"blocks": ["minecraft:azalea_leaves"]},
+  "dimensions": ["minecraft:overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Chiave       | Obbligatorio | Valore                                                                               | Predefinito     | Cosa fa                                                                                                                               |
+| ------------ | ------------ | ------------------------------------------------------------------------------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`   | no           | elenco di stringhe                                                                   | nessuno         | Id di mod che devono essere caricati, come altrove.                                                                                   |
+| `blocks`     | uno dei tre  | elenco di id di blocchi, o oggetti con `block` e `properties` per indicare uno stato |                 | Blocchi di foglie coperti dalla regola, nella stessa forma di `blocks` delle colonne che cadono. Un `meta` di 1.12.2 non viene letto. |
+| `tag`        | uno dei tre  | elenco di id di tag di blocchi, come `minecraft:leaves`, senza `#`                   |                 | Tag di blocchi i cui blocchi sono coperti dalla regola. Gli id vengono letti al caricamento della regola.                             |
+| `all`        | uno dei tre  | bool                                                                                 | `false`         | Se true, ogni blocco di foglie che può decadere è coperto.                                                                            |
+| `except`     | no           | oggetto con `blocks` e `tag`                                                         | nessuno         | Foglie che la regola non copre anche se le chiavi qui sopra le nominano, nelle stesse forme.                                          |
+| `dimensions` | no           | elenco di id di dimensioni, come `minecraft:overworld` o `minecraft:the_nether`      | ogni dimensione | Le dimensioni in cui la regola vale.                                                                                                  |
+| `minTicks`   | no           | int, da 1 a 1200                                                                     | `10`            | Ritardo minimo prima del tick di decadimento di una foglia.                                                                           |
+| `maxTicks`   | no           | int, da 1 a 1200                                                                     | `60`            | Ritardo massimo. Non può essere inferiore a `minTicks`.                                                                               |
+
+Una regola richiede almeno una tra `blocks`, `tag` e `all`; un file che non ne ha nessuna viene ignorato con una riga di errore, come quello in cui `maxTicks` è inferiore a `minTicks`. La prima regola, nell'ordine dei file, che copre la foglia e la dimensione e non la esclude stabilisce il ritardo. Sono coperte solo le foglie che vanilla lascia decadere, e solo nelle posizioni in cui il livello esegue i tick. Le foglie di Dynamic Trees non vengono mai toccate, nemmeno se un file le elenca. Sono dati del pack lato server e non richiedono nulla sul client; senza file non c'è lavoro in più e le foglie si comportano come oggi. Un primo file `leaf_decay` richiede un riavvio. Un caricamento scrive `Loaded N leaf decay rule(s)` nel log, e un file i cui `blocks` non nominano alcun blocco registrato e il cui `tag` non dà alcun id valido scrive `Leaf decay <key> names no registered blocks, ignoring it`; un `tag` che non è un id valido viene segnalato come saltato.
 
 ## Diffusione dei fiori
 
