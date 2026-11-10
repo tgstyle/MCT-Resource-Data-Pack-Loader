@@ -103,6 +103,7 @@ import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
@@ -467,6 +468,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentSpawnSwitch::onPotentialSpawns);
         NeoForge.EVENT_BUS.addListener(ContentSpawnSwitch::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onCropGrow);
+        NeoForge.EVENT_BUS.addListener(ContentGrowWater::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onBabySpawn);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onCanSleep);
