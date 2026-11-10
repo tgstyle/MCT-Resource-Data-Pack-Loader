@@ -111,6 +111,7 @@ import mctmods.resourcedatapackloader.common.rubic.Rubic;
 import mctmods.resourcedatapackloader.common.rubic.server.chunkio.CubicChunksWorld;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
@@ -239,6 +240,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(SeasonClock.class);
         MinecraftForge.EVENT_BUS.register(ContentSeasonSnow.class);
         MinecraftForge.EVENT_BUS.register(ContentGrowSwitch.class);
+        MinecraftForge.EVENT_BUS.register(ContentGrowWater.class);
         MinecraftForge.EVENT_BUS.register(ContentRuleSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentMobSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentTradeSwitch.class);

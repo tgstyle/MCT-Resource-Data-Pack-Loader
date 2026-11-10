@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.util.BlockMatches;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
@@ -36,6 +37,7 @@ public final class ContentGrowSwitch {
     private static final String BY_BLOCK = "byBlock";
     private static final String TOOLTIP = "tooltip";
     private static final String WAIVER = "waiver";
+    private static final String WATER = "water";
     private static final List<String> TOOLTIPS = Arrays.asList("off", "here", "year");
     private static final List<String> WAIVER_KEYS = Arrays.asList("blocks", "within", "scale", "kinds", "clear");
     static final float MOST = 100.0F;
@@ -54,7 +56,7 @@ public final class ContentGrowSwitch {
         }
     }
 
-    @Nullable private static Float within(String owner, String key, JsonElement value, boolean whole, float low, float high) {
+    @Nullable static Float within(String owner, String key, JsonElement value, boolean whole, float low, float high) {
         Float number = ContentSpawnSwitch.number(owner, key, value, whole);
         if (number == null) { return null; }
         if (number < low || number > high) {
@@ -84,14 +86,14 @@ public final class ContentGrowSwitch {
         return Math.max(mode, GrowSwitchDef.TOOLTIP_OFF);
     }
 
-    private static void waiverBlocks(String owner, JsonElement element, List<BlockMatch> into) {
+    static void blockList(String owner, String key, JsonElement element, List<BlockMatch> into) {
         if (!element.isJsonArray()) {
-            ContentLog.LOGGER.error("{} gives growth.waiver.blocks that is not a list of block ids or #names, ignoring it", owner);
+            ContentLog.LOGGER.error("{} gives {} that is not a list of block ids or #names, ignoring it", owner, key);
             return;
         }
         for (JsonElement entry : element.getAsJsonArray()) {
             if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
-                ContentLog.LOGGER.error("{} gives growth.waiver.blocks an entry {} that is not a block id or #name, ignoring it", owner, entry);
+                ContentLog.LOGGER.error("{} gives {} an entry {} that is not a block id or #name, ignoring it", owner, key, entry);
                 continue;
             }
             BlockMatch match = BlockMatches.parse(owner, entry.getAsString(), GROWTH);
@@ -99,16 +101,16 @@ public final class ContentGrowSwitch {
         }
     }
 
-    private static boolean[] waiverKinds(String owner, JsonElement element) {
+    static boolean[] kindList(String owner, String key, JsonElement element) {
         boolean[] kinds = new boolean[GrowSwitchDef.KINDS];
         if (element.isJsonArray()) {
             for (JsonElement entry : element.getAsJsonArray()) {
                 int kind = entry.isJsonPrimitive() ? KEYS.indexOf(entry.getAsString()) : -1;
                 if (kind == GrowSwitchDef.CROPS || kind == GrowSwitchDef.SAPLINGS) { kinds[kind] = true; }
-                else { ContentLog.LOGGER.error("{} gives growth.waiver.kinds the entry {}, which is not crops or saplings, ignoring it", owner, entry); }
+                else { ContentLog.LOGGER.error("{} gives {} the entry {}, which is not crops or saplings, ignoring it", owner, key, entry); }
             }
         }
-        else { ContentLog.LOGGER.error("{} gives growth.waiver.kinds that is not a list of crops and saplings, ignoring it", owner); }
+        else { ContentLog.LOGGER.error("{} gives {} that is not a list of crops and saplings, ignoring it", owner, key); }
         if (!kinds[GrowSwitchDef.CROPS] && !kinds[GrowSwitchDef.SAPLINGS]) { return WaiverDef.bothKinds(); }
         return kinds;
     }
@@ -123,14 +125,14 @@ public final class ContentGrowSwitch {
             if (!WAIVER_KEYS.contains(entry.getKey())) { ContentLog.LOGGER.error("{} gives growth.waiver.{}, which is not a waiver key, ignoring it", owner, entry.getKey()); }
         }
         List<BlockMatch> blocks = new ArrayList<>();
-        if (json.has("blocks")) { waiverBlocks(owner, json.get("blocks"), blocks); }
+        if (json.has("blocks")) { blockList(owner, "growth.waiver.blocks", json.get("blocks"), blocks); }
         if (blocks.isEmpty()) {
             ContentLog.LOGGER.error("{} gives growth.waiver with no usable blocks, ignoring it", owner);
             return null;
         }
         Float within = json.has("within") ? within(owner, "growth.waiver.within", json.get("within"), true, 1.0F, WaiverDef.MAX_WITHIN) : null;
         Float scale = json.has("scale") ? within(owner, "growth.waiver.scale", json.get("scale"), false, 0.0F, MOST) : null;
-        boolean[] kinds = json.has("kinds") ? waiverKinds(owner, json.get("kinds")) : WaiverDef.bothKinds();
+        boolean[] kinds = json.has("kinds") ? kindList(owner, "growth.waiver.kinds", json.get("kinds")) : WaiverDef.bothKinds();
         JsonElement clearing = json.get("clear");
         boolean clear = false;
         if (clearing != null && clearing.isJsonPrimitive() && clearing.getAsJsonPrimitive().isBoolean()) { clear = clearing.getAsBoolean(); }
@@ -141,12 +143,13 @@ public final class ContentGrowSwitch {
     @Nullable public static GrowSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives growth that is not an object of crops, saplings, animals, breeding, byBlock, tooltip and waiver keys, ignoring it", owner);
+            ContentLog.LOGGER.error("{} gives growth that is not an object of crops, saplings, animals, breeding, byBlock, tooltip, waiver and water keys, ignoring it", owner);
             return null;
         }
         float[] scales = GrowSwitchDef.filled(1.0F);
         List<GrowSwitchDef.Match> matches = new ArrayList<>();
         WaiverDef waiver = null;
+        WaterDef water = null;
         int tooltip = GrowSwitchDef.TOOLTIP_OFF;
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             if (BY_BLOCK.equals(entry.getKey())) {
@@ -159,6 +162,10 @@ public final class ContentGrowSwitch {
             }
             if (WAIVER.equals(entry.getKey())) {
                 waiver = waiver(owner, entry.getValue());
+                continue;
+            }
+            if (WATER.equals(entry.getKey())) {
+                water = ContentGrowWater.parse(owner, entry.getValue());
                 continue;
             }
             int kind = KEYS.indexOf(entry.getKey());
@@ -174,18 +181,18 @@ public final class ContentGrowSwitch {
             }
             scales[kind] = value;
         }
-        return new GrowSwitchDef(scales, matches, waiver, tooltip);
+        return new GrowSwitchDef(scales, matches, waiver, tooltip, water);
     }
 
-    private static float scale(World world, BlockPos pos, Block block, int kind) {
-        GrowSwitchDef def = ContentEnvironments.growth(world, pos);
+    private static float scale(GrowSwitchDef def, World world, BlockPos pos, Block block, int kind) {
         WaiverDef waiver = def.waiver();
-        return waiver != null && waiver.covers(kind) && waiver.found(world, pos) ? waiver.scale : def.scale(kind, block, world, pos);
+        float speed = waiver != null && waiver.covers(kind) && waiver.found(world, pos) ? waiver.scale : def.scale(kind, block, world, pos);
+        return speed > 0.0F ? speed * ContentGrowWater.factor(world, pos, block, kind, def) : speed;
     }
 
     static int steps(World world, BlockPos pos, int kind, Random rand) { return roll(ContentEnvironments.growth(world, pos).scale(kind), rand); }
 
-    static int steps(World world, BlockPos pos, Block block, int kind, Random rand) { return roll(scale(world, pos, block, kind), rand); }
+    static int steps(GrowSwitchDef def, World world, BlockPos pos, Block block, int kind, Random rand) { return roll(scale(def, world, pos, block, kind), rand); }
 
     static int roll(float scale, Random rand) {
         int whole = (int) scale;
@@ -195,7 +202,9 @@ public final class ContentGrowSwitch {
 
     public static boolean skips(World world, BlockPos pos, Block block, Random rand) {
         if (draining || world.isRemote) { return false; }
-        int steps = steps(world, pos, block, GrowSwitchDef.SAPLINGS, rand);
+        GrowSwitchDef def = ContentEnvironments.growth(world, pos);
+        if (ContentGrowWater.broke(def, world, pos, block, GrowSwitchDef.SAPLINGS)) { return true; }
+        int steps = steps(def, world, pos, block, GrowSwitchDef.SAPLINGS, rand);
         if (steps > 1) { queue(world, pos, block, steps - 1); }
         return steps == 0;
     }
@@ -215,7 +224,12 @@ public final class ContentGrowSwitch {
         if (draining || world.isRemote) { return; }
         BlockPos pos = event.getPos();
         Block block = event.getState().getBlock();
-        int steps = steps(world, pos, block, GrowSwitchDef.CROPS, world.rand);
+        GrowSwitchDef def = ContentEnvironments.growth(world, pos);
+        if (ContentGrowWater.broke(def, world, pos, block, GrowSwitchDef.CROPS)) {
+            event.setResult(Event.Result.DENY);
+            return;
+        }
+        int steps = steps(def, world, pos, block, GrowSwitchDef.CROPS, world.rand);
         if (steps == 0) { event.setResult(Event.Result.DENY); }
         else if (steps > 1) { queue(world, pos, block, steps - 1); }
     }

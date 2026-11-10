@@ -4,15 +4,16 @@ import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
-import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.gui.PouchInventory;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
+import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -23,7 +24,6 @@ import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockSapling;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.enchantment.Enchantment;
@@ -46,6 +46,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT) public final class PackTooltips {
     private static final int COMPOUND = 10;
     private static final String ITEMS = "Items";
+    private static final long WATER_TICKS = 20L;
+    @Nullable private static BlockPos waterPos;
+    @Nullable private static Block waterBlock;
+    private static int waterKind;
+    private static long waterTime;
+    private static ContentGrowWater.Status waterStatus = ContentGrowWater.Status.NONE;
 
     private PackTooltips() {}
 
@@ -81,12 +87,32 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     @Nullable private static Block plant(ItemStack stack, World world, BlockPos pos) {
         Item item = stack.getItem();
         Block block = BlockMatch.blockOf(item, world, pos);
-        return item instanceof IPlantable || sapling(block) ? block : null;
+        return item instanceof IPlantable || ContentGrowWater.sapling(block) ? block : null;
     }
 
-    private static boolean sapling(Block block) { return block instanceof BlockSapling || block instanceof ContentSaplingBlock; }
-
     private static String scaled(float scale) { return scale == Math.rint(scale) ? String.valueOf((int) scale) : String.valueOf(scale); }
+
+    private static ContentGrowWater.Status waterStatus(World world, BlockPos pos, Block block, int kind, GrowSwitchDef here) {
+        long now = world.getTotalWorldTime();
+        if (!pos.equals(waterPos) || block != waterBlock || kind != waterKind || now < waterTime || now - waterTime >= WATER_TICKS) {
+            waterStatus = ContentGrowWater.status(world, pos, block, kind, here);
+            waterPos = pos;
+            waterBlock = block;
+            waterKind = kind;
+            waterTime = now;
+        }
+        return waterStatus;
+    }
+
+    private static void water(World world, BlockPos pos, Block block, int kind, GrowSwitchDef here, List<String> tooltip) {
+        WaterDef water = here.water();
+        if (water == null) { return; }
+        ContentGrowWater.Status status = waterStatus(world, pos, block, kind, here);
+        if (status == ContentGrowWater.Status.FOUND) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility.water.found")); }
+        else if (status == ContentGrowWater.Status.WAIVED) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility.water.waived")); }
+        else if (status == ContentGrowWater.Status.MISSING && water.breaks) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility.water.breaks", water.within())); }
+        else if (status == ContentGrowWater.Status.MISSING) { tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility.water.missing", water.within(), scaled(here.scale(kind, block, world, pos) * water.scale))); }
+    }
 
     private static void fertility(ItemStack stack, List<String> tooltip) {
         EntityPlayer player = Minecraft.getMinecraft().player;
@@ -96,8 +122,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (block == null) { return; }
         GrowSwitchDef here = ContentEnvironments.growth(player.world, pos);
         if (here.tooltip() == GrowSwitchDef.TOOLTIP_OFF) { return; }
-        int kind = sapling(block) ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS;
+        int kind = ContentGrowWater.kindOf(block);
         tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility", scaled(here.scale(kind, block, player.world, pos))));
+        water(player.world, pos, block, kind, here, tooltip);
         int dimension = player.world.provider.getDimension();
         SeasonDef seasons = here.tooltip() == GrowSwitchDef.TOOLTIP_YEAR ? ContentSeasons.def(dimension) : null;
         if (seasons == null) { return; }
