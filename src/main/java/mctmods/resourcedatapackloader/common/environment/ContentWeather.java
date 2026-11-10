@@ -37,7 +37,7 @@ public final class ContentWeather {
         return biome.getBaseTemperature() >= 0.15F ? Biome.Precipitation.RAIN : found;
     }
 
-    @Nullable private static Level level(@Nullable LevelReader world) { return world instanceof Level own ? own : world instanceof WorldGenLevel region ? region.getLevel() : null; }
+    @Nullable public static Level level(@Nullable LevelReader world) { return world instanceof Level own ? own : world instanceof WorldGenLevel region ? region.getLevel() : null; }
 
     @Nullable private static Integer ceilingFor(Level level) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }

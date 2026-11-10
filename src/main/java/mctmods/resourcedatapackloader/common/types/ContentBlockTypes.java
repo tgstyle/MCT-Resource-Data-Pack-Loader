@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentVineBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortalBlock;
 import mctmods.resourcedatapackloader.common.blocks.portal.ContentPortwayBlock;
+import mctmods.resourcedatapackloader.common.blocks.sensor.ContentSeasonSensorBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLeavesBlock;
 import mctmods.resourcedatapackloader.common.blocks.wood.ContentLogBlock;
 import mctmods.resourcedatapackloader.common.items.CompressedBlockItem;
@@ -85,7 +86,8 @@ public final class ContentBlockTypes {
     public static final String PORTAL = "portal";
     public static final String BELL = "bell";
     public static final String PORTWAY = "portway";
-    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL, PORTWAY);
+    public static final String SEASON_SENSOR = "seasonsensor";
+    private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL, PORTWAY, SEASON_SENSOR);
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
     private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, FALLING, SLAB, WALL, PORTWAY);
 
@@ -131,6 +133,7 @@ public final class ContentBlockTypes {
             }
             case CONTAINER -> List.of(new Created(id, new ContentContainerBlock(def, properties), ContentRegistry.MAIN));
             case BELL -> List.of(new Created(id, new ContentBellBlock(def, properties.noOcclusion()), ContentRegistry.MAIN));
+            case SEASON_SENSOR -> List.of(new Created(id, new ContentSeasonSensorBlock(def, properties), ContentRegistry.MAIN));
             case PORTWAY -> List.of(new Created(id, ContentPortwayBlock.create(def, properties), ContentRegistry.MAIN));
             case LOG -> List.of(new Created(id, new ContentLogBlock(properties), ContentRegistry.MAIN));
             case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, LineCompat.notViewBlocking(properties.randomTicks().isSuffocating((_, _, _) -> false))), ContentRegistry.MAIN));

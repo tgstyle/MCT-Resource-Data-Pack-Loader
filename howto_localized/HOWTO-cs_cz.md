@@ -5708,10 +5708,13 @@ Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
     "starTwinkle": 0.5,
     "lightningColor": "#A080FF",
     "grassTint": "#A0FF80",
-    "foliageTint": "#E0A040"
+    "foliageTint": "#E0A040",
+    "birchTint": "#C0D060"
   }
 }
 ```
+
+`birchTint` násobí barvu březového listí samostatně. Pokud chybí, březové listí bere `foliageTint` jako všechno ostatní listí.
 
 `grassTint` násobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny a `foliageTint` barvu listí a lián. Vlastní barva biomu stále prosvítá a oba klíče fungují uvnitř `sky` prostředí, čímž roční období mění rostliny. Předměty v ruce a v nabídkách si své barvy ponechají.
 
@@ -5725,16 +5728,17 @@ Na 26.x se `waterFogColor` stane atributem prostředí `visual/water_fog_color` 
 
 `lightningColor` zabarvuje blesky.
 
-| Klíč             | Povinné | Hodnota                 | Výchozí      | Co dělá                                                       |
-| ---------------- | ------- | ----------------------- | ------------ | ------------------------------------------------------------- |
-| `snowColor`      | ne      | hexadecimální barva     | bílá         | Odstín vrstev sněhu a sněhových bloků                         |
-| `waterFogColor`  | ne      | hexadecimální barva     | jako u biomu | Barva mlhy pod vodou                                          |
-| `lavaFogColor`   | ne      | hexadecimální barva     | `991A00`     | Barva mlhy v lávě                                             |
-| `starColor`      | ne      | hexadecimální barva     | bílá         | Odstín hvězd                                                  |
-| `starTwinkle`    | ne      | desetinné číslo, 0 až 1 | `0.0`        | Jak hluboko hvězdy při blikání ztmavnou. `0` je drží klidné   |
-| `grassTint`      | ne      | hexadecimální barva     | bílá         | Vynásobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny |
-| `foliageTint`    | ne      | hexadecimální barva     | bílá         | Vynásobí barvu listí a lián                                   |
-| `lightningColor` | ne      | hexadecimální barva     | `737380`     | Odstín blesku                                                 |
+| Klíč             | Povinné | Hodnota                 | Výchozí       | Co dělá                                                       |
+| ---------------- | ------- | ----------------------- | ------------- | ------------------------------------------------------------- |
+| `snowColor`      | ne      | hexadecimální barva     | bílá          | Odstín vrstev sněhu a sněhových bloků                         |
+| `waterFogColor`  | ne      | hexadecimální barva     | jako u biomu  | Barva mlhy pod vodou                                          |
+| `lavaFogColor`   | ne      | hexadecimální barva     | `991A00`      | Barva mlhy v lávě                                             |
+| `starColor`      | ne      | hexadecimální barva     | bílá          | Odstín hvězd                                                  |
+| `starTwinkle`    | ne      | desetinné číslo, 0 až 1 | `0.0`         | Jak hluboko hvězdy při blikání ztmavnou. `0` je drží klidné   |
+| `grassTint`      | ne      | hexadecimální barva     | bílá          | Vynásobí barvu trávy, vysoké trávy, kapradin a cukrové třtiny |
+| `foliageTint`    | ne      | hexadecimální barva     | bílá          | Vynásobí barvu listí a lián                                   |
+| `birchTint`      | ne      | hexadecimální barva     | `foliageTint` | Vynásobí barvu březového listí                                |
+| `lightningColor` | ne      | hexadecimální barva     | `737380`      | Odstín blesku                                                 |
 
 ### Skybox, polární záře a duha
 
@@ -5918,7 +5922,12 @@ Blok `ambience` dává dimenzi vlastní hudbu, zvuky a unášené částice. Kl�
       "spawning": { "surfaceNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5 }
+      "growth": {
+        "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5,
+        "byBlock": { "minecraft:wheat": 4.0, "minecraft:melon_stem": 0.0, "#minecraft:saplings": 0.5 },
+        "tooltip": "here",
+        "waiver": { "blocks": ["minecraft:glass", "#minecraft:impermeable"], "within": 6, "scale": 1.0, "kinds": ["crops", "saplings"], "clear": false }
+      }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
@@ -5930,6 +5939,12 @@ Blok `ambience` dává dimenzi vlastní hudbu, zvuky a unášené částice. Kl�
     },
     "longnight": {
       "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 3.0, "wakeAt": 1000 }
+    },
+    "deepwinter": {
+      "rules": { "snow": { "place": "any", "freeze": "any", "whenDry": true } }
+    },
+    "thaw": {
+      "rules": { "snow": { "melt": "always", "meltChance": 0.25, "meltBlocks": ["minecraft:snow", "minecraft:ice"] } }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -5952,51 +5967,70 @@ Prostředí může nést i blok `spawning`, který po dobu zapnutí mění přir
 
 Prostředí může nést i blok `growth`, který po dobu zapnutí zrychluje nebo zpomaluje růst v dimenzi. `crops` platí pro plodiny, stonky, kakao, netherové bradavice, cukrovou třtinu, kaktus, chorusové květy a každou modovanou rostlinu, která roste přes událost plodin z NeoForge; `saplings` platí pro sazenice rostoucí ve stromy; `animals` určuje, jak rychle mláďata dospívají; `breeding` určuje, za jak dlouho jsou zvířata po páření znovu připravená se pářit, a při `0` už nakrmená zvířata nemají mláďata. Každý klíč je násobitel od `0` do `100`: `1` je obvyklá rychlost, `0.5` polovina, `2` dvojnásobek a `0` růst zastaví. Nad 1 dostane rostlina pokaždé, když ji hra vybere k růstu, další pokusy o růst, takže světlo, půda i voda dál rozhodují. Kostní moučka, krmení a příkazy nejsou nikdy ovlivněny. S `biomes` se blok použije jen tam a tam, kde se překrývá víc prostředí, rozhoduje to zapnuté jako poslední, stejně jako u oblohy. Vynechaný klíč zachová obvyklou rychlost. Vypnutí prostředí vrátí obvyklou rychlost okamžitě; co už vyrostlo, zůstává.
 
+Uvnitř `growth` nastavuje `byBlock` rychlost pro jeden blok plodiny nebo sazenice, nebo pro skupinu, místo hodnoty `crops` či `saplings`: klíčem je id bloku, například `minecraft:wheat`, nebo `#` a tag bloků, například `#minecraft:saplings`, a hodnotou číslo od `0` do `100`. Id bloku má přednost před tagem a když se shoduje více tagů, vyhrává ten, který je napsán první. `tooltip` ukazuje rychlost na semeni, sazenici nebo předmětu plodiny: `here` pro prostředí, ve kterém držitel stojí, `year` přidá řádek pro každé roční období dimenze a `off`, výchozí hodnota, nic neukáže. Potřebuje módu na klientu, takže se zapnutým `vanillaClients` se nezobrazí nic. `waiver` zvedne rychlost rostlinám, nad nimiž leží vyjmenovaný blok, například sklo nad zimní plodinou: dokud některý blok z `blocks` leží nejvýše `within` bloků přímo nad rostlinou, roste rostlina pro uvedené `kinds` rychlostí `scale` místo rychlosti prostředí. Je-li `clear` zapnuté, žádný blok mezi rostlinou a vyjmenovaným blokem nesmí být plně neprůhledný, takže střecha z kamenných půlbloků uprostřed výjimku ukončí. Zvířata a rozmnožování nikdy nepoužívají `byBlock` ani `waiver`.
+
 Prostředí může nést i blok `mobs`, který po dobu zapnutí mění moby v dimenzi, například pro událost jako krvavý měsíc. `entities` pojmenovává moby, které mění, podle ID nebo podle druhu pomocí `#monster`, `#creature`, `#ambient` nebo `#water_creature`; když chybí, týká se všech nepřátelských mobů. `health`, `damage` a `speed` násobí nejvyšší zdraví moba, jeho poškození útokem zblízka a rychlost chůze; aktuální zdraví moba se mění spolu s maximem. `equipment` dá každému mobovi předmět do slotu, který má prázdný, spolu s šancí, že po smrti vypadne. Které prostředí mob dostane, se rozhoduje podle místa, kde stojí při zrození nebo načtení, a znovu pro každého načteného moba při každém přepnutí prostředí; s `biomes` a při překrývání platí totéž co u oblohy. Mob si změnu drží, dokud je prostředí zapnuté, i po restartu. Po vypnutí prostředí se jeho zdraví, poškození i rychlost vrátí a výbava, kterou prostředí dalo, zmizí, pokud ji mob stále drží. Šípy, ohnivé koule a výbuchy si poškození ponechají a hráči se nikdy nemění.
 
 Prostředí může nést také blok `loot`, který zaměňuje jednu tabulku kořisti za jinou, dokud je prostředí zapnuté: kořist z mobů, rybaření, odměny za úspěchy a bedny a vozíky s bednou, které svět vytváří. Bedna se naplní při prvním otevření, takže o jejím obsahu rozhoduje prostředí zapnuté právě v tu chvíli. Tabulka přiřazená k `minecraft:empty` nic nevypustí. Blok `trades` uvádí obchody ve tvaru popsaném v [Obchody](#obchody); vesničan, jehož povolání uvádí, nabízí tyto obchody až do svého stupně místo vlastních, dokud je prostředí zapnuté, a po jeho vypnutí dostane své zpět. Každý vesničan si pamatuje obojí: uskutečněné obchody, vyprodané nabídky i obnovení zásob pokračují tam, kde skončily, když se prostředí vrátí, i po restartu. U každého uvedeného povolání je třeba zadat obchody stupně 1, jinak nový vesničan tohoto povolání nemá co nabídnout. Potulní obchodníci se nikdy nemění. S `biomes` a překryvy jako u oblohy.
 
-Prostředí může nést také blok `rules`, který mění chod světa, dokud je zapnuté. `dayLength` natáhne den stejně jako [`time.dayLength`](#blok-time), `weather` drží počasí na `clear`, `rain` nebo `thunder` a `weatherSpeed` způsobí, že počasí v dimenzi přichází a odchází rychleji nebo pomaleji, přičemž `0` ho drží tak, jak je; bez `weather.cycle` zrychluje počasí v Overworldu, které sdílejí ostatní dimenze. `difficulty` zde nahradí obtížnost světa a předchází `worldDifficulty`, a `localDifficulty` nastaví místní obtížnost od `0` do `6.75`, která rozhoduje, jak často se moby objevují s brněním nebo sbírají předměty. Při vypnutém `sleep` nikdo nemůže spát a kdo spí, probudí se; `wakeAt` nastaví denní dobu, kdy končí noční spánek, což posune hodiny jen v Overworldu, stejně jako přeskočení noci ve vanille. `sleep` a `localDifficulty` se řídí `biomes` a překryvy jako u oblohy; ostatní klíče pokrývají celou dimenzi, takže prostředí s `biomes`, které nějaký uvede, se zapíše do logu a klíč se ignoruje. Vypnutí prostředí vše okamžitě vrátí; počasí odeznívá během několika sekund.
+Prostředí může nést také blok `rules`, který mění chod světa, dokud je zapnuté. `dayLength` natáhne den stejně jako [`time.dayLength`](#blok-time), `weather` drží počasí na `clear`, `rain` nebo `thunder` a `weatherSpeed` způsobí, že počasí v dimenzi přichází a odchází rychleji nebo pomaleji, přičemž `0` ho drží tak, jak je; bez `weather.cycle` zrychluje počasí v Overworldu, které sdílejí ostatní dimenze. `difficulty` zde nahradí obtížnost světa a předchází `worldDifficulty`, a `localDifficulty` nastaví místní obtížnost od `0` do `6.75`, která rozhoduje, jak často se moby objevují s brněním nebo sbírají předměty. Při vypnutém `sleep` nikdo nemůže spát a kdo spí, probudí se; `wakeAt` nastaví denní dobu, kdy končí noční spánek, což posune hodiny jen v Overworldu, stejně jako přeskočení noci ve vanille. `sleep`, `localDifficulty` a `snow` se řídí `biomes` a překryvy jako u oblohy; ostatní klíče pokrývají celou dimenzi, takže prostředí s `biomes`, které nějaký uvede, se zapíše do logu a klíč se ignoruje. Vypnutí prostředí vše okamžitě vrátí; počasí odeznívá během několika sekund.
+
+Uvnitř `rules` určuje `snow`, kde sníh zůstává ležet a kde voda zamrzá, dokud je prostředí zapnuté. `place` a `freeze` nabývají každý jedné ze čtyř hodnot. `default` ponechá `weather.snow`, resp. `weather.freeze` dimenze a vanilkový test studeného biomu. `biome` ponechá test studeného biomu, ale ignoruje `false` v bloku `weather` dimenze. `any` nechá sníh nebo led přijmout každý biom, bez ohledu na to, jak teplý je, a také ignoruje tento `false`. `never` to zastaví. Sníh padá jen za deště a voda zamrzá i za jasného počasí, jako ve vanille; i nadále je potřeba otevřená obloha, světlo bloků pod 10 a podklad, na který může sníh dosednout. S `whenDry` sníh zůstává ležet i bez deště, kolem každého hráče, v oblasti, kde hra provádí tiky bloků, zhruba rychlostí, jakou by jej přidával déšť. `melt: always` roztaví bloky z `meltBlocks` na vrcholu každého sloupce v téže oblasti, ať je světlo nebo biom jakékoli. Vrstva sněhu ztrácí vždy jednu vrstvu, led se mění na vodu, nebo zmizí, je-li v dimenzi zapnuto `waterVaporizes`. Každý jiný blok v seznamu, například `minecraft:snow_block`, se odstraní. `meltChance` udává, jak pravděpodobné je, že zkontrolovaný sloupec roztaje: při `1` roztaje sloupec blízko hráče zhruba tak často, jak by mu déšť přidal vrstvu, a výchozí hodnota je šestnáctkrát pomalejší. S `melt: always` `whenDry` nedělá nic. Nic se neukládá: když se prostředí vypne, tání se zastaví tam, kde je, a co už roztálo nebo zůstalo ležet, zůstane.
 
 Prostředí může nést také blok `raids`, který mění [nájezdy](#nájezdy) v dimenzi, dokud je zapnuté. S `every` si každý hráč drží počet ticků, které stráví tam, kde je prostředí zapnuté. Jakmile počet dosáhne `every`, začne u něj jeden z nájezdů uvedených v `start`, jako by nesl jeho `omen`: ve vesnici, ve které stojí, nebo kolem něj, má-li nájezd `anywhere`. Nemůže-li nájezd začít, počet zůstane plný a hodiny to zkusí znovu každou sekundu. Každý nájezd, který začne, vrátí počet na 0 všem hráčům v dosahu jeho `reach`, takže `every` je nejkratší doba mezi nájezdy. `waves` a `points` násobí počet vln a body každého nájezdu, který začne v prostředí, včetně nájezdů spuštěných pomocí `omen` a příkazem `/rdplserver raid`. Obě hodnoty se zaokrouhlují a nájezd má vždy aspoň jednu vlnu; za koncem vlastního seznamu nájezdu přichází znovu jeho poslední vlna. Nájezd si nechá vlny a body, se kterými začal, i když se prostředí vypne, a ukládají se s ním. S `biomes` se hodiny posuzují tam, kde hráč stojí, a vlny s body ve středu nájezdu. Kde se prostředí překrývají, rozhoduje to, které bylo zapnuto naposledy. Kde žádné prostředí `every` nedává, počet se zastaví; ukládá se s hráčem, jeden počet na dimenzi.
 
-| Klíč                                                   | Povinné   | Hodnota                       | Výchozí        | Co dělá                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------ | --------- | ----------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `environments.<name>`                                  | ne        | objekt                        | žádný          | Jedno prostředí. Jeho název je jedno slovo, jakékoli kromě `default`                                                                                                                                                                                          |
-| `environments.<name>.biomes`                           | ne        | seznam názvů biomů            | každý biom     | Id biomů, například `minecraft:desert`, nebo `#tag` pro tag biomů, například `#minecraft:is_ocean`. Prostředí pak platí jen v těchto biomech                                                                                                                  |
-| `environments.<name>.sky`                              | ne        | objekt                        | žádný          | Klíče [bloku `sky`](#blok-sky) kromě těch, které svět nastaví jednou při načtení: `hasSkyLight`, `surfaceWorld`, `respawn`, `respawnDimension`, `spawning`, `nether`, `beds`, `waterVaporizes`, `groundLevel`, `movementFactor`, `fixedTime` a `ambientLight` |
-| `environments.<name>.ambience`                         | ne        | objekt                        | žádný          | Klíče [bloku `ambience`](#blok-ambience)                                                                                                                                                                                                                      |
-| `environments.<name>.spawning`                         | ne        | objekt                        | žádný          | Klíče četností a stropů z části [Spawnování](#spawnování) a navíc `weights`                                                                                                                                                                                   |
-| `environments.<name>.spawning.weights`                 | ne        | objekt id entity na násobitel | žádný          | Násobí váhu tohoto moba v každém seznamu spawnů, ve kterém je; `0` mu brání v přirozeném spawnování                                                                                                                                                           |
-| `environments.<name>.growth`                           | ne        | objekt                        | žádný          | Rychlosti pro `crops`, `saplings`, `animals` a `breeding`                                                                                                                                                                                                     |
-| `environments.<name>.growth.crops`                     | ne        | číslo od 0 do 100             | `1`            | Rychlost růstu plodin; `0` ho zastaví                                                                                                                                                                                                                         |
-| `environments.<name>.growth.saplings`                  | ne        | číslo od 0 do 100             | `1`            | Rychlost růstu sazenic; `0` ho zastaví                                                                                                                                                                                                                        |
-| `environments.<name>.growth.animals`                   | ne        | číslo od 0 do 100             | `1`            | Jak rychle mláďata dospívají; `0` je udrží mladá                                                                                                                                                                                                              |
-| `environments.<name>.growth.breeding`                  | ne        | číslo od 0 do 100             | `1`            | Jak rychle uplyne čekání po páření; `0` zastaví páření                                                                                                                                                                                                        |
-| `environments.<name>.mobs`                             | ne        | objekt                        | žádný          | Mění moby, dokud je prostředí zapnuté                                                                                                                                                                                                                         |
-| `environments.<name>.mobs.entities`                    | ne        | seznam ID entit nebo druhů    | `["#monster"]` | ID jako `minecraft:zombie` nebo druhy `#monster`, `#creature`, `#ambient` a `#water_creature`                                                                                                                                                                 |
-| `environments.<name>.mobs.health`                      | ne        | číslo nad 0                   | `1`            | Násobí nejvyšší zdraví                                                                                                                                                                                                                                        |
-| `environments.<name>.mobs.damage`                      | ne        | číslo od 0 výše               | `1`            | Násobí poškození útoku zblízka                                                                                                                                                                                                                                |
-| `environments.<name>.mobs.speed`                       | ne        | číslo od 0 výše               | `1`            | Násobí rychlost chůze; `0` drží moba na místě                                                                                                                                                                                                                 |
-| `environments.<name>.mobs.equipment`                   | ne        | objekt slotu na předmět       | žádný          | Sloty `mainhand`, `offhand`, `head`, `chest`, `legs` a `feet`; vyplní se jen prázdný slot                                                                                                                                                                     |
-| `environments.<name>.mobs.equipment.<slot>.item`       | ano       | ID předmětu                   | žádný          | Předmět, který mob dostane                                                                                                                                                                                                                                    |
-| `environments.<name>.mobs.equipment.<slot>.dropChance` | ne        | číslo od 0 do 1               | `0.085`        | Šance, že předmět po smrti moba vypadne                                                                                                                                                                                                                       |
-| `environments.<name>.loot`                             | ne        | objekt id tabulek             | žádný          | Za každou uvedenou tabulku dosadí zadanou, dokud je prostředí zapnuté                                                                                                                                                                                         |
-| `environments.<name>.trades`                           | ne        | seznam obchodů                | žádný          | Položky jako v [Obchody](#obchody); vesničané uvedeného povolání nabízejí jen tyto, až do svého stupně                                                                                                                                                        |
-| `environments.<name>.trades[].profession`              | ano       | id povolání                   | žádný          | Spolu s `career`, `level`, `buy`, `buySecondary`, `sell` a `maxUses` jako v [Obchody](#obchody)                                                                                                                                                               |
-| `environments.<name>.rules`                            | ne        | objekt                        | žádný          | Mění chod světa, dokud je prostředí zapnuté                                                                                                                                                                                                                   |
-| `environments.<name>.rules.dayLength`                  | ne        | celé číslo nad 0              | vlastní        | Délka dne, jen pro celou dimenzi                                                                                                                                                                                                                              |
-| `environments.<name>.rules.weather`                    | ne        | `clear`, `rain`, `thunder`    | žádný          | Drží počasí, jen pro celou dimenzi                                                                                                                                                                                                                            |
-| `environments.<name>.rules.weatherSpeed`               | ne        | číslo od 0 do 100             | `1`            | Jak rychle se počasí mění, jen pro celou dimenzi                                                                                                                                                                                                              |
-| `environments.<name>.rules.difficulty`                 | ne        | `peaceful`…`hard`             | žádný          | Obtížnost, jen pro celou dimenzi                                                                                                                                                                                                                              |
-| `environments.<name>.rules.localDifficulty`            | ne        | číslo od 0 do 6.75            | z vanilly      | Místní obtížnost                                                                                                                                                                                                                                              |
-| `environments.<name>.rules.sleep`                      | ne        | boolean                       | `true`         | Při vypnutí nikdo nemůže spát                                                                                                                                                                                                                                 |
-| `environments.<name>.rules.wakeAt`                     | ne        | celé číslo od 0 do 23999      | `0`            | Denní doba, kdy spánek končí, jen pro celou dimenzi                                                                                                                                                                                                           |
-| `environments.<name>.raids`                            | ne        | objekt                        | žádný          | Mění nájezdy: `every`, `start`, `waves` a `points`                                                                                                                                                                                                            |
-| `environments.<name>.raids.every`                      | ne        | celé číslo nad 0              | žádný          | Ticky, které hráč stráví tady, než u něj začne nájezd. Vyžaduje `start`                                                                                                                                                                                       |
-| `environments.<name>.raids.start`                      | s `every` | ID nájezdu nebo jejich seznam | žádný          | Nájezd, který hodiny spustí, nebo nájezdy, z nichž náhodně vybírají                                                                                                                                                                                           |
-| `environments.<name>.raids.waves`                      | ne        | číslo nad 0, nejvýše 100      | `1`            | Násobí počet vln, které nájezd pošle                                                                                                                                                                                                                          |
-| `environments.<name>.raids.points`                     | ne        | číslo od 0 do 100             | `1`            | Násobí body, které vyhraný nájezd vyplatí                                                                                                                                                                                                                     |
+| Klíč                                                   | Povinné    | Hodnota                              | Výchozí                               | Co dělá                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------ | ---------- | ------------------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environments.<name>`                                  | ne         | objekt                               | žádný                                 | Jedno prostředí. Jeho název je jedno slovo, jakékoli kromě `default`                                                                                                                                                                                          |
+| `environments.<name>.biomes`                           | ne         | seznam názvů biomů                   | každý biom                            | Id biomů, například `minecraft:desert`, nebo `#tag` pro tag biomů, například `#minecraft:is_ocean`. Prostředí pak platí jen v těchto biomech                                                                                                                  |
+| `environments.<name>.sky`                              | ne         | objekt                               | žádný                                 | Klíče [bloku `sky`](#blok-sky) kromě těch, které svět nastaví jednou při načtení: `hasSkyLight`, `surfaceWorld`, `respawn`, `respawnDimension`, `spawning`, `nether`, `beds`, `waterVaporizes`, `groundLevel`, `movementFactor`, `fixedTime` a `ambientLight` |
+| `environments.<name>.ambience`                         | ne         | objekt                               | žádný                                 | Klíče [bloku `ambience`](#blok-ambience)                                                                                                                                                                                                                      |
+| `environments.<name>.spawning`                         | ne         | objekt                               | žádný                                 | Klíče četností a stropů z části [Spawnování](#spawnování) a navíc `weights`                                                                                                                                                                                   |
+| `environments.<name>.spawning.weights`                 | ne         | objekt id entity na násobitel        | žádný                                 | Násobí váhu tohoto moba v každém seznamu spawnů, ve kterém je; `0` mu brání v přirozeném spawnování                                                                                                                                                           |
+| `environments.<name>.growth`                           | ne         | objekt                               | žádný                                 | Rychlosti pro `crops`, `saplings`, `animals` a `breeding`                                                                                                                                                                                                     |
+| `environments.<name>.growth.crops`                     | ne         | číslo od 0 do 100                    | `1`                                   | Rychlost růstu plodin; `0` ho zastaví                                                                                                                                                                                                                         |
+| `environments.<name>.growth.saplings`                  | ne         | číslo od 0 do 100                    | `1`                                   | Rychlost růstu sazenic; `0` ho zastaví                                                                                                                                                                                                                        |
+| `environments.<name>.growth.animals`                   | ne         | číslo od 0 do 100                    | `1`                                   | Jak rychle mláďata dospívají; `0` je udrží mladá                                                                                                                                                                                                              |
+| `environments.<name>.growth.breeding`                  | ne         | číslo od 0 do 100                    | `1`                                   | Jak rychle uplyne čekání po páření; `0` zastaví páření                                                                                                                                                                                                        |
+| `environments.<name>.growth.byBlock`                   | ne         | objekt: id bloku nebo `#tag` a číslo | žádný                                 | Rychlost pro jeden blok plodiny nebo sazenice, nebo pro skupinu, místo `crops` či `saplings`. Id bloku má přednost před `#tagem`; mezi dvěma tagy vyhrává první napsaný                                                                                       |
+| `environments.<name>.growth.tooltip`                   | ne         | `"off"`, `"here"`, `"year"`          | `"off"`                               | Ukáže rychlost na semenech, sazenicích a předmětech plodin: `here` pro prostředí, ve kterém držitel stojí, `year` navíc řádek pro každé roční období                                                                                                          |
+| `environments.<name>.growth.waiver`                    | ne         | objekt                               | žádný                                 | Nahradí rychlost růstu rostliny, dokud nad ní leží vyjmenovaný blok                                                                                                                                                                                           |
+| `environments.<name>.growth.waiver.blocks`             | s `waiver` | seznam id bloků nebo `#tagů`         | žádný                                 | Bloky, které se počítají                                                                                                                                                                                                                                      |
+| `environments.<name>.growth.waiver.within`             | ne         | celé číslo od 1 do 64                | `8`                                   | Kolik bloků nad rostlinou se prohledá                                                                                                                                                                                                                         |
+| `environments.<name>.growth.waiver.scale`              | ne         | číslo od 0 do 100                    | `1`                                   | Rychlost použitá místo běžné, dokud výjimka platí                                                                                                                                                                                                             |
+| `environments.<name>.growth.waiver.kinds`              | ne         | seznam `crops`, `saplings`           | obě                                   | Které druhy výjimka pokrývá                                                                                                                                                                                                                                   |
+| `environments.<name>.growth.waiver.clear`              | ne         | `true` nebo `false`                  | `false`                               | `true` vyžaduje, aby žádný blok mezi rostlinou a vyjmenovaným blokem nebyl plně neprůhledný; `false` blok započítá, ať leží mezi nimi cokoli                                                                                                                  |
+| `environments.<name>.mobs`                             | ne         | objekt                               | žádný                                 | Mění moby, dokud je prostředí zapnuté                                                                                                                                                                                                                         |
+| `environments.<name>.mobs.entities`                    | ne         | seznam ID entit nebo druhů           | `["#monster"]`                        | ID jako `minecraft:zombie` nebo druhy `#monster`, `#creature`, `#ambient` a `#water_creature`                                                                                                                                                                 |
+| `environments.<name>.mobs.health`                      | ne         | číslo nad 0                          | `1`                                   | Násobí nejvyšší zdraví                                                                                                                                                                                                                                        |
+| `environments.<name>.mobs.damage`                      | ne         | číslo od 0 výše                      | `1`                                   | Násobí poškození útoku zblízka                                                                                                                                                                                                                                |
+| `environments.<name>.mobs.speed`                       | ne         | číslo od 0 výše                      | `1`                                   | Násobí rychlost chůze; `0` drží moba na místě                                                                                                                                                                                                                 |
+| `environments.<name>.mobs.equipment`                   | ne         | objekt slotu na předmět              | žádný                                 | Sloty `mainhand`, `offhand`, `head`, `chest`, `legs` a `feet`; vyplní se jen prázdný slot                                                                                                                                                                     |
+| `environments.<name>.mobs.equipment.<slot>.item`       | ano        | ID předmětu                          | žádný                                 | Předmět, který mob dostane                                                                                                                                                                                                                                    |
+| `environments.<name>.mobs.equipment.<slot>.dropChance` | ne         | číslo od 0 do 1                      | `0.085`                               | Šance, že předmět po smrti moba vypadne                                                                                                                                                                                                                       |
+| `environments.<name>.loot`                             | ne         | objekt id tabulek                    | žádný                                 | Za každou uvedenou tabulku dosadí zadanou, dokud je prostředí zapnuté                                                                                                                                                                                         |
+| `environments.<name>.trades`                           | ne         | seznam obchodů                       | žádný                                 | Položky jako v [Obchody](#obchody); vesničané uvedeného povolání nabízejí jen tyto, až do svého stupně                                                                                                                                                        |
+| `environments.<name>.trades[].profession`              | ano        | id povolání                          | žádný                                 | Spolu s `career`, `level`, `buy`, `buySecondary`, `sell` a `maxUses` jako v [Obchody](#obchody)                                                                                                                                                               |
+| `environments.<name>.rules`                            | ne         | objekt                               | žádný                                 | Mění chod světa, dokud je prostředí zapnuté                                                                                                                                                                                                                   |
+| `environments.<name>.rules.dayLength`                  | ne         | celé číslo nad 0                     | vlastní                               | Délka dne, jen pro celou dimenzi                                                                                                                                                                                                                              |
+| `environments.<name>.rules.weather`                    | ne         | `clear`, `rain`, `thunder`           | žádný                                 | Drží počasí, jen pro celou dimenzi                                                                                                                                                                                                                            |
+| `environments.<name>.rules.weatherSpeed`               | ne         | číslo od 0 do 100                    | `1`                                   | Jak rychle se počasí mění, jen pro celou dimenzi                                                                                                                                                                                                              |
+| `environments.<name>.rules.difficulty`                 | ne         | `peaceful`…`hard`                    | žádný                                 | Obtížnost, jen pro celou dimenzi                                                                                                                                                                                                                              |
+| `environments.<name>.rules.localDifficulty`            | ne         | číslo od 0 do 6.75                   | z vanilly                             | Místní obtížnost                                                                                                                                                                                                                                              |
+| `environments.<name>.rules.sleep`                      | ne         | boolean                              | `true`                                | Při vypnutí nikdo nemůže spát                                                                                                                                                                                                                                 |
+| `environments.<name>.rules.wakeAt`                     | ne         | celé číslo od 0 do 23999             | `0`                                   | Denní doba, kdy spánek končí, jen pro celou dimenzi                                                                                                                                                                                                           |
+| `environments.<name>.rules.snow`                       | ne         | objekt                               | žádný                                 | Sníh a led, dokud je prostředí zapnuté; řídí se `biomes`                                                                                                                                                                                                      |
+| `environments.<name>.rules.snow.place`                 | ne         | `default`, `biome`, `any`, `never`   | `default`                             | Kde sníh zůstává ležet: podle dimenze, jen podle testu studeného biomu, ve všech biomech, nebo nikde                                                                                                                                                          |
+| `environments.<name>.rules.snow.freeze`                | ne         | `default`, `biome`, `any`, `never`   | `default`                             | Totéž pro zamrzající vodu                                                                                                                                                                                                                                     |
+| `environments.<name>.rules.snow.whenDry`               | ne         | logická hodnota                      | `false`                               | Zapnuto: sníh zůstává ležet i bez deště, kolem hráčů                                                                                                                                                                                                          |
+| `environments.<name>.rules.snow.melt`                  | ne         | `never`, `always`                    | `never`                               | `always` roztaví `meltBlocks` kolem hráčů, ať je světlo nebo biom jakékoli                                                                                                                                                                                    |
+| `environments.<name>.rules.snow.meltChance`            | ne         | číslo nad 0, až 1                    | `0.0625`                              | Jak pravděpodobné je, že zkontrolovaný sloupec roztaje                                                                                                                                                                                                        |
+| `environments.<name>.rules.snow.meltBlocks`            | ne         | seznam ID bloků                      | `["minecraft:snow", "minecraft:ice"]` | Co taje: vrstva sněhu ztrácí vrstvu, led se mění na vodu (s `waterVaporizes` na nic), každý jiný blok se odstraní                                                                                                                                             |
+| `environments.<name>.raids`                            | ne         | objekt                               | žádný                                 | Mění nájezdy: `every`, `start`, `waves` a `points`                                                                                                                                                                                                            |
+| `environments.<name>.raids.every`                      | ne         | celé číslo nad 0                     | žádný                                 | Ticky, které hráč stráví tady, než u něj začne nájezd. Vyžaduje `start`                                                                                                                                                                                       |
+| `environments.<name>.raids.start`                      | s `every`  | ID nájezdu nebo jejich seznam        | žádný                                 | Nájezd, který hodiny spustí, nebo nájezdy, z nichž náhodně vybírají                                                                                                                                                                                           |
+| `environments.<name>.raids.waves`                      | ne         | číslo nad 0, nejvýše 100             | `1`                                   | Násobí počet vln, které nájezd pošle                                                                                                                                                                                                                          |
+| `environments.<name>.raids.points`                     | ne         | číslo od 0 do 100                    | `1`                                   | Násobí body, které vyhraný nájezd vyplatí                                                                                                                                                                                                                     |
 
 Jakýkoli jiný klíč v prostředí, stejně jako kterýkoli z klíčů `sky` výše, se přeskočí s chybou v logu. Svět uložený s prostředím, které balíček už nejmenuje, se vrátí k vlastní podobě dimenze.
 
@@ -6033,6 +6067,96 @@ Příkaz nebo postel, které posunou hodiny, posunou i roční období, a svět 
 | `seasons`       | ne          | objekt                                  | žádný   | Zapíná a vypíná prostředí dimenze v ročním cyklu                          |
 | `seasons.days`  | s `seasons` | celé číslo nad 0                        | žádný   | Počet dní, které každé roční období trvá                                  |
 | `seasons.order` | s `seasons` | seznam jmen prostředí nebo seznamů jmen | žádný   | Roční období za sebou. Položka se seznamem přepíná své prostředí společně |
+
+### Hodiny ročních období
+
+*předměty*
+
+Předmět s `seasonClock` je hodinami ročních období. Jeho definice předmětu čte období dvěma vlastnostmi a pravý klik řekne držiteli, jaké je období a kolikátý je v něm den.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "seasonClock": { "dimension": "minecraft:overworld", "message": true },
+  "variants": {
+    "season_clock": {
+      "maxSize": 1
+    }
+  }
+}
+```
+
+A jeho definice předmětu, `assets/mypack/items/season_clock.json`, s jedním snímkem pro každé ze čtyř ročních období:
+
+```json
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "rdpl:year",
+    "fallback": { "type": "minecraft:model", "model": "mypack:item/clock_spring" },
+    "entries": [
+      { "threshold": 0.25, "model": { "type": "minecraft:model", "model": "mypack:item/clock_summer" } },
+      { "threshold": 0.5, "model": { "type": "minecraft:model", "model": "mypack:item/clock_autumn" } },
+      { "threshold": 0.75, "model": { "type": "minecraft:model", "model": "mypack:item/clock_winter" } }
+    ]
+  }
+}
+```
+
+| Klíč                    | Povinné | Hodnota            | Výchozí          | Co dělá                                                                            |
+| ----------------------- | ------- | ------------------ | ---------------- | ---------------------------------------------------------------------------------- |
+| `seasonClock`           | ne      | `true` nebo objekt | žádný            | Udělá z předmětu hodiny ročních období. `true` čte dimenzi, ve které držitel stojí |
+| `seasonClock.dimension` | ne      | id dimenze         | dimenze držitele | Jejíž roční období hodiny ukazují                                                  |
+| `seasonClock.message`   | ne      | logická hodnota    | `true`           | Pravý klik řekne držiteli období a den v něm                                       |
+
+| Vlastnost     | Hodnota                   | Co dělá                                                                                                                         |
+| ------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:year`   | desetinné číslo od 0 do 1 | Jak daleko je rok: číslo období plus podíl uplynulých dní, vydělené počtem období. 0 v dimenzi bez ročních období               |
+| `rdpl:season` | celé číslo od 0           | Číslo období, 0 pro první položku `order`. Snímky tak lze vybírat podle období, ne podle zlomku. 0 v dimenzi bez ročních období |
+
+Obojí jsou číselné vlastnosti pro model `minecraft:range_dispatch`. Záznam platí, jakmile vlastnost dosáhne svého `threshold`, a vyhrává poslední platný, proto je řaď od nejnižší hodnoty k nejvyšší, jako to dělá kompas. V dimenzi bez ročních období to zpráva řekne.
+
+### Senzor ročních období
+
+*bloky*
+
+Blok typu `seasonSensor` dává redstonový signál podle období zvolené dimenze a komparátor čte totéž číslo. Hodiny kontroluje každých 100 ticků.
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "seasonSensor",
+  "material": "rock",
+  "creativeTab": "redstone",
+  "seasonSensor": {
+    "dimension": "minecraft:overworld",
+    "output": { "spring": 3, "summer": 6, "autumn": 9, "winter": 12 }
+  },
+  "variants": { "season_sensor": { "hardness": 1.0, "resistance": 5 } }
+}
+```
+
+A jeho blockstate, `assets/mypack/blockstates/season_sensor.json`, s jednou položkou pro každou sílu od 0 do 15:
+
+```json
+{
+  "variants": {
+    "power=0": { "model": "mypack:block/season_sensor_0" },
+    "power=1": { "model": "mypack:block/season_sensor_1" },
+    "power=15": { "model": "mypack:block/season_sensor_15" }
+  }
+}
+```
+
+| Klíč                     | Povinné       | Hodnota                              | Výchozí                          | Co dělá                                                                                                                            |
+| ------------------------ | ------------- | ------------------------------------ | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `seasonSensor`           | s tímto typem | objekt                               | žádný                            | Blok, který dává redstonový signál podle období                                                                                    |
+| `seasonSensor.dimension` | ne            | id dimenze                           | dimenze samotného bloku          | Jejíž roční období čte                                                                                                             |
+| `seasonSensor.output`    | ne            | objekt, název období na sílu 1 až 15 | rovnoměrné rozložení přes období | Síla pro každé období. Vynechané období dostane `(index + 1) * 15 / počet` zaokrouhlené dolů, čtyři období tedy dají 3, 7, 11 a 15 |
+
+Síla je stav bloku `power`, takže blockstate potřebuje variantu pro každou z jeho 16 hodnot. V dimenzi bez ročních období zůstává 0. Období v `output` se jmenuje podle prvního prostředí své položky v `order`.
 
 ## Portály a brány
 
@@ -8260,19 +8384,25 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 
 `when` obsahuje podmínky, které musí všechny platit ve chvíli, kdy se spouštěč spustí.
 
-| Nastavení                   | Typ              | Co kontroluje                                                                                                                                                   |
-| --------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `biomes`                    | seznam           | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče                                                                                                  |
-| `environments`              | seznam           | Jedno z těchto prostředí je v hráčově dimenzi zapnuté, včetně `default`                                                                                         |
-| `timeFrom`, `timeTo`        | celé číslo       | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000`                                                                 |
-| `dayAtLeast`                | celé číslo       | Číslo dne je alespoň toto                                                                                                                                       |
-| `advancement`               | text             | Hráč má tento pokrok                                                                                                                                            |
-| `portway`, `network`        | text             | Hráč má ve svém seznamu nebo mezi globálními průchody s tímto id bloku nebo z této sítě. Kterékoli z obou lze vynechat                                          |
-| `gameMode`                  | text             | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`                                                                             |
-| `team`                      | text             | Hráč je v tomto týmu tabulky skóre                                                                                                                              |
-| `dietAtLeast`               | celé číslo       | Zapamatovaná jídla hráče obsahují alespoň tolik různých jídel, nebo s `dietCount` `lifetime` každé jídlo, které hráč kdy snědl (vyžaduje soubor Pestrost jídla) |
-| `dietCount`                 | text             | `memory` (výchozí) nebo `lifetime`: co počítá `dietAtLeast`                                                                                                     |
-| `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto                                                                                                                              |
+```json
+{ "when": { "season": ["winter", "spring"], "dimension": "minecraft:overworld" } }
+```
+
+| Nastavení                   | Typ              | Co kontroluje                                                                                                                                                                                    |
+| --------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `biomes`                    | seznam           | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče                                                                                                                                   |
+| `environments`              | seznam           | Jedno z těchto prostředí je v hráčově dimenzi zapnuté, včetně `default`                                                                                                                          |
+| `season`                    | seznam           | Dimenze je podle ročního hodinového cyklu v jednom z těchto ročních období, i když bylo prostředí přepnuto ručně. Název ročního období je první název prostředí u položky `order` ročních období |
+| `dimension`                 | text             | Dimenze, jejíž roční období `season` čte, registrový název dimenze, například `minecraft:overworld`. Bez něj se bere hráčova dimenze                                                             |
+| `timeFrom`, `timeTo`        | celé číslo       | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000`                                                                                                  |
+| `dayAtLeast`                | celé číslo       | Číslo dne je alespoň toto                                                                                                                                                                        |
+| `advancement`               | text             | Hráč má tento pokrok                                                                                                                                                                             |
+| `portway`, `network`        | text             | Hráč má ve svém seznamu nebo mezi globálními průchody s tímto id bloku nebo z této sítě. Kterékoli z obou lze vynechat                                                                           |
+| `gameMode`                  | text             | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator`                                                                                                              |
+| `team`                      | text             | Hráč je v tomto týmu tabulky skóre                                                                                                                                                               |
+| `dietAtLeast`               | celé číslo       | Zapamatovaná jídla hráče obsahují alespoň tolik různých jídel, nebo s `dietCount` `lifetime` každé jídlo, které hráč kdy snědl (vyžaduje soubor Pestrost jídla)                                  |
+| `dietCount`                 | text             | `memory` (výchozí) nebo `lifetime`: co počítá `dietAtLeast`                                                                                                                                      |
+| `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto                                                                                                                                                               |
 
 ### Karta
 

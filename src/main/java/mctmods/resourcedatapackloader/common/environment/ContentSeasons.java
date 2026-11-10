@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.cards.CardPlace;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.json.Json;
 
@@ -14,13 +15,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
+import net.minecraft.SharedConstants;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 public final class ContentSeasons {
     private static final String SEASONS = "seasons";
     private static final int INTERVAL = 20;
+    private static final int CLOCK_INTERVAL = 200;
     private static final Map<Identifier, SeasonDef> BY_DIMENSION = new HashMap<>();
     private static final Map<Identifier, Integer> APPLIED = new HashMap<>();
     private static int ticks;
@@ -95,7 +100,10 @@ public final class ContentSeasons {
     public static void onServerTick(ServerTickEvent.Post event) { tick(event.getServer()); }
 
     private static void tick(MinecraftServer server) {
-        if (BY_DIMENSION.isEmpty() || ++ticks % INTERVAL != 0) { return; }
+        if (BY_DIMENSION.isEmpty()) { return; }
+        ticks++;
+        if (ticks % CLOCK_INTERVAL == 0) { sendClock(server); }
+        if (ticks % INTERVAL != 0) { return; }
         long day = CardPlace.day(server.overworld());
         for (Map.Entry<Identifier, SeasonDef> entry : BY_DIMENSION.entrySet()) {
             int index = entry.getValue().index(day);
@@ -103,7 +111,27 @@ public final class ContentSeasons {
             if (applied != null && applied == index) { continue; }
             APPLIED.put(entry.getKey(), index);
             enter(server, entry.getKey(), entry.getValue(), index, day);
+            sendClock(server);
         }
+    }
+
+    @Nullable public static SeasonDef def(Identifier dimension) { return BY_DIMENSION.get(dimension); }
+
+    @Nullable public static SeasonState state(Identifier dimension) {
+        SeasonDef def = BY_DIMENSION.get(dimension);
+        if (def == null) { return null; }
+        long clock = SeasonClock.ticks(ServerLifecycleHooks.getCurrentServer());
+        return new SeasonState(def, def.index(clock / SharedConstants.TICKS_PER_GAME_DAY), clock);
+    }
+
+    @Nullable public static SeasonState state(@Nullable Identifier dimension, Identifier own) { return state(dimension == null ? own : dimension); }
+
+    public static void sendClock(ServerPlayer player) {
+        if (!BY_DIMENSION.isEmpty()) { RDPLNetwork.sendSeasonClock(player, SeasonClock.ticks(player.level().getServer())); }
+    }
+
+    private static void sendClock(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { sendClock(player); }
     }
 
     private static void enter(MinecraftServer server, Identifier key, SeasonDef seasons, int index, long day) {

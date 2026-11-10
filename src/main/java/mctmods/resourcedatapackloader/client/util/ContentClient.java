@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.client.renderer.ContentBannerItemRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentBannerRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentContainerRenderer;
+import mctmods.resourcedatapackloader.client.renderer.ContentSeasonClockProperty;
 import mctmods.resourcedatapackloader.client.renderer.ReturningThrowRenderer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
@@ -84,6 +85,7 @@ public final class ContentClient {
         modBus.addListener(ContentSnowTint::sources);
         modBus.addListener(ContentSeasonTint::resolvers);
         modBus.addListener(ContentSeasonTint::sources);
+        modBus.addListener(ContentSeasonClockProperty::register);
     }
 
     private static void bellModels(ModelEvent.RegisterStandalone event) {

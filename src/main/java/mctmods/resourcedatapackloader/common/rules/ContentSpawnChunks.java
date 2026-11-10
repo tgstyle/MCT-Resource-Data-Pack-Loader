@@ -16,6 +16,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 public final class ContentSpawnChunks {
     private static final int MOST_BLOCKS = 1024;
@@ -83,6 +84,12 @@ public final class ContentSpawnChunks {
         heldAt = spawn;
         heldRadius = heldChunks();
         tiles(heldAt, heldRadius, ENTITY_TICKING, (pos, distance) -> chunks.addTicketWithRadius(HELD, pos, distance));
+    }
+
+    public static boolean idle(ServerLevel level, LevelChunk chunk) {
+        ChunkPos pos = chunk.getPos();
+        if (heldAt == null || level.dimension() != Level.OVERWORLD || heldAt.getChessboardDistance(pos) > heldRadius) { return false; }
+        return !level.getForceLoadedChunks().contains(pos.pack()) && !level.getChunkSource().chunkMap.anyPlayerCloseEnoughForSpawning(pos);
     }
 
     private static void tiles(ChunkPos middle, int radius, int ticking, BiConsumer<ChunkPos, Integer> ticket) {

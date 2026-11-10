@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.gui.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
@@ -64,6 +65,7 @@ public final class RDPLNetwork {
             ContentRuleSwitch.settle(context.player().level());
             if (FMLEnvironment.getDist() == Dist.CLIENT) { ContentSeasonTint.changed(); }
         });
+        registrar.playToClient(SeasonClockMessage.TYPE, SeasonClockMessage.CODEC, (message, _) -> SeasonClock.received(message.ticks()));
         registrar.playToServer(IntroDoneMessage.TYPE, IntroDoneMessage.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); } });
         registrar.playToServer(OpenWornMessage.TYPE, OpenWornMessage.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); } });
         registrar.playToServer(PortwayFilterMessage.TYPE, PortwayFilterMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player && player.containerMenu instanceof ContentPortwayMenu menu) { menu.filter(message.text()); } });
@@ -133,6 +135,8 @@ public final class RDPLNetwork {
     public static void sendTalk(ServerPlayer player, TalkMessage talk) { send(player, talk); }
 
     public static void sendTalkPick(int index) { ClientPacketDistributor.sendToServer(new TalkPickMessage(index)); }
+
+    public static void sendSeasonClock(ServerPlayer player, long ticks) { send(player, new SeasonClockMessage(ticks)); }
 
     public static void sendEnvironments(ServerPlayer player, EnvironmentsMessage environments) { send(player, environments); }
 }

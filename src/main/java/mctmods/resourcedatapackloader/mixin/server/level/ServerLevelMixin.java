@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.server.level;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentTimeWindows;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.environment.ContentWeatherCycle;
@@ -13,6 +14,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentSpawnChunks;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
@@ -97,10 +99,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At("HEAD"), cancellable = true) private void rdpl$noPrecipitation(BlockPos pos, CallbackInfo ci) { if (!ContentWeather.traits((ServerLevel) (Object) this).precipitation()) { ci.cancel(); } }
 
+    @Inject(method = "tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V", at = @At("HEAD"), cancellable = true) private void rdpl$noPlayerNoTick(LevelChunk chunk, int tickSpeed, CallbackInfo ci) { if (ContentSpawnChunks.idle((ServerLevel) (Object) this, chunk)) { ci.cancel(); } }
+
     @Redirect(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;handlePrecipitation(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/biome/Biome$Precipitation;)V")) private void rdpl$rainFillBelowCeiling(Block block, BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
         if (ContentWeather.above(level, pos.getY())) { return; }
         Biome.Precipitation falls = ContentWeather.fallsAs(level, level.getBiome(pos.above()).value(), precipitation);
-        if (falls == Biome.Precipitation.SNOW && !ContentWeather.traits(level).snow()) { return; }
+        if (falls == Biome.Precipitation.SNOW && ContentSeasonSnow.snowStopped(level, pos)) { return; }
         block.handlePrecipitation(state, level, pos, falls);
     }
 

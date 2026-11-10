@@ -120,6 +120,7 @@ public final class ContentParser {
                 portal(key, json, null, true, false),
                 ContentParserContainers.container(key, json),
                 bell(json),
+                ContentParserSeasons.sensor(key, json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json),
                 ContentParserWeights.weight(json, key),
@@ -340,7 +341,8 @@ public final class ContentParser {
                 ContentParserWeapons.weapon(key, json),
                 ContentParserPortways.item(key, json),
                 Json.getBoolean(json, "sleepingBag", false), ContentParserContainers.upgrade(key, json),
-                ContentParserWeights.weight(json, key), ContentParserFireworks.firework(key, json));
+                ContentParserWeights.weight(json, key), ContentParserFireworks.firework(key, json),
+                ContentParserSeasons.clock(key, json));
     }
 
     public static String fluidName(Identifier key, JsonObject json) { return Json.getString(json, "name", key.getPath()).trim(); }

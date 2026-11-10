@@ -240,7 +240,7 @@ public final class ContentGeneratedModels {
                 String top = texture(namespace, name + "_top");
                 String bottom = texture(namespace, name + "_bottom");
                 model(def, namespace, name, top == null && bottom == null ? cube(def, texture, "cube_all") : bottomTop(def, texture, top, bottom));
-                blockstate(namespace, name, ContentBlockTypes.PORTWAY.equals(type) ? portwayStates(def.portway(), main) : singleVariant(main));
+                blockstate(namespace, name, ContentBlockTypes.PORTWAY.equals(type) ? portwayStates(def.portway(), main) : ContentBlockTypes.SEASON_SENSOR.equals(type) ? powerStates(main) : singleVariant(main));
             }
         }
     }
@@ -263,6 +263,12 @@ public final class ContentGeneratedModels {
             model(def, namespace, name, textured(def, textureOr(namespace, name, baseTexture), "cross", "cross"));
             blockstate(namespace, name, singleVariant(main));
         }
+    }
+
+    private static JsonObject powerStates(String main) {
+        JsonObject variants = new JsonObject();
+        for (int power = 0; power <= 15; power++) { variants.add("power=" + power, Json.obj("model", main)); }
+        return Json.obj("variants", variants);
     }
 
     private static JsonObject portwayStates(@Nullable PortwayDef portway, String main) {

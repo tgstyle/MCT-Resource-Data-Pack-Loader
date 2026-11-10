@@ -5707,10 +5707,13 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "starTwinkle": 0.5,
     "lightningColor": "#A080FF",
     "grassTint": "#A0FF80",
-    "foliageTint": "#E0A040"
+    "foliageTint": "#E0A040",
+    "birchTint": "#C0D060"
   }
 }
 ```
+
+`birchTint` 单独与桦树叶的颜色相乘。未设置时，桦树叶与其他树叶一样使用 `foliageTint`。
 
 `grassTint` 与草、高草、蕨和甘蔗的颜色相乘，`foliageTint` 与树叶和藤蔓的颜色相乘。生物群系自身的颜色依然会透出来，两个键都可以用在环境的 `sky` 中，季节正是这样改变植物的。手持物品和菜单中的物品保持原色。
 
@@ -5733,6 +5736,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `starTwinkle`    | 否   | 浮点数，0 到 1 | `0.0`          | 星星闪烁时变暗的程度。`0` 表示不闪烁 |
 | `grassTint`      | 否   | 十六进制颜色   | 白色           | 与草、高草、蕨和甘蔗的颜色相乘       |
 | `foliageTint`    | 否   | 十六进制颜色   | 白色           | 与树叶和藤蔓的颜色相乘               |
+| `birchTint`      | 否   | 十六进制颜色   | `foliageTint`  | 与桦树叶的颜色相乘                   |
 | `lightningColor` | 否   | 十六进制颜色   | `737380`       | 闪电的色调                           |
 
 ### 天空盒、极光与彩虹
@@ -5917,7 +5921,12 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
       "spawning": { "surfaceNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5 }
+      "growth": {
+        "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 1.5,
+        "byBlock": { "minecraft:wheat": 4.0, "minecraft:melon_stem": 0.0, "#minecraft:saplings": 0.5 },
+        "tooltip": "here",
+        "waiver": { "blocks": ["minecraft:glass", "#minecraft:impermeable"], "within": 6, "scale": 1.0, "kinds": ["crops", "saplings"], "clear": false }
+      }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
@@ -5929,6 +5938,12 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     },
     "longnight": {
       "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 3.0, "wakeAt": 1000 }
+    },
+    "deepwinter": {
+      "rules": { "snow": { "place": "any", "freeze": "any", "whenDry": true } }
+    },
+    "thaw": {
+      "rules": { "snow": { "melt": "always", "meltChance": 0.25, "meltBlocks": ["minecraft:snow", "minecraft:ice"] } }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -5951,51 +5966,70 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 环境还可以带有 `growth` 块，在该环境开启期间加快或减慢维度中的生长。`crops` 涵盖作物、茎、可可、下界疣、甘蔗、仙人掌、紫颂花，以及任何通过 NeoForge 作物事件生长的模组植物；`saplings` 涵盖长成树的树苗；`animals` 涵盖幼年动物长大的速度；`breeding` 涵盖繁殖过的动物再次可以繁殖所需的时间，取 `0` 时喂食后的动物不再产下幼崽。每项都是 `0` 到 `100` 的倍数：`1` 是通常速度，`0.5` 是一半，`2` 是两倍，`0` 则停止。大于 1 时，游戏每次选中植物生长，它都会获得额外的生长机会，因此光照、土壤和水仍然起作用。骨粉、喂食和命令永远不受影响。使用 `biomes` 时，该块只在那些生物群系中生效，多个环境重叠的地方，与天空一样，最后开启的那个优先。省略的键保持通常速度。关闭环境会立刻恢复通常速度；已经长出来的保持不变。
 
+在 `growth` 里，`byBlock` 为单个作物或树苗方块，或为一组方块，设定速度，取代 `crops` 或 `saplings` 的值：键是 `minecraft:wheat` 这样的方块 ID，或以 `#` 开头的方块标签，例如 `#minecraft:saplings`，值是 `0` 到 `100` 的数。方块 ID 优先于标签，两个标签都匹配时，先写的那个生效。`tooltip` 会在种子、树苗或作物物品上显示速度：`here` 显示持有者所在环境的速度，`year` 还会为维度的每个季节多加一行，默认的 `off` 什么也不显示。它需要客户端安装该模组，所以开启 `vanillaClients` 时什么也不会显示。`waiver` 会提高头顶有列出方块的植物的速度，比如冬季作物上方的玻璃：只要 `blocks` 中的某个方块位于植物正上方 `within` 格以内，该植物就会按 `kinds` 所列的种类，以 `scale` 而不是环境的速度生长。开启 `clear` 后，植物与列出的方块之间不能有完全不透明的方块，所以中间有一层石半砖屋顶时，这项例外就会失效。动物和繁殖从不使用 `byBlock` 和 `waiver`。
+
 环境还可以带一个 `mobs` 块，在环境开启期间改变维度中的生物，适合血月之类的活动。`entities` 按 ID 指定它要改变的生物，也可以用 `#monster`、`#creature`、`#ambient` 或 `#water_creature` 按类别指定；省略时涵盖所有怪物。`health`、`damage` 和 `speed` 分别乘以生物的最大生命值、近战攻击伤害和行走速度；生物的当前生命值会随最大值一同按比例变化。`equipment` 会给每个生物在其空着的槽位中放入一件物品，并指定它死亡时掉落的概率。生物采用哪个环境，由它生成或被加载时所在的位置决定，并且每次切换环境时，对每个已加载的生物重新决定一次；`biomes` 和重叠的处理与天空相同。只要该环境保持开启，生物就会保留这一变化，重启后也一样。环境关闭时，生物的生命值、伤害和速度会恢复，环境给予的装备如果生物仍持有也会消失。箭、火球和爆炸的伤害不变，玩家永远不会被改变。
 
 环境还可以带有 `loot` 块，在环境开启期间把一张战利品表换成另一张：生物掉落、钓鱼、进度奖励，以及世界生成的箱子和运输矿车。箱子在第一次打开时才被填充，所以由那一刻开启的环境决定里面的内容。把一张表对应到 `minecraft:empty`，就什么都不会掉落。`trades` 块按[交易](#交易)的格式列出交易；它提到的职业的村民，在环境开启期间会提供这些交易（最高到自己的等级）来代替自己原有的交易，环境关闭后则恢复自己的交易。每个村民两份都会保留：已完成的交易、售罄的交易和补货，会在环境回来时从原处继续，重启之后也一样。列出的每个职业都要给出 1 级交易，否则该职业的新村民没有任何交易可提供。流浪商人不会被改变。`biomes` 和重叠的处理与天空相同。
 
-环境还可以带一个 `rules` 块，在环境开启期间改变世界的运作方式。`dayLength` 像 [`time.dayLength`](#time-块) 一样拉长一天，`weather` 把天气固定为 `clear`、`rain` 或 `thunder`，`weatherSpeed` 让维度的天气变化更快或更慢，`0` 则保持现状；没有 `weather.cycle` 时，它会加快主世界的天气，其他维度共用这一天气。`difficulty` 在这里取代世界难度，优先于 `worldDifficulty`，`localDifficulty` 设定从 `0` 到 `6.75` 的局部难度，决定生物生成时穿戴盔甲或拾取物品的频率。关闭 `sleep` 后无人能睡觉，正在睡觉的玩家会醒来；`wakeAt` 设定一夜睡眠结束的时刻，并且和原版的跳过夜晚一样，只在主世界拨动时钟。`sleep` 和 `localDifficulty` 与天空一样遵循 `biomes` 和重叠；其余的键作用于整个维度，因此带 `biomes` 的环境给出这类键时会写入日志，该键被忽略。关闭环境会一次性恢复所有内容；天气会在几秒内逐渐恢复。
+环境还可以带一个 `rules` 块，在环境开启期间改变世界的运作方式。`dayLength` 像 [`time.dayLength`](#time-块) 一样拉长一天，`weather` 把天气固定为 `clear`、`rain` 或 `thunder`，`weatherSpeed` 让维度的天气变化更快或更慢，`0` 则保持现状；没有 `weather.cycle` 时，它会加快主世界的天气，其他维度共用这一天气。`difficulty` 在这里取代世界难度，优先于 `worldDifficulty`，`localDifficulty` 设定从 `0` 到 `6.75` 的局部难度，决定生物生成时穿戴盔甲或拾取物品的频率。关闭 `sleep` 后无人能睡觉，正在睡觉的玩家会醒来；`wakeAt` 设定一夜睡眠结束的时刻，并且和原版的跳过夜晚一样，只在主世界拨动时钟。`sleep`、`localDifficulty` 和 `snow` 与天空一样遵循 `biomes` 和重叠；其余的键作用于整个维度，因此带 `biomes` 的环境给出这类键时会写入日志，该键被忽略。关闭环境会一次性恢复所有内容；天气会在几秒内逐渐恢复。
+
+在 `rules` 中，`snow` 决定环境开启期间雪在哪里积累、水在哪里结冰。`place` 和 `freeze` 各自取四个值之一。`default` 保留维度的 `weather.snow` 或 `weather.freeze` 以及原版的寒冷生物群系判定。`biome` 保留寒冷生物群系判定，但忽略维度 `weather` 块中的 `false`。`any` 让每个生物群系都能积雪或结冰，无论它多温暖，同样忽略那个 `false`。`never` 则禁止。雪只在下雨时积累，水在晴天也会结冰，与原版一致；仍需要露天、方块光照低于 10，并且地面能承载积雪。`whenDry` 开启后，即使不下雨，雪也会在每个玩家周围、游戏对方块进行随机刻的范围内积累，速度大致与下雨时相当。`melt: always` 会在同一范围内、每根立柱的顶部融化 `meltBlocks` 中的方块，不论光照或生物群系如何。雪层每次减少一层，冰会变成水，若维度的 `waterVaporizes` 开启则直接消失。列表中的其他方块，例如 `minecraft:snow_block`，会被移除。`meltChance` 是被检查的立柱融化的概率：设为 `1` 时，玩家附近的立柱融化的频率大致与下雨时给它加一层的频率相当，默认值比这慢十六倍。`melt: always` 时，`whenDry` 不起任何作用。任何内容都不会保存：环境关闭时，融化会停在当时的状态，已经融化或积累的部分保持不变。
 
 环境还可以带一个 `raids` 块，在环境开启期间改变维度中的[袭击](#袭击)。给出 `every` 后，每个玩家会统计自己在环境开启的地方度过的刻数。计数达到 `every` 时，`start` 中列出的某个袭击会在该玩家身边开始，就像他带着该袭击的 `omen` 一样：在他所处的村庄中，或者在袭击带有 `anywhere` 时在他周围。若袭击无法在那里开始，计数保持满值，时钟每秒再试一次。任何开始的袭击都会把其 `reach` 范围内每个玩家的计数重置为 0，因此 `every` 是两次袭击之间的最短间隔。`waves` 和 `points` 会乘以在该环境下开始的每个袭击的波数和积分，由 `omen` 触发的和由 `/rdplserver raid` 触发的也包括在内。两者都会四舍五入，袭击至少有一波；超出袭击自身列表的末尾后，它的最后一波会再次到来。袭击会保留开始时的波数和积分，即使环境之后关闭也是如此，它们会随袭击一起保存。有 `biomes` 时，时钟按玩家所在位置判断，波数和积分按袭击的中心判断。多个环境重叠的地方，由最后开启的那个决定。没有环境给出 `every` 的地方计数暂停，计数随玩家保存，每个维度一个。
 
-| 键                                                     | 必需            | 值                     | 默认值         | 作用                                                                                                                                                                                                                                    |
-| ------------------------------------------------------ | --------------- | ---------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `environments.<name>`                                  | 否              | 对象                   | 无             | 一个环境。名称为一个单词，除 `default` 外均可                                                                                                                                                                                           |
-| `environments.<name>.biomes`                           | 否              | 生物群系名称列表       | 所有生物群系   | 生物群系 id，例如 `minecraft:desert`，或用 `#tag` 表示生物群系标签，例如 `#minecraft:is_ocean`。这样环境只在这些生物群系中生效                                                                                                          |
-| `environments.<name>.sky`                              | 否              | 对象                   | 无             | [`sky` 块](#sky-块)中的键，但世界加载时只设定一次的键除外：`hasSkyLight`、`surfaceWorld`、`respawn`、`respawnDimension`、`spawning`、`nether`、`beds`、`waterVaporizes`、`groundLevel`、`movementFactor`、`fixedTime` 和 `ambientLight` |
-| `environments.<name>.ambience`                         | 否              | 对象                   | 无             | [`ambience` 块](#ambience-块)中的键                                                                                                                                                                                                     |
-| `environments.<name>.spawning`                         | 否              | 对象                   | 无             | [生成](#生成)的频率和上限键，外加 `weights`                                                                                                                                                                                             |
-| `environments.<name>.spawning.weights`                 | 否              | 实体 id 到倍数的对象   | 无             | 按倍数调整该生物在它所在的每个生成列表中的权重；`0` 会让它不再自然生成                                                                                                                                                                  |
-| `environments.<name>.growth`                           | 否              | 对象                   | 无             | `crops`、`saplings`、`animals` 和 `breeding` 的速度                                                                                                                                                                                     |
-| `environments.<name>.growth.crops`                     | 否              | 数字，0 到 100         | `1`            | 作物生长速度；`0` 会使其停止                                                                                                                                                                                                            |
-| `environments.<name>.growth.saplings`                  | 否              | 数字，0 到 100         | `1`            | 树苗生长速度；`0` 会使其停止                                                                                                                                                                                                            |
-| `environments.<name>.growth.animals`                   | 否              | 数字，0 到 100         | `1`            | 幼年动物长大的速度；`0` 会让它们一直保持幼年                                                                                                                                                                                            |
-| `environments.<name>.growth.breeding`                  | 否              | 数字，0 到 100         | `1`            | 繁殖后等待时间流逝的速度；`0` 会使繁殖停止                                                                                                                                                                                              |
-| `environments.<name>.mobs`                             | 否              | 对象                   | 无             | 在环境开启期间改变生物                                                                                                                                                                                                                  |
-| `environments.<name>.mobs.entities`                    | 否              | 实体 ID 或类别列表     | `["#monster"]` | 如 `minecraft:zombie` 的 ID，或类别 `#monster`、`#creature`、`#ambient`、`#water_creature`                                                                                                                                              |
-| `environments.<name>.mobs.health`                      | 否              | 数字，大于 0           | `1`            | 乘以最大生命值                                                                                                                                                                                                                          |
-| `environments.<name>.mobs.damage`                      | 否              | 0 或更大的数字         | `1`            | 乘以近战攻击伤害                                                                                                                                                                                                                        |
-| `environments.<name>.mobs.speed`                       | 否              | 0 或更大的数字         | `1`            | 乘以行走速度；`0` 会使生物停在原地                                                                                                                                                                                                      |
-| `environments.<name>.mobs.equipment`                   | 否              | 槽位到物品的对象       | 无             | 槽位为 `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet`；只会填入空槽位                                                                                                                                                           |
-| `environments.<name>.mobs.equipment.<slot>.item`       | 是              | 物品 ID                | 无             | 给予的物品                                                                                                                                                                                                                              |
-| `environments.<name>.mobs.equipment.<slot>.dropChance` | 否              | 数字，0 到 1           | `0.085`        | 生物死亡时该物品掉落的概率                                                                                                                                                                                                              |
-| `environments.<name>.loot`                             | 否              | 表 ID 到表 ID 的对象   | 无             | 环境开启期间，把列出的每张表换成给定的表                                                                                                                                                                                                |
-| `environments.<name>.trades`                           | 否              | 交易列表               | 无             | 条目格式同[交易](#交易)；列出的职业的村民只提供这些交易，最高到其等级                                                                                                                                                                   |
-| `environments.<name>.trades[].profession`              | 是              | 职业 ID                | 无             | `career`、`level`、`buy`、`buySecondary`、`sell`、`maxUses` 的格式同[交易](#交易)                                                                                                                                                       |
-| `environments.<name>.rules`                            | 否              | 对象                   | 无             | 环境开启期间的世界规则                                                                                                                                                                                                                  |
-| `environments.<name>.rules.dayLength`                  | 否              | 大于 0 的整数          | 维度自身的值   | 一天的长度，仅限整个维度                                                                                                                                                                                                                |
-| `environments.<name>.rules.weather`                    | 否              | 字符串                 | 无             | 固定为 `clear`、`rain` 或 `thunder`，仅限整个维度                                                                                                                                                                                       |
-| `environments.<name>.rules.weatherSpeed`               | 否              | 数字，0 到 100         | `1`            | 天气变化的快慢，仅限整个维度                                                                                                                                                                                                            |
-| `environments.<name>.rules.difficulty`                 | 否              | `peaceful`…`hard`      | 无             | 难度，仅限整个维度                                                                                                                                                                                                                      |
-| `environments.<name>.rules.localDifficulty`            | 否              | 数字，0 到 6.75        | 原版的值       | 局部难度                                                                                                                                                                                                                                |
-| `environments.<name>.rules.sleep`                      | 否              | 布尔值                 | `true`         | 关闭后任何人都无法睡觉                                                                                                                                                                                                                  |
-| `environments.<name>.rules.wakeAt`                     | 否              | 整数，0 到 23999       | `0`            | 睡眠结束的时间，仅限整个维度                                                                                                                                                                                                            |
-| `environments.<name>.raids`                            | 否              | 对象                   | 无             | 改变袭击：`every`、`start`、`waves` 和 `points`                                                                                                                                                                                         |
-| `environments.<name>.raids.every`                      | 否              | 大于 0 的整数          | 无             | 玩家在此度过多少刻后，袭击在其身边开始。需要 `start`                                                                                                                                                                                    |
-| `environments.<name>.raids.start`                      | 有 `every` 时是 | 袭击 id 或其列表       | 无             | 时钟发起的袭击，或时钟从中随机选取的袭击列表                                                                                                                                                                                            |
-| `environments.<name>.raids.waves`                      | 否              | 数字，大于 0，最大 100 | `1`            | 乘以袭击派出的波数                                                                                                                                                                                                                      |
-| `environments.<name>.raids.points`                     | 否              | 数字，0 到 100         | `1`            | 乘以获胜的袭击发放的积分                                                                                                                                                                                                                |
+| 键                                                     | 必需               | 值                                 | 默认值                                | 作用                                                                                                                                                                                                                                    |
+| ------------------------------------------------------ | ------------------ | ---------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environments.<name>`                                  | 否                 | 对象                               | 无                                    | 一个环境。名称为一个单词，除 `default` 外均可                                                                                                                                                                                           |
+| `environments.<name>.biomes`                           | 否                 | 生物群系名称列表                   | 所有生物群系                          | 生物群系 id，例如 `minecraft:desert`，或用 `#tag` 表示生物群系标签，例如 `#minecraft:is_ocean`。这样环境只在这些生物群系中生效                                                                                                          |
+| `environments.<name>.sky`                              | 否                 | 对象                               | 无                                    | [`sky` 块](#sky-块)中的键，但世界加载时只设定一次的键除外：`hasSkyLight`、`surfaceWorld`、`respawn`、`respawnDimension`、`spawning`、`nether`、`beds`、`waterVaporizes`、`groundLevel`、`movementFactor`、`fixedTime` 和 `ambientLight` |
+| `environments.<name>.ambience`                         | 否                 | 对象                               | 无                                    | [`ambience` 块](#ambience-块)中的键                                                                                                                                                                                                     |
+| `environments.<name>.spawning`                         | 否                 | 对象                               | 无                                    | [生成](#生成)的频率和上限键，外加 `weights`                                                                                                                                                                                             |
+| `environments.<name>.spawning.weights`                 | 否                 | 实体 id 到倍数的对象               | 无                                    | 按倍数调整该生物在它所在的每个生成列表中的权重；`0` 会让它不再自然生成                                                                                                                                                                  |
+| `environments.<name>.growth`                           | 否                 | 对象                               | 无                                    | `crops`、`saplings`、`animals` 和 `breeding` 的速度                                                                                                                                                                                     |
+| `environments.<name>.growth.crops`                     | 否                 | 数字，0 到 100                     | `1`                                   | 作物生长速度；`0` 会使其停止                                                                                                                                                                                                            |
+| `environments.<name>.growth.saplings`                  | 否                 | 数字，0 到 100                     | `1`                                   | 树苗生长速度；`0` 会使其停止                                                                                                                                                                                                            |
+| `environments.<name>.growth.animals`                   | 否                 | 数字，0 到 100                     | `1`                                   | 幼年动物长大的速度；`0` 会让它们一直保持幼年                                                                                                                                                                                            |
+| `environments.<name>.growth.breeding`                  | 否                 | 数字，0 到 100                     | `1`                                   | 繁殖后等待时间流逝的速度；`0` 会使繁殖停止                                                                                                                                                                                              |
+| `environments.<name>.growth.byBlock`                   | 否                 | 方块 ID 或 `#标签` 到数字的对象    | 无                                    | 单个作物或树苗方块，或一组方块的速度，取代 `crops` 或 `saplings`。方块 ID 优先于标签，两个标签都匹配时先写的生效                                                                                                                        |
+| `environments.<name>.growth.tooltip`                   | 否                 | `"off"`、`"here"`、`"year"`        | `"off"`                               | 在种子、树苗和作物物品上显示速度：`here` 为持有者所在的环境，`year` 再为每个季节加一行                                                                                                                                                  |
+| `environments.<name>.growth.waiver`                    | 否                 | 对象                               | 无                                    | 植物上方有列出的方块时，替换该植物的生长速度                                                                                                                                                                                            |
+| `environments.<name>.growth.waiver.blocks`             | 有 `waiver` 时必填 | 方块 ID 或 `#标签` 的列表          | 无                                    | 起作用的方块                                                                                                                                                                                                                            |
+| `environments.<name>.growth.waiver.within`             | 否                 | 1 到 64 的整数                     | `8`                                   | 在植物上方查找多少格                                                                                                                                                                                                                    |
+| `environments.<name>.growth.waiver.scale`              | 否                 | 0 到 100 的数                      | `1`                                   | 例外生效时代替使用的速度                                                                                                                                                                                                                |
+| `environments.<name>.growth.waiver.kinds`              | 否                 | `crops`、`saplings` 的列表         | 两者                                  | 例外涵盖哪些种类                                                                                                                                                                                                                        |
+| `environments.<name>.growth.waiver.clear`              | 否                 | `true` 或 `false`                  | `false`                               | `true` 要求植物与列出的方块之间没有完全不透明的方块；`false` 无论中间隔着什么都算数                                                                                                                                                     |
+| `environments.<name>.mobs`                             | 否                 | 对象                               | 无                                    | 在环境开启期间改变生物                                                                                                                                                                                                                  |
+| `environments.<name>.mobs.entities`                    | 否                 | 实体 ID 或类别列表                 | `["#monster"]`                        | 如 `minecraft:zombie` 的 ID，或类别 `#monster`、`#creature`、`#ambient`、`#water_creature`                                                                                                                                              |
+| `environments.<name>.mobs.health`                      | 否                 | 数字，大于 0                       | `1`                                   | 乘以最大生命值                                                                                                                                                                                                                          |
+| `environments.<name>.mobs.damage`                      | 否                 | 0 或更大的数字                     | `1`                                   | 乘以近战攻击伤害                                                                                                                                                                                                                        |
+| `environments.<name>.mobs.speed`                       | 否                 | 0 或更大的数字                     | `1`                                   | 乘以行走速度；`0` 会使生物停在原地                                                                                                                                                                                                      |
+| `environments.<name>.mobs.equipment`                   | 否                 | 槽位到物品的对象                   | 无                                    | 槽位为 `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet`；只会填入空槽位                                                                                                                                                           |
+| `environments.<name>.mobs.equipment.<slot>.item`       | 是                 | 物品 ID                            | 无                                    | 给予的物品                                                                                                                                                                                                                              |
+| `environments.<name>.mobs.equipment.<slot>.dropChance` | 否                 | 数字，0 到 1                       | `0.085`                               | 生物死亡时该物品掉落的概率                                                                                                                                                                                                              |
+| `environments.<name>.loot`                             | 否                 | 表 ID 到表 ID 的对象               | 无                                    | 环境开启期间，把列出的每张表换成给定的表                                                                                                                                                                                                |
+| `environments.<name>.trades`                           | 否                 | 交易列表                           | 无                                    | 条目格式同[交易](#交易)；列出的职业的村民只提供这些交易，最高到其等级                                                                                                                                                                   |
+| `environments.<name>.trades[].profession`              | 是                 | 职业 ID                            | 无                                    | `career`、`level`、`buy`、`buySecondary`、`sell`、`maxUses` 的格式同[交易](#交易)                                                                                                                                                       |
+| `environments.<name>.rules`                            | 否                 | 对象                               | 无                                    | 环境开启期间的世界规则                                                                                                                                                                                                                  |
+| `environments.<name>.rules.dayLength`                  | 否                 | 大于 0 的整数                      | 维度自身的值                          | 一天的长度，仅限整个维度                                                                                                                                                                                                                |
+| `environments.<name>.rules.weather`                    | 否                 | 字符串                             | 无                                    | 固定为 `clear`、`rain` 或 `thunder`，仅限整个维度                                                                                                                                                                                       |
+| `environments.<name>.rules.weatherSpeed`               | 否                 | 数字，0 到 100                     | `1`                                   | 天气变化的快慢，仅限整个维度                                                                                                                                                                                                            |
+| `environments.<name>.rules.difficulty`                 | 否                 | `peaceful`…`hard`                  | 无                                    | 难度，仅限整个维度                                                                                                                                                                                                                      |
+| `environments.<name>.rules.localDifficulty`            | 否                 | 数字，0 到 6.75                    | 原版的值                              | 局部难度                                                                                                                                                                                                                                |
+| `environments.<name>.rules.sleep`                      | 否                 | 布尔值                             | `true`                                | 关闭后任何人都无法睡觉                                                                                                                                                                                                                  |
+| `environments.<name>.rules.wakeAt`                     | 否                 | 整数，0 到 23999                   | `0`                                   | 睡眠结束的时间，仅限整个维度                                                                                                                                                                                                            |
+| `environments.<name>.rules.snow`                       | 否                 | 对象                               | 无                                    | 环境开启期间的雪和冰；跟随 `biomes`                                                                                                                                                                                                     |
+| `environments.<name>.rules.snow.place`                 | 否                 | `default`, `biome`, `any`, `never` | `default`                             | 雪在哪里积累：按维度设定、仅按寒冷生物群系判定、每个生物群系、或哪里都不积                                                                                                                                                              |
+| `environments.<name>.rules.snow.freeze`                | 否                 | `default`, `biome`, `any`, `never` | `default`                             | 水在哪里结冰，同上                                                                                                                                                                                                                      |
+| `environments.<name>.rules.snow.whenDry`               | 否                 | 布尔值                             | `false`                               | 开启后，即使不下雨，雪也会在玩家周围积累                                                                                                                                                                                                |
+| `environments.<name>.rules.snow.melt`                  | 否                 | `never`, `always`                  | `never`                               | `always` 会在玩家周围融化 `meltBlocks`，不论光照或生物群系                                                                                                                                                                              |
+| `environments.<name>.rules.snow.meltChance`            | 否                 | 大于 0、至多 1 的数字              | `0.0625`                              | 被检查的立柱融化的概率                                                                                                                                                                                                                  |
+| `environments.<name>.rules.snow.meltBlocks`            | 否                 | 方块 ID 列表                       | `["minecraft:snow", "minecraft:ice"]` | 融化的内容：雪层减少一层，冰变成水（有 `waterVaporizes` 时直接消失），其他方块被移除                                                                                                                                                    |
+| `environments.<name>.raids`                            | 否                 | 对象                               | 无                                    | 改变袭击：`every`、`start`、`waves` 和 `points`                                                                                                                                                                                         |
+| `environments.<name>.raids.every`                      | 否                 | 大于 0 的整数                      | 无                                    | 玩家在此度过多少刻后，袭击在其身边开始。需要 `start`                                                                                                                                                                                    |
+| `environments.<name>.raids.start`                      | 有 `every` 时是    | 袭击 id 或其列表                   | 无                                    | 时钟发起的袭击，或时钟从中随机选取的袭击列表                                                                                                                                                                                            |
+| `environments.<name>.raids.waves`                      | 否                 | 数字，大于 0，最大 100             | `1`                                   | 乘以袭击派出的波数                                                                                                                                                                                                                      |
+| `environments.<name>.raids.points`                     | 否                 | 数字，0 到 100                     | `1`                                   | 乘以获胜的袭击发放的积分                                                                                                                                                                                                                |
 
 环境中的任何其他键，或上面列出的 `sky` 键，都会被忽略并在日志中记录错误。用资源包已不再定义的环境保存的世界，会恢复维度自身的外观。
 
@@ -6032,6 +6066,96 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `seasons`       | 否                | 对象                       | 无     | 按年周期开启和关闭维度的环境                 |
 | `seasons.days`  | 有 `seasons` 时是 | 大于 0 的整数              | 无     | 每个季节持续的天数                           |
 | `seasons.order` | 有 `seasons` 时是 | 环境名或名称列表组成的列表 | 无     | 季节的先后顺序。列表项会让其中的环境一起切换 |
+
+### 季节时钟
+
+*物品*
+
+带有 `seasonClock` 的物品就是季节时钟。它的物品定义通过两个属性读取季节，右键会告诉持有者当前是哪个季节、是这个季节的第几天。
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "seasonClock": { "dimension": "minecraft:overworld", "message": true },
+  "variants": {
+    "season_clock": {
+      "maxSize": 1
+    }
+  }
+}
+```
+
+它的物品定义 `assets/mypack/items/season_clock.json` 为四个季节各配一帧：
+
+```json
+{
+  "model": {
+    "type": "minecraft:range_dispatch",
+    "property": "rdpl:year",
+    "fallback": { "type": "minecraft:model", "model": "mypack:item/clock_spring" },
+    "entries": [
+      { "threshold": 0.25, "model": { "type": "minecraft:model", "model": "mypack:item/clock_summer" } },
+      { "threshold": 0.5, "model": { "type": "minecraft:model", "model": "mypack:item/clock_autumn" } },
+      { "threshold": 0.75, "model": { "type": "minecraft:model", "model": "mypack:item/clock_winter" } }
+    ]
+  }
+}
+```
+
+| 键                      | 必需 | 值            | 默认值           | 作用                                            |
+| ----------------------- | ---- | ------------- | ---------------- | ----------------------------------------------- |
+| `seasonClock`           | 否   | `true` 或对象 | 无               | 让物品成为季节时钟。`true` 读取持有者所在的维度 |
+| `seasonClock.dimension` | 否   | 维度 ID       | 持有者所在的维度 | 显示哪个维度的季节                              |
+| `seasonClock.message`   | 否   | 布尔值        | `true`           | 右键会告诉持有者当前季节和这是该季节的第几天    |
+
+| 属性          | 值            | 作用                                                                               |
+| ------------- | ------------- | ---------------------------------------------------------------------------------- |
+| `rdpl:year`   | 0 到 1 的小数 | 一年过去了多少：季节序号加上该季节已过天数的比例，再除以季节数。维度没有季节时为 0 |
+| `rdpl:season` | 从 0 起的整数 | 季节序号，`order` 的第一项为 0。可以按季节而不是按比例挑选帧。维度没有季节时为 0   |
+
+两者都是 `minecraft:range_dispatch` 模型的数值属性。条目在属性达到其 `threshold` 时生效，满足条件的最后一项胜出，所以要从小到大排列，和定位指南针的做法一样。维度没有季节时，消息会这样告诉持有者。
+
+### 季节传感器
+
+*方块*
+
+类型为 `seasonSensor` 的方块会按维度的季节输出红石信号，比较器读到的也是同一个数。它每 100 刻查看一次时钟。
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "seasonSensor",
+  "material": "rock",
+  "creativeTab": "redstone",
+  "seasonSensor": {
+    "dimension": "minecraft:overworld",
+    "output": { "spring": 3, "summer": 6, "autumn": 9, "winter": 12 }
+  },
+  "variants": { "season_sensor": { "hardness": 1.0, "resistance": 5 } }
+}
+```
+
+它的方块状态 `assets/mypack/blockstates/season_sensor.json` 为 0 到 15 的每个强度各写一项：
+
+```json
+{
+  "variants": {
+    "power=0": { "model": "mypack:block/season_sensor_0" },
+    "power=1": { "model": "mypack:block/season_sensor_1" },
+    "power=15": { "model": "mypack:block/season_sensor_15" }
+  }
+}
+```
+
+| 键                       | 必需           | 值                              | 默认值             | 作用                                                                                              |
+| ------------------------ | -------------- | ------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------- |
+| `seasonSensor`           | 使用该类型时是 | 对象                            | 无                 | 按季节输出红石信号的方块                                                                          |
+| `seasonSensor.dimension` | 否             | 维度 ID                         | 方块自己所在的维度 | 读取哪个维度的季节                                                                                |
+| `seasonSensor.output`    | 否             | 对象，季节名对应 1 到 15 的强度 | 在各季节间平均分配 | 每个季节的强度。省略的季节得到 `(序号 + 1) * 15 / 季节数` 向下取整的值，四个季节就是 3、7、11、15 |
+
+强度就是方块状态 `power`，所以方块状态要为它的 16 个值各写一个变种。维度没有季节时，它保持为 0。`output` 里的季节以其 `order` 条目中第一个环境的名称来称呼。
 
 ## 传送门与闸门
 
@@ -8259,10 +8383,16 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 `when` 包含的条件必须在触发器触发的那一刻全部成立。
 
+```json
+{ "when": { "season": ["winter", "spring"], "dimension": "minecraft:overworld" } }
+```
+
 | 设置                        | 类型       | 检查内容                                                                                                              |
 | --------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
 | `biomes`                    | 列表       | 玩家站在这些生物群系之一中，写法与触发器相同                                                                          |
 | `environments`              | 列表       | 玩家所在维度中，这些环境之一处于启用状态，包括 `default`                                                              |
+| `season`                    | 列表       | 按季节时钟，该维度处于这些季节之一，即使环境是手动切换的。季节名称是季节 `order` 中某一项的第一个环境名称             |
+| `dimension`                 | 文本       | `season` 读取季节所用的维度，写维度 ID，例如 `minecraft:overworld`。不写时为玩家所在的维度                            |
 | `timeFrom`、`timeTo`        | 整数       | 昼夜时钟位于此时间窗口内，窗口可以跨过午夜，例如 `13000` 到 `1000`                                                    |
 | `dayAtLeast`                | 整数       | 天数至少为此值                                                                                                        |
 | `advancement`               | 文本       | 玩家拥有该进度                                                                                                        |

@@ -46,6 +46,7 @@ import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpaw
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
 import mctmods.resourcedatapackloader.common.fireworks.ContentFireworks;
@@ -255,6 +256,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentEnvironments::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentEnvironments::onLogin);
         NeoForge.EVENT_BUS.addListener(ContentSeasons::onServerTick);
+        NeoForge.EVENT_BUS.addListener(ContentSeasonSnow::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentBoards::onTick);
         NeoForge.EVENT_BUS.addListener(ContentBoards::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentBoards::onAttack);

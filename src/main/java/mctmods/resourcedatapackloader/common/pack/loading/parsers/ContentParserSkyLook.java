@@ -17,7 +17,7 @@ import net.minecraft.resources.Identifier;
 
 public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
-    private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow", "grassTint", "foliageTint");
+    private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow", "grassTint", "foliageTint", "birchTint");
     private static final List<String> FACES = List.of("up", "down", "north", "east", "south", "west");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
@@ -49,7 +49,7 @@ public final class ContentParserSkyLook {
                 color(key, sun, "color"), color(key, sun, "auraColor"), auraSize(key, sun), auraHorizon(key, sun),
                 (int) Json.ranged(sun, "lineCount", 0.0F, 0.0F, 64.0F, "Dimension " + key + " sky.sun"), Json.ranged(sun, "lineStart", 0.25F, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"),
                 Json.ranged(sun, "lineLength", 3.0F, 0.0F, 1000.0F, "Dimension " + key + " sky.sun"), Json.ranged(sun, "lineWidth", 0.02F, 0.0F, 10.0F, "Dimension " + key + " sky.sun"), argb(key, sun),
-                color(key, sky, "grassTint"), color(key, sky, "foliageTint"));
+                color(key, sky, "grassTint"), color(key, sky, "foliageTint"), color(key, sky, "birchTint"));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(Identifier key, JsonObject sky) {

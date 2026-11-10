@@ -33,6 +33,7 @@ import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.fireworks.FireworkParticles;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
@@ -88,6 +89,7 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> ContentFogSampler.tick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> ContentHeatShimmer.tick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> ContentSeasonTint.tick());
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> SeasonClock.tick());
         NeoForge.EVENT_BUS.addListener(ContentHeatShimmer::onAfterLevel);
         NeoForge.EVENT_BUS.addListener(HoldView::onFog);
         NeoForge.EVENT_BUS.addListener(HoldView::onHud);
@@ -103,6 +105,7 @@ public class ClientSetup {
             Toasts.leave();
             ContentEnvironments.clear();
             ContentSeasonTint.forget();
+            SeasonClock.received(0L);
             AnvilCosts.leave();
             ContentSkyGates.clear();
             ClientItemLocks.clear();
