@@ -120,6 +120,7 @@ public final class PackManager {
     public static final String HARVESTS = "harvests";
     public static final String VEINS = "veins";
     public static final String COLUMNS = "columns";
+    public static final String PAIRED_DOORS = "paired_doors";
     public static final String FLOWER_SPREADS = "flower_spreads";
     public static final String CARRIES = "carries";
     public static final String ENCHANTING = "enchanting";

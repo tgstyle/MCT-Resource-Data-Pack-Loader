@@ -78,6 +78,7 @@ Questa guida è per le build 1.20.1 e 1.21.1. Leggono gli stessi pack; i pochi p
 - [Colonne che cadono](#colonne-che-cadono)
 - [Diffusione dei fiori](#diffusione-dei-fiori)
 - [Trasporto](#trasporto)
+- [Porte accoppiate](#porte-accoppiate)
 - [Rimozioni di loot](#rimozioni-di-loot)
 - [Drop dei mob](#drop-dei-mob)
 - [Bottino dei giocatori](#bottino-dei-giocatori)
@@ -232,6 +233,7 @@ Sotto `data/`:
 | `<namespace>/diets/*.json`                   | Regole per cui un cibo ripetuto sazia meno e una dieta varia sazia di più. [Varietà del cibo](#varietà-del-cibo)                                                                                                               |
 | `<namespace>/columns/*.json`                 | Serie di blocchi che cadono e si rompono insieme a quelli sopra il blocco rotto dal giocatore. [Colonne che cadono](#colonne-che-cadono)                                                                                       |
 | `<namespace>/flower_spreads/*.json`          | Fiori extra piazzati intorno all'erba o a un altro blocco quando vi si usa la farina d'ossa. [Diffusione dei fiori](#diffusione-dei-fiori)                                                                                     |
+| `<namespace>/paired_doors/*.json`            | Una porta vicina alla sua porta speculare si apre e si chiude con lei. [Porte accoppiate](#porte-accoppiate)                                                                                                                   |
 | `<namespace>/advancements/*.json`            | Progressi. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                                 |
 | `<namespace>/functions/*.mcfunction`         | File di funzione. [Cosa puoi sovrascrivere](#cosa-puoi-sovrascrivere)                                                                                                                                                          |
 | `<namespace>/tags/<kind>/*.json`             | Tag, nel formato del gioco. [Materiali, schede, suoni, tag](#materiali-schede-suoni-tag)                                                                                                                                       |
@@ -3858,6 +3860,38 @@ Uno scambio può dipendere anche dal giocatore che apre la finestra. Chi non sod
 `priceScale` cambia solo `buy`, mai `buySecondary`, e al costo scalato si applicano comunque anche la domanda e la reputazione del gioco. Il gioco distingue uno scambio condizionale dagli altri scambi del villico dalla sua professione e dai suoi oggetti (`buy`, `buySecondary` e `sell`), perciò dagli oggetti che nessun altro scambio di quella professione usa. Due scambi del pack con gli stessi oggetti: il secondo viene saltato e scritto nel log. I villici i cui scambi sono già stati generati li mantengono.
 
 ---
+
+## Porte accoppiate
+
+*crafting, bottino e scambi*
+
+`<namespace>/paired_doors/*.json`
+
+Il nome del file lo scegli tu, viene letta solo la cartella e più file si sommano.
+
+Una porta che sta accanto a un'altra, con i cardini specchiati, si muove con essa. Quando un giocatore ne usa una, un segnale di redstone la cambia, o un mob la apre o la chiude, il suo compagno si apre o si chiude allo stesso modo, così una porta doppia si comporta come una porta sola. Senza file non cambia nulla; un pack che vuole che l'accoppiamento sia una scelta del giocatore mette una voce `config:` in `requires`, come descritto sotto Opzioni del pack.
+
+```json
+{
+  "requires": [],
+  "blocks": ["minecraft:oak_door", {"block": "mypack:gate_door"}],
+  "tag": ["minecraft:wooden_doors"],
+  "all": false,
+  "unlessSneaking": true,
+  "mobs": false
+}
+```
+
+| Chiave           | Obbligatorio | Valore                                       | Predefinito | Cosa fa                                                                                                                                                                                                                                                                         |
+| ---------------- | ------------ | -------------------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`       | no           | elenco di stringhe                           | nessuno     | Id di mod, namespace di pack o opzioni `config:` che devono essere presenti, come altrove.                                                                                                                                                                                      |
+| `blocks`         | no           | elenco di id di blocco o oggetti con `block` | nessuno     | Le porte che questa regola copre. Scrivi solo id: lo stato di blocco di una porta contiene orientamento, cardine e stato aperto, non il tipo, quindi non isola una porta. Una regola richiede `blocks`, `tag` o `all`, altrimenti registra una riga di errore e viene ignorata. |
+| `tag`            | no           | elenco di id di tag di blocco                | nessuno     | Tag di blocchi le cui porte sono coperte da questa regola. Un tag che non è un id di tag valido registra una riga di errore ed è lasciato fuori.                                                                                                                                |
+| `all`            | no           | booleano                                     | `false`     | Se vero, conta ogni porta di ogni mod, senza elenco.                                                                                                                                                                                                                            |
+| `unlessSneaking` | no           | booleano                                     | `true`      | Se vero, un giocatore accovacciato sposta solo la porta che ha usato.                                                                                                                                                                                                           |
+| `mobs`           | no           | booleano                                     | `false`     | Se vero, una porta cambiata da un mob, da un comando o da codice di un altro mod sposta anche il suo compagno. Se falso resta il comportamento attuale.                                                                                                                         |
+
+Due porte si accoppiano quando il compagno sta direttamente accanto alla porta, ha il cardine specchiato e lo stesso orientamento, è coperto dalla stessa regola, era nello stesso stato aperto della porta prima della modifica e si può aprire a mano nello stesso modo. Una porta che non si può aprire a mano, come la porta di ferro, si accoppia solo con un'altra porta di quel tipo e segue redstone e mob, ma un clic a mano non ne muove mai una. Un segnale di redstone su una delle due muove entrambe, e un compagno che la redstone tiene alimentato non viene mai chiuso dalla coppia. Tutto ciò che non è un clic del giocatore né redstone conta come modifica da mob, e il compagno la segue solo se `mobs` è vero. Un clic sposta il compagno solo se il giocatore può usare entrambe le porte secondo le regole dei claim, e una modifica da redstone o da mob solo se entrambe le porte hanno lo stesso proprietario di claim. I giocatori finti non muovono mai una coppia, e botole e cancelli non sono inclusi. Un caricamento registra `Loaded N paired door rule(s)`, e un file che non nomina alcun blocco registrato né alcun tag valido registra una riga di errore ed è ignorato.
 
 ## Rimozioni di loot
 

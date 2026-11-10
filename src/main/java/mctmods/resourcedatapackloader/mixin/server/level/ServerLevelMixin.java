@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.server.level;
 
+import mctmods.resourcedatapackloader.common.blocks.ContentPairedDoors;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
@@ -112,4 +113,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ServerLevel level = (ServerLevel) (Object) this;
         if (!ContentSpawnChunks.leftToTheGame() && level.dimension() == Level.OVERWORLD) { ContentSpawnChunks.hold(level, new ChunkPos(pos)); }
     }
+
+    @Inject(method = "sendBlockUpdated(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;I)V", at = @At("TAIL")) private void rdpl$pairedDoors(BlockPos pos, BlockState oldState, BlockState newState, int flags, CallbackInfo ci) { ContentPairedDoors.onBlockChanged((ServerLevel) (Object) this, pos, oldState, newState); }
 }
