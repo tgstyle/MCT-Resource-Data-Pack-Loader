@@ -1,12 +1,15 @@
 package mctmods.resourcedatapackloader.common.dimension;
 
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
+import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.MobSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RuleSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SnowRuleDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.RaidSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.TradeSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
@@ -47,6 +50,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.biome.Biome;
 import net.neoforged.fml.util.thread.EffectiveSide;
@@ -177,13 +182,14 @@ public final class ContentEnvironments {
         return set == null ? base : set;
     }
 
-    private static <T> T chosen(ServerLevel level, BlockPos pos, Map<DimensionDef, T> blocks, T none) {
-        ResourceLocation dimension = level.dimension().location();
+    private static <T> T chosen(Level level, BlockPos pos, Map<DimensionDef, T> blocks, T none) { return chosen(level.dimension().location(), level, pos, blocks, none); }
+
+    private static <T> T chosen(ResourceLocation dimension, LevelReader reader, BlockPos pos, Map<DimensionDef, T> blocks, T none) {
         List<String> active = ACTIVE.get(dimension);
         Map<String, DimensionDef> sets = active == null ? null : SETS.get(dimension);
         if (sets == null) { return none; }
         if (active.size() > 1) {
-            Holder<Biome> biome = level.getBiome(pos);
+            Holder<Biome> biome = reader.getBiome(pos);
             for (int index = active.size() - 1; index > 0; index--) {
                 DimensionDef set = sets.get(active.get(index));
                 if (set != null && PLACES.containsKey(set) && BiomeNames.matches(PLACES.get(set), biome)) { return blocks.getOrDefault(set, none); }
@@ -208,9 +214,20 @@ public final class ContentEnvironments {
 
     public static RuleSwitchDef rules(ServerLevel level, BlockPos pos) { return chosen(level, pos, RULESETS, RuleSwitchDef.NONE); }
 
+    public static SnowRuleDef snow(LevelReader reader, BlockPos pos) { return snowIn(ContentWeather.level(reader), reader, pos); }
+
+    private static SnowRuleDef snowIn(@Nullable Level level, LevelReader reader, BlockPos pos) {
+        return level == null ? SnowRuleDef.NONE : chosen(level.dimension().location(), reader, pos, RULESETS, RuleSwitchDef.NONE).snow();
+    }
+
     public static SpawnSwitchDef spawning(ServerLevel level, BlockPos pos) { return chosen(level, pos, SPAWNS, SpawnSwitchDef.NONE); }
 
-    public static GrowSwitchDef growth(ServerLevel level, BlockPos pos) { return chosen(level, pos, GROWS, GrowSwitchDef.NONE); }
+    public static GrowSwitchDef growth(Level level, BlockPos pos) { return chosen(level, pos, GROWS, GrowSwitchDef.NONE); }
+
+    public static GrowSwitchDef growthOf(ResourceLocation dimension, String environment) {
+        DimensionDef set = SETS.getOrDefault(dimension, Map.of()).get(environment);
+        return set == null ? GrowSwitchDef.NONE : GROWS.getOrDefault(set, GrowSwitchDef.NONE);
+    }
 
     public static MobSwitchDef mobs(ServerLevel level, BlockPos pos) { return chosen(level, pos, MOBLINES, MobSwitchDef.NONE); }
 
@@ -291,6 +308,7 @@ public final class ContentEnvironments {
         ACTIVE.clear();
         ContentSeasons.forget();
         ContentRaidSwitch.check(RAIDLINES.values());
+        ContentSeasonSnow.check(RULESETS.values());
         EnvironmentStorage storage = EnvironmentStorage.of(event.getServer());
         for (Map.Entry<ResourceLocation, List<String>> entry : storage.kept().entrySet()) {
             List<String> kept = new ArrayList<>();
@@ -345,6 +363,7 @@ public final class ContentEnvironments {
             if (look == null) { continue; }
             found.add(look.grassTint());
             found.add(look.foliageTint());
+            found.add(look.birchTint());
             found.add(look.snowColor());
         }
         return found;
@@ -356,6 +375,8 @@ public final class ContentEnvironments {
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { RDPLNetwork.sendEnvironments(player, new EnvironmentsMessage(new LinkedHashMap<>(ACTIVE), true)); }
+        if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
+        RDPLNetwork.sendEnvironments(player, new EnvironmentsMessage(new LinkedHashMap<>(ACTIVE), true));
+        ContentSeasons.sendClock(player);
     }
 }

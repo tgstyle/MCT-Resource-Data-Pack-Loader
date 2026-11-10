@@ -150,6 +150,11 @@ public final class ContentClient {
                     }));
                 }
             }
+            for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+                if (entry.def() == null || entry.def().seasonClock() == null) { continue; }
+                ItemProperties.register(entry.item(), ResourceLocation.fromNamespaceAndPath("rdpl", "year"), ClientSeasonClock.year(entry.def().seasonClock()));
+                ItemProperties.register(entry.item(), ResourceLocation.fromNamespaceAndPath("rdpl", "season"), ClientSeasonClock.season(entry.def().seasonClock()));
+            }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());

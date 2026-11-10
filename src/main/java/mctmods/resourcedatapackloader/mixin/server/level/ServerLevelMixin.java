@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.server.level;
 
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentTimeWindows;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.environment.ContentWeatherCycle;
@@ -83,7 +84,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Redirect(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;handlePrecipitation(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/biome/Biome$Precipitation;)V")) private void rdpl$rainFillBelowCeiling(Block block, BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
         if (ContentWeather.above(level, pos.getY())) { return; }
         Biome.Precipitation falls = ContentWeather.fallsAs(level, level.getBiome(pos.above()).value(), precipitation);
-        if (falls == Biome.Precipitation.SNOW && !ContentWeather.traits(level).snow()) { return; }
+        if (falls == Biome.Precipitation.SNOW && ContentSeasonSnow.snowStopped(level, pos)) { return; }
         block.handlePrecipitation(state, level, pos, falls);
     }
 

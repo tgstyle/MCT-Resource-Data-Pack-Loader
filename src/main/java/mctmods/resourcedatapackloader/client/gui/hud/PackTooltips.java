@@ -3,8 +3,13 @@ package mctmods.resourcedatapackloader.client.gui.hud;
 import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
+import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
+import mctmods.resourcedatapackloader.common.environment.SeasonState;
 import mctmods.resourcedatapackloader.common.items.ContentContainerBlockItem;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
@@ -13,16 +18,24 @@ import mctmods.resourcedatapackloader.core.config.Config;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CropBlock;
+import net.minecraft.world.level.block.NetherWartBlock;
+import net.minecraft.world.level.block.SaplingBlock;
+import net.minecraft.world.level.block.StemBlock;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -73,10 +86,35 @@ public final class PackTooltips {
         else { tooltip.add(Component.translatable("rdpl.diet.tooltip.new").withStyle(ChatFormatting.YELLOW)); }
     }
 
+    private static boolean sapling(Block block) { return block instanceof SaplingBlock || block instanceof ContentSaplingBlock; }
+
+    private static boolean plant(Block block) { return block instanceof CropBlock || block instanceof StemBlock || block instanceof NetherWartBlock || sapling(block); }
+
+    private static String scaled(float scale) { return scale == Math.rint(scale) ? String.valueOf((int) scale) : String.valueOf(scale); }
+
+    private static void fertility(ItemStack stack, List<Component> tooltip) {
+        Player player = Minecraft.getInstance().player;
+        if (Config.content.vanillaClients() || player == null || stack.isEmpty()) { return; }
+        Block block = Block.byItem(stack.getItem());
+        if (!plant(block)) { return; }
+        BlockPos pos = player.blockPosition();
+        GrowSwitchDef here = ContentEnvironments.growth(player.level(), pos);
+        if (here.tooltip() == GrowSwitchDef.TOOLTIP_OFF) { return; }
+        int kind = sapling(block) ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS;
+        tooltip.add(Component.translatable("rdpl.tooltip.fertility", scaled(here.scale(kind, block))).withStyle(ChatFormatting.GRAY));
+        ResourceLocation dimension = player.level().dimension().location();
+        SeasonState seasons = here.tooltip() == GrowSwitchDef.TOOLTIP_YEAR ? ContentSeasons.state(dimension) : null;
+        if (seasons == null) { return; }
+        for (String name : seasons.names()) {
+            tooltip.add(Component.translatable("rdpl.tooltip.fertility.season", name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1), scaled(ContentEnvironments.growthOf(dimension, name).scale(kind, block))).withStyle(ChatFormatting.GRAY));
+        }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         weight(event.getItemStack(), event.getToolTip());
         kept(event.getItemStack(), event.getToolTip());
         diet(event.getItemStack(), event.getToolTip());
+        fertility(event.getItemStack(), event.getToolTip());
         affixes(event.getItemStack(), event.getToolTip());
         lines(event);
     }

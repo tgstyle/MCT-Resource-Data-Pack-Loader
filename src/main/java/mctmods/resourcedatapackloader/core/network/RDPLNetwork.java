@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.gui.ContentPortwayMenu;
+import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
 import mctmods.resourcedatapackloader.common.items.ContentWornContainers;
@@ -69,6 +70,7 @@ public final class RDPLNetwork {
         registrar.playToClient(EatenMessage.TYPE, EatenMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientDiet.receive(message.eaten()); } });
         registrar.playToClient(WeightMessage.TYPE, WeightMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientWeights.receive(message); } });
         registrar.playToClient(BedStateMessage.TYPE, BedStateMessage.CODEC, (message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { SleepScreen.receive(message.state()); } });
+        registrar.playToClient(SeasonClockMessage.TYPE, SeasonClockMessage.CODEC, (message, context) -> SeasonClock.received(message.ticks()));
         registrar.playToServer(SetSpawnMessage.TYPE, SetSpawnMessage.CODEC, (message, context) -> { if (context.player() instanceof ServerPlayer player) { ContentSleep.setSpawnHere(player); } });
     }
 
@@ -106,6 +108,8 @@ public final class RDPLNetwork {
     public static void sendGates(ServerPlayer player, Set<String> open) { send(player, new GatesMessage(StringListCodec.capped(open))); }
 
     public static boolean sendUnlocks(ServerPlayer player, Set<String> open) { return send(player, new UnlocksMessage(StringListCodec.capped(open))); }
+
+    public static void sendSeasonClock(ServerPlayer player, long ticks) { send(player, new SeasonClockMessage(ticks)); }
 
     public static void sendEaten(ServerPlayer player, Set<String> eaten) { send(player, new EatenMessage(StringListCodec.capped(eaten))); }
 
