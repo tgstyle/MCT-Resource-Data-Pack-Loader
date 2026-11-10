@@ -45,9 +45,10 @@ public final class ItemDef {
     @Nullable public final ContainerUpgradeDef upgrade;
     public final int weight;
     @Nullable public final FireworkDef firework;
+    @Nullable public final SeasonClockDef seasonClock;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes, @Nullable WeaponDef weapon, @Nullable PortwayItemDef portway, boolean sleepingBag, @Nullable ContainerUpgradeDef upgrade, int weight, @Nullable FireworkDef firework) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, String rollStore, boolean passesTurn, String locates, String bauble, List<PotionEffectDef> wornEffects, List<AttributeDef> wornAttributes, @Nullable WeaponDef weapon, @Nullable PortwayItemDef portway, boolean sleepingBag, @Nullable ContainerUpgradeDef upgrade, int weight, @Nullable FireworkDef firework, @Nullable SeasonClockDef seasonClock) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -81,6 +82,7 @@ public final class ItemDef {
         this.upgrade = upgrade;
         this.weight = weight;
         this.firework = firework;
+        this.seasonClock = seasonClock;
     }
 
     public boolean worn() { return !bauble.isEmpty() && (!wornEffects.isEmpty() || !wornAttributes.isEmpty()); }

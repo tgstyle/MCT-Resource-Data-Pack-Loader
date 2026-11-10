@@ -134,6 +134,7 @@ public final class ContentParser {
                 Json.getString(json, "openSound", "").trim(),
                 ContentParserContainers.container(key, json),
                 bell(json),
+                ContentParserSeasons.sensor(json),
                 Collections.unmodifiableList(strings(json, "spreadsOnto")),
                 Json.getBoolean(json, "needsOxygen", true),
                 ContentParserPortways.portway(json),
@@ -355,7 +356,8 @@ public final class ContentParser {
                 Json.getBoolean(json, "sleepingBag", false),
                 ContentParserContainers.upgrade(key, type, json),
                 ContentParserWeights.weight(json, key),
-                ContentParserFireworks.firework(key, json));
+                ContentParserFireworks.firework(key, json),
+                ContentParserSeasons.clock(json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

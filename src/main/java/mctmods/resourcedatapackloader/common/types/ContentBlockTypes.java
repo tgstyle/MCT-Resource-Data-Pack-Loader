@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentFallingBlock;
 import mctmods.resourcedatapackloader.common.blocks.banner.ContentBannerBlock;
 import mctmods.resourcedatapackloader.common.blocks.banner.ContentWallBannerBlock;
 import mctmods.resourcedatapackloader.common.blocks.bell.ContentBellBlock;
+import mctmods.resourcedatapackloader.common.blocks.sensor.ContentSeasonSensorBlock;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
 import mctmods.resourcedatapackloader.common.blocks.light.ContentTorchBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCaneBlock;
@@ -162,6 +163,10 @@ public final class ContentBlockTypes {
         register("bell", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentBellBlock(def)); }
             @Override public int maxVariants() { return ContentBellBlock.MAX_VARIANTS; }
+        });
+        register("seasonSensor", new IBlockType() {
+            @Override public List<Block> create(BlockDef def) { return Collections.singletonList(new ContentSeasonSensorBlock(def)); }
+            @Override public int maxVariants() { return ContentSeasonSensorBlock.MAX_VARIANTS; }
         });
         register("portway", new IBlockType() {
             @Override public List<Block> create(BlockDef def) { return Collections.singletonList(ContentPortwayBlock.create(def)); }

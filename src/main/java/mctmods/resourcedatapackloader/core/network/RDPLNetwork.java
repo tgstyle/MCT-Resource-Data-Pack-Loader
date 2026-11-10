@@ -86,6 +86,7 @@ public final class RDPLNetwork {
         registerMessage(SetSpawnMessage.Handler.class, SetSpawnMessage.class);
         registerClient(() -> ClientDiet.Handler.class, EatenMessage.class);
         registerClient(() -> FireworkBurstParticle.Handler.class, FireworkBurstMessage.class);
+        registerMessage(SeasonClockMessage.Handler.class, SeasonClockMessage.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -153,6 +154,8 @@ public final class RDPLNetwork {
             if (player.getPosition().distanceSq(x, y, z) <= NEAR_SQ) { sendTo(message, (EntityPlayerMP) player); }
         }
     }
+
+    public static void sendSeasonClock(EntityPlayerMP player, long ticks) { sendTo(new SeasonClockMessage(ticks), player); }
 
     public static void sendEaten(EntityPlayerMP player, Collection<String> eaten) { sendTo(new EatenMessage(eaten), player); }
 

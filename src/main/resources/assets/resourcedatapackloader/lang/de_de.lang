@@ -1,3 +1,5 @@
+rdpl.season.now=Es ist %s, Tag %d von %d
+rdpl.season.none=Hier gibt es keine Jahreszeiten
 rdpl.build.toolow=Bauen endet bei y %s
 rdpl.compressed=Komprimierter Block: %s
 rdpl.compressed.layered=Komprimierter Block: %s (x%d)
@@ -203,6 +205,8 @@ rdpl.diet.variety=Abwechslungsreiches Essen tut gut
 rdpl.diet.tooltip.eaten=Ernährung: schon probiert
 rdpl.diet.tooltip.new=Ernährung: noch nie probiert
 rdpl.diet.tooltip.ignored=Ernährung: zählt nicht
+rdpl.tooltip.fertility=Fruchtbarkeit: x%s
+rdpl.tooltip.fertility.season=%s: x%s
 rdpl.carry.block=Du trägst %s (Schleichen und Rechtsklick zum Absetzen)
 rdpl.carry.mob=Du trägst %s (Schleichen und Rechtsklick auf einen Block zum Absetzen)
 rdpl.carry.down=%s abgesetzt

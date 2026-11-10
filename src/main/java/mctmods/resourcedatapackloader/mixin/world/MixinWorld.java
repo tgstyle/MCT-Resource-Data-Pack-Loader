@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.world;
 
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
@@ -18,6 +19,8 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.NotRubicWorldException;
 import mctmods.resourcedatapackloader.core.util.math.IntRange;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import java.util.List;
 import java.util.Objects;
@@ -328,6 +331,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @ModifyConstant(method = {"canSnowAtBody", "canBlockFreezeBody"}, constant = @Constant(intValue = 256), remap = false) private int rdpl$canSnowAt_getMaxHeight(int _256) { return rdpl$getMaxHeight(); }
 
     @SuppressWarnings("DisallowedTargetInsn") @ModifyConstant(method = {"canSnowAtBody", "canBlockFreezeBody"}, constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO), remap = false) private int rdpl$canSnowAt_getMinHeight(int zero) { return rdpl$getMinHeight(); }
+
+    @WrapOperation(method = "canSnowAtBody(Lnet/minecraft/util/math/BlockPos;Z)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/biome/Biome;getTemperature(Lnet/minecraft/util/math/BlockPos;)F", remap = true), remap = false) private float rdpl$snowWhereAny(Biome biome, BlockPos pos, Operation<Float> original) { return ContentDimensionRules.snowsAnywhere((World) (Object) this, pos) ? -1.0F : original.call(biome, pos); }
+
+    @WrapOperation(method = "canBlockFreezeBody(Lnet/minecraft/util/math/BlockPos;Z)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/biome/Biome;getTemperature(Lnet/minecraft/util/math/BlockPos;)F", remap = true), remap = false) private float rdpl$freezeWhereAny(Biome biome, BlockPos pos, Operation<Float> original) { return ContentDimensionRules.freezesAnywhere((World) (Object) this, pos) ? -1.0F : original.call(biome, pos); }
 
     @Redirect(method = "spawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z")) private boolean rdpl$spawnEntity_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn) {
         assert this == (Object) world;

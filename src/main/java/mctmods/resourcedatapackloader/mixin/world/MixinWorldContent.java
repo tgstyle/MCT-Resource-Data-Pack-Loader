@@ -113,9 +113,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @WrapOperation(method = "updateWeather", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;updateWeather()V", remap = false)) private void rdpl$existingWeather(WorldProvider provider, Operation<Void> original) { ContentDimensionRules.existingWeather((World) (Object) this, () -> original.call(provider)); }
 
-    @WrapOperation(method = "canBlockFreeze", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;canBlockFreeze(Lnet/minecraft/util/math/BlockPos;Z)Z", remap = false)) private boolean rdpl$existingFreezes(WorldProvider provider, BlockPos pos, boolean byWater, Operation<Boolean> original) { return ContentDimensionRules.existingFreezes((World) (Object) this, original.call(provider, pos, byWater)); }
+    @WrapOperation(method = "canBlockFreeze", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;canBlockFreeze(Lnet/minecraft/util/math/BlockPos;Z)Z", remap = false)) private boolean rdpl$existingFreezes(WorldProvider provider, BlockPos pos, boolean byWater, Operation<Boolean> original) { return ContentDimensionRules.existingFreezes((World) (Object) this, pos, original.call(provider, pos, byWater)); }
 
-    @WrapOperation(method = "canSnowAt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;canSnowAt(Lnet/minecraft/util/math/BlockPos;Z)Z", remap = false)) private boolean rdpl$existingSnows(WorldProvider provider, BlockPos pos, boolean checkLight, Operation<Boolean> original) { return ContentDimensionRules.existingSnows((World) (Object) this, original.call(provider, pos, checkLight)); }
+    @WrapOperation(method = "canSnowAt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;canSnowAt(Lnet/minecraft/util/math/BlockPos;Z)Z", remap = false)) private boolean rdpl$existingSnows(WorldProvider provider, BlockPos pos, boolean checkLight, Operation<Boolean> original) { return ContentDimensionRules.existingSnows((World) (Object) this, pos, original.call(provider, pos, checkLight)); }
 
     @Inject(method = "isRainingAt", at = @At("HEAD"), cancellable = true) private void rdpl$rainBelowCeiling(BlockPos position, CallbackInfoReturnable<Boolean> cir) {
         if (ContentWeather.above((World) (Object) this, position.getY())) { cir.setReturnValue(false); }

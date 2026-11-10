@@ -35,7 +35,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static final int WHITE = 0xFFFFFF;
     private static final int GRASS = 0;
     private static final int FOLIAGE = 1;
-    private static final int[] NONE = {WHITE, WHITE};
+    private static final int BIRCH = 2;
+    private static final int[] NONE = {WHITE, WHITE, WHITE};
     private static final Map<Integer, Map<Biome, int[]>> CACHE = new ConcurrentHashMap<>();
     @Nullable private static volatile Boolean found;
     private static volatile boolean dirty;
@@ -100,14 +101,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private static int leaf(IBlockState state, @Nullable IBlockAccess world, @Nullable BlockPos pos, int tintIndex) {
         BlockPlanks.EnumType type = state.getValue(BlockOldLeaf.VARIANT);
-        if (type == BlockPlanks.EnumType.SPRUCE) { return fixed(ColorizerFoliage.getFoliageColorPine(), world, pos); }
-        if (type == BlockPlanks.EnumType.BIRCH) { return fixed(ColorizerFoliage.getFoliageColorBirch(), world, pos); }
+        if (type == BlockPlanks.EnumType.SPRUCE) { return fixed(ColorizerFoliage.getFoliageColorPine(), FOLIAGE, world, pos); }
+        if (type == BlockPlanks.EnumType.BIRCH) { return fixed(ColorizerFoliage.getFoliageColorBirch(), BIRCH, world, pos); }
         return world != null && pos != null ? BiomeColorHelper.getFoliageColorAtPos(world, pos) : ColorizerFoliage.getFoliageColorBasic();
     }
 
-    private static int fixed(int constant, @Nullable IBlockAccess world, @Nullable BlockPos pos) {
+    private static int fixed(int constant, int which, @Nullable IBlockAccess world, @Nullable BlockPos pos) {
         if (world == null || pos == null) { return constant; }
-        return multiply(constant, ContentSnowTint.average(world, pos, biome -> tints(biome)[FOLIAGE]));
+        return multiply(constant, ContentSnowTint.average(world, pos, biome -> tints(biome)[which]));
     }
 
     private static int tinted(Biome biome, int which, int color) {
@@ -134,6 +135,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         DimensionDef def = ContentDimensions.byId(dimension, biome);
         SkyLookDef look = def == null ? null : def.look;
         if (look == null) { return NONE; }
-        return new int[]{look.grassTint == SkyLookDef.UNSET ? WHITE : look.grassTint, look.foliageTint == SkyLookDef.UNSET ? WHITE : look.foliageTint};
+        int foliage = look.foliageTint == SkyLookDef.UNSET ? WHITE : look.foliageTint;
+        return new int[]{look.grassTint == SkyLookDef.UNSET ? WHITE : look.grassTint, foliage, look.birchTint == SkyLookDef.UNSET ? foliage : look.birchTint};
     }
 }

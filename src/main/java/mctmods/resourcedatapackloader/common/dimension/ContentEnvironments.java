@@ -213,6 +213,12 @@ public final class ContentEnvironments {
 
     public static GrowSwitchDef growth(World world, BlockPos pos) { return chosen(world, pos, GROWS, GrowSwitchDef.NONE); }
 
+    public static GrowSwitchDef growthOf(int dimension, String environment) {
+        Map<String, DimensionDef> sets = setsOf(dimension);
+        DimensionDef set = sets == null ? null : sets.get(environment);
+        return set == null ? GrowSwitchDef.NONE : GROWS.getOrDefault(set, GrowSwitchDef.NONE);
+    }
+
     public static RaidSwitchDef raids(World world, BlockPos pos) { return chosen(world, pos, RAIDLINES, RaidSwitchDef.NONE); }
 
     public static MobSwitchDef mobs(World world, BlockPos pos) { return chosen(world, pos, MOBLINES, MobSwitchDef.NONE); }
@@ -312,6 +318,7 @@ public final class ContentEnvironments {
             if (set == null || set.look == null) { continue; }
             found.add(set.look.grassTint);
             found.add(set.look.foliageTint);
+            found.add(set.look.birchTint);
             found.add(set.look.snowColor);
         }
         return found;
@@ -377,7 +384,9 @@ public final class ContentEnvironments {
     }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.player instanceof EntityPlayerMP) { RDPLNetwork.sendTo(new EnvironmentsMessage(new LinkedHashMap<>(ACTIVE), true), (EntityPlayerMP) event.player); }
+        if (!(event.player instanceof EntityPlayerMP)) { return; }
+        RDPLNetwork.sendTo(new EnvironmentsMessage(new LinkedHashMap<>(ACTIVE), true), (EntityPlayerMP) event.player);
+        ContentSeasons.sendClock((EntityPlayerMP) event.player);
     }
 
     @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) {

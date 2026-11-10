@@ -89,6 +89,8 @@ public final class CardParser {
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
         when.environments = Json.strings(json, "environments");
+        when.seasons = Json.strings(json, "season");
+        when.dimension = Json.getString(json, "dimension", "").trim();
         when.timeFrom = CardPlace.tickOf(json, "timeFrom");
         when.timeTo = CardPlace.tickOf(json, "timeTo");
         when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;

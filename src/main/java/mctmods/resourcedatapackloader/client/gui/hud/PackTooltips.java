@@ -4,8 +4,14 @@ import mctmods.resourcedatapackloader.client.util.ClientDiet;
 import mctmods.resourcedatapackloader.client.util.ClientWeights;
 import mctmods.resourcedatapackloader.common.affixes.ContentAffixes;
 import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBlock;
+import mctmods.resourcedatapackloader.common.blocks.plant.ContentSaplingBlock;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
+import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.gui.PouchInventory;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
@@ -13,15 +19,25 @@ import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import javax.annotation.Nullable;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockSapling;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.world.World;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.relauncher.Side;
@@ -62,12 +78,42 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         else { tooltip.add(TextFormatting.YELLOW + I18n.format("rdpl.diet.tooltip.new")); }
     }
 
+    @Nullable private static Block plant(ItemStack stack, World world, BlockPos pos) {
+        Item item = stack.getItem();
+        Block block = BlockMatch.blockOf(item, world, pos);
+        return item instanceof IPlantable || sapling(block) ? block : null;
+    }
+
+    private static boolean sapling(Block block) { return block instanceof BlockSapling || block instanceof ContentSaplingBlock; }
+
+    private static String scaled(float scale) { return scale == Math.rint(scale) ? String.valueOf((int) scale) : String.valueOf(scale); }
+
+    private static void fertility(ItemStack stack, List<String> tooltip) {
+        EntityPlayer player = Minecraft.getMinecraft().player;
+        if (Config.content.vanillaClients || player == null || stack.isEmpty()) { return; }
+        BlockPos pos = player.getPosition();
+        Block block = plant(stack, player.world, pos);
+        if (block == null) { return; }
+        GrowSwitchDef here = ContentEnvironments.growth(player.world, pos);
+        if (here.tooltip() == GrowSwitchDef.TOOLTIP_OFF) { return; }
+        int kind = sapling(block) ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS;
+        tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility", scaled(here.scale(kind, block, player.world, pos))));
+        int dimension = player.world.provider.getDimension();
+        SeasonDef seasons = here.tooltip() == GrowSwitchDef.TOOLTIP_YEAR ? ContentSeasons.def(dimension) : null;
+        if (seasons == null) { return; }
+        for (List<String> entry : seasons.order) {
+            String name = entry.get(0);
+            tooltip.add(TextFormatting.GRAY + I18n.format("rdpl.tooltip.fertility.season", name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1), scaled(ContentEnvironments.growthOf(dimension, name).scale(kind, block, player.world, pos))));
+        }
+    }
+
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         List<String> tooltip = event.getToolTip();
         weight(stack, tooltip);
         kept(stack, tooltip);
         diet(stack, tooltip);
+        fertility(stack, tooltip);
         if (ContentTooltips.none()) { return; }
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(stack).entrySet()) {
             List<String> lines = ContentTooltips.forEnchantment(entry.getKey());

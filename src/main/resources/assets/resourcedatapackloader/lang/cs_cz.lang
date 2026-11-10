@@ -1,3 +1,5 @@
+rdpl.season.now=Roční období: %s, den %d z %d
+rdpl.season.none=Tady se roční období nestřídají
 rdpl.build.toolow=Stavba se zastaví na y %s
 rdpl.compressed=Stlačený blok: %s
 rdpl.compressed.layered=Stlačený blok: %s (x%d)
@@ -203,6 +205,8 @@ rdpl.diet.variety=Pestrá strava dělá dobře
 rdpl.diet.tooltip.eaten=Strava: už ochutnáno
 rdpl.diet.tooltip.new=Strava: ještě neochutnáno
 rdpl.diet.tooltip.ignored=Strava: nepočítá se
+rdpl.tooltip.fertility=Úrodnost: x%s
+rdpl.tooltip.fertility.season=%s: x%s
 rdpl.carry.block=Neseš: %s (plížením a pravým kliknutím to položíš)
 rdpl.carry.mob=Neseš: %s (plížením a pravým kliknutím na blok to položíš)
 rdpl.carry.down=Položeno: %s

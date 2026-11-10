@@ -5888,10 +5888,13 @@ Galacticraftが読み込まれていると、Galacticraftとそのアドオン�
     "starTwinkle": 0.5,
     "lightningColor": "#A080FF",
     "grassTint": "#A0FF80",
-    "foliageTint": "#E0A040"
+    "foliageTint": "#E0A040",
+    "birchTint": "#C0D060"
   }
 }
 ```
+
+`birchTint` は白樺の葉の色だけに乗算されます。指定しない場合、白樺の葉も他の葉と同じく `foliageTint` を使います。
 
 `grassTint` は草、背の高い草、シダ、サトウキビの色に、`foliageTint` は葉とツタの色に乗算されます。バイオーム自身の色はそのまま透けて見え、どちらのキーも環境の `sky` の中で使えます。季節が植物の色を変えるのはこの仕組みです。手に持ったアイテムやメニュー内のアイテムの色は変わりません。
 
@@ -5903,16 +5906,17 @@ Galacticraftが読み込まれていると、Galacticraftとそのアドオン�
 
 `lightningColor` は稲妻に色を付けます。
 
-| キー             | 必須   | 値           | デフォルト | 説明                                               |
-| ---------------- | ------ | ------------ | ---------- | -------------------------------------------------- |
-| `snowColor`      | いいえ | 16進カラー   | 白         | 雪の層と雪ブロックの色合い                         |
-| `waterFogColor`  | いいえ | 16進カラー   | `050533`   | 水中の霧の色                                       |
-| `lavaFogColor`   | いいえ | 16進カラー   | `991A00`   | 溶岩中の霧の色                                     |
-| `starColor`      | いいえ | 16進カラー   | 白         | 星の色合い                                         |
-| `starTwinkle`    | いいえ | 小数、0から1 | `0.0`      | 星のまたたきで暗くなる深さ。`0` で安定します       |
-| `grassTint`      | いいえ | 16進カラー   | 白         | 草、背の高い草、シダ、サトウキビの色に乗算されます |
-| `foliageTint`    | いいえ | 16進カラー   | 白         | 葉とツタの色に乗算されます                         |
-| `lightningColor` | いいえ | 16進カラー   | `737380`   | 稲妻の色合い                                       |
+| キー             | 必須   | 値           | デフォルト    | 説明                                               |
+| ---------------- | ------ | ------------ | ------------- | -------------------------------------------------- |
+| `snowColor`      | いいえ | 16進カラー   | 白            | 雪の層と雪ブロックの色合い                         |
+| `waterFogColor`  | いいえ | 16進カラー   | `050533`      | 水中の霧の色                                       |
+| `lavaFogColor`   | いいえ | 16進カラー   | `991A00`      | 溶岩中の霧の色                                     |
+| `starColor`      | いいえ | 16進カラー   | 白            | 星の色合い                                         |
+| `starTwinkle`    | いいえ | 小数、0から1 | `0.0`         | 星のまたたきで暗くなる深さ。`0` で安定します       |
+| `grassTint`      | いいえ | 16進カラー   | 白            | 草、背の高い草、シダ、サトウキビの色に乗算されます |
+| `foliageTint`    | いいえ | 16進カラー   | 白            | 葉とツタの色に乗算されます                         |
+| `birchTint`      | いいえ | 16進カラー   | `foliageTint` | 白樺の葉の色に乗算されます                         |
+| `lightningColor` | いいえ | 16進カラー   | `737380`      | 稲妻の色合い                                       |
 
 ### スカイボックス、オーロラ、虹
 
@@ -6099,7 +6103,12 @@ Galacticraftが読み込まれていると、Galacticraftとそのアドオン�
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0 }
+      "growth": {
+        "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0,
+        "byBlock": { "minecraft:wheat": 4.0, "minecraft:melon_stem": 0.0, "#treeSapling": 0.5 },
+        "tooltip": "here",
+        "waiver": { "blocks": ["minecraft:glass", "#blockGlass"], "within": 6, "scale": 1.0, "kinds": ["crops", "saplings"], "clear": false }
+      }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
@@ -6111,6 +6120,12 @@ Galacticraftが読み込まれていると、Galacticraftとそのアドオン�
     },
     "longnight": {
       "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 4.0, "wakeAt": 1000 }
+    },
+    "deepwinter": {
+      "rules": { "snow": { "place": "any", "freeze": "any", "whenDry": true } }
+    },
+    "thaw": {
+      "rules": { "snow": { "melt": "always", "meltChance": 0.25, "meltBlocks": ["minecraft:snow_layer", "minecraft:ice"] } }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -6133,51 +6148,70 @@ Galacticraftが読み込まれていると、Galacticraftとそのアドオン�
 
 環境には `growth` ブロックを持たせることもでき、環境がオンの間、ディメンション内の成長を速めたり遅らせたりします。`crops` は作物、茎、カカオ、ネザーウォート、サトウキビ、サボテン、コーラスフラワー、そして Forge の作物成長イベントで育つ Mod の植物を対象にし、`saplings` は苗木が木に育つ速さ、`animals` は動物の子どもが大人になる速さ、`breeding` は繁殖した動物が再び繁殖できるようになるまでの速さを対象にします。`breeding` が `0` だと、エサを与えても子どもは生まれません。どの値も `0` から `100` の倍率で、`1` が通常の速さ、`0.5` が半分、`2` が 2 倍、`0` なら止まります。1 より大きいと、ゲームが植物を成長させるために選ぶたびに追加の成長判定が行われるので、明るさ、土、水の条件は引き続き効きます。骨粉、エサやり、コマンドには一切影響しません。`biomes` を付けるとブロックはそこだけに適用され、複数の環境が重なる場所では、空の場合と同じく最後にオンにしたものが優先されます。ブロックが省いたキーは通常の速さのままです。環境をオフにすると通常の速さにすぐ戻り、すでに育ったものはそのまま残ります。
 
+`growth` の中では、`byBlock` が作物または苗木のブロック1種類、あるいはそのグループの速度を、`crops` や `saplings` の値の代わりに決めます。キーは `minecraft:wheat` のようなブロック ID か、`#treeSapling` のような鉱石辞書名を表す `#名前` で、値は `0` から `100` までの数です。ブロック ID は `#名前` より優先され、2つの `#名前` が当てはまるときは先に書いたほうが優先されます。`#名前` は最初に必要になったときに調べられ、その鉱石辞書エントリのアイテムに対応するブロックに当てはまります。`#cropWheat` のような種の名前は、その種が育てる作物に届きます。`tooltip` は種、苗木、作物のアイテムに速度を表示します。`here` は持っている人が立っている環境の速度、`year` はそれに加えてディメンションの季節ごとに1行、既定値の `off` は何も表示しません。`waiver` は、リストにあるブロックが上にある植物の速度を引き上げます。冬の作物の上にガラスを置く場合などです。`blocks` のどれかが植物の真上 `within` ブロック以内にある間、その植物は `kinds` に挙げた種類について、環境の速度の代わりに `scale` で育ちます。`clear` をオンにすると、植物とリストのブロックの間に完全に不透明なブロックがあってはならず、間に石のハーフブロックの屋根があれば例外は終わります。動物と繁殖は `byBlock` も `waiver` も使いません。
+
 環境には `mobs` ブロックも持たせられます。これは、その環境がオンの間、ディメンション内のモブを変化させるもので、ブラッドムーンのようなイベントに使えます。`entities` は変化させるモブを ID で指定し、`#monster`、`#creature`、`#ambient`、`#water_creature` で種類ごとに指定することもできます。省略するとすべてのモンスターが対象です。`health`、`damage`、`speed` は、モブの最大体力、近接攻撃のダメージ、歩く速さに掛けられ、現在の体力は最大値に合わせて増減します。`equipment` は、空いているスロットにアイテムを持たせ、死亡時にそれを落とす確率も決めます。モブがどの環境を受けるかは、スポーンまたは読み込みの時にモブが立っている場所で決まり、環境を切り替えるたびに、読み込まれているすべてのモブについてあらためて決まります。`biomes` と重なりは空と同じ扱いです。モブはその環境がオンの間、再起動をまたいでも変化を保ちます。環境をオフにすると、体力、ダメージ、速さは元に戻り、環境が与えた装備は、モブがまだ持っていれば取り上げられます。矢、ファイアボール、爆発のダメージは変わらず、プレイヤーは決して変化しません。
 
 環境には `loot` ブロックも持たせられます。これは、その環境がオンの間、あるルートテーブルを別のものに差し替えるもので、対象はモブのドロップ、釣り、進捗の報酬、そしてワールドが生成するチェストとチェスト付きトロッコです。チェストは最初に開いたときに中身が決まるため、その時点でオンの環境が中身を決めます。テーブルを `minecraft:empty` に対応させると、何も落ちません。`trades` ブロックは [取引](#取引)と同じ形式で取引を並べます。そこに職業が挙げられた村人は、環境がオンの間、自分の取引の代わりにその取引をレベルの範囲まで提供し、オフにすると自分の取引に戻ります。各村人は両方を保持し、行った取引、売り切れた取引、補充は、環境が戻ったときにその続きから再開します。再起動をまたいでも同じです。挙げる職業ごとにレベル 1 の取引を用意してください。ないと、その職業の新しい村人には提供できる取引がありません。行商人は変更されません。`biomes` と重なりの扱いは空と同じです。
 
-環境には `rules` ブロックも持たせられ、環境がオンの間、ワールドの動き方を変えます。`dayLength` は [`time.dayLength`](#time-ブロック) と同じように 1 日を引き延ばし、`weather` は天候を `clear`、`rain`、`thunder` のいずれかに固定し、`weatherSpeed` はそのディメンションの天候が移り変わる速さを上げ下げします（`0` なら今の天候のまま）。`weather.cycle` がない場合は、ほかのディメンションと共有しているオーバーワールドの天候を速めます。`difficulty` はここでワールドの難易度を置き換え、`worldDifficulty` より優先されます。`localDifficulty` は局所難易度を `0` から `6.75` で設定し、モブが防具を着けて湧く頻度やアイテムを拾う頻度を決めます。`sleep` をオフにすると誰も眠れなくなり、眠っている人は起こされます。`wakeAt` は一晩の睡眠が終わる時刻を設定し、バニラのスキップと同じく、時計を動かすのはオーバーワールドだけです。`sleep` と `localDifficulty` の `biomes` と重なりの扱いは空と同じで、それ以外のキーはディメンション全体に及ぶため、`biomes` を持つ環境がそれらを指定すると、ログに記録されてそのキーは無視されます。環境をオフにするとすべてが一度に元に戻り、天候は数秒かけて戻ります。
+環境には `rules` ブロックも持たせられ、環境がオンの間、ワールドの動き方を変えます。`dayLength` は [`time.dayLength`](#time-ブロック) と同じように 1 日を引き延ばし、`weather` は天候を `clear`、`rain`、`thunder` のいずれかに固定し、`weatherSpeed` はそのディメンションの天候が移り変わる速さを上げ下げします（`0` なら今の天候のまま）。`weather.cycle` がない場合は、ほかのディメンションと共有しているオーバーワールドの天候を速めます。`difficulty` はここでワールドの難易度を置き換え、`worldDifficulty` より優先されます。`localDifficulty` は局所難易度を `0` から `6.75` で設定し、モブが防具を着けて湧く頻度やアイテムを拾う頻度を決めます。`sleep` をオフにすると誰も眠れなくなり、眠っている人は起こされます。`wakeAt` は一晩の睡眠が終わる時刻を設定し、バニラのスキップと同じく、時計を動かすのはオーバーワールドだけです。`sleep`、`localDifficulty`、`snow` の `biomes` と重なりの扱いは空と同じで、それ以外のキーはディメンション全体に及ぶため、`biomes` を持つ環境がそれらを指定すると、ログに記録されてそのキーは無視されます。環境をオフにするとすべてが一度に元に戻り、天候は数秒かけて戻ります。
+
+`rules` の中では、`snow` が環境のオンの間に雪がどこに積もり、水がどこで凍るかを決めます。`place` と `freeze` はそれぞれ 4 つの値のいずれかを取ります。`default` はディメンションの `weather.snow` または `weather.freeze` と、バニラの寒冷バイオームの判定を残します。`biome` は寒冷バイオームの判定を残しますが、ディメンションの `weather` ブロックにある `false` は無視します。`any` はどのバイオームでも、どれほど暖かくても雪や氷を受け入れ、その `false` も無視します。`never` は止めます。雪が積もるのは雨の間だけで、水は晴れていても凍ります（バニラと同じです）。空が開けていること、ブロックの明るさが 10 未満であること、雪が載れる地面であることは、引き続き必要です。`whenDry` を付けると、雨がなくても、プレイヤーの周りで、ゲームがブロックを更新する範囲に、雨が積もらせるのとだいたい同じ速さで雪が積もります。`melt: always` は、同じ範囲の各列の最上部で `meltBlocks` のブロックを、明るさやバイオームに関係なく溶かします。積雪は一度に 1 層ずつ減り、氷は水になるか、ディメンションの `waterVaporizes` が有効な場所では消えます。リストにあるほかのブロック（`minecraft:snow` など）は取り除かれます。`meltChance` は、調べた列が溶ける確率です。`1` にすると、プレイヤーの近くの列は、雨がその列に 1 層加えるのとだいたい同じ頻度で溶け、既定値はその 16 倍遅くなります。`melt: always` のとき、`whenDry` は何もしません。何も保存されません。環境がオフになると溶けるのは止まり、それまでに溶けたり積もったりしたものは残ります。
 
 環境には `raids` ブロックも持たせられます。これは、その環境がオンの間、ディメンションの[襲撃](#襲撃)を変えます。`every` を指定すると、各プレイヤーは環境がオンの場所で過ごしたティック数を数えます。その数が `every` に達すると、`start` に挙げた襲撃のどれかが、`omen` を持っているかのようにそのプレイヤーのもとで始まります。プレイヤーのいる村の中で、襲撃に `anywhere` があればプレイヤーの周りで始まります。襲撃がそこで始められないときは、カウントは満タンのままで、時計は毎秒やり直します。襲撃が始まるたびに、その `reach` 以内にいるすべてのプレイヤーのカウントが 0 に戻るので、`every` は襲撃と襲撃の間の最短の時間になります。`waves` と `points` は、環境の下で始まるすべての襲撃のウェーブ数とポイントに掛けます。`omen` による襲撃と `/rdplserver raid` による襲撃も含みます。どちらも四捨五入され、襲撃のウェーブは常に 1 以上です。襲撃自身のリストの終わりを過ぎると、最後のウェーブがもう一度来ます。襲撃は、環境がオフになっても、始まったときのウェーブ数とポイントを保ち、それらは襲撃と一緒に保存されます。`biomes` がある場合、時計はプレイヤーのいる場所で、ウェーブ数とポイントは襲撃の中心で判定します。複数の環境が重なる場所では、最後にオンにしたものが決めます。`every` を与える環境がない場所ではカウントは止まり、プレイヤーとともに、ディメンションごとに 1 つ保存されます。
 
-| キー                                                   | 必須               | 値                                       | デフォルト         | 説明                                                                                                                                                                                                                                                                         |
-| ------------------------------------------------------ | ------------------ | ---------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `environments.<name>`                                  | いいえ             | オブジェクト                             | なし               | 1 つの環境。名前は 1 語で、`default` 以外なら何でも構いません                                                                                                                                                                                                                |
-| `environments.<name>.biomes`                           | いいえ             | バイオーム名のリスト                     | すべてのバイオーム | `minecraft:desert` のようなバイオーム名、または `#SNOWY` のようなForgeのバイオームタイプを表す `#TYPE`。環境はそのバイオームの中だけに適用されます                                                                                                                           |
-| `environments.<name>.sky`                              | いいえ             | オブジェクト                             | なし               | [`sky` ブロック](#sky-ブロック)のキー。ただしワールドの読み込み時に一度だけ決まるもの、`hasSkyLight`、`surfaceWorld`、`respawn`、`respawnDimension`、`spawning`、`nether`、`beds`、`waterVaporizes`、`groundLevel`、`movementFactor`、`fixedTime`、`ambientLight` は除きます |
-| `environments.<name>.ambience`                         | いいえ             | オブジェクト                             | なし               | [`ambience` ブロック](#ambience-ブロック)のキー                                                                                                                                                                                                                              |
-| `environments.<name>.spawning`                         | いいえ             | オブジェクト                             | なし               | [スポーン](#スポーン)の倍率キーと上限キーに `weights` を加えたもの                                                                                                                                                                                                           |
-| `environments.<name>.spawning.weights`                 | いいえ             | エンティティ ID から倍率へのオブジェクト | なし               | そのモブの重みを、入っているすべてのスポーンリストで拡大縮小します。`0` なら自然にはスポーンしません                                                                                                                                                                         |
-| `environments.<name>.growth`                           | いいえ             | オブジェクト                             | なし               | `crops`、`saplings`、`animals`、`breeding` の速さ                                                                                                                                                                                                                            |
-| `environments.<name>.growth.crops`                     | いいえ             | 数値、0〜100                             | `1`                | 作物の成長速度。`0` で止まります                                                                                                                                                                                                                                             |
-| `environments.<name>.growth.saplings`                  | いいえ             | 数値、0〜100                             | `1`                | 苗木の成長速度。`0` で止まります                                                                                                                                                                                                                                             |
-| `environments.<name>.growth.animals`                   | いいえ             | 数値、0〜100                             | `1`                | 動物の子どもが大人になる速さ。`0` なら子どものままです                                                                                                                                                                                                                       |
-| `environments.<name>.growth.breeding`                  | いいえ             | 数値、0〜100                             | `1`                | 繁殖後の待ち時間が過ぎる速さ。`0` なら繁殖できなくなります                                                                                                                                                                                                                   |
-| `environments.<name>.mobs`                             | いいえ             | オブジェクト                             | なし               | 環境がオンの間、モブを変化させる                                                                                                                                                                                                                                             |
-| `environments.<name>.mobs.entities`                    | いいえ             | エンティティ ID または種類のリスト       | `["#monster"]`     | `minecraft:zombie` のような ID、または `#monster`、`#creature`、`#ambient`、`#water_creature`                                                                                                                                                                                |
-| `environments.<name>.mobs.health`                      | いいえ             | 0 より大きい数値                         | `1`                | 最大体力に掛ける                                                                                                                                                                                                                                                             |
-| `environments.<name>.mobs.damage`                      | いいえ             | 0 以上の数値                             | `1`                | 近接攻撃のダメージに掛ける                                                                                                                                                                                                                                                   |
-| `environments.<name>.mobs.speed`                       | いいえ             | 0 以上の数値                             | `1`                | 歩く速さに掛ける。`0` ならモブはその場から動かない                                                                                                                                                                                                                           |
-| `environments.<name>.mobs.equipment`                   | いいえ             | スロットからアイテムへのオブジェクト     | なし               | スロットは `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet`。空いているスロットだけが埋まる                                                                                                                                                                            |
-| `environments.<name>.mobs.equipment.<slot>.item`       | はい               | アイテム ID                              | なし               | 与えるアイテム                                                                                                                                                                                                                                                               |
-| `environments.<name>.mobs.equipment.<slot>.dropChance` | いいえ             | 数値、0〜1                               | `0.085`            | モブが死んだときにアイテムを落とす確率                                                                                                                                                                                                                                       |
-| `environments.<name>.loot`                             | いいえ             | テーブルIDからテーブルIDへのオブジェクト | なし               | 環境がオンの間、挙げた各テーブルを指定のテーブルに差し替えます                                                                                                                                                                                                               |
-| `environments.<name>.trades`                           | いいえ             | 取引のリスト                             | なし               | [取引](#取引)と同じ形式の項目。挙げた職業の村人は、レベルまでこれらだけを提供します                                                                                                                                                                                          |
-| `environments.<name>.trades[].profession`              | はい               | 職業ID                                   | なし               | `career`、`level`、`buy`、`buySecondary`、`sell`、`maxUses` は [取引](#取引)と同じ                                                                                                                                                                                           |
-| `environments.<name>.rules`                            | いいえ             | オブジェクト                             | なし               | 環境がオンの間、ワールドの動き方を変える                                                                                                                                                                                                                                     |
-| `environments.<name>.rules.dayLength`                  | いいえ             | 0より大きい整数                          | ディメンションの値 | 1 日の長さ。ディメンション全体のみ                                                                                                                                                                                                                                           |
-| `environments.<name>.rules.weather`                    | いいえ             | `clear`, `rain`, `thunder`               | なし               | 天候を固定する。ディメンション全体のみ                                                                                                                                                                                                                                       |
-| `environments.<name>.rules.weatherSpeed`               | いいえ             | 数値、0〜100                             | `1`                | 天候が変わる速さ。ディメンション全体のみ                                                                                                                                                                                                                                     |
-| `environments.<name>.rules.difficulty`                 | いいえ             | `peaceful`…`hard`                        | なし               | 難易度。ディメンション全体のみ                                                                                                                                                                                                                                               |
-| `environments.<name>.rules.localDifficulty`            | いいえ             | 数値、0〜6.75                            | バニラの値         | 局所難易度                                                                                                                                                                                                                                                                   |
-| `environments.<name>.rules.sleep`                      | いいえ             | 真偽値                                   | `true`             | オフにすると誰も眠れない                                                                                                                                                                                                                                                     |
-| `environments.<name>.rules.wakeAt`                     | いいえ             | 整数、0〜23999                           | `0`                | 睡眠が終わる時刻。ディメンション全体のみ                                                                                                                                                                                                                                     |
-| `environments.<name>.raids`                            | いいえ             | オブジェクト                             | なし               | 襲撃を変える：`every`、`start`、`waves`、`points`                                                                                                                                                                                                                            |
-| `environments.<name>.raids.every`                      | いいえ             | 0より大きい整数                          | なし               | 襲撃が始まるまでにプレイヤーがここで過ごすティック数。`start` が必要                                                                                                                                                                                                         |
-| `environments.<name>.raids.start`                      | `every` を使うとき | 襲撃 ID またはそのリスト                 | なし               | 時計が始める襲撃、または時計がランダムに選ぶ襲撃のリスト                                                                                                                                                                                                                     |
-| `environments.<name>.raids.waves`                      | いいえ             | 0 より大きい数値、100 まで               | `1`                | 襲撃が送るウェーブ数に掛ける                                                                                                                                                                                                                                                 |
-| `environments.<name>.raids.points`                     | いいえ             | 0〜100 の数値                            | `1`                | 勝った襲撃が与えるポイントに掛ける                                                                                                                                                                                                                                           |
+| キー                                                   | 必須                    | 値                                                | デフォルト                                  | 説明                                                                                                                                                                                                                                                                         |
+| ------------------------------------------------------ | ----------------------- | ------------------------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environments.<name>`                                  | いいえ                  | オブジェクト                                      | なし                                        | 1 つの環境。名前は 1 語で、`default` 以外なら何でも構いません                                                                                                                                                                                                                |
+| `environments.<name>.biomes`                           | いいえ                  | バイオーム名のリスト                              | すべてのバイオーム                          | `minecraft:desert` のようなバイオーム名、または `#SNOWY` のようなForgeのバイオームタイプを表す `#TYPE`。環境はそのバイオームの中だけに適用されます                                                                                                                           |
+| `environments.<name>.sky`                              | いいえ                  | オブジェクト                                      | なし                                        | [`sky` ブロック](#sky-ブロック)のキー。ただしワールドの読み込み時に一度だけ決まるもの、`hasSkyLight`、`surfaceWorld`、`respawn`、`respawnDimension`、`spawning`、`nether`、`beds`、`waterVaporizes`、`groundLevel`、`movementFactor`、`fixedTime`、`ambientLight` は除きます |
+| `environments.<name>.ambience`                         | いいえ                  | オブジェクト                                      | なし                                        | [`ambience` ブロック](#ambience-ブロック)のキー                                                                                                                                                                                                                              |
+| `environments.<name>.spawning`                         | いいえ                  | オブジェクト                                      | なし                                        | [スポーン](#スポーン)の倍率キーと上限キーに `weights` を加えたもの                                                                                                                                                                                                           |
+| `environments.<name>.spawning.weights`                 | いいえ                  | エンティティ ID から倍率へのオブジェクト          | なし                                        | そのモブの重みを、入っているすべてのスポーンリストで拡大縮小します。`0` なら自然にはスポーンしません                                                                                                                                                                         |
+| `environments.<name>.growth`                           | いいえ                  | オブジェクト                                      | なし                                        | `crops`、`saplings`、`animals`、`breeding` の速さ                                                                                                                                                                                                                            |
+| `environments.<name>.growth.crops`                     | いいえ                  | 数値、0〜100                                      | `1`                                         | 作物の成長速度。`0` で止まります                                                                                                                                                                                                                                             |
+| `environments.<name>.growth.saplings`                  | いいえ                  | 数値、0〜100                                      | `1`                                         | 苗木の成長速度。`0` で止まります                                                                                                                                                                                                                                             |
+| `environments.<name>.growth.animals`                   | いいえ                  | 数値、0〜100                                      | `1`                                         | 動物の子どもが大人になる速さ。`0` なら子どものままです                                                                                                                                                                                                                       |
+| `environments.<name>.growth.breeding`                  | いいえ                  | 数値、0〜100                                      | `1`                                         | 繁殖後の待ち時間が過ぎる速さ。`0` なら繁殖できなくなります                                                                                                                                                                                                                   |
+| `environments.<name>.growth.byBlock`                   | いいえ                  | ブロック ID または `#名前` から数へのオブジェクト | なし                                        | 作物または苗木のブロック1種類、あるいはグループの速度で、`crops` や `saplings` の代わりになる。ブロック ID は `#名前` より優先され、2つの `#名前` が当てはまるときは先に書いたほうが優先される。`#名前` は鉱石辞書名                                                         |
+| `environments.<name>.growth.tooltip`                   | いいえ                  | `"off"`、`"here"`、`"year"`                       | `"off"`                                     | 種、苗木、作物のアイテムに速度を表示する。`here` は持っている人が立っている環境、`year` はさらに季節ごとに1行                                                                                                                                                                |
+| `environments.<name>.growth.waiver`                    | いいえ                  | オブジェクト                                      | なし                                        | リストにあるブロックが上にある間、植物の成長速度を置き換える                                                                                                                                                                                                                 |
+| `environments.<name>.growth.waiver.blocks`             | `waiver` があるとき必須 | ブロック ID または `#名前` のリスト               | なし                                        | 対象になるブロック                                                                                                                                                                                                                                                           |
+| `environments.<name>.growth.waiver.within`             | いいえ                  | 1 から 64 までの整数                              | `8`                                         | 植物の上を何ブロックまで調べるか                                                                                                                                                                                                                                             |
+| `environments.<name>.growth.waiver.scale`              | いいえ                  | 0 から 100 までの数                               | `1`                                         | 例外が働いている間、代わりに使う速度                                                                                                                                                                                                                                         |
+| `environments.<name>.growth.waiver.kinds`              | いいえ                  | `crops`、`saplings` のリスト                      | 両方                                        | 例外が対象にする種類                                                                                                                                                                                                                                                         |
+| `environments.<name>.growth.waiver.clear`              | いいえ                  | `true` または `false`                             | `false`                                     | `true` は、植物とリストのブロックの間に完全に不透明なブロックがないことを求める。`false` は間に何があってもそのブロックを数える                                                                                                                                              |
+| `environments.<name>.mobs`                             | いいえ                  | オブジェクト                                      | なし                                        | 環境がオンの間、モブを変化させる                                                                                                                                                                                                                                             |
+| `environments.<name>.mobs.entities`                    | いいえ                  | エンティティ ID または種類のリスト                | `["#monster"]`                              | `minecraft:zombie` のような ID、または `#monster`、`#creature`、`#ambient`、`#water_creature`                                                                                                                                                                                |
+| `environments.<name>.mobs.health`                      | いいえ                  | 0 より大きい数値                                  | `1`                                         | 最大体力に掛ける                                                                                                                                                                                                                                                             |
+| `environments.<name>.mobs.damage`                      | いいえ                  | 0 以上の数値                                      | `1`                                         | 近接攻撃のダメージに掛ける                                                                                                                                                                                                                                                   |
+| `environments.<name>.mobs.speed`                       | いいえ                  | 0 以上の数値                                      | `1`                                         | 歩く速さに掛ける。`0` ならモブはその場から動かない                                                                                                                                                                                                                           |
+| `environments.<name>.mobs.equipment`                   | いいえ                  | スロットからアイテムへのオブジェクト              | なし                                        | スロットは `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet`。空いているスロットだけが埋まる                                                                                                                                                                            |
+| `environments.<name>.mobs.equipment.<slot>.item`       | はい                    | アイテム ID                                       | なし                                        | 与えるアイテム                                                                                                                                                                                                                                                               |
+| `environments.<name>.mobs.equipment.<slot>.dropChance` | いいえ                  | 数値、0〜1                                        | `0.085`                                     | モブが死んだときにアイテムを落とす確率                                                                                                                                                                                                                                       |
+| `environments.<name>.loot`                             | いいえ                  | テーブルIDからテーブルIDへのオブジェクト          | なし                                        | 環境がオンの間、挙げた各テーブルを指定のテーブルに差し替えます                                                                                                                                                                                                               |
+| `environments.<name>.trades`                           | いいえ                  | 取引のリスト                                      | なし                                        | [取引](#取引)と同じ形式の項目。挙げた職業の村人は、レベルまでこれらだけを提供します                                                                                                                                                                                          |
+| `environments.<name>.trades[].profession`              | はい                    | 職業ID                                            | なし                                        | `career`、`level`、`buy`、`buySecondary`、`sell`、`maxUses` は [取引](#取引)と同じ                                                                                                                                                                                           |
+| `environments.<name>.rules`                            | いいえ                  | オブジェクト                                      | なし                                        | 環境がオンの間、ワールドの動き方を変える                                                                                                                                                                                                                                     |
+| `environments.<name>.rules.dayLength`                  | いいえ                  | 0より大きい整数                                   | ディメンションの値                          | 1 日の長さ。ディメンション全体のみ                                                                                                                                                                                                                                           |
+| `environments.<name>.rules.weather`                    | いいえ                  | `clear`, `rain`, `thunder`                        | なし                                        | 天候を固定する。ディメンション全体のみ                                                                                                                                                                                                                                       |
+| `environments.<name>.rules.weatherSpeed`               | いいえ                  | 数値、0〜100                                      | `1`                                         | 天候が変わる速さ。ディメンション全体のみ                                                                                                                                                                                                                                     |
+| `environments.<name>.rules.difficulty`                 | いいえ                  | `peaceful`…`hard`                                 | なし                                        | 難易度。ディメンション全体のみ                                                                                                                                                                                                                                               |
+| `environments.<name>.rules.localDifficulty`            | いいえ                  | 数値、0〜6.75                                     | バニラの値                                  | 局所難易度                                                                                                                                                                                                                                                                   |
+| `environments.<name>.rules.sleep`                      | いいえ                  | 真偽値                                            | `true`                                      | オフにすると誰も眠れない                                                                                                                                                                                                                                                     |
+| `environments.<name>.rules.wakeAt`                     | いいえ                  | 整数、0〜23999                                    | `0`                                         | 睡眠が終わる時刻。ディメンション全体のみ                                                                                                                                                                                                                                     |
+| `environments.<name>.rules.snow`                       | いいえ                  | オブジェクト                                      | なし                                        | 環境がオンの間の雪と氷。`biomes` に従う                                                                                                                                                                                                                                      |
+| `environments.<name>.rules.snow.place`                 | いいえ                  | `default`, `biome`, `any`, `never`                | `default`                                   | 雪が積もる場所。ディメンションの設定どおり、寒冷バイオームの判定だけ、すべてのバイオーム、またはどこにも積もらない                                                                                                                                                           |
+| `environments.<name>.rules.snow.freeze`                | いいえ                  | `default`, `biome`, `any`, `never`                | `default`                                   | 水が凍る場所についても同様                                                                                                                                                                                                                                                   |
+| `environments.<name>.rules.snow.whenDry`               | いいえ                  | 真偽値                                            | `false`                                     | オンにすると、雨がなくてもプレイヤーの周りに雪が積もる                                                                                                                                                                                                                       |
+| `environments.<name>.rules.snow.melt`                  | いいえ                  | `never`, `always`                                 | `never`                                     | `always` はプレイヤーの周りの `meltBlocks` を、明るさやバイオームに関係なく溶かす                                                                                                                                                                                            |
+| `environments.<name>.rules.snow.meltChance`            | いいえ                  | 0 より大きく 1 までの数                           | `0.0625`                                    | 調べた列が溶ける確率                                                                                                                                                                                                                                                         |
+| `environments.<name>.rules.snow.meltBlocks`            | いいえ                  | ブロック ID のリスト                              | `["minecraft:snow_layer", "minecraft:ice"]` | 溶けるもの: 積雪は 1 層減り、氷は水になる（`waterVaporizes` があれば消える）。ほかのブロックは取り除かれる                                                                                                                                                                   |
+| `environments.<name>.raids`                            | いいえ                  | オブジェクト                                      | なし                                        | 襲撃を変える：`every`、`start`、`waves`、`points`                                                                                                                                                                                                                            |
+| `environments.<name>.raids.every`                      | いいえ                  | 0より大きい整数                                   | なし                                        | 襲撃が始まるまでにプレイヤーがここで過ごすティック数。`start` が必要                                                                                                                                                                                                         |
+| `environments.<name>.raids.start`                      | `every` を使うとき      | 襲撃 ID またはそのリスト                          | なし                                        | 時計が始める襲撃、または時計がランダムに選ぶ襲撃のリスト                                                                                                                                                                                                                     |
+| `environments.<name>.raids.waves`                      | いいえ                  | 0 より大きい数値、100 まで                        | `1`                                         | 襲撃が送るウェーブ数に掛ける                                                                                                                                                                                                                                                 |
+| `environments.<name>.raids.points`                     | いいえ                  | 0〜100 の数値                                     | `1`                                         | 勝った襲撃が与えるポイントに掛ける                                                                                                                                                                                                                                           |
 
 環境の中のほかのキーや、上に挙げた `sky` のキーは、ログにエラーを出して無視されます。パックがもう定義していない環境で保存されたワールドは、ディメンション本来の見た目に戻ります。
 
@@ -6214,6 +6248,94 @@ Galacticraftが読み込まれていると、Galacticraftとそのアドオン�
 | `seasons`       | いいえ               | オブジェクト                     | なし       | ディメンションの環境を1年の周期でオンとオフに切り替えます              |
 | `seasons.days`  | `seasons` を使うとき | 0より大きい整数                  | なし       | 各季節が続く日数                                                       |
 | `seasons.order` | `seasons` を使うとき | 環境名、または名前のリストの配列 | なし       | 季節を順番に並べたもの。リストの項目は、その環境をまとめて切り替えます |
+
+### 季節時計
+
+*アイテム*
+
+`seasonClock` を持つアイテムは季節時計になります。モデルは2つのプレディケートで季節を読み取り、右クリックすると持っている人に今の季節とその何日目かが伝えられます。
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "seasonClock": { "dimension": "rdpl:overworldlike", "message": true },
+  "variants": {
+    "clock": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+そのモデル `assets/mypack/models/item/season_clock.json` は、4つの季節それぞれに1コマずつ用意します。
+
+```json
+{
+  "parent": "item/generated",
+  "textures": { "layer0": "mypack:items/clock_spring" },
+  "overrides": [
+    { "predicate": { "rdpl:year": 0.25 }, "model": "mypack:item/clock_summer" },
+    { "predicate": { "rdpl:year": 0.5 }, "model": "mypack:item/clock_autumn" },
+    { "predicate": { "rdpl:year": 0.75 }, "model": "mypack:item/clock_winter" }
+  ]
+}
+```
+
+| キー                    | 必須   | 値                        | デフォルト                   | 説明                                                                            |
+| ----------------------- | ------ | ------------------------- | ---------------------------- | ------------------------------------------------------------------------------- |
+| `seasonClock`           | いいえ | `true` またはオブジェクト | なし                         | アイテムを季節時計にします。`true` は持っている人がいるディメンションを読みます |
+| `seasonClock.dimension` | いいえ | ディメンションの登録名    | 持っている人のディメンション | どのディメンションの季節を表示するか                                            |
+| `seasonClock.message`   | いいえ | 真偽値                    | `true`                       | 右クリックで、持っている人に季節とその何日目かを伝えます                        |
+
+| プレディケート | 値               | 説明                                                                                                                 |
+| -------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:year`    | 0以上1以下の小数 | 1年の進み具合。季節の番号に、その季節で過ぎた日数の割合を足し、季節の数で割った値です。季節のないディメンションでは0 |
+| `rdpl:season`  | 0以上の整数      | 季節の番号。`order` の最初の項目が0です。割合ではなく季節ごとにコマを選べます。季節のないディメンションでは0         |
+
+オーバーライドはプレディケートが値に達すると適用され、適用されるもののうち最後のものが選ばれます。そのため、探知コンパスが `angle` でするのと同じく、小さい値から順に並べます。季節のないディメンションでは、メッセージでそのことが伝えられます。
+
+### 季節センサー
+
+*ブロック*
+
+タイプ `seasonSensor` のブロックは、ディメンションの季節に応じてレッドストーン信号を出し、コンパレーターも同じ値を読み取ります。時計の確認は100ティックごとです。
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "seasonSensor",
+  "material": "rock",
+  "creativeTab": "redstone",
+  "seasonSensor": {
+    "dimension": "rdpl:overworldlike",
+    "output": { "spring": 3, "summer": 6, "autumn": 9, "winter": 12 }
+  },
+  "variants": { "season_sensor": { "meta": 0, "hardness": 1.0, "resistance": 5 } }
+}
+```
+
+そのブロックステート `assets/mypack/blockstates/season_sensor.json` には、0から15までの強さそれぞれに1つずつ項目を書きます。
+
+```json
+{
+  "variants": {
+    "power=0": { "model": "mypack:season_sensor_0" },
+    "power=1": { "model": "mypack:season_sensor_1" },
+    "power=15": { "model": "mypack:season_sensor_15" }
+  }
+}
+```
+
+| キー                     | 必須             | 値                                    | デフォルト                   | 説明                                                                                                                                |
+| ------------------------ | ---------------- | ------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `seasonSensor`           | このタイプのとき | オブジェクト                          | なし                         | 季節に応じてレッドストーン信号を出すブロック                                                                                        |
+| `seasonSensor.dimension` | いいえ           | ディメンションの登録名                | ブロック自身のディメンション | どのディメンションの季節を読むか                                                                                                    |
+| `seasonSensor.output`    | いいえ           | オブジェクト。季節名から1〜15の強さへ | 季節に均等に割り振る         | 季節ごとの強さ。省いた季節には `(番号 + 1) * 15 / 季節の数` の小数点以下を切り捨てた値が入り、4つの季節なら 3、7、11、15 になります |
+
+強さはブロックステート `power` で、ブロックステートには16通りの値それぞれのバリアントが必要です。季節のないディメンションでは0のままです。`output` の季節は、`order` のその項目の最初の環境の名前で呼びます。
 
 ## Galacticraftの天体
 
@@ -9029,10 +9151,16 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 `when` には、トリガーが発動した瞬間にすべて満たされていなければならない条件を記述します。
 
+```json
+{ "when": { "season": ["winter", "spring"], "dimension": "rdpl:overworldlike" } }
+```
+
 | 設定                        | 種類           | 確認する内容                                                                                                                                                                                              |
 | --------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `biomes`                    | リスト         | プレイヤーがこれらのバイオームのいずれかにいること。トリガーと同じ書き方です                                                                                                                              |
 | `environments`              | リスト         | プレイヤーのいるディメンションで、これらの環境のいずれかが有効であること。`default` も含む                                                                                                                |
+| `season`                    | リスト         | 季節の時計に照らして、そのディメンションがこれらの季節のいずれかにあること。環境を手で切り替えていても同じです。季節名は、季節の `order` の各項目にある最初の環境名です                                   |
+| `dimension`                 | テキスト       | `season` が季節を読み取るディメンション。`rdpl:overworldlike` のようなディメンションのレジストリ名で書きます。省くとプレイヤーのいるディメンションです                                                    |
 | `timeFrom`, `timeTo`        | 整数           | 日の時計がこの区間に入っていること。区間は真夜中をまたいでもよく、たとえば `13000` から `1000` までです                                                                                                   |
 | `dayAtLeast`                | 整数           | 日数がこの値以上であること                                                                                                                                                                                |
 | `advancement`               | テキスト       | プレイヤーがこの進捗を達成していること                                                                                                                                                                    |

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.sky;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,4 +24,11 @@ public final class SeasonDef {
     }
 
     public int index(long day) { return (int) Math.floorMod(Math.floorDiv(day, days), order.size()); }
+
+    public float progress(long ticks) {
+        long year = (long) days * DimensionTraitsDef.VANILLA_DAY * order.size();
+        return Math.floorMod(ticks, year) / (float) year;
+    }
+
+    public int dayInSeason(long ticks) { return (int) Math.floorMod(Math.floorDiv(ticks, DimensionTraitsDef.VANILLA_DAY), days); }
 }

@@ -133,10 +133,6 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override public boolean canDoRainSnowIce(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation; }
 
-    @Override public boolean canSnowAt(@Nonnull BlockPos pos, boolean checkLight) { return (def == null || def.traits.snow) && super.canSnowAt(pos, checkLight); }
-
-    @Override public boolean canBlockFreeze(@Nonnull BlockPos pos, boolean byWater) { return (def == null || def.traits.freeze) && super.canBlockFreeze(pos, byWater); }
-
     @Override public boolean isDaytime() {
         if (def != null && ContentRuleSwitch.dayLength(world, def) == DimensionTraitsDef.NO_DAY) { return true; }
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }

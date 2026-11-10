@@ -34,6 +34,10 @@ import net.minecraft.world.World;
         setHasSubtypes(true);
         setMaxDamage(0);
         if (!def.locates.isEmpty()) { addPropertyOverride(new ResourceLocation("angle"), new ContentCompassNeedle()); }
+        if (def.seasonClock != null) {
+            addPropertyOverride(new ResourceLocation("rdpl", "year"), ContentSeasonClock.year(def.seasonClock));
+            addPropertyOverride(new ResourceLocation("rdpl", "season"), ContentSeasonClock.season(def.seasonClock));
+        }
         ContentSetup.apply(this, def.creativeTab);
     }
 
@@ -63,7 +67,11 @@ import net.minecraft.world.World;
     }
 
     @Override @Nonnull public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
-        if (def.rolls.isEmpty() && !def.passesTurn && def.locates.isEmpty()) { return super.onItemRightClick(world, player, hand); }
+        if (def.rolls.isEmpty() && !def.passesTurn && def.locates.isEmpty()) {
+            if (def.seasonClock == null || !def.seasonClock.message) { return super.onItemRightClick(world, player, hand); }
+            if (!world.isRemote) { ContentSeasonClock.tell(def.seasonClock, player); }
+            return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));
+        }
         if (!world.isRemote && player instanceof EntityPlayerMP) {
             if (!def.locates.isEmpty()) { ContentCompass.use((EntityPlayerMP) player, hand, def.locates); }
             else if (def.passesTurn) { ContentTurns.byItem((EntityPlayerMP) player); }

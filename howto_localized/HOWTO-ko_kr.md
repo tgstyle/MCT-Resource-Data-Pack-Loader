@@ -5888,10 +5888,13 @@ Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지�
     "starTwinkle": 0.5,
     "lightningColor": "#A080FF",
     "grassTint": "#A0FF80",
-    "foliageTint": "#E0A040"
+    "foliageTint": "#E0A040",
+    "birchTint": "#C0D060"
   }
 }
 ```
+
+`birchTint`는 자작나무 잎의 색에만 곱해집니다. 지정하지 않으면 자작나무 잎도 다른 잎처럼 `foliageTint`를 따릅니다.
 
 `grassTint`는 풀, 키 큰 풀, 고사리, 사탕수수의 색에, `foliageTint`는 나뭇잎과 덩굴의 색에 곱해집니다. 생물 군계 자체의 색은 그대로 비쳐 보이며, 두 키 모두 환경의 `sky` 안에서 동작합니다. 계절이 식물의 색을 바꾸는 방식이 바로 이것입니다. 손에 든 아이템과 메뉴 속 아이템은 색이 바뀌지 않습니다.
 
@@ -5903,16 +5906,17 @@ Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지�
 
 `lightningColor`는 번개에 색조를 입힙니다.
 
-| 키               | 필수   | 값            | 기본값   | 설명                                                                 |
-| ---------------- | ------ | ------------- | -------- | -------------------------------------------------------------------- |
-| `snowColor`      | 아니요 | 16진수 색상   | 흰색     | 눈 층과 눈 블록의 색조                                               |
-| `waterFogColor`  | 아니요 | 16진수 색상   | `050533` | 물속 안개 색                                                         |
-| `lavaFogColor`   | 아니요 | 16진수 색상   | `991A00` | 용암 속 안개 색                                                      |
-| `starColor`      | 아니요 | 16진수 색상   | 흰색     | 별 색조                                                              |
-| `starTwinkle`    | 아니요 | 소수, 0에서 1 | `0.0`    | 반짝일 때 별이 얼마나 깊이 어두워지는지. `0`이면 일정하게 유지됩니다 |
-| `grassTint`      | 아니요 | 16진수 색상   | 흰색     | 풀, 키 큰 풀, 고사리, 사탕수수의 색에 곱해집니다                     |
-| `foliageTint`    | 아니요 | 16진수 색상   | 흰색     | 나뭇잎과 덩굴의 색에 곱해집니다                                      |
-| `lightningColor` | 아니요 | 16진수 색상   | `737380` | 번개 색조                                                            |
+| 키               | 필수   | 값            | 기본값        | 설명                                                                 |
+| ---------------- | ------ | ------------- | ------------- | -------------------------------------------------------------------- |
+| `snowColor`      | 아니요 | 16진수 색상   | 흰색          | 눈 층과 눈 블록의 색조                                               |
+| `waterFogColor`  | 아니요 | 16진수 색상   | `050533`      | 물속 안개 색                                                         |
+| `lavaFogColor`   | 아니요 | 16진수 색상   | `991A00`      | 용암 속 안개 색                                                      |
+| `starColor`      | 아니요 | 16진수 색상   | 흰색          | 별 색조                                                              |
+| `starTwinkle`    | 아니요 | 소수, 0에서 1 | `0.0`         | 반짝일 때 별이 얼마나 깊이 어두워지는지. `0`이면 일정하게 유지됩니다 |
+| `grassTint`      | 아니요 | 16진수 색상   | 흰색          | 풀, 키 큰 풀, 고사리, 사탕수수의 색에 곱해집니다                     |
+| `foliageTint`    | 아니요 | 16진수 색상   | 흰색          | 나뭇잎과 덩굴의 색에 곱해집니다                                      |
+| `birchTint`      | 아니요 | 16진수 색상   | `foliageTint` | 자작나무 잎의 색에 곱해집니다                                        |
+| `lightningColor` | 아니요 | 16진수 색상   | `737380`      | 번개 색조                                                            |
 
 ### 스카이박스, 오로라, 무지개
 
@@ -6099,7 +6103,12 @@ Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지�
       "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
     },
     "harvest": {
-      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0 }
+      "growth": {
+        "crops": 2.0, "saplings": 2.0, "animals": 2.0, "breeding": 2.0,
+        "byBlock": { "minecraft:wheat": 4.0, "minecraft:melon_stem": 0.0, "#treeSapling": 0.5 },
+        "tooltip": "here",
+        "waiver": { "blocks": ["minecraft:glass", "#blockGlass"], "within": 6, "scale": 1.0, "kinds": ["crops", "saplings"], "clear": false }
+      }
     },
     "bloodmoon": {
       "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
@@ -6111,6 +6120,12 @@ Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지�
     },
     "longnight": {
       "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false, "weatherSpeed": 2.0, "localDifficulty": 4.0, "wakeAt": 1000 }
+    },
+    "deepwinter": {
+      "rules": { "snow": { "place": "any", "freeze": "any", "whenDry": true } }
+    },
+    "thaw": {
+      "rules": { "snow": { "melt": "always", "meltChance": 0.25, "meltBlocks": ["minecraft:snow_layer", "minecraft:ice"] } }
     },
     "siege": {
       "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
@@ -6133,51 +6148,70 @@ Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지�
 
 환경에는 `growth` 블록도 둘 수 있으며, 환경이 켜져 있는 동안 차원의 성장 속도를 높이거나 늦춥니다. `crops`는 작물, 줄기, 카카오, 네더 와트, 사탕수수, 선인장, 코러스 꽃, 그리고 Forge의 작물 성장 이벤트로 자라는 모드 식물에 적용되고, `saplings`는 묘목이 나무로 자라는 속도, `animals`는 새끼 동물이 어른이 되는 속도, `breeding`은 번식한 동물이 다시 번식할 수 있게 되기까지의 속도에 적용됩니다. `breeding`이 `0`이면 먹이를 먹여도 새끼가 태어나지 않습니다. 각 값은 `0`부터 `100`까지의 배수로, `1`은 평소 속도, `0.5`는 절반, `2`는 두 배, `0`은 멈춤입니다. 1보다 크면 게임이 식물을 성장시키려고 고를 때마다 성장 기회가 추가로 주어지므로 빛, 흙, 물 조건은 그대로 따집니다. 뼛가루, 먹이 주기, 명령은 결코 영향을 받지 않습니다. `biomes`가 있으면 이 블록은 그 안에서만 적용되고, 여러 환경이 겹치는 곳에서는 하늘과 마찬가지로 마지막에 켠 것이 정합니다. 블록에서 뺀 키는 평소 속도를 그대로 씁니다. 환경을 끄면 평소 속도로 곧바로 돌아오며, 이미 자란 것은 그대로 남습니다.
 
+`growth` 안에서 `byBlock`은 작물 또는 묘목 블록 하나, 또는 그룹의 속도를 `crops`나 `saplings` 값 대신 정합니다. 키는 `minecraft:wheat` 같은 블록 ID이거나, `#treeSapling` 같은 광물 사전 이름을 뜻하는 `#이름`이고, 값은 `0`부터 `100`까지의 수입니다. 블록 ID가 `#이름`보다 우선하며, `#이름` 두 개가 모두 맞으면 먼저 적은 쪽이 이깁니다. `#이름`은 처음 필요할 때 찾아보며, 그 광물 사전 항목에 든 아이템의 블록에 해당합니다. `#cropWheat` 같은 씨앗의 이름은 그 씨앗이 심는 작물에 닿습니다. `tooltip`은 씨앗, 묘목, 작물 아이템에 속도를 보여 줍니다. `here`는 들고 있는 사람이 서 있는 환경의 속도, `year`는 거기에 차원의 계절마다 한 줄을 더하며, 기본값 `off`는 아무것도 보여 주지 않습니다. `waiver`는 목록에 있는 블록이 위에 놓인 식물의 속도를 끌어올립니다. 겨울 작물 위의 유리가 그 예입니다. `blocks` 중 하나가 식물 바로 위 `within`칸 이내에 있는 동안, 식물은 `kinds`에 적은 종류에 한해 환경의 속도 대신 `scale`로 자랍니다. `clear`를 켜면 식물과 목록의 블록 사이에 완전히 불투명한 블록이 없어야 하므로, 그 사이에 돌 반 블록 지붕이 있으면 예외가 끝납니다. 동물과 번식은 `byBlock`도 `waiver`도 쓰지 않습니다.
+
 환경에는 `mobs` 블록도 넣을 수 있습니다. 이 블록은 환경이 켜져 있는 동안 차원의 몹을 바꾸며, 블러드문 같은 이벤트에 쓸 수 있습니다. `entities`는 바꿀 몹을 ID로, 또는 `#monster`, `#creature`, `#ambient`, `#water_creature`로 종류별로 지정하며, 생략하면 모든 몬스터가 대상입니다. `health`, `damage`, `speed`는 몹의 최대 체력, 근접 공격 피해, 걷는 속도에 곱해지고, 현재 체력은 최대 체력에 맞춰 늘거나 줄어듭니다. `equipment`는 비어 있는 슬롯에 아이템을 쥐여 주고, 죽을 때 그 아이템을 떨어뜨릴 확률도 정합니다. 몹이 어느 환경을 받을지는 생성되거나 불러와질 때 서 있는 곳에서 정해지고, 환경이 전환될 때마다 불러온 모든 몹에 대해 다시 정해집니다. `biomes`와 겹침은 하늘과 같게 적용됩니다. 몹은 그 환경이 켜져 있는 동안 재시작 후에도 변화를 유지합니다. 환경이 꺼지면 체력, 피해, 속도가 원래대로 돌아가고, 환경이 준 장비는 몹이 아직 들고 있을 때 사라집니다. 화살, 화염구, 폭발의 피해는 그대로이고, 플레이어는 절대 바뀌지 않습니다.
 
 환경에는 `loot` 블록도 넣을 수 있으며, 환경이 켜져 있는 동안 전리품 테이블 하나를 다른 것으로 바꿉니다. 몹의 드롭, 낚시, 발전 과제 보상, 그리고 월드가 생성하는 상자와 상자 마인카트가 대상입니다. 상자는 처음 열 때 채워지므로, 그 순간 켜져 있는 환경이 안에 든 것을 정합니다. 테이블을 `minecraft:empty`에 연결하면 아무것도 떨어지지 않습니다. `trades` 블록은 [거래](#거래)와 같은 형식으로 거래를 나열합니다. 이 블록이 직업을 언급한 주민은 환경이 켜져 있는 동안 자신의 거래 대신 그 거래를 자신의 레벨까지 제공하고, 환경이 꺼지면 자신의 거래를 되찾습니다. 각 주민은 둘 다 기억합니다. 이루어진 거래, 매진된 제안, 재입고는 환경이 돌아왔을 때 멈췄던 곳에서 이어지며, 재시작을 거쳐도 마찬가지입니다. 나열하는 직업마다 레벨 1 거래를 넣어야 하며, 그렇지 않으면 그 직업의 새 주민은 제공할 것이 없습니다. 떠돌이 상인은 바뀌지 않습니다. `biomes`와 겹침은 하늘과 같습니다.
 
-환경은 `rules` 블록도 가질 수 있으며, 환경이 켜져 있는 동안 월드가 돌아가는 방식을 바꿉니다. `dayLength`는 [`time.dayLength`](#time-블록)처럼 하루를 늘리고, `weather`는 날씨를 `clear`, `rain`, `thunder` 중 하나로 고정하며, `weatherSpeed`는 차원의 날씨가 오가는 속도를 높이거나 낮춥니다(`0`이면 현재 날씨 그대로). `weather.cycle`이 없으면 다른 차원이 공유하는 오버월드의 날씨를 빠르게 합니다. `difficulty`는 여기서 월드의 난이도를 `worldDifficulty`보다 먼저 대체하고, `localDifficulty`는 지역 난이도를 `0`에서 `6.75`까지 정해 몹이 방어구를 입고 스폰하거나 아이템을 주울 빈도를 결정합니다. `sleep`을 끄면 아무도 잘 수 없고 자고 있던 사람은 깨어납니다. `wakeAt`은 하룻밤의 수면이 끝나는 시각을 정하며, 바닐라의 건너뛰기처럼 시계는 오버월드에서만 움직입니다. `sleep`과 `localDifficulty`는 `biomes`와 겹침을 하늘과 같게 따르고, 나머지 키는 차원 전체에 적용되므로 `biomes`가 있는 환경이 그런 키를 주면 로그에 기록하고 그 키는 무시합니다. 환경을 끄면 모든 것이 한 번에 복원되며, 날씨는 몇 초에 걸쳐 되돌아옵니다.
+환경은 `rules` 블록도 가질 수 있으며, 환경이 켜져 있는 동안 월드가 돌아가는 방식을 바꿉니다. `dayLength`는 [`time.dayLength`](#time-블록)처럼 하루를 늘리고, `weather`는 날씨를 `clear`, `rain`, `thunder` 중 하나로 고정하며, `weatherSpeed`는 차원의 날씨가 오가는 속도를 높이거나 낮춥니다(`0`이면 현재 날씨 그대로). `weather.cycle`이 없으면 다른 차원이 공유하는 오버월드의 날씨를 빠르게 합니다. `difficulty`는 여기서 월드의 난이도를 `worldDifficulty`보다 먼저 대체하고, `localDifficulty`는 지역 난이도를 `0`에서 `6.75`까지 정해 몹이 방어구를 입고 스폰하거나 아이템을 주울 빈도를 결정합니다. `sleep`을 끄면 아무도 잘 수 없고 자고 있던 사람은 깨어납니다. `wakeAt`은 하룻밤의 수면이 끝나는 시각을 정하며, 바닐라의 건너뛰기처럼 시계는 오버월드에서만 움직입니다. `sleep`, `localDifficulty`, `snow`는 `biomes`와 겹침을 하늘과 같게 따르고, 나머지 키는 차원 전체에 적용되므로 `biomes`가 있는 환경이 그런 키를 주면 로그에 기록하고 그 키는 무시합니다. 환경을 끄면 모든 것이 한 번에 복원되며, 날씨는 몇 초에 걸쳐 되돌아옵니다.
+
+`rules` 안에서 `snow`는 환경이 켜져 있는 동안 눈이 쌓이는 곳과 물이 어는 곳을 정합니다. `place`와 `freeze`는 각각 네 가지 값 중 하나를 가집니다. `default`는 차원의 `weather.snow` 또는 `weather.freeze`와 바닐라의 추운 바이옴 판정을 그대로 둡니다. `biome`은 추운 바이옴 판정은 그대로 두지만 차원의 `weather` 블록에 있는 `false`는 무시합니다. `any`는 바이옴이 아무리 따뜻해도 모든 바이옴이 눈이나 얼음을 받게 하며, 그 `false`도 무시합니다. `never`는 이를 막습니다. 눈은 비가 올 때만 쌓이고, 물은 바닐라에서처럼 맑은 날씨에도 얼지만, 하늘이 트여 있어야 하고 블록 빛이 10 미만이어야 하며 눈이 얹힐 수 있는 땅이어야 한다는 조건은 그대로입니다. `whenDry`를 켜면 비가 없어도 각 플레이어 주변, 게임이 블록을 틱하는 구역에서 비가 쌓을 만한 속도로 눈이 쌓입니다. `melt: always`는 같은 구역의 각 기둥 맨 위에서 `meltBlocks`의 블록을 빛이나 바이옴과 관계없이 녹입니다. 눈 층은 한 번에 한 층씩 줄고, 얼음은 물이 되거나, 차원의 `waterVaporizes`가 켜진 곳에서는 사라집니다. 목록의 다른 블록(예: `minecraft:snow`)은 제거됩니다. `meltChance`는 검사한 기둥이 녹을 확률입니다. `1`이면 플레이어 근처의 기둥은 비가 그 기둥에 한 층을 더하는 만큼 자주 녹고, 기본값은 그보다 열여섯 배 느립니다. `melt: always`일 때 `whenDry`는 아무 일도 하지 않습니다. 아무것도 저장되지 않습니다. 환경이 꺼지면 녹는 일은 그 자리에서 멈추고, 이미 녹았거나 쌓인 것은 그대로 남습니다.
 
 환경에는 `raids` 블록도 넣을 수 있으며, 환경이 켜져 있는 동안 차원의 [습격](#습격)을 바꿉니다. `every`를 쓰면 각 플레이어는 환경이 켜진 곳에서 보낸 틱 수를 셉니다. 그 수가 `every`에 이르면 `start`에 적은 습격 중 하나가 그 플레이어에게서 시작됩니다. 마치 그 습격의 `omen`을 지닌 것처럼, 플레이어가 있는 마을에서, 또는 습격에 `anywhere`가 있으면 플레이어 주위에서 시작됩니다. 습격이 거기서 시작될 수 없으면 수는 가득 찬 채로 남고 시계는 매초 다시 시도합니다. 습격이 시작될 때마다 `reach` 안에 있는 모든 플레이어의 수가 0으로 돌아가므로, `every`는 습격과 습격 사이의 최단 시간입니다. `waves`와 `points`는 환경 아래에서 시작되는 모든 습격의 웨이브 수와 점수에 곱해지며, `omen`으로 시작된 습격과 `/rdplserver raid`로 시작된 습격도 포함합니다. 둘 다 반올림되며 습격에는 언제나 웨이브가 하나 이상 있습니다. 습격 자체 목록의 끝을 넘으면 마지막 웨이브가 다시 옵니다. 습격은 환경이 꺼져도 시작할 때의 웨이브 수와 점수를 유지하며, 이는 습격과 함께 저장됩니다. `biomes`가 있으면 시계는 플레이어가 선 곳에서, 웨이브 수와 점수는 습격의 중심에서 판단합니다. 여러 환경이 겹치는 곳에서는 마지막에 켠 환경이 결정합니다. `every`를 주는 환경이 없는 곳에서는 수가 멈추며, 플레이어와 함께 차원마다 하나씩 저장됩니다.
 
-| 키                                                     | 필수           | 값                             | 기본값         | 설명                                                                                                                                                                                                                                                    |
-| ------------------------------------------------------ | -------------- | ------------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `environments.<name>`                                  | 아니요         | 객체                           | 없음           | 환경 하나. 이름은 한 단어이며 `default`만 아니면 됩니다                                                                                                                                                                                                 |
-| `environments.<name>.biomes`                           | 아니요         | 생물 군계 이름의 목록          | 모든 생물 군계 | `minecraft:desert` 같은 생물 군계 이름, 또는 `#SNOWY` 같은 Forge 생물 군계 유형을 가리키는 `#TYPE`. 그러면 환경은 이 생물 군계 안에서만 적용됩니다                                                                                                      |
-| `environments.<name>.sky`                              | 아니요         | 객체                           | 없음           | [`sky` 블록](#sky-블록)의 키. 단, 월드를 불러올 때 한 번만 정해지는 `hasSkyLight`, `surfaceWorld`, `respawn`, `respawnDimension`, `spawning`, `nether`, `beds`, `waterVaporizes`, `groundLevel`, `movementFactor`, `fixedTime`, `ambientLight`는 빼고요 |
-| `environments.<name>.ambience`                         | 아니요         | 객체                           | 없음           | [`ambience` 블록](#ambience-블록)의 키                                                                                                                                                                                                                  |
-| `environments.<name>.spawning`                         | 아니요         | 객체                           | 없음           | [스폰](#스폰)의 비율 키와 상한 키에 `weights`를 더한 것                                                                                                                                                                                                 |
-| `environments.<name>.spawning.weights`                 | 아니요         | 엔티티 ID에서 배수로 가는 객체 | 없음           | 그 몹이 들어 있는 모든 스폰 목록에서 가중치를 조정합니다. `0`이면 자연적으로 스폰되지 않습니다                                                                                                                                                          |
-| `environments.<name>.growth`                           | 아니요         | 객체                           | 없음           | `crops`, `saplings`, `animals`, `breeding`의 속도                                                                                                                                                                                                       |
-| `environments.<name>.growth.crops`                     | 아니요         | 숫자, 0~100                    | `1`            | 작물 성장 속도. `0`이면 멈춥니다                                                                                                                                                                                                                        |
-| `environments.<name>.growth.saplings`                  | 아니요         | 숫자, 0~100                    | `1`            | 묘목 성장 속도. `0`이면 멈춥니다                                                                                                                                                                                                                        |
-| `environments.<name>.growth.animals`                   | 아니요         | 숫자, 0~100                    | `1`            | 새끼 동물이 자라는 속도. `0`이면 계속 새끼로 남습니다                                                                                                                                                                                                   |
-| `environments.<name>.growth.breeding`                  | 아니요         | 숫자, 0~100                    | `1`            | 번식 뒤 대기 시간이 줄어드는 속도. `0`이면 번식이 멈춥니다                                                                                                                                                                                              |
-| `environments.<name>.mobs`                             | 아니요         | 객체                           | 없음           | 환경이 켜져 있는 동안 몹을 바꿉니다                                                                                                                                                                                                                     |
-| `environments.<name>.mobs.entities`                    | 아니요         | 엔티티 ID 또는 종류 목록       | `["#monster"]` | `minecraft:zombie` 같은 ID, 또는 `#monster`, `#creature`, `#ambient`, `#water_creature`                                                                                                                                                                 |
-| `environments.<name>.mobs.health`                      | 아니요         | 0보다 큰 숫자                  | `1`            | 최대 체력에 곱합니다                                                                                                                                                                                                                                    |
-| `environments.<name>.mobs.damage`                      | 아니요         | 0 이상의 숫자                  | `1`            | 근접 공격 피해에 곱합니다                                                                                                                                                                                                                               |
-| `environments.<name>.mobs.speed`                       | 아니요         | 0 이상의 숫자                  | `1`            | 걷는 속도에 곱합니다. `0`이면 몹이 제자리에 묶입니다                                                                                                                                                                                                    |
-| `environments.<name>.mobs.equipment`                   | 아니요         | 슬롯에서 아이템으로 가는 객체  | 없음           | 슬롯은 `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`이며, 비어 있는 슬롯만 채워집니다                                                                                                                                                          |
-| `environments.<name>.mobs.equipment.<slot>.item`       | 예             | 아이템 ID                      | 없음           | 주어지는 아이템                                                                                                                                                                                                                                         |
-| `environments.<name>.mobs.equipment.<slot>.dropChance` | 아니요         | 숫자, 0~1                      | `0.085`        | 몹이 죽을 때 아이템을 떨어뜨릴 확률                                                                                                                                                                                                                     |
-| `environments.<name>.loot`                             | 아니요         | 테이블 ID 쌍의 객체            | 없음           | 환경이 켜져 있는 동안 지정한 각 테이블을 주어진 테이블로 바꿉니다                                                                                                                                                                                       |
-| `environments.<name>.trades`                           | 아니요         | 거래 목록                      | 없음           | 항목은 [거래](#거래)와 같습니다. 목록에 있는 직업의 주민은 자신의 레벨까지 이 거래만 제공합니다                                                                                                                                                         |
-| `environments.<name>.trades[].profession`              | 예             | 직업 ID                        | 없음           | `career`, `level`, `buy`, `buySecondary`, `sell`, `maxUses`는 [거래](#거래)와 같습니다                                                                                                                                                                  |
-| `environments.<name>.rules`                            | 아니요         | 객체                           | 없음           | 환경이 켜져 있는 동안 월드의 동작을 바꿉니다                                                                                                                                                                                                            |
-| `environments.<name>.rules.dayLength`                  | 아니요         | 0보다 큰 정수                  | 차원의 값      | 하루의 길이. 차원 전체에만 적용                                                                                                                                                                                                                         |
-| `environments.<name>.rules.weather`                    | 아니요         | `clear`, `rain`, `thunder`     | 없음           | 날씨를 고정합니다. 차원 전체에만 적용                                                                                                                                                                                                                   |
-| `environments.<name>.rules.weatherSpeed`               | 아니요         | 숫자, 0~100                    | `1`            | 날씨가 바뀌는 속도. 차원 전체에만 적용                                                                                                                                                                                                                  |
-| `environments.<name>.rules.difficulty`                 | 아니요         | `peaceful`…`hard`              | 없음           | 난이도. 차원 전체에만 적용                                                                                                                                                                                                                              |
-| `environments.<name>.rules.localDifficulty`            | 아니요         | 숫자, 0~6.75                   | 바닐라 값      | 지역 난이도                                                                                                                                                                                                                                             |
-| `environments.<name>.rules.sleep`                      | 아니요         | 불리언                         | `true`         | 끄면 아무도 잘 수 없습니다                                                                                                                                                                                                                              |
-| `environments.<name>.rules.wakeAt`                     | 아니요         | 정수, 0~23999                  | `0`            | 수면이 끝나는 시각. 차원 전체에만 적용                                                                                                                                                                                                                  |
-| `environments.<name>.raids`                            | 아니요         | 객체                           | 없음           | 습격을 바꿉니다: `every`, `start`, `waves`, `points`                                                                                                                                                                                                    |
-| `environments.<name>.raids.every`                      | 아니요         | 0보다 큰 정수                  | 없음           | 습격이 시작되기까지 플레이어가 여기서 보내는 틱 수. `start`가 필요합니다                                                                                                                                                                                |
-| `environments.<name>.raids.start`                      | `every`와 함께 | 습격 id 또는 그 목록           | 없음           | 시계가 시작하는 습격, 또는 시계가 무작위로 고르는 습격 목록                                                                                                                                                                                             |
-| `environments.<name>.raids.waves`                      | 아니요         | 0보다 큰 숫자, 최대 100        | `1`            | 습격이 보내는 웨이브 수에 곱합니다                                                                                                                                                                                                                      |
-| `environments.<name>.raids.points`                     | 아니요         | 숫자, 0~100                    | `1`            | 이긴 습격이 주는 점수에 곱합니다                                                                                                                                                                                                                        |
+| 키                                                     | 필수                 | 값                                      | 기본값                                      | 설명                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------ | -------------------- | --------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environments.<name>`                                  | 아니요               | 객체                                    | 없음                                        | 환경 하나. 이름은 한 단어이며 `default`만 아니면 됩니다                                                                                                                                                                                                 |
+| `environments.<name>.biomes`                           | 아니요               | 생물 군계 이름의 목록                   | 모든 생물 군계                              | `minecraft:desert` 같은 생물 군계 이름, 또는 `#SNOWY` 같은 Forge 생물 군계 유형을 가리키는 `#TYPE`. 그러면 환경은 이 생물 군계 안에서만 적용됩니다                                                                                                      |
+| `environments.<name>.sky`                              | 아니요               | 객체                                    | 없음                                        | [`sky` 블록](#sky-블록)의 키. 단, 월드를 불러올 때 한 번만 정해지는 `hasSkyLight`, `surfaceWorld`, `respawn`, `respawnDimension`, `spawning`, `nether`, `beds`, `waterVaporizes`, `groundLevel`, `movementFactor`, `fixedTime`, `ambientLight`는 빼고요 |
+| `environments.<name>.ambience`                         | 아니요               | 객체                                    | 없음                                        | [`ambience` 블록](#ambience-블록)의 키                                                                                                                                                                                                                  |
+| `environments.<name>.spawning`                         | 아니요               | 객체                                    | 없음                                        | [스폰](#스폰)의 비율 키와 상한 키에 `weights`를 더한 것                                                                                                                                                                                                 |
+| `environments.<name>.spawning.weights`                 | 아니요               | 엔티티 ID에서 배수로 가는 객체          | 없음                                        | 그 몹이 들어 있는 모든 스폰 목록에서 가중치를 조정합니다. `0`이면 자연적으로 스폰되지 않습니다                                                                                                                                                          |
+| `environments.<name>.growth`                           | 아니요               | 객체                                    | 없음                                        | `crops`, `saplings`, `animals`, `breeding`의 속도                                                                                                                                                                                                       |
+| `environments.<name>.growth.crops`                     | 아니요               | 숫자, 0~100                             | `1`                                         | 작물 성장 속도. `0`이면 멈춥니다                                                                                                                                                                                                                        |
+| `environments.<name>.growth.saplings`                  | 아니요               | 숫자, 0~100                             | `1`                                         | 묘목 성장 속도. `0`이면 멈춥니다                                                                                                                                                                                                                        |
+| `environments.<name>.growth.animals`                   | 아니요               | 숫자, 0~100                             | `1`                                         | 새끼 동물이 자라는 속도. `0`이면 계속 새끼로 남습니다                                                                                                                                                                                                   |
+| `environments.<name>.growth.breeding`                  | 아니요               | 숫자, 0~100                             | `1`                                         | 번식 뒤 대기 시간이 줄어드는 속도. `0`이면 번식이 멈춥니다                                                                                                                                                                                              |
+| `environments.<name>.growth.byBlock`                   | 아니요               | 블록 ID 또는 `#이름`에서 수로 가는 객체 | 없음                                        | 작물 또는 묘목 블록 하나, 또는 그룹의 속도로, `crops`나 `saplings` 대신 쓰입니다. 블록 ID가 `#이름`보다 우선하고, `#이름` 둘이 맞으면 먼저 적은 쪽이 이깁니다. `#이름`은 광물 사전 이름입니다                                                           |
+| `environments.<name>.growth.tooltip`                   | 아니요               | `"off"`, `"here"`, `"year"`             | `"off"`                                     | 씨앗, 묘목, 작물 아이템에 속도를 보여 줍니다. `here`는 들고 있는 사람이 서 있는 환경, `year`는 계절마다 한 줄을 더합니다                                                                                                                                |
+| `environments.<name>.growth.waiver`                    | 아니요               | 객체                                    | 없음                                        | 목록에 있는 블록이 위에 있는 동안 식물의 성장 속도를 대신합니다                                                                                                                                                                                         |
+| `environments.<name>.growth.waiver.blocks`             | `waiver`가 있으면 예 | 블록 ID 또는 `#이름`의 목록             | 없음                                        | 대상이 되는 블록                                                                                                                                                                                                                                        |
+| `environments.<name>.growth.waiver.within`             | 아니요               | 1부터 64까지의 정수                     | `8`                                         | 식물 위로 몇 칸까지 찾는지                                                                                                                                                                                                                              |
+| `environments.<name>.growth.waiver.scale`              | 아니요               | 0부터 100까지의 수                      | `1`                                         | 예외가 적용되는 동안 대신 쓰는 속도                                                                                                                                                                                                                     |
+| `environments.<name>.growth.waiver.kinds`              | 아니요               | `crops`, `saplings`의 목록              | 둘 다                                       | 예외가 다루는 종류                                                                                                                                                                                                                                      |
+| `environments.<name>.growth.waiver.clear`              | 아니요               | `true` 또는 `false`                     | `false`                                     | `true`는 식물과 목록의 블록 사이에 완전히 불투명한 블록이 없어야 합니다. `false`는 사이에 무엇이 있든 그 블록을 셉니다                                                                                                                                  |
+| `environments.<name>.mobs`                             | 아니요               | 객체                                    | 없음                                        | 환경이 켜져 있는 동안 몹을 바꿉니다                                                                                                                                                                                                                     |
+| `environments.<name>.mobs.entities`                    | 아니요               | 엔티티 ID 또는 종류 목록                | `["#monster"]`                              | `minecraft:zombie` 같은 ID, 또는 `#monster`, `#creature`, `#ambient`, `#water_creature`                                                                                                                                                                 |
+| `environments.<name>.mobs.health`                      | 아니요               | 0보다 큰 숫자                           | `1`                                         | 최대 체력에 곱합니다                                                                                                                                                                                                                                    |
+| `environments.<name>.mobs.damage`                      | 아니요               | 0 이상의 숫자                           | `1`                                         | 근접 공격 피해에 곱합니다                                                                                                                                                                                                                               |
+| `environments.<name>.mobs.speed`                       | 아니요               | 0 이상의 숫자                           | `1`                                         | 걷는 속도에 곱합니다. `0`이면 몹이 제자리에 묶입니다                                                                                                                                                                                                    |
+| `environments.<name>.mobs.equipment`                   | 아니요               | 슬롯에서 아이템으로 가는 객체           | 없음                                        | 슬롯은 `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`이며, 비어 있는 슬롯만 채워집니다                                                                                                                                                          |
+| `environments.<name>.mobs.equipment.<slot>.item`       | 예                   | 아이템 ID                               | 없음                                        | 주어지는 아이템                                                                                                                                                                                                                                         |
+| `environments.<name>.mobs.equipment.<slot>.dropChance` | 아니요               | 숫자, 0~1                               | `0.085`                                     | 몹이 죽을 때 아이템을 떨어뜨릴 확률                                                                                                                                                                                                                     |
+| `environments.<name>.loot`                             | 아니요               | 테이블 ID 쌍의 객체                     | 없음                                        | 환경이 켜져 있는 동안 지정한 각 테이블을 주어진 테이블로 바꿉니다                                                                                                                                                                                       |
+| `environments.<name>.trades`                           | 아니요               | 거래 목록                               | 없음                                        | 항목은 [거래](#거래)와 같습니다. 목록에 있는 직업의 주민은 자신의 레벨까지 이 거래만 제공합니다                                                                                                                                                         |
+| `environments.<name>.trades[].profession`              | 예                   | 직업 ID                                 | 없음                                        | `career`, `level`, `buy`, `buySecondary`, `sell`, `maxUses`는 [거래](#거래)와 같습니다                                                                                                                                                                  |
+| `environments.<name>.rules`                            | 아니요               | 객체                                    | 없음                                        | 환경이 켜져 있는 동안 월드의 동작을 바꿉니다                                                                                                                                                                                                            |
+| `environments.<name>.rules.dayLength`                  | 아니요               | 0보다 큰 정수                           | 차원의 값                                   | 하루의 길이. 차원 전체에만 적용                                                                                                                                                                                                                         |
+| `environments.<name>.rules.weather`                    | 아니요               | `clear`, `rain`, `thunder`              | 없음                                        | 날씨를 고정합니다. 차원 전체에만 적용                                                                                                                                                                                                                   |
+| `environments.<name>.rules.weatherSpeed`               | 아니요               | 숫자, 0~100                             | `1`                                         | 날씨가 바뀌는 속도. 차원 전체에만 적용                                                                                                                                                                                                                  |
+| `environments.<name>.rules.difficulty`                 | 아니요               | `peaceful`…`hard`                       | 없음                                        | 난이도. 차원 전체에만 적용                                                                                                                                                                                                                              |
+| `environments.<name>.rules.localDifficulty`            | 아니요               | 숫자, 0~6.75                            | 바닐라 값                                   | 지역 난이도                                                                                                                                                                                                                                             |
+| `environments.<name>.rules.sleep`                      | 아니요               | 불리언                                  | `true`                                      | 끄면 아무도 잘 수 없습니다                                                                                                                                                                                                                              |
+| `environments.<name>.rules.wakeAt`                     | 아니요               | 정수, 0~23999                           | `0`                                         | 수면이 끝나는 시각. 차원 전체에만 적용                                                                                                                                                                                                                  |
+| `environments.<name>.rules.snow`                       | 아니요               | 객체                                    | 없음                                        | 환경이 켜져 있는 동안의 눈과 얼음. `biomes`를 따름                                                                                                                                                                                                      |
+| `environments.<name>.rules.snow.place`                 | 아니요               | `default`, `biome`, `any`, `never`      | `default`                                   | 눈이 쌓이는 곳. 차원의 설정대로, 추운 바이옴 판정만으로, 모든 바이옴에, 또는 어디에도 쌓이지 않음                                                                                                                                                       |
+| `environments.<name>.rules.snow.freeze`                | 아니요               | `default`, `biome`, `any`, `never`      | `default`                                   | 물이 어는 곳에도 같은 방식                                                                                                                                                                                                                              |
+| `environments.<name>.rules.snow.whenDry`               | 아니요               | 참 또는 거짓                            | `false`                                     | 켜면 비가 없어도 플레이어 주변에 눈이 쌓임                                                                                                                                                                                                              |
+| `environments.<name>.rules.snow.melt`                  | 아니요               | `never`, `always`                       | `never`                                     | `always`는 플레이어 주변의 `meltBlocks`를 빛이나 바이옴과 관계없이 녹임                                                                                                                                                                                 |
+| `environments.<name>.rules.snow.meltChance`            | 아니요               | 0보다 크고 1 이하인 숫자                | `0.0625`                                    | 검사한 기둥이 녹을 확률                                                                                                                                                                                                                                 |
+| `environments.<name>.rules.snow.meltBlocks`            | 아니요               | 블록 ID 목록                            | `["minecraft:snow_layer", "minecraft:ice"]` | 녹는 것: 눈 층은 한 층씩 줄고, 얼음은 물이 됨(`waterVaporizes`가 있으면 사라짐), 그 밖의 블록은 제거됨                                                                                                                                                  |
+| `environments.<name>.raids`                            | 아니요               | 객체                                    | 없음                                        | 습격을 바꿉니다: `every`, `start`, `waves`, `points`                                                                                                                                                                                                    |
+| `environments.<name>.raids.every`                      | 아니요               | 0보다 큰 정수                           | 없음                                        | 습격이 시작되기까지 플레이어가 여기서 보내는 틱 수. `start`가 필요합니다                                                                                                                                                                                |
+| `environments.<name>.raids.start`                      | `every`와 함께       | 습격 id 또는 그 목록                    | 없음                                        | 시계가 시작하는 습격, 또는 시계가 무작위로 고르는 습격 목록                                                                                                                                                                                             |
+| `environments.<name>.raids.waves`                      | 아니요               | 0보다 큰 숫자, 최대 100                 | `1`                                         | 습격이 보내는 웨이브 수에 곱합니다                                                                                                                                                                                                                      |
+| `environments.<name>.raids.points`                     | 아니요               | 숫자, 0~100                             | `1`                                         | 이긴 습격이 주는 점수에 곱합니다                                                                                                                                                                                                                        |
 
 환경 안의 다른 키나 위에 적은 `sky` 키는 로그에 오류를 남기고 무시됩니다. 팩이 더 이상 정의하지 않는 환경으로 저장된 월드는 차원 고유의 모습으로 돌아갑니다.
 
@@ -6214,6 +6248,94 @@ Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지�
 | `seasons`       | 아니요           | 객체                            | 없음   | 차원의 환경을 1년 주기로 켜고 끕니다                 |
 | `seasons.days`  | `seasons`와 함께 | 0보다 큰 정수                   | 없음   | 각 계절이 이어지는 일수                              |
 | `seasons.order` | `seasons`와 함께 | 환경 이름 또는 이름 목록의 배열 | 없음   | 계절의 순서. 목록 항목은 그 환경들을 함께 전환합니다 |
+
+### 계절 시계
+
+*아이템*
+
+`seasonClock`이 있는 아이템은 계절 시계가 됩니다. 모델은 두 가지 조건자로 계절을 읽고, 우클릭하면 들고 있는 사람에게 현재 계절과 그 계절의 며칠째인지 알려 줍니다.
+
+`<namespace>/items/*.json`
+
+```json
+{
+  "seasonClock": { "dimension": "rdpl:overworldlike", "message": true },
+  "variants": {
+    "clock": {
+      "meta": 0,
+      "maxSize": 1
+    }
+  }
+}
+```
+
+그리고 이 아이템의 모델 `assets/mypack/models/item/season_clock.json`은 네 계절마다 프레임 하나씩 둡니다.
+
+```json
+{
+  "parent": "item/generated",
+  "textures": { "layer0": "mypack:items/clock_spring" },
+  "overrides": [
+    { "predicate": { "rdpl:year": 0.25 }, "model": "mypack:item/clock_summer" },
+    { "predicate": { "rdpl:year": 0.5 }, "model": "mypack:item/clock_autumn" },
+    { "predicate": { "rdpl:year": 0.75 }, "model": "mypack:item/clock_winter" }
+  ]
+}
+```
+
+| 키                      | 필수   | 값               | 기본값                | 설명                                                                          |
+| ----------------------- | ------ | ---------------- | --------------------- | ----------------------------------------------------------------------------- |
+| `seasonClock`           | 아니요 | `true` 또는 객체 | 없음                  | 아이템을 계절 시계로 만듭니다. `true`는 들고 있는 사람이 있는 차원을 읽습니다 |
+| `seasonClock.dimension` | 아니요 | 차원 등록 이름   | 들고 있는 사람의 차원 | 어느 차원의 계절을 보여 줄지 정합니다                                         |
+| `seasonClock.message`   | 아니요 | 불리언           | `true`                | 우클릭하면 들고 있는 사람에게 계절과 그 계절의 며칠째인지 알려 줍니다         |
+
+| 조건자        | 값                 | 설명                                                                                                                               |
+| ------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:year`   | 0에서 1까지의 소수 | 한 해가 얼마나 지났는지입니다. 계절 번호에 그 계절에서 지난 날수의 비율을 더하고 계절 수로 나눈 값입니다. 계절이 없는 차원에서는 0 |
+| `rdpl:season` | 0 이상의 정수      | 계절 번호이며, `order`의 첫 항목이 0입니다. 비율 대신 계절별로 프레임을 고를 수 있습니다. 계절이 없는 차원에서는 0                 |
+
+재정의는 조건자가 그 값에 이르면 적용되고, 적용되는 것 중 마지막이 쓰입니다. 그래서 위치 탐지 나침반이 `angle`로 하듯이 낮은 값부터 높은 값 순으로 적습니다. 계절이 없는 차원에서는 메시지가 그렇게 알려 줍니다.
+
+### 계절 감지기
+
+*블록*
+
+유형이 `seasonSensor`인 블록은 차원의 계절에 따라 레드스톤 신호를 내보내고, 비교기도 같은 수를 읽습니다. 100틱마다 시계를 확인합니다.
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "seasonSensor",
+  "material": "rock",
+  "creativeTab": "redstone",
+  "seasonSensor": {
+    "dimension": "rdpl:overworldlike",
+    "output": { "spring": 3, "summer": 6, "autumn": 9, "winter": 12 }
+  },
+  "variants": { "season_sensor": { "meta": 0, "hardness": 1.0, "resistance": 5 } }
+}
+```
+
+그리고 이 블록의 블록 상태 `assets/mypack/blockstates/season_sensor.json`에는 0부터 15까지 세기마다 항목 하나씩 적습니다.
+
+```json
+{
+  "variants": {
+    "power=0": { "model": "mypack:season_sensor_0" },
+    "power=1": { "model": "mypack:season_sensor_1" },
+    "power=15": { "model": "mypack:season_sensor_15" }
+  }
+}
+```
+
+| 키                       | 필수         | 값                              | 기본값             | 설명                                                                                                                                |
+| ------------------------ | ------------ | ------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `seasonSensor`           | 이 유형일 때 | 객체                            | 없음               | 계절에 따라 레드스톤 신호를 내는 블록                                                                                               |
+| `seasonSensor.dimension` | 아니요       | 차원 등록 이름                  | 블록 자신의 차원   | 어느 차원의 계절을 읽을지 정합니다                                                                                                  |
+| `seasonSensor.output`    | 아니요       | 객체, 계절 이름에서 1~15 세기로 | 계절에 고르게 나눔 | 계절별 세기입니다. 빼 놓은 계절은 `(번호 + 1) * 15 / 계절 수`의 소수점 아래를 버린 값을 받으며, 계절이 넷이면 3, 7, 11, 15가 됩니다 |
+
+세기는 블록 상태 `power`이므로 블록 상태에는 16가지 값마다 변형이 있어야 합니다. 계절이 없는 차원에서는 0으로 남습니다. `output`의 계절은 `order`의 해당 항목에 있는 첫 환경의 이름으로 부릅니다.
 
 ## Galacticraft 천체
 
@@ -9029,10 +9151,16 @@ chunks {
 
 `when`에는 트리거가 발동하는 순간 모두 참이어야 하는 조건이 들어 있습니다.
 
+```json
+{ "when": { "season": ["winter", "spring"], "dimension": "rdpl:overworldlike" } }
+```
+
 | 설정                        | 유형         | 확인하는 것                                                                                                                                          |
 | --------------------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `biomes`                    | 목록         | 플레이어가 이 생물 군계 중 하나에 서 있는지 여부이며, 트리거와 같은 방식으로 적습니다                                                                |
 | `environments`              | 목록         | 플레이어가 있는 차원에서 이 환경 중 하나가 켜져 있는지 여부이며, `default`도 포함한다                                                                |
+| `season`                    | 목록         | 환경을 직접 바꿨더라도, 계절 시계로 볼 때 그 차원이 이 계절 중 하나에 있는지 여부입니다. 계절 이름은 계절 `order` 항목의 첫 번째 환경 이름입니다     |
+| `dimension`                 | 텍스트       | `season`이 계절을 읽는 차원이며, `rdpl:overworldlike`처럼 차원 레지스트리 이름으로 적습니다. 생략하면 플레이어가 있는 차원입니다                     |
 | `timeFrom`, `timeTo`        | 정수         | 하루 시계가 이 구간 안에 있는지 여부이며, `13000`~`1000`처럼 자정을 넘길 수 있습니다                                                                 |
 | `dayAtLeast`                | 정수         | 날짜가 이 값 이상인지 여부                                                                                                                           |
 | `advancement`               | 문자열       | 플레이어가 이 발전 과제를 가지고 있는지 여부                                                                                                         |

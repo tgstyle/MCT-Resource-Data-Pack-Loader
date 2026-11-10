@@ -47,6 +47,8 @@ import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
+import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
 import mctmods.resourcedatapackloader.common.fireworks.FireworkDispensing;
 import mctmods.resourcedatapackloader.common.fuels.ContentFuels;
@@ -184,7 +186,9 @@ public class ModSetup {
         }
     }
 
-    public static void preInit() { Rubic.preInit(); }
+    public static void preInit() {
+        Rubic.preInit();
+    }
 
     public static void init() {
         Rubic.init();
@@ -227,6 +231,8 @@ public class ModSetup {
         RDPLNetwork.register();
         MinecraftForge.EVENT_BUS.register(Toasts.class);
         MinecraftForge.EVENT_BUS.register(ContentEnvironments.class);
+        MinecraftForge.EVENT_BUS.register(SeasonClock.class);
+        MinecraftForge.EVENT_BUS.register(ContentSeasonSnow.class);
         MinecraftForge.EVENT_BUS.register(ContentGrowSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentRuleSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentMobSwitch.class);

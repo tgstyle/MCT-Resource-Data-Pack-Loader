@@ -1,3 +1,5 @@
+rdpl.season.now=현재 계절: %s, %d일째 (총 %d일)
+rdpl.season.none=이곳에는 계절이 없습니다
 rdpl.build.toolow=건설은 y %s 높이에서 멈춥니다
 rdpl.compressed=압축된 %s
 rdpl.compressed.layered=압축된 %s (x%d)
@@ -203,6 +205,8 @@ rdpl.diet.variety=다양하게 먹으니 몸이 가볍다
 rdpl.diet.tooltip.eaten=식단: 먹어 봄
 rdpl.diet.tooltip.new=식단: 먹어 본 적 없음
 rdpl.diet.tooltip.ignored=식단: 집계 안 됨
+rdpl.tooltip.fertility=비옥도: x%s
+rdpl.tooltip.fertility.season=%s: x%s
 rdpl.carry.block=%s을(를) 들고 있습니다 (웅크린 채 우클릭하면 내려놓습니다)
 rdpl.carry.mob=%s을(를) 들고 있습니다 (웅크린 채 블록을 우클릭하면 내려놓습니다)
 rdpl.carry.down=%s을(를) 내려놓았습니다

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.common.environment.ContentTimeWindows;
 import mctmods.resourcedatapackloader.common.environment.ContentWeatherCycle;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SnowRuleDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.TimeWindowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
@@ -166,15 +167,25 @@ public final class ContentDimensionRules {
         else { weather(world, def, CYCLES.computeIfAbsent(world, held -> new ContentWeatherCycle()), own); }
     }
 
-    public static boolean existingFreezes(World world, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return own && (def == null || def.traits.freeze);
+    public static boolean existingFreezes(World world, BlockPos pos, boolean own) {
+        DimensionDef def = ContentDimensions.of(world);
+        return snowRuled(ContentEnvironments.rules(world, pos).snow.freeze, own, def == null || def.traits.freeze);
     }
 
-    public static boolean existingSnows(World world, boolean own) {
-        DimensionDef def = ContentDimensions.overlay(world);
-        return own && (def == null || def.traits.snow);
+    public static boolean existingSnows(World world, BlockPos pos, boolean own) {
+        DimensionDef def = ContentDimensions.of(world);
+        return snowRuled(ContentEnvironments.rules(world, pos).snow.place, own, def == null || def.traits.snow);
     }
+
+    private static boolean snowRuled(int mode, boolean own, boolean trait) {
+        if (mode == SnowRuleDef.NEVER) { return false; }
+        if (mode == SnowRuleDef.BIOME || mode == SnowRuleDef.ANY) { return own; }
+        return own && trait;
+    }
+
+    public static boolean snowsAnywhere(World world, BlockPos pos) { return ContentEnvironments.rules(world, pos).snow.place == SnowRuleDef.ANY; }
+
+    public static boolean freezesAnywhere(World world, BlockPos pos) { return ContentEnvironments.rules(world, pos).snow.freeze == SnowRuleDef.ANY; }
 
     public static boolean existingLightning(World world, boolean own) {
         DimensionDef def = ContentDimensions.overlay(world);

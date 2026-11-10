@@ -1,3 +1,5 @@
+rdpl.season.now=Сейчас %s, день %d из %d
+rdpl.season.none=Здесь нет смены времён года
 rdpl.build.toolow=Строительство заканчивается на y %s
 rdpl.compressed=Сжатый блок: %s
 rdpl.compressed.layered=Сжатый блок: %s (x%d)
@@ -203,6 +205,8 @@ rdpl.diet.variety=Разнообразное питание бодрит
 rdpl.diet.tooltip.eaten=Рацион: уже пробовали
 rdpl.diet.tooltip.new=Рацион: ещё не пробовали
 rdpl.diet.tooltip.ignored=Рацион: не учитывается
+rdpl.tooltip.fertility=Плодородие: x%s
+rdpl.tooltip.fertility.season=%s: x%s
 rdpl.carry.block=Вы несёте: %s (присядьте и щёлкните правой кнопкой мыши, чтобы поставить)
 rdpl.carry.mob=Вы несёте: %s (присядьте и щёлкните правой кнопкой мыши по блоку, чтобы поставить)
 rdpl.carry.down=Вы поставили: %s

@@ -1,3 +1,5 @@
+rdpl.season.now=当前季节：%s，第 %d 天（共 %d 天）
+rdpl.season.none=这里没有季节变化
 rdpl.build.toolow=建造在 y %s 处停止
 rdpl.compressed=压缩%s
 rdpl.compressed.layered=压缩%s (x%d)
@@ -203,6 +205,8 @@ rdpl.diet.variety=饮食多样，浑身舒畅
 rdpl.diet.tooltip.eaten=饮食：已尝过
 rdpl.diet.tooltip.new=饮食：未尝过
 rdpl.diet.tooltip.ignored=饮食：不计入
+rdpl.tooltip.fertility=肥力：x%s
+rdpl.tooltip.fertility.season=%s：x%s
 rdpl.carry.block=正在搬运：%s（潜行并右键即可放下）
 rdpl.carry.mob=正在搬运：%s（潜行并右键点击方块即可放下）
 rdpl.carry.down=已放下：%s
