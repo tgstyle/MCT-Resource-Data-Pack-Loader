@@ -73,6 +73,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Adernabbau](#adernabbau)
 - [Fallende Säulen](#fallende-säulen)
+- [Laubzerfall](#laubzerfall)
 - [Blumenausbreitung](#blumenausbreitung)
 - [Tragen](#tragen)
 - [Gepaarte Türen](#gepaarte-türen)
@@ -235,6 +236,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/player_loot/*.json`                                                                | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                                                                                                        |
 | `<namespace>/diets/*.json`                                                                      | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                                                                                                                                            |
 | `<namespace>/columns/*.json`                                                                    | Reihen fallender Blöcke, die über einem vom Spieler gebrochenen Block mit abbrechen. [Fallende Säulen](#fallende-säulen)                                                                                                                                                               |
+| `<namespace>/leaf_decay/*.json`                                                                 | Laub um einen entfernten Stamm zerfällt auf einem kurzen Timer. [Laubzerfall](#laubzerfall)                                                                                                                                                                                            |
 | `<namespace>/flower_spreads/*.json`                                                             | Zusätzliche Blumen, die um Gras oder einen anderen Block gesetzt werden, wenn Knochenmehl darauf benutzt wird. [Blumenausbreitung](#blumenausbreitung)                                                                                                                                 |
 | `<namespace>/paired_doors/*.json`                                                               | Eine Tür neben ihrem gespiegelten Nachbarn öffnet und schließt sich mit ihr. [Gepaarte Türen](#gepaarte-türen)                                                                                                                                                                         |
 | `<namespace>/advancements/*.json`                                                               | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                                                                                                                                              |
@@ -3714,6 +3716,40 @@ Bricht ein Spieler einen Block, bricht auch die Reihe gelisteter fallender Blöc
 | `alternate`      | nein    | Objekt mit `item` und `chance` (0 bis 1)                                                                | keine    | Jeder Säulenblock droppt `item` bei einem erfolgreichen Wurf, sonst seinen eigenen Blockgegenstand. Ohne ihn droppt jeder Block seine normale Beute bei Glück 0. |
 
 Fake-Spieler lösen nie eine Säule aus, und Spieler im Kreativmodus erhalten keine Drops. Dateien stapeln sich; benutzt wird die erste Datei, deren Blöcke den Block über dem gebrochenen halten. Beim Laden steht im Log `Loaded N falling column group(s)`, und eine Datei, die keinen registrierten Block nennt oder ein fehlerhaftes `alternate` hat, meldet einen Fehler.
+
+## Laubzerfall
+
+*herstellung, beute und handel*
+
+`<namespace>/leaf_decay/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, eine Datei enthält eine Regel, und mehrere Dateien stapeln sich.
+
+Wird ein Stamm oder ein anderer Block entfernt, der Laub hält, werden die abgedeckten Blätter im Umkreis von 4 Blöcken zum Zerfall markiert, und nach einer zufälligen Verzögerung zwischen `minTicks` und `maxTicks` wird ein Zerfalls-Tick angesetzt, statt auf die zufälligen Ticks von Vanilla zu warten. Ob ein Blatt wirklich fällt, entscheidet dann der Vanilla-Zerfall selbst: Laub, das noch mit einem Stamm verbunden ist, bleibt, und vom Spieler gesetztes Laub wird nie angetastet.
+
+```json
+{
+  "blocks": ["minecraft:leaves", "minecraft:leaves2"],
+  "tag": ["#treeLeaves"],
+  "except": {"blocks": [{"block": "minecraft:leaves2", "meta": 1}]},
+  "dimensions": ["overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Schlüssel    | Pflicht         | Wert                                                                                                    | Standard       | Was er macht                                                                                                                                   |
+| ------------ | --------------- | ------------------------------------------------------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `requires`   | nein            | Liste von Strings                                                                                       | keine          | Mod-IDs, die geladen sein müssen, wie überall sonst.                                                                                           |
+| `blocks`     | eins von dreien | Liste von Block-IDs, mit `meta` (1.12.2) oder `properties` (1.20.1 und neuer) wie bei einer Härtegruppe |                | Laubblöcke, die die Regel abdeckt, in derselben Form wie `blocks` bei den fallenden Säulen.                                                    |
+| `tag`        | eins von dreien | Liste von Strings                                                                                       |                | Ore-Dictionary-Namen mit führendem `#`, etwa `#treeLeaves`. Auch eine Block-ID wird angenommen. Die Namen werden beim ersten Gebrauch gelesen. |
+| `all`        | eins von dreien | bool                                                                                                    | `false`        | Bei true wird jeder Laubblock abgedeckt, der zerfallen kann.                                                                                   |
+| `except`     | nein            | Objekt mit `blocks` und `tag`                                                                           | keine          | Laub, das die Regel nicht abdeckt, auch wenn die Schlüssel oben es nennen, in denselben Formen.                                                |
+| `dimensions` | nein            | Liste von Dimensions-IDs oder -Namen                                                                    | jede Dimension | Die Dimensionen, in denen die Regel gilt, nach ID oder Name, etwa `-1` oder `the_nether`.                                                      |
+| `minTicks`   | nein            | int, 1 bis 1200                                                                                         | `10`           | Kürzeste Verzögerung bis zum Zerfalls-Tick eines Blatts.                                                                                       |
+| `maxTicks`   | nein            | int, 1 bis 1200                                                                                         | `60`           | Längste Verzögerung. Sie darf nicht unter `minTicks` liegen.                                                                                   |
+
+Eine Regel braucht mindestens eines von `blocks`, `tag` oder `all`; eine Datei ohne eines davon wird mit einer Fehlerzeile ignoriert, ebenso eine, deren `maxTicks` unter `minTicks` liegt. Die erste Regel in der Dateireihenfolge, die das Blatt und die Dimension abdeckt und es nicht ausnimmt, bestimmt die Verzögerung. Abgedeckt werden nur Blätter, die Vanilla zerfallen lässt, und nur in geladenen Chunks. Ein Mod-Laubblock, der `updateTick` überschreibt, bekommt pro Auslöser einen zusätzlichen Tick, und Laub aus Dynamic Trees wird nie angefasst, auch wenn eine Datei es auflistet. Das sind Server-Paketdaten und brauchen nichts auf dem Client; ohne Datei entsteht keine zusätzliche Arbeit, und Laub verhält sich wie bisher. Beim Laden steht im Log `Loaded N leaf decay rule(s)`, und eine Datei, die weder einen registrierten Block noch einen Tag nennt, meldet `Leaf decay <key> names no registered blocks, ignoring it`.
 
 ## Blumenausbreitung
 

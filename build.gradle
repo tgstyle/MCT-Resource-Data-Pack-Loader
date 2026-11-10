@@ -178,6 +178,8 @@ dependencies {
     if (companion('mantle')) { runtimeOnly deobf("curse.maven:${common.mant_version}") }
     if (companion('ftblib')) { runtimeOnly deobf("curse.maven:${common.ftbl_version}") }
     if (companion('ftbutilities')) { runtimeOnly deobf("curse.maven:${common.ftbu_version}") }
+    if (companion('dynamictrees')) { runtimeOnly deobf("curse.maven:${common.dytr_version}") }
+    if (companion('biomesoplenty')) { runtimeOnly deobf("curse.maven:${common.bopl_version}") }
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
     annotationProcessor 'com.google.guava:guava:32.1.2-jre'

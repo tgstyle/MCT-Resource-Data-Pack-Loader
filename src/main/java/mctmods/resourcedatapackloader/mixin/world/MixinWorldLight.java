@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.DoorChanges;
 import mctmods.resourcedatapackloader.common.environment.ContentDressLight;
 import mctmods.resourcedatapackloader.common.environment.ContentLightArea;
 import mctmods.resourcedatapackloader.common.environment.ILightAreaHolder;
+import mctmods.resourcedatapackloader.common.leafdecay.DecayWatch;
 import mctmods.resourcedatapackloader.common.pregen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -63,7 +64,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Unique private static boolean rdpl$deaf(IWorldEventListener listener) {
         Class<?> kind = listener.getClass();
-        return kind == ServerWorldEventHandler.class || kind == PathWorldListener.class || kind == DoorChanges.class || "vazkii.quark.world.world.event.RaveEventListener".equals(kind.getName());
+        return kind == ServerWorldEventHandler.class || kind == PathWorldListener.class || kind == DoorChanges.class || kind == DecayWatch.class || "vazkii.quark.world.world.event.RaveEventListener".equals(kind.getName());
     }
 
     @Unique private void rdpl$nameTheListeners() {

@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.common.rules;
 
-import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
+import mctmods.resourcedatapackloader.common.util.BlockMatches;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.google.gson.JsonElement;
@@ -32,6 +32,7 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 
 public final class ContentGrowSwitch {
     private static final List<String> KEYS = Arrays.asList("crops", "saplings", "animals", "breeding");
+    private static final String GROWTH = "growth";
     private static final String BY_BLOCK = "byBlock";
     private static final String TOOLTIP = "tooltip";
     private static final String WAIVER = "waiver";
@@ -53,17 +54,6 @@ public final class ContentGrowSwitch {
         }
     }
 
-    @Nullable private static BlockMatch match(String owner, String text) {
-        String name = text.trim();
-        if (!name.startsWith("#")) {
-            Block block = ContentStates.block(name, owner + " growth");
-            return block == null ? null : BlockMatch.of(block);
-        }
-        if (name.length() > 1) { return BlockMatch.group(name.substring(1)); }
-        ContentLog.LOGGER.error("{} gives a '#' with no ore dictionary name in growth, ignoring it", owner);
-        return null;
-    }
-
     @Nullable private static Float within(String owner, String key, JsonElement value, boolean whole, float low, float high) {
         Float number = ContentSpawnSwitch.number(owner, key, value, whole);
         if (number == null) { return null; }
@@ -82,7 +72,7 @@ public final class ContentGrowSwitch {
         }
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             Float scale = within(owner, "growth.byBlock." + entry.getKey(), entry.getValue(), false, 0.0F, MOST);
-            BlockMatch match = scale == null ? null : match(owner, entry.getKey());
+            BlockMatch match = scale == null ? null : BlockMatches.parse(owner, entry.getKey(), GROWTH);
             if (match != null) { found.add(new GrowSwitchDef.Match(match, scale)); }
         }
         return found;
@@ -104,7 +94,7 @@ public final class ContentGrowSwitch {
                 ContentLog.LOGGER.error("{} gives growth.waiver.blocks an entry {} that is not a block id or #name, ignoring it", owner, entry);
                 continue;
             }
-            BlockMatch match = match(owner, entry.getAsString());
+            BlockMatch match = BlockMatches.parse(owner, entry.getAsString(), GROWTH);
             if (match != null) { into.add(match); }
         }
     }

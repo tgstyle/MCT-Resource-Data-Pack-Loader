@@ -68,6 +68,8 @@ import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.items.ContentWeapons;
 import mctmods.resourcedatapackloader.common.items.ContentWorn;
+import mctmods.resourcedatapackloader.common.leafdecay.ContentLeafDecay;
+import mctmods.resourcedatapackloader.common.leafdecay.LeafDecays;
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.loot.BlockDrops;
@@ -202,6 +204,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentVeins.class);
         MinecraftForge.EVENT_BUS.register(ContentColumns.class);
         MinecraftForge.EVENT_BUS.register(ContentPairedDoors.class);
+        if (ContentLeafDecay.load()) { MinecraftForge.EVENT_BUS.register(LeafDecays.class); }
         MinecraftForge.EVENT_BUS.register(ContentBoneMealFlowers.class);
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
         MinecraftForge.EVENT_BUS.register(PlayerWeights.class);

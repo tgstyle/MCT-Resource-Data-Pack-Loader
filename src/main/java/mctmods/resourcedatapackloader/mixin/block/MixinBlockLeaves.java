@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.block;
 
+import mctmods.resourcedatapackloader.common.leafdecay.ContentLeafDecay;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import net.minecraft.block.BlockLeaves;
@@ -16,6 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "beginLeavesDecay", at = @At("TAIL")) private void rdpl$decaySoon(IBlockState state, World world, BlockPos pos, CallbackInfo ci) {
         if (!Config.tweaks.promptLeafDecay || !world.getChunk(pos).isPopulated() || !state.getValue(BlockLeaves.DECAYABLE)) { return; }
 
-        world.scheduleUpdate(pos, state.getBlock(), MathHelper.getInt(world.rand, 10, 20));
+        world.scheduleUpdate(pos, state.getBlock(), ContentLeafDecay.delay(state, world, pos, MathHelper.getInt(world.rand, 10, 20)));
     }
 }
