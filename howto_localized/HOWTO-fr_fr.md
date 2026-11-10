@@ -76,6 +76,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Récolte par clic droit](#récolte-par-clic-droit)
 - [Minage de filons](#minage-de-filons)
 - [Colonnes qui tombent](#colonnes-qui-tombent)
+- [Dégradation des feuilles](#dégradation-des-feuilles)
 - [Propagation des fleurs](#propagation-des-fleurs)
 - [Portage](#portage)
 - [Portes appariées](#portes-appariées)
@@ -232,6 +233,7 @@ Sous `data/` :
 | `<namespace>/mob_drops/*.json`               | Objets retirés de ce que certains mobs lâchent, ou ajoutés à cela. [Butins des mobs](#butins-des-mobs)                                                                                                                                   |
 | `<namespace>/diets/*.json`                   | Des règles qui font qu'un aliment répété nourrit moins et qu'un régime varié nourrit plus. [Variété alimentaire](#variété-alimentaire)                                                                                                   |
 | `<namespace>/columns/*.json`                 | Suites de blocs qui tombent et cassent avec le bloc que le joueur casse, au-dessus de lui. [Colonnes qui tombent](#colonnes-qui-tombent)                                                                                                 |
+| `<namespace>/leaf_decay/*.json`              | Feuilles voisines d'un bloc qui change, qui se dégradent après un court délai. [Dégradation des feuilles](#dégradation-des-feuilles)                                                                                                     |
 | `<namespace>/flower_spreads/*.json`          | Fleurs supplémentaires placées autour de l'herbe ou d'un autre bloc quand on y utilise de la poudre d'os. [Propagation des fleurs](#propagation-des-fleurs)                                                                              |
 | `<namespace>/paired_doors/*.json`            | Une porte voisine de son partenaire en miroir s'ouvre et se ferme avec elle. [Portes appariées](#portes-appariées)                                                                                                                       |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                                                                                 |
@@ -3598,6 +3600,40 @@ Quand un joueur casse un bloc, la suite de blocs qui tombent listés juste au-de
 | `alternate`      | non    | objet avec `item` et `chance` (0 à 1)                                                                          | aucun   | Chaque bloc de la colonne donne `item` à un jet réussi, ou son propre objet de bloc en cas d'échec. Sans lui, chaque bloc donne ses drops normaux à Fortune 0. |
 
 Les faux joueurs ne la déclenchent jamais, et les joueurs en créatif ne reçoivent aucun drop. Les fichiers se cumulent ; le premier fichier dont les blocs contiennent le bloc au-dessus du bloc cassé est utilisé. Au chargement, le journal affiche `Loaded N falling column group(s)`, et un fichier qui nomme un bloc non enregistré ou un `alternate` invalide signale une erreur.
+
+## Dégradation des feuilles
+
+*artisanat, butin et commerce*
+
+`<namespace>/leaf_decay/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, un fichier contient une règle, et plusieurs fichiers se cumulent.
+
+Quand un bloc voisin d'une feuille change, comme une bûche qu'on retire, cette feuille est programmée pour se dégrader après un délai aléatoire entre `minTicks` et `maxTicks`, au lieu d'attendre les ticks aléatoires de vanilla. C'est ensuite la dégradation de vanilla elle-même qui décide si la feuille tombe vraiment : les feuilles encore reliées à une bûche restent, et les feuilles marquées comme persistantes, comme celles qu'un joueur a posées, ne sont jamais touchées.
+
+```json
+{
+  "blocks": ["minecraft:oak_leaves", "minecraft:birch_leaves"],
+  "tag": ["minecraft:leaves"],
+  "except": {"blocks": ["minecraft:azalea_leaves"]},
+  "dimensions": ["minecraft:overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Clé          | Requis       | Valeur                                                                                    | Défaut                | Rôle                                                                                                                                 |
+| ------------ | ------------ | ----------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `requires`   | non          | liste de chaînes                                                                          | aucun                 | Ids de mods qui doivent être chargés, comme ailleurs.                                                                                |
+| `blocks`     | un des trois | liste d'id de blocs, ou objets avec `block` et `properties` pour nommer un état           |                       | Blocs de feuilles couverts par la règle, dans la même forme que `blocks` des colonnes qui tombent. Un `meta` de 1.12.2 n'est pas lu. |
+| `tag`        | un des trois | liste d'id de tags de blocs, comme `minecraft:leaves`, sans `#`                           |                       | Tags de blocs dont les blocs sont couverts par la règle. Les ids sont lus au chargement de la règle.                                 |
+| `all`        | un des trois | bool                                                                                      | `false`               | À true, toute feuille qui peut se dégrader est couverte.                                                                             |
+| `except`     | non          | objet avec `blocks` et `tag`                                                              | aucun                 | Feuilles que la règle ne couvre pas, même si les clés ci-dessus les nomment, dans les mêmes formes.                                  |
+| `dimensions` | non          | liste d'identifiants de dimensions, comme `minecraft:overworld` ou `minecraft:the_nether` | toutes les dimensions | Les dimensions où la règle s'applique.                                                                                               |
+| `minTicks`   | non          | int, de 1 à 1200                                                                          | `10`                  | Délai le plus court avant le tick de dégradation d'une feuille.                                                                      |
+| `maxTicks`   | non          | int, de 1 à 1200                                                                          | `60`                  | Délai le plus long. Il ne doit pas être inférieur à `minTicks`.                                                                      |
+
+Une règle a besoin d'au moins une des clés `blocks`, `tag` ou `all` ; un fichier sans aucune est ignoré avec une ligne d'erreur, tout comme celui dont `maxTicks` est inférieur à `minTicks`. La première règle, dans l'ordre des fichiers, qui couvre la feuille et la dimension sans l'exclure fixe le délai. Seules les feuilles que vanilla laisse se dégrader sont couvertes, et seulement aux positions que le niveau met à jour. Les feuilles de Dynamic Trees ne sont jamais touchées, même si un fichier les liste. C'est une donnée de pack serveur qui ne demande rien au client ; sans fichier, aucun travail en plus et les feuilles se comportent comme aujourd'hui. Les règles se chargent au démarrage du serveur, donc un premier fichier `leaf_decay` demande un redémarrage. Un chargement affiche `Loaded N leaf decay rule(s)`. Un fichier dont `blocks` ne nomme aucun bloc enregistré et dont `tag` ne donne aucun id valide affiche `Leaf decay <key> names no registered blocks, ignoring it`, et un `tag` qui n'est pas un id valide affiche qu'il est ignoré.
 
 ## Propagation des fleurs
 

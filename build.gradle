@@ -180,6 +180,7 @@ dependencies {
     if (companion('ftbchunks')) { runtimeOnly "curse.maven:ftb-chunks-314906:9374151" }
     if (companion('ftblibrary')) { runtimeOnly "curse.maven:ftb-library-404465:9350706" }
     if (companion('architectury')) { runtimeOnly "curse.maven:architectury-api-419699:8492726" }
+    if (companion('dynamictrees')) { runtimeOnly "curse.maven:dynamictrees-252818:8227322" }
     if (companion('biomesoplenty')) {
         runtimeOnly "curse.maven:biomes-o-plenty-220318:8288121"
         runtimeOnly "curse.maven:terrablender-940057:6054947"

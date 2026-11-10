@@ -76,6 +76,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Colheita com o botão direito](#colheita-com-o-botão-direito)
 - [Mineração de filões](#mineração-de-filões)
 - [Colunas que caem](#colunas-que-caem)
+- [Decomposição das folhas](#decomposição-das-folhas)
 - [Propagação de flores](#propagação-de-flores)
 - [Transportar](#transportar)
 - [Portas emparelhadas](#portas-emparelhadas)
@@ -232,6 +233,7 @@ Em `data/`:
 | `<namespace>/mob_drops/*.json`               | Itens retirados do que os mobs indicados largam, ou acrescentados a isso. [Itens largados por mobs](#itens-largados-por-mobs)                                                                                          |
 | `<namespace>/diets/*.json`                   | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                                                  |
 | `<namespace>/columns/*.json`                 | Sequências de blocos que caem e partem juntamente com os blocos acima do bloco partido pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                             |
+| `<namespace>/leaf_decay/*.json`              | As folhas ao lado de um bloco que muda decompõem-se após um intervalo curto. [Decomposição das folhas](#decomposição-das-folhas)                                                                                       |
 | `<namespace>/flower_spreads/*.json`          | Flores extra colocadas à volta da relva ou de outro bloco quando se usa pó de osso nele. [Propagação de flores](#propagação-de-flores)                                                                                 |
 | `<namespace>/paired_doors/*.json`            | A porta ao lado da sua vizinha espelhada abre e fecha com ela. [Portas emparelhadas](#portas-emparelhadas)                                                                                                             |
 | `<namespace>/advancements/*.json`            | Progressos. [O que podes substituir](#o-que-podes-substituir)                                                                                                                                                          |
@@ -3598,6 +3600,40 @@ Quando um jogador parte um bloco, a sequência de blocos que caem listados mesmo
 | `alternate`      | não         | objeto com `item` e `chance` (0 a 1)                                                                       | nenhum       | Cada bloco da coluna deixa cair `item` numa jogada bem-sucedida, ou o item do próprio bloco numa falha. Sem ele, cada bloco deixa cair os seus itens normais com Fortuna 0. |
 
 Jogadores falsos nunca a ativam, e os jogadores em criativo não recebem itens largados. Os ficheiros acumulam-se; usa-se o primeiro cujos blocos contêm o bloco acima do partido. Ao carregar, o registo mostra `Loaded N falling column group(s)`, e um ficheiro que nomeie um bloco não registado ou um `alternate` inválido regista um erro.
+
+## Decomposição das folhas
+
+*fabrico, saque e comércio*
+
+`<namespace>/leaf_decay/*.json`
+
+O nome do ficheiro é à tua escolha, só a pasta é lida, cada ficheiro traz uma regra e vários ficheiros acumulam-se.
+
+Quando um bloco ao lado de uma folha muda, como um tronco que é removido, essa folha fica agendada para se decompor após um atraso aleatório entre `minTicks` e `maxTicks`, em vez de esperar pelos ticks aleatórios do vanilla. Depois, é a própria decomposição do vanilla que decide se a folha cai mesmo: as folhas ainda ligadas a um tronco ficam, e as folhas marcadas como persistentes, como as que um jogador colocou, nunca são tocadas.
+
+```json
+{
+  "blocks": ["minecraft:oak_leaves", "minecraft:birch_leaves"],
+  "tag": ["minecraft:leaves"],
+  "except": {"blocks": ["minecraft:azalea_leaves"]},
+  "dimensions": ["minecraft:overworld"],
+  "minTicks": 10,
+  "maxTicks": 60
+}
+```
+
+| Chave        | Obrigatório | Valor                                                                               | Predefinição       | O que faz                                                                                                              |
+| ------------ | ----------- | ----------------------------------------------------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------- |
+| `requires`   | não         | lista de strings                                                                    | nenhum             | Ids de mod que têm de estar carregados, como em toda a parte.                                                          |
+| `blocks`     | um dos três | lista de ids de bloco, ou objetos com `block` e `properties` para indicar um estado |                    | Blocos de folhas que a regra abrange, na mesma forma de `blocks` das colunas que caem. Um `meta` do 1.12.2 não é lido. |
+| `tag`        | um dos três | lista de ids de etiqueta de bloco, como `minecraft:leaves`, sem o `#`               |                    | Etiquetas de bloco cujos blocos a regra abrange. Os ids são lidos ao carregar a regra.                                 |
+| `all`        | um dos três | bool                                                                                | `false`            | Se true, todo o bloco de folhas que se pode decompor fica abrangido.                                                   |
+| `except`     | não         | objeto com `blocks` e `tag`                                                         | nenhum             | Folhas que a regra não abrange mesmo que as chaves acima as nomeiem, nas mesmas formas.                                |
+| `dimensions` | não         | lista de ids de dimensão, como `minecraft:overworld` ou `minecraft:the_nether`      | todas as dimensões | As dimensões em que a regra vale.                                                                                      |
+| `minTicks`   | não         | int, de 1 a 1200                                                                    | `10`               | Menor atraso antes do tick de decomposição de uma folha.                                                               |
+| `maxTicks`   | não         | int, de 1 a 1200                                                                    | `60`               | Maior atraso. Não pode ser menor que `minTicks`.                                                                       |
+
+Uma regra precisa de pelo menos uma entre `blocks`, `tag` e `all`; um ficheiro sem nenhuma é ignorado com uma linha de erro, tal como um cujo `maxTicks` seja menor que `minTicks`. A primeira regra, pela ordem dos ficheiros, que abrange a folha e a dimensão e não a exclui define o atraso. Só são abrangidas as folhas que o vanilla deixa decompor, e apenas nas posições em que o nível faz tick. As folhas do Dynamic Trees nunca são tocadas, mesmo que um ficheiro as liste. São dados de pacote do servidor e não exigem nada no cliente; sem ficheiro não há trabalho extra e as folhas comportam-se como até agora. As regras são carregadas ao arrancar o servidor, por isso um primeiro ficheiro `leaf_decay` exige um reinício. Ao carregar, o registo mostra `Loaded N leaf decay rule(s)`, e um ficheiro cujos `blocks` não nomeiem nenhum bloco registado e cuja `tag` não dê um id válido regista `Leaf decay <key> names no registered blocks, ignoring it`, e uma `tag` que não seja um id válido regista que é ignorada.
 
 ## Propagação de flores
 

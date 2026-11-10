@@ -70,6 +70,8 @@ import mctmods.resourcedatapackloader.common.itemlocks.ContentItemLocks;
 import mctmods.resourcedatapackloader.common.itemlocks.ItemLockSync;
 import mctmods.resourcedatapackloader.common.items.ContentWeapons;
 import mctmods.resourcedatapackloader.common.items.ContentWorn;
+import mctmods.resourcedatapackloader.common.leafdecay.ContentLeafDecay;
+import mctmods.resourcedatapackloader.common.leafdecay.LeafDecayQueue;
 import mctmods.resourcedatapackloader.common.locate.ContentProspect;
 import mctmods.resourcedatapackloader.common.locate.ContentStructureSearch;
 import mctmods.resourcedatapackloader.common.loot.BlockDrops;
@@ -440,6 +442,11 @@ public class ModSetup {
         if (ContentExposures.spreads()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
         if (VanillaFluidRules.wanted()) { NeoForge.EVENT_BUS.addListener(VanillaFluidRules::onNeighborNotify); }
         if (VanillaFluidRules.sourcesWanted()) { NeoForge.EVENT_BUS.addListener(VanillaFluidRules::onCreateSource); }
+        if (ContentLeafDecay.wanted()) {
+            NeoForge.EVENT_BUS.addListener(LeafDecayQueue::onNeighborNotify);
+            NeoForge.EVENT_BUS.addListener(LeafDecayQueue::onTick);
+            NeoForge.EVENT_BUS.addListener(LeafDecayQueue::onUnload);
+        }
         if (FluidReactionQueue.wanted()) {
             NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onTick);
             NeoForge.EVENT_BUS.addListener(FluidReactionQueue::onUnload);
@@ -581,6 +588,7 @@ public class ModSetup {
         RegistryRemaps.applyAliases();
         CompressedAliases.apply();
         ContentOverrides.reload();
+        ContentLeafDecay.refresh();
         OwnershipSettings.reload();
         ClaimSettings.reload();
         ContentReplacements.reload();
@@ -605,6 +613,7 @@ public class ModSetup {
 
     private static void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
+        LeafDecayQueue.clear();
         CityBorder.forget();
         ContentWeapons.clear();
         ContentEnvironments.stopped();
