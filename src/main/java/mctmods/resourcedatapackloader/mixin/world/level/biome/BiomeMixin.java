@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.world.level.biome;
 
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.worldgen.TemplateMemo;
@@ -14,12 +15,17 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Biome.class) public abstract class BiomeMixin {
-    @Inject(method = "shouldSnow(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$snowBelowCeiling(LevelReader level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) { if (ContentWeather.above(level, pos.getY()) || !ContentWeather.traits(level).snow()) { cir.setReturnValue(false); } }
+    @Inject(method = "shouldSnow(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$snowBelowCeiling(LevelReader level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) { if (ContentWeather.above(level, pos.getY()) || ContentSeasonSnow.snowStopped(level, pos)) { cir.setReturnValue(false); } }
 
-    @Inject(method = "shouldFreeze(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Z)Z", at = @At("HEAD"), cancellable = true) private void rdpl$freezeWhereAllowed(LevelReader level, BlockPos water, boolean mustBeAtEdge, CallbackInfoReturnable<Boolean> cir) { if (!ContentWeather.traits(level).freeze()) { cir.setReturnValue(false); } }
+    @Inject(method = "shouldFreeze(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Z)Z", at = @At("HEAD"), cancellable = true) private void rdpl$freezeWhereAllowed(LevelReader level, BlockPos water, boolean mustBeAtEdge, CallbackInfoReturnable<Boolean> cir) { if (ContentSeasonSnow.freezeStopped(level, water)) { cir.setReturnValue(false); } }
+
+    @Redirect(method = "shouldSnow(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;warmEnoughToRain(Lnet/minecraft/core/BlockPos;)Z")) private boolean rdpl$snowWhereAny(Biome biome, BlockPos pos, LevelReader level) { return ContentSeasonSnow.warmForSnow(biome, level, pos); }
+
+    @Redirect(method = "shouldFreeze(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Z)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;warmEnoughToRain(Lnet/minecraft/core/BlockPos;)Z")) private boolean rdpl$freezeWhereAny(Biome biome, BlockPos pos, LevelReader level, BlockPos water, boolean mustBeAtEdge) { return ContentSeasonSnow.warmForFreeze(biome, level, pos); }
 
     @Shadow @Final private static PerlinSimplexNoise TEMPERATURE_NOISE;
     @Shadow @Final private Biome.ClimateSettings climateSettings;

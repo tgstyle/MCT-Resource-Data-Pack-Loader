@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.client.util.ContentRuleClient;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.dialogs.DialogTalk;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.gui.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.common.hearts.ContentHearts;
 import mctmods.resourcedatapackloader.common.intro.ContentIntroPlay;
@@ -97,7 +98,10 @@ public final class RDPLNetwork {
             if (player != null) { ContentSleep.setSpawnHere(player); }
         }).add();
         channel.messageBuilder(EatenMessage.class, 21, NetworkDirection.PLAY_TO_CLIENT).encoder(EatenMessage::write).decoder(EatenMessage::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { ClientDiet.receive(message.eaten()); } }).add();
+        channel.messageBuilder(SeasonClockMessage.class, 22, NetworkDirection.PLAY_TO_CLIENT).encoder(SeasonClockMessage::write).decoder(SeasonClockMessage::read).consumerMainThread((message, context) -> SeasonClock.received(message.ticks())).add();
     }
+
+    public static void sendSeasonClock(ServerPlayer player, long ticks) { toPlayer(player, new SeasonClockMessage(ticks)); }
 
     public static void setSpawnHere() { if (channel != null) { channel.sendToServer(new SetSpawnMessage()); } }
 

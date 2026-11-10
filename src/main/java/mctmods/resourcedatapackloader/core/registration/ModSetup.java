@@ -44,6 +44,7 @@ import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpaw
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
+import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
 import mctmods.resourcedatapackloader.common.fireworks.BurstParticles;
@@ -254,6 +255,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentEnvironments::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(ContentEnvironments::onLogin);
         MinecraftForge.EVENT_BUS.addListener(ContentSeasons::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(ContentSeasonSnow::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onTick);
         MinecraftForge.EVENT_BUS.addListener(FireworkBursts::onTick);
         MinecraftForge.EVENT_BUS.addListener(FireworkDetonations::onGameEvent);

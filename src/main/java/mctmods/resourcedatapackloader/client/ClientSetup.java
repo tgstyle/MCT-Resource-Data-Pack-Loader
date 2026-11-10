@@ -31,6 +31,7 @@ import mctmods.resourcedatapackloader.client.util.ToastFilter;
 import mctmods.resourcedatapackloader.common.anvils.AnvilCosts;
 import mctmods.resourcedatapackloader.common.diet.ContentDiet;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
+import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.core.config.Config;
 
@@ -75,6 +76,7 @@ public class ClientSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onFog);
         MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentSeasonTint::onTick);
+        MinecraftForge.EVENT_BUS.addListener(SeasonClock::onClientTick);
         MinecraftForge.EVENT_BUS.addListener(ContentHeatShimmer::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentHeatShimmer::onStage);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, HoldView::onFog);
@@ -95,6 +97,7 @@ public class ClientSetup {
             Toasts.leave();
             ContentEnvironments.clear();
             ContentSeasonTint.forget();
+            SeasonClock.received(0L);
             AnvilCosts.leave();
             ContentSkyGates.clear();
             ClientItemLocks.clear();

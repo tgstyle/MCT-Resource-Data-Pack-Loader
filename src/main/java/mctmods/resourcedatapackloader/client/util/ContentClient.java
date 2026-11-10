@@ -27,6 +27,8 @@ import mctmods.resourcedatapackloader.common.gui.ContentPortwayMenu;
 import mctmods.resourcedatapackloader.common.gui.EntityStorageMenu;
 import mctmods.resourcedatapackloader.common.items.ContentLocatorItem;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
+import mctmods.resourcedatapackloader.common.items.ContentSeasonClock;
+import mctmods.resourcedatapackloader.common.pack.definitions.items.SeasonClockDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.core.config.Settings;
@@ -123,6 +125,11 @@ public final class ContentClient {
             if (portway != null) { MenuScreens.register(portway, ContentPortwayScreen::new); }
             for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
                 if (entry.item() instanceof ContentLocatorItem) { ItemProperties.register(entry.item(), ResourceLocation.parse("angle"), new CompassItemPropertyFunction((level, stack, holder) -> CompassItem.isLodestoneCompass(stack) ? CompassItem.getLodestonePosition(stack.getOrCreateTag()) : null)); }
+                SeasonClockDef clock = entry.def() == null ? null : entry.def().seasonClock();
+                if (clock != null) {
+                    ItemProperties.register(entry.item(), ResourceLocation.fromNamespaceAndPath("rdpl", "year"), (stack, level, holder, seed) -> ContentSeasonClock.year(clock, stack, level, holder));
+                    ItemProperties.register(entry.item(), ResourceLocation.fromNamespaceAndPath("rdpl", "season"), (stack, level, holder, seed) -> ContentSeasonClock.season(clock, stack, level, holder));
+                }
             }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());

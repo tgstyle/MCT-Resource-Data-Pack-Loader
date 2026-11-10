@@ -27,10 +27,11 @@ public final class ContentSeasonTint {
     private static final int WHITE = 0xFFFFFF;
     private static final int GRASS = 0;
     private static final int FOLIAGE = 1;
-    private static final int[] NONE = {WHITE, WHITE};
+    private static final int BIRCH_TINT = 2;
+    private static final int[] NONE = {WHITE, WHITE, WHITE};
     private static final Map<ResourceLocation, Map<Biome, int[]>> CACHE = new ConcurrentHashMap<>();
     private static final ColorResolver EVERGREEN = (biome, x, z) -> multiply(FoliageColor.getEvergreenColor(), tints(biome)[FOLIAGE]);
-    private static final ColorResolver BIRCH = (biome, x, z) -> multiply(FoliageColor.getBirchColor(), tints(biome)[FOLIAGE]);
+    private static final ColorResolver BIRCH = (biome, x, z) -> multiply(FoliageColor.getBirchColor(), tints(biome)[BIRCH_TINT]);
     @Nullable private static volatile Boolean found;
     private static volatile boolean dirty;
     @Nullable private static List<Object> last;
@@ -127,6 +128,7 @@ public final class ContentSeasonTint {
         DimensionDef def = ContentDimensions.def(dimension, holder);
         SkyLookDef look = def == null ? null : def.look();
         if (look == null) { return NONE; }
-        return new int[] {look.grassTint() == SkyLookDef.UNSET ? WHITE : look.grassTint(), look.foliageTint() == SkyLookDef.UNSET ? WHITE : look.foliageTint()};
+        int foliage = look.foliageTint() == SkyLookDef.UNSET ? WHITE : look.foliageTint();
+        return new int[] {look.grassTint() == SkyLookDef.UNSET ? WHITE : look.grassTint(), foliage, look.birchTint() == SkyLookDef.UNSET ? foliage : look.birchTint()};
     }
 }

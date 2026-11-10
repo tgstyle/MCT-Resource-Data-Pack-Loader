@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.items.ContentLocatorItem;
 import mctmods.resourcedatapackloader.common.items.ContentPortwayItem;
 import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
 import mctmods.resourcedatapackloader.common.items.ContentRollItem;
+import mctmods.resourcedatapackloader.common.items.ContentSeasonClockItem;
 import mctmods.resourcedatapackloader.common.items.ContentSleepingBagItem;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.MaterialDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
@@ -79,8 +80,13 @@ public final class ContentItemTypes {
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
             case CONTAINER_UPGRADE -> new ContentContainerUpgradeItem(def, properties);
             case PORTWAY -> portway(def, properties);
-            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? def.sleepingBag() ? new ContentSleepingBagItem(def, properties.stacksTo(1)) : new Item(properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
+            default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? plain(def, properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
         };
+    }
+
+    private static Item plain(ItemDef def, Item.Properties properties) {
+        if (def.sleepingBag()) { return new ContentSleepingBagItem(def, properties.stacksTo(1)); }
+        return def.seasonClock() == null ? new Item(properties) : new ContentSeasonClockItem(def.seasonClock(), properties);
     }
 
     private static Item portway(ItemDef def, Item.Properties properties) {

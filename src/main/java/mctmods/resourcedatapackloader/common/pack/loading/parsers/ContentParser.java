@@ -118,6 +118,7 @@ public final class ContentParser {
                 portal(key, json, null, true, false),
                 ContentParserContainers.container(key, json),
                 bell(json),
+                ContentParserSeasons.sensor(json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json),
                 ContentParserWeights.weight(json, key),
@@ -338,7 +339,8 @@ public final class ContentParser {
                 Json.getBoolean(json, "sleepingBag", false),
                 ContentParserContainers.upgrade(key, Settings.lower(Json.getString(json, "type", DEFAULT_TYPE)), json),
                 ContentParserWeights.weight(json, key),
-                ContentParserFireworks.firework(key, json));
+                ContentParserFireworks.firework(key, json),
+                ContentParserSeasons.clock(json));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
