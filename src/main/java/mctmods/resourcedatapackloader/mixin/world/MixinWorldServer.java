@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.world;
 
+import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.common.rubic.server.CubeGC;
@@ -319,7 +320,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
                 if (this.canBlockFreezeNoWater(blockBelow)) { this.setBlockState(blockBelow, Blocks.ICE.getDefaultState()); }
             }
             if (raining && isBlockLoaded(block) && this.canSnowAt(block, true)) { this.setBlockState(block, Blocks.SNOW_LAYER.getDefaultState()); }
-            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain() && !ContentWeather.above((World) (Object) this, blockBelow.getY())) { this.getBlockState(blockBelow).getBlock().fillWithRain((World) (Object) this, blockBelow); }
+            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain() && !ContentWeather.above((World) (Object) this, blockBelow.getY())) {
+                VanillaFluidRules.rained((World) (Object) this, blockBelow);
+                this.getBlockState(blockBelow).getBlock().fillWithRain((World) (Object) this, blockBelow);
+            }
         }
         this.profiler.endSection();
     }
