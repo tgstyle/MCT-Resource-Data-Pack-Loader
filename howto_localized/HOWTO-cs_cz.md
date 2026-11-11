@@ -2315,19 +2315,36 @@ Soubor zde připojuje reakce k vanilla vodě nebo lávě, bez mixinu. Jeho klí�
   "infinite": {
     "biomes": ["minecraft:river", "#minecraft:is_ocean"],
     "dimensions": ["minecraft:overworld"]
+  },
+  "rain": {
+    "biomes": ["minecraft:plains", "#minecraft:is_river"],
+    "chance": 160,
+    "maxLevel": 4,
+    "seaLevel": true
   }
 }
 ```
 
 Tekutina z balíčku tento soubor pro své vlastní kontakty nepotřebuje. Její vlastní `reactions` už pojmenovávají vanilla tekutinu, kterou potkává.
 
+S `rain` mění déšť mělkou vodu na zdroje. Pokaždé, když vanilla vybere sloupec pro sníh nebo kotel v načteném chunku poblíž hráče a je tam déšť, tekoucí voda na vrcholu tohoto sloupce pod otevřeným nebem se může změnit na zdroj. Když několik souborů obsahuje `rain`, rozhodne první, který sloupci odpovídá.
+
 Tato pravidla fungují s `vanillaClients`. Jsou jen serverový stav, takže obyčejný klient od balíčku nic nepotřebuje. Pravidlo, které pojmenuje blok, jejž server neregistruje, se zahodí se svou chybou.
 
-| Klíč                  | Povinné | Hodnota      | Výchozí          | Co dělá                                                                                                                                                                                                |
-| --------------------- | ------- | ------------ | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `infinite`            | ne      | objekt       | žádný (vanilla)  | `fluid` musí být `minecraft:water`. Dva zdroje vedle tekoucího bloku udělají třetí jen na uvedených místech; jinde nikdy. Klíč vynechán: vanilla pravidlo všude. Soubory s lávou ho ignorují s chybou. |
-| `infinite.biomes`     | ne      | seznam textů | jakýkoli biom    | ID biomů, nebo `#` následované tagem biomu.                                                                                                                                                            |
-| `infinite.dimensions` | ne      | seznam textů | jakákoli dimenze | Stejné názvy jako `byDimension`. Když jsou dané oba seznamy, místo musí odpovídat oběma.                                                                                                               |
+| Klíč                  | Povinné | Hodnota                 | Výchozí          | Co dělá                                                                                                                                                                                                |
+| --------------------- | ------- | ----------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | ne      | objekt                  | žádný (vanilla)  | `fluid` musí být `minecraft:water`. Dva zdroje vedle tekoucího bloku udělají třetí jen na uvedených místech; jinde nikdy. Klíč vynechán: vanilla pravidlo všude. Soubory s lávou ho ignorují s chybou. |
+| `infinite.biomes`     | ne      | seznam textů            | jakýkoli biom    | ID biomů, nebo `#` následované tagem biomu.                                                                                                                                                            |
+| `infinite.dimensions` | ne      | seznam textů            | jakákoli dimenze | Stejné názvy jako `byDimension`. Když jsou dané oba seznamy, místo musí odpovídat oběma.                                                                                                               |
+| `rain`                | ne      | objekt                  | žádný (vypnuto)  | `fluid` musí být `minecraft:water`. Mění tekoucí vodu na zdroj, když na ni prší, jak je popsáno výše. Soubory s lávou ho ignorují s chybou a neznámý klíč uvnitř něj zahodí položku s chybou.          |
+| `rain.biomes`         | ne      | seznam textů            | jakýkoli biom    | Stejné jako `infinite.biomes`.                                                                                                                                                                         |
+| `rain.dimensions`     | ne      | seznam textů            | jakákoli dimenze | Stejné jako `infinite.dimensions`.                                                                                                                                                                     |
+| `rain.chance`         | ne      | celé číslo, 1 nebo více | 160              | Jeden z tolika vybraných sloupců se změní. Nižší je rychlejší; 1 změní každý vybraný sloupec.                                                                                                          |
+| `rain.maxLevel`       | ne      | celé číslo, 1 až 7      | 4                | Tekoucí voda od úrovně 1 až do této úrovně se změní. Úroveň 1 sedí vedle zdroje a 7 je nejtenčí okraj. Padající voda se nikdy nemění.                                                                  |
+| `rain.minHeight`      | ne      | celé číslo              | žádný            | Nejnižší Y, na kterém smí být vodní blok.                                                                                                                                                              |
+| `rain.maxHeight`      | ne      | celé číslo              | žádný            | Nejvyšší Y, na kterém smí být vodní blok.                                                                                                                                                              |
+| `rain.seaLevel`       | ne      | true nebo false         | false            | `true`: změní se jen voda na hladině moře světa nebo pod ní.                                                                                                                                           |
+| `rain.inClaims`       | ne      | true nebo false         | true             | `false`: voda uvnitř claimu se nikdy nemění.                                                                                                                                                           |
 
 Herní pravidlo `water_source_conversion` stále platí tam, kde to seznam dovoluje. Místo se testuje u každého sousedního zdroje.
 

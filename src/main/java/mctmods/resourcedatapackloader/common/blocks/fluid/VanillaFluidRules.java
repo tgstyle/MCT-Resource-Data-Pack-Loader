@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.blocks.fluid;
 
 import mctmods.resourcedatapackloader.common.cards.CardPlace;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimGuard;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.FluidReactionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserFluids;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -22,9 +24,11 @@ import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -36,6 +40,8 @@ public final class VanillaFluidRules {
     private static final List<FluidReactionDef> WATER = new ArrayList<>();
     private static final List<FluidReactionDef> LAVA = new ArrayList<>();
     private static final List<Place> SOURCES = new ArrayList<>();
+    private static final List<Rain> RAIN = new ArrayList<>();
+    private static final Set<String> RAIN_MEMBERS = Set.of("biomes", "dimensions", "chance", "maxLevel", "minHeight", "maxHeight", "seaLevel", "inClaims");
     private static final Map<BlockState, Boolean> TOUCHED = new ConcurrentHashMap<>();
 
     private VanillaFluidRules() {}
@@ -46,6 +52,7 @@ public final class VanillaFluidRules {
         WATER.clear();
         LAVA.clear();
         SOURCES.clear();
+        RAIN.clear();
         if (Config.definitionsOff() || !Config.content.fluidRules()) { return; }
         Json.eachObject(PackManager.FLUID_RULES, "fluid rule", VanillaFluidRules::read);
     }
@@ -99,6 +106,7 @@ public final class VanillaFluidRules {
         }
         into.addAll(rules);
         if (json.has("infinite")) { readInfinite(key, json, into == WATER); }
+        if (json.has("rain")) { readRain(key, json, into == WATER); }
     }
 
     private static void readInfinite(Identifier key, JsonObject json, boolean water) {
@@ -126,6 +134,50 @@ public final class VanillaFluidRules {
         SOURCES.add(new Place(Collections.unmodifiableList(biomes), Collections.unmodifiableList(dimensions)));
     }
 
+    private static void readRain(Identifier key, JsonObject json, boolean water) {
+        if (!water) {
+            ContentLog.LOGGER.error("Fluid rule {} has 'rain' in a lava file, but only water takes rain, so it is skipped", key);
+            return;
+        }
+        if (!GsonHelper.isObjectNode(json, "rain")) {
+            ContentLog.LOGGER.error("Fluid rule {} has a rain that is not an object, so it is ignored", key);
+            return;
+        }
+        JsonObject rain = json.getAsJsonObject("rain");
+        for (String member : rain.keySet()) {
+            if (!RAIN_MEMBERS.contains(member)) {
+                ContentLog.LOGGER.error("Fluid rule {} has the unknown member '{}' in 'rain', so the entry is ignored", key, member);
+                return;
+            }
+        }
+        int chance = Json.number(rain, "chance", 160);
+        if (chance < 1) {
+            ContentLog.LOGGER.error("Fluid rule {} sets rain chance to {}, which is below 1, so 1 is used", key, chance);
+            chance = 1;
+        }
+        int maxLevel = Json.number(rain, "maxLevel", 4);
+        if (maxLevel < 1 || maxLevel > 7) {
+            ContentLog.LOGGER.error("Fluid rule {} sets rain maxLevel to {}, which is outside 1 to 7, so it is clamped", key, maxLevel);
+            maxLevel = Math.clamp(maxLevel, 1, 7);
+        }
+        int minHeight = rain.has("minHeight") ? Json.number(rain, "minHeight", Integer.MIN_VALUE) : Integer.MIN_VALUE;
+        int maxHeight = rain.has("maxHeight") ? Json.number(rain, "maxHeight", Integer.MAX_VALUE) : Integer.MAX_VALUE;
+        RAIN.add(new Rain(Collections.unmodifiableList(Json.names(rain, "biomes")), Collections.unmodifiableList(Json.names(rain, "dimensions")), chance, maxLevel, minHeight, maxHeight, Json.flag(rain, "seaLevel"), !Json.getBoolean(rain, "inClaims", true)));
+    }
+
+    public static void rained(Level level, BlockPos pos, BlockState state) {
+        if (RAIN.isEmpty() || state.getBlock() != Blocks.WATER) { return; }
+        int depth = state.getValue(LiquidBlock.LEVEL);
+        Holder<Biome> biome = level.getBiome(pos);
+        for (Rain rain : RAIN) {
+            if (depth < 1 || depth > rain.maxLevel() || pos.getY() < rain.minHeight() || pos.getY() > rain.maxHeight()) { continue; }
+            if (!BiomeNames.matches(rain.biomes(), biome) || !rain.dimensions().isEmpty() && !CardPlace.inAny(rain.dimensions(), level)) { continue; }
+            if (rain.seaLevel() && pos.getY() > level.getSeaLevel() || rain.outsideClaims() && ClaimGuard.covers(level, pos) != 0) { continue; }
+            if (level.getRandom().nextInt(rain.chance()) == 0) { level.setBlock(pos, Blocks.WATER.defaultBlockState(), 3); }
+            return;
+        }
+    }
+
     public static boolean sourcesWanted() { return !SOURCES.isEmpty(); }
 
     public static void onCreateSource(CreateFluidSourceEvent event) {
@@ -139,4 +191,6 @@ public final class VanillaFluidRules {
     }
 
     private record Place(List<String> biomes, List<String> dimensions) {}
+
+    private record Rain(List<String> biomes, List<String> dimensions, int chance, int maxLevel, int minHeight, int maxHeight, boolean seaLevel, boolean outsideClaims) {}
 }
