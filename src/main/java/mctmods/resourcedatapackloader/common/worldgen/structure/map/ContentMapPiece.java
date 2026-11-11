@@ -1,14 +1,20 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.map;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.TemplateStructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
@@ -24,17 +30,20 @@ public final class ContentMapPiece extends TemplateStructurePiece {
     private static final String SEED = "Seed";
     private final String map;
     private final long seed;
+    @Nullable private final ContentMapSite site;
 
-    public ContentMapPiece(StructureTemplateManager manager, Identifier template, Rotation rotation, BlockPos corner, Identifier map, long seed) {
+    public ContentMapPiece(StructureTemplateManager manager, Identifier template, Rotation rotation, BlockPos corner, Identifier map, long seed, @Nullable ContentMapSite site) {
         super(TYPE, 0, manager, template, template.toString(), settings(rotation, map.toString(), seed), corner);
         this.map = map.toString();
         this.seed = seed;
+        this.site = site;
     }
 
     public ContentMapPiece(StructureTemplateManager manager, CompoundTag tag) {
         super(TYPE, tag, manager, _ -> settings(Rotation.valueOf(tag.getStringOr(ROTATION, "")), tag.getStringOr(MAP, ""), tag.getLongOr(SEED, 0L)));
         this.map = tag.getStringOr(MAP, "");
         this.seed = tag.getLongOr(SEED, 0L);
+        this.site = ContentMapSite.read(tag);
     }
 
     private static StructurePlaceSettings settings(Rotation rotation, String map, long seed) {
@@ -50,6 +59,13 @@ public final class ContentMapPiece extends TemplateStructurePiece {
         tag.putString(ROTATION, placeSettings.getRotation().name());
         tag.putString(MAP, map);
         tag.putLong(SEED, seed);
+        if (site != null) { site.write(tag); }
+    }
+
+    @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
+        super.postProcess(level, manager, generator, random, box, chunk, pos);
+        if (site == null) { return; }
+        RespawnRecorder.record(level.getLevel(), RespawnRecorder.resolve(site.kind(), site.def()), site.instance(), box, level);
     }
 
     @Override protected void handleDataMarker(@Nonnull String name, @Nonnull BlockPos pos, @Nonnull ServerLevelAccessor level, @Nonnull RandomSource random, @Nonnull BoundingBox box) {}

@@ -101,6 +101,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
@@ -479,6 +480,9 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentRetrogen::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentWorldShape::onCreateSpawn);
         NeoForge.EVENT_BUS.addListener(ContentCaveRegions::onLevelLoad);
+        NeoForge.EVENT_BUS.addListener(RespawnEvents::onLevelLoad);
+        NeoForge.EVENT_BUS.addListener(RespawnEvents::onChunkLoad);
+        NeoForge.EVENT_BUS.addListener(RespawnEvents::onTick);
         NeoForge.EVENT_BUS.addListener(ContentSkyLand::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(ContentCaveRegions::onPotentialSpawns);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentSpawnSwitch::onPotentialSpawns);

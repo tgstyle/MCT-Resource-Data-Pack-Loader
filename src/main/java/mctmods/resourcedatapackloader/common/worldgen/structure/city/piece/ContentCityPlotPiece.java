@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.common.worldgen.structure.city.piece;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCity;
@@ -134,6 +136,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         if (!plot.isEmpty()) { CityPlotSeams.unheld(level, () -> CityPlotGround.raisedFooting(level, held, box, seat, keep, roads, bores)); }
         if (def == null) { return; }
         stock(level, box, def);
+        RespawnRecorder.record(level.getLevel(), def.respawn(), new RespawnInstance(RespawnInstance.PLOT, def.key().toString(), templateName, templatePosition, placeSettings.getRotation(), Mirror.NONE, ContentCityBlocks.integrityOf(placeSettings), level.getSeed(), held), box, level);
         BlockState ground = ContentStates.known(def.ground(), "village plot " + def.key());
         int grounded = CityPlotGround.footing(level, held, box, seat, ground == null ? Blocks.DIRT.defaultBlockState() : ground, bores);
         int overhead = CityPlotGround.liftOffRoof(level, held, box);

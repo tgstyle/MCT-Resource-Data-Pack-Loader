@@ -8,7 +8,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 
-public record StructureMapDef(Identifier key, int cell, int ground, int spacing, int chance, @Nullable int[] at, List<String> dimensions, List<Layer> layers, int cellsWide, int cellsDeep, @Nullable int[] depth, List<PickDef> spawners, @Nullable Identifier loot) {
+public record StructureMapDef(Identifier key, int cell, int ground, int spacing, int chance, @Nullable int[] at, List<String> dimensions, List<Layer> layers, int cellsWide, int cellsDeep, @Nullable int[] depth, List<PickDef> spawners, @Nullable Identifier loot, @Nullable RespawnDef respawn) {
     public static final int LIMIT = 8;
     public static final int REACH = 8;
     public static final int CELL_MOST = 48;

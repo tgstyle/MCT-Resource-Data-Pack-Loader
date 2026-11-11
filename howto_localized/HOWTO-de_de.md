@@ -108,6 +108,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Formen](#formen)
 - [Verteilung](#verteilung)
 - [Strukturkarten](#strukturkarten)
+- [Wiederkehrende Strukturen](#wiederkehrende-strukturen)
 - [Dorfgrundstücke](#dorfgrundstücke)
 - [Stadtpläne](#stadtpläne)
 - [Durchgehende Stadt](#durchgehende-stadt)
@@ -6710,6 +6711,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `structures`        | Liste                                  | keine                                                                                                | Eine Struktur, die einmal pro Regionszelle im Herzen der Zelle auf den nächsten Höhlenboden gesetzt wird, so wie das Spiel einem Höhlenbiom sein Wahrzeichen gibt. Einträge sind `namespace:name`-Vorlagen oder `{ "structure": "...", "weight": 3 }` zur Auswahl zwischen mehreren                                                                                                                                                        |
 | `structureChance`   | 0,0 bis 1,0                            | `1.0`                                                                                                | Die Chance, mit der jede Zelle der Region ihre Struktur tatsächlich bekommt                                                                                                                                                                                                                                                                                                                                                                |
 | `structureLoot`     | `namespace:pfad`                       | keine                                                                                                | Die Beutetabelle, aus der jede Truhe in einer gesetzten Struktur beim ersten Öffnen gefüllt wird                                                                                                                                                                                                                                                                                                                                           |
+| `respawn`           | Objekt                                 | keine                                                                                                | Bringt die gesetzte Struktur zurück, nachdem Spieler sie geleert haben. [Wiederkehrende Strukturen](#wiederkehrende-strukturen)                                                                                                                                                                                                                                                                                                            |
 | `biome`             | Biomname                               | keiner                                                                                               | Das Biom, das die Region in ihrem Raum meldet, als 3D-Biom geschrieben. Gibt der Region eigene Laub-, Gras- und Wasserfarben, eigene Musik und Umgebungsgeräusche, und lässt Vanillas Spawn-Gewichtung es lesen. Die Oberfläche darüber bleibt unberührt, da nur die Zellen geschrieben werden, die die Region einnimmt. Weggelassen behält die Region das Biom, das sie umgibt, und legt trotzdem ihre Bedeckungen, Strukturen und Spawns |
 | `requires`          | Liste von Mod-IDs oder Pack-Namespaces | keine                                                                                                | Die Region wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                                                                                                                                                                      |
 | `ambientSound`      | Soundname                              | keiner                                                                                               | Ein Geräusch, das einem Spieler in der Region ab und zu vorgespielt wird, so wie die Biome des Spiels ihre eigenen Höhlengeräusche ergänzen. Der Server schickt es nur diesem Spieler                                                                                                                                                                                                                                                      |
@@ -7122,6 +7124,7 @@ Ein `tree` ohne `log` oder `leaves` generiert nichts und sagt das im Log. Nennst
 | `structure`        | imprint, tree | `namespace:name`                          | keine    | Die Vorlage, die gesetzt wird                                                                                                                                                                                                                                                                  |
 | `integrity`        | imprint, tree | 1 bis 100                                 | `100`    | Prozentsatz der Blöcke der Vorlage, die tatsächlich erscheinen                                                                                                                                                                                                                                 |
 | `lootTable`        | imprint, tree | `namespace:pfad`                          | keine    | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird, und jeder andere Behälter, der eine annimmt, eine Shulkerkiste oder die Kiste eines Mods darunter. Gilt für `structure` und jeden Eintrag von `structures`; jede Truhe würfelt mit eigenem Seed |
+| `respawn`          | imprint       | Objekt                                    | keine    | Bringt die gesetzte Vorlage zurück, nachdem Spieler sie geleert haben. [Wiederkehrende Strukturen](#wiederkehrende-strukturen)                                                                                                                                                                 |
 | `structures`       | imprint, tree | Liste                                     | keine    | Mehrere Vorlagen zur Auswahl, eine davon wird jedes Mal gesetzt. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure`                                                                                         |
 | `turns`            | imprint, tree | Liste                                     | beliebig | Wie herum sie gesetzt werden darf: `none`, `quarter`, `half`, `threequarter`. Einträge dürfen ein `weight` tragen. Weggelassen sind alle vier gleich wahrscheinlich                                                                                                                            |
 | `turns[].turn`     | imprint, tree | `none`, `quarter`, `half`, `threequarter` | keine    | Die Drehung, die ein Objekt-Eintrag von `turns` nennt, etwa `{ "turn": "half", "weight": 2 }`                                                                                                                                                                                                  |
@@ -7356,6 +7359,7 @@ Eine Karte kann auch unter das Gelände absinken und die Spawner und Truhen fül
 | `depth`      | Zahl oder zwei Zahlen    | keiner   | Versenkt das Bauwerk ins Gelände: Der Boden der Bodenebene liegt so viele Blöcke unter der abgetasteten Oberfläche statt auf ihr. Zwei Zahlen sind ein Kleinst- und ein Größtwert, und jede Kopie lost ihren eigenen aus dem Weltseed aus. Gilt für Kopien, die die Karte verteilt oder mit `at` festsetzt; eine Karte, die ein Dorf oder eine Stadt platziert, setzt ihre `ground`-Ebene weiterhin auf die Oberfläche |
 | `spawners`   | Liste von Entitäts-IDs   | keiner   | Der Mob für jeden Spawner in den Vorlagen der Karte, der ohne Mob oder nur mit einem Schwein gespeichert wurde. Ein Eintrag kann eine Gewichtung tragen, etwa `id=2`; ein Spawner, der mit einem anderen Mob als einem Schwein gespeichert wurde, behält ihn. Eine ID, die nichts registriert (die Entitätsvariante eines Packs bei aktivem `vanillaClients`), fällt aus der Auslosung heraus                          |
 | `loot`       | Beutetabellen-ID         | keiner   | Die Beutetabelle für jede Truhe und Redstone-Truhe in den Vorlagen der Karte, die ohne Beutetabelle und ohne Gegenstände gespeichert wurde; eine Truhe, die mit einem von beidem gespeichert wurde, bleibt unverändert                                                                                                                                                                                                 |
+| `respawn`    | Objekt                   | keiner   | Bringt das Bauwerk zurück, nachdem Spieler es geleert haben. [Wiederkehrende Strukturen](#wiederkehrende-strukturen)                                                                                                                                                                                                                                                                                                   |
 | `dimensions` | Liste von Dimensions-IDs | alle     | Wo die Karte bauen darf, die eigenen Dimensionen eines Packs eingeschlossen                                                                                                                                                                                                                                                                                                                                            |
 | `layers`     | Liste                    | keine    | Die Ebenen, von unten nach oben, jede mit `palette` und `map`                                                                                                                                                                                                                                                                                                                                                          |
 
@@ -7370,6 +7374,48 @@ Eine Palette nennt Vorlagen per Registry-Schlüssel aus dem `<namespace>/structu
 Jede Kopie lost eine der vier Ausrichtungen aus dem Weltseed aus, und das ganze Bauwerk dreht sich gemeinsam, Vorlagen eingeschlossen, Mauern, die sich über Zellen hinweg treffen, treffen sich also weiterhin; eine Karte dreht sich, spiegelt sich aber nie. Die Bodenebene setzt auf der abgetasteten Geländeoberfläche unter der Mitte des Bauwerks auf, und die ganze Karte teilt sich diese eine Höhe. Eine verstreute Karte ist für das Spiel eine eigene Struktur, gesetzt über ein Structure-Set, das für dich geschrieben wird, jeder Chunk baut also nur seinen eigenen Ausschnitt des Rasters, und ein Bauwerk über viele Chunks entsteht ohne kaskadierende Generierung, in welcher Reihenfolge die Chunks auch laden. Ein [Dorfgrundstück](#dorfgrundstücke) vom Typ `template` kann in seinem `structure` ebenfalls eine Karte nennen, die Komposition wird dann zum Stadtgebäude.
 
 Eine Karte schneidet ins Gelände: Jeder Block, den eine Vorlage enthält, Luft eingeschlossen, ersetzt, was dort war, während eine leere Zelle oder der Raum um eine kleinere Vorlage fest bleibt. Die Luft jedes Raums gehört deshalb in die Vorlage, und ein Schacht braucht seine Zellen bis zur Oberfläche.
+
+## Wiederkehrende Strukturen
+
+*die welt generieren*
+
+Eine Struktur kann wiederkommen, nachdem Spieler sie geleert haben: ihre Truhen füllen sich neu, ihre Spawner setzen sich zurück, ihre Mobs kehren zurück, und kaputte Wände können wieder aufgebaut werden. Füge ein `respawn`-Objekt zu einer Strukturkarte, einer Höhlenregion, einem Dorfgrundstück oder zur `shape` eines `imprint`-Eintrags der Weltgenerierung hinzu.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Schlüssel        | Typ        | Standard  | Was er macht                                                                                                                              |
+| ---------------- | ---------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `after`          | Zahl       | keiner    | Sekunden von einem Reset zum nächsten, gezählt ab dem Bau der Struktur. Mindestens `10`; `0` schaltet das Wiederkehren aus. Pflichtangabe |
+| `playerDistance` | Zahl       | `64`      | Kein Reset, solange ein Spieler innerhalb dieser Blockanzahl um die Struktur steht, bis `256`; es wird 15 Sekunden später erneut versucht |
+| `loot`           | Text       | `emptied` | Welche Truhen sich aus der Beutetabelle neu füllen, mit der sie gebaut wurden, wie unten aufgelistet                                      |
+| `spawners`       | true/false | `true`    | Setzt jeden Spawner wieder so, wie er gebaut wurde, mit Mob und Timings                                                                   |
+| `mobs`           | true/false | `true`    | Setzt die Mobs zurück, die die Vorlage enthält. Nur Imprints und Höhlenregionen                                                           |
+| `mobCap`         | Zahl       | `0`       | Die meisten Mobtypen der Vorlage, die nach einem Reset in der Struktur leben, bis `64`. `0` ist so viele, wie die Vorlage enthält         |
+| `rebuild`        | Text       | `none`    | Welche Blöcke wieder gesetzt werden, wie unten aufgelistet                                                                                |
+
+| Wert                | Was er macht                                                                                                                     |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | Truhen bleiben unberührt                                                                                                         |
+| `loot: "emptied"`   | Nur eine Truhe, in der nichts mehr liegt, füllt sich neu; eine, die noch Gegenstände enthält, behält sie                         |
+| `loot: "all"`       | Jede Truhe wird geleert und neu gefüllt                                                                                          |
+| `rebuild: "none"`   | Keine Blöcke werden wieder gesetzt                                                                                               |
+| `rebuild: "broken"` | Ein Vorlagenblock wird nur dort wieder gesetzt, wo jetzt Luft oder etwas Ersetzbares steht, damit Spielerbauten erhalten bleiben |
+| `rebuild: "full"`   | Jeder Vorlagenblock wird erneut gesetzt, über dem, was dort steht                                                                |
+
+Nur die Truhen, die beim Bau der Struktur eine Beutetabelle hatten, füllen sich neu. Ein Reset wartet, bis jeder Chunk, den die Struktur abdeckt, geladen ist, und lädt oder erzeugt nie einen; eine Struktur in nicht geladenem Land wird zurückgesetzt, sobald ein Spieler sie das nächste Mal in den Bereich holt. Strukturen, die vor dem Hinzufügen von `respawn` durch das Pack gebaut wurden, werden nicht verfolgt. Alles läuft auf dem Server, Spieler brauchen nichts zu installieren.
 
 ## Dorfgrundstücke
 
@@ -7494,6 +7540,7 @@ Ein `template`, dessen `structure` eine deiner [Strukturkarten](#strukturkarten)
 | `structure`      | template    | `namespace:name` | keine            | Die Vorlage, die gesetzt wird, oder eine deiner Strukturkarten, die dann die Größe des Grundstücks bestimmt                                                   |
 | `integrity`      | template    | 1 bis 100        | `100`            | Prozentsatz der Blöcke der Vorlage, die erscheinen                                                                                                            |
 | `lootTable`      | template    | `namespace:pfad` | keine            | Die Beutetabelle, aus der jede Truhe in der gesetzten Vorlage beim ersten Öffnen gefüllt wird. Ein Grundstück, das eine Strukturkarte nennt, bleibt unberührt |
+| `respawn`        | template    | Objekt           | keine            | Bringt das Grundstück zurück, nachdem Spieler es geleert haben. [Wiederkehrende Strukturen](#wiederkehrende-strukturen)                                       |
 | `villagers`      | allen       | int              | `0`              | Wie viele Leute das Grundstück spawnt                                                                                                                         |
 | `villagerEntity` | allen       | `namespace:name` | ein Dorfbewohner | Wer dort wohnt, etwa eine eigene Entity-Variante                                                                                                              |
 | `villagerX`      | allen       | int              | `1`              | Wo sie erscheinen, quer über das Grundstück                                                                                                                   |

@@ -269,7 +269,8 @@ public final class ContentWorldgenParser {
                 Mth.clamp(Json.getFloat(entry, "buddingChance", 0.083F), 0.0F, 1.0F),
                 Json.getString(entry, "crystal", "").trim(),
                 Mth.clamp(Json.getFloat(entry, "crystalChance", 0.35F), 0.0F, 1.0F),
-                Mth.clamp(Json.getFloat(entry, "crack", 0.0F), 0.0F, 1.0F));
+                Mth.clamp(Json.getFloat(entry, "crack", 0.0F), 0.0F, 1.0F),
+                ContentParserRespawn.parse(key, entry));
     }
 
     private static String choice(Identifier key, JsonObject entry, String member, String what, String fallback, Collection<String> allowed) {

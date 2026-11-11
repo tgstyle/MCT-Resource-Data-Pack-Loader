@@ -108,6 +108,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 - [Shapes](#shapes)
 - [Spreads](#spreads)
 - [Structure maps](#structure-maps)
+- [Respawning structures](#respawning-structures)
 - [Village plots](#village-plots)
 - [City layout maps](#city-layout-maps)
 - [Continuous city](#continuous-city)
@@ -6710,6 +6711,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `structures`        | list                               | none                                                                                          | A structure placed once per region cell, at the cell's heart, snapped to a cave floor, the way the game gives a cave biome its landmark. Entries are `namespace:name` templates, or `{ "structure": "...", "weight": 3 }` to choose between several                                                                                                                                                |
 | `structureChance`   | 0.0 to 1.0                         | `1.0`                                                                                         | The chance each cell of the region actually gets its structure                                                                                                                                                                                                                                                                                                                                     |
 | `structureLoot`     | `namespace:path`                   | none                                                                                          | The loot table every chest inside a placed structure is filled from the first time it is opened                                                                                                                                                                                                                                                                                                    |
+| `respawn`           | object                             | none                                                                                          | Brings the placed structure back after players clear it. [Respawning structures](#respawning-structures)                                                                                                                                                                                                                                                                                           |
 | `biome`             | biome name                         | none                                                                                          | The biome the region reports inside its volume, written as a 3D biome. Gives the region its own foliage, grass and water colors, music and ambient sounds, and lets vanilla spawn weighting read it. The surface above is untouched, since only the cells the region occupies are written. Left out, the region keeps whatever biome surrounds it and still lays its covers, structures and spawns |
 | `requires`          | list of mod ids or pack namespaces | none                                                                                          | The region is skipped unless all are present                                                                                                                                                                                                                                                                                                                                                       |
 | `ambientSound`      | sound name                         | none                                                                                          | A sound played now and then to a player standing inside the region, the way the game's biomes add their own cave sounds. Sent by the server to that player alone                                                                                                                                                                                                                                   |
@@ -7122,6 +7124,7 @@ A `tree` with no `log` or `leaves` generates nothing, and says so in the log. Na
 | `structure`        | imprint, tree | `namespace:name`                          | none    | The template to place                                                                                                                                                                                                                                                  |
 | `integrity`        | imprint, tree | 1 to 100                                  | `100`   | Percentage of the template's blocks that actually appear                                                                                                                                                                                                               |
 | `lootTable`        | imprint, tree | `namespace:path`                          | none    | The loot table every chest inside the placed template is filled from the first time it is opened, and any other container that takes one, a shulker box or a mod's crate among them. Covers `structure` and every entry of `structures`; each chest rolls its own seed |
+| `respawn`          | imprint       | object                                    | none    | Brings the placed template back after players clear it. [Respawning structures](#respawning-structures)                                                                                                                                                                |
 | `structures`       | imprint, tree | list                                      | none    | Several templates to choose between, one placed each time. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure`                                                                                        |
 | `turns`            | imprint, tree | list                                      | any     | Which way round it may be placed: `none`, `quarter`, `half`, `threequarter`. Entries may carry a `weight`. Left out, all four are equally likely                                                                                                                       |
 | `turns[].turn`     | imprint, tree | `none`, `quarter`, `half`, `threequarter` | none    | The turn an object entry of `turns` names, as in `{ "turn": "half", "weight": 2 }`                                                                                                                                                                                     |
@@ -7356,6 +7359,7 @@ A map can also sink under the terrain and fill the spawners and chests its templ
 | `depth`      | number, or two numbers | none    | Sinks the building under the terrain: the ground layer's floor sits this many blocks below the sampled surface instead of at it. Two numbers are a least and a most, and each copy rolls its own from the world seed. Applies to copies the map scatters or pins with `at`; a map a village or city places still floors its `ground` layer at the surface |
 | `spawners`   | list of entity ids     | none    | The mob for every spawner in the map's templates that was saved with none, or with only a pig. An entry may carry a weight, as `id=2`; a spawner saved with a mob other than a pig keeps it. An id nothing registers (a pack's entity variant while `vanillaClients` is on) is left out of the roll                                                       |
 | `loot`       | loot table id          | none    | The loot table for every chest and trapped chest in the map's templates that was saved with no loot table and no items; a chest saved with either keeps it                                                                                                                                                                                                |
+| `respawn`    | object                 | none    | Brings the building back after players clear it. [Respawning structures](#respawning-structures)                                                                                                                                                                                                                                                          |
 | `dimensions` | list of dimension ids  | all     | Where the map may build, a pack's own dimensions included                                                                                                                                                                                                                                                                                                 |
 | `layers`     | list                   | none    | The layers, bottom up, each a `palette` and a `map`                                                                                                                                                                                                                                                                                                       |
 
@@ -7370,6 +7374,48 @@ A palette names templates by registry key from a pack's `<namespace>/structures/
 Every copy rolls one of the four facings from the world seed and the whole building turns together, templates included, so walls that meet across cells still meet; a map turns but never mirrors. The ground layer floors at the sampled terrain surface under the building's middle, and the whole map shares that one height. A scattered map is a structure of its own to the game, placed through a structure set written for you, so each chunk builds only its own slice of the grid and a building spanning many chunks arrives without cascading generation, whatever order the chunks load in. A [village plot](#village-plots) of type `template` may also name a map as its `structure`, which makes the composite a city building.
 
 A map carves into the terrain: every block a template holds, air included, replaces what was there, while an empty cell or the space around a smaller template stays solid, so give each room its air in the template and a shaft its cells up to the surface.
+
+## Respawning structures
+
+*generating the world*
+
+A structure can come back after players have cleared it: its chests refill, its spawners reset, its mobs return, and broken walls can be rebuilt. Add a `respawn` object to a structure map, a cave region, a village plot, or the `shape` of an `imprint` worldgen entry.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Setting          | Type       | Default   | What it does                                                                                                                     |
+| ---------------- | ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `after`          | number     | none      | Seconds from one reset to the next, counted from when the structure was built. At least `10`; `0` turns respawning off. Required |
+| `playerDistance` | number     | `64`      | No reset happens while a player is within this many blocks of the structure, up to `256`; it tries again 15 seconds later        |
+| `loot`           | text       | `emptied` | Which chests refill from the loot table they were built with, as listed below                                                    |
+| `spawners`       | true/false | `true`    | Puts every spawner back as it was built, mob and timings included                                                                |
+| `mobs`           | true/false | `true`    | Puts back the mobs the template holds. Imprints and cave regions only                                                            |
+| `mobCap`         | number     | `0`       | The most of the template's mob types alive in the structure after a reset, up to `64`. `0` is as many as the template holds      |
+| `rebuild`        | text       | `none`    | Which blocks are put back, as listed below                                                                                       |
+
+| Value               | What it does                                                                                          |
+| ------------------- | ----------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | Chests are left alone                                                                                 |
+| `loot: "emptied"`   | Only a chest with nothing left in it refills; one still holding items keeps them                      |
+| `loot: "all"`       | Every chest is emptied and refilled                                                                   |
+| `rebuild: "none"`   | No blocks are put back                                                                                |
+| `rebuild: "broken"` | A template block is put back only where it is now air or something replaceable, so player builds stay |
+| `rebuild: "full"`   | Every template block is placed again, over whatever stands there                                      |
+
+Only the chests that had a loot table when the structure was built refill. A reset waits until every chunk the structure covers is loaded and never loads or generates one; a structure in unloaded land resets when a player next brings it in. Structures built before the pack added `respawn` are not tracked. Everything runs on the server, so players need nothing installed.
 
 ## Village plots
 
@@ -7494,6 +7540,7 @@ A `template` whose `structure` names one of your [structure maps](#structure-map
 | `structure`      | template | `namespace:name` | none       | The template to place, or one of your structure maps, which then sets the plot's size                                                             |
 | `integrity`      | template | 1 to 100         | `100`      | Percentage of the template's blocks that appear                                                                                                   |
 | `lootTable`      | template | `namespace:path` | none       | The loot table every chest inside the placed template is filled from the first time it is opened. A plot that names a structure map is left alone |
+| `respawn`        | template | object           | none       | Brings the plot back after players clear it. [Respawning structures](#respawning-structures)                                                      |
 | `villagers`      | all      | int              | `0`        | How many people the plot spawns                                                                                                                   |
 | `villagerEntity` | all      | `namespace:name` | a villager | Who lives there, such as an entity variant of your own                                                                                            |
 | `villagerX`      | all      | int              | `1`        | Where they appear, across the plot                                                                                                                |
