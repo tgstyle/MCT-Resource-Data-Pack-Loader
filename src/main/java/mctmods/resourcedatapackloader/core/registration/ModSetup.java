@@ -92,7 +92,6 @@ import mctmods.resourcedatapackloader.common.ownership.claims.ClaimTools;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimWorldProtection;
 import mctmods.resourcedatapackloader.common.ownership.claims.ContentClaims;
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
-import mctmods.resourcedatapackloader.common.pack.definitions.worlds.WorldgenDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
@@ -101,9 +100,6 @@ import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.potions.ContentPotions;
 import mctmods.resourcedatapackloader.common.pregen.ContentChunkSaves;
 import mctmods.resourcedatapackloader.common.pregen.ContentChunkWatch;
-import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
-import mctmods.resourcedatapackloader.common.pregen.ContentPregenDimensions;
-import mctmods.resourcedatapackloader.common.pregen.ContentPregenHold;
 import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.recipes.FurnaceBlocking;
@@ -131,49 +127,22 @@ import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.trades.ContentTradeGate;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
-import mctmods.resourcedatapackloader.common.villages.CityGrid;
-import mctmods.resourcedatapackloader.common.villages.ContentPathIntersects;
-import mctmods.resourcedatapackloader.common.villages.ContentPaths;
 import mctmods.resourcedatapackloader.common.villages.ContentPierCargo;
-import mctmods.resourcedatapackloader.common.villages.ContentVillages;
-import mctmods.resourcedatapackloader.common.villages.RecurrentVillages;
-import mctmods.resourcedatapackloader.common.villages.VillagePieces;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.weights.WeightSync;
-import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
-import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
-import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveAmbience;
-import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
-import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentStructurePlacement;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
-import mctmods.resourcedatapackloader.common.worldgen.structure.ContentStructures;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.dress.ContentBeardSeat;
-import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityMaps;
-import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentBedrock;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentTerrain;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentVoidWorld;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
 import mctmods.resourcedatapackloader.core.integration.ftblib.ContentFtbLib;
 import mctmods.resourcedatapackloader.core.integration.ftbutilities.ContentFtbUtilities;
-import mctmods.resourcedatapackloader.core.integration.galacticraftcore.GcPlanetWorldgen;
 import mctmods.resourcedatapackloader.core.integration.streams.StreamsRubicValleys;
 import mctmods.resourcedatapackloader.core.integration.thuttech.ThutRubicLifts;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraft.world.storage.loot.functions.LootFunctionManager;
@@ -225,8 +194,7 @@ public class ModSetup {
         RegistryRemaps.reload();
         FurnaceRecipes.reload();
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
-        RecurrentVillages.register();
-        VillagePieces.rails();
+        StructureSetup.villagePieces();
         GameRegistry.registerTileEntity(TileEntityPackContainer.class, ResourceDataPackLoader.id("container"));
         GameRegistry.registerTileEntity(TileEntityPackBell.class, ResourceDataPackLoader.id("bell"));
         GameRegistry.registerTileEntity(TileEntityPortway.class, ResourceDataPackLoader.id("portway"));
@@ -234,11 +202,9 @@ public class ModSetup {
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
         ContentRegistry.resolveItemPotions();
-        ContentBiomes.applyPlacement();
+        WorldgenSetup.applyPlacement();
         ContentWorldTemplates.load();
-        ContentPathIntersects.load();
-        ContentStructureMaps.load();
-        ContentCityMaps.load();
+        StructureSetup.loadMaps();
         ContentPortalFrames.load();
         ContentWorldIntro.load();
         RDPLNetwork.register();
@@ -254,11 +220,10 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentTradeSwitch.class);
         MinecraftForge.EVENT_BUS.register(AnvilCosts.class);
         if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
-        ContentBiomeControl.apply();
+        WorldgenSetup.applyBiomeControl();
         ContentSetup.applyFire();
-        MinecraftForge.TERRAIN_GEN_BUS.register(ContentBiomes.class);
-        MinecraftForge.TERRAIN_GEN_BUS.register(ContentBiomeControl.class);
-        MinecraftForge.TERRAIN_GEN_BUS.register(ContentStructures.class);
+        WorldgenSetup.terrainListeners();
+        StructureSetup.terrainListeners();
         ContentSpawning.applyCaps();
         if (ContentSpawning.rateControlled()) {
             MinecraftForge.EVENT_BUS.register(ContentSpawning.class);
@@ -271,13 +236,13 @@ public class ModSetup {
         VanillaFluidRules.load();
         if (VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
         if (FluidReactionQueue.wanted()) { MinecraftForge.EVENT_BUS.register(FluidReactionQueue.class); }
-        if (ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(ContentCaveAmbience.class); }
+        WorldgenSetup.caveAmbience();
         MinecraftForge.EVENT_BUS.register(ContentProspect.class);
-        if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
+        WorldgenSetup.seams();
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
         if (ContentExposures.spreads()) { MinecraftForge.EVENT_BUS.register(ContentExposures.Mobs.class); }
-        if (ContentBiomeControl.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBiomeControl.class); }
-        if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }
+        WorldgenSetup.biomeListeners();
+        WorldgenSetup.worldTypeListeners();
         ContentDimensions.load();
         ContentGameRules.load();
         ContentTeams.load();
@@ -303,7 +268,7 @@ public class ModSetup {
         if (ContentRanks.stealing()) { MinecraftForge.EVENT_BUS.register(RankSteal.class); }
         ContentHearts.load();
         MinecraftForge.EVENT_BUS.register(ContentHearts.class);
-        if (ContentVillages.load()) { ContentVillages.register(); }
+        StructureSetup.villages();
         ContentBlastPlaster.install();
         ContentFtbLib.install();
         ContentFtbUtilities.install();
@@ -321,21 +286,10 @@ public class ModSetup {
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
         CbmpRubicParts.register();
         StreamsRubicValleys.register();
-        GcPlanetWorldgen.register();
+        WorldgenSetup.planets();
         ThutRubicLifts.register();
-        MinecraftForge.EVENT_BUS.register(ContentPaths.class);
-        if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
-        if (ContentOreControl.enabled()) { MinecraftForge.ORE_GEN_BUS.register(ContentOreControl.class); }
-        MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
-        if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
-        List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
-        if (veins.isEmpty() && ContentStructureMaps.none() && !ContentCaveRegions.any()) { ContentRetrogen.setup(veins, null); }
-        else {
-            ContentWorldgen worldgen = new ContentWorldgen(veins);
-            GameRegistry.registerWorldGenerator(worldgen, 3);
-            ContentRetrogen.setup(veins, worldgen);
-        }
-        if (Config.worldgen.blockOres && veins.isEmpty()) { ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above"); }
+        StructureSetup.pathListeners();
+        WorldgenSetup.generators();
         boolean anvils = ContentAnvils.load();
         if (ContentAffixes.load()) { MinecraftForge.EVENT_BUS.register(ContentAffixes.class); }
         if (anvils || ContentAffixes.sockets()) { MinecraftForge.EVENT_BUS.register(ContentAnvils.class); }
@@ -348,12 +302,10 @@ public class ModSetup {
             if (ContentHardness.anySwaps()) { GameRegistry.registerWorldGenerator(new ContentHardness.Swaps(), 100); }
         }
         ContentOverrides.reload();
-        ContentReplacements.reload();
-        if (ContentRetrogen.wanted() || ContentHardness.anySwaps()) { MinecraftForge.EVENT_BUS.register(ContentRetrogen.class); }
+        WorldgenSetup.replacements();
         MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
-        MinecraftForge.EVENT_BUS.register(ContentPregenDimensions.class);
-        MinecraftForge.EVENT_BUS.register(ContentPregenHold.class);
-        MinecraftForge.EVENT_BUS.register(CityGrid.class);
+        WorldgenSetup.pregenListeners();
+        StructureSetup.cityGrid();
         ContentWorn.register();
         OwnedBlocksProvider.register();
         MinecraftForge.EVENT_BUS.register(OwnedBlocksProvider.class);
@@ -377,7 +329,7 @@ public class ModSetup {
 
     public static void postInit() {
         ContentEntityTypes.registerLate();
-        ContentBiomes.resolveSpawns();
+        WorldgenSetup.resolveSpawns();
     }
 
     public static void loadComplete() {
@@ -417,19 +369,17 @@ public class ModSetup {
         OwnershipSettings.reload();
         ClaimSettings.reload();
         ContentWeights.load();
-        ContentReplacements.reload();
-        ContentStructurePlacement.reload();
+        WorldgenSetup.reloadReplacements();
+        StructureSetup.reloadPlacement();
         ContentEntityTicks.reload();
-        ContentVillages.reload();
-        ContentBeardSeat.reload();
-        ContentCityMaps.reload();
+        StructureSetup.reloadVillages();
         ContentChunkSaves.reload();
         ContentSpawnChunks.reload();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ClientProxy.reload(); }
         CardRules.load();
         ContentDialogs.load();
         ContentHearts.load();
-        if (ContentVillages.load()) { ContentVillages.register(); }
+        StructureSetup.villages();
     }
 
     public static void serverCommands(FMLServerStartingEvent event) {
@@ -449,7 +399,7 @@ public class ModSetup {
         FunctionOverrides.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
     }
 
-    public static void onServerStopping() { ContentPregen.serverStopping(); }
+    public static void onServerStopping() { WorldgenSetup.serverStopping(); }
 
     public static void onIdMapping() { ContentCompressables.mapOrphanMetas(); }
 
