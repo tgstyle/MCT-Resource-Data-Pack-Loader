@@ -2324,19 +2324,36 @@ Um ficheiro de água também pode tornar a água vanilla infinita. Com `infinite
   "infinite": {
     "biomes": ["minecraft:swamp", "#minecraft:is_jungle"],
     "dimensions": ["minecraft:overworld"]
+  },
+  "rain": {
+    "biomes": ["minecraft:plains", "#minecraft:is_river"],
+    "chance": 160,
+    "maxLevel": 4,
+    "seaLevel": true
   }
 }
 ```
 
 Um fluido do pacote não precisa deste ficheiro para os seus próprios contactos. As suas `reactions` já nomeiam o fluido vanilla que encontra.
 
+Com `rain`, a chuva transforma água pouco funda em fontes. Sempre que o vanilla escolhe uma coluna para neve ou um caldeirão num chunk carregado perto de um jogador e está a chover aí, a água corrente no topo dessa coluna, a céu aberto, pode tornar-se uma fonte. Quando vários ficheiros têm `rain`, decide o primeiro que corresponde à coluna.
+
 Estas regras funcionam com `vanillaClients`. São apenas estado do servidor, por isso um cliente simples não precisa de nada do pacote. Uma regra que nomeia um bloco que o servidor não regista é descartada com o seu erro.
 
-| Chave                 | Obrigatório | Valor           | Predefinição      | O que faz                                                                                                                                                                                                                           |
-| --------------------- | ----------- | --------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `infinite`            | não         | objeto          | nenhum (vanilla)  | `fluid` tem de ser `minecraft:water`. Duas fontes junto a um bloco que corre geram uma terceira só nos sítios listados; nos outros nunca. Chave omitida: regra vanilla em todo o lado. Os ficheiros de lava ignoram-na com um erro. |
-| `infinite.biomes`     | não         | lista de textos | qualquer bioma    | IDs de bioma, ou `#` seguido de uma etiqueta de bioma.                                                                                                                                                                              |
-| `infinite.dimensions` | não         | lista de textos | qualquer dimensão | Mesmos nomes de `byDimension`. Quando as duas listas são dadas, o sítio tem de corresponder às duas.                                                                                                                                |
+| Chave                 | Obrigatório | Valor                     | Predefinição       | O que faz                                                                                                                                                                                                                                  |
+| --------------------- | ----------- | ------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `infinite`            | não         | objeto                    | nenhum (vanilla)   | `fluid` tem de ser `minecraft:water`. Duas fontes junto a um bloco que corre geram uma terceira só nos sítios listados; nos outros nunca. Chave omitida: regra vanilla em todo o lado. Os ficheiros de lava ignoram-na com um erro.        |
+| `infinite.biomes`     | não         | lista de textos           | qualquer bioma     | IDs de bioma, ou `#` seguido de uma etiqueta de bioma.                                                                                                                                                                                     |
+| `infinite.dimensions` | não         | lista de textos           | qualquer dimensão  | Mesmos nomes de `byDimension`. Quando as duas listas são dadas, o sítio tem de corresponder às duas.                                                                                                                                       |
+| `rain`                | não         | objeto                    | nenhum (desligado) | `fluid` tem de ser `minecraft:water`. Transforma água corrente numa fonte enquanto chove sobre ela, como descrito acima. Os ficheiros de lava ignoram-na com um erro, e uma chave desconhecida dentro dela descarta a entrada com um erro. |
+| `rain.biomes`         | não         | lista de textos           | qualquer bioma     | Igual a `infinite.biomes`.                                                                                                                                                                                                                 |
+| `rain.dimensions`     | não         | lista de textos           | qualquer dimensão  | Igual a `infinite.dimensions`.                                                                                                                                                                                                             |
+| `rain.chance`         | não         | número inteiro, 1 ou mais | 160                | Uma em cada tantas colunas escolhidas é convertida. Quanto menor, mais rápido; 1 converte cada coluna escolhida.                                                                                                                           |
+| `rain.maxLevel`       | não         | número inteiro, de 1 a 7  | 4                  | A água corrente do nível 1 até este nível é convertida. O nível 1 fica junto a uma fonte, e o 7 é a borda mais fina. A água que cai nunca é convertida.                                                                                    |
+| `rain.minHeight`      | não         | número inteiro            | nenhum             | Menor Y em que o bloco de água pode estar.                                                                                                                                                                                                 |
+| `rain.maxHeight`      | não         | número inteiro            | nenhum             | Maior Y em que o bloco de água pode estar.                                                                                                                                                                                                 |
+| `rain.seaLevel`       | não         | true ou false             | false              | `true`: só a água ao nível do mar do mundo ou abaixo é convertida.                                                                                                                                                                         |
+| `rain.inClaims`       | não         | true ou false             | true               | `false`: a água dentro de um claim nunca é convertida.                                                                                                                                                                                     |
 
 A regra de jogo `waterSourceConversion` continua a aplicar-se onde a lista o permitir. O sítio é testado em cada fonte vizinha.
 

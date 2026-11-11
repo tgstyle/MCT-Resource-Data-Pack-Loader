@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.server.level;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentPairedDoors;
+import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
@@ -101,6 +102,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (ContentWeather.above(level, pos.getY())) { return; }
         Biome.Precipitation falls = ContentWeather.fallsAs(level, level.getBiome(pos.above()).value(), precipitation);
         if (falls == Biome.Precipitation.SNOW && ContentSeasonSnow.snowStopped(level, pos)) { return; }
+        if (falls == Biome.Precipitation.RAIN) { VanillaFluidRules.rained(level, pos, state); }
         block.handlePrecipitation(state, level, pos, falls);
     }
 

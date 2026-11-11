@@ -2324,19 +2324,36 @@ A water file can also make vanilla water finite. With `infinite` set, two source
   "infinite": {
     "biomes": ["minecraft:swamp", "#minecraft:is_jungle"],
     "dimensions": ["minecraft:overworld"]
+  },
+  "rain": {
+    "biomes": ["minecraft:plains", "#minecraft:is_river"],
+    "chance": 160,
+    "maxLevel": 4,
+    "seaLevel": true
   }
 }
 ```
 
 A pack fluid does not need this file for its own contacts. Its own `reactions` already name the vanilla fluid it meets.
 
+With `rain`, rain turns shallow water into sources. Each time vanilla picks a column for snow or a cauldron in a loaded chunk near a player and it is raining there, flowing water at the top of that column, under open sky, may become a source. When several files hold `rain`, the first one that matches the column decides.
+
 These rules work with `vanillaClients`. They are server state only, so a plain client needs nothing from the pack. A rule that names a block the server does not register is dropped with its error.
 
-| Key                   | Required | Value        | Default        | What it does                                                                                                                                                                                                      |
-| --------------------- | -------- | ------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `infinite`            | no       | object       | none (vanilla) | `fluid` must be `minecraft:water`. Two sources beside a flowing block make a third only in the listed places; elsewhere they never do. Key left out: vanilla rule everywhere. Lava files ignore it with an error. |
-| `infinite.biomes`     | no       | list of text | any biome      | Biome ids, or `#` followed by a biome tag.                                                                                                                                                                        |
-| `infinite.dimensions` | no       | list of text | any dimension  | Same names as `byDimension`. When both lists are given the place must match both.                                                                                                                                 |
+| Key                   | Required | Value                   | Default        | What it does                                                                                                                                                                                                      |
+| --------------------- | -------- | ----------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `infinite`            | no       | object                  | none (vanilla) | `fluid` must be `minecraft:water`. Two sources beside a flowing block make a third only in the listed places; elsewhere they never do. Key left out: vanilla rule everywhere. Lava files ignore it with an error. |
+| `infinite.biomes`     | no       | list of text            | any biome      | Biome ids, or `#` followed by a biome tag.                                                                                                                                                                        |
+| `infinite.dimensions` | no       | list of text            | any dimension  | Same names as `byDimension`. When both lists are given the place must match both.                                                                                                                                 |
+| `rain`                | no       | object                  | none (off)     | `fluid` must be `minecraft:water`. Turns flowing water into a source while it rains on it, as described above. Lava files ignore it with an error, and an unknown key inside it drops the entry with an error.    |
+| `rain.biomes`         | no       | list of text            | any biome      | Same as `infinite.biomes`.                                                                                                                                                                                        |
+| `rain.dimensions`     | no       | list of text            | any dimension  | Same as `infinite.dimensions`.                                                                                                                                                                                    |
+| `rain.chance`         | no       | whole number, 1 or more | 160            | One in this many picked columns converts. Lower is faster; 1 converts every picked column.                                                                                                                        |
+| `rain.maxLevel`       | no       | whole number, 1 to 7    | 4              | Flowing water of level 1 up to this level converts. Level 1 sits next to a source and 7 is the thinnest edge. Falling water never converts.                                                                       |
+| `rain.minHeight`      | no       | whole number            | none           | Lowest Y the water block may be at.                                                                                                                                                                               |
+| `rain.maxHeight`      | no       | whole number            | none           | Highest Y the water block may be at.                                                                                                                                                                              |
+| `rain.seaLevel`       | no       | true or false           | false          | `true`: only water at or below the world's sea level converts.                                                                                                                                                    |
+| `rain.inClaims`       | no       | true or false           | true           | `false`: water inside a claim never converts.                                                                                                                                                                     |
 
 The `waterSourceConversion` gamerule still applies where the list allows it. The place is tested at each neighboring source.
 
