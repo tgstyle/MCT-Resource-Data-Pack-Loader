@@ -117,7 +117,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static void fertility(ItemStack stack, List<String> tooltip) {
         EntityPlayer player = Minecraft.getMinecraft().player;
         if (Config.content.vanillaClients || player == null || stack.isEmpty()) { return; }
-        BlockPos pos = player.getPosition();
+        BlockPos pos = new BlockPos(player);
         Block block = plant(stack, player.world, pos);
         if (block == null) { return; }
         GrowSwitchDef here = ContentEnvironments.growth(player.world, pos);

@@ -115,6 +115,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentSneakGrow;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnChunks;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
@@ -241,6 +242,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentSeasonSnow.class);
         MinecraftForge.EVENT_BUS.register(ContentGrowSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentGrowWater.class);
+        MinecraftForge.EVENT_BUS.register(ContentSneakGrow.class);
         MinecraftForge.EVENT_BUS.register(ContentRuleSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentMobSwitch.class);
         MinecraftForge.EVENT_BUS.register(ContentTradeSwitch.class);
@@ -448,6 +450,7 @@ public class ModSetup {
         ContentEnvironments.serverStopped();
         ContentSpawnSwitch.serverStopped();
         ContentGrowSwitch.serverStopped();
+        ContentSneakGrow.forget();
         ContentMobSwitch.serverStopped();
         ContentTradeSwitch.serverStopped();
         FunctionOverrides.serverStopped();

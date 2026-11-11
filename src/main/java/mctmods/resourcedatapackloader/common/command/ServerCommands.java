@@ -73,7 +73,7 @@ import net.minecraftforge.common.DimensionManager;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "weight", "ownership", "claim", "unclaim", "claims", "dumpregistry");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid", "portway", "talk", "sneak", "weight", "ownership", "claim", "unclaim", "claims", "dumpregistry");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
     private static final List<String> BIOME_ACTIONS = Arrays.asList("list", "here", "find");
@@ -159,6 +159,7 @@ public class ServerCommands extends CommandBase {
         List<String> open = new ArrayList<>();
         open.add("intro");
         open.add("talk");
+        open.add("sneak");
         if (ContentTeams.any()) { open.add("team"); }
         if (ContentScoring.any()) { open.add("round"); }
         if (ClaimCommand.listed() && sender.canUseCommand(ClaimSettings.commandLevel(), getName())) { open.addAll(ClaimCommand.NAMES); }
@@ -177,6 +178,7 @@ public class ServerCommands extends CommandBase {
         if (args.length >= 2 && "portway".equals(args[0])) { return PortwayCommand.complete(server, args); }
         if (args.length >= 2 && "talk".equals(args[0])) { return TalkCommand.complete(server, args); }
         if (args.length >= 2 && "weight".equals(args[0])) { return WeightCommand.complete(server, args); }
+        if (args.length >= 2 && "sneak".equals(args[0])) { return SneakCommand.complete(args); }
         if (args.length >= 2 && "ownership".equals(args[0])) { return OwnershipCommand.complete(args); }
         if (args.length >= 2 && ClaimCommand.handles(args[0])) { return ClaimCommand.complete(server, sender, args); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
@@ -222,7 +224,7 @@ public class ServerCommands extends CommandBase {
         else if ("portway".equals(args[0])) { allow(sender, PortwayCommand.LEVEL); }
         else if (ClaimCommand.handles(args[0])) { allow(sender, ClaimSettings.commandLevel()); }
         else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
-        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && !"talk".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
+        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && !"talk".equals(args[0]) && !"sneak".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (ClaimCommand.handles(args[0])) { ClaimCommand.run(server, sender, args, getUsage(sender)); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
@@ -254,6 +256,7 @@ public class ServerCommands extends CommandBase {
         else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
         else if ("talk".equals(args[0])) { TalkCommand.run(server, sender, args, getUsage(sender)); }
         else if ("weight".equals(args[0]) && args.length <= 2) { WeightCommand.run(server, sender, args); }
+        else if ("sneak".equals(args[0]) && SneakCommand.valid(args)) { SneakCommand.run(sender, args); }
         else if ("ownership".equals(args[0])) { OwnershipCommand.run(server, sender, args, getUsage(sender)); }
         else if (args.length == 1 && "dumpregistry".equals(args[0])) { RegistryDumpCommand.run(server, sender); }
         else { throw new WrongUsageException(getUsage(sender)); }
