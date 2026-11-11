@@ -25,8 +25,9 @@ public final class StructureMapDef {
     public final int cellsWide;
     public final int cellsDeep;
     public final int widest;
+    @Nullable public final RespawnDef respawn;
 
-    public StructureMapDef(ResourceLocation key, int cell, int ground, int spacing, int chance, @Nullable int[] at, Set<Integer> dimensions, Layer[] layers, @Nullable int[] depth, List<PickDef> spawners, @Nullable ResourceLocation loot) {
+    public StructureMapDef(ResourceLocation key, int cell, int ground, int spacing, int chance, @Nullable int[] at, Set<Integer> dimensions, Layer[] layers, @Nullable int[] depth, List<PickDef> spawners, @Nullable ResourceLocation loot, @Nullable RespawnDef respawn) {
         this.key = key;
         this.cell = cell;
         this.ground = ground;
@@ -38,6 +39,7 @@ public final class StructureMapDef {
         this.depth = depth;
         this.spawners = spawners;
         this.loot = loot;
+        this.respawn = respawn;
         int wide = 1;
         int deep = 1;
         for (Layer layer : layers) {

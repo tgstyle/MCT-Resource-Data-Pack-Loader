@@ -44,6 +44,7 @@ public final class CaveRegionDef {
     public final String biome;
     public final SkyStone sky;
     public final AmbienceDef ambience;
+    @Nullable public final RespawnDef respawn;
     private boolean resolved;
     @Nullable private IBlockState floorState;
     @Nullable private IBlockState ceilingState;
@@ -54,7 +55,7 @@ public final class CaveRegionDef {
                          String floorCover, float floorChance, String ceilingCover, float ceilingChance,
                          List<String> coverReplace, int waterLevel, List<SpawnEntryDef> spawns, boolean keepDefaultSpawns,
                          List<PickDef> structures, float structureChance, String structureLoot, String biome,
-                         SkyStone sky, AmbienceDef ambience) {
+                         SkyStone sky, AmbienceDef ambience, @Nullable RespawnDef respawn) {
         this.key = key;
         this.weight = weight;
         this.minHeight = minHeight;
@@ -74,6 +75,7 @@ public final class CaveRegionDef {
         this.biome = biome;
         this.sky = sky;
         this.ambience = ambience;
+        this.respawn = respawn;
     }
 
     public boolean shapesSky() { return sky.shapes() || hasBiome(); }

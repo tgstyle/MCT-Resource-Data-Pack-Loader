@@ -2,10 +2,12 @@ package mctmods.resourcedatapackloader.common.pack.definitions.blocks;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.AmountDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.RespawnDef;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentField;
 
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class ShapeDef {
     public static final int FULL_INTEGRITY = 100;
@@ -81,8 +83,9 @@ public final class ShapeDef {
     public final ContentField field;
     public final float threshold;
     public final String lootTable;
+    @Nullable public final RespawnDef respawn;
 
-    public ShapeDef(String type, AmountDef radius, AmountDef height, AmountDef width, String plane, boolean slim, String outline, String fill, List<String> surface, AmountDef stack, boolean seeSky, boolean checkStay, int scatterX, int scatterY, int scatterZ, String log, String leaves, boolean hanging, String structure, List<PickDef> structures, List<PickDef> turns, List<PickDef> mirrors, String taper, int integrity, int rarity, boolean perChunk, ContentField field, float threshold, String lootTable) {
+    public ShapeDef(String type, AmountDef radius, AmountDef height, AmountDef width, String plane, boolean slim, String outline, String fill, List<String> surface, AmountDef stack, boolean seeSky, boolean checkStay, int scatterX, int scatterY, int scatterZ, String log, String leaves, boolean hanging, String structure, List<PickDef> structures, List<PickDef> turns, List<PickDef> mirrors, String taper, int integrity, int rarity, boolean perChunk, ContentField field, float threshold, String lootTable, @Nullable RespawnDef respawn) {
         this.type = type;
         this.radius = radius;
         this.height = height;
@@ -112,9 +115,10 @@ public final class ShapeDef {
         this.field = field;
         this.threshold = threshold;
         this.lootTable = lootTable;
+        this.respawn = respawn;
     }
 
-    public static ShapeDef cluster() { return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", Collections.emptyList(), AmountDef.of(1), true, true, 8, 4, 8, "", "", false, "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), STRAIGHT, FULL_INTEGRITY, 0, false, null, 0.5F, ""); }
+    public static ShapeDef cluster() { return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", Collections.emptyList(), AmountDef.of(1), true, true, 8, 4, 8, "", "", false, "", Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), STRAIGHT, FULL_INTEGRITY, 0, false, null, 0.5F, "", null); }
 
     public boolean isRound() { return CIRCLE.equals(plane); }
 

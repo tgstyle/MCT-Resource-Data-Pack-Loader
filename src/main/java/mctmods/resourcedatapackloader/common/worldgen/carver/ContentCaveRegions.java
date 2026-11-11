@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
@@ -25,11 +27,13 @@ import javax.annotation.Nullable;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 
@@ -231,6 +235,12 @@ public final class ContentCaveRegions {
         }
         loaded.addBlocksToWorld(world, fitted, settings, 2);
         StructureLoot.stock(world, x - span.getX() / 2, y, z - span.getZ() / 2, x - span.getX() / 2 + span.getX() - 1, y + span.getY() - 1, z - span.getZ() / 2 + span.getZ() - 1, region.structureLoot, random);
+        if (region.respawn != null) {
+            int minX = x - span.getX() / 2;
+            int minZ = z - span.getZ() / 2;
+            StructureBoundingBox area = new StructureBoundingBox(minX, y, minZ, minX + span.getX() - 1, y + span.getY() - 1, minZ + span.getZ() - 1);
+            RespawnRecorder.record(world, region.respawn, new RespawnInstance(RespawnInstance.CAVE, region.key.toString(), named, fitted, rotation, Mirror.NONE, 100, cellHash, area), area);
+        }
     }
 
     public static void decorate(World world, int chunkX, int chunkZ, Random random) {

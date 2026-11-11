@@ -175,7 +175,8 @@ public final class ContentParserWorldgen {
                         MathHelper.clamp(Json.getFloat(json, "soundChance", ContentParserDimensionTraits.SOUND_CHANCE), 0.0F, 1.0F),
                         Json.getString(json, "particle", "").trim(),
                         MathHelper.clamp(Json.getFloat(json, "particleChance", ContentParserDimensionTraits.PARTICLE_CHANCE), 0.0F, 1.0F),
-                        AmbienceDef.NO_COLOR));
+                        AmbienceDef.NO_COLOR),
+                ContentParserRespawn.parse(key, json));
     }
 
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
@@ -237,7 +238,8 @@ public final class ContentParserWorldgen {
                 orderSign,
                 Json.getInt(json, "orderX", 1),
                 Json.getInt(json, "orderY", 1),
-                Json.getInt(json, "orderZ", 1));
+                Json.getInt(json, "orderZ", 1),
+                ContentParserRespawn.parse(key, json));
     }
 
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
@@ -274,7 +276,8 @@ public final class ContentParserWorldgen {
                 Json.getBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(Json.getJsonObject(entry, "field", new JsonObject())) : null,
                 Json.getFloat(entry, "threshold", ShapeDef.VEIN.equals(type) ? 0.4F : 0.5F),
-                Json.getString(entry, "lootTable", ""));
+                Json.getString(entry, "lootTable", ""),
+                ContentParserRespawn.parse(key, entry));
         made.locateAs = Json.getString(entry, "locateAs", "");
         made.fade = Math.max(0, Json.getInt(entry, "fade", 0));
         made.pattern = Json.choice(entry, "pattern", "default", "Worldgen " + key + " shape", PATTERNS);

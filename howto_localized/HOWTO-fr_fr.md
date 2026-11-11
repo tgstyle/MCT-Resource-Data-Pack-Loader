@@ -106,6 +106,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Formes](#formes)
 - [Propagations](#propagations)
 - [Cartes de structures](#cartes-de-structures)
+- [Structures qui réapparaissent](#structures-qui-réapparaissent)
 - [Parcelles de village](#parcelles-de-village)
 - [Cartes de plan des villes](#cartes-de-plan-des-villes)
 - [Ville continue](#ville-continue)
@@ -7450,6 +7451,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | `structures`        | liste            | aucun                                | Une structure placée une fois par cellule de région, au cœur de la cellule, calée sur un sol de grotte — comme les versions modernes donnent un point de repère à un biome de grotte. Les entrées sont des modèles `namespace:name`, ou `{ "structure": "...", "weight": 3 }` pour choisir parmi plusieurs                                                                                                                                                                                                                                         |
 | `structureChance`   | 0.0 à 1.0        | `1.0`                                | La probabilité que chaque cellule de la région obtienne réellement sa structure                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | `structureLoot`     | `namespace:path` | aucun                                | La table de butin dont est rempli chaque coffre d'une structure placée la première fois qu'il est ouvert                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `respawn`           | objet            | aucun                                | Remet la structure placée en place après que les joueurs l'ont vidée. [Structures qui réapparaissent](#structures-qui-réapparaissent)                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `biome`             | nom de biome     | aucun                                | Le biome que la région signale dans son volume, écrit dans le cube comme un biome 3D. Donne à la région son propre feuillage, ses couleurs d'herbe et d'eau, sa musique et ses sons d'ambiance, et permet à la pondération d'apparition vanilla de le lire. La surface au-dessus n'est pas touchée, car seules les cellules occupées par la région sont écrites                                                                                                                                                                                    |
 | `skyStone`          | bloc             | le réglage du monde                  | Le bloc dont sont faites les îles du ciel sous leur surface dans cette région, de sorte qu'une région porte ses propres îles                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `skyIslands`        | `-1` à `1`       | le réglage du monde                  | Le seuil des îles dans la région. Plus bas rassemble plus de terre                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
@@ -7870,6 +7872,7 @@ Un `tree` sans `log` ni `leaves` ne génère rien, et le dit dans le journal. No
 | `structure`  | imprint, tree | `namespace:name`     | aucun  | Le modèle à placer                                                                                                                                                                                                                                                                   |
 | `integrity`  | imprint, tree | 1 à 100              | `100`  | Pourcentage des blocs du modèle qui apparaissent réellement                                                                                                                                                                                                                          |
 | `lootTable`  | imprint, tree | `namespace:path`     | aucun  | La table de butin dont est rempli chaque coffre du modèle placé à sa première ouverture, ainsi que tout autre conteneur qui en accepte une, boîte de shulker ou caisse d'un mod comprises. Couvre `structure` et chaque entrée de `structures` ; chaque coffre tire sa propre graine |
+| `respawn`    | imprint       | objet                | aucun  | Remet le modèle placé en place après que les joueurs l'ont vidé. [Structures qui réapparaissent](#structures-qui-réapparaissent)                                                                                                                                                     |
 | `structures` | imprint, tree | liste                | aucun  | Plusieurs modèles au choix, un seul placé à chaque fois. Chaque entrée s'écrit `{ "structure": "namespace:name", "weight": 3 }`, ou un simple nom pour des chances égales. Remplace `structure`                                                                                      |
 | `turns`      | imprint, tree | liste                | toutes | Dans quel sens il peut être placé : `none`, `quarter`, `half`, `threequarter`. Les entrées peuvent porter un `weight`. S'il est omis, les quatre sont équiprobables                                                                                                                  |
 | `mirrors`    | imprint, tree | liste                | aucun  | Le retourner aussi : `none`, `leftright`, `frontback`, avec `weight` facultatif. Une entrée qui nomme son propre poids est un objet avec `mirror` et `weight`, comme `{ "mirror": "leftright", "weight": 2 }`, et une entrée de `turns` de même avec `turn`                          |
@@ -8095,6 +8098,7 @@ Une carte peut aussi s'enfoncer sous le terrain et remplir les spawners et les c
 | `depth`      | nombre ou deux nombres | aucun             | Enfonce le bâtiment sous le terrain : le sol de la couche `ground` se trouve à autant de blocs sous la surface échantillonnée, au lieu d'être à sa hauteur. Deux nombres donnent un minimum et un maximum, et chaque copie tire le sien à partir de la graine du monde. S'applique aux copies que la carte disperse ou épingle avec `at` ; une carte qu'un village ou une ville place pose toujours sa couche `ground` à la surface |
 | `spawners`   | liste d'ids d'entité   | aucun             | Le mob de chaque spawner des modèles de la carte qui a été enregistré sans mob ou avec un simple cochon. Une entrée peut porter un poids, comme `id=2` ; un spawner enregistré avec un autre mob qu'un cochon le garde. Un id qu'aucun registre ne connaît (la variante d'entité d'un pack quand `vanillaClients` est activé) est écarté du tirage                                                                                  |
 | `loot`       | id de table de butin   | aucun             | La table de butin de chaque coffre et coffre piégé des modèles de la carte qui a été enregistré sans table de butin et sans objets ; un coffre enregistré avec l'un des deux le garde                                                                                                                                                                                                                                               |
+| `respawn`    | objet                  | aucun             | Remet le bâtiment en place après que les joueurs l'ont vidé. [Structures qui réapparaissent](#structures-qui-réapparaissent)                                                                                                                                                                                                                                                                                                        |
 | `dimensions` | liste                  | toutes            | Les identifiants de dimension où la carte peut se construire                                                                                                                                                                                                                                                                                                                                                                        |
 | `layers`     | liste                  | aucun             | Les couches, de bas en haut, chacune avec une `palette` et une `map`                                                                                                                                                                                                                                                                                                                                                                |
 
@@ -8109,6 +8113,48 @@ Une palette nomme des modèles par clé de registre à partir du dossier `<names
 Chaque copie tire l'une des quatre orientations à partir de la graine du monde et le bâtiment entier tourne d'un bloc, modèles compris, de sorte que les murs qui se rejoignent d'une cellule à l'autre se rejoignent toujours. La couche de sol repose sur la surface du terrain échantillonnée sous le milieu du bâtiment. Chaque chunk ne construit que sa propre tranche de la grille, donc un bâtiment qui s'étend sur de nombreux chunks apparaît sans génération en cascade, quel que soit l'ordre de chargement des chunks. Une [parcelle de village](#parcelles-de-village) de type `template` peut aussi nommer une carte comme `structure`, ce qui fait du composite un bâtiment de village.
 
 Une carte creuse le terrain : chaque bloc qu'un modèle contient, air compris, remplace ce qui s'y trouvait, tandis qu'une cellule vide ou l'espace autour d'un modèle plus petit reste plein ; il faut donc donner à chaque salle son air dans le modèle et à un puits ses cellules jusqu'à la surface.
+
+## Structures qui réapparaissent
+
+*générer le monde*
+
+Une structure peut revenir une fois que les joueurs l'ont vidée : ses coffres se remplissent à nouveau, ses générateurs se remettent en place, ses monstres reviennent, et les murs cassés peuvent être reconstruits. Ajoutez un objet `respawn` à une carte de structures, une région de grottes, une parcelle de village ou au `shape` d'une entrée `imprint` de worldgen.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Réglage          | Type    | Défaut    | Rôle                                                                                                                                                                 |
+| ---------------- | ------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `after`          | nombre  | aucun     | Secondes entre une réinitialisation et la suivante, comptées à partir de la construction de la structure. Au moins `10` ; `0` désactive la réapparition. Obligatoire |
+| `playerDistance` | nombre  | `64`      | Aucune réinitialisation tant qu'un joueur se trouve à moins de ce nombre de blocs de la structure, jusqu'à `256` ; elle réessaie 15 secondes plus tard               |
+| `loot`           | texte   | `emptied` | Quels coffres se remplissent à nouveau à partir de la table de butin avec laquelle ils ont été construits, comme indiqué ci-dessous                                  |
+| `spawners`       | booléen | `true`    | Remet chaque générateur comme il a été construit, monstre et minutage compris                                                                                        |
+| `mobs`           | booléen | `true`    | Remet les monstres que contient le modèle. Imprints et régions de grottes uniquement                                                                                 |
+| `mobCap`         | nombre  | `0`       | Le nombre maximal de types de monstres du modèle vivants dans la structure après une réinitialisation, jusqu'à `64`. `0` en laisse autant que le modèle en contient  |
+| `rebuild`        | texte   | `none`    | Quels blocs sont remis en place, comme indiqué ci-dessous                                                                                                            |
+
+| Valeur              | Rôle                                                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | Les coffres restent intacts                                                                                                                       |
+| `loot: "emptied"`   | Seul un coffre sans rien à l'intérieur se remplit ; un coffre qui contient encore des objets les garde                                            |
+| `loot: "all"`       | Chaque coffre est vidé puis rempli à nouveau                                                                                                      |
+| `rebuild: "none"`   | Aucun bloc n'est remis en place                                                                                                                   |
+| `rebuild: "broken"` | Un bloc du modèle n'est remis que là où il y a désormais de l'air ou quelque chose de remplaçable, pour que les constructions des joueurs restent |
+| `rebuild: "full"`   | Chaque bloc du modèle est posé à nouveau, par-dessus ce qui se trouve là                                                                          |
+
+Seuls les coffres qui avaient une table de butin au moment de la construction de la structure se remplissent. Une réinitialisation attend que chaque chunk couvert par la structure soit chargé, et ne charge ni ne génère jamais de chunk ; une structure en terrain non chargé se réinitialise dès qu'un joueur s'en approche de nouveau. Les structures construites avant que le pack ajoute `respawn` ne sont pas suivies. Tout tourne sur le serveur, les joueurs n'ont rien à installer.
 
 ## Parcelles de village
 
@@ -8233,6 +8279,7 @@ Un `template` dont la `structure` nomme l'une de vos [cartes de structures](#car
 | `structure`      | template    | `namespace:name` | aucun         | Le modèle à placer, ou l'une de vos cartes de structures, qui fixe alors la taille de la parcelle                                                         |
 | `integrity`      | template    | 1 à 100          | `100`         | Pourcentage des blocs du modèle qui apparaissent                                                                                                          |
 | `lootTable`      | template    | `namespace:path` | aucun         | La table de butin dont est rempli chaque coffre du modèle placé à sa première ouverture. Une parcelle qui nomme une carte de structures n'est pas touchée |
+| `respawn`        | template    | objet            | aucun         | Remet la parcelle en place après que les joueurs l'ont vidée. [Structures qui réapparaissent](#structures-qui-réapparaissent)                             |
 | `villagers`      | toutes      | entier           | `0`           | Combien de personnes la parcelle fait apparaître                                                                                                          |
 | `villagerEntity` | toutes      | `namespace:name` | un villageois | Qui y habite, par exemple une variante d'entité de votre cru                                                                                              |
 | `villagerX`      | toutes      | entier           | `1`           | Où ils apparaissent, dans la largeur de la parcelle                                                                                                       |

@@ -106,6 +106,7 @@ Quattordici esempi funzionanti. Trascinane uno qualsiasi direttamente in `rdploa
 - [Forme](#forme)
 - [Propagazioni](#propagazioni)
 - [Mappe delle strutture](#mappe-delle-strutture)
+- [Strutture che ricompaiono](#strutture-che-ricompaiono)
 - [Lotti dei villaggi](#lotti-dei-villaggi)
 - [Mappe della disposizione delle città](#mappe-della-disposizione-delle-città)
 - [Città continua](#città-continua)
@@ -7450,6 +7451,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `structures`        | elenco                | nessuno                           | Una struttura piazzata una volta per cella di regione, al centro della cella, agganciata al pavimento di una grotta, come le versioni moderne danno a un bioma di grotta il suo punto di riferimento. Le voci sono modelli `namespace:name`, oppure `{ "structure": "...", "weight": 3 }` per scegliere tra più opzioni                                                                                                                                                                                                                                  |
 | `structureChance`   | da 0.0 a 1.0          | `1.0`                             | La probabilità che ogni cella della regione ottenga davvero la sua struttura                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `structureLoot`     | `namespace:path`      | nessuno                           | La loot table da cui viene riempito ogni baule dentro una struttura piazzata la prima volta che viene aperto                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `respawn`           | oggetto               | nessuno                           | Riporta la struttura piazzata dopo che i giocatori l'hanno ripulita. [Strutture che ricompaiono](#strutture-che-ricompaiono)                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `biome`             | nome del bioma        | nessuno                           | Il bioma che la regione riporta dentro il proprio volume, scritto nel cubo come bioma 3D. Dà alla regione il proprio fogliame, i propri colori di erba e acqua, musica e suoni ambientali, e permette a vanilla di leggerlo per la ponderazione dello spawn. La superficie sopra non viene toccata, dato che si scrivono solo le celle occupate dalla regione                                                                                                                                                                                            |
 | `skyStone`          | blocco                | l'impostazione del mondo          | Il blocco di cui sono fatte le isole del cielo sotto la loro superficie dentro questa regione, così una regione porta isole proprie                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `skyIslands`        | da `-1` a `1`         | l'impostazione del mondo          | La soglia delle isole dentro la regione. Più basso raccoglie più terra                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
@@ -7870,6 +7872,7 @@ Un `tree` senza `log` né `leaves` non genera nulla, e lo segnala nel log. Indic
 | `structure`  | imprint, tree | `namespace:name`  | nessuno     | Il modello da piazzare                                                                                                                                                                                                                                                                            |
 | `integrity`  | imprint, tree | da 1 a 100        | `100`       | Percentuale dei blocchi del modello che compaiono davvero                                                                                                                                                                                                                                         |
 | `lootTable`  | imprint, tree | `namespace:path`  | nessuno     | La loot table da cui viene riempito ogni baule dentro il modello piazzato la prima volta che viene aperto, e ogni altro contenitore che ne accetta una, tra cui una scatola di shulker o la cassa di una mod. Copre `structure` e ogni voce di `structures`; ogni baule sorteggia un proprio seed |
+| `respawn`    | imprint       | oggetto           | nessuno     | Riporta il modello piazzato dopo che i giocatori l'hanno ripulito. [Strutture che ricompaiono](#strutture-che-ricompaiono)                                                                                                                                                                        |
 | `structures` | imprint, tree | elenco            | nessuno     | Più modelli tra cui scegliere, uno piazzato ogni volta. Ogni voce è `{ "structure": "namespace:name", "weight": 3 }`, oppure un nome semplice per probabilità uguali. Prevale su `structure`                                                                                                      |
 | `turns`      | imprint, tree | elenco            | qualsiasi   | In quale verso può essere piazzato: `none`, `quarter`, `half`, `threequarter`. Le voci possono avere un `weight`. Se omesso, tutti e quattro sono ugualmente probabili                                                                                                                            |
 | `mirrors`    | imprint, tree | elenco            | nessuno     | Specchialo anche: `none`, `leftright`, `frontback`, con `weight` facoltativo. Una voce che indica un peso proprio è un oggetto con `mirror` e `weight`, come `{ "mirror": "leftright", "weight": 2 }`, e una voce di `turns` allo stesso modo con `turn`                                          |
@@ -8095,6 +8098,7 @@ Una mappa può anche affondare sotto il terreno e riempire gli spawner e i bauli
 | `depth`      | numero o due numeri    | nessuno          | Affonda l'edificio sotto il terreno: il pavimento dello strato `ground` si trova a tanti blocchi sotto la superficie campionata invece che su di essa. Due numeri indicano un minimo e un massimo, e ogni copia estrae il proprio dal seme del mondo. Vale per le copie che la mappa distribuisce o fissa con `at`; una mappa che un villaggio o una città piazza continua a posare lo strato `ground` in superficie |
 | `spawners`   | elenco di id di entità | nessuno          | Il mob per ogni spawner dei modelli della mappa salvato senza mob o con un semplice maiale. Una voce può avere un peso, come `id=2`; uno spawner salvato con un mob diverso da un maiale lo mantiene. Un id che nulla registra (la variante di entità di un pack quando `vanillaClients` è attivo) viene escluso dall'estrazione                                                                                     |
 | `loot`       | id di loot table       | nessuno          | La loot table per ogni baule e baule trappola dei modelli della mappa salvato senza loot table e senza oggetti; un baule salvato con una loot table o con degli oggetti resta com'è                                                                                                                                                                                                                                  |
+| `respawn`    | oggetto                | nessuno          | Riporta l'edificio dopo che i giocatori l'hanno ripulito. [Strutture che ricompaiono](#strutture-che-ricompaiono)                                                                                                                                                                                                                                                                                                    |
 | `dimensions` | elenco                 | tutte            | Id delle dimensioni in cui la mappa può costruire                                                                                                                                                                                                                                                                                                                                                                    |
 | `layers`     | elenco                 | nessuno          | Gli strati, dal basso verso l'alto, ciascuno con una `palette` e una `map`                                                                                                                                                                                                                                                                                                                                           |
 
@@ -8109,6 +8113,48 @@ Una palette indica i modelli tramite chiave di registro da `<namespace>/structur
 Ogni copia sorteggia una delle quattro orientazioni dal seed del mondo e l'intero edificio ruota insieme, modelli compresi, così le pareti che si incontrano tra celle si incontrano ancora. Lo strato del suolo poggia sulla superficie del terreno campionata sotto il centro dell'edificio. Ogni chunk costruisce solo la propria fetta della griglia, quindi un edificio che copre molti chunk arriva senza generazione a cascata, in qualunque ordine si carichino i chunk. Anche un [lotto di villaggio](#lotti-dei-villaggi) di tipo `template` può indicare una mappa come `structure`, il che rende il composito un edificio del villaggio.
 
 Una mappa scava nel terreno: ogni blocco che un modello contiene, aria compresa, sostituisce ciò che c'era, mentre una cella vuota o lo spazio attorno a un modello più piccolo resta solido, quindi nel modello va messa l'aria di ogni stanza e a un pozzo vanno date le sue celle fino alla superficie.
+
+## Strutture che ricompaiono
+
+*generazione del mondo*
+
+Una struttura può ricomparire dopo che i giocatori l'hanno ripulita: i suoi bauli si riempiono di nuovo, i suoi spawner si ripristinano, i suoi mob tornano e i muri abbattuti possono essere ricostruiti. Aggiungi un oggetto `respawn` a una mappa delle strutture, a una regione di grotte, a un lotto di villaggio o alla `shape` di una voce `imprint` di worldgen.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Impostazione     | Tipo     | Predefinito | Cosa fa                                                                                                                                   |
+| ---------------- | -------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `after`          | numero   | nessuno     | Secondi da un ripristino al successivo, contati dalla costruzione della struttura. Almeno `10`; `0` disattiva il ripristino. Obbligatorio |
+| `playerDistance` | numero   | `64`        | Nessun ripristino finché un giocatore si trova entro questo numero di blocchi dalla struttura, fino a `256`; riprova 15 secondi dopo      |
+| `loot`           | testo    | `emptied`   | Quali bauli si riempiono di nuovo dalla loot table con cui sono stati costruiti, come elencato sotto                                      |
+| `spawners`       | booleano | `true`      | Rimette ogni spawner com'era stato costruito, mob e tempi compresi                                                                        |
+| `mobs`           | booleano | `true`      | Rimette i mob che contiene il modello. Solo imprint e regioni di grotte                                                                   |
+| `mobCap`         | numero   | `0`         | Il massimo di tipi di mob del modello vivi nella struttura dopo un ripristino, fino a `64`. `0` vuol dire quanti ne contiene il modello   |
+| `rebuild`        | testo    | `none`      | Quali blocchi vengono rimessi, come elencato sotto                                                                                        |
+
+| Valore              | Cosa fa                                                                                                                          |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | I bauli restano come sono                                                                                                        |
+| `loot: "emptied"`   | Si riempie solo un baule rimasto vuoto; uno che ha ancora oggetti li tiene                                                       |
+| `loot: "all"`       | Ogni baule viene svuotato e riempito di nuovo                                                                                    |
+| `rebuild: "none"`   | Nessun blocco viene rimesso                                                                                                      |
+| `rebuild: "broken"` | Un blocco del modello viene rimesso solo dove ora c'è aria o qualcosa di sostituibile, così le costruzioni dei giocatori restano |
+| `rebuild: "full"`   | Ogni blocco del modello viene piazzato di nuovo, sopra quello che c'è                                                            |
+
+Solo i bauli che avevano una loot table quando la struttura è stata costruita si riempiono di nuovo. Un ripristino attende che ogni chunk coperto dalla struttura sia caricato, e non carica né genera mai un chunk; una struttura in un terreno non caricato si ripristina quando un giocatore torna in zona. Le strutture costruite prima che il pack aggiungesse `respawn` non sono tracciate. Tutto gira sul server, quindi i giocatori non devono installare nulla.
 
 ## Lotti dei villaggi
 
@@ -8233,6 +8279,7 @@ Un `template` il cui `structure` indica una delle tue [mappe delle strutture](#m
 | `structure`      | template | `namespace:name` | nessuno     | Il modello da piazzare, oppure una delle tue mappe delle strutture, che in tal caso stabilisce le dimensioni del lotto                                                              |
 | `integrity`      | template | da 1 a 100       | `100`       | Percentuale dei blocchi del modello che compaiono                                                                                                                                   |
 | `lootTable`      | template | `namespace:path` | nessuno     | La loot table da cui viene riempito ogni baule all'interno del modello piazzato la prima volta che viene aperto. Un lotto che indica una mappa delle strutture viene lasciato com'è |
+| `respawn`        | template | oggetto          | nessuno     | Riporta il lotto dopo che i giocatori l'hanno ripulito. [Strutture che ricompaiono](#strutture-che-ricompaiono)                                                                     |
 | `villagers`      | tutti    | intero           | `0`         | Quante persone genera il lotto                                                                                                                                                      |
 | `villagerEntity` | tutti    | `namespace:name` | un villico  | Chi ci abita, ad esempio una variante di entità tutta tua                                                                                                                           |
 | `villagerX`      | tutti    | intero           | `1`         | Dove compaiono, lungo il lotto                                                                                                                                                      |

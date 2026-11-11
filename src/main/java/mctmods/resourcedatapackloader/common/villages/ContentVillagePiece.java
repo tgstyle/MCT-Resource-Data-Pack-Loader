@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
@@ -25,6 +27,7 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
@@ -160,7 +163,9 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
         StructureMapDef map = ContentStructureMaps.byName(def.structure);
         if (map != null) {
             long seed = MathUtil.mix(world.getSeed(), boundingBox.minX, 2, boundingBox.minZ);
-            ContentStructureMaps.cells(world, map, seed, rotation(), boundingBox.minX, boundingBox.minY - map.ground * map.cell, boundingBox.minZ, box);
+            BlockPos base = new BlockPos(boundingBox.minX, boundingBox.minY - map.ground * map.cell, boundingBox.minZ);
+            ContentStructureMaps.cells(world, map, seed, rotation(), base.getX(), base.getY(), base.getZ(), box);
+            RespawnRecorder.record(world, def.respawn, new RespawnInstance(RespawnInstance.PLOT, def.registryName.toString(), "", base, rotation(), Mirror.NONE, 100, seed, boundingBox), box);
         }
         else {
             ResourceLocation name = new ResourceLocation(def.structure);
@@ -172,8 +177,10 @@ public class ContentVillagePiece extends StructureVillagePieces.Village {
             }
             Rotation rotation = rotation();
             PlacementSettings settings = new PlacementSettings().setRotation(rotation).setBoundingBox(box).setIgnoreEntities(true).setIntegrity(def.integrity / 100.0F);
-            template.addBlocksToWorld(world, corner(rotation), settings);
+            BlockPos origin = corner(rotation);
+            template.addBlocksToWorld(world, origin, settings);
             StructureLoot.stock(world, Math.max(box.minX, boundingBox.minX), Math.max(box.minY, boundingBox.minY), Math.max(box.minZ, boundingBox.minZ), Math.min(box.maxX, boundingBox.maxX), Math.min(box.maxY, boundingBox.maxY), Math.min(box.maxZ, boundingBox.maxZ), def.lootTable, new Random(MathUtil.mix(world.getSeed(), boundingBox.minX, 3, boundingBox.minZ) ^ ((long) box.minX << 32 ^ box.minZ)));
+            RespawnRecorder.record(world, def.respawn, new RespawnInstance(RespawnInstance.PLOT, def.registryName.toString(), def.structure, origin, rotation, Mirror.NONE, def.integrity, RespawnRecorder.coordinateSeed(origin), boundingBox), box);
         }
         boolean turned = getCoordBaseMode() == EnumFacing.EAST || getCoordBaseMode() == EnumFacing.WEST;
         int width = (turned ? boundingBox.maxZ - boundingBox.minZ : boundingBox.maxX - boundingBox.minX) + 1;

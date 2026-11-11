@@ -92,6 +92,8 @@ public final class ContentRegistry {
 
     public static Collection<CaveRegionDef> caveRegions() { return CAVEREGION_DEFS.values(); }
 
+    @Nullable public static WorldgenDef worldgen(ResourceLocation key) { return WORLDGEN_DEFS.get(key); }
+
     public static void resolveItemPotions() {
         for (ItemDef def : ITEM_DEFS.values()) {
             for (ItemVariant variant : def.visible) {

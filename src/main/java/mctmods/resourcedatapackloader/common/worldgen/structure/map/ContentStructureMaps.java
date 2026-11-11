@@ -4,7 +4,10 @@ import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserWorlds;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.common.util.world.TemplateFilters;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.BeardSurface;
@@ -24,12 +27,15 @@ import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
+import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 
@@ -113,10 +119,13 @@ public class ContentStructureMaps {
         if (anchor < 0) { anchor = world.getSeaLevel() - 1; }
         int base = Math.max(def.baseY(anchor, seed), GenHeights.floor(world, 0) + 1);
         int placedCells = cells(world, def, seed, turn, originX, base, originZ, window);
+        if (placedCells > 0 && def.respawn != null) { RespawnRecorder.record(world, def.respawn, new RespawnInstance(RespawnInstance.MAP, def.key.toString(), "", new BlockPos(originX, base, originZ), turn, Mirror.NONE, 100, seed, new StructureBoundingBox(originX, base, originZ, footprint.maxX, base + def.layers.length * def.cell - 1, footprint.maxZ)), window); }
         if (placedCells > 0 && window.isVecInside(new BlockPos(originX, 64, originZ)) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key, originX, base, originZ, turn, base + def.ground * def.cell); }
     }
 
-    public static int cells(World world, StructureMapDef def, long seed, Rotation turn, int originX, int base, int originZ, StructureBoundingBox window) {
+    public static int cells(World world, StructureMapDef def, long seed, Rotation turn, int originX, int base, int originZ, StructureBoundingBox window) { return cells(world, def, seed, turn, originX, base, originZ, window, null); }
+
+    public static int cells(World world, StructureMapDef def, long seed, Rotation turn, int originX, int base, int originZ, StructureBoundingBox window, @Nullable ITemplateProcessor filter) {
         int wide = def.cellsWide * def.cell;
         int deep = def.cellsDeep * def.cell;
         WorldServer server = (WorldServer) world;
@@ -172,7 +181,12 @@ public class ContentStructureMaps {
                     settings.setRandom(new Random(cellSeed));
                     settings.setBoundingBox(window);
                     BlockPos placeAt = new BlockPos(cornerX + backX, layerY, cornerZ + backZ);
-                    if (def.fills()) { piece.addBlocksToWorld(world, placeAt, (placed, at, info) -> ContentMapFill.fill(def, cellSeed, at, info), settings, FLAGS); }
+                    if (filter != null) {
+                        BlockRotationProcessor turning = new BlockRotationProcessor(placeAt, settings);
+                        ITemplateProcessor first = def.fills() ? (placed, at, info) -> ContentMapFill.fill(def, cellSeed, at, info) : turning;
+                        piece.addBlocksToWorld(world, placeAt, TemplateFilters.chain(first, filter), settings, FLAGS);
+                    }
+                    else if (def.fills()) { piece.addBlocksToWorld(world, placeAt, (placed, at, info) -> ContentMapFill.fill(def, cellSeed, at, info), settings, FLAGS); }
                     else { piece.addBlocksToWorld(world, placeAt, settings, FLAGS); }
                     placedCells++;
                 }

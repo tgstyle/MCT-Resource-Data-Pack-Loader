@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
@@ -29,6 +31,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
@@ -145,7 +148,8 @@ public final class ContentImprint implements IContentShape {
         Mirror mirror = mirror(random);
         settings.setMirror(mirror);
         settings.setIntegrity(shape.integrity / (float) ShapeDef.FULL_INTEGRITY);
-        settings.setRandom(random);
+        long seed = shape.respawn == null ? 0L : random.nextLong();
+        settings.setRandom(shape.respawn == null ? random : new Random(seed));
         BlockPos span = loaded.transformedSize(rotation);
         int cornerX = within(origin.getX(), origin.getX() - span.getX() / 2, span.getX());
         int cornerZ = within(origin.getZ(), origin.getZ() - span.getZ() / 2, span.getZ());
@@ -158,6 +162,10 @@ public final class ContentImprint implements IContentShape {
         if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(new BlockRotationProcessor(fitted, settings)), settings, WORLDGEN_FLAGS); }
         else { loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS); }
         StructureLoot.stock(world, cornerX, origin.getY(), cornerZ, cornerX + span.getX() - 1, origin.getY() + span.getY() - 1, cornerZ + span.getZ() - 1, shape.lootTable, random);
+        if (shape.respawn != null) {
+            StructureBoundingBox area = new StructureBoundingBox(cornerX, origin.getY(), cornerZ, cornerX + span.getX() - 1, origin.getY() + span.getY() - 1, cornerZ + span.getZ() - 1);
+            RespawnRecorder.record(world, shape.respawn, new RespawnInstance(RespawnInstance.IMPRINT, key.toString(), named, fitted, rotation, mirror, shape.integrity, seed, area), area);
+        }
         if (shape.locateAs != null && !shape.locateAs.isEmpty()) { ContentLocate.record(world, shape.locateAs, fitted); }
         return true;
     }

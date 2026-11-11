@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.rubic.world.cube;
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
+import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
 import mctmods.resourcedatapackloader.common.rubic.world.EntityContainer;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumnInternal;
@@ -265,6 +266,7 @@ public class Cube implements ICube {
         if (!this.world.isRemote) {
             ContentOwnership.onCubeLoad(this);
             ShieldIndexes.scanCube(this.world, this);
+            RespawnEvents.onCubeLoad(this.world, this);
         }
         boolean raised = false;
         ExtendedBlockStorage blocks = storage == null || storage.isEmpty() ? null : storage;

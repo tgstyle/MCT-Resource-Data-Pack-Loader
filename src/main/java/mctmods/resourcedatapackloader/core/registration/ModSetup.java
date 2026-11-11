@@ -50,6 +50,7 @@ import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldEvents;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
+import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
@@ -144,6 +145,7 @@ import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomeControl;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveAmbience;
+import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
@@ -264,6 +266,7 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.register(ContentSpawnSwitch.class);
         }
         MinecraftForge.EVENT_BUS.register(ShieldEvents.class);
+        MinecraftForge.EVENT_BUS.register(RespawnEvents.class);
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
         VanillaFluidRules.load();
         if (VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
@@ -326,7 +329,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
         if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
         List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
-        if (veins.isEmpty() && ContentStructureMaps.none()) { ContentRetrogen.setup(veins, null); }
+        if (veins.isEmpty() && ContentStructureMaps.none() && !ContentCaveRegions.any()) { ContentRetrogen.setup(veins, null); }
         else {
             ContentWorldgen worldgen = new ContentWorldgen(veins);
             GameRegistry.registerWorldGenerator(worldgen, 3);

@@ -205,7 +205,7 @@ public final class ContentParserWorlds {
         }
         Set<Integer> dimensions = new LinkedHashSet<>();
         if (json.has("dimensions")) { dimensions.addAll(Json.ints(Json.getJsonArray(json, "dimensions"), "dimensions")); }
-        StructureMapDef def = new StructureMapDef(key, cell, ground, spacing, chance, pinned, dimensions, layers, mapDepth(key, json), mapSpawners(key, json), mapLoot(key, json));
+        StructureMapDef def = new StructureMapDef(key, cell, ground, spacing, chance, pinned, dimensions, layers, mapDepth(key, json), mapSpawners(key, json), mapLoot(key, json), ContentParserRespawn.parse(key, json));
         if (spacing > 0 && spacing * 16 < def.widest) {
             ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest);
             return null;

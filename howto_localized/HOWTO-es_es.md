@@ -106,6 +106,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 - [Formas](#formas)
 - [Dispersiones](#dispersiones)
 - [Mapas de estructuras](#mapas-de-estructuras)
+- [Estructuras que reaparecen](#estructuras-que-reaparecen)
 - [Parcelas de aldea](#parcelas-de-aldea)
 - [Mapas de trazado de ciudades](#mapas-de-trazado-de-ciudades)
 - [Ciudad continua](#ciudad-continua)
@@ -7450,6 +7451,7 @@ Todas las claves a la vez. Un archivo real escribe solo las que necesita.
 | `structures`        | lista               | ninguno                       | Una estructura colocada una vez por celda de región, en el corazón de la celda, ajustada a un suelo de cueva, como las versiones modernas dan a un bioma de cueva su punto de referencia. Las entradas son plantillas `namespace:name`, o `{ "structure": "...", "weight": 3 }` para elegir entre varias                                                                                                                                                                                                                                         |
 | `structureChance`   | 0.0 a 1.0           | `1.0`                         | La probabilidad de que cada celda de la región llegue a tener su estructura                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `structureLoot`     | `namespace:path`    | ninguno                       | La tabla de botín de la que se rellena cada cofre dentro de una estructura colocada la primera vez que se abre                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `respawn`           | objeto              | ninguno                       | Devuelve la estructura colocada cuando los jugadores la han despejado. [Estructuras que reaparecen](#estructuras-que-reaparecen)                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `biome`             | nombre de bioma     | ninguno                       | El bioma que la región indica dentro de su volumen, escrito en el cubo como bioma 3D. Da a la región sus propios colores de follaje, hierba y agua, música y sonidos ambientales, y deja que el sorteo de apariciones de vanilla lo lea. La superficie de arriba no se toca, ya que solo se escriben las celdas que ocupa la región                                                                                                                                                                                                              |
 | `skyStone`          | bloque              | el ajuste del mundo           | El bloque del que están hechas las islas del cielo bajo su superficie dentro de esta región, de modo que una región lleva islas propias                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `skyIslands`        | `-1` a `1`          | el ajuste del mundo           | El umbral de islas dentro de la región. Más bajo reúne más tierra                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -7870,6 +7872,7 @@ Un `tree` sin `log` ni `leaves` no genera nada, y lo indica en el registro. Si s
 | `structure`  | imprint, tree | `namespace:name`   | ninguno     | La plantilla que se coloca                                                                                                                                                                                                                                                               |
 | `integrity`  | imprint, tree | 1 a 100            | `100`       | Porcentaje de los bloques de la plantilla que aparecen realmente                                                                                                                                                                                                                         |
 | `lootTable`  | imprint, tree | `namespace:path`   | ninguno     | La tabla de botín con la que se rellena cada cofre de la plantilla colocada la primera vez que se abre, y cualquier otro contenedor que admita una, como una caja de shulker o el cajón de un mod. Cubre `structure` y cada entrada de `structures`; cada cofre sortea su propia semilla |
+| `respawn`    | imprint       | objeto             | ninguno     | Devuelve la plantilla colocada cuando los jugadores la han despejado. [Estructuras que reaparecen](#estructuras-que-reaparecen)                                                                                                                                                          |
 | `structures` | imprint, tree | lista              | ninguno     | Varias plantillas entre las que elegir, una por colocación. Cada entrada es `{ "structure": "namespace:name", "weight": 3 }`, o un nombre sin más para probabilidades iguales. Sustituye a `structure`                                                                                   |
 | `turns`      | imprint, tree | lista              | cualquiera  | En qué sentido puede colocarse: `none`, `quarter`, `half`, `threequarter`. Las entradas pueden llevar un `weight`. Si se omite, las cuatro son igual de probables                                                                                                                        |
 | `mirrors`    | imprint, tree | lista              | ninguno     | Además la voltea: `none`, `leftright`, `frontback`, con `weight` opcional. Una entrada que indica su propio peso es un objeto con `mirror` y `weight`, como `{ "mirror": "leftright", "weight": 2 }`, y una entrada de `turns` igual con `turn`                                          |
@@ -8095,6 +8098,7 @@ Un mapa también puede hundirse bajo el terreno y rellenar los spawners y los co
 | `depth`      | número o dos números    | ninguno               | Hunde el edificio bajo el terreno: el suelo de la capa de suelo queda tantos bloques por debajo de la superficie muestreada en lugar de sobre ella. Dos números son un mínimo y un máximo, y cada copia sortea el suyo a partir de la semilla del mundo. Se aplica a las copias que el mapa reparte o fija con `at`; un mapa que coloca una aldea o una ciudad sigue asentando su capa `ground` en la superficie |
 | `spawners`   | lista de ids de entidad | ninguno               | El mob de cada spawner de las plantillas del mapa que se guardó sin ninguno o solo con un cerdo. Una entrada puede llevar un peso, como `id=2`; un spawner guardado con un mob que no sea un cerdo lo conserva. Un id que nada registra (la variante de entidad de un paquete mientras `vanillaClients` está activado) queda fuera del sorteo                                                                    |
 | `loot`       | id de tabla de botín    | ninguno               | La tabla de botín de cada cofre y cofre trampa de las plantillas del mapa que se guardó sin tabla de botín y sin objetos; un cofre guardado con alguno de los dos lo conserva                                                                                                                                                                                                                                    |
+| `respawn`    | objeto                  | ninguno               | Devuelve el edificio cuando los jugadores lo han despejado. [Estructuras que reaparecen](#estructuras-que-reaparecen)                                                                                                                                                                                                                                                                                            |
 | `dimensions` | lista                   | todas                 | Ids de dimensiones en las que puede construirse el mapa                                                                                                                                                                                                                                                                                                                                                          |
 | `layers`     | lista                   | ninguno               | Las capas, de abajo arriba, cada una con una `palette` y un `map`                                                                                                                                                                                                                                                                                                                                                |
 
@@ -8109,6 +8113,48 @@ Una paleta nombra plantillas por clave de registro del `<namespace>/structures/`
 Cada copia sortea una de las cuatro orientaciones a partir de la semilla del mundo y todo el edificio gira junto, plantillas incluidas, de modo que los muros que se encuentran entre celdas siguen encontrándose. La capa de suelo se asienta en la superficie del terreno muestreada bajo el centro del edificio. Cada chunk construye solo su propia porción de la cuadrícula, así que un edificio que abarca muchos chunks llega sin generación en cascada, sea cual sea el orden en que se carguen los chunks. Una [parcela de aldea](#parcelas-de-aldea) de tipo `template` también puede nombrar un mapa como su `structure`, lo que convierte el compuesto en un edificio de aldea.
 
 Un mapa se abre paso en el terreno: cada bloque que contiene una plantilla, aire incluido, sustituye lo que había, mientras que una celda vacía o el espacio alrededor de una plantilla más pequeña sigue sólido, así que da a cada sala su aire en la plantilla y a un pozo sus celdas hasta la superficie.
+
+## Estructuras que reaparecen
+
+*generación del mundo*
+
+Una estructura puede volver después de que los jugadores la hayan despejado: sus cofres se rellenan, sus spawners se reinician, sus mobs regresan y los muros derrumbados pueden reconstruirse. Añade un objeto `respawn` a un mapa de estructuras, a una región de cuevas, a una parcela de aldea o a la `shape` de una entrada de worldgen `imprint`.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Ajuste           | Tipo     | Por defecto | Qué hace                                                                                                                                                  |
+| ---------------- | -------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `after`          | número   | ninguno     | Segundos desde un reinicio hasta el siguiente, contados desde que se construyó la estructura. Como mínimo `10`; `0` desactiva la reaparición. Obligatorio |
+| `playerDistance` | número   | `64`        | No hay reinicio mientras un jugador esté a menos de estos bloques de la estructura, hasta `256`; lo vuelve a intentar 15 segundos después                 |
+| `loot`           | texto    | `emptied`   | Qué cofres se rellenan con la tabla de botín con la que se construyeron, como se indica abajo                                                             |
+| `spawners`       | booleano | `true`      | Vuelve a poner cada spawner como se construyó, con su mob y sus tiempos                                                                                   |
+| `mobs`           | booleano | `true`      | Vuelve a poner los mobs que contiene la plantilla. Solo para imprint y regiones de cuevas                                                                 |
+| `mobCap`         | número   | `0`         | El máximo de tipos de mob de la plantilla vivos en la estructura tras un reinicio, hasta `64`. `0` son tantos como tenga la plantilla                     |
+| `rebuild`        | texto    | `none`      | Qué bloques se vuelven a poner, como se indica abajo                                                                                                      |
+
+| Valor               | Qué hace                                                                                                                                             |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | Los cofres se dejan como están                                                                                                                       |
+| `loot: "emptied"`   | Solo se rellena un cofre que no tenga nada dentro; uno que aún tenga objetos los conserva                                                            |
+| `loot: "all"`       | Se vacía y se vuelve a rellenar cada cofre                                                                                                           |
+| `rebuild: "none"`   | No se vuelve a poner ningún bloque                                                                                                                   |
+| `rebuild: "broken"` | Un bloque de la plantilla solo se vuelve a poner donde ahora hay aire o algo reemplazable, para que se conserven las construcciones de los jugadores |
+| `rebuild: "full"`   | Cada bloque de la plantilla se vuelve a colocar, sobre lo que haya allí                                                                              |
+
+Solo se rellenan los cofres que tenían una tabla de botín cuando se construyó la estructura. Un reinicio espera hasta que estén cargados todos los chunks que cubre la estructura, y nunca carga ni genera ninguno; una estructura en terreno sin cargar se reinicia cuando un jugador vuelve a acercarse a ella. Las estructuras construidas antes de que el pack añadiera `respawn` no se registran. Todo se ejecuta en el servidor, así que los jugadores no necesitan tener nada instalado.
 
 ## Parcelas de aldea
 
@@ -8233,6 +8279,7 @@ Una `template` cuyo `structure` nombra uno de tus [mapas de estructuras](#mapas-
 | `structure`      | template  | `namespace:name` | ninguno     | La plantilla que se coloca, o uno de tus mapas de estructuras, que entonces fija el tamaño de la parcela                                                            |
 | `integrity`      | template  | 1 a 100          | `100`       | Porcentaje de los bloques de la plantilla que aparecen                                                                                                              |
 | `lootTable`      | template  | `namespace:path` | ninguno     | La tabla de botín con la que se rellena cada cofre de la plantilla colocada la primera vez que se abre. Una parcela que nombra un mapa de estructuras queda intacta |
+| `respawn`        | template  | objeto           | ninguno     | Devuelve la parcela cuando los jugadores la han despejado. [Estructuras que reaparecen](#estructuras-que-reaparecen)                                                |
 | `villagers`      | todas     | entero           | `0`         | Cuántas personas genera la parcela                                                                                                                                  |
 | `villagerEntity` | todas     | `namespace:name` | un aldeano  | Quién vive allí, por ejemplo una variante de entidad propia                                                                                                         |
 | `villagerX`      | todas     | entero           | `1`         | Dónde aparecen, a lo ancho de la parcela                                                                                                                            |
