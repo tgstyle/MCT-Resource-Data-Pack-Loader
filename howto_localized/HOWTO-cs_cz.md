@@ -108,6 +108,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Tvary](#tvary)
 - [Rozptyly](#rozptyly)
 - [Mapy struktur](#mapy-struktur)
+- [Obnova struktur](#obnova-struktur)
 - [Pozemky vesnic](#pozemky-vesnic)
 - [Mapy rozložení měst](#mapy-rozložení-měst)
 - [Souvislé město](#souvislé-město)
@@ -6724,6 +6725,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 | `structures`        | seznam                                | žádný                                                                              | Struktura umístěná jednou na buňku oblasti, v srdci buňky, přichycená k podlaze jeskyně, tak jako hra dává jeskynnímu biomu jeho orientační bod. Položky jsou šablony `namespace:name`, nebo `{ "structure": "...", "weight": 3 }` pro volbu mezi několika                                                                                                                            |
 | `structureChance`   | 0.0 až 1.0                            | `1.0`                                                                              | Šance, že každá buňka oblasti svou strukturu skutečně dostane                                                                                                                                                                                                                                                                                                                         |
 | `structureLoot`     | `namespace:path`                      | žádný                                                                              | Tabulka kořisti, ze které se každá truhla uvnitř umístěné struktury naplní při prvním otevření                                                                                                                                                                                                                                                                                        |
+| `respawn`           | objekt                                | žádný                                                                              | Vrátí postavenou strukturu zpět poté, co ji hráči vyčistí. [Obnova struktur](#obnova-struktur)                                                                                                                                                                                                                                                                                        |
 | `biome`             | název biomu                           | žádný                                                                              | Biom, který oblast hlásí uvnitř svého objemu, zapsaný jako 3D biom. Dává oblasti vlastní barvy listí, trávy a vody, hudbu a okolní zvuky a umožňuje, aby ho četlo vanilla vážení spawnů. Povrch nad tím zůstává nedotčen, protože se zapisují jen buňky, které oblast zabírá. Pokud chybí, oblast si ponechá biom, který ji obklopuje, a přesto klade své pokryvy, struktury a spawny |
 | `requires`          | seznam id módů nebo namespaců balíčků | žádný                                                                              | Oblast se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                     |
 | `ambientSound`      | název zvuku                           | žádný                                                                              | Zvuk přehrávaný tu a tam hráči stojícímu uvnitř oblasti, tak jako herní biomy přidávají vlastní jeskynní zvuky. Server ho posílá jen tomuto hráči                                                                                                                                                                                                                                     |
@@ -7136,6 +7138,7 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `structure`        | imprint, tree | `namespace:name`                          | žádný     | Šablona k umístění                                                                                                                                                                                                                                                |
 | `integrity`        | imprint, tree | 1 až 100                                  | `100`     | Procento bloků šablony, které se skutečně objeví                                                                                                                                                                                                                  |
 | `lootTable`        | imprint, tree | `namespace:path`                          | žádný     | Tabulka kořisti, z níž se naplní každá truhla v umístěné šabloně při prvním otevření, i každý jiný kontejner, který ji přijímá, mimo jiné shulkerová bedna nebo bedna z módu. Pokrývá `structure` i každou položku `structures`; každá truhla losuje vlastní seed |
+| `respawn`          | imprint       | objekt                                    | žádný     | Vrátí postavenou šablonu zpět poté, co ji hráči vyčistí. [Obnova struktur](#obnova-struktur)                                                                                                                                                                      |
 | `structures`       | imprint, tree | seznam                                    | žádný     | Několik šablon k výběru, pokaždé se umístí jedna. Každá položka je `{ "structure": "namespace:name", "weight": 3 }`, nebo holé jméno pro stejné šance. Přepisuje `structure`                                                                                      |
 | `turns`            | imprint, tree | seznam                                    | libovolný | Jakým směrem smí být umístěna: `none`, `quarter`, `half`, `threequarter`. Položky mohou nést `weight`. Když chybí, všechny čtyři jsou stejně pravděpodobné                                                                                                        |
 | `turns[].turn`     | imprint, tree | `none`, `quarter`, `half`, `threequarter` | žádný     | Otočení, které pojmenovává objektová položka `turns`, jako v `{ "turn": "half", "weight": 2 }`                                                                                                                                                                    |
@@ -7370,6 +7373,7 @@ Mapa se také může zanořit pod terén a doplnit spawnery a bedny, které jej�
 | `depth`      | číslo, nebo dvě čísla | žádný   | Zanoří budovu pod terén: podlaha vrstvy země leží o tolik bloků pod vzorkovaným povrchem, místo aby ležela na něm. Dvě čísla jsou nejmenší a největší hodnota a každá kopie si ze seedu světa vylosuje svou vlastní. Platí pro kopie, které mapa rozmisťuje nebo připíná pomocí `at`; mapa, kterou umisťuje vesnice nebo město, má vrstvu `ground` stále na povrchu |
 | `spawners`   | seznam id entit       | žádný   | Moba pro každý spawner v šablonách mapy, který byl uložen bez moba nebo jen s prasetem. Položka může nést váhu, například `id=2`; spawner uložený s jiným mobem než prase si ho ponechá. Id, které nic neregistruje (varianta entity z balíčku při zapnutém `vanillaClients`), se z losování vynechá                                                                |
 | `loot`       | id tabulky kořisti    | žádný   | Tabulka kořisti pro každou bednu i bednu s pastí v šablonách mapy, která byla uložena bez tabulky kořisti a bez předmětů; bedna uložená s jedním z nich si ho ponechá                                                                                                                                                                                               |
+| `respawn`    | objekt                | žádný   | Vrátí stavbu zpět poté, co ji hráči vyčistí. [Obnova struktur](#obnova-struktur)                                                                                                                                                                                                                                                                                    |
 | `dimensions` | seznam id dimenzí     | všechny | Kde smí mapa stavět, včetně vlastních dimenzí balíčku                                                                                                                                                                                                                                                                                                               |
 | `layers`     | seznam                | žádný   | Vrstvy odspodu nahoru, každá se `palette` a `map`                                                                                                                                                                                                                                                                                                                   |
 
@@ -7384,6 +7388,48 @@ Paleta pojmenovává šablony registrovým klíčem ze složky `<namespace>/stru
 Každá kopie losuje jedno ze čtyř natočení ze seedu světa a celá budova se otočí společně, včetně šablon, takže zdi, které se setkávají přes buňky, se stále setkávají; mapa se otáčí, ale nikdy nezrcadlí. Zemní vrstva leží podlahou na vzorkovaném povrchu terénu pod středem budovy a celá mapa sdílí tuto jedinou výšku. Rozptýlená mapa je pro hru samostatná struktura, umístěná přes sadu struktur, která se pro tebe napíše, takže každý chunk postaví jen svůj řez mřížky a budova přes mnoho chunků vznikne bez kaskádového generování, v jakémkoli pořadí se chunky načtou. [Pozemek vesnice](#pozemky-vesnic) typu `template` může také pojmenovat mapu jako svou `structure`, čímž se složená stavba stane městskou budovou.
 
 Mapa se zařezává do terénu: každý blok, který šablona obsahuje, včetně vzduchu, nahradí to, co tam bylo, zatímco prázdná buňka nebo prostor kolem menší šablony zůstane plný, takže každé místnosti dejte vzduch přímo v šabloně a šachtě buňky až k povrchu.
+
+## Obnova struktur
+
+*generování světa*
+
+Struktura se může vrátit poté, co ji hráči vyčistí: její truhly se doplní, spawnery se vrátí do původního stavu, mobové se vrátí a rozbořené zdi lze obnovit. Přidej objekt `respawn` do mapy struktur, oblasti jeskyní, pozemku vesnice nebo do `shape` položky generování světa typu `imprint`.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Nastavení        | Typ        | Výchozí   | Co dělá                                                                                                                        |
+| ---------------- | ---------- | --------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `after`          | číslo      | žádný     | Sekundy od jednoho resetu k dalšímu, počítané od chvíle, kdy byla struktura postavena. Nejméně `10`; `0` vypne obnovu. Povinné |
+| `playerDistance` | číslo      | `64`      | Reset neproběhne, dokud je hráč do tohoto počtu bloků od struktury, nejvýše `256`; zkusí to znovu o 15 sekund později          |
+| `loot`           | text       | `emptied` | Které truhly se doplní z tabulky kořisti, se kterou byly postaveny, jak je uvedeno níže                                        |
+| `spawners`       | true/false | `true`    | Vrátí každý spawner do stavu, v jakém byl postaven, včetně moba a časování                                                     |
+| `mobs`           | true/false | `true`    | Vrátí moby, které šablona obsahuje. Jen pro imprinty a oblasti jeskyní                                                         |
+| `mobCap`         | číslo      | `0`       | Nejvíce druhů mobů ze šablony, které jsou po resetu živé ve struktuře, nejvýše `64`. `0` je tolik, kolik šablona obsahuje      |
+| `rebuild`        | text       | `none`    | Které bloky se vrátí, jak je uvedeno níže                                                                                      |
+
+| Hodnota             | Co dělá                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | Truhly zůstanou netknuté                                                                                   |
+| `loot: "emptied"`   | Doplní se jen prázdná truhla; truhla, v níž ještě něco je, si to ponechá                                   |
+| `loot: "all"`       | Každá truhla se vyprázdní a doplní                                                                         |
+| `rebuild: "none"`   | Žádné bloky se nevrátí                                                                                     |
+| `rebuild: "broken"` | Blok šablony se vrátí jen tam, kde je teď vzduch nebo něco, co lze nahradit, takže hráčské stavby zůstanou |
+| `rebuild: "full"`   | Každý blok šablony se položí znovu, přes cokoli, co tam stojí                                              |
+
+Doplní se jen truhly, které měly tabulku kořisti, když byla struktura postavena. Reset počká, dokud nejsou načteny všechny chunky, které struktura zabírá, a nikdy žádný nenačte ani negeneruje; struktura v nenačtené oblasti se resetuje, až ji hráč znovu přivede. Struktury postavené dříve, než balíček přidal `respawn`, se nesledují. Vše běží na serveru, takže hráči nic instalovat nemusí.
 
 ## Pozemky vesnic
 
@@ -7508,6 +7554,7 @@ Pozemek `template`, jehož `structure` pojmenovává jednu z tvých [map struktu
 | `structure`      | template  | `namespace:name` | žádný    | Šablona, která se umístí, nebo jedna z tvých map struktur, která pak určí velikost pozemku                                                          |
 | `integrity`      | template  | 1 až 100         | `100`    | Procento bloků šablony, které se objeví                                                                                                             |
 | `lootTable`      | template  | `namespace:path` | žádná    | Tabulka kořisti, z níž se naplní každá truhla uvnitř umístěné šablony při prvním otevření. Pozemek, který pojmenovává mapu struktur, se nechává být |
+| `respawn`        | template  | objekt           | žádný    | Vrátí pozemek zpět poté, co jej hráči vyčistí. [Obnova struktur](#obnova-struktur)                                                                  |
 | `villagers`      | všechny   | celé číslo       | `0`      | Kolik lidí pozemek spawnuje                                                                                                                         |
 | `villagerEntity` | všechny   | `namespace:name` | vesničan | Kdo tam bydlí, například tvoje vlastní varianta entity                                                                                              |
 | `villagerX`      | všechny   | celé číslo       | `1`      | Kde se objeví, napříč pozemkem                                                                                                                      |

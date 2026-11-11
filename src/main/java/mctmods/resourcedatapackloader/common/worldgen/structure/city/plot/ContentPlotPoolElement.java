@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.city.plot;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.villages.VillageDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCity;
@@ -27,6 +29,7 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.JigsawBlock;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -84,6 +87,7 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
                 StructureLoot.stock(entity, table, level.getSeed() ^ spot.asLong());
             }
         }
+        RespawnRecorder.record(level.getLevel(), def.respawn(), new RespawnInstance(RespawnInstance.PLOT, plot, template.left().orElseThrow().toString(), offset, rotation, Mirror.NONE, def.integrity(), level.getSeed(), held), box, level);
         ContentCity.residents(level, def, box, index -> offset.offset(StructureTemplate.calculateRelativePosition(settings, new BlockPos(def.villagerX() + index, def.villagerY(), def.villagerZ()))));
         ContentPlotSign.stand(level, def, box, offset, settings);
         return true;

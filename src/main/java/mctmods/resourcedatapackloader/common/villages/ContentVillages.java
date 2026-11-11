@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMa
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserRespawn;
 import mctmods.resourcedatapackloader.common.util.worldgen.WeightedPicks;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityGround;
 import mctmods.resourcedatapackloader.common.worldgen.structure.city.plot.ContentPlotPoolElement;
@@ -104,7 +105,7 @@ public final class ContentVillages {
             Vec3i size = house.getValue().size();
             TURNS.put(house.getKey(), house.getValue().turn());
             VANILLA.put(house.getKey(), new VillageDef(house.getKey(), VillageDef.TEMPLATE, 3, 1, 4, Math.max(3, size.getX()), Math.max(1, size.getY()), Math.max(3, size.getZ()), 2,
-                    List.of(), "minecraft:oak_log", "minecraft:farmland", true, 2, house.getKey().toString(), "minecraft:dirt", ShapeDef.FULL_INTEGRITY, "", 0, "", 1, 1, 1, List.of(), "", 1, 1, 1));
+                    List.of(), "minecraft:oak_log", "minecraft:farmland", true, 2, house.getKey().toString(), "minecraft:dirt", ShapeDef.FULL_INTEGRITY, "", 0, "", 1, 1, 1, List.of(), "", 1, 1, 1, null));
         }
     }
 
@@ -131,7 +132,7 @@ public final class ContentVillages {
     private static VillageDef sized(VillageDef def, int width, int height, int depth) {
         if (width == def.width() && height == def.height() && depth == def.depth()) { return def; }
         return new VillageDef(def.key(), def.type(), def.weight(), def.leastCount(), def.mostCount(), width, height, depth, def.apron(), def.crops(), def.edge(), def.soil(), def.water(), def.rowWidth(),
-                def.structure(), def.ground(), def.integrity(), def.lootTable(), def.villagers(), def.villagerEntity(), def.villagerX(), def.villagerY(), def.villagerZ(), def.requires(), def.orderSign(), def.orderX(), def.orderY(), def.orderZ());
+                def.structure(), def.ground(), def.integrity(), def.lootTable(), def.villagers(), def.villagerEntity(), def.villagerX(), def.villagerY(), def.villagerZ(), def.requires(), def.orderSign(), def.orderX(), def.orderY(), def.orderZ(), def.respawn());
     }
 
     @Nullable public static VillageDef byKey(String named) {
@@ -263,6 +264,7 @@ public final class ContentVillages {
                 orderSign,
                 Json.getInt(json, "orderX", 1),
                 Json.getInt(json, "orderY", 1),
-                Json.getInt(json, "orderZ", 1)), null);
+                Json.getInt(json, "orderZ", 1),
+                ContentParserRespawn.parse(key, json)), null);
     }
 }

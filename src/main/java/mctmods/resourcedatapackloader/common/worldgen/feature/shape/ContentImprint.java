@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.locate.ContentLocate;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.util.loot.StructureLoot;
 import mctmods.resourcedatapackloader.common.worldgen.feature.IContentShape;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
@@ -128,7 +130,7 @@ public final class ContentImprint implements IContentShape {
         ChunkPos home = new ChunkPos(SectionPos.blockToSectionCoord(at[0]), SectionPos.blockToSectionCoord(at[1]));
         boolean split = beyond(cornerX, cornerZ, home) || beyond(cornerX + span.getX() - 1, cornerZ + span.getZ() - 1, home);
         BoundingBox box = loaded.getBoundingBox(new StructurePlaceSettings().setRotation(rotation).setMirror(mirror), fitted);
-        return new Pin(loaded, rotation, mirror, cornerX, cornerZ, span, fitted, home, split, box);
+        return new Pin(loaded, rotation, mirror, cornerX, cornerZ, span, fitted, home, split, box, seat.name());
     }
 
     public boolean placePinned(ContentPlacer placer, ChunkPos center, BlockPos origin) {
@@ -153,8 +155,15 @@ public final class ContentImprint implements IContentShape {
             if (!pin.loaded().placeInWorld(level, fitted, fitted, settings, random, Block.UPDATE_CLIENTS)) { return false; }
             stock(placer, random, pin.cornerX(), origin.getY(), pin.cornerZ(), pin.span());
         }
+        if (shape.respawn() != null) { recordPinned(level, pin, center, fitted); }
         if (!shape.locateAs().isEmpty() && center.equals(pin.home())) { ContentLocate.record(level.getLevel(), shape.locateAs(), fitted); }
         return true;
+    }
+
+    private void recordPinned(WorldGenLevel level, Pin pin, ChunkPos center, BlockPos fitted) {
+        BoundingBox area = pin.loaded().getBoundingBox(new StructurePlaceSettings().setRotation(pin.rotation()).setMirror(pin.mirror()), fitted);
+        BoundingBox window = pin.split() ? new BoundingBox(Math.max(area.minX(), center.getMinBlockX()), area.minY(), Math.max(area.minZ(), center.getMinBlockZ()), Math.min(area.maxX(), center.getMaxBlockX()), area.maxY(), Math.min(area.maxZ(), center.getMaxBlockZ())) : area;
+        RespawnRecorder.record(level.getLevel(), shape.respawn(), new RespawnInstance(RespawnInstance.IMPRINT, key.toString(), pin.name().toString(), fitted, pin.rotation(), pin.mirror(), shape.integrity(), fitted.asLong(), area), window, level);
     }
 
     private static boolean beyond(int x, int z, ChunkPos home) { return Math.abs(SectionPos.blockToSectionCoord(x) - home.x) > 1 || Math.abs(SectionPos.blockToSectionCoord(z) - home.z) > 1; }
@@ -166,15 +175,21 @@ public final class ContentImprint implements IContentShape {
         StructureTemplate loaded = seat.loaded();
         Rotation rotation = seat.rotation();
         Mirror mirror = seat.mirror();
-        StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setMirror(mirror).setRandom(random);
+        long seed = shape.respawn() == null ? 0L : random.nextLong();
+        RandomSource placing = shape.respawn() == null ? random : RandomSource.create(seed);
+        StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setMirror(mirror).setRandom(placing);
         process(settings, placer);
         Vec3i span = seat.span();
         int cornerX = seat.cornerX();
         int cornerZ = seat.cornerZ();
         if (blocked(placer, cornerX, cornerZ, span) || placer.keepsAny(cornerX, cornerZ, cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
         BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, origin.getY(), cornerZ), mirror, rotation);
-        if (!loaded.placeInWorld(level, fitted, fitted, settings, random, Block.UPDATE_CLIENTS)) { return false; }
+        if (!loaded.placeInWorld(level, fitted, fitted, settings, placing, Block.UPDATE_CLIENTS)) { return false; }
         stock(placer, random, cornerX, origin.getY(), cornerZ, span);
+        if (shape.respawn() != null) {
+            BoundingBox area = new BoundingBox(cornerX, origin.getY(), cornerZ, cornerX + span.getX() - 1, origin.getY() + span.getY() - 1, cornerZ + span.getZ() - 1);
+            RespawnRecorder.record(level.getLevel(), shape.respawn(), new RespawnInstance(RespawnInstance.IMPRINT, key.toString(), seat.name().toString(), fitted, rotation, mirror, shape.integrity(), seed, area), area, level);
+        }
         if (!shape.locateAs().isEmpty()) { ContentLocate.record(level.getLevel(), shape.locateAs(), fitted); }
         return true;
     }
@@ -185,20 +200,21 @@ public final class ContentImprint implements IContentShape {
     }
 
     @Nullable private Seat seat(WorldGenLevel level, RandomSource random, int originX, int originZ, boolean report) {
-        StructureTemplate loaded = load(level, random, report);
-        if (loaded == null) { return null; }
+        Loaded found = load(level, random, report);
+        if (found == null) { return null; }
+        StructureTemplate loaded = found.template();
         Rotation rotation = turn(random);
         Mirror mirror = mirror(random);
         Vec3i span = loaded.getSize(rotation);
-        return new Seat(loaded, rotation, mirror, span, within(originX, span.getX()), within(originZ, span.getZ()));
+        return new Seat(loaded, found.name(), rotation, mirror, span, within(originX, span.getX()), within(originZ, span.getZ()));
     }
 
-    @Nullable private StructureTemplate load(WorldGenLevel level, RandomSource random, boolean report) {
+    @Nullable private Loaded load(WorldGenLevel level, RandomSource random, boolean report) {
         String named = shape.structures().isEmpty() ? shape.structure() : PickDef.pick(shape.structures(), random);
         ResourceLocation template = named == null || named.isEmpty() ? null : ResourceLocation.tryParse(named);
         if (template == null) { return null; }
         Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
-        if (held.isPresent()) { return held.get(); }
+        if (held.isPresent()) { return new Loaded(template, held.get()); }
         if (report) { ContentLog.LOGGER.error("Worldgen {} places structure '{}', which could not be loaded, so nothing generates", key, named); }
         return null;
     }
@@ -263,9 +279,11 @@ public final class ContentImprint implements IContentShape {
 
     private record Held(ResourceLocation template, BlockState state) {}
 
-    private record Seat(StructureTemplate loaded, Rotation rotation, Mirror mirror, Vec3i span, int cornerX, int cornerZ) {}
+    private record Loaded(ResourceLocation name, StructureTemplate template) {}
 
-    public record Pin(StructureTemplate loaded, Rotation rotation, Mirror mirror, int cornerX, int cornerZ, Vec3i span, BlockPos fitted, ChunkPos home, boolean split, BoundingBox box) {
+    private record Seat(StructureTemplate loaded, ResourceLocation name, Rotation rotation, Mirror mirror, Vec3i span, int cornerX, int cornerZ) {}
+
+    public record Pin(StructureTemplate loaded, Rotation rotation, Mirror mirror, int cornerX, int cornerZ, Vec3i span, BlockPos fitted, ChunkPos home, boolean split, BoundingBox box, ResourceLocation name) {
         public boolean covers(ChunkPos chunk) { return box.intersects(chunk.getMinBlockX(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), chunk.getMaxBlockZ()); }
     }
 }

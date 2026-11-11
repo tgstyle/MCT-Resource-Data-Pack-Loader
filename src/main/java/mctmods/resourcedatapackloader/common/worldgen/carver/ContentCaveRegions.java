@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.WorldgenFiles;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentBiomeParser;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserRespawn;
 import mctmods.resourcedatapackloader.common.util.dimension.DimensionValues;
 import mctmods.resourcedatapackloader.common.util.worldgen.WorldgenJson;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentCover;
@@ -450,7 +451,8 @@ public final class ContentCaveRegions {
                 Json.getString(json, "structureLoot", "").trim(), json.has("biome") ? biome(key, Json.getString(json, "biome", "")) : null, Json.strings(json, "requires"),
                 Json.getString(json, "ambientSound", "").trim(), Mth.clamp(Json.getFloat(json, "soundChance", 0.0111F), 0.0F, 1.0F),
                 Json.getString(json, "particle", "").trim(), Mth.clamp(Json.getFloat(json, "particleChance", 0.00625F), 0.0F, 1.0F),
-                json.has("waterLevel") ? Json.getInt(json, "waterLevel") : CaveRegionDef.NO_WATER, SkyStoneDef.read(json, key));
+                json.has("waterLevel") ? Json.getInt(json, "waterLevel") : CaveRegionDef.NO_WATER, SkyStoneDef.read(json, key),
+                ContentParserRespawn.parse(key, json));
     }
 
     @Nullable private static ResourceLocation biome(ResourceLocation key, String written) {

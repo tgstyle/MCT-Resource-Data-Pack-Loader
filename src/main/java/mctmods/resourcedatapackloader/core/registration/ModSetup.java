@@ -103,6 +103,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
@@ -232,6 +233,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentScoring::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onPlayerDeath);
         OwnershipEvents.register();
+        RespawnEvents.register();
         NeoForge.EVENT_BUS.addListener(ModSetup::onServerStarting);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onRespawn);
         NeoForge.EVENT_BUS.addListener(ContentScoring::onBack);

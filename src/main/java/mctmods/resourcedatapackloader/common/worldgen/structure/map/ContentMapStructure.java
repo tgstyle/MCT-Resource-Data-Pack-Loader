@@ -1,8 +1,6 @@
 package mctmods.resourcedatapackloader.common.worldgen.structure.map;
 
-import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.StructureMapDef;
-import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.math.Hashes;
@@ -14,15 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 public final class ContentMapStructure extends Structure {
     public static final MapCodec<ContentMapStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(settingsCodec(instance),
@@ -44,7 +40,7 @@ public final class ContentMapStructure extends Structure {
         if (spots.isEmpty()) { return Optional.empty(); }
         BlockPos origin = new BlockPos(windowX, context.chunkGenerator().getSeaLevel(), windowZ);
         return Optional.of(new GenerationStub(origin, builder -> {
-            for (Spot spot : spots) { pieces(context, def, spot, windowX, windowZ, true, builder); }
+            for (Spot spot : spots) { pieces(context, def, null, spot, windowX, windowZ, true, builder); }
         }));
     }
 
@@ -82,60 +78,14 @@ public final class ContentMapStructure extends Structure {
         return new Spot(seed, originX, originZ, turn, Math.max(def.baseY(anchor, seed), context.heightAccessor().getMinBuildHeight() + 1));
     }
 
-    public static void lay(GenerationContext context, StructureMapDef def, long seed, Rotation turn, int x, int z, int base, StructurePiecesBuilder builder) { pieces(context, def, new Spot(seed, x, z, turn, base), x, z, false, builder); }
+    public static void lay(GenerationContext context, StructureMapDef def, @Nullable String village, long seed, Rotation turn, int x, int z, int base, StructurePiecesBuilder builder) { pieces(context, def, village, new Spot(seed, x, z, turn, base), x, z, false, builder); }
 
-    private static void pieces(GenerationContext context, StructureMapDef def, Spot spot, int windowX, int windowZ, boolean windowed, StructurePiecesBuilder builder) {
+    private static void pieces(GenerationContext context, StructureMapDef def, @Nullable String village, Spot spot, int windowX, int windowZ, boolean windowed, StructurePiecesBuilder builder) {
         int window = StructureMapDef.window();
-        int wide = def.cellsWide() * def.cell();
-        int deep = def.cellsDeep() * def.cell();
-        int placed = 0;
-        for (int layer = 0; layer < def.layers().size(); layer++) {
-            StructureMapDef.Layer held = def.layers().get(layer);
-            int layerY = spot.base() + layer * def.cell();
-            for (int row = 0; row < held.rows().size(); row++) {
-                String cells = held.rows().get(row);
-                for (int column = 0; column < cells.length(); column++) {
-                    char mark = cells.charAt(column);
-                    if (mark == '.') { continue; }
-                    int flatX = column * def.cell();
-                    int flatZ = row * def.cell();
-                    int cellX;
-                    int cellZ;
-                    if (spot.turn() == Rotation.NONE) {
-                        cellX = flatX;
-                        cellZ = flatZ;
-                    }
-                    else if (spot.turn() == Rotation.CLOCKWISE_90) {
-                        cellX = deep - def.cell() - flatZ;
-                        cellZ = flatX;
-                    }
-                    else if (spot.turn() == Rotation.CLOCKWISE_180) {
-                        cellX = wide - def.cell() - flatX;
-                        cellZ = deep - def.cell() - flatZ;
-                    }
-                    else {
-                        cellX = flatZ;
-                        cellZ = wide - def.cell() - flatX;
-                    }
-                    int cornerX = spot.x() + cellX;
-                    int cornerZ = spot.z() + cellZ;
-                    if (windowed && (cornerX < windowX || cornerX >= windowX + window || cornerZ < windowZ || cornerZ >= windowZ + window)) { continue; }
-                    long cellSeed = Hashes.mix(spot.seed(), column, layer, row);
-                    String named = PickDef.pick(held.palette().get(mark), RandomSource.create(cellSeed));
-                    ResourceLocation template = named == null ? null : ResourceLocation.tryParse(named);
-                    if (template == null) { continue; }
-                    Optional<StructureTemplate> piece = context.structureTemplateManager().get(template);
-                    if (piece.isEmpty()) {
-                        ContentStructureMaps.missing(def, named);
-                        continue;
-                    }
-                    Vec3i span = piece.get().getSize(spot.turn());
-                    if (Math.max(span.getX(), span.getZ()) > StructureMapDef.CELL_MOST) { ContentStructureMaps.oversize(def, named, Math.max(span.getX(), span.getZ())); }
-                    builder.addPiece(new ContentMapPiece(context.structureTemplateManager(), template, spot.turn(), new BlockPos(cornerX + ContentImprint.backX(spot.turn(), span), layerY, cornerZ + ContentImprint.backZ(spot.turn(), span)), def.key(), cellSeed));
-                    placed++;
-                }
-            }
-        }
+        ContentMapSite site = ContentMapSite.of(def, village, spot.seed(), spot.turn(), spot.x(), spot.base(), spot.z());
+        ContentMapCells.Reach reach = (cornerX, cornerZ) -> !windowed || cornerX >= windowX && cornerX < windowX + window && cornerZ >= windowZ && cornerZ < windowZ + window;
+        int placed = ContentMapCells.each(def, context.structureTemplateManager(), spot.seed(), spot.turn(), spot.x(), spot.base(), spot.z(), reach,
+                cell -> builder.addPiece(new ContentMapPiece(context.structureTemplateManager(), cell.name(), spot.turn(), cell.at(), def.key(), cell.seed(), site)));
         if (placed > 0 && spot.x() >= windowX && spot.x() < windowX + window && spot.z() >= windowZ && spot.z() < windowZ + window) {
             int floor = spot.base() + def.ground() * def.cell();
             ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key(), spot.x(), floor, spot.z(), spot.turn(), floor);

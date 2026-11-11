@@ -81,7 +81,7 @@ public final class ContentCityStructureSeat {
         StructureMapDef map = template == null ? null : ContentStructureMaps.def(template);
         if (map != null) {
             StructurePiecesBuilder cells = new StructurePiecesBuilder();
-            ContentMapStructure.lay(context, map, Hashes.mix(context.seed(), placed.fromX(), 2, placed.fromZ()), turn, placed.fromX(), placed.fromZ(), level - map.ground() * map.cell(), cells);
+            ContentMapStructure.lay(context, map, placed.def().key().toString(), Hashes.mix(context.seed(), placed.fromX(), 2, placed.fromZ()), turn, placed.fromX(), placed.fromZ(), level - map.ground() * map.cell(), cells);
             List<StructurePiece> laid = new ArrayList<>(cells.build().pieces());
             sign(placed.def(), map, turn, placed, level, laid);
             return new ContentCityStructure.Seated(laid, footprint, Set.of(), placed, level);

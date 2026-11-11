@@ -108,6 +108,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Leem os mesmos pacotes; os poucos
 - [Formas](#formas)
 - [Dispersões](#dispersões)
 - [Mapas de estruturas](#mapas-de-estruturas)
+- [Estruturas que reaparecem](#estruturas-que-reaparecem)
 - [Parcelas de aldeias](#parcelas-de-aldeias)
 - [Mapas de disposição de cidades](#mapas-de-disposição-de-cidades)
 - [Cidade contínua](#cidade-contínua)
@@ -6722,6 +6723,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 | `structures`        | lista                                         | nenhum                                                                                             | Uma estrutura colocada uma vez por célula de região, no coração da célula, ajustada a um chão de caverna, como o jogo dá a um bioma de caverna o seu marco. As entradas são modelos `namespace:name`, ou `{ "structure": "...", "weight": 3 }` para escolher entre vários                                                                                                                                      |
 | `structureChance`   | 0.0 a 1.0                                     | `1.0`                                                                                              | A probabilidade de cada célula da região receber realmente a sua estrutura                                                                                                                                                                                                                                                                                                                                     |
 | `structureLoot`     | `namespace:path`                              | nenhum                                                                                             | A tabela de saque de que se enche cada baú dentro de uma estrutura colocada da primeira vez que é aberto                                                                                                                                                                                                                                                                                                       |
+| `respawn`           | objeto                                        | nenhum                                                                                             | Devolve a estrutura colocada depois de os jogadores a limparem. [Estruturas que reaparecem](#estruturas-que-reaparecem)                                                                                                                                                                                                                                                                                        |
 | `biome`             | nome de bioma                                 | nenhum                                                                                             | O bioma que a região comunica dentro do seu volume, escrito como bioma 3D. Dá à região as suas próprias cores de folhagem, relva e água, música e sons ambiente, e deixa a ponderação de spawn vanilla lê-lo. A superfície acima fica intacta, já que só são escritas as células que a região ocupa. Se omitido, a região mantém o bioma que a rodeia e continua a pôr as suas coberturas, estruturas e spawns |
 | `requires`          | lista de ids de mods ou namespaces de pacotes | nenhum                                                                                             | A região é ignorada a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                                                                        |
 | `ambientSound`      | nome de som                                   | nenhum                                                                                             | Um som tocado de vez em quando a um jogador dentro da região, como os biomas do jogo acrescentam os seus sons de caverna. Enviado pelo servidor só a esse jogador                                                                                                                                                                                                                                              |
@@ -7134,6 +7136,7 @@ Uma `tree` sem `log` nem `leaves` não gera nada, e di-lo no registo. Indicar um
 | `structure`        | imprint, tree | `namespace:name`                          | nenhum       | O modelo a colocar                                                                                                                                                                                                                                                                                    |
 | `integrity`        | imprint, tree | 1 a 100                                   | `100`        | Percentagem dos blocos do modelo que realmente aparecem                                                                                                                                                                                                                                               |
 | `lootTable`        | imprint, tree | `namespace:path`                          | nenhum       | A tabela de saque de que se enche todo o baú dentro do modelo colocado, da primeira vez que é aberto, e qualquer outro contentor que aceite uma, incluindo uma caixa de shulker ou o cofre de um mod. Abrange `structure` e todas as entradas de `structures`; cada baú sorteia a sua própria semente |
+| `respawn`          | imprint       | objeto                                    | nenhum       | Devolve o modelo colocado depois de os jogadores o limparem. [Estruturas que reaparecem](#estruturas-que-reaparecem)                                                                                                                                                                                  |
 | `structures`       | imprint, tree | lista                                     | nenhum       | Vários modelos entre os quais escolher, um colocado de cada vez. Cada entrada é `{ "structure": "namespace:name", "weight": 3 }`, ou um nome simples para probabilidades iguais. Substitui `structure`                                                                                                |
 | `turns`            | imprint, tree | lista                                     | qualquer     | Em que sentido pode ser colocado: `none`, `quarter`, `half`, `threequarter`. As entradas podem trazer um `weight`. Omitido, as quatro são igualmente prováveis                                                                                                                                        |
 | `turns[].turn`     | imprint, tree | `none`, `quarter`, `half`, `threequarter` | nenhum       | A rotação que uma entrada de objeto de `turns` indica, como em `{ "turn": "half", "weight": 2 }`                                                                                                                                                                                                      |
@@ -7368,6 +7371,7 @@ Um mapa também pode afundar-se sob o terreno e preencher os spawners e os baús
 | `depth`      | número ou dois números   | nenhum       | Afunda a construção sob o terreno: o piso da camada `ground` fica este número de blocos abaixo da superfície amostrada, em vez de ficar nela. Dois números são um mínimo e um máximo, e cada cópia sorteia o seu a partir da semente do mundo. Aplica-se às cópias que o mapa espalha ou fixa com `at`; um mapa que uma aldeia ou uma cidade coloca continua a assentar a camada `ground` na superfície |
 | `spawners`   | lista de ids de entidade | nenhum       | O mob de cada spawner dos modelos do mapa que foi guardado sem nenhum ou apenas com um porco. Uma entrada pode levar um peso, como `id=2`; um spawner guardado com um mob que não seja um porco mantém-no. Um id que nada regista (a variante de entidade de um pacote enquanto `vanillaClients` está ativado) fica fora do sorteio                                                                     |
 | `loot`       | id de tabela de saque    | nenhum       | A tabela de saque de cada baú e baú armadilhado dos modelos do mapa que foi guardado sem tabela de saque e sem itens; um baú guardado com qualquer um dos dois mantém-no                                                                                                                                                                                                                                |
+| `respawn`    | objeto                   | nenhum       | Devolve a construção depois de os jogadores a limparem. [Estruturas que reaparecem](#estruturas-que-reaparecem)                                                                                                                                                                                                                                                                                         |
 | `dimensions` | lista de ids de dimensão | todas        | Onde o mapa se pode construir, incluindo as dimensões do próprio pacote                                                                                                                                                                                                                                                                                                                                 |
 | `layers`     | lista                    | nenhum       | As camadas, de baixo para cima, cada uma com um `palette` e um `map`                                                                                                                                                                                                                                                                                                                                    |
 
@@ -7382,6 +7386,48 @@ Uma paleta indica modelos pela chave de registo a partir de `<namespace>/structu
 Cada cópia sorteia uma das quatro orientações a partir da semente do mundo e o edifício inteiro roda em conjunto, modelos incluídos, pelo que as paredes que se encontram entre células continuam a encontrar-se; um mapa roda mas nunca é espelhado. A camada do solo assenta na superfície do terreno amostrada sob o meio do edifício, e o mapa inteiro partilha essa altura única. Um mapa espalhado é, para o jogo, uma estrutura por si só, colocada através de um conjunto de estruturas escrito por ti, pelo que cada chunk constrói apenas a sua fatia da grelha e um edifício que abrange muitos chunks surge sem geração em cascata, seja qual for a ordem em que os chunks carregam. Uma [parcela de aldeia](#parcelas-de-aldeias) do tipo `template` também pode indicar um mapa como `structure`, o que faz do conjunto um edifício da cidade.
 
 Um mapa escava o terreno: cada bloco que um modelo contém, ar incluído, substitui o que lá estava, enquanto uma célula vazia ou o espaço em redor de um modelo mais pequeno continua sólido, por isso dê a cada sala o seu ar no modelo e a um poço as suas células até à superfície.
+
+## Estruturas que reaparecem
+
+*gerar o mundo*
+
+Uma estrutura pode voltar depois de os jogadores a limparem: os baús voltam a ser abastecidos, os spawners são repostos, os mobs regressam e as paredes partidas podem ser reconstruídas. Acrescenta um objeto `respawn` a um mapa de estruturas, a uma região de cavernas, a uma parcela de aldeia ou ao `shape` de uma entrada de worldgen `imprint`.
+
+```json
+{
+  "cell": 24,
+  "at": [128, -64],
+  "loot": "minecraft:chests/simple_dungeon",
+  "respawn": { "after": 1200, "playerDistance": 48, "loot": "emptied", "rebuild": "broken" },
+  "layers": [
+    {
+      "palette": { "a": "mypack:crypt" },
+      "map": ["a"]
+    }
+  ]
+}
+```
+
+| Definição        | Tipo     | Predefinição | O que faz                                                                                                                                   |
+| ---------------- | -------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `after`          | número   | nenhum       | Segundos de uma reposição até à seguinte, contados desde que a estrutura foi construída. Mínimo `10`; `0` desliga a reaparição. Obrigatório |
+| `playerDistance` | número   | `64`         | Não há reposição enquanto um jogador estiver a menos destes blocos da estrutura, até `256`; volta a tentar 15 segundos depois               |
+| `loot`           | texto    | `emptied`    | Quais baús voltam a ser abastecidos com a tabela de saque com que foram construídos, como se indica abaixo                                  |
+| `spawners`       | booleano | `true`       | Repõe cada spawner tal como foi construído, com mob e tempos                                                                                |
+| `mobs`           | booleano | `true`       | Repõe os mobs que o modelo contém. Só para imprint e regiões de cavernas                                                                    |
+| `mobCap`         | número   | `0`          | O máximo de tipos de mob do modelo vivos na estrutura depois de uma reposição, até `64`. `0` é tantos quantos o modelo tiver                |
+| `rebuild`        | texto    | `none`       | Quais blocos são repostos, como se indica abaixo                                                                                            |
+
+| Valor               | O que faz                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `loot: "none"`      | Os baús ficam como estão                                                                                                  |
+| `loot: "emptied"`   | Só um baú sem nada dentro volta a ser abastecido; um que ainda tenha itens mantém-nos                                     |
+| `loot: "all"`       | Todos os baús são esvaziados e abastecidos de novo                                                                        |
+| `rebuild: "none"`   | Nenhum bloco é reposto                                                                                                    |
+| `rebuild: "broken"` | Um bloco do modelo só é reposto onde agora há ar ou algo substituível, para que as construções dos jogadores se mantenham |
+| `rebuild: "full"`   | Todos os blocos do modelo são colocados de novo, por cima do que lá estiver                                               |
+
+Só voltam a ser abastecidos os baús que tinham uma tabela de saque quando a estrutura foi construída. Uma reposição espera até que todos os chunks ocupados pela estrutura estejam carregados e nunca carrega nem gera nenhum; uma estrutura em terreno descarregado é reposta quando um jogador voltar a aproximar-se. As estruturas construídas antes de o pacote acrescentar `respawn` não são registadas. Tudo corre no servidor, por isso os jogadores não precisam de ter nada instalado.
 
 ## Parcelas de aldeias
 
@@ -7506,6 +7552,7 @@ Um `template` cujo `structure` nomeia um dos teus [mapas de estruturas](#mapas-d
 | `structure`      | template  | `namespace:name` | nenhum       | O modelo a colocar, ou um dos teus mapas de estruturas, que então define o tamanho do terreno                                                                                       |
 | `integrity`      | template  | 1 a 100          | `100`        | Percentagem dos blocos do modelo que aparecem                                                                                                                                       |
 | `lootTable`      | template  | `namespace:path` | nenhum       | A tabela de saque com que todos os baús dentro do modelo colocado são preenchidos da primeira vez que são abertos. Um terreno que indique um mapa de estruturas é deixado como está |
+| `respawn`        | template  | objeto           | nenhum       | Devolve a parcela depois de os jogadores a limparem. [Estruturas que reaparecem](#estruturas-que-reaparecem)                                                                        |
 | `villagers`      | todos     | número inteiro   | `0`          | Quantas pessoas o terreno faz aparecer                                                                                                                                              |
 | `villagerEntity` | todos     | `namespace:name` | um aldeão    | Quem lá vive, como uma variante de entidade tua                                                                                                                                     |
 | `villagerX`      | todos     | número inteiro   | `1`          | Onde aparecem, ao longo do terreno                                                                                                                                                  |
