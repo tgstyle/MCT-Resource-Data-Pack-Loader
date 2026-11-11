@@ -45,6 +45,7 @@
         "world.level.levelgen.FlatLevelSourceMixin",
         "world.level.chunk.ChunkAccessMixin",
         "world.level.chunk.LevelChunkRemovalMixin",
+        "world.level.chunk.LevelChunkShieldMixin",
         "world.level.levelgen.structure.StructureStartMixin",
         "server.level.WorldGenRegionMixin",
         "world.level.lighting.DataLayerStorageMapMixin",

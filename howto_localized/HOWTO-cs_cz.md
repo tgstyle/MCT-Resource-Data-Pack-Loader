@@ -850,6 +850,8 @@ Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které po
 | `tint`                       | ne                                     | `biome`, `none` nebo hexadecimální barva          | žádný                                                                                            | K zobrazení potřebuje v modelu `tintindex`                                                                                                                                                                                                                                                                                                                                                                      |
 | `plantTypes`                 | ne                                     | seznam [typů rostlin](#seznamy-hodnot)            | žádný                                                                                            | Co se na něm dá sázet                                                                                                                                                                                                                                                                                                                                                                                           |
 | `behavesAs`                  | ne                                     | seznam `till`, `path`, `bush`, `animals`          | žádný                                                                                            | Vanilla chování, která převezme                                                                                                                                                                                                                                                                                                                                                                                 |
+| `blocksSpawns`               | ne                                     | objekt s `radius`, `mobs`, `entities`             | žádný                                                                                            | Přirozený spawn mobů v okruhu `radius` kolem tohoto bloku je zastaven. Viz [Štíty proti spawnu a počasí](#štíty-proti-spawnu-a-počasí)                                                                                                                                                                                                                                                                          |
+| `blocksWeather`              | ne                                     | objekt s `radius`                                 | žádný                                                                                            | Déšť a sníh se zastaví ve sloupcích v okruhu `radius` kolem tohoto bloku. Viz [Štíty proti spawnu a počasí](#štíty-proti-spawnu-a-počasí)                                                                                                                                                                                                                                                                       |
 | `bounds`                     | ne                                     | seznam šesti čísel, 0 až 1                        | celý blok                                                                                        | Kolizní box, jako `[x1, y1, z1, x2, y2, z2]`                                                                                                                                                                                                                                                                                                                                                                    |
 | `requires`                   | ne                                     | seznam id módů nebo namespace balíčků             | žádný                                                                                            | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                                                                                                                                                                                               |
 | `particle`                   | jen pochodeň                           | `none`, `flame`, `colored`                        | `flame`                                                                                          | Částice nad pochodní                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -1816,6 +1818,32 @@ Vanilla kontroluje své vlastní bloky podle identity na tuctu míst, takže blo
 | `path`    | Lopata ho promění v cestičku, nebo v to, co pojmenovává `shovelPathBecomes`                                   |
 | `bush`    | Lze na něj sázet květiny, trávu a sazenice a zůstanou na něm, jako na hlíně. Totéž co `plains` v `plantTypes` |
 | `animals` | Zvířata se na něm spawnují za světla, stejně jako na trávě                                                    |
+
+### Štíty proti spawnu a počasí
+
+Blok může zabránit spawnu mobů kolem sebe, nepustit počasí k zemi kolem sebe, nebo obojí.
+
+```json
+{
+  "blocksSpawns": { "radius": 48, "mobs": "hostile", "entities": ["minecraft:zombie", "minecraft:skeleton"] },
+  "blocksWeather": { "radius": 32 },
+  "variants": { "ward_stone": { "hardness": 2.0 } }
+}
+```
+
+**`blocksSpawns`** zastavuje přirozený spawn v krychli kolem bloku, `radius` bloků do každého směru, včetně nahoru a dolů. Spawnery, spawn egg, příkazy a množení fungují dál. Působí hned po položení bloku a přestane po jeho rozbití.
+
+| Klíč       | Hodnota                      | Výchozí   | Co dělá                                                                                                             |
+| ---------- | ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------- |
+| `radius`   | 1 až 128                     | 32        | Jak daleko blok sahá                                                                                                |
+| `mobs`     | `hostile`, `passive`, `all`  | `hostile` | Které moby se zastaví: nepřátelé, ostatní, nebo oba                                                                 |
+| `entities` | seznam ID entit nebo `#tagy` | žádný     | Zastaví jen tyto, stále v rámci `mobs`. `#tag` zastaví každou entitu v daném tagu. Neznámé ID se zaloguje a vynechá |
+
+**`blocksWeather`** nepustí déšť a sníh na každý sloupec v okruhu `radius` bloků do stran, v libovolné výšce. Nenasněží tam, včetně sezónního sněhu, voda nezamrzá, kotle se nenaplňují a blesk neudeří. Hráči s RDPL tam nevidí padat déšť ani sníh a neslyší déšť. Sníh už ležící na zemi tává. Dimenze s vlastním renderem počasí tam déšť vykreslí dál.
+
+| Klíč     | Hodnota  | Výchozí | Co dělá                      |
+| -------- | -------- | ------- | ---------------------------- |
+| `radius` | 1 až 128 | 32      | Kolik bloků do stran dosáhne |
 
 ## Předměty
 

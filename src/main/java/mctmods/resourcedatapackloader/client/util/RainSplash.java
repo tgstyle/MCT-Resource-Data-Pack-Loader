@@ -56,7 +56,9 @@ public final class RainSplash {
         ParticleOptions splash = particle(rain);
         int count = (int) (PER_BLOCK * diameter * diameter * strength * strength) / (status == ParticleStatus.DECREASED ? 2 : 1);
         for (int drop = 0; drop < count; drop++) {
-            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, at.offset(random.nextInt(diameter) - radius, 0, random.nextInt(diameter) - radius));
+            BlockPos column = at.offset(random.nextInt(diameter) - radius, 0, random.nextInt(diameter) - radius);
+            if (WeatherShield.shut(column.getX(), column.getZ())) { continue; }
+            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, column);
             if (top.getY() <= level.getMinY() || top.getY() > at.getY() + REACH || top.getY() < at.getY() - REACH || precipitation(level, top) != Biome.Precipitation.RAIN) { continue; }
             landed = top.below();
             if (status == ParticleStatus.MINIMAL) { break; }

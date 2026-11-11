@@ -124,7 +124,9 @@ public final class ContentParser {
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json),
                 ContentParserWeights.weight(json, key),
-                ContentParserCrops.tall(json, key, maxAge));
+                ContentParserCrops.tall(json, key, maxAge),
+                ContentParserShields.spawns(json, key),
+                ContentParserShields.weather(json));
     }
 
     private static String renderLayer(Identifier key, JsonObject json) {
