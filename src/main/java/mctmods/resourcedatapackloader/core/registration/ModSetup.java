@@ -17,6 +17,8 @@ import mctmods.resourcedatapackloader.common.blocks.fluid.VanillaFluidRules;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentBoneMealFlowers;
 import mctmods.resourcedatapackloader.common.board.ContentBoards;
 import mctmods.resourcedatapackloader.common.board.ContentDice;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldEvents;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.cards.CardEvents;
 import mctmods.resourcedatapackloader.common.cards.CardRules;
 import mctmods.resourcedatapackloader.common.cards.CardScan;
@@ -300,6 +302,8 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onOpen);
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentDisabledEvents::onChunk);
+        MinecraftForge.EVENT_BUS.addListener(ShieldEvents::onChunkLoad);
+        MinecraftForge.EVENT_BUS.addListener(ShieldEvents::onChunkUnload);
         MinecraftForge.EVENT_BUS.addListener(ContentWeapons::onModifiers);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onAttack);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentWeapons::onHurt);
@@ -548,6 +552,7 @@ public class ModSetup {
             RegistryRemaps.reload();
             event.enqueueWork(() -> {
                 ContentSpawners.apply();
+                ShieldIndexes.resolve();
                 ContentPortals.bind();
                 ContentHardness.setup();
                 ContentAnvils.load();

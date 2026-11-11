@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.world.level;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.IShieldHolder;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentServer;
 import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
@@ -21,14 +23,21 @@ import net.minecraft.world.level.block.entity.TickingBlockEntity;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(Level.class) @Implements(@Interface(iface = LevelAccessor.class, prefix = "level$")) public abstract class LevelMixin {
-    @Inject(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$rainBelowCeiling(BlockPos pos, CallbackInfoReturnable<Boolean> cir) { if (ContentWeather.above((Level) (Object) this, pos.getY())) { cir.setReturnValue(false); } }
+@Mixin(Level.class) @Implements(@Interface(iface = LevelAccessor.class, prefix = "level$")) public abstract class LevelMixin implements IShieldHolder {
+    @Unique private ShieldIndex rdpl$shields;
+
+    @Override public ShieldIndex rdpl$shields() { return rdpl$shields; }
+
+    @Override public void rdpl$setShields(ShieldIndex index) { rdpl$shields = index; }
+
+    @Inject(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$rainBelowCeiling(BlockPos pos, CallbackInfoReturnable<Boolean> cir) { if (ContentWeather.shut((Level) (Object) this, pos)) { cir.setReturnValue(false); } }
 
     @Redirect(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getPrecipitationAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/biome/Biome$Precipitation;")) private Biome.Precipitation rdpl$rainWhereSnowIsOff(Biome biome, BlockPos pos) { return ContentWeather.fallsAs((Level) (Object) this, biome, biome.getPrecipitationAt(pos)); }
 

@@ -38,6 +38,7 @@
         "server.players.PlayerListMixin",
         "world.level.biome.TheEndBiomeSourceMixin",
         "world.level.chunk.ChunkGeneratorMixin",
+        "world.level.chunk.LevelChunkShieldMixin",
         "world.level.levelgen.FlatLevelSourceMixin",
         "world.level.levelgen.SurfaceRulesContextMixin",
         "world.level.levelgen.structure.StructureStartMixin",

@@ -849,6 +849,8 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 | `tint`                       | no                                    | `biome`, `none`, or a hex color                   | none                                                                                                         | Needs a `tintindex` in the model to show                                                                                                                                                                                                                                                                                                                                                                            |
 | `plantTypes`                 | no                                    | list of [plant types](#value-lists)               | none                                                                                                         | What can be planted on it                                                                                                                                                                                                                                                                                                                                                                                           |
 | `behavesAs`                  | no                                    | list of `till`, `path`, `bush`, `animals`         | none                                                                                                         | Vanilla behaviors to take on                                                                                                                                                                                                                                                                                                                                                                                        |
+| `blocksSpawns`               | no                                    | object with `radius`, `mobs`, `entities`          | none                                                                                                         | Natural mob spawns within `radius` of this block are stopped. See [Spawn and weather shields](#spawn-and-weather-shields)                                                                                                                                                                                                                                                                                           |
+| `blocksWeather`              | no                                    | object with `radius`                              | none                                                                                                         | Rain and snow stop in the columns within `radius` of this block. See [Spawn and weather shields](#spawn-and-weather-shields)                                                                                                                                                                                                                                                                                        |
 | `bounds`                     | no                                    | list of six numbers, 0 to 1                       | full block                                                                                                   | The collision box, as `[x1, y1, z1, x2, y2, z2]`                                                                                                                                                                                                                                                                                                                                                                    |
 | `requires`                   | no                                    | list of mod ids or pack namespaces                | none                                                                                                         | The file is skipped unless all are present                                                                                                                                                                                                                                                                                                                                                                          |
 | `particle`                   | torch only                            | `none`, `flame`, `colored`                        | `flame`                                                                                                      | The particle above a torch                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -1818,6 +1820,32 @@ Vanilla checks for its own blocks by identity in a dozen places, so a pack block
 | `path`    | A shovel turns it into a dirt path, or into whatever `shovelPathBecomes` names                                    |
 | `bush`    | Flowers, grass and saplings can be planted on it and stay on it, as on dirt. The same as `plains` in `plantTypes` |
 | `animals` | Animals spawn on it in the light, as they do on grass                                                             |
+
+### Spawn and weather shields
+
+A block can keep mobs from spawning around it, keep the weather off the ground around it, or both.
+
+```json
+{
+  "blocksSpawns": { "radius": 48, "mobs": "hostile", "entities": ["minecraft:zombie", "minecraft:skeleton"] },
+  "blocksWeather": { "radius": 32 },
+  "variants": { "ward_stone": { "hardness": 2.0 } }
+}
+```
+
+**`blocksSpawns`** stops natural spawning in a cube around the block, `radius` blocks out in every direction, up and down included. Spawners, spawn eggs, commands and breeding still work. It works as soon as the block is placed and stops when it is broken.
+
+| Key        | Value                         | Default   | What it does                                                                                                         |
+| ---------- | ----------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `radius`   | 1 to 128                      | 32        | How far the block reaches                                                                                            |
+| `mobs`     | `hostile`, `passive`, `all`   | `hostile` | Which mobs are stopped: monsters, everything else, or both                                                           |
+| `entities` | list of entity ids or `#tags` | none      | Stops only these, still within `mobs`. A `#tag` stops every entity in that tag. An unknown id is logged and left out |
+
+**`blocksWeather`** keeps rain and snow off every column within `radius` blocks across, at any height. No snow settles there, seasonal snow included, water does not freeze, cauldrons do not fill and lightning does not strike. Players with RDPL see no rain or snow falling there, and hear no rain. Snow already on the ground still melts. A dimension with its own weather renderer still draws its rain there.
+
+| Key      | Value    | Default | What it does                      |
+| -------- | -------- | ------- | --------------------------------- |
+| `radius` | 1 to 128 | 32      | How many blocks across it reaches |
 
 ## Items
 
