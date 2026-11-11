@@ -93,9 +93,6 @@ import mctmods.resourcedatapackloader.common.portals.ContentPortalFrames;
 import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.portals.PortalEvents;
 import mctmods.resourcedatapackloader.common.potions.ContentPotions;
-import mctmods.resourcedatapackloader.common.pregen.ContentPregen;
-import mctmods.resourcedatapackloader.common.pregen.ContentPregenDimensions;
-import mctmods.resourcedatapackloader.common.pregen.ContentPregenHold;
 import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
@@ -118,34 +115,12 @@ import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.ContentDisabledEvents;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
-import mctmods.resourcedatapackloader.common.villages.ContentPathIntersects;
-import mctmods.resourcedatapackloader.common.villages.ContentPaths;
-import mctmods.resourcedatapackloader.common.villages.ContentVillages;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
-import mctmods.resourcedatapackloader.common.worldgen.biome.ContentBiomes;
-import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
-import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveAmbience;
-import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
-import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
-import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeTrunk;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentChunkTokens;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPopulateControl;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentReplacements;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentRetrogen;
-import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.ContentCity;
-import mctmods.resourcedatapackloader.common.worldgen.structure.city.layout.CityBorder;
-import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentCityMaps;
-import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCraters;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSkyLand;
-import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
 import mctmods.resourcedatapackloader.core.config.AtomicModConfig;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
@@ -193,12 +168,8 @@ public class ModSetup {
         SpawnLocks.load();
         SpawnSwaps.load();
         ContentWorldTemplates.load();
-        ContentBiomes.load();
-        ContentCaveRegions.load();
-        ContentStructureMaps.load();
-        ContentVillages.load();
-        ContentPathIntersects.load();
-        ContentCityMaps.load();
+        WorldgenSetup.loadDefinitions();
+        StructureSetup.loadMaps();
         ContentDimensions.load();
         ContentGameRules.load();
         ContentGates.load();
@@ -207,7 +178,7 @@ public class ModSetup {
         ContentPortalFrames.load();
         ContentPortals.prepare();
         ContentWorldIntro.load();
-        ContentWorldgen.load();
+        WorldgenSetup.loadGenerators();
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
         MinecraftForge.EVENT_BUS.addListener(ContentFireworks::onUseBlock);
@@ -274,7 +245,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onAttack);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onTouch);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onSquare);
-        MinecraftForge.EVENT_BUS.addListener(ContentPaths::onRightClick);
+        StructureSetup.pathListeners();
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onBreakSpeed);
         MinecraftForge.EVENT_BUS.addListener(ContentAnvils::onAnvil);
         MinecraftForge.EVENT_BUS.addListener(ContentAffixes::onPlayerTick);
@@ -416,21 +387,15 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentThreat::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(ContentThreat::onLogout);
         MinecraftForge.EVENT_BUS.addListener(ContentThreat::onLevelUnload);
-        MinecraftForge.EVENT_BUS.addListener(ContentSeams::onLevelTick);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregenDimensions::onServerStarted);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregen::onServerStopping);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregen::onServerTick);
-        MinecraftForge.EVENT_BUS.addListener(CityBorder::onServerTick);
+        WorldgenSetup.seamListeners();
+        WorldgenSetup.pregenListeners();
+        StructureSetup.cityListeners();
 
-        MinecraftForge.EVENT_BUS.addListener(ContentPregenHold::onLogin);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregenHold::onLogout);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregenDimensions::onDimensionChange);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregenHold::onTravel);
-        MinecraftForge.EVENT_BUS.addListener(ContentPregenHold::onTeleport);
+        WorldgenSetup.pregenHoldListeners();
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
-        MinecraftForge.EVENT_BUS.addListener(ContentWorldgen::onServerStarted);
+        WorldgenSetup.serverListeners();
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onDeathWatch);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onStruck);
@@ -458,24 +423,16 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.addListener(LeafDecayQueue::onTick);
             MinecraftForge.EVENT_BUS.addListener(LeafDecayQueue::onUnload);
         }
-        if (ContentCaveRegions.ambient()) { MinecraftForge.EVENT_BUS.addListener(ContentCaveAmbience::onPlayerTick); }
+        WorldgenSetup.caveAmbience();
         MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPlacementCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentEntities::onPositionCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onDespawnCheck);
-        MinecraftForge.EVENT_BUS.addListener(ContentOreControl::onServerStarted);
-        MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onChunkLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onLevelUnload);
-        MinecraftForge.EVENT_BUS.addListener(ContentRetrogen::onLevelTick);
+        WorldgenSetup.generationListeners();
         MinecraftForge.EVENT_BUS.addGenericListener(LevelChunk.class, ContentChunkTokens::onAttach);
         modBus.addListener(ContentChunkTokens::register);
         OwnershipEvents.register(modBus);
-        MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onCreateSpawn);
-        MinecraftForge.EVENT_BUS.addListener(ContentCaveRegions::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentSkyLand::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentBiomes::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentCraters::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentCaveRegions::onPotentialSpawns);
+        WorldgenSetup.worldListeners();
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentSpawnSwitch::onPotentialSpawns);
         MinecraftForge.EVENT_BUS.addListener(ContentSpawnSwitch::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(ContentGrowSwitch::onCropGrow);
@@ -487,13 +444,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepFinished);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentMobSwitch::onJoin);
-        MinecraftForge.EVENT_BUS.addListener(ContentPopulateControl::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentOreControl::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentGeneratorControl::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onLevelLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onServerStarted);
-        MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onLogin);
-        MinecraftForge.EVENT_BUS.addListener(ContentWorldShape::onRespawn);
+        WorldgenSetup.levelListeners();
         MinecraftForge.EVENT_BUS.addListener(ContentWelcome::onLogin);
         MinecraftForge.EVENT_BUS.addListener(Toasts::onLogin);
         MinecraftForge.EVENT_BUS.addListener(AnvilCosts::onLogin);
@@ -505,7 +456,7 @@ public class ModSetup {
         modBus.addListener(ModSetup::onAddPackFinders);
         BurstParticles.REGISTER.register(modBus);
         LootFunctions.REGISTER.register(modBus);
-        ContentTreeTrunk.REGISTER.register(modBus);
+        WorldgenSetup.registerTrees(modBus);
         BlockDrops.REGISTER.register(modBus);
         ContentLootSwitch.REGISTER.register(modBus);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
@@ -597,7 +548,7 @@ public class ModSetup {
     private static void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); }
 
     private static void beforeServerStart(ServerAboutToStartEvent event) {
-        ContentListBiomes.seed(event.getServer().getWorldData().worldGenOptions().seed());
+        WorldgenSetup.seedBiomes(event);
         Path root = PackManager.get().getRoot();
         if (root == null) { return; }
         PackManager.get().scan(root);
@@ -607,8 +558,8 @@ public class ModSetup {
         OwnershipSettings.reload();
         ClaimSettings.reload();
         ContentWeights.load();
-        ContentReplacements.reload();
-        ContentCityMaps.reload();
+        WorldgenSetup.reloadReplacements();
+        StructureSetup.reloadCityMaps();
         ContentWorldTemplates.load();
         ContentEntityTicks.reload();
         ContentTeams.load();
@@ -622,14 +573,14 @@ public class ModSetup {
         ContentDialogs.load();
         PackOptionsWorld.beforeWorldsLoad(event.getServer());
         ContentPristine.beforeWorldsLoad(event.getServer());
-        ContentCity.begin();
+        StructureSetup.beginCity();
         ContentBlastPlaster.install();
         ContentSpawning.applyCaps();
     }
 
     private static void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
-        CityBorder.forget();
+        StructureSetup.forgetCity();
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
