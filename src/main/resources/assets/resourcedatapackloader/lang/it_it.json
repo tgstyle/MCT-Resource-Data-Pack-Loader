@@ -93,6 +93,7 @@
   "rdpl.tooltip.fertility.water.missing": "Acqua: nessuna entro %s blocchi, crescita x%s",
   "rdpl.tooltip.fertility.water.breaks": "Acqua: nessuna entro %s blocchi, la pianta si spezza",
   "rdpl.tooltip.fertility.water.waived": "Acqua: non necessaria sotto copertura",
+  "rdpl.tooltip.soulbound": "Legato all'anima",
   "rdpl.hearts.gained": "Ti senti più robusto.",
   "rdpl.hearts.lost": "Ti senti più fragile.",
   "rdpl.carry.block": "Stai trasportando %s (accovacciati e fai clic destro per posarlo)",

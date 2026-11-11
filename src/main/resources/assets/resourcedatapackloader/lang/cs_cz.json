@@ -93,6 +93,7 @@
   "rdpl.tooltip.fertility.water.missing": "Voda: v dosahu %s bloků žádná, růst x%s",
   "rdpl.tooltip.fertility.water.breaks": "Voda: v dosahu %s bloků žádná, rostlina se zlomí",
   "rdpl.tooltip.fertility.water.waived": "Voda: pod krytím není potřeba",
+  "rdpl.tooltip.soulbound": "Vázáno k duši",
   "rdpl.hearts.gained": "Cítíš se odolnější.",
   "rdpl.hearts.lost": "Cítíš se křehčí.",
   "rdpl.carry.block": "Neseš: %s (plížením a pravým kliknutím to položíš)",

@@ -93,6 +93,7 @@
   "rdpl.tooltip.fertility.water.missing": "水：%sブロック以内になし、成長x%s",
   "rdpl.tooltip.fertility.water.breaks": "水：%sブロック以内になし、植物が壊れる",
   "rdpl.tooltip.fertility.water.waived": "水：屋根の下では不要",
+  "rdpl.tooltip.soulbound": "ソウルバウンド",
   "rdpl.hearts.gained": "体が丈夫になった気がする。",
   "rdpl.hearts.lost": "体が弱くなった気がする。",
   "rdpl.carry.block": "%sを持ち上げました（スニーク中に右クリックで置けます）",

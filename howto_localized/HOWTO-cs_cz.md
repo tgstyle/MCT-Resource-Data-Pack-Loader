@@ -83,6 +83,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Odstranění kořisti](#odstranění-kořisti)
 - [Dropy z mobů](#dropy-z-mobů)
 - [Kořist hráčů](#kořist-hráčů)
+- [Předměty vázané k duši](#předměty-vázané-k-duši)
 - [Pestrost jídla](#pestrost-jídla)
 - [Vesničané a obchody](#vesničané-a-obchody)
 
@@ -231,6 +232,7 @@ V `data/`:
 | `<namespace>/carries/*.json`                 | Bloky a moby, které hráč v plížení zvedne a položí. [Nošení](#nošení)                                                                                                                                |
 | `<namespace>/player_loot/*.json`             | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů)                                                                                                                             |
 | `<namespace>/mob_drops/*.json`               | Předměty odebírané z dropů pojmenovaných mobů, nebo do nich přidávané. [Dropy z mobů](#dropy-z-mobů)                                                                                                 |
+| `<namespace>/soulbound/*.json`               | Předměty, které hráč po smrti zachová. [Předměty vázané k duši](#předměty-vázané-k-duši)                                                                                                             |
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
 | `<namespace>/leaf_decay/*.json`              | Listí u změněného bloku opadá po krátké prodlevě. [Rychlé opadávání listí](#rychlé-opadávání-listí)                                                                                                  |
@@ -586,6 +588,7 @@ Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože d�
 - **Zakázané bloky a předměty**, vyřaď ze hry libovolný blok nebo předmět, viz [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
 - **Vstřiky kořisti**, přidej pool do tabulky kořisti místo nahrazení celé
 - **Odstranění kořisti**, vezmi záznam nebo předmět z tabulky kořisti, nebo ji vyprázdni, bez nahrazení tabulky
+- **Předměty vázané k duši**, zachovej označené předměty přes smrt a oživení
 - **Dropy z bloků**, přidej k tomu, co libovolný blok dropne při rozbití, nebo to nahraď, včetně zkušeností
 - **Kořist hráčů**, losuj tabulku kořisti, když hráč zemře, navíc k tomu, co nesl, nebo místo toho
 - **Vlastnosti existujících bloků, předmětů a lektvarů**, tvrdost, světlo, velikosti stacků, jídlo na čemkoli, efekty lektvaru, viz [Přepsání vlastností](#přepsání-vlastností)
@@ -605,13 +608,13 @@ Balíček může žít jen na serveru, s hráči na čistých vanilla klientech,
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                                   |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (řádky popisků předmětů a kouzel, názvy afixů a slotů na drahokamy) |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `mob_drops`, `advancements`, `functions`, `veins`, `weights`, `spawn_swaps`              | `entities`, `villagers`, `portalframes`, `curioslots` (Curios odmítá vanilla klienty)                                                    |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `mob_drops`, `advancements`, `functions`, `veins`, `weights`, `spawn_swaps`, `soulbound` | `entities`, `villagers`, `portalframes`, `curioslots` (Curios odmítá vanilla klienty)                                                    |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech)                         |
 | celá vrstva ovládání, nastavení a předgenerování                                                                                                           |                                                                                                                                          |
 
 Pravý sloupec je tvrdá zarážka: bloky, předměty, typy entit, zvuky a efekty lektvarů, které vanilla klient nemá, mu nelze popsat a vlastní portál dimenze je jedním z bloků balíčku; expozice se načítají jen spolu s tímto obsahem. Levý sloupec funguje, protože všechno v něm buď běží zcela na straně serveru, dorazí ke klientovi jako položky datového balíčku, které vanilla už čte (biomy, oblasti jeskyní, typy dimenzí, kouzla), nebo dorazí přes pakety, kterými vanilla už mluví (výsledný slot výroby plněný serverem, běžné pakety pokroků, odmítnutí bran ve stavových zprávách a podržení při předgenerování složené z vanilla paketů herního režimu, titulku a teleportu).
 
-Zůstávají na serveru a kreslí je jen vlastní klient módu: `background` lišty bosse, `heartColors` v souboru srdcí, `tooExpensive` v souboru kovadliny, `enchantCosts` a `lapisCosts` v souboru zaklínání, názvy afixů a slotů na drahokamy, klíče `sky` dimenze kromě těch, které se nastaví jednou při načtení světa, její `ambience` a počasí `rain` a `wind`, a každá změna `sky` a `ambience`, kterou prostředí provede, včetně nádechů ročních období. Se zapnutým `vanillaClients` se každá taková položka, kterou balíček nastaví, jmenuje v logu a zbytek jejího souboru platí dál.
+Zůstávají na serveru a kreslí je jen vlastní klient módu: `background` lišty bosse, `heartColors` v souboru srdcí, `tooExpensive` v souboru kovadliny, `enchantCosts` a `lapisCosts` v souboru zaklínání, tooltip vázání k duši, názvy afixů a slotů na drahokamy, klíče `sky` dimenze kromě těch, které se nastaví jednou při načtení světa, její `ambience` a počasí `rain` a `wind`, a každá změna `sky` a `ambience`, kterou prostředí provede, včetně nádechů ročních období. Se zapnutým `vanillaClients` se každá taková položka, kterou balíček nastaví, jmenuje v logu a zbytek jejího souboru platí dál.
 
 Nastavení:
 
@@ -687,7 +690,7 @@ Balíček vytvořený pro řadu 1.12.2 se načte tak, jak je. Loader ho pozná p
 
 - Definiční složky se přesouvají z `assets/<namespace>/` do `data/<namespace>/` a s nimi vanilla datové složky: recepty, tabulky kořisti, vstřiky kořisti, pokroky, funkce a struktury, přejmenované na jednotná čísla, která čte 1.21.1 (`recipe`, `loot_table`, `advancement`, `function`, `structure`, `tags/item`).
 - `textures/blocks/` a `textures/items/` se servírují jako `textures/block/` a `textures/item/`, v modelech, v pixelových mapách i v samotných souborech. Model předmětu v `models/item/<file>/<variant>.json` se servíruje jako `models/item/<variant>.json`.
-- Každé id s metadaty, `minecraft:wool:14` nebo `minecraft:dye:4`, projde datovými opravami samotné hry, stejným kódem, který aktualizuje svět z 1.12.2, takže vyjde jako blok nebo předmět, kterým se stalo: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Stav bloku, který flattening přežil jako vlastnost, `minecraft:log:1` na `minecraft:oak_log` s `axis=y`, vyjde jako objekt `properties`. Vlastní id balíčku se řeší přes jeho vlastní definice: `mypack:materials:5` se stane variantou, jejíž `meta` bylo 5, a `mypack:ruby_ore` první variantou souboru, protože každá varianta je zde samostatný blok. Názvy entit a biomů se opravují stejně a čísla dimenzí se stanou id.
+- Každé id s metadaty, `minecraft:wool:14` nebo `minecraft:dye:4`, projde datovými opravami samotné hry, stejným kódem, který aktualizuje svět z 1.12.2, takže vyjde jako blok nebo předmět, kterým se stalo: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Stav bloku, který flattening přežil jako vlastnost, `minecraft:log:1` na `minecraft:oak_log` s `axis=y`, vyjde jako objekt `properties`. Vlastní id balíčku se řeší přes jeho vlastní definice: `mypack:materials:5` se stane variantou, jejíž `meta` bylo 5, a `mypack:ruby_ore` první variantou souboru, protože každá varianta je zde samostatný blok. Názvy entit a biomů se opravují stejně a čísla dimenzí se stanou id. V seznamu `items` souboru [předmětů vázaných k duši](#předměty-vázané-k-duši) fungují `název:meta` a `název:*` jen na 1.12.2; v nových balíčcích se píše holé id.
 - `variants` si ponechají své klíče; `meta` se zahodí a `oreDict` se stane `tags` přes mapování slovníku rud na konvenční tagy. Soubor `oredict/*.json` se stane jedním souborem tagu předmětů na každý název, který přidává nebo odebírá: odebrání `-name` skončí v seznamu `remove` tagu a odebrání `*` tag nahradí. Holé `creativeTab` převezme namespace balíčku a štítek vanilla karty z 1.12.2 jako `misc` se stane nejbližší vanilla kartou.
 - Soubor `.lang` se servíruje jako `.json`, který hra čte, s `tile.mypack:file.variant.name` jako `block.mypack.variant`, `item.` stejným způsobem, `itemGroup.x` jako `itemGroup.mypack.x`, `fluid.x` jako oba klíče tekutiny a vším ostatním tak, jak je napsáno. Soubor `.lang` ve složce `langgates/<name>/` se převádí stejným způsobem.
 - Blockstate z 1.12.2 se neservíruje vůbec. Místo toho se čtou jeho textury a servírují se pod názvy, které generátor hledá, `textures/block/<variant>.png` s `_top` a `_bottom` tam, kde blockstate měl `end`, `top` nebo `bottom`, takže se blockstate a modely generují pro každou variantu tak, jak by se generovaly pro balíček psaný zde.
@@ -3212,6 +3215,8 @@ Každý záznam v `effects` má `type`:
 
 Každý soubor se na serveru převede na záznam vanilla enchantu, takže vanilla klient od packu nic nepotřebuje. Vanilla čte enchanty předmětu přes registr enchantů: když se pack odebere a svět načte předmět, který jmenuje jeho enchant, log napíše „Tried to load invalid item“ a vanilla zahodí ten záznam, nebo celý stack. Tak se chovají vanilla datapacky a po vrácení packu se nic nevrátí.
 
+Soubor [vázání k duši](#předměty-vázané-k-duši) může označit i každý stack, který ho nese.
+
 ## Práce s kovadlinou
 
 *výroba, kořist a obchod*
@@ -3738,7 +3743,7 @@ Hra nedává hráčům žádnou vlastní tabulku kořisti: smrt odhodí jen inve
 | `rollOnKeepInventory` | ne      | boolean              | `false` | Zda se tabulka vůbec losuje při smrti, při které se inventář zachoval  |
 | `dropLoose`           | ne      | boolean              | `false` | Zda se předměty dají přímo na zem místo přidání k dropům ze smrti      |
 
-`add` odhodí předměty z tabulky vedle inventáře, což se hodí pro odměny za zabití. `replace` inventář zahodí a odhodí jen to, co tabulka vylosuje.
+`add` odhodí předměty z tabulky vedle inventáře, což se hodí pro odměny za zabití. `replace` inventář zahodí a odhodí jen to, co tabulka vylosuje. Položka `replace` nikdy nezahodí [předmět vázaný k duši](#předměty-vázané-k-duši).
 
 Při vypnutém `rollOnKeepInventory` se při smrtech pod `keepInventory` (a při smrtech ve spectatoru, které inventář vždy zachovají) nelosuje nic. Zapnutí způsobí, že smrt zůstane na světech s ponechaným inventářem nákladná.
 
@@ -3758,6 +3763,62 @@ Jedna funkce kořisti je vlastní funkcí RDPL a lze ji použít v jakékoli tab
 `dropLoose` obchází seznam dropů úplně: předměty se umístí přímo do světa, takže je módy s hroby nikdy nevidí; inventář jde do hrobu, předměty z tabulky leží na zemi pro zabijáka. Použij to pro kořist, která patří zabijákovi, ne hrobu oběti. Bez módu s hroby to mění málo. Upozornění: předměty existují dřív, než by cokoli dál po proudu mohlo dropy zrušit, takže položky, které nesmějí přežít zrušenou smrt, by to měly mít vypnuté.
 
 Nastavením `playerLoot` v kategorii `data` konfigurace na `false` složku úplně vypneš.
+
+## Předměty vázané k duši
+
+*craft, kořist a obchod*
+
+`<namespace>/soulbound/*.json`
+
+Název souboru si zvol libovolný, čte se jen složka a více souborů se skládá, jedna značka na soubor. Soubor nese právě jeden z klíčů `enchantment`, `items` a `nbt`; bez nich nebo s více z nich se zapíše do logu a přeskočí.
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| Klíč                  | Povinný      | Hodnota                      | Výchozí                                           | Co dělá                                                                                                                                                                                                                                             |
+| --------------------- | ------------ | ---------------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantment`         | jeden ze tří | id enchantu                  |                                                   | Libovolný registrovaný enchant: z packu, vanilla nebo z modu jiného autora. Stack s úrovní 1 a výš se označí. Neznámé id se jednou zapíše do logu a soubor se při použití přeskočí                                                                  |
+| `items`               | jeden ze tří | seznam id předmětů           |                                                   | Označí se bez ohledu na tagy. Na 1.12.2 fungují za id `:meta` a `:*`; v nových verzích se píše jen holé id                                                                                                                                          |
+| `nbt`                 | jeden ze tří | název tagu                   |                                                   | Označí se, když kořenový tag stacku drží tuto logickou hodnotu jako true. Na 1.21 a novějších je kořenovým tagem uživatelská data stacku (`minecraft:custom_data`)                                                                                  |
+| `loseChance`          | ne           | 0 až 1                       | `0`                                               | Šance při každé smrti, že značka zmizí: jedna úroveň u `enchantment` (poslední úroveň enchant odstraní), příznak u `nbt`. Značky `items` se ztratit nedají, takže klíč se tam ignoruje s řádkem v logu. 0 nikdy, 1 vždy, mezi tím se nezaokrouhluje |
+| `rollOnKeepInventory` | ne           | boolean                      | `false`                                           | Zda se šance losuje i při smrti, která inventář zachovala (pravidlo keepInventory nebo divák). Stejný název a výchozí hodnota jako u `player_loot`                                                                                                  |
+| `graves`              | ne           | `player` nebo `grave`        | `player`                                          | `player`: předmět se nikdy nedostane do seznamu dropů, takže ho žádný mod hrobů nevidí. `grave`: jde spolu s dropy; mod hrobů, který ho vezme nebo odstraní, si ho ponechá, jinak se vrátí hráči                                                    |
+| `loseFirst`           | ne           | boolean                      | `false`                                           | `false`: předmět se vrátí při této smrti a přijde bez značky. `true`: nejdřív přijde losování a předmět, který ztratil celou značku, dropne jako každý jiný                                                                                         |
+| `keepVanishing`       | ne           | boolean                      | `false`                                           | `false`: předmět s Kletbou zmizení se pořád ztratí, jako ve vanille. `true`: vyhrává značka                                                                                                                                                         |
+| `tooltip`             | ne           | klíč jazyka nebo prostý text | `rdpl.tooltip.soulbound` (čte se „Vázáno k duši“) | Zobrazený řádek. Prázdný řetězec nezobrazí nic. Klíč jazyka, pokud ho načtený jazykový soubor má, jinak prostý text, jako u `tooltips`                                                                                                              |
+
+**Více značek.** Předmět je označen, když sedí kterýkoli záznam. `graves` je `player`, pokud tak říká některý odpovídající záznam. Každý odpovídající záznam `enchantment` nebo `nbt` losuje vlastní šanci. Pro každý různý neprázdný `tooltip` odpovídajících záznamů se zobrazí jeden řádek.
+
+**Při smrti.** Označený předmět v režimu `player` se vytáhne z inventáře na začátku smrti, dřív než seznam dropů nebo jakýkoli mod hrobů. Pokud smrt zruší jiný mod, jako efekt podobný totemu, předmět se vrátí do inventáře.
+
+**Hroby.** V režimu `grave` jde předmět spolu s dropy. Mod hrobů, který ho vezme, si ho ponechá; jinak se při oživení vrátí hráči.
+
+**keepInventory.** Při smrti, která inventář zachová (pravidlo keepInventory nebo divák), vanilla zachová všechno, takže se značka nelosuje, pokud `rollOnKeepInventory` není true.
+
+**Nahrazení.** `replace` v [Kořist hráčů](#kořist-hráčů) nikdy nezahodí označený předmět.
+
+**Kletba zmizení.** Vanilla zničí předmět s Kletbou zmizení ještě před vznikem dropů. Takový předmět proto při `keepVanishing` true vždy jde režimem `player`, ať je v `graves` cokoli. Při `keepVanishing` false zmizí jako ve vanille.
+
+**Co to nezasáhne.** Předměty mimo vanilla inventář, například sloty Curios, tahle funkce nedosáhne.
+
+**Konfig.** Nastav `soulbound` v kategorii konfigu `data` na `false`, aby se funkce vypnula: nečte se žádný soubor, nic se neuchová a tooltip se nezobrazí. Tooltip je vypnutý i při zapnutém `vanillaClients`. Značení funguje i na samotném serveru s vanilla klienty, protože se nic nezaregistruje; tooltip potřebuje mod na klientovi.
 
 ## Pestrost jídla
 

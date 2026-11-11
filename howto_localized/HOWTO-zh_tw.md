@@ -83,6 +83,7 @@
 - [戰利品移除](#戰利品移除)
 - [生物掉落](#生物掉落)
 - [玩家戰利品](#玩家戰利品)
+- [靈魂綁定物品](#靈魂綁定物品)
 - [飲食多樣性](#飲食多樣性)
 - [村民與交易](#村民與交易)
 
@@ -231,6 +232,7 @@ Resource Data Pack Loader（RDPL）會讀取單一資料夾 `rdploader`，並負
 | `<namespace>/carries/*.json`                 | 玩家潛行時可以拿起並放回的方塊和生物。[搬運](#搬運)                                                                 |
 | `<namespace>/player_loot/*.json`             | 玩家死亡時抽取的戰利品表。[玩家戰利品](#玩家戰利品)                                                                 |
 | `<namespace>/mob_drops/*.json`               | 從指定生物的掉落物中移除或添加物品。[生物掉落](#生物掉落)                                                           |
+| `<namespace>/soulbound/*.json`               | 玩家死亡後仍留在身上的物品。[靈魂綁定物品](#靈魂綁定物品)                                                           |
 | `<namespace>/diets/*.json`                   | 讓重複吃同一種食物飽足較少、飲食多樣則飽足較多的規則。 [飲食多樣性](#飲食多樣性)                                    |
 | `<namespace>/columns/*.json`                 | 玩家破壞方塊時，其上方連續的下落方塊會一併被破壞。 [下落方塊柱](#下落方塊柱)                                        |
 | `<namespace>/leaf_decay/*.json`              | 與發生變化的方塊相鄰的樹葉會在較短的計時後消失。[樹葉消失](#樹葉消失)                                               |
@@ -586,6 +588,7 @@ RDPL 自己的資源包與遊戲自己的資源包永遠保持啟用；`required
 - **停用的方塊與物品**，讓任何方塊或物品退出遊戲，見[停用的方塊與物品](#停用的方塊與物品)
 - **戰利品注入**，在戰利品表中加入一個池，而不是取代整張表
 - **戰利品移除**，在戰利品表中移除一個條目或物品，或清空該表，而不是取代整張表
+- **靈魂綁定物品**，讓帶有標記的物品在死亡和重生後依然保留
 - **方塊掉落物**，新增或取代任何方塊被破壞時掉落的內容，經驗值也包括在內
 - **玩家戰利品**，在玩家死亡時擲出戰利品表，可疊加在其所攜帶的物品之上，也可取而代之
 - **既有方塊、物品與藥水的屬性**，包括硬度、光照、堆疊數量、任何東西上的食物，以及藥水的效果，見[屬性覆寫](#屬性覆寫)
@@ -605,13 +608,13 @@ RDPL 適合取代一兩個配方，而你自己內容的配方則應加在隨附
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `worldgen`、`worldtemplates`、`gamerules`、`structures`、`structuremaps`、`citymaps`、`villages`、`pathintersects`、`caveregions`、`biomes`、`dimensions`  | `blocks`、`items`、`fluids`、`materials`、`containers`                                                         |
 | `recipes`、`recipe_removals`、`recipe_swaps`、`furnace`、`fuels`、`brewing`、`anvils`、`affixes`、`gems`、`enchanting`、`enchantments`、`tags`、`disabled` | `potions`、`potion_types`、`sounds`、`tabs`、`exposures`、`tooltips`（物品與附魔的提示行、詞綴與寶石槽的名稱） |
-| `loot_tables`、`loot_injections`、`loot_removals`、`player_loot`、`mob_drops`、`advancements`、`functions`、`veins`、`weights`、`spawn_swaps`              | `entities`、`villagers`、`portalframes`、`curioslots`（Curios 會拒絕原版用戶端）                               |
+| `loot_tables`、`loot_injections`、`loot_removals`、`player_loot`、`soulbound`、`mob_drops`、`advancements`、`functions`、`veins`、`weights`、`spawn_swaps` | `entities`、`villagers`、`portalframes`、`curioslots`（Curios 會拒絕原版用戶端）                               |
 | `gates`、`cards`、`trades`、`registry_remap`、`teams`、`scoring`、`ranks`、`raids`、`hardness`、`blastplaster`                                             | `models`、`blockstates`、`textures`、`lang`、`worldintro`、`overrides`（用戶端資料夾：沒有用戶端時就不要放）   |
 | 整個控制層、設定與預先生成                                                                                                                                 |                                                                                                                |
 
 右側欄是硬性限制：原版用戶端沒有的方塊、物品、實體類型、音效與藥水效果，無法向它描述，而維度自己的傳送門是資源包的方塊之一；曝露設定只會與那些內容一起載入。左側欄之所以可行，是因為其中的一切要嘛完全在伺服端執行，要嘛以原版本來就會讀取的資料包項目傳到用戶端（生態域、洞穴區域、維度類型、附魔），要嘛透過原版本來就能溝通的封包傳達（由伺服器填入的合成結果格、一般的進度封包、閘門拒絕時的狀態訊息，以及由原版遊戲模式、標題與傳送封包構成的預先生成停留）。
 
-只保留在伺服端、僅由模組自己的用戶端繪製的內容：首領血條的 `background`、心形檔案中的 `heartColors`、鐵砧檔案中的 `tooExpensive`、附魔檔案中的 `enchantCosts` 與 `lapisCosts`、詞綴與寶石槽的名稱、維度中除世界載入時設定一次的之外的 `sky` 鍵、其 `ambience`，以及天氣的 `rain` 與 `wind`，還有環境造成的每一次 `sky` 與 `ambience` 變化，包括季節色調。開啟 `vanillaClients` 時，資源包設定的每一項都會在日誌中列出，該檔案的其餘部分仍然有效。
+只保留在伺服端、僅由模組自己的用戶端繪製的內容：首領血條的 `background`、心形檔案中的 `heartColors`、鐵砧檔案中的 `tooExpensive`、附魔檔案中的 `enchantCosts` 與 `lapisCosts`、靈魂綁定的提示、詞綴與寶石槽的名稱、維度中除世界載入時設定一次的之外的 `sky` 鍵、其 `ambience`，以及天氣的 `rain` 與 `wind`，還有環境造成的每一次 `sky` 與 `ambience` 變化，包括季節色調。開啟 `vanillaClients` 時，資源包設定的每一項都會在日誌中列出，該檔案的其餘部分仍然有效。
 
 設定步驟：
 
@@ -687,7 +690,7 @@ thatmod.jar
 
 - 定義資料夾從 `assets/<namespace>/` 移到 `data/<namespace>/`，原版資料資料夾也隨之一起移動：配方、戰利品表、戰利品注入、進度、函數與結構，並改為 1.21.1 讀取的單數名稱（`recipe`、`loot_table`、`advancement`、`function`、`structure`、`tags/item`）。
 - `textures/blocks/` 與 `textures/items/` 會以 `textures/block/` 與 `textures/item/` 提供，無論是在模型、像素圖還是檔案本身之中。位於 `models/item/<file>/<variant>.json` 的物品模型，則以 `models/item/<variant>.json` 提供。
-- 每個帶中繼資料的 id，`minecraft:wool:14` 或 `minecraft:dye:4`，都會經過遊戲自己的資料修正器，也就是升級 1.12.2 世界所用的同一份程式碼，因此會變成它後來成為的方塊或物品：`minecraft:red_wool`、`minecraft:lapis_lazuli`。在扁平化之後以屬性形式保留下來的方塊狀態，`minecraft:log:1` 變成 `minecraft:oak_log` 並帶 `axis=y`，會以 `properties` 物件輸出。資源包自己的 id 則透過它自己的定義解析：`mypack:materials:5` 變成 `meta` 為 5 的那個變體，`mypack:ruby_ore` 則是檔案的第一個變體，因為在此每個變體都是獨立的方塊。實體與生態域名稱以同樣方式修正，維度編號則變成 id。
+- 每個帶中繼資料的 id，`minecraft:wool:14` 或 `minecraft:dye:4`，都會經過遊戲自己的資料修正器，也就是升級 1.12.2 世界所用的同一份程式碼，因此會變成它後來成為的方塊或物品：`minecraft:red_wool`、`minecraft:lapis_lazuli`。在扁平化之後以屬性形式保留下來的方塊狀態，`minecraft:log:1` 變成 `minecraft:oak_log` 並帶 `axis=y`，會以 `properties` 物件輸出。資源包自己的 id 則透過它自己的定義解析：`mypack:materials:5` 變成 `meta` 為 5 的那個變體，`mypack:ruby_ore` 則是檔案的第一個變體，因為在此每個變體都是獨立的方塊。實體與生態域名稱以同樣方式修正，維度編號則變成 id。[靈魂綁定](#靈魂綁定物品)檔案的 `items` 清單只在 1.12.2 上接受 `name:meta` 和 `name:*`；現代資源包使用裸 ID。
 - `variants` 保留其鍵；`meta` 會被捨棄，`oreDict` 則透過礦物辭典對應到慣例標籤的方式，變成 `tags`。`oredict/*.json` 檔案會依其加入或移除的每個名稱，各變成一個物品標籤檔案：`-name` 形式的移除會落進標籤的 `remove` 清單，移除 `*` 則取代該標籤。單獨寫的 `creativeTab` 會採用資源包的命名空間，1.12.2 原版分頁標籤如 `misc` 則變成最接近的原版分頁。
 - `.lang` 檔案會以遊戲讀取的 `.json` 提供，`tile.mypack:file.variant.name` 變成 `block.mypack.variant`，`item.` 同理，`itemGroup.x` 變成 `itemGroup.mypack.x`，`fluid.x` 同時變成兩個流體鍵，其餘一律照原樣。`langgates/<name>/` 資料夾裡的 `.lang` 檔案也以同樣方式轉換。
 - 1.12.2 的方塊狀態完全不會被提供。改為讀取它的材質，並以產生器尋找的名稱提供，即 `textures/block/<variant>.png`，若方塊狀態中有 `end`、`top` 或 `bottom`，則加上 `_top` 與 `_bottom`，於是方塊狀態與模型會為每個變體產生，就像為在此編寫的資源包所做的一樣。
@@ -3163,7 +3166,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 
 `<namespace>/enchantments/*.json`
 
-檔案的路徑就是附魔的註冊名稱，所以 `mypack/enchantments/venom_edge.json` 會註冊 `mypack:venom_edge`。它可以附在 `category` 所屬的物品上，以及 `items` 中列出的每個物品上；和其他附魔一樣，附魔台會提供它，戰利品會帶有它，村民也會拿它交易。
+檔案的路徑就是附魔的註冊名稱，所以 `mypack/enchantments/venom_edge.json` 會註冊 `mypack:venom_edge`。它可以附在 `category` 所屬的物品上，以及 `items` 中列出的每個物品上；和其他附魔一樣，附魔台會提供它，戰利品會帶有它，村民也會拿它交易。[靈魂綁定](#靈魂綁定物品)檔案還可以標記任何攜帶它的物品堆疊。
 
 ```json
 {
@@ -3738,7 +3741,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `rollOnKeepInventory` | 否   | 布林值             | `false` | 在保留物品欄的死亡中，是否仍要擲出該表       |
 | `dropLoose`           | 否   | 布林值             | `false` | 物品是否直接放在地面上，而不是加入死亡掉落物 |
 
-`add` 會把表中的物品與物品欄一起掉落，適合擊殺懸賞。`replace` 會丟棄物品欄，只掉落表中擲出的內容。
+`add` 會把表中的物品與物品欄一起掉落，適合擊殺懸賞。`replace` 會丟棄物品欄，只掉落表中擲出的內容。它永遠不會丟棄[靈魂綁定](#靈魂綁定物品)物品。
 
 關閉 `rollOnKeepInventory` 時，`keepInventory` 下的死亡（以及一律保留物品欄的旁觀者死亡）不會擲出任何東西。開啟它則能讓保留物品欄的世界中，死亡依然有代價。
 
@@ -3758,6 +3761,62 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 `dropLoose` 完全繞過掉落物清單：物品會被直接放進世界，所以墓碑模組永遠看不到它們；物品欄進入墓碑，表中的物品則散落在地上留給擊殺者。適用於屬於擊殺者而不是受害者墓碑的戰利品。沒有墓碑模組時，它幾乎沒有差別。注意：這些物品在下游任何環節取消掉落之前就已經存在，所以凡是在死亡被取消後不應保留的項目，都應當關閉它。
 
 在 `data` 設定類別中將 `playerLoot` 設為 `false`，即可完全關閉該資料夾。
+
+## 靈魂綁定物品
+
+*合成、戰利品與交易*
+
+`<namespace>/soulbound/*.json`
+
+檔案名稱由你自行決定，只讀取該資料夾，多個檔案可以疊加，每個檔案設定一種標記。一個檔案中恰好要有 `enchantment`、`items` 和 `nbt` 其中之一；一個都沒有或超過一個的檔案會被記入日誌並略過。
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| 鍵                    | 必需   | 值                  | 預設值                                         | 作用                                                                                                                                                                                                               |
+| --------------------- | ------ | ------------------- | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `enchantment`         | 三選一 | 附魔 ID             |                                                | 任何已註冊的附魔：資源包自訂的、原版的或其他模組的。帶有該附魔且等級為 1 以上的堆疊會被標記。未知的 ID 會記錄一次日誌，並在使用時略過該檔案                                                                        |
+| `items`               | 三選一 | 物品 ID 清單        |                                                | 無論其標籤為何都會被標記。1.12.2 還可以在 ID 後寫 `:meta` 和 `:*`；現代版本只寫裸 ID                                                                                                                               |
+| `nbt`                 | 三選一 | 標籤名稱            |                                                | 堆疊的根標籤中該布林值為 true 時被標記。1.21 及以上版本中，根標籤即堆疊的自訂資料（`minecraft:custom_data`）                                                                                                       |
+| `loseChance`          | 否     | 0 到 1              | `0`                                            | 每次死亡標記消失的機率：對 `enchantment` 而言每次減一級（最後一級會移除附魔），對 `nbt` 而言是那個旗標。`items` 的標記無法失去，因此該鍵在那裡會被忽略並記錄一行日誌。0 表示永不，1 表示必定，中間的值不會四捨五入 |
+| `rollOnKeepInventory` | 否     | 布林值              | `false`                                        | 在保留物品欄的死亡（keepInventory 規則或旁觀者）中是否擲這個機率。與 `player_loot` 的名稱和預設值相同                                                                                                              |
+| `graves`              | 否     | `player` 或 `grave` | `player`                                       | `player`：物品永遠不會進入掉落清單，因此任何墓碑模組都看不到它。`grave`：它隨掉落物一起走；取走或移除它的墓碑模組會保留它，否則它回到玩家身上                                                                      |
+| `loseFirst`           | 否     | 布林值              | `false`                                        | `false`：本次死亡時物品返回，並且回到玩家身上時已失去標記。`true`：先擲機率，失去全部標記的物品會像其他物品一樣掉落                                                                                                |
+| `keepVanishing`       | 否     | 布林值              | `false`                                        | `false`：帶有消失詛咒的物品仍會消失，與原版相同。`true`：標記優先                                                                                                                                                  |
+| `tooltip`             | 否     | 語言鍵或純文字      | `rdpl.tooltip.soulbound`（顯示為「靈魂綁定」） | 顯示的那一行。空字串則不顯示。已載入的語言檔案中有該語言鍵時使用語言鍵，否則使用純文字，與 `tooltips` 相同                                                                                                         |
+
+**多個標記。** 只要任何一個符合的條目匹配某個物品，它就會被標記。只要任何一個符合條目把 `graves` 設為 `player`，它就是 `player`。每個符合的 `enchantment` 或 `nbt` 條目各自擲一次機率。提示會為符合條目中每個不同的非空 `tooltip` 各顯示一行。
+
+**死亡時。** `player` 模式下的物品會在死亡開始時離開物品欄，早於掉落清單或任何墓碑模組讀取它。如果另一個模組取消了這次死亡，例如圖騰一類的效果，物品會被放回物品欄。
+
+**墓碑。** `grave` 模式下，物品隨掉落物一起走。取走它的墓碑模組會保留它；否則它在重生時回到玩家身上。
+
+**keepInventory。** 在保留物品欄的死亡中（keepInventory 規則或旁觀者），原版會保留一切，因此除非 `rollOnKeepInventory` 為 true，否則不會擲標記的機率。
+
+**替換。** [玩家戰利品](#玩家戰利品)的 `replace` 永遠不會丟棄帶標記的物品。
+
+**消失。** 原版會在掉落物產生之前銷毀帶有消失詛咒的物品，因此帶有該詛咒且 `keepVanishing` 為 true 的物品總是採用 `player` 模式。
+
+**未涵蓋的範圍。** 原版物品欄之外的物品，例如 Curios 欄位，不受此功能影響。
+
+**設定。** 在 `data` 設定類別中把 `soulbound` 設為 `false`，即可關閉該功能：不讀取任何檔案，不保留任何標記，也不顯示提示。開啟 `vanillaClients` 時提示同樣關閉。僅在伺服端安裝、用戶端為原版時，標記依然有效，因為沒有註冊任何內容；提示則需要用戶端安裝該模組。
 
 ## 飲食多樣性
 

@@ -83,6 +83,7 @@
 - [전리품 제거](#전리품-제거)
 - [몹 드롭](#몹-드롭)
 - [플레이어 전리품](#플레이어-전리품)
+- [영혼 귀속 아이템](#영혼-귀속-아이템)
 - [음식 다양성](#음식-다양성)
 - [주민과 거래](#주민과-거래)
 
@@ -231,6 +232,7 @@ Resource Data Pack Loader(RDPL)는 `rdploader` 폴더 하나를 읽으며 세 �
 | `<namespace>/carries/*.json`                 | 웅크린 플레이어가 들어 올렸다가 다시 내려놓는 블록과 몹. [들기](#들기)                                                                                |
 | `<namespace>/player_loot/*.json`             | 플레이어가 죽을 때 굴리는 전리품 테이블. [플레이어 전리품](#플레이어-전리품)                                                                          |
 | `<namespace>/mob_drops/*.json`               | 이름이 지정된 몹이 떨어뜨리는 아이템을 빼거나 더하는 것. [몹 드롭](#몹-드롭)                                                                          |
+| `<namespace>/soulbound/*.json`               | 죽어도 플레이어가 계속 지니는 아이템. [영혼 귀속 아이템](#영혼-귀속-아이템)                                                                           |
 | `<namespace>/diets/*.json`                   | 같은 음식을 반복하면 덜 채우고 다양하게 먹으면 더 채우도록 만드는 규칙. [음식 다양성](#음식-다양성)                                                   |
 | `<namespace>/columns/*.json`                 | 플레이어가 부순 블록 위에 이어진 떨어지는 블록들을 함께 부숩니다. [떨어지는 기둥](#떨어지는-기둥)                                                     |
 | `<namespace>/leaf_decay/*.json`              | 변하는 블록 옆의 나뭇잎은 짧은 타이머로 소멸합니다. [나뭇잎 소멸](#나뭇잎-소멸)                                                                       |
@@ -588,6 +590,7 @@ RDPL 자체 팩과 게임 자체 팩은 항상 켜져 있으며, `required: fals
 - **전리품 제거**: 전리품 테이블을 통째로 교체하지 않고, 항목이나 아이템을 빼거나 테이블을 비웁니다
 - **블록 드롭**: 블록이 부서질 때 드롭하는 것을, 경험치까지 포함해, 추가하거나 교체합니다
 - **플레이어 전리품**: 플레이어가 죽을 때 들고 있던 것에 더해, 또는 그 대신 전리품 테이블을 굴립니다
+- **영혼 귀속 아이템**: 표시한 아이템을 죽음과 리스폰을 거쳐도 계속 지니게 합니다
 - **기존 블록, 아이템, 물약의 속성**: 경도, 빛, 스택 크기, 무엇에든 붙이는 음식 속성, 물약의 효과. [속성 재정의](#속성-재정의) 참고
 - **화로 레시피, 연료 연소 시간, 크리에이티브 탭, 소리 이벤트**
 
@@ -605,13 +608,13 @@ RDPL은 레시피 한두 개를 교체하는 데 적합하며, 자기 콘텐츠�
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                         |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips` (아이템과 마법 부여의 툴팁 줄, 어펙스와 보석 소켓의 이름) |
-| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `mob_drops`, `advancements`, `functions`, `veins`, `weights`, `spawn_swaps`              | `entities`, `villagers`, `portalframes`, `curioslots` (Curios는 바닐라 클라이언트를 거부합니다)                                |
+| `loot_tables`, `loot_injections`, `loot_removals`, `player_loot`, `soulbound`, `mob_drops`, `advancements`, `functions`, `veins`, `weights`, `spawn_swaps` | `entities`, `villagers`, `portalframes`, `curioslots` (Curios는 바닐라 클라이언트를 거부합니다)                                |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`                                             | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (클라이언트 폴더: 클라이언트가 없으면 빼세요)           |
 | 제어 계층 전체, 설정, 사전 생성                                                                                                                            |                                                                                                                                |
 
 오른쪽 열은 절대적인 한계입니다. 바닐라 클라이언트에 없는 블록, 아이템, 엔티티 유형, 소리, 물약 효과는 클라이언트에 설명할 수 없고, 차원의 자체 포털도 팩의 블록 중 하나이며, 노출은 그 콘텐츠와 함께일 때만 로드됩니다. 왼쪽 열이 동작하는 것은 거기 있는 모든 것이 전부 서버 측에서 돌거나, 바닐라가 이미 읽는 데이터 팩 항목(생물 군계, 동굴 지역, 차원 유형, 마법 부여)으로 클라이언트에 전달되거나, 바닐라가 이미 쓰는 패킷(서버가 채우는 제작 결과 칸, 일반 발전 과제 패킷, 상태 메시지로 표시되는 게이트 거부, 바닐라의 게임 모드, 제목, 순간 이동 패킷으로 이루어진 사전 생성 대기)으로 전달되기 때문입니다.
 
-서버에만 남고 모드 자체 클라이언트만 그리는 항목은 다음과 같습니다: 보스 바의 `background`, 하트 파일의 `heartColors`, 모루 파일의 `tooExpensive`, 마법 부여 파일의 `enchantCosts`와 `lapisCosts`, 어펙스와 보석 소켓의 이름, 월드를 불러올 때 한 번 설정되는 것을 제외한 차원의 `sky` 키, 차원의 `ambience`와 날씨 `rain`, `wind`, 그리고 환경이 만드는 모든 `sky`와 `ambience` 변화(계절 색조 포함)입니다. `vanillaClients`를 켜면 팩이 설정한 각 항목이 로그에 이름으로 기록되고, 그 파일의 나머지는 계속 적용됩니다.
+서버에만 남고 모드 자체 클라이언트만 그리는 항목은 다음과 같습니다: 보스 바의 `background`, 하트 파일의 `heartColors`, 모루 파일의 `tooExpensive`, 마법 부여 파일의 `enchantCosts`와 `lapisCosts`, 영혼 귀속 툴팁, 어펙스와 보석 소켓의 이름, 월드를 불러올 때 한 번 설정되는 것을 제외한 차원의 `sky` 키, 차원의 `ambience`와 날씨 `rain`, `wind`, 그리고 환경이 만드는 모든 `sky`와 `ambience` 변화(계절 색조 포함)입니다. `vanillaClients`를 켜면 팩이 설정한 각 항목이 로그에 이름으로 기록되고, 그 파일의 나머지는 계속 적용됩니다.
 
 설정 방법:
 
@@ -687,7 +690,7 @@ thatmod.jar
 
 - 정의 폴더가 `assets/<namespace>/`에서 `data/<namespace>/`로 옮겨지며, 바닐라 데이터 폴더인 레시피, 전리품 테이블, 전리품 주입, 발전 과제, 함수, 구조물도 함께 옮겨지고, 1.21.1이 읽는 단수형 이름(`recipe`, `loot_table`, `advancement`, `function`, `structure`, `tags/item`)으로 바뀝니다.
 - `textures/blocks/`와 `textures/items/`는 모델, 픽셀 맵, 파일 자체에서 `textures/block/`과 `textures/item/`으로 제공됩니다. `models/item/<file>/<variant>.json`의 아이템 모델은 `models/item/<variant>.json`으로 제공됩니다.
-- `minecraft:wool:14`나 `minecraft:dye:4`처럼 메타데이터가 붙은 모든 id는 1.12.2 월드를 업그레이드하는 것과 같은 코드인 게임 자체의 데이터 픽서를 거치므로, `minecraft:red_wool`, `minecraft:lapis_lazuli`처럼 바뀐 블록이나 아이템으로 나옵니다. 평탄화 뒤에 속성으로 남은 블록 상태, 즉 `minecraft:log:1`에서 `axis=y`인 `minecraft:oak_log`는 `properties` 객체로 나옵니다. 팩 자체의 id는 팩 자신의 정의를 통해 해석됩니다. `mypack:materials:5`는 `meta`가 5였던 변형이 되고, `mypack:ruby_ore`는 파일의 첫 번째 변형이 되는데, 여기서는 변형마다 별개의 블록이기 때문입니다. 엔티티와 생물 군계 이름도 같은 방식으로 고쳐지고, 차원 번호는 id가 됩니다.
+- `minecraft:wool:14`나 `minecraft:dye:4`처럼 메타데이터가 붙은 모든 id는 1.12.2 월드를 업그레이드하는 것과 같은 코드인 게임 자체의 데이터 픽서를 거치므로, `minecraft:red_wool`, `minecraft:lapis_lazuli`처럼 바뀐 블록이나 아이템으로 나옵니다. 평탄화 뒤에 속성으로 남은 블록 상태, 즉 `minecraft:log:1`에서 `axis=y`인 `minecraft:oak_log`는 `properties` 객체로 나옵니다. 팩 자체의 id는 팩 자신의 정의를 통해 해석됩니다. `mypack:materials:5`는 `meta`가 5였던 변형이 되고, `mypack:ruby_ore`는 파일의 첫 번째 변형이 되는데, 여기서는 변형마다 별개의 블록이기 때문입니다. 엔티티와 생물 군계 이름도 같은 방식으로 고쳐지고, 차원 번호는 id가 됩니다. [영혼 귀속 아이템](#영혼-귀속-아이템) 파일의 `items` 목록은 1.12.2에서만 `name:meta`와 `name:*`를 받으며, 최신 버전에서는 아이템 id만 씁니다.
 - `variants`는 키를 유지하며, `meta`는 버려지고 `oreDict`는 광석 사전을 규약 태그에 대응시키는 방식으로 `tags`가 됩니다. `oredict/*.json` 파일은 추가하거나 제거하는 이름마다 아이템 태그 파일 하나가 됩니다. `-name` 제거는 태그의 `remove` 목록에 들어가고, `*`를 제거하면 태그가 교체됩니다. 맨 이름의 `creativeTab`은 팩의 네임스페이스를 갖고, `misc` 같은 1.12.2 바닐라 탭 라벨은 가장 가까운 바닐라 탭이 됩니다.
 - `.lang` 파일은 게임이 읽는 `.json`으로 제공됩니다. `tile.mypack:file.variant.name`은 `block.mypack.variant`가 되고, `item.`도 같은 방식이며, `itemGroup.x`는 `itemGroup.mypack.x`, `fluid.x`는 두 유체 키 모두가 되고, 나머지는 적힌 그대로입니다. `langgates/<name>/` 폴더 안의 `.lang` 파일도 같은 방식으로 변환됩니다.
 - 1.12.2 블록 상태는 전혀 제공되지 않습니다. 대신 그 텍스처를 읽어 생성기가 찾는 이름으로 제공하며, 블록 상태에 `end`, `top`, `bottom`이 있던 곳에는 `_top`과 `_bottom`이 붙은 `textures/block/<variant>.png`를 씁니다. 그러면 여기서 작성한 팩과 마찬가지로 변형마다 블록 상태와 모델이 생성됩니다.
@@ -3163,7 +3166,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 
 `<namespace>/enchantments/*.json`
 
-파일의 경로가 곧 마법의 레지스트리 이름이므로 `mypack/enchantments/venom_edge.json`은 `mypack:venom_edge`를 등록합니다. 마법은 `category`에 해당하는 아이템과 `items`에 적힌 모든 아이템에 붙으며, 다른 마법과 마찬가지로 마법 부여대가 제시하고, 전리품에 실리고, 주민이 거래합니다.
+파일의 경로가 곧 마법의 레지스트리 이름이므로 `mypack/enchantments/venom_edge.json`은 `mypack:venom_edge`를 등록합니다. 마법은 `category`에 해당하는 아이템과 `items`에 적힌 모든 아이템에 붙으며, 다른 마법과 마찬가지로 마법 부여대가 제시하고, 전리품에 실리고, 주민이 거래합니다. [영혼 귀속 아이템](#영혼-귀속-아이템) 파일로는 마법이 붙은 스택에 표시를 붙일 수도 있습니다.
 
 ```json
 {
@@ -3738,7 +3741,7 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 | `rollOnKeepInventory` | 아니요 | 불리언               | `false` | 인벤토리를 유지한 죽음에서 테이블을 추첨할지 여부              |
 | `dropLoose`           | 아니요 | 불리언               | `false` | 아이템이 사망 드롭에 합쳐지지 않고 바닥에 바로 놓일지 여부     |
 
-`add`는 인벤토리와 함께 테이블의 아이템을 떨어뜨리며, 현상금 사냥에 알맞습니다. `replace`는 인벤토리를 버리고 테이블이 추첨한 것만 떨어뜨립니다.
+`add`는 인벤토리와 함께 테이블의 아이템을 떨어뜨리며, 현상금 사냥에 알맞습니다. `replace`는 인벤토리를 버리고 테이블이 추첨한 것만 떨어뜨리지만, [영혼 귀속 아이템](#영혼-귀속-아이템)은 결코 버리지 않습니다.
 
 `rollOnKeepInventory`가 꺼져 있으면 `keepInventory` 아래의 죽음(항상 인벤토리를 유지하는 관전자의 죽음 포함)은 아무것도 추첨하지 않습니다. 켜면 인벤토리 유지 월드에서도 죽음의 대가가 따릅니다.
 
@@ -3758,6 +3761,60 @@ id만 쓰며 태그는 쓸 수 없습니다. 문, 키 큰 식물, 침대처럼 �
 `dropLoose`는 드롭 목록을 완전히 건너뜁니다. 아이템이 월드에 직접 놓이므로 무덤 모드는 그것을 보지 못하며, 인벤토리는 무덤에 들어가고 테이블의 아이템은 처치한 쪽을 위해 바닥에 놓입니다. 희생자의 무덤이 아니라 처치한 쪽에게 속하는 전리품에 쓰세요. 무덤 모드가 없으면 거의 차이가 없습니다. 주의: 아이템이 이후 단계에서 드롭을 취소하기 전에 이미 존재하므로, 취소된 죽음에서 남으면 안 되는 항목은 꺼 두세요.
 
 `data` 설정 범주의 `playerLoot`를 `false`로 설정하면 폴더 전체가 꺼집니다.
+
+## 영혼 귀속 아이템
+
+*제작, 전리품, 거래*
+
+`<namespace>/soulbound/*.json`
+
+파일 이름은 원하는 대로 정할 수 있습니다. 폴더만 읽으며 여러 파일이 겹쳐 적용되고, 파일마다 표시를 하나씩 남깁니다. `enchantment`, `items`, `nbt` 중 정확히 하나를 파일에 쓰며, 아무것도 없거나 둘 이상인 파일은 로그에 남기고 건너뜁니다. 표시가 붙은 스택은 아래 키에 따라 죽음과 리스폰을 거쳐도 플레이어에게 남습니다.
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| 키                    | 필수       | 값                       | 기본값                                          | 설명                                                                                                                                                                                                                                                                    |
+| --------------------- | ---------- | ------------------------ | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantment`         | 셋 중 하나 | 마법 ID                  |                                                 | 등록된 마법이면 무엇이든 가능합니다. 팩 고유, 바닐라, 다른 모드의 마법이 모두 해당합니다. 레벨 1 이상인 스택에 표시가 붙습니다. 알 수 없는 ID는 한 번 로그에 남고, 사용할 때 파일을 건너뜁니다                                                                          |
+| `items`               | 셋 중 하나 | 아이템 ID 목록           |                                                 | 태그와 상관없이 그 아이템에 표시가 붙습니다. 1.12.2에서는 ID 뒤에 `:meta` 또는 `:*`를 쓸 수 있습니다. 최신 버전에서는 ID만 씁니다                                                                                                                                       |
+| `nbt`                 | 셋 중 하나 | 태그 이름                |                                                 | 스택의 루트 태그가 그 이름의 불리언을 true로 가지면 표시를 붙입니다. 1.21 이상에서 루트 태그는 스택의 커스텀 데이터(`minecraft:custom_data`)입니다                                                                                                                      |
+| `loseChance`          | 아니요     | 0에서 1                  | `0`                                             | 죽을 때마다 표시가 사라질 확률입니다. `enchantment`는 한 단계씩 떨어지며(마지막 단계가 사라지면 마법도 제거됩니다), `nbt`는 플래그입니다. `items`의 표시는 잃지 않으므로 이 키는 무시되고 로그 줄이 남습니다. 0은 절대 없음, 1은 항상, 그 사이 값은 반올림하지 않습니다 |
+| `rollOnKeepInventory` | 아니요     | 불리언                   | `false`                                         | 인벤토리를 유지한 죽음(keepInventory 규칙 또는 관전자)에도 확률을 굴릴지 여부입니다. `player_loot`과 이름과 기본값이 같습니다                                                                                                                                           |
+| `graves`              | 아니요     | `player` 또는 `grave`    | `player`                                        | `player`: 아이템이 죽음의 시작에 꺼내져 드롭 목록에 들어가지 않으므로 어떤 무덤 모드도 보지 못합니다. `grave`: 아이템이 드롭과 함께 움직입니다. 가져간 무덤 모드가 그것을 보관하며, 그렇지 않으면 리스폰할 때 플레이어에게 돌아갑니다                                   |
+| `loseFirst`           | 아니요     | 불리언                   | `false`                                         | `false`: 아이템은 이번 죽음에 돌아오며, 표시를 잃은 상태로 돌아옵니다. `true`: 확률을 먼저 굴리고, 표시를 모두 잃은 아이템은 다른 아이템처럼 떨어집니다                                                                                                                 |
+| `keepVanishing`       | 아니요     | 불리언                   | `false`                                         | `false`: 소멸의 저주가 걸린 아이템은 바닐라처럼 사라집니다. `true`: 표시가 우선합니다                                                                                                                                                                                   |
+| `tooltip`             | 아니요     | 언어 키 또는 일반 텍스트 | `rdpl.tooltip.soulbound` ("영혼 귀속"으로 표시) | 표시되는 줄입니다. 빈 문자열이면 아무것도 표시하지 않습니다. 불러온 언어 파일에 그 키가 있으면 언어 키로, 없으면 일반 텍스트로 씁니다. `tooltips`와 같습니다                                                                                                            |
+
+한 스택이 여러 항목에 맞으면, 그중 하나라도 맞을 때 표시가 붙습니다. `graves`는 맞는 항목 중 하나라도 `player`라고 하면 `player`입니다. 맞는 `enchantment`와 `nbt` 항목은 각자 확률을 굴립니다. 서로 다른, 빈 문자열이 아닌 `tooltip`마다 툴팁 줄이 한 줄씩 나옵니다.
+
+**죽을 때.** 표시가 붙은 아이템은 죽음이 시작될 때 인벤토리에서 꺼내집니다. 다른 모드나 드롭 목록이 읽기 전이며, `player` 모드에서는 드롭 밖에 남으므로 무덤 모드가 보지 못하고 리스폰할 때 플레이어에게 돌아갑니다. `grave` 모드에서는 드롭과 함께 움직입니다. 가져간 무덤 모드는 그것을 보관하고, 나머지는 리스폰할 때 돌아갑니다. 토템 같은 효과로 다른 모드가 죽음을 취소하면 꺼내진 아이템은 모두 인벤토리로 돌아갑니다.
+
+**keepInventory와 관전자.** 바닐라는 이런 죽음에서 인벤토리 전체를 유지하므로 아무것도 꺼내지 않습니다. 확률은 `rollOnKeepInventory`가 true일 때만 굴리며, `player_loot`과 같은 규칙입니다.
+
+**교체.** `replace` 모드의 `player_loot` 테이블은 영혼 귀속 아이템을 버리지 않습니다.
+
+**소멸.** 바닐라는 드롭이 생기기 전에 소멸의 저주가 걸린 아이템을 없애므로, 그 저주가 걸리고 `keepVanishing`이 true인 아이템은 항상 `player` 모드를 씁니다. `keepVanishing`이 false이면 바닐라처럼 사라집니다.
+
+**닿지 않는 것.** 읽히는 것은 바닐라 인벤토리뿐입니다. Curios 슬롯이나 다른 모드의 슬롯은 닿지 않습니다.
+
+**설정.** `data` 설정 범주에서 `soulbound`를 `false`로 두면 이 기능이 꺼집니다. 파일을 읽지 않고, 아이템을 보관하지 않으며, 툴팁도 그리지 않습니다. 바닐라 클라이언트에서도 표시는 서버만으로 동작합니다. `vanillaClients`를 켜면 툴팁이 꺼지며, 툴팁은 클라이언트에 모드가 있어야 합니다.
 
 ## 음식 다양성
 

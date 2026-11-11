@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchD
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
+import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -138,11 +140,18 @@ public final class PackTooltips {
         }
     }
 
+    private static void soulbound(ItemStack stack, List<Component> tooltip) {
+        ClientLevel level = Minecraft.getInstance().level;
+        if (Config.content.vanillaClients() || stack.isEmpty() || level == null) { return; }
+        for (String line : ContentSoulbound.tooltips(level.registryAccess(), stack)) { tooltip.add(text(line)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         weight(event.getItemStack(), event.getToolTip());
         kept(event.getItemStack(), event.getToolTip());
         diet(event.getItemStack(), event.getToolTip());
         fertility(event.getItemStack(), event.getToolTip());
+        soulbound(event.getItemStack(), event.getToolTip());
         affixes(event.getItemStack(), event.getToolTip());
         lines(event);
     }

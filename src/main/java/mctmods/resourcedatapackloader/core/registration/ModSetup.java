@@ -115,6 +115,7 @@ import mctmods.resourcedatapackloader.common.scoring.ContentScoring;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleep;
 import mctmods.resourcedatapackloader.common.sleeping.ContentSleepingBags;
+import mctmods.resourcedatapackloader.common.soulbound.SoulboundDeath;
 import mctmods.resourcedatapackloader.common.trades.ContentVillagers;
 import mctmods.resourcedatapackloader.common.util.ContentDisabledEvents;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
@@ -504,6 +505,10 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, SoulboundDeath::onDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, SoulboundDeath::onDeathCanceled);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, SoulboundDeath::onDrops);
+        NeoForge.EVENT_BUS.addListener(SoulboundDeath::onClone);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, MobDrops::onDrops);
         NeoForge.EVENT_BUS.addListener(ModSetup::onTagsUpdated);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ModSetup::onAddReloadListeners);
