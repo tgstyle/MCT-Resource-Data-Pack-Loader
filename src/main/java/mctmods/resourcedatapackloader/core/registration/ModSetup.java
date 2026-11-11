@@ -104,6 +104,7 @@ import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
+import mctmods.resourcedatapackloader.common.rules.ContentSneakGrow;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
@@ -471,6 +472,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentGrowWater::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onBabySpawn);
+        NeoForge.EVENT_BUS.addListener(ContentSneakGrow::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(ContentSneakGrow::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onCanSleep);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onContinueSleep);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepFinished);
@@ -620,6 +623,7 @@ public class ModSetup {
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
+        ContentSneakGrow.forget();
         DissolvePass.clear();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
         PackManager.get().close();
