@@ -214,6 +214,7 @@ rdpl.tooltip.fertility.water.found=Água: encontrada nas proximidades
 rdpl.tooltip.fertility.water.missing=Água: nenhuma até %s blocos, crescimento x%s
 rdpl.tooltip.fertility.water.breaks=Água: nenhuma até %s blocos, a planta parte-se
 rdpl.tooltip.fertility.water.waived=Água: não é necessária sob cobertura
+rdpl.tooltip.soulbound=Vinculado à alma
 rdpl.carry.block=A transportar %s (baixa-te e clica com o botão direito para o pousar)
 rdpl.carry.mob=A transportar %s (baixa-te e clica com o botão direito num bloco para o pousar)
 rdpl.carry.down=Pousaste %s

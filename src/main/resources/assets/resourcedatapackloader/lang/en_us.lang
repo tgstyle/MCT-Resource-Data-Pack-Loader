@@ -214,6 +214,7 @@ rdpl.tooltip.fertility.water.found=Water: found nearby
 rdpl.tooltip.fertility.water.missing=Water: none within %s blocks, growth x%s
 rdpl.tooltip.fertility.water.breaks=Water: none within %s blocks, the plant breaks
 rdpl.tooltip.fertility.water.waived=Water: not needed under cover
+rdpl.tooltip.soulbound=Soulbound
 rdpl.carry.block=Carrying %s (sneak and right-click to set it down)
 rdpl.carry.mob=Carrying %s (sneak and right-click a block to set it down)
 rdpl.carry.down=Set down %s

@@ -45,6 +45,7 @@ public final class PackReport {
         collect(off, Config.data.affixes, "data.affixes", PackManager.JSON, PackManager.AFFIXES, PackManager.GEMS);
         collect(off, Config.data.enchanting, "data.enchanting", PackManager.JSON, PackManager.ENCHANTING);
         collect(off, Config.data.playerLoot, "data.playerLoot", PackManager.JSON, PackManager.PLAYER_LOOT);
+        collect(off, Config.data.soulbound, "data.soulbound", PackManager.JSON, PackManager.SOULBOUND);
         collect(off, Config.data.registryRemaps, "data.registryRemaps", PackManager.JSON, PackManager.REGISTRY_REMAP);
         collect(off, Config.worldgen.load, "worldgen.load", PackManager.JSON, PackManager.WORLDGEN);
         collect(off, Config.data.functions, "data.functions", PackManager.MCFUNCTION, PackManager.FUNCTIONS);

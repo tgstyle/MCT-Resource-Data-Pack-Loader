@@ -214,6 +214,7 @@ rdpl.tooltip.fertility.water.found=Вода: рядом есть
 rdpl.tooltip.fertility.water.missing=Воды нет в радиусе %s блоков, рост x%s
 rdpl.tooltip.fertility.water.breaks=Воды нет в радиусе %s блоков, растение ломается
 rdpl.tooltip.fertility.water.waived=Вода: под укрытием не нужна
+rdpl.tooltip.soulbound=Привязано к душе
 rdpl.carry.block=Вы несёте: %s (присядьте и щёлкните правой кнопкой мыши, чтобы поставить)
 rdpl.carry.mob=Вы несёте: %s (присядьте и щёлкните правой кнопкой мыши по блоку, чтобы поставить)
 rdpl.carry.down=Вы поставили: %s

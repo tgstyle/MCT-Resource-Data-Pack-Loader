@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
+import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -134,6 +135,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         }
     }
 
+    private static void soulbound(ItemStack stack, List<String> tooltip) {
+        if (Config.content.vanillaClients || stack.isEmpty()) { return; }
+        for (String line : ContentSoulbound.tooltips(stack)) { tooltip.add(text(line)); }
+    }
+
     @SubscribeEvent public static void onTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         List<String> tooltip = event.getToolTip();
@@ -141,6 +147,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         kept(stack, tooltip);
         diet(stack, tooltip);
         fertility(stack, tooltip);
+        soulbound(stack, tooltip);
         if (ContentTooltips.none()) { return; }
         for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(stack).entrySet()) {
             List<String> lines = ContentTooltips.forEnchantment(entry.getKey());

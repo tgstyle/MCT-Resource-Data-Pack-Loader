@@ -79,6 +79,7 @@ Catorze exemplos funcionais. Coloca qualquer um deles diretamente em `rdploader`
 - [Portas emparelhadas](#portas-emparelhadas)
 - [Remoções de saque](#remoções-de-saque)
 - [Saque de jogadores](#saque-de-jogadores)
+- [Itens vinculados à alma](#itens-vinculados-à-alma)
 - [Variedade alimentar](#variedade-alimentar)
 - [Aldeões e trocas](#aldeões-e-trocas)
 
@@ -234,6 +235,7 @@ Todos os caminhos deste guia estão escritos a partir de `assets/`, pelo que `<n
 | `<namespace>/harvests/*.json`                                                                   | Culturas colhidas e replantadas com o botão direito. [Colheita com o botão direito](#colheita-com-o-botão-direito)                                                                                                       |
 | `<namespace>/carries/*.json`                                                                    | Blocos e mobs que um jogador agachado apanha e volta a pousar. [Transportar](#transportar)                                                                                                                               |
 | `<namespace>/player_loot/*.json`                                                                | Uma tabela de saque lançada quando um jogador morre. [Saque de jogadores](#saque-de-jogadores)                                                                                                                           |
+| `<namespace>/soulbound/*.json`                                                                  | Itens que ficam com o jogador após a morte. [Itens vinculados à alma](#itens-vinculados-à-alma)                                                                                                                          |
 | `<namespace>/diets/*.json`                                                                      | Regras que fazem um alimento repetido alimentar menos e uma dieta variada alimentar mais. [Variedade alimentar](#variedade-alimentar)                                                                                    |
 | `<namespace>/columns/*.json`                                                                    | Sequências de blocos que caem e partem juntamente com os blocos acima do bloco partido pelo jogador. [Colunas que caem](#colunas-que-caem)                                                                               |
 | `<namespace>/leaf_decay/*.json`                                                                 | As folhas à volta de um tronco removido decompõem-se num temporizador curto. [Decomposição das folhas](#decomposição-das-folhas)                                                                                         |
@@ -575,6 +577,7 @@ O modelo nunca é registado, enquanto `jacks_ore` é registado com o material, o
 - **Injeções de saque**, acrescentam um grupo a uma tabela de saque em vez de substituir tudo
 - **Remoções de saque**, retira uma entrada ou um item de uma tabela de saque, ou esvazia-a, sem substituir a tabela
 - **Saque de jogadores**, lança uma tabela de saque quando um jogador morre, além do que transportava ou em vez disso
+- **Itens vinculados à alma**, mantenha os itens marcados após a morte e o renascimento
 - **Itens largados por blocos**, acrescentam ou substituem o que qualquer bloco larga quando um jogador o parte
 - **Propriedades de blocos, itens e poções existentes**, dureza, luz, tamanhos de pilha, comida em qualquer coisa, os efeitos de uma poção, ver [Substituições de propriedades](#substituições-de-propriedades)
 - **Nomes do dicionário de minérios, receitas de fornalha, tempos de queima de combustível, separadores criativos e eventos de som**
@@ -609,7 +612,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                   | `blocks`, `items`, `fluids`, `materials`                                                                                                      |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (linhas de dica de itens e encantamentos, nomes de afixos e encaixes) |
-| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`, `spawn_swaps`                                                                        | `biomes`, `dimensions`, `portalframes`                                                                                                        |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`, `spawn_swaps`, `soulbound`                                                           | `biomes`, `dimensions`, `portalframes`                                                                                                        |
 | `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `mob_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                                     |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (para profissões que o cliente conhece: as do vanilla ou as de um mod presente nos dois lados)        | `entities`, `worldintro`, `texts` (a introdução nunca é exibida a um cliente vanilla)                                                         |
 | `teams`, `scoring`, `ranks`                                                                                                                                                              | `models`, `blockstates`, `textures`, `lang` (pastas do cliente; sem cliente, deixa-as de fora)                                                |
@@ -617,7 +620,7 @@ Um pacote pode viver só no servidor, com jogadores em clientes vanilla puros, s
 
 A coluna da direita é um limite rígido: um cliente vanilla enviado para uma dimensão desconhecida é desligado, e não é possível descrever-lhe blocos desconhecidos. A coluna da esquerda funciona porque tudo o que lá está ou corre inteiramente do lado do servidor ou chega ao cliente através de pacotes que o vanilla já entende (ranhura de resultado de fabrico preenchida pelo servidor, pacotes de progressos normais, recusas de passagem em mensagens de estado e uma retenção de pré-geração feita de pacotes vanilla de modo de jogo, título e teletransporte).
 
-Ficam no servidor e só o cliente do próprio mod os desenha: o `background` de uma barra de chefe, `heartColors` num ficheiro de corações, `tooExpensive` num ficheiro de bigorna, `enchantCosts` e `lapisCosts` num ficheiro de encantamento, e os nomes de afixos e encaixes de gemas. Com `vanillaClients` ativo, cada um destes valores que um pacote define é indicado no registo, e o resto do ficheiro continua a aplicar-se.
+Ficam no servidor e só o cliente do próprio mod os desenha: o `background` de uma barra de chefe, `heartColors` num ficheiro de corações, `tooExpensive` num ficheiro de bigorna, `enchantCosts` e `lapisCosts` num ficheiro de encantamento, e os nomes de afixos e encaixes de gemas, e a dica de vinculado à alma. Com `vanillaClients` ativo, cada um destes valores que um pacote define é indicado no registo, e o resto do ficheiro continua a aplicar-se.
 
 `worldtemplates` funciona do lado do servidor, com uma exceção: **`rubicWorld` não pode ser usado com `vanillaClients`**. Um mundo rubic é feito de cubos, e não é possível enviá-los a um cliente sem o mod, que seria recusado no início de sessão ou não veria nada. Com ambos definidos, os mundos novos são criados normais em vez de rubic e o registo diz porquê, em vez de deixar um servidor que recusa todos os jogadores. Ligar `vanillaClients` num mundo que *já* foi criado como mundo rubic é o único caso que pára o jogo por completo: carregar essa gravação como um mundo normal arruiná-la-ia, por isso é deixada intacta para decidires.
 
@@ -3350,6 +3353,8 @@ Cada entrada de `effects` tem um `type`:
 
 O registo de encantamentos é guardado com o mundo, como as poções personalizadas. Remover o pack leva o servidor ao aviso do Forge sobre entradas em falta, que pede uma confirmação e antes faz uma cópia de segurança do mundo; um servidor dedicado espera por ela, a não ser que arranque com `-Dfml.queryResult=confirm`. O id continua reservado para que nenhum outro encantamento o assuma, os itens guardam-no na sua tag, o vanilla ignora-o enquanto o pack falta, e ele volta quando o pack volta.
 
+Um ficheiro [vinculado à alma](#itens-vinculados-à-alma) também pode indicar um encantamento, para que cada pilha que o tenha fique com o jogador depois da morte.
+
 ## Trabalho na bigorna
 
 *fabrico, saque e comércio*
@@ -3971,7 +3976,7 @@ O vanilla 1.12 não dá tabela de saque aos jogadores: a morte larga apenas o in
 | `rollOnKeepInventory` | não         | booleano           | `false`      | Se a tabela chega sequer a ser sorteada numa morte que manteve o inventário                  |
 | `dropLoose`           | não         | booleano           | `false`      | Se os itens são postos diretamente no chão em vez de se juntarem aos itens largados na morte |
 
-`add` larga os itens da tabela juntamente com o inventário; usa-o para recompensas por abate. `replace` descarta o inventário e larga apenas o que a tabela sortear.
+`add` larga os itens da tabela juntamente com o inventário; usa-o para recompensas por abate. `replace` descarta o inventário e larga apenas o que a tabela sortear. Uma entrada `replace` nunca descarta um item [vinculado à alma](#itens-vinculados-à-alma).
 
 Com `rollOnKeepInventory` desativado, as mortes sob `keepInventory` (e as mortes em modo espectador, que mantêm sempre o inventário) não sorteiam nada. Ativá-lo mantém as mortes dispendiosas em mundos com keep-inventory.
 
@@ -3991,6 +3996,64 @@ Uma função de saque é própria do RDPL, utilizável em qualquer tabela com um
 `dropLoose` ignora por completo a lista de itens largados: os itens são colocados diretamente no mundo, pelo que os mods de sepulturas nunca os veem; o inventário vai para a sepultura, os itens da tabela ficam no chão para o assassino. Usa-o para despojos que pertencem ao assassino e não à sepultura da vítima. Sem um mod de sepulturas, pouco muda. Ressalva: os itens passam a existir antes de qualquer coisa a jusante poder cancelar os itens largados, pelo que as entradas que não devem sobreviver a uma morte cancelada devem deixá-lo desativado.
 
 Define `playerLoot` na categoria `data` da config como `false` para desativar a pasta por completo.
+
+## Itens vinculados à alma
+
+*fabrico, saque e comércio*
+
+`<namespace>/soulbound/*.json`
+
+O nome do ficheiro é escolhido por si; apenas a pasta é lida, e vários ficheiros acumulam-se. Cada ficheiro faz uma marca, por um encantamento, uma lista de itens ou um booleano na própria tag da pilha, por isso exatamente um de `enchantment`, `items` e `nbt` vai em cada ficheiro. Um ficheiro sem nenhum deles, ou com mais de um, é registado no registo e ignorado.
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| Chave                 | Obrigatório | Valor                            | Predefinição                                     | O que faz                                                                                                                                                                                                                                                                                                |
+| --------------------- | ----------- | -------------------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantment`         | um de três  | id de encantamento               |                                                  | Qualquer encantamento registado: um do pacote, do vanilla ou de outro mod. Uma pilha de nível 1 ou superior fica marcada. Um id desconhecido é registado uma vez e o ficheiro ignorado no momento da utilização                                                                                          |
+| `items`               | um de três  | lista de ids de itens            |                                                  | Marcados sejam quais forem as tags. Na 1.12.2, `:meta` e `:*` funcionam depois do id, como em `tooltips`                                                                                                                                                                                                 |
+| `nbt`                 | um de três  | nome de tag                      |                                                  | Marcado quando a tag raiz da própria pilha tem esse booleano como verdadeiro                                                                                                                                                                                                                             |
+| `loseChance`          | não         | 0 a 1                            | `0`                                              | Probabilidade por morte de a marca desaparecer: um nível para `enchantment` (o último nível remove o encantamento), a flag para `nbt`. As marcas de `items` não podem ser perdidas, por isso a chave é ignorada aí com uma linha no registo. 0 nunca, 1 sempre, valores intermédios não são arredondados |
+| `rollOnKeepInventory` | não         | booleano                         | `false`                                          | Se a probabilidade é sorteada numa morte que manteve o inventário (regra keepInventory ou espectador). Mesmo nome e predefinição de `player_loot`                                                                                                                                                        |
+| `graves`              | não         | `player` ou `grave`              | `player`                                         | `player`: o item nunca chega à lista de itens largados, por isso nenhum mod de túmulos o vê. `grave`: ele segue com os itens largados; um mod de túmulos que o tome ou remova mantém-no, senão regressa ao jogador                                                                                       |
+| `loseFirst`           | não         | booleano                         | `false`                                          | `false`: o item regressa nesta morte e volta sem a marca perdida. `true`: o sorteio vem primeiro, e um item que perdeu toda a marca cai como qualquer outro item                                                                                                                                         |
+| `keepVanishing`       | não         | booleano                         | `false`                                          | `false`: um item com a Maldição do Desaparecimento continua a desaparecer, como no vanilla. `true`: a marca prevalece                                                                                                                                                                                    |
+| `tooltip`             | não         | chave de idioma ou texto simples | `rdpl.tooltip.soulbound` (lê "Vinculado à alma") | A linha mostrada. Uma cadeia vazia não mostra nenhuma. Uma chave de idioma quando um ficheiro de idioma carregado a tem, texto simples caso contrário, como faz `tooltips`                                                                                                                               |
+
+Várias marcas numa pilha: fica marcada se qualquer entrada corresponder. `graves` é `player` se alguma entrada correspondente o disser. Cada entrada correspondente de `enchantment` ou `nbt` sorteia a sua própria probabilidade. Aparece uma linha de dica por cada `tooltip` não vazio e distinto das entradas correspondentes.
+
+**Na morte.** Com `graves` em `player`, a predefinição, um item marcado sai do inventário no início da morte, antes que qualquer mod de túmulos ou a lista de itens largados o veja, e regressa ao jogador no renascimento. Se outro mod cancelar a morte, como faz um efeito tipo totem, os itens voltam ao inventário.
+
+**Perder a marca.** Com `loseFirst` desligado, uma marca perdida mantém ainda assim o item nessa morte, e o item regressa sem a marca. Com `loseFirst` ligado, o sorteio vem primeiro, e um item que perde toda a marca cai como qualquer outro item.
+
+**Túmulos.** Com `graves` em `grave`, os itens marcados juntam-se aos itens largados com tudo o resto. Os que um mod de túmulos tomar ficam com ele, e os restantes regressam ao jogador no renascimento.
+
+**keepInventory e espectadores.** O vanilla mantém tudo numa morte com keepInventory e numa morte de espectador, por isso nada é movido. Uma marca só é sorteada nessas mortes quando `rollOnKeepInventory` é verdadeiro.
+
+**Substituir.** Uma entrada `replace` em [Saque de jogadores](#saque-de-jogadores) nunca descarta um item vinculado à alma.
+
+**Maldição do Desaparecimento.** O vanilla destrói um item amaldiçoado quando o jogador morre, antes de existirem itens largados. Por isso um item com essa maldição segue sempre o modo jogador quando `keepVanishing` é verdadeiro, qualquer que seja o `graves`. Com `keepVanishing` falso, desaparece como no vanilla.
+
+**O que não alcança.** Itens fora do inventário do vanilla, como os slots do Baubles, não são alcançados por esta funcionalidade.
+
+**Config.** Defina `soulbound` na categoria `data` da config como `false` para desligar a pasta: nenhum ficheiro é lido, nada é mantido e nenhuma dica aparece. A dica fica também desligada quando `vanillaClients` está ativo, e precisa do mod no cliente. A marcação funciona só com o servidor e clientes vanilla.
 
 ## Variedade alimentar
 

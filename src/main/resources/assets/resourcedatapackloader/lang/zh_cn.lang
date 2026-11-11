@@ -214,6 +214,7 @@ rdpl.tooltip.fertility.water.found=水：附近有水
 rdpl.tooltip.fertility.water.missing=水：%s 格内没有水，生长速度 x%s
 rdpl.tooltip.fertility.water.breaks=水：%s 格内没有水，植物会被破坏
 rdpl.tooltip.fertility.water.waived=水：遮盖下不需要水
+rdpl.tooltip.soulbound=灵魂绑定
 rdpl.carry.block=正在搬运：%s（潜行并右键即可放下）
 rdpl.carry.mob=正在搬运：%s（潜行并右键点击方块即可放下）
 rdpl.carry.down=已放下：%s

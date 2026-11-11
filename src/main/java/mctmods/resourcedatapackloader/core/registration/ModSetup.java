@@ -78,6 +78,7 @@ import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
 import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.soulbound.SoulboundDeath;
 import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnedBlocksProvider;
@@ -214,6 +215,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(WeightSync.class);
         MinecraftForge.EVENT_BUS.register(ContentStorageSwap.class);
         MinecraftForge.EVENT_BUS.register(PlayerLoot.class);
+        MinecraftForge.EVENT_BUS.register(SoulboundDeath.class);
         LootFunctionManager.registerFunction(new KilledName.Serializer());
         LootTableList.register(ContentPierCargo.LOOT_TABLE);
         RegistryRemaps.reload();

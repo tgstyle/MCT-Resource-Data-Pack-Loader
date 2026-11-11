@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.loot;
 
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
+import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -73,7 +74,7 @@ public final class PlayerLoot {
         for (EntityItem drop : drops) { player.world.spawnEntity(drop); }
     }
 
-    private static boolean keeping(EntityPlayer player) { return player.world.getGameRules().getBoolean(KEEP_INVENTORY_RULE) || player.isSpectator(); }
+    public static boolean keeping(EntityPlayer player) { return player.world.getGameRules().getBoolean(KEEP_INVENTORY_RULE) || player.isSpectator(); }
 
     private static void roll(EntityPlayer player, DamageSource source, boolean recentlyHit, List<EntityItem> drops) {
         if (!Config.data.playerLoot) { return; }
@@ -90,7 +91,7 @@ public final class PlayerLoot {
             replacing |= entry.replace;
         }
         if (rolling.isEmpty()) { return; }
-        if (replacing) { drops.clear(); }
+        if (replacing) { drops.removeIf(drop -> !ContentSoulbound.marked(drop.getItem())); }
         EntityPlayer killer = killer(source, recentlyHit);
         for (Entry entry : rolling) {
             LootTable table = world.getLootTableManager().getLootTableFromLocation(ContentLootSwitch.swap(world, new BlockPos(player), entry.table));

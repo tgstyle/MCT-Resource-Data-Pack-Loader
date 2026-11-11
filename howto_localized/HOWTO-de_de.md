@@ -79,6 +79,7 @@ Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir 
 - [Gepaarte Türen](#gepaarte-türen)
 - [Beute-Entfernungen](#beute-entfernungen)
 - [Spielerbeute](#spielerbeute)
+- [Seelengebundene Gegenstände](#seelengebundene-gegenstände)
 - [Nahrungsvielfalt](#nahrungsvielfalt)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
 
@@ -234,6 +235,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/harvests/*.json`                                                                   | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                                                                                                                                                     |
 | `<namespace>/carries/*.json`                                                                    | Blöcke und Mobs, die ein Spieler schleichend aufhebt und wieder absetzt. [Tragen](#tragen)                                                                                                                                                                                             |
 | `<namespace>/player_loot/*.json`                                                                | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                                                                                                                                        |
+| `<namespace>/soulbound/*.json`                                                                  | Gegenstände, die auch beim Tod beim Spieler bleiben. [Seelengebundene Gegenstände](#seelengebundene-gegenstände)                                                                                                                                                                       |
 | `<namespace>/diets/*.json`                                                                      | Regeln, nach denen ein wiederholtes Essen weniger und eine abwechslungsreiche Ernährung mehr sättigt. [Nahrungsvielfalt](#nahrungsvielfalt)                                                                                                                                            |
 | `<namespace>/columns/*.json`                                                                    | Reihen fallender Blöcke, die über einem vom Spieler gebrochenen Block mit abbrechen. [Fallende Säulen](#fallende-säulen)                                                                                                                                                               |
 | `<namespace>/leaf_decay/*.json`                                                                 | Laub um einen entfernten Stamm zerfällt auf einem kurzen Timer. [Laubzerfall](#laubzerfall)                                                                                                                                                                                            |
@@ -575,6 +577,7 @@ Die Vorlage registriert sich nie, während `jacks_ore` mit Material, Sound, Werk
 - **Beute-Injektionen**: einen Pool zu einer Beutetabelle hinzufügen, statt sie komplett zu ersetzen
 - **Beute-Entfernungen**: einen Eintrag oder ein Item aus einer Beutetabelle entfernen oder sie leeren, ohne die Tabelle zu ersetzen
 - **Spielerbeute**: beim Tod eines Spielers eine Beutetabelle auswürfeln, zusätzlich zu dem, was er dabeihatte, oder an dessen Stelle
+- **Seelengebundene Gegenstände**: markierte Gegenstände bleiben über Tod und Wiederbelebung erhalten
 - **Blockdrops**: dem Drop eines beliebigen Blocks beim Abbau durch einen Spieler etwas hinzufügen oder ihn ersetzen
 - **Eigenschaften vorhandener Blöcke, Items und Tränke**: Härte, Licht, Stapelgrößen, Essbarkeit für alles, die Effekte eines Tranks, siehe [Eigenschaften überschreiben](#eigenschaften-überschreiben)
 - **Ore-Dictionary-Namen, Ofenrezepte, Brenndauern, Kreativtabs und Sound-Events**
@@ -609,7 +612,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `caveregions`                                                                                                                   | `blocks`, `items`, `fluids`, `materials`                                                                                                                            |
 | `villages`, `pathintersects`, `structuremaps`, `citymaps`                                                                                                                                | `potions`, `potion_types`, `enchantments`, `sounds`, `tabs`, `tooltips` (Tooltip-Zeilen für Gegenstände und Verzauberungen, Namen von Affixen und Edelsteinplätzen) |
-| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`, `spawn_swaps`                                                                        | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
+| `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `oredict`, `disabled`, `spawn_swaps`, `soulbound`                                                           | `biomes`, `dimensions`, `portalframes`                                                                                                                              |
 | `loot_tables`, `loot_injections`, `loot_removals`, `block_drops`, `mob_drops`, `anvils`, `affixes`, `gems`, `enchanting`, `player_loot`, `advancements`, `functions`, `veins`, `weights` | `villagers`, `item_locks`                                                                                                                                           |
 | `gates`, `cards`, `registry_remap`, `exposures`, `hardness`, `overrides`, `trades` (für Berufe, die der Client kennt: die von Vanilla oder eines beidseitigen Mods)                      | `entities`, `worldintro`, `texts` (das Intro wird einem Vanilla-Client nie gezeigt)                                                                                 |
 | `teams`, `scoring`, `ranks`                                                                                                                                                              | `models`, `blockstates`, `textures`, `lang` (Client-Ordner – ohne Client weglassen)                                                                                 |
@@ -617,7 +620,7 @@ Ein Pack kann allein auf dem Server liegen, mit Spielern auf reinen Vanilla-Clie
 
 Die rechte Spalte ist eine harte Grenze: Ein Vanilla-Client, der in eine unbekannte Dimension geschickt wird, fliegt sofort raus, und unbekannte Blöcke lassen sich ihm nicht beschreiben. Die linke Spalte funktioniert, weil alles darin entweder vollständig serverseitig läuft oder den Client über Netzwerkpakete erreicht, die Vanilla ohnehin spricht (vom Server gefülltes Ergebnisfeld der Werkbank, gewöhnliche Fortschritts-Netzwerkpakete, Statusmeldungen bei abgelehnten Toren, ein Vorgenerierungs-Halt aus Vanilla-Netzwerkpaketen für Spielmodus, Titel und Teleport).
 
-Sie bleiben auf dem Server und werden nur vom eigenen Client des Mods gezeichnet: das `background` einer Bossleiste, `heartColors` in einer Herzen-Datei, `tooExpensive` in einer Amboss-Datei, `enchantCosts` und `lapisCosts` in einer Verzauberungs-Datei sowie die Namen von Affixen und Edelsteinplätzen. Ist `vanillaClients` aktiv, wird jeder dieser Werte, den ein Pack setzt, im Log genannt, und der Rest seiner Datei gilt weiter.
+Sie bleiben auf dem Server und werden nur vom eigenen Client des Mods gezeichnet: das `background` einer Bossleiste, `heartColors` in einer Herzen-Datei, `tooExpensive` in einer Amboss-Datei, `enchantCosts` und `lapisCosts` in einer Verzauberungs-Datei sowie die Namen von Affixen und Edelsteinplätzen und der Tooltip seelengebundener Gegenstände. Ist `vanillaClients` aktiv, wird jeder dieser Werte, den ein Pack setzt, im Log genannt, und der Rest seiner Datei gilt weiter.
 
 `worldtemplates` liegt mit einer Ausnahme auf der Serverseite: **`rubicWorld` und `vanillaClients` schließen sich aus**. Eine Rubic-Welt besteht aus Würfeln, und einem Client ohne den Mod lassen sie sich nicht schicken – er flöge beim Anmelden raus oder sähe schlicht nichts. Sind beide gesetzt, entsteht eine gewöhnliche Welt statt einer Rubic-Welt, und das Log sagt warum; ein Server, der jeden Spieler abweist, entsteht so gar nicht erst. Nur ein Fall hält das Spiel wirklich an: `vanillaClients` für eine Welt einzuschalten, die *bereits* als Rubic-Welt angelegt wurde. Einen solchen Spielstand als gewöhnliche Welt zu laden würde ihn zerstören, also bleibt er unangetastet und die Entscheidung bei dir.
 
@@ -3350,6 +3353,8 @@ Jeder Eintrag in `effects` hat einen `type`:
 
 Das Verzauberungsregister wird mit der Welt gespeichert, wie bei eigenen Tränken. Wird das Pack entfernt, schickt der Server die Welt durch die Abfrage von Forge zu fehlenden Einträgen, die eine Bestätigung verlangt und zuerst ein Backup der Welt anlegt; ein dedizierter Server wartet darauf, wenn er nicht mit `-Dfml.queryResult=confirm` gestartet wird. Die ID bleibt reserviert, damit keine andere Verzauberung sie übernimmt, Gegenstände behalten sie in ihrem Tag, Vanilla ignoriert sie, solange das Pack fehlt, und mit dem Pack ist sie wieder da.
 
+Eine Datei für [seelengebundene Gegenstände](#seelengebundene-gegenstände) kann auch eine Verzauberung benennen, sodass jeder Stapel, der sie trägt, über den Tod beim Spieler bleibt.
+
 ## Ambosswerk
 
 *herstellung, beute und handel*
@@ -3971,7 +3976,7 @@ Vanilla 1.12 gibt Spielern keine Beutetabelle – beim Tod fällt nur das Invent
 | `rollOnKeepInventory` | nein    | boolean              | `false`  | Ob die Tabelle bei einem Tod überhaupt ausgewürfelt wird, der das Inventar behalten hat |
 | `dropLoose`           | nein    | boolean              | `false`  | Ob die Items direkt auf den Boden gelegt werden, statt zu den Todesdrops zu kommen      |
 
-`add` legt die Items der Tabelle neben die Inventardrops – die Wahl für Kopfgelder auf einen Kill. `replace` verwirft das Inventar, und es fällt nur, was die Tabelle auswürfelt.
+`add` legt die Items der Tabelle neben die Inventardrops – die Wahl für Kopfgelder auf einen Kill. `replace` verwirft das Inventar, und es fällt nur, was die Tabelle auswürfelt. Ein `replace`-Eintrag verwirft nie einen [seelengebundenen](#seelengebundene-gegenstände) Gegenstand.
 
 Steht `rollOnKeepInventory` auf aus, würfeln Tode unter `keepInventory` (und Tode im Zuschauermodus, die das Inventar immer behalten) nichts. Angeschaltet hält es den Tod auch auf Keep-Inventory-Welten teuer.
 
@@ -3991,6 +3996,64 @@ Eine Beutefunktion bringt RDPL selbst mit, nutzbar in jeder Tabelle mit einem ge
 `dropLoose` umgeht die Dropliste vollständig: Die Items werden direkt in die Welt gesetzt, Grab-Mods sehen sie nie – das Inventar wandert ins Grab, die Items der Tabelle liegen für den Töter auf dem Boden. Nimm sie für Beute, die dem Töter gehört statt dem Grab des Opfers. Ohne Grab-Mod ändert sie wenig. Vorbehalt: Die Items existieren, bevor irgendetwas nachgelagert die Drops noch abbrechen könnte – ein Eintrag, der einen abgebrochenen Tod nicht überleben darf, lässt sie besser aus.
 
 Setz `playerLoot` in der Config-Kategorie `data` auf `false`, um den Ordner ganz abzuschalten.
+
+## Seelengebundene Gegenstände
+
+*herstellung, beute und handel*
+
+`<namespace>/soulbound/*.json`
+
+Die Dateinamen wählst du frei, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich. Jede Datei setzt eine Markierung: über eine Verzauberung, eine Liste von Gegenständen oder einen Boolean im eigenen Tag des Stapels. Darum gehört genau eines von `enchantment`, `items` und `nbt` in jede Datei. Eine Datei ohne davon oder mit mehr als einem wird protokolliert und übersprungen.
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| Schlüssel             | Pflicht          | Wert                         | Standard                                          | Was es tut                                                                                                                                                                                                                                                                                                          |
+| --------------------- | ---------------- | ---------------------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantment`         | eines von dreien | Verzauberungs-ID             |                                                   | Jede registrierte Verzauberung: eine aus dem Pack, aus Vanilla oder von einem anderen Mod. Ein Stapel mit der Verzauberung ab Stufe 1 wird markiert. Eine unbekannte ID wird einmal protokolliert, und die Datei wird zur Nutzungszeit übersprungen                                                                 |
+| `items`               | eines von dreien | Liste von Item-IDs           |                                                   | Markiert, egal welche Tags er trägt. Auf 1.12.2 funktionieren `:meta` und `:*` nach der ID, wie bei `tooltips`                                                                                                                                                                                                      |
+| `nbt`                 | eines von dreien | Tag-Name                     |                                                   | Markiert, wenn der eigene Root-Tag des Stapels diesen Boolean als wahr enthält                                                                                                                                                                                                                                      |
+| `loseChance`          | nein             | 0 bis 1                      | `0`                                               | Chance pro Tod, dass die Markierung verloren geht: eine Stufe bei `enchantment` (die letzte Stufe entfernt die Verzauberung), das Flag bei `nbt`. `items`-Markierungen können nicht verloren gehen, der Schlüssel wird dort mit einer Logzeile ignoriert. 0 heißt nie, 1 immer, Zwischenwerte werden nicht gerundet |
+| `rollOnKeepInventory` | nein             | Boolean                      | `false`                                           | Ob die Chance bei einem Tod gewürfelt wird, der das Inventar behalten hat (Regel keepInventory oder Zuschauer). Gleicher Name und gleicher Standard wie bei `player_loot`                                                                                                                                           |
+| `graves`              | nein             | `player` oder `grave`        | `player`                                          | `player`: Der Gegenstand kommt nie in die Dropliste, also sieht ihn kein Grab-Mod. `grave`: Er wandert mit den Drops; ein Grab-Mod, der ihn nimmt oder entfernt, behält ihn, sonst kommt er zum Spieler zurück                                                                                                      |
+| `loseFirst`           | nein             | Boolean                      | `false`                                           | `false`: Der Gegenstand kehrt bei diesem Tod zurück und kommt ohne die verlorene Markierung wieder. `true`: Der Wurf kommt zuerst, und ein Gegenstand, der seine ganze Markierung verloren hat, fällt wie jeder andere Gegenstand                                                                                   |
+| `keepVanishing`       | nein             | Boolean                      | `false`                                           | `false`: Ein Gegenstand mit Fluch der Vergänglichkeit verschwindet weiterhin wie in Vanilla. `true`: Die Markierung gewinnt                                                                                                                                                                                         |
+| `tooltip`             | nein             | Lang-Schlüssel oder Klartext | `rdpl.tooltip.soulbound` (liest „Seelengebunden“) | Die angezeigte Zeile. Ein leerer String zeigt keine. Ein Lang-Schlüssel, wenn eine geladene Lang-Datei ihn hat, sonst Klartext, wie bei `tooltips`                                                                                                                                                                  |
+
+Mehrere Markierungen auf einem Stapel: Er ist markiert, sobald ein passender Eintrag zutrifft. `graves` ist `player`, wenn ein passender Eintrag das so angibt. Jeder passende Eintrag `enchantment` oder `nbt` würfelt seine eigene Chance. Pro verschiedenem, nicht leerem `tooltip` der passenden Einträge erscheint eine Tooltip-Zeile.
+
+**Beim Tod.** Mit `graves` auf `player`, dem Standard, wird ein markierter Gegenstand zu Beginn des Todes aus dem Inventar genommen, noch bevor ein Grab-Mod oder die Dropliste ihn liest, und kehrt beim Respawn zum Spieler zurück. Bricht ein anderer Mod den Tod ab, wie es ein Totem-Effekt tut, kommen die Gegenstände zurück ins Inventar.
+
+**Verlust der Markierung.** Bei ausgeschaltetem `loseFirst` behält eine verlorene Markierung den Gegenstand für diesen Tod, und er kommt ohne Markierung zurück. Bei eingeschaltetem `loseFirst` kommt der Wurf zuerst, und ein Gegenstand, der seine ganze Markierung verliert, fällt wie jeder andere Gegenstand.
+
+**Gräber.** Mit `graves` auf `grave` gehen markierte Gegenstände mit allem anderen in die Drops. Was ein Grab-Mod nimmt, bleibt bei ihm, der Rest kommt beim Respawn zum Spieler zurück.
+
+**keepInventory und Zuschauer.** Vanilla behält bei diesen Toden alles, also wird nichts bewegt. Eine Chance wird bei so einem Tod nur gewürfelt, wenn `rollOnKeepInventory` true ist.
+
+**Ersetzen.** Ein `replace`-Eintrag in [Spielerbeute](#spielerbeute) verwirft nie einen seelengebundenen Gegenstand.
+
+**Fluch der Vergänglichkeit.** Vanilla zerstört verfluchte Gegenstände, bevor es Drops gibt. Darum nimmt ein Gegenstand mit diesem Fluch immer den Modus `player`, wenn `keepVanishing` true ist. Bei `keepVanishing` false verschwindet er wie in Vanilla.
+
+**Was nicht erreicht wird.** Gegenstände außerhalb des Vanilla-Inventars, etwa Baubles-Slots, erreicht dieses Feature nicht.
+
+**Config.** Setz `soulbound` in der Config-Kategorie `data` auf `false`, um das Feature abzuschalten: Keine Datei wird gelesen, nichts wird behalten und kein Tooltip angezeigt. Der Tooltip ist auch aus, wenn `vanillaClients` aktiv ist, und er braucht den Mod auf dem Client. Markierungen funktionieren auch allein auf dem Server mit reinen Vanilla-Clients.
 
 ## Nahrungsvielfalt
 

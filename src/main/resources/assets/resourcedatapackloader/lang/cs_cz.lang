@@ -214,6 +214,7 @@ rdpl.tooltip.fertility.water.found=Voda: poblíž nalezena
 rdpl.tooltip.fertility.water.missing=Voda: v dosahu %s bloků žádná, růst x%s
 rdpl.tooltip.fertility.water.breaks=Voda: v dosahu %s bloků žádná, rostlina se zlomí
 rdpl.tooltip.fertility.water.waived=Voda: pod krytím není potřeba
+rdpl.tooltip.soulbound=Vázáno k duši
 rdpl.carry.block=Neseš: %s (plížením a pravým kliknutím to položíš)
 rdpl.carry.mob=Neseš: %s (plížením a pravým kliknutím na blok to položíš)
 rdpl.carry.down=Položeno: %s
