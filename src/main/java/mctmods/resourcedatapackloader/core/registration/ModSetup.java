@@ -104,6 +104,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentSneakGrow;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
@@ -480,6 +481,8 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentGrowWater::onBonemeal);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentGrowSwitch::onBabySpawn);
+        NeoForge.EVENT_BUS.addListener(ContentSneakGrow::onPlayerTick);
+        NeoForge.EVENT_BUS.addListener(ContentSneakGrow::onLogout);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onCanSleep);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onContinueSleep);
         NeoForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepFinished);
@@ -618,6 +621,7 @@ public class ModSetup {
         CityBorder.forget();
         ContentWeapons.clear();
         ContentEnvironments.stopped();
+        ContentSneakGrow.forget();
         ContentTradeSwitch.forget();
         DissolvePass.clear();
         if (FMLEnvironment.getDist() == Dist.CLIENT) { return; }

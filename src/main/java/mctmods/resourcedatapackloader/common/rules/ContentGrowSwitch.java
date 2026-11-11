@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -34,6 +35,7 @@ public final class ContentGrowSwitch {
     private static final String TOOLTIP = "tooltip";
     private static final String WAIVER = "waiver";
     private static final String WATER = "water";
+    private static final String SNEAK = "sneak";
     private static final List<String> TOOLTIPS = List.of("off", "here", "year");
     private static final List<String> WAIVER_KEYS = List.of("blocks", "within", "scale", "kinds", "clear");
     static final double MOST = 100.0D;
@@ -48,7 +50,7 @@ public final class ContentGrowSwitch {
 
     private ContentGrowSwitch() {}
 
-    @Nullable private static BlockMatch match(String owner, String text) {
+    @Nullable static BlockMatch match(String owner, String text) {
         String name = text.trim();
         if (!name.startsWith("#")) {
             Block block = ContentStates.registered(name);
@@ -152,6 +154,7 @@ public final class ContentGrowSwitch {
         List<GrowSwitchDef.Match> matches = new ArrayList<>();
         WaiverDef waiver = null;
         WaterDef water = null;
+        SneakGrowDef sneak = null;
         int tooltip = GrowSwitchDef.TOOLTIP_OFF;
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             if (BY_BLOCK.equals(entry.getKey())) {
@@ -170,6 +173,10 @@ public final class ContentGrowSwitch {
                 water = ContentGrowWater.parse(owner, entry.getValue());
                 continue;
             }
+            if (SNEAK.equals(entry.getKey())) {
+                sneak = ContentSneakGrow.parse(owner, entry.getValue());
+                continue;
+            }
             int kind = KEYS.indexOf(entry.getKey());
             if (kind < 0) {
                 ContentLog.LOGGER.error("{} gives growth.{}, which is not a growth key, ignoring it", owner, entry.getKey());
@@ -179,7 +186,7 @@ public final class ContentGrowSwitch {
             if (value == null || value < 0.0D || value > MOST) { ContentLog.LOGGER.error("{} gives growth.{} that is not a number from 0 to 100, ignoring it", owner, entry.getKey()); }
             else { scales[kind] = value.floatValue(); }
         }
-        return new GrowSwitchDef(scales, matches, waiver, tooltip, water);
+        return new GrowSwitchDef(scales, matches, waiver, tooltip, water, sneak);
     }
 
     private static float scale(GrowSwitchDef def, ServerLevel level, BlockPos pos, Block block, int kind) {
@@ -188,6 +195,8 @@ public final class ContentGrowSwitch {
         WaterDef water = def.water();
         return speed > 0.0F && water != null && ContentGrowWater.status(level, pos, block, kind, def) == ContentGrowWater.Status.MISSING ? speed * water.scale() : speed;
     }
+
+    static boolean stopped(ServerLevel level, BlockPos pos, Block block, int kind) { return scale(ContentEnvironments.growth(level, pos), level, pos, block, kind) <= 0.0F; }
 
     static int roll(float scale, RandomSource random) {
         int whole = (int) scale;
