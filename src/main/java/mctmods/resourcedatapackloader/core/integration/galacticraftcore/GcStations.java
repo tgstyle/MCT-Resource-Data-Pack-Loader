@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core.integration.galacticraftcore;
 
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.CelestialDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.GalacticraftDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
@@ -98,6 +99,7 @@ final class GcStations {
         }
         BY_TYPE.put(dimension.id, made);
         BY_TYPE.put(fixed, made);
+        ContentDimensions.claimStation(dimension, fixed);
         STATIONS.add(made);
         return true;
     }

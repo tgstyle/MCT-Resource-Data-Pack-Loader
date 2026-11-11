@@ -132,6 +132,8 @@ public final class ContentDimensions {
 
     public static void claim(DimensionDef def) { BY_ID.put(def.id, def); }
 
+    public static void claimStation(DimensionDef def, int fixed) { BY_ID.put(def.id, def); BY_ID.put(fixed, def); STATION_TYPES.add(def.id); STATION_TYPES.add(fixed); }
+
     @Nullable public static DimensionDef byId(int dimension) { return held(BY_ID, dimension); }
 
     @Nullable public static DimensionDef byId(int dimension, Biome biome) { return held(BY_ID, dimension, biome, true); }
