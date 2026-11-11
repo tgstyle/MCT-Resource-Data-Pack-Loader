@@ -103,6 +103,7 @@ import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentMobSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
+import mctmods.resourcedatapackloader.common.rules.ContentSneakGrow;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentSpawning;
 import mctmods.resourcedatapackloader.common.rules.ContentTradeSwitch;
@@ -472,6 +473,8 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentGrowWater::onBonemeal);
         MinecraftForge.EVENT_BUS.addListener(ContentGrowSwitch::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentGrowSwitch::onBabySpawn);
+        MinecraftForge.EVENT_BUS.addListener(ContentSneakGrow::onPlayerTick);
+        MinecraftForge.EVENT_BUS.addListener(ContentSneakGrow::onLogout);
         MinecraftForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentRuleSwitch::onSleepFinished);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, ContentMobSwitch::onJoin);
@@ -616,6 +619,7 @@ public class ModSetup {
         ContentWeapons.clear();
         ContentEnvironments.stopped();
         ContentTradeSwitch.forget();
+        ContentSneakGrow.forget();
         LeafDecayQueue.clear();
         DissolvePass.clear();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }

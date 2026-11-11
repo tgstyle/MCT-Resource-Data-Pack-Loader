@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.common.blocks.ContentStates;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockMatch;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaiverDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -37,6 +38,7 @@ public final class ContentGrowSwitch {
     private static final String TOOLTIP = "tooltip";
     private static final String WAIVER = "waiver";
     private static final String WATER = "water";
+    private static final String SNEAK = "sneak";
     private static final List<String> TOOLTIPS = List.of("off", "here", "year");
     private static final List<String> WAIVER_KEYS = List.of("blocks", "within", "scale", "kinds", "clear");
     static final float MOST = 100.0F;
@@ -154,13 +156,14 @@ public final class ContentGrowSwitch {
     @Nullable public static GrowSwitchDef parse(String owner, @Nullable JsonElement element) {
         if (element == null) { return null; }
         if (!element.isJsonObject()) {
-            ContentLog.LOGGER.error("{} gives growth that is not an object of crops, saplings, animals, breeding, byBlock, tooltip, waiver and water keys, ignoring it", owner);
+            ContentLog.LOGGER.error("{} gives growth that is not an object of crops, saplings, animals, breeding, byBlock, tooltip, waiver, water and sneak keys, ignoring it", owner);
             return null;
         }
         float[] scales = {1.0F, 1.0F, 1.0F, 1.0F};
         List<GrowSwitchDef.Match> matches = new ArrayList<>();
         WaiverDef waiver = null;
         WaterDef water = null;
+        SneakGrowDef sneak = null;
         int tooltip = GrowSwitchDef.TOOLTIP_OFF;
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
             if (BY_BLOCK.equals(entry.getKey())) {
@@ -179,6 +182,10 @@ public final class ContentGrowSwitch {
                 water = ContentGrowWater.parse(owner, entry.getValue());
                 continue;
             }
+            if (SNEAK.equals(entry.getKey())) {
+                sneak = ContentSneakGrow.parse(owner, entry.getValue());
+                continue;
+            }
             int kind = KEYS.indexOf(entry.getKey());
             if (kind < 0) {
                 ContentLog.LOGGER.error("{} gives growth.{}, which is not a growth key, ignoring it", owner, entry.getKey());
@@ -188,7 +195,7 @@ public final class ContentGrowSwitch {
             if (amount > MOST) { ContentLog.LOGGER.error("{} gives growth.{} as {}, which is above {}, ignoring it", owner, entry.getKey(), amount, MOST); }
             else if (amount >= 0.0F) { scales[kind] = amount; }
         }
-        return new GrowSwitchDef(scales, matches, waiver, tooltip, water);
+        return new GrowSwitchDef(scales, matches, waiver, tooltip, water, sneak);
     }
 
     private static float scale(GrowSwitchDef def, ServerLevel level, BlockPos pos, Block block, int kind) {
@@ -196,6 +203,8 @@ public final class ContentGrowSwitch {
         float base = waiver != null && waiver.covers(kind) && waiver.found(level, pos) ? waiver.scale : def.scale(kind, block);
         return base > 0.0F ? base * ContentGrowWater.factor(level, pos, block, kind, def) : base;
     }
+
+    static boolean stopped(ServerLevel level, BlockPos pos, Block block, int kind) { return scale(ContentEnvironments.growth(level, pos), level, pos, block, kind) <= 0.0F; }
 
     private static int steps(ServerLevel level, BlockPos pos, int kind, RandomSource random) { return roll(ContentEnvironments.growth(level, pos).scale(kind), random); }
 

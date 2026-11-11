@@ -12,21 +12,23 @@ public final class GrowSwitchDef {
     public static final int KINDS = 4;
     public static final int TOOLTIP_OFF = 0;
     public static final int TOOLTIP_YEAR = 2;
-    public static final GrowSwitchDef NONE = new GrowSwitchDef(new float[] {1.0F, 1.0F, 1.0F, 1.0F}, List.of(), null, TOOLTIP_OFF, null);
+    public static final GrowSwitchDef NONE = new GrowSwitchDef(new float[] {1.0F, 1.0F, 1.0F, 1.0F}, List.of(), null, TOOLTIP_OFF, null, null);
     private final float[] scales;
     private final List<Match> byBlock;
     @Nullable private final WaiverDef waiver;
     private final int tooltip;
     @Nullable private final WaterDef water;
+    @Nullable private final SneakGrowDef sneak;
 
     public record Match(BlockMatch what, float scale) {}
 
-    public GrowSwitchDef(float[] scales, List<Match> byBlock, @Nullable WaiverDef waiver, int tooltip, @Nullable WaterDef water) {
+    public GrowSwitchDef(float[] scales, List<Match> byBlock, @Nullable WaiverDef waiver, int tooltip, @Nullable WaterDef water, @Nullable SneakGrowDef sneak) {
         this.scales = scales;
         this.byBlock = byBlock;
         this.waiver = waiver;
         this.tooltip = tooltip;
         this.water = water;
+        this.sneak = sneak;
     }
 
     public float scale(int kind) { return scales[kind]; }
@@ -43,6 +45,8 @@ public final class GrowSwitchDef {
     }
 
     @Nullable public WaiverDef waiver() { return waiver; }
+
+    @Nullable public SneakGrowDef sneak() { return sneak; }
 
     public int tooltip() { return tooltip; }
 
