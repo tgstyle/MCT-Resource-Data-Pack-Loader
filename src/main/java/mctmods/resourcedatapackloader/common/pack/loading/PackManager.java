@@ -92,6 +92,7 @@ public final class PackManager {
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String LOOT_REMOVALS = "loot_removals";
     public static final String PLAYER_LOOT = "player_loot";
+    public static final String SOULBOUND = "soulbound";
     public static final String MOB_DROPS = "mob_drops";
     public static final String BLOCK_DROPS = "block_drops";
     public static final String REGISTRY_REMAP = "registry_remap";

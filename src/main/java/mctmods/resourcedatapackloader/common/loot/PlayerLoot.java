@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.loot;
 
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
+import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
@@ -71,7 +72,7 @@ public final class PlayerLoot {
         if (GENERATION.stale()) { reload(); }
         if (ENTRIES.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         ServerLevel level = player.serverLevel();
-        boolean keeping = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || player.isSpectator();
+        boolean keeping = keeping(player);
         List<Entry> rolling = new ArrayList<>();
         boolean replacing = false;
         for (Entry entry : ENTRIES) {
@@ -81,7 +82,7 @@ public final class PlayerLoot {
         }
         if (rolling.isEmpty()) { return; }
         Collection<ItemEntity> drops = event.getDrops();
-        if (replacing) { drops.clear(); }
+        if (replacing) { drops.removeIf(drop -> !ContentSoulbound.marked(drop.getItem())); }
         DamageSource source = event.getSource();
         Player killer = killer(event);
         for (Entry entry : rolling) {
@@ -102,6 +103,8 @@ public final class PlayerLoot {
             }
         }
     }
+
+    public static boolean keeping(ServerPlayer player) { return player.serverLevel().getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || player.isSpectator(); }
 
     @Nullable private static Player killer(LivingDropsEvent event) {
         if (!event.isRecentlyHit()) { return null; }

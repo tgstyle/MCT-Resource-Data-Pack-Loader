@@ -139,6 +139,7 @@
   "rdpl.tooltip.fertility.water.missing": "Води немає в радіусі %s блоків, зростання x%s",
   "rdpl.tooltip.fertility.water.breaks": "Води немає в радіусі %s блоків, рослина ламається",
   "rdpl.tooltip.fertility.water.waived": "Вода: під укриттям не потрібна",
+  "rdpl.tooltip.soulbound": "Прив'язано до душі",
   "rdpl.hearts.gained": "Ви відчуваєте себе витривалішим.",
   "rdpl.hearts.lost": "Ви відчуваєте себе слабшим.",
   "rdpl.carry.block": "Ви несете: %s (присядьте й клацніть правою кнопкою миші, щоб поставити)",

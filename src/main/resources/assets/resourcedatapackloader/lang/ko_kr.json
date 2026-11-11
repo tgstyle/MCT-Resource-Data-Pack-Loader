@@ -139,6 +139,7 @@
   "rdpl.tooltip.fertility.water.missing": "물: %s블록 이내에 없음, 성장 x%s",
   "rdpl.tooltip.fertility.water.breaks": "물: %s블록 이내에 없음, 식물이 부서짐",
   "rdpl.tooltip.fertility.water.waived": "물: 덮개 아래라 필요 없음",
+  "rdpl.tooltip.soulbound": "영혼 귀속",
   "rdpl.hearts.gained": "몸이 더 튼튼해진 것 같다.",
   "rdpl.hearts.lost": "몸이 더 약해진 것 같다.",
   "rdpl.carry.block": "%s을(를) 들고 있습니다 (웅크린 채 우클릭하면 내려놓습니다)",

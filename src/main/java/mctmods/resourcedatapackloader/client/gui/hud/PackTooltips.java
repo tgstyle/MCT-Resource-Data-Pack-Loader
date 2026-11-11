@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
+import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -130,11 +131,17 @@ public final class PackTooltips {
         }
     }
 
+    private static void soulbound(ItemStack stack, List<Component> tooltip) {
+        if (Config.content.vanillaClients() || stack.isEmpty()) { return; }
+        for (String line : ContentSoulbound.tooltips(stack)) { tooltip.add(text(line)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         weight(event.getItemStack(), event.getToolTip());
         kept(event.getItemStack(), event.getToolTip());
         diet(event.getItemStack(), event.getToolTip());
         fertility(event.getItemStack(), event.getToolTip());
+        soulbound(event.getItemStack(), event.getToolTip());
         lines(event);
         affixes(event.getItemStack(), event.getToolTip());
     }

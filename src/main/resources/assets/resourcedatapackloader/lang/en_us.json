@@ -139,6 +139,7 @@
   "rdpl.tooltip.fertility.water.missing": "Water: none within %s blocks, growth x%s",
   "rdpl.tooltip.fertility.water.breaks": "Water: none within %s blocks, the plant breaks",
   "rdpl.tooltip.fertility.water.waived": "Water: not needed under cover",
+  "rdpl.tooltip.soulbound": "Soulbound",
   "rdpl.hearts.gained": "You feel hardier.",
   "rdpl.hearts.lost": "You feel frailer.",
   "rdpl.carry.block": "Carrying %s (sneak and right-click to set it down)",

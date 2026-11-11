@@ -76,6 +76,7 @@ import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
 import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.soulbound.SoulboundDeath;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
@@ -502,6 +503,10 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGHEST, SoulboundDeath::onDeath);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, SoulboundDeath::onDeathCanceled);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, SoulboundDeath::onDrops);
+        MinecraftForge.EVENT_BUS.addListener(SoulboundDeath::onClone);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOW, MobDrops::onDrops);
         MinecraftForge.EVENT_BUS.addListener(RegistryRemaps::onMissingMappings);
         MinecraftForge.EVENT_BUS.addListener(CompressedAliases::onMissingMappings);
