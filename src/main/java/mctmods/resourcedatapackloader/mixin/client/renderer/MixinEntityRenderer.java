@@ -5,6 +5,8 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.util.ContentReach;
 import mctmods.resourcedatapackloader.client.util.RainSplash;
 import mctmods.resourcedatapackloader.client.util.TrueDarkness;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentWorldProvider;
@@ -43,6 +45,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow @Final private Minecraft mc;
     @Shadow @Final private int[] lightmapColors;
     @Unique @Nullable private DarknessDef rdpl$darkness;
+    @Unique private final ShieldIndex.Near rdpl$shields = new ShieldIndex.Near();
+    @Unique private int rdpl$viewY;
     @Inject(method = "createWorldIcon", at = @At("HEAD"), cancellable = true) private void rdpl$iconAfterTheFog(CallbackInfo ci) {
         if (HoldView.showing()) { ci.cancel(); }
     }
@@ -56,12 +60,34 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return view != null && ContentWeather.above(view.world, MathHelper.floor(view.posY));
     }
 
+    @Unique private void rdpl$fillShields(int range) {
+        Entity view = mc.getRenderViewEntity();
+        if (view == null || !ShieldIndexes.active()) { return; }
+        rdpl$viewY = MathHelper.floor(view.posY);
+        ShieldIndexes.near(mc.world, MathHelper.floor(view.posX), MathHelper.floor(view.posZ), range, rdpl$shields);
+    }
+
+    @Unique private BlockPos rdpl$shutHeight(BlockPos pos) { return new BlockPos(pos.getX(), rdpl$viewY + 11, pos.getZ()); }
+
     @Inject(method = "renderRainSnow", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherRender(float partialTicks, CallbackInfo ci) {
-        if (rdpl$aboveCeiling()) { ci.cancel(); }
+        if (rdpl$aboveCeiling()) {
+            ci.cancel();
+            return;
+        }
+        rdpl$fillShields(mc.gameSettings.fancyGraphics ? 10 : 5);
+    }
+
+    @WrapOperation(method = "renderRainSnow", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getPrecipitationHeight(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;")) private BlockPos rdpl$shutRain(World world, BlockPos pos, Operation<BlockPos> original) {
+        return rdpl$shields.shut(pos.getX(), pos.getZ()) ? rdpl$shutHeight(pos) : original.call(world, pos);
+    }
+
+    @WrapOperation(method = "addRainParticles", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getPrecipitationHeight(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;", ordinal = 0)) private BlockPos rdpl$shutSplash(World world, BlockPos pos, Operation<BlockPos> original) {
+        return rdpl$shields.shut(pos.getX(), pos.getZ()) ? rdpl$shutHeight(pos) : original.call(world, pos);
     }
 
     @Inject(method = "addRainParticles", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) {
         Minecraft mc = Minecraft.getMinecraft();
+        rdpl$fillShields(10);
         RainDef rain = ContentDimensions.rain(mc.world);
         if (rdpl$aboveCeiling() || rain != null && rain.splashless()) {
             ci.cancel();
@@ -69,7 +95,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         }
         RainDef splash = mc.world.provider instanceof ContentWorldProvider ? ((ContentWorldProvider) mc.world.provider).rainSplash() : rain;
         if (splash == null) { return; }
-        RainSplash.tick(mc, splash, rendererUpdateCount);
+        RainSplash.tick(mc, splash, rendererUpdateCount, rdpl$shields);
         ci.cancel();
     }
 

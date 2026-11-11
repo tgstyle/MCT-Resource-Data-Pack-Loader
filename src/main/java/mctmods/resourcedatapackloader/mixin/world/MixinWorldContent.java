@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.world;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.IShieldHolder;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
@@ -32,12 +35,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@SuppressWarnings("ConstantConditions") @Mixin(World.class) public abstract class MixinWorldContent {
+@SuppressWarnings("ConstantConditions") @Mixin(World.class) public abstract class MixinWorldContent implements IShieldHolder {
+    @Unique private ShieldIndex rdpl$shields;
     @Unique private static final int rdpl$NOTIFY_NEIGHBORS = 1;
     @Unique private static final int rdpl$SUPPRESS_OBSERVERS = 16;
     @Shadow @Final public boolean isRemote;
     @Shadow @Final public List<Entity> loadedEntityList;
     @Shadow @Final protected List<Entity> unloadedEntityList;
+
+    @Override public ShieldIndex rdpl$shields() { return rdpl$shields; }
+
+    @Override public void rdpl$setShields(ShieldIndex index) { rdpl$shields = index; }
 
     @Shadow protected abstract boolean isChunkLoaded(int x, int z, boolean allowEmpty);
 
@@ -118,10 +126,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @WrapOperation(method = "canSnowAt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;canSnowAt(Lnet/minecraft/util/math/BlockPos;Z)Z", remap = false)) private boolean rdpl$existingSnows(WorldProvider provider, BlockPos pos, boolean checkLight, Operation<Boolean> original) { return ContentDimensionRules.existingSnows((World) (Object) this, pos, original.call(provider, pos, checkLight)); }
 
     @Inject(method = "isRainingAt", at = @At("HEAD"), cancellable = true) private void rdpl$rainBelowCeiling(BlockPos position, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentWeather.above((World) (Object) this, position.getY())) { cir.setReturnValue(false); }
+        if (ContentWeather.shut((World) (Object) this, position)) { cir.setReturnValue(false); }
     }
 
     @Inject(method = "canSnowAt", at = @At("HEAD"), cancellable = true) private void rdpl$snowBelowCeiling(BlockPos pos, boolean checkLight, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentWeather.above((World) (Object) this, pos.getY())) { cir.setReturnValue(false); }
+        if (ContentWeather.shut((World) (Object) this, pos)) { cir.setReturnValue(false); }
+    }
+
+    @Inject(method = "canBlockFreeze(Lnet/minecraft/util/math/BlockPos;Z)Z", at = @At("HEAD"), cancellable = true) private void rdpl$noFreezeUnderShield(BlockPos pos, boolean noWaterAdj, CallbackInfoReturnable<Boolean> cir) {
+        if (ShieldIndexes.weatherShut((World) (Object) this, pos.getX(), pos.getZ())) { cir.setReturnValue(false); }
     }
 }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.core.network.world;
 
 import mctmods.resourcedatapackloader.client.util.CubeProviderClient;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
 import mctmods.resourcedatapackloader.core.network.handler.AbstractClientMessageHandler;
@@ -127,6 +128,7 @@ public class CubesMessage implements IMessage {
             ByteBuf buf = WorldEncoder.createByteBufForRead(data);
             WorldEncoder.decodeCube(new PacketBuffer(buf), cubes);
 
+            cubes.stream().filter(Objects::nonNull).forEach(cube -> ShieldIndexes.scanCube(worldClient, cube));
             cubes.stream().filter(Objects::nonNull).forEach(Cube::markForRenderUpdate);
 
             message.getTileEntityTags().forEach(tags -> tags.forEach(tag -> {

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.util;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
 
@@ -46,7 +47,7 @@ public final class RainSplash {
         else { world.playSound(x, y, z, sound, SoundCategory.WEATHER, rain.volume, 1.0F, false); }
     }
 
-    public static void tick(Minecraft mc, RainDef rain, int rendererUpdateCount) {
+    public static void tick(Minecraft mc, RainDef rain, int rendererUpdateCount, ShieldIndex.Near shields) {
         WorldClient world = mc.world;
         Entity view = mc.getRenderViewEntity();
         float strength = world.getRainStrength(1.0F);
@@ -62,7 +63,9 @@ public final class RainSplash {
         double soundY = 0.0D;
         double soundZ = 0.0D;
         for (int drop = 0; drop < count; drop++) {
-            BlockPos top = world.getPrecipitationHeight(at.add(RANDOM.nextInt(RADIUS) - RANDOM.nextInt(RADIUS), 0, RANDOM.nextInt(RADIUS) - RANDOM.nextInt(RADIUS)));
+            BlockPos column = at.add(RANDOM.nextInt(RADIUS) - RANDOM.nextInt(RADIUS), 0, RANDOM.nextInt(RADIUS) - RANDOM.nextInt(RADIUS));
+            if (shields.shut(column.getX(), column.getZ())) { continue; }
+            BlockPos top = world.getPrecipitationHeight(column);
             Biome biome = world.getBiome(top);
             if (top.getY() > at.getY() + RADIUS || top.getY() < at.getY() - RADIUS || !biome.canRain() || biome.getTemperature(top) < 0.15F) { continue; }
             BlockPos ground = top.down();

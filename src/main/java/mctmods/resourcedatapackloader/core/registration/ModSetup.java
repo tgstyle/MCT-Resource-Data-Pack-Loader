@@ -48,6 +48,8 @@ import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldEvents;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.exposures.ContentExposures;
@@ -261,6 +263,7 @@ public class ModSetup {
             MinecraftForge.EVENT_BUS.register(ContentThreat.class);
             MinecraftForge.EVENT_BUS.register(ContentSpawnSwitch.class);
         }
+        MinecraftForge.EVENT_BUS.register(ShieldEvents.class);
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
         VanillaFluidRules.load();
         if (VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
@@ -387,6 +390,7 @@ public class ModSetup {
         ContentRanks.verify();
         ContentRegistry.resolveFluidReactions();
         VanillaFluidRules.resolve();
+        ShieldIndexes.resolve();
     }
 
     public static void beforeServerStart(MinecraftServer server) {

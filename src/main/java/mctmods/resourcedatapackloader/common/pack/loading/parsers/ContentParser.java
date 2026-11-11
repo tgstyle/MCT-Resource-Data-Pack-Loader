@@ -139,7 +139,9 @@ public final class ContentParser {
                 Json.getBoolean(json, "needsOxygen", true),
                 ContentParserPortways.portway(json),
                 ContentParserWeights.weight(json, key),
-                ContentParserCrops.tall(json, key, maxAge));
+                ContentParserCrops.tall(json, key, maxAge),
+                ContentParserShields.spawns(json, key),
+                ContentParserShields.weather(json));
     }
 
     @Nullable private static BellDef bell(JsonObject json) {

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rules;
 
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentSpawnGate;
@@ -34,6 +35,7 @@ import net.minecraft.entity.monster.IMob;
 import net.minecraft.entity.passive.EntityAnimal;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -98,6 +100,10 @@ public final class ContentSpawning {
             return;
         }
         if (event.getSpawner() == null && (ContentThreat.barred(event.getEntity()) || ContentSpawnGate.barred(event.getEntity()))) {
+            deny(event);
+            return;
+        }
+        if (event.getSpawner() == null && ShieldIndexes.spawnDenied(world, event.getEntity(), MathHelper.floor(event.getX()), MathHelper.floor(event.getY()), MathHelper.floor(event.getZ()))) {
             deny(event);
             return;
         }

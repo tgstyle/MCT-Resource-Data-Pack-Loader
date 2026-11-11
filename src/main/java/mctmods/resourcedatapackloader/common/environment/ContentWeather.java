@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.common.environment;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.worldgen.DimensionHeights;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import javax.annotation.Nullable;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public final class ContentWeather {
@@ -18,6 +20,8 @@ public final class ContentWeather {
         Integer ceiling = ceilingFor(world.provider.getDimension());
         return ceiling != null && y > ceiling;
     }
+
+    public static boolean shut(World world, BlockPos pos) { return above(world, pos.getY()) || ShieldIndexes.weatherShut(world, pos.getX(), pos.getZ()); }
 
     @Nullable public static Integer ceilingFor(int dimension) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }

@@ -885,6 +885,8 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
 | `tint`                       | não                                        | `biome`, `none`, ou uma cor hexadecimal           | nenhum                                                                                                        | Precisa de um `tintindex` no modelo para aparecer                                                                                                                                                                                                                                                                                                                  |
 | `plantTypes`                 | não                                        | lista de [tipos de planta](#listas-de-valores)    | nenhum                                                                                                        | O que pode ser plantado nele                                                                                                                                                                                                                                                                                                                                       |
 | `behavesAs`                  | não                                        | lista de `till`, `path`, `bush`, `animals`        | nenhum                                                                                                        | Comportamentos vanilla a adotar                                                                                                                                                                                                                                                                                                                                    |
+| `blocksSpawns`               | não                                        | objeto com `radius`, `mobs`, `entities`           | nenhum                                                                                                        | Os spawns naturais de mobs dentro de `radius` deste bloco são interrompidos. Ver [Escudos contra spawn e meteorologia](#escudos-contra-spawn-e-meteorologia)                                                                                                                                                                                                       |
+| `blocksWeather`              | não                                        | objeto com `radius`                               | nenhum                                                                                                        | A chuva e a neve param nas colunas dentro de `radius` deste bloco. Ver [Escudos contra spawn e meteorologia](#escudos-contra-spawn-e-meteorologia)                                                                                                                                                                                                                 |
 | `bounds`                     | não                                        | lista de seis números, de 0 a 1                   | bloco inteiro                                                                                                 | A caixa de colisão, como `[x1, y1, z1, x2, y2, z2]`                                                                                                                                                                                                                                                                                                                |
 | `requires`                   | não                                        | lista de ids de mods ou namespaces de pacotes     | nenhum                                                                                                        | O ficheiro é ignorado a menos que todos estejam presentes                                                                                                                                                                                                                                                                                                          |
 | `particle`                   | só em tochas                               | `none`, `flame`, `colored`                        | `flame`                                                                                                       | A partícula por cima de uma tocha                                                                                                                                                                                                                                                                                                                                  |
@@ -1944,6 +1946,32 @@ O vanilla verifica os seus próprios blocos por identidade numa dúzia de sítio
 | `path`    | Uma pá transforma-o em caminho de relva                                                                                 |
 | `bush`    | Flores, erva e rebentos podem ser plantados nele e permanecem nele, como na terra. O mesmo que `plains` em `plantTypes` |
 | `animals` | Os animais fazem spawn nele sob luz, como na relva                                                                      |
+
+### Escudos contra spawn e meteorologia
+
+Um bloco pode impedir que mobs apareçam à sua volta, manter a meteorologia longe do chão em redor, ou as duas coisas.
+
+```json
+{
+  "blocksSpawns": { "radius": 48, "mobs": "hostile", "entities": ["minecraft:zombie", "minecraft:skeleton"] },
+  "blocksWeather": { "radius": 32 },
+  "variants": { "ward_stone": { "meta": 0, "hardness": 2.0 } }
+}
+```
+
+**`blocksSpawns`** interrompe o spawn natural num cubo à volta do bloco, `radius` blocos em todas as direções, incluindo para cima e para baixo. Os spawners, os ovos de spawn, os comandos e a reprodução continuam a funcionar. Actua assim que o bloco é colocado e pára quando é partido.
+
+| Chave      | Valor                       | Padrão    | O que faz                                                                                                |
+| ---------- | --------------------------- | --------- | -------------------------------------------------------------------------------------------------------- |
+| `radius`   | 1 a 128                     | 32        | Até onde o bloco chega                                                                                   |
+| `mobs`     | `hostile`, `passive`, `all` | `hostile` | Que mobs são interrompidos: monstros, todos os outros, ou ambos                                          |
+| `entities` | lista de ids de entidades   | nenhum    | Interrompe apenas estes, ainda dentro de `mobs`. Um id desconhecido é registado no log e deixado de fora |
+
+**`blocksWeather`** mantém a chuva e a neve fora de cada coluna dentro de `radius` blocos de largura, a qualquer altura. Não se acumula neve ali, nem a sazonal, a água não congela, os caldeirões não se enchem e os raios não caem. Os jogadores com RDPL não veem chuva ou neve a cair ali e não ouvem a chuva. A neve que já está no chão continua a derreter. Uma dimensão com o seu próprio renderizador de meteorologia continua a desenhar ali a chuva.
+
+| Chave    | Valor   | Padrão | O que faz                         |
+| -------- | ------- | ------ | --------------------------------- |
+| `radius` | 1 a 128 | 32     | Quantos blocos de largura alcança |
 
 ## Itens
 

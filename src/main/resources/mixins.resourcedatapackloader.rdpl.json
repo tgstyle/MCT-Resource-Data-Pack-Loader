@@ -49,6 +49,7 @@
     "world.gen.MixinChunkGeneratorFlat",
     "world.gen.MixinChunkGeneratorOverworld",
     "world.chunk.MixinChunkLight",
+    "world.chunk.MixinChunkShield",
     "world.chunk.MixinChunkPrimer",
     "world.gen.MixinChunkProviderLookup",
     "world.gen.MixinChunkProviderServer",

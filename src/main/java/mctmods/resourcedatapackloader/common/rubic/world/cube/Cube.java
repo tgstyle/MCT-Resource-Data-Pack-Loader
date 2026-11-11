@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.common.rubic.world.cube;
 
 import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.ownership.ContentOwnership;
 import mctmods.resourcedatapackloader.common.rubic.world.EntityContainer;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.IColumn;
@@ -261,7 +262,10 @@ public class Cube implements ICube {
         ContentOrders.plotSigns(this.world, this.tileEntityMap.values());
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
-        if (!this.world.isRemote) { ContentOwnership.onCubeLoad(this); }
+        if (!this.world.isRemote) {
+            ContentOwnership.onCubeLoad(this);
+            ShieldIndexes.scanCube(this.world, this);
+        }
         boolean raised = false;
         ExtendedBlockStorage blocks = storage == null || storage.isEmpty() ? null : storage;
         boolean stale = isSurfaceTracked && !world.isRemote && surfaceIsStale(blocks);
@@ -320,6 +324,7 @@ public class Cube implements ICube {
             return;
         }
         this.isCubeLoaded = false;
+        ShieldIndexes.dropCube(this.world, this);
         if (!isSurfaceTracked) { trackSurface(); }
         this.world.unloadEntities(this.entities.getEntities());
         for (Entity entity : this.entities.getEntities()) { entity.addedToChunk = false; }

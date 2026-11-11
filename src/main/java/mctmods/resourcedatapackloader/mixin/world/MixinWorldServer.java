@@ -320,7 +320,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
                 if (this.canBlockFreezeNoWater(blockBelow)) { this.setBlockState(blockBelow, Blocks.ICE.getDefaultState()); }
             }
             if (raining && isBlockLoaded(block) && this.canSnowAt(block, true)) { this.setBlockState(block, Blocks.SNOW_LAYER.getDefaultState()); }
-            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain() && !ContentWeather.above((World) (Object) this, blockBelow.getY())) {
+            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain() && !ContentWeather.shut((World) (Object) this, blockBelow)) {
                 VanillaFluidRules.rained((World) (Object) this, blockBelow);
                 this.getBlockState(blockBelow).getBlock().fillWithRain((World) (Object) this, blockBelow);
             }
