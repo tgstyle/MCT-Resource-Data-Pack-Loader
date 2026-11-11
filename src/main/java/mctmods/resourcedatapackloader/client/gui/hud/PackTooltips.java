@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.WaterDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SeasonDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
 import mctmods.resourcedatapackloader.common.pack.definitions.weights.WeightDef;
+import mctmods.resourcedatapackloader.common.soulbound.ContentSoulbound;
 import mctmods.resourcedatapackloader.common.tooltips.ContentTooltips;
 import mctmods.resourcedatapackloader.common.weights.CarriedWeight;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
@@ -165,6 +166,11 @@ public final class PackTooltips {
         }
     }
 
+    private static void soulbound(ItemStack stack, HolderLookup.Provider access, List<Component> tooltip) {
+        if (Config.content.vanillaClients() || stack.isEmpty()) { return; }
+        for (String line : ContentSoulbound.tooltips(access, stack)) { tooltip.add(text(line)); }
+    }
+
     public static void onTooltip(ItemTooltipEvent event) {
         HolderLookup.Provider access = event.getContext().registries();
         if (access != null) { weight(event.getItemStack(), access, event.getToolTip()); }
@@ -172,6 +178,7 @@ public final class PackTooltips {
         kept(event.getItemStack(), event.getToolTip());
         diet(event.getItemStack(), event.getToolTip());
         fertility(event.getItemStack(), event.getToolTip());
+        if (access != null) { soulbound(event.getItemStack(), access, event.getToolTip()); }
         if (ContentTooltips.none()) { return; }
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();

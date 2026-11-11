@@ -78,6 +78,7 @@ import mctmods.resourcedatapackloader.common.loot.LootInjections;
 import mctmods.resourcedatapackloader.common.loot.LootRemovals;
 import mctmods.resourcedatapackloader.common.loot.MobDrops;
 import mctmods.resourcedatapackloader.common.loot.PlayerLoot;
+import mctmods.resourcedatapackloader.common.soulbound.SoulboundDeath;
 import mctmods.resourcedatapackloader.common.ownership.DissolvePass;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipEvents;
 import mctmods.resourcedatapackloader.common.ownership.OwnershipSettings;
@@ -513,6 +514,10 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, LootRemovals::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, SoulboundDeath::onDeath);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, SoulboundDeath::onDeathCanceled);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, true, SoulboundDeath::onDrops);
+        NeoForge.EVENT_BUS.addListener(SoulboundDeath::onClone);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOW, MobDrops::onDrops);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ModSetup::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(ModSetup::onRegisterCommands);

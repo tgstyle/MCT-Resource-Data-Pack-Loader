@@ -83,6 +83,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 - [Loot removals](#loot-removals)
 - [Mob drops](#mob-drops)
 - [Player loot](#player-loot)
+- [Soulbound items](#soulbound-items)
 - [Food variety](#food-variety)
 - [Villagers and trades](#villagers-and-trades)
 
@@ -231,6 +232,7 @@ Under `data/`:
 | `<namespace>/carries/*.json`                 | Blocks and mobs a player picks up and sets down while sneaking. [Carrying](#carrying)                                                                                          |
 | `<namespace>/mob_drops/*.json`               | Items stripped from or added to what named mobs drop. [Mob drops](#mob-drops)                                                                                                  |
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                                                            |
+| `<namespace>/soulbound/*.json`               | Items that stay with the player through death. [Soulbound items](#soulbound-items)                                                                                             |
 | `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
 | `<namespace>/columns/*.json`                 | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
 | `<namespace>/leaf_decay/*.json`              | Leaves next to a block that changes decay on a short timer. [Leaf decay](#leaf-decay)                                                                                          |
@@ -591,6 +593,7 @@ A dimension or biome parent can be a template in the same way, gated behind the 
 - **Mob drops**, strip items from what named mobs drop, equipment included, and add items by killer, held item and damage type
 - **Block drops**, add to or replace what any block drops when it is broken, experience included
 - **Player loot**, roll a loot table when a player dies, on top of what they were carrying or instead of it
+- **Soulbound items**, keep marked items through death and respawn
 - **Properties of existing blocks, items and potions**, hardness, light, stack sizes, food on anything, a potion's effects, see [Property overrides](#property-overrides)
 - **Furnace recipes, fuel burn times, creative tabs and sound events**
 
@@ -608,13 +611,13 @@ A pack can live on the server alone, with players on plain vanilla clients, unde
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                  |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                                    |
-| `loot_tables`, `loot_injections`, `loot_removals`, `mob_drops`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                             | `entities`, `villagers`, `portalframes`, `curioslots`                                                                   |
+| `loot_tables`, `loot_injections`, `loot_removals`, `mob_drops`, `player_loot`, `soulbound`, `advancements`, `functions`, `veins`, `weights`                | `entities`, `villagers`, `portalframes`, `curioslots`                                                                   |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`, `spawn_swaps`                              | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (client folders: with no client, leave them out) |
 | the whole control layer, settings, and pregeneration                                                                                                       |                                                                                                                         |
 
 The right-hand column is a hard stop: blocks, items, entity types, sounds and potion effects a vanilla client does not have cannot be described to it, and a dimension's own portal is one of the pack's blocks; exposures load only alongside that content. The left-hand column works because everything there either runs entirely server-side, reaches the client as data pack entries vanilla already reads (biomes, cave regions, dimension types, enchantments), or reaches it through packets vanilla already speaks (server-filled crafting result slot, ordinary advancement packets, status-message gate refusals, and a pregeneration hold made of vanilla game mode/title/teleport packets).
 
-Kept on the server, drawn only by the mod's own client: a boss bar's `background`, `heartColors` in a hearts file, an anvil file's `tooExpensive`, an enchanting file's `enchantCosts` and `lapisCosts`, the names of affixes and gem sockets, a dimension's `sky` keys other than the ones set once when the world loads and the ones a vanilla client reads from the dimension type (`skyColor`, `fogColor`, `cloudHeight`, `showFog`, `lightSkyColor`, `lightBlockColor`, `skyFactor`, `waterFogColor`), its `ambience` and its weather `rain` and `wind`, and every `sky` and `ambience` change an environment makes, a season's tints included. With `vanillaClients` on, each one a pack sets is named in the log, and the rest of its file still applies.
+Kept on the server, drawn only by the mod's own client: a boss bar's `background`, `heartColors` in a hearts file, an anvil file's `tooExpensive`, an enchanting file's `enchantCosts` and `lapisCosts`, the names of affixes and gem sockets, a soulbound file's `tooltip` line, a dimension's `sky` keys other than the ones set once when the world loads and the ones a vanilla client reads from the dimension type (`skyColor`, `fogColor`, `cloudHeight`, `showFog`, `lightSkyColor`, `lightBlockColor`, `skyFactor`, `waterFogColor`), its `ambience` and its weather `rain` and `wind`, and every `sky` and `ambience` change an environment makes, a season's tints included. With `vanillaClients` on, each one a pack sets is named in the log, and the rest of its file still applies.
 
 Setup:
 
@@ -702,6 +705,7 @@ A pack made for the 1.12.2 line loads as it is. The loader recognizes one by its
 - A world template that turns off every structure 1.12.2 had in a dimension turns off the structures only this version has there too: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` and `trial_chambers` in the overworld and `nether_fossils` in the Nether. Leave one of the 1.12.2 names on and they are left alone. The generator control keys, `blockWorldGenerators` and its companions, are left out of a converted template with one line in the log, since nothing here reads them. A flat template's `generatorOptions` layers have their block names fixed the same way, so `minecraft:grass` becomes `minecraft:grass_block`.
 - Functions are rewritten line by line into this version's command syntax. Ids with data values go through the same data fixers, so `give @p minecraft:wool 1 14` becomes `give @p minecraft:red_wool 1` and `give @p mypack:materials 1 5` gives the variant whose `meta` was 5, and item, entity and block nbt is fixed as a world's would be (1.21.1: an item's nbt becomes its components). `testforblock`, `testfor` and `scoreboard players test` become `execute if`, `execute <entity> <x> <y> <z> [detect ...]` becomes `execute as ... at @s [positioned ...] [if block ...] run`, `effect` takes `give` and `clear`, `blockdata`, `entitydata` and `replaceitem` become `data merge` and `item replace`, and `scoreboard teams` and `scoreboard players tag` become `team` and `tag`. Selectors trade `score_X_min` and `score_X` for `scores`, `r` and `rm` for `distance`, `l` and `lm` for `level`, `m` for `gamemode`, `c` for `limit` and `sort`, and `rx` and `ry` for `x_rotation` and `y_rotation`. Enchantment and effect numbers, particle and sound names, game mode and difficulty numbers, a `weather` duration in seconds and a relative `tp` of another entity are carried too. A line the port cannot carry is turned into a comment (a `# ` in front of the line) and the log names the file, the line and why; the function still loads, without that line, until it is restored by hand. `block_drops` is carried as it is, its `meta` folded into the block name or its `properties`.
 - A 1.12.2 flat world's floor sat at y 0, and this version lays a flat world from its bottom at y -64, so the port moves heights down with it. Where a world template's `worldType` is `flat` or `superflat`, its `worldSpawn` and `resetSendsTo` move down 64 (to its `worldMinHeight` when it names one), and so do a team's `spawn`, `standIn` `at` and `spawnBox` heights and a score file's `opens.lobby` when every world template the pack ships is flat. A pack dimension with `flat` terrain moves its `groundLevel`, and any position that names that dimension, the same way (by its `minHeight` when it has one). Functions do not say where they run, so when the pack's overworld is flat every absolute y in its functions moves down 64, a selector's `y` included, and the log says so once; `~` and `^` heights are left alone. A world on normal terrain keeps every coordinate, since its surface stays at sea level.
+- A soulbound file's `items` list takes `:meta` and `:*` after an id on 1.12.2 only; the modern versions take the bare id, see [Soulbound items](#soulbound-items).
 
 The log carries one summary line per ported pack and a line for each file it moved, left out or could not carry, and every key this version no longer reads is still named by the parser that meets it. The port is a best effort, not a finished pack: read those lines and finish by hand what they name, starting with any command line it turned into a comment and any texture it could not find a name for. Make those fixes at the pack root or in a separate zip, never in the `versions/` folder the port wrote: another version of RDPL writes that folder anew.
 
@@ -3159,6 +3163,8 @@ Each entry is either `input`, `ingredient` and `output`, which brews one item in
 
 The file's path is the enchantment's registry name, so `mypack/enchantments/venom_edge.json` registers `mypack:venom_edge`. It goes on the items of its `category` and on every item named in `items`, and the enchanting table offers it, loot carries it and villagers trade it like any other.
 
+An enchantment can also be made a mark with a [soulbound](#soulbound-items) file, so a stack that holds it stays with the player through death.
+
 ```json
 {
   "name": "enchantment.mypack.venom_edge",
@@ -3764,7 +3770,7 @@ The game gives players no loot table of their own: death drops only the inventor
 | `rollOnKeepInventory` | no       | boolean            | `false` | Whether the table is rolled at all on a death that kept the inventory               |
 | `dropLoose`           | no       | boolean            | `false` | Whether the items are put on the ground directly instead of joining the death drops |
 
-`add` drops the table's items alongside the inventory, which suits kill bounties. `replace` discards the inventory and drops only what the table rolls.
+`add` drops the table's items alongside the inventory, which suits kill bounties. `replace` discards the inventory and drops only what the table rolls, but it never discards a soulbound item, see [Soulbound items](#soulbound-items).
 
 With `rollOnKeepInventory` off, deaths under `keepInventory` (and spectator deaths, which always keep the inventory) roll nothing. Turning it on keeps deaths costly on keep-inventory worlds.
 
@@ -3784,6 +3790,62 @@ One loot function is RDPL's own, usable in any table with a looted entity: `rdpl
 `dropLoose` bypasses the drop list entirely: the items are placed in the world directly, so grave mods never see them; the inventory goes in the grave, the table's items lie on the ground for the killer. Use it for spoils that belong to the killer rather than the victim's grave. Without a grave mod it changes little. Caveat: the items exist before anything downstream could cancel the drops, so entries that must not survive a canceled death should leave it off.
 
 Set `playerLoot` in the `data` config category to `false` to turn the folder off entirely.
+
+## Soulbound items
+
+*crafting, loot and trade*
+
+`<namespace>/soulbound/*.json`
+
+The folder is `assets/` on 1.12.2 and `data/` on the modern versions, like `player_loot`. The file name is yours to choose, several files stack, and each file holds one mark. A file names exactly one of `enchantment`, `items` or `nbt`; with none, or with more than one, the file is logged and skipped.
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| Key                   | Required     | Value                  | Default                                      | What it does                                                                                                                                                                                                                                               |
+| --------------------- | ------------ | ---------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantment`         | one of three | enchantment id         |                                              | Any registered enchantment: a pack one, vanilla or another mod's. A stack with level 1 or more is marked. An unknown id is logged once and the file skipped at use time                                                                                    |
+| `items`               | one of three | list of item ids       |                                              | Marked whatever its tags. On 1.12.2, `:meta` and `:*` after the id work as they do in `tooltips`; on the modern versions, the bare id                                                                                                                      |
+| `nbt`                 | one of three | tag name               |                                              | Marked when the stack's own root tag holds that boolean as true. On 26.x it is the stack's custom data, `minecraft:custom_data`                                                                                                                            |
+| `loseChance`          | no           | 0 to 1                 | `0`                                          | Chance per death that the mark goes: one level for `enchantment` (the last level removes the enchantment), the flag for `nbt`. `items` marks cannot be lost, so the key is ignored there with a log line. 0 never, 1 always, nothing in between is rounded |
+| `rollOnKeepInventory` | no           | boolean                | `false`                                      | Whether the chance is rolled on a death that kept the inventory (keepInventory rule or spectator). Same name and default as `player_loot`                                                                                                                  |
+| `graves`              | no           | `player` or `grave`    | `player`                                     | `player`: the item never reaches the drop list, so no grave mod sees it. `grave`: it travels with the drops; a grave mod that takes or removes it keeps it, otherwise it returns to the player                                                             |
+| `loseFirst`           | no           | boolean                | `false`                                      | `false`: the item returns this death and comes back without the lost mark. `true`: the roll comes first and an item that lost its whole mark drops like any other item                                                                                     |
+| `keepVanishing`       | no           | boolean                | `false`                                      | `false`: an item with Curse of Vanishing still vanishes, as in vanilla. `true`: the mark wins, and such an item always takes `player` mode, since vanilla destroys cursed items before the drops exist                                                     |
+| `tooltip`             | no           | lang key or plain text | `rdpl.tooltip.soulbound` (reads "Soulbound") | The line shown. Empty string shows none. Lang key when a loaded lang file has it, plain text otherwise, as `tooltips` does                                                                                                                                 |
+
+Several marks on one stack: it is marked when any entry matches. `graves` is `player` if any matching entry says so. Each matching `enchantment` or `nbt` entry rolls its own chance. One tooltip line shows for each distinct non-empty `tooltip` of the matching entries.
+
+**Each death.** With `graves` set to `player`, the default, marked items are taken out of the inventory at the start of the death, before anything else reads it, so neither a grave mod nor the drop list sees them. If another mod cancels the death, as a totem-like effect does, the items go back into the inventory.
+
+**keepInventory.** Under the keepInventory rule and for spectators, vanilla keeps everything, so no mark is taken out and no chance is rolled unless `rollOnKeepInventory` is on.
+
+**Graves.** A `player` item is kept back from the drops and returns at respawn. A `grave` item travels with the drops: a grave mod that takes it keeps it, and one left in the drops returns to the player at respawn.
+
+**Replace.** A `replace` table in `player_loot` never discards a soulbound item.
+
+**Vanishing.** An item with Curse of Vanishing and `keepVanishing` on always takes `player` mode, because vanilla destroys cursed items before the drops exist. With `keepVanishing` off it vanishes as it does in vanilla.
+
+**What it does not reach.** Items outside the vanilla inventory, such as Curios slots and the like, are not reached.
+
+**data.soulbound.** The `data` config category has `soulbound` (default `true`, beside `playerLoot`). Off means no file is read, nothing is rescued and no tooltip is drawn. The tooltip is also off when `vanillaClients` is on. Marking works on a server alone with vanilla clients; the tooltip needs the mod on the client.
 
 ## Food variety
 

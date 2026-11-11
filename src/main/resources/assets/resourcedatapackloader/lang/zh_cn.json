@@ -92,6 +92,7 @@
   "rdpl.tooltip.fertility.water.missing": "水：%s 格内没有水，生长速度 x%s",
   "rdpl.tooltip.fertility.water.breaks": "水：%s 格内没有水，植物会被破坏",
   "rdpl.tooltip.fertility.water.waived": "水：遮盖下不需要水",
+  "rdpl.tooltip.soulbound": "灵魂绑定",
   "rdpl.diet.tooltip.ignored": "饮食：不计入",
   "rdpl.hearts.gained": "你觉得身体更结实了。",
   "rdpl.hearts.lost": "你觉得身体更虚弱了。",

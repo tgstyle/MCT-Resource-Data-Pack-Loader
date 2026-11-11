@@ -83,6 +83,7 @@ Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres le
 - [Quitar botín](#quitar-botín)
 - [Botín de mobs](#botín-de-mobs)
 - [Botín de jugadores](#botín-de-jugadores)
+- [Objetos ligados al alma](#objetos-ligados-al-alma)
 - [Variedad de comida](#variedad-de-comida)
 - [Aldeanos y comercio](#aldeanos-y-comercio)
 
@@ -231,6 +232,7 @@ Bajo `data/`:
 | `<namespace>/carries/*.json`                 | Bloques y mobs que un jugador agachado recoge y vuelve a dejar. [Transporte](#transporte)                                                                                                                                        |
 | `<namespace>/mob_drops/*.json`               | Ítems quitados o añadidos a lo que sueltan las criaturas con nombre. [Botín de mobs](#botín-de-mobs)                                                                                                                             |
 | `<namespace>/player_loot/*.json`             | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores)                                                                                                                              |
+| `<namespace>/soulbound/*.json`               | Objetos que se quedan con el jugador al morir. [Objetos ligados al alma](#objetos-ligados-al-alma)                                                                                                                               |
 | `<namespace>/diets/*.json`                   | Reglas que hacen que una comida repetida alimente menos y una dieta variada alimente más. [Variedad de comida](#variedad-de-comida)                                                                                              |
 | `<namespace>/columns/*.json`                 | Hileras de bloques que caen y se rompen juntas sobre el bloque que rompe el jugador. [Columnas que caen](#columnas-que-caen)                                                                                                     |
 | `<namespace>/leaf_decay/*.json`              | Las hojas cerca de un bloque cambiado decaen en poco tiempo. [Caída de hojas](#caída-de-hojas)                                                                                                                                   |
@@ -591,6 +593,7 @@ El padre de una dimensión o de un bioma puede ser una plantilla del mismo modo,
 - **Botín de mobs**: quitan ítems de lo que sueltan las criaturas con nombre, incluido el equipo, y añaden ítems según quién las mate, lo que sostenga en la mano y el tipo de daño
 - **Drops de bloques**: añaden o sustituyen lo que suelta cualquier bloque al romperse, experiencia incluida
 - **Botín de jugadores**: sortea una tabla de botín cuando muere un jugador, además de lo que llevaba encima o en su lugar
+- **Objetos ligados al alma**: conservan los objetos marcados al morir y al reaparecer
 - **Propiedades de bloques, ítems y pociones existentes**: dureza, luz, tamaños de pila, comida en cualquier cosa, los efectos de una poción, véase [Sobrescritura de propiedades](#sobrescritura-de-propiedades)
 - **Recetas de horno, tiempos de combustión de combustibles, pestañas creativas y eventos de sonido**
 
@@ -608,13 +611,13 @@ Un pack puede vivir solo en el servidor, con jugadores en clientes de vanilla pu
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions`  | `blocks`, `items`, `fluids`, `materials`, `containers`                                                                   |
 | `recipes`, `recipe_removals`, `recipe_swaps`, `furnace`, `fuels`, `brewing`, `anvils`, `affixes`, `gems`, `enchanting`, `enchantments`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures`, `tooltips`                                                     |
-| `loot_tables`, `loot_injections`, `loot_removals`, `mob_drops`, `player_loot`, `advancements`, `functions`, `veins`, `weights`                             | `entities`, `villagers`, `portalframes`, `curioslots`                                                                    |
+| `loot_tables`, `loot_injections`, `loot_removals`, `mob_drops`, `player_loot`, `soulbound`, `advancements`, `functions`, `veins`, `weights`                | `entities`, `villagers`, `portalframes`, `curioslots`                                                                    |
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `ranks`, `raids`, `hardness`, `blastplaster`, `spawn_swaps`                              | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (carpetas de cliente: sin cliente, déjalas fuera) |
 | toda la capa de control, los ajustes y la pregeneración                                                                                                    |                                                                                                                          |
 
 La columna de la derecha es un límite estricto: los bloques, ítems, tipos de entidad, sonidos y efectos de poción que un cliente de vanilla no tiene no se le pueden describir, y el portal propio de una dimensión es uno de los bloques del pack; las exposiciones se cargan solo junto a ese contenido. La columna de la izquierda funciona porque todo lo que contiene o se ejecuta íntegramente del lado del servidor, o llega al cliente como entradas de data pack que vanilla ya lee (biomas, regiones de cuevas, tipos de dimensión, encantamientos), o llega por paquetes que vanilla ya habla (casilla de resultado de fabricación rellenada por el servidor, paquetes de logros ordinarios, rechazos de portal mediante mensajes de estado y una retención de pregeneración hecha con paquetes de vanilla de modo de juego, título y teletransporte).
 
-Se quedan en el servidor y solo los dibuja el cliente propio del mod: el `background` de la barra de jefe, `heartColors` en un archivo de corazones, `tooExpensive` en un archivo de yunque, `enchantCosts` y `lapisCosts` en un archivo de encantamiento, los nombres de los afijos y de los engarces de gemas, las claves `sky` de una dimensión distintas de las que se fijan una sola vez al cargar el mundo y de las que un cliente de vanilla lee del tipo de dimensión (`skyColor`, `fogColor`, `cloudHeight`, `showFog`, `lightSkyColor`, `lightBlockColor`, `skyFactor`, `waterFogColor`), su `ambience` y su clima `rain` y `wind`, y cada cambio de `sky` y de `ambience` que haga un entorno, incluidos los tintes de cada estación. Con `vanillaClients` activado, cada elemento que establezca un pack se nombra en el registro, y el resto de su archivo sigue aplicándose.
+Se quedan en el servidor y solo los dibuja el cliente propio del mod: el `background` de la barra de jefe, `heartColors` en un archivo de corazones, `tooExpensive` en un archivo de yunque, `enchantCosts` y `lapisCosts` en un archivo de encantamiento, los nombres de los afijos y de los engarces de gemas, la línea `tooltip` de los archivos ligados al alma, las claves `sky` de una dimensión distintas de las que se fijan una sola vez al cargar el mundo y de las que un cliente de vanilla lee del tipo de dimensión (`skyColor`, `fogColor`, `cloudHeight`, `showFog`, `lightSkyColor`, `lightBlockColor`, `skyFactor`, `waterFogColor`), su `ambience` y su clima `rain` y `wind`, y cada cambio de `sky` y de `ambience` que haga un entorno, incluidos los tintes de cada estación. Con `vanillaClients` activado, cada elemento que establezca un pack se nombra en el registro, y el resto de su archivo sigue aplicándose.
 
 Configuración:
 
@@ -702,6 +705,7 @@ Un pack hecho para la línea 1.12.2 se carga tal cual. El loader reconoce uno po
 - Una plantilla de mundo que desactiva todas las estructuras que 1.12.2 tenía en una dimensión desactiva también allí las estructuras que solo tiene esta versión: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` y `trial_chambers` en el Overworld y `nether_fossils` en el Nether. Si dejas activado uno de los nombres de 1.12.2, se dejan en paz. Las claves de control del generador, `blockWorldGenerators` y sus compañeras, se omiten de una plantilla convertida con una línea en el registro, ya que nada aquí las lee. En las capas de `generatorOptions` de una plantilla plana, los nombres de bloque se corrigen igual, de modo que `minecraft:grass` se convierte en `minecraft:grass_block`.
 - Las funciones se reescriben línea a línea a la sintaxis de comandos de esta versión. Los ids con valores de datos pasan por los mismos data fixers, de modo que `give @p minecraft:wool 1 14` se convierte en `give @p minecraft:red_wool 1` y `give @p mypack:materials 1 5` da la variante cuyo `meta` era 5, y el nbt de ítems, entidades y bloques se corrige como se haría con el de un mundo (1.21.1: el nbt de un ítem se convierte en sus componentes). `testforblock`, `testfor` y `scoreboard players test` se convierten en `execute if`, `execute <entity> <x> <y> <z> [detect ...]` se convierte en `execute as ... at @s [positioned ...] [if block ...] run`, `effect` toma `give` y `clear`, `blockdata`, `entitydata` y `replaceitem` se convierten en `data merge` y `item replace`, y `scoreboard teams` y `scoreboard players tag` se convierten en `team` y `tag`. Los selectores cambian `score_X_min` y `score_X` por `scores`, `r` y `rm` por `distance`, `l` y `lm` por `level`, `m` por `gamemode`, `c` por `limit` y `sort`, y `rx` y `ry` por `x_rotation` y `y_rotation`. También se trasladan los números de encantamientos y efectos, los nombres de partículas y sonidos, los números de modo de juego y dificultad, la duración en segundos de un `weather` y un `tp` relativo a otra entidad. Una línea que la conversión no puede trasladar se convierte en un comentario (un `# ` delante de la línea) y el registro nombra el archivo, la línea y el motivo; la función se sigue cargando, sin esa línea, hasta que se restaura a mano. `block_drops` se traslada tal cual, con su `meta` incorporado al nombre del bloque o a sus `properties`.
 - El suelo de un mundo plano de 1.12.2 estaba en y 0, y esta versión construye un mundo plano desde su fondo en y -64, así que la conversión baja las alturas en consecuencia. Cuando el `worldType` de una plantilla de mundo es `flat` o `superflat`, su `worldSpawn` y `resetSendsTo` bajan 64 (hasta su `worldMinHeight` cuando lo nombra), y también las alturas del `spawn` de un equipo, del `at` de `standIn` y de `spawnBox` y el `opens.lobby` de un archivo de puntuación cuando todas las plantillas de mundo que incluye el pack son planas. Una dimensión de pack con terreno `flat` baja su `groundLevel`, y cualquier posición que nombre esa dimensión, igual (según su `minHeight` cuando lo tiene). Las funciones no dicen dónde se ejecutan, así que cuando el Overworld del pack es plano toda y absoluta de sus funciones baja 64, la `y` de un selector incluida, y el registro lo indica una vez; las alturas con `~` y `^` se dejan en paz. Un mundo con terreno normal conserva todas las coordenadas, ya que su superficie sigue estando al nivel del mar.
+- La lista `items` de un archivo ligado al alma acepta `:meta` y `:*` tras un id solo en 1.12.2; las versiones modernas aceptan el id desnudo, ver [Objetos ligados al alma](#objetos-ligados-al-alma).
 
 El registro lleva una línea de resumen por pack convertido y una línea por cada archivo que movió, omitió o no pudo trasladar, y cada clave que esta versión ya no lee la nombra igualmente el parser que la encuentra. La conversión es un mejor esfuerzo, no un pack terminado: lee esas líneas y termina a mano lo que nombran, empezando por cualquier línea de comando que convirtió en comentario y cualquier textura para la que no pudo encontrar nombre. Haz esas correcciones en la raíz del pack o en un zip aparte, nunca en la carpeta `versions/` que escribió la conversión: otra versión de RDPL escribe esa carpeta de nuevo.
 
@@ -3159,6 +3163,8 @@ Cada entrada es o bien `input`, `ingredient` y `output`, que elabora un ítem a 
 
 La ruta del archivo es el nombre de registro del encantamiento, así que `mypack/enchantments/venom_edge.json` registra `mypack:venom_edge`. Va en los ítems de su `category` y en cada ítem nombrado en `items`; la mesa de encantamientos lo ofrece, el botín lo lleva y los aldeanos comercian con él como con cualquier otro.
 
+También puede convertirse en marca un encantamiento con un archivo [ligado al alma](#objetos-ligados-al-alma), así que una pila que lo lleve se queda con el jugador al morir.
+
 ```json
 {
   "name": "enchantment.mypack.venom_edge",
@@ -3764,7 +3770,7 @@ El juego no da a los jugadores ninguna tabla de botín propia: al morir solo se 
 | `rollOnKeepInventory` | no          | booleano          | `false`     | Si la tabla se sortea siquiera en una muerte que conservó el inventario                     |
 | `dropLoose`           | no          | booleano          | `false`     | Si los ítems se dejan directamente en el suelo en lugar de sumarse a los drops de la muerte |
 
-`add` suelta los ítems de la tabla junto al inventario, lo que resulta adecuado para recompensas por matar. `replace` descarta el inventario y suelta solo lo que sortee la tabla.
+`add` suelta los ítems de la tabla junto al inventario, lo que resulta adecuado para recompensas por matar. `replace` descarta el inventario y suelta solo lo que sortee la tabla, pero nunca descarta un ítem [ligado al alma](#objetos-ligados-al-alma).
 
 Con `rollOnKeepInventory` desactivado, las muertes bajo `keepInventory` (y las muertes de espectador, que siempre conservan el inventario) no sortean nada. Activarlo mantiene las muertes costosas en los mundos con conservación de inventario.
 
@@ -3784,6 +3790,62 @@ Una función de botín es propia de RDPL y se puede usar en cualquier tabla con 
 `dropLoose` se salta por completo la lista de drops: los ítems se colocan directamente en el mundo, así que los mods de tumbas nunca los ven; el inventario va a la tumba, y los ítems de la tabla quedan en el suelo para el asesino. Úsalo para botines que pertenecen al asesino y no a la tumba de la víctima. Sin un mod de tumbas cambia poco. Advertencia: los ítems existen antes de que nada posterior pudiera cancelar los drops, así que las entradas que no deban sobrevivir a una muerte cancelada deberían dejarlo desactivado.
 
 Pon `playerLoot` en la categoría de configuración `data` a `false` para desactivar la carpeta por completo.
+
+## Objetos ligados al alma
+
+*fabricación, botín y comercio*
+
+`<namespace>/soulbound/*.json`
+
+La carpeta es `assets/` en 1.12.2 y `data/` en las versiones modernas, como en `player_loot`. El nombre del archivo lo eliges tú, se acumulan varios archivos, y cada archivo contiene una marca. Un archivo nombra exactamente uno de `enchantment`, `items` o `nbt`; sin ninguno, o con más de uno, el archivo se registra en el log y se omite.
+
+```json
+{
+  "enchantment": "mypack:binding_soul",
+  "loseChance": 0.25,
+  "rollOnKeepInventory": false,
+  "graves": "player",
+  "loseFirst": false,
+  "keepVanishing": false,
+  "tooltip": "Soulbound"
+}
+```
+
+```json
+{ "items": ["minecraft:elytra", "mypack:ruby_blade"], "tooltip": "mypack.tooltip.bound" }
+```
+
+```json
+{ "nbt": "mypack_soulbound", "loseChance": 0.1 }
+```
+
+| Clave                 | Obligatorio | Valor                       | Por defecto                                      | Qué hace                                                                                                                                                                                                                                                                                             |
+| --------------------- | ----------- | --------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enchantment`         | uno de tres | id de encantamiento         |                                                  | Cualquier encantamiento registrado: uno del pack, de vanilla o de otro mod. Una pila de nivel 1 o más queda marcada. Un id desconocido se registra una vez y el archivo se omite al usarlo                                                                                                           |
+| `items`               | uno de tres | lista de ids de ítems       |                                                  | Marca esos ítems sean cuales sean sus etiquetas. En 1.12.2, `:meta` y `:*` después del id funcionan como en `tooltips`; en las versiones modernas, el id desnudo                                                                                                                                     |
+| `nbt`                 | uno de tres | nombre de etiqueta          |                                                  | Marca una pila cuya etiqueta raíz propia tiene ese booleano como verdadero. En 26.x es el dato personalizado de la pila, `minecraft:custom_data`                                                                                                                                                     |
+| `loseChance`          | no          | 0 a 1                       | `0`                                              | Probabilidad por muerte de que la marca se pierda: un nivel para `enchantment` (el último nivel quita el encantamiento) o la bandera para `nbt`. Las marcas de `items` no se pueden perder, así que la clave se ignora ahí con una línea en el log. 0 nunca, 1 siempre, lo intermedio no se redondea |
+| `rollOnKeepInventory` | no          | booleano                    | `false`                                          | Si la probabilidad se tira en una muerte que conservó el inventario (regla keepInventory o espectador). Mismo nombre y valor por defecto que `player_loot`                                                                                                                                           |
+| `graves`              | no          | `player` o `grave`          | `player`                                         | `player`: el objeto nunca llega a la lista de drops, así que ningún mod de tumbas lo ve. `grave`: viaja con los drops; un mod de tumbas que lo tome o lo quite lo conserva, si no vuelve al jugador                                                                                                  |
+| `loseFirst`           | no          | booleano                    | `false`                                          | `false`: el objeto vuelve en esta muerte y regresa sin la marca perdida. `true`: primero se tira la probabilidad, y un objeto que pierde toda su marca cae como cualquier otro                                                                                                                       |
+| `keepVanishing`       | no          | booleano                    | `false`                                          | `false`: un objeto con Maldición de desaparición sigue desapareciendo, como en vanilla. `true`: gana la marca, y un objeto así siempre toma el modo `player`, ya que vanilla destruye los objetos malditos antes de que existan los drops                                                            |
+| `tooltip`             | no          | clave de lang o texto plano | `rdpl.tooltip.soulbound` (dice "Ligado al alma") | La línea que se muestra. Una cadena vacía no muestra ninguna. Una clave de lang cuando un archivo de idioma cargado la tiene, y texto plano si no, igual que `tooltips`                                                                                                                              |
+
+Varias marcas en una pila: queda marcada cuando coincide cualquier entrada. `graves` es `player` si alguna entrada coincidente lo dice. Cada entrada `enchantment` o `nbt` que coincide tira su propia probabilidad. Sale una línea de tooltip por cada `tooltip` distinto y no vacío de las entradas que coinciden.
+
+**Cada muerte.** Con `graves` en `player`, el valor por defecto, los objetos marcados salen del inventario al empezar la muerte, antes de que los lea cualquier otra cosa, así que ni un mod de tumbas ni la lista de drops los ven. Si otro mod cancela la muerte, como hace un efecto tipo tótem, los objetos vuelven al inventario.
+
+**keepInventory.** Con la regla keepInventory y para espectadores, vanilla lo conserva todo, así que no se saca ninguna marca ni se tira probabilidad alguna salvo que `rollOnKeepInventory` esté activado.
+
+**Tumbas.** Un objeto `player` queda fuera de los drops y vuelve al reaparecer. Un objeto `grave` viaja con los drops: un mod de tumbas que lo tome se lo queda, y el que quede en los drops vuelve al jugador al reaparecer.
+
+**Reemplazo.** Una tabla `replace` en `player_loot` nunca descarta un objeto ligado al alma.
+
+**Desaparición.** Un objeto con Maldición de desaparición y `keepVanishing` activado siempre toma el modo `player`, porque vanilla destruye los objetos malditos antes de que existan los drops. Con `keepVanishing` desactivado desaparece como en vanilla.
+
+**Lo que no alcanza.** Los objetos fuera del inventario vanilla, como las ranuras de Curios y similares, no los alcanza.
+
+**data.soulbound.** La categoría `data` de la configuración tiene `soulbound` (por defecto `true`, junto a `playerLoot`). Apagada, no se lee ningún archivo, no se rescata nada y no se dibuja tooltip. El tooltip también se apaga cuando `vanillaClients` está activado. El marcado funciona con un servidor solo y clientes vanilla; el tooltip necesita el mod en el cliente.
 
 ## Variedad de comida
 
