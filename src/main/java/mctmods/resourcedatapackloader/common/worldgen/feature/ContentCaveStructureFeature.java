@@ -1,7 +1,10 @@
 package mctmods.resourcedatapackloader.common.worldgen.feature;
 
+import mctmods.resourcedatapackloader.common.pack.definitions.blocks.ShapeDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveRegionDef;
+import mctmods.resourcedatapackloader.common.respawn.RespawnInstance;
+import mctmods.resourcedatapackloader.common.respawn.RespawnRecorder;
 import mctmods.resourcedatapackloader.common.worldgen.carver.ContentCaveRegions;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentImprint;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentPlacer;
@@ -20,6 +23,8 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -116,6 +121,10 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
             ResourceLocation table = ResourceLocation.tryParse(region.structureLoot());
             if (table == null) { ContentLog.LOGGER.error("Cave region {} names structureLoot '{}', which is not a valid id, so the containers are left as the template holds them", region.key(), region.structureLoot()); }
             else { ContentImprint.stock(placer, random, table, cornerX, y, cornerZ, span); }
+        }
+        if (region.respawn() != null) {
+            BoundingBox area = new BoundingBox(cornerX, y, cornerZ, cornerX + span.getX() - 1, y + span.getY() - 1, cornerZ + span.getZ() - 1);
+            RespawnRecorder.record(level, region.respawn(), new RespawnInstance(RespawnInstance.CAVE, region.key().toString(), template.toString(), fitted, rotation, Mirror.NONE, ShapeDef.FULL_INTEGRITY, cellHash, area), area);
         }
         ContentLog.LOGGER.debug("Cave region {} placed {} at {} {} {} turned {}", region.key(), named, x, y, z, rotation);
         return true;

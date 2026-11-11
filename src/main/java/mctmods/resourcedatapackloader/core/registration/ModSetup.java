@@ -100,6 +100,7 @@ import mctmods.resourcedatapackloader.common.pregen.ContentPristine;
 import mctmods.resourcedatapackloader.common.raids.ContentRaids;
 import mctmods.resourcedatapackloader.common.recipes.IRecipeFilter;
 import mctmods.resourcedatapackloader.common.recipes.RecipeLoading;
+import mctmods.resourcedatapackloader.common.respawn.RespawnEvents;
 import mctmods.resourcedatapackloader.common.rules.ContentGameRules;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowWater;
@@ -221,6 +222,9 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentTeams::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(PackOptionsWorld::onLogin);
         MinecraftForge.EVENT_BUS.addListener(PackOptionsWorld::onLevelSave);
+        MinecraftForge.EVENT_BUS.addListener(RespawnEvents::onLevelLoad);
+        MinecraftForge.EVENT_BUS.addListener(RespawnEvents::onChunkLoad);
+        MinecraftForge.EVENT_BUS.addListener(RespawnEvents::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentTeams::onFriendlyFire);
         MinecraftForge.EVENT_BUS.addListener(ContentWorn::onPlayerTick);
         MinecraftForge.EVENT_BUS.addListener(ContentScoring::onLevelLoad);

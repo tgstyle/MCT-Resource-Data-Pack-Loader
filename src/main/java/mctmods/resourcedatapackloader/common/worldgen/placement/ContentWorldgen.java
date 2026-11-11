@@ -79,7 +79,6 @@ public final class ContentWorldgen {
     public static final String RETROGEN_TOKENS = "retrogen";
     private static final String UNDERGROUND = "underground_ores";
     private static final String VEGETAL = "vegetal_decoration";
-    private static final String SURFACE = "surface_structures";
     private static final Map<ResourceLocation, WorldgenDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Entry> ENTRIES = new LinkedHashMap<>();
     private static boolean loaded;
@@ -87,6 +86,8 @@ public final class ContentWorldgen {
     private static final int EDGE_REACH = 16;
 
     private ContentWorldgen() {}
+
+    @Nullable public static WorldgenDef def(ResourceLocation key) { return DEFS.get(key); }
 
     public static void load() {
         if (loaded) { return; }
@@ -431,8 +432,7 @@ public final class ContentWorldgen {
 
     private static String step(ShapeDef shape) {
         return switch (shape.type()) {
-            case ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES -> VEGETAL;
-            case ShapeDef.IMPRINT -> SURFACE;
+            case ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES, ShapeDef.IMPRINT -> VEGETAL;
             default -> UNDERGROUND;
         };
     }

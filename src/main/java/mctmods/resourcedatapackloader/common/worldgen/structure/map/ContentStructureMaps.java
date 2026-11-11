@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.WorldgenFiles;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserRespawn;
 import mctmods.resourcedatapackloader.common.rules.ContentLootSwitch;
 import mctmods.resourcedatapackloader.common.util.dimension.DimensionValues;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentWorldgen;
@@ -182,7 +183,7 @@ public final class ContentStructureMaps {
             else { ContentLog.LOGGER.error("Structure map {} pins 'at' with {} number(s) instead of x and z, so the pin is ignored", key, spot.size()); }
         }
         StructureMapDef def = new StructureMapDef(key, cell, Mth.clamp(Json.getInt(json, "ground", 0), 0, layers.size() - 1), spacing, Mth.clamp(Json.getInt(json, "chance", 100), 1, 100), pinned,
-                Json.strings(json, "dimensions"), List.copyOf(layers), wide, deep, depth(key, json), spawners(key, json), loot(key, json));
+                Json.strings(json, "dimensions"), List.copyOf(layers), wide, deep, depth(key, json), spawners(key, json), loot(key, json), ContentParserRespawn.parse(key, json));
         if (spacing > 0 && spacing * 16 < def.widest()) {
             ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest());
             return null;
