@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionEffect
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSunHaze;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.environment.ContentWeather;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyFlip;
@@ -22,9 +24,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.ShaderInstance;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -38,6 +47,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LevelRenderer.class) public abstract class LevelRendererMixin {
     @Shadow @Nullable private ClientLevel level;
+    @Unique private final ShieldIndex.Near rdpl$shields = new ShieldIndex.Near();
+    @Unique private int rdpl$viewY;
 
     @Redirect(method = "renderClouds", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;getCloudHeight()F")) private float rdpl$cloudHeightAsked(DimensionSpecialEffects effects) {
         float own = effects.getCloudHeight();
@@ -51,9 +62,33 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return view != null && ContentWeather.above(view.level(), view.getBlockY());
     }
 
-    @Inject(method = "renderSnowAndRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherRender(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
+    @Unique private void rdpl$fillShields(ClientLevel world, double x, double y, double z, int range) {
+        rdpl$viewY = Mth.floor(y);
+        ShieldIndexes.near(world, Mth.floor(x), Mth.floor(z), range, rdpl$shields);
+    }
 
-    @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
+    @Inject(method = "renderSnowAndRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherRender(LightTexture lightTexture, float partialTick, double camX, double camY, double camZ, CallbackInfo ci) {
+        if (rdpl$aboveCeiling()) {
+            ci.cancel();
+            return;
+        }
+        if (level != null) { rdpl$fillShields(level, camX, camY, camZ, Minecraft.useFancyGraphics() ? 10 : 5); }
+    }
+
+    @Redirect(method = "renderSnowAndRain", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getHeight(Lnet/minecraft/world/level/levelgen/Heightmap$Types;II)I")) private int rdpl$shutRain(Level world, Heightmap.Types heightmapType, int x, int z) { return rdpl$shields.shut(x, z) ? rdpl$viewY + 11 : world.getHeight(heightmapType, x, z); }
+
+    @Redirect(method = "tickRain", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/LevelReader;getHeightmapPos(Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;", ordinal = 0)) private BlockPos rdpl$shutSplash(LevelReader world, Heightmap.Types heightmapType, BlockPos pos) { return rdpl$shields.shut(pos.getX(), pos.getZ()) ? new BlockPos(pos.getX(), rdpl$viewY + 11, pos.getZ()) : world.getHeightmapPos(heightmapType, pos); }
+
+    @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(Camera camera, CallbackInfo ci) {
+        if (rdpl$aboveCeiling()) {
+            ci.cancel();
+            return;
+        }
+        if (level != null) {
+            Vec3 at = camera.getPosition();
+            rdpl$fillShields(level, at.x, at.y, at.z, 10);
+        }
+    }
 
     @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderColor(FFFF)V", ordinal = 2), index = 3) private float rdpl$dimSun(float alpha) { return alpha * ContentDimensionEffects.sun(level); }
 

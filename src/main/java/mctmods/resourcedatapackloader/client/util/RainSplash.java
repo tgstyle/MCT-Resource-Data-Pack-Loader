@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client.util;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.RainDef;
 import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.core.util.math.Rgb;
@@ -29,6 +31,7 @@ import net.minecraft.world.level.material.FluidState;
 
 public final class RainSplash {
     private static final int RADIUS = 10;
+    private static final ShieldIndex.Near SHIELDS = new ShieldIndex.Near();
     private static int soundCounter;
 
     private RainSplash() {}
@@ -48,12 +51,15 @@ public final class RainSplash {
         if (strength <= 0.0F || rain.splashless()) { return; }
         RandomSource random = RandomSource.create(ticks * 312987231L);
         BlockPos at = BlockPos.containing(camera.getPosition());
+        ShieldIndexes.near(level, at.getX(), at.getZ(), RADIUS, SHIELDS);
         BlockPos landed = null;
         ParticleStatus status = mc.options.particles().get();
         ParticleOptions splash = particle(rain);
         int count = (int) (100.0F * strength * strength) / (status == ParticleStatus.DECREASED ? 2 : 1);
         for (int drop = 0; drop < count; drop++) {
-            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, at.offset(random.nextInt(RADIUS * 2 + 1) - RADIUS, 0, random.nextInt(RADIUS * 2 + 1) - RADIUS));
+            BlockPos column = at.offset(random.nextInt(RADIUS * 2 + 1) - RADIUS, 0, random.nextInt(RADIUS * 2 + 1) - RADIUS);
+            if (SHIELDS.shut(column.getX(), column.getZ())) { continue; }
+            BlockPos top = level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, column);
             if (top.getY() <= level.getMinBuildHeight() || top.getY() > at.getY() + RADIUS || top.getY() < at.getY() - RADIUS) { continue; }
             Biome biome = level.getBiome(top).value();
             if (biome.getPrecipitationAt(top) != Biome.Precipitation.RAIN) { continue; }

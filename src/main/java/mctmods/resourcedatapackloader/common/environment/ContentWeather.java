@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.environment;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
@@ -8,6 +9,7 @@ import mctmods.resourcedatapackloader.common.util.dimension.DimensionValues;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import javax.annotation.Nullable;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.WorldGenLevel;
@@ -25,6 +27,8 @@ public final class ContentWeather {
         Integer ceiling = ceilingFor(level);
         return ceiling != null && y > ceiling;
     }
+
+    public static boolean shut(@Nullable LevelReader world, BlockPos pos) { return above(world, pos.getY()) || ShieldIndexes.weatherShut(world, pos.getX(), pos.getZ()); }
 
     public static DimensionTraitsDef traits(@Nullable LevelReader world) {
         Level level = level(world);

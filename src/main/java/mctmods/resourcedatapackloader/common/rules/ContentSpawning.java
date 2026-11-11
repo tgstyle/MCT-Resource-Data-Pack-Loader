@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.common.rules;
 
+import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentSpawnGate;
@@ -67,6 +68,10 @@ public final class ContentSpawning {
             return;
         }
         if (!spawner && (ContentThreat.barred(mob) || ContentSpawnGate.barred(mob))) {
+            fail(event);
+            return;
+        }
+        if (!spawner && ShieldIndexes.spawnDenied(level, mob, mob.getBlockX(), mob.getBlockY(), mob.getBlockZ())) {
             fail(event);
             return;
         }

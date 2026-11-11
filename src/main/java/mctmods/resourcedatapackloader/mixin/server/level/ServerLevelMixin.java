@@ -84,7 +84,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Inject(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At("HEAD"), cancellable = true) private void rdpl$noPrecipitation(BlockPos blockPos, CallbackInfo ci) { if (!ContentWeather.traits((ServerLevel) (Object) this).precipitation()) { ci.cancel(); } }
 
     @Redirect(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;handlePrecipitation(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/biome/Biome$Precipitation;)V")) private void rdpl$rainFillBelowCeiling(Block block, BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
-        if (ContentWeather.above(level, pos.getY())) { return; }
+        if (ContentWeather.shut(level, pos)) { return; }
         Biome.Precipitation falls = ContentWeather.fallsAs(level, level.getBiome(pos.above()).value(), precipitation);
         if (falls == Biome.Precipitation.SNOW && ContentSeasonSnow.snowStopped(level, pos)) { return; }
         if (falls == Biome.Precipitation.RAIN) { VanillaFluidRules.rained(level, pos, state); }
