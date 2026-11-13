@@ -178,6 +178,8 @@ dependencies {
     if (companion('mantle')) { runtimeOnly deobf("curse.maven:${common.mant_version}") }
     if (companion('ftblib')) { runtimeOnly deobf("curse.maven:${common.ftbl_version}") }
     if (companion('ftbutilities')) { runtimeOnly deobf("curse.maven:${common.ftbu_version}") }
+    if (companion('galaxyspace')) { runtimeOnly deobf('curse.maven:galaxy-space-addon-for-galacticraft-238770:7005609') }
+    if (companion('asmodeuscore')) { runtimeOnly deobf('curse.maven:asmodeuscore-303101:7180991') }
     if (companion('dynamictrees')) { runtimeOnly deobf("curse.maven:${common.dytr_version}") }
     if (companion('biomesoplenty')) { runtimeOnly deobf("curse.maven:${common.bopl_version}") }
 

@@ -113,8 +113,18 @@ public final class ContentParserCelestial {
         String icon = Json.getString(json, "icon", "").trim();
         String ring = Json.getString(json, "ring", "").trim();
         return new CelestialDef(key, CelestialDef.OVERRIDE, body, "", icon.isEmpty() ? null : new ResourceLocation(icon), 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0,
-                ring.isEmpty() ? null : new ResourceLocation(ring), Math.max(0.1F, Json.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)), 0.0F, -1,
+                ring.isEmpty() ? null : new ResourceLocation(ring), Math.max(0.1F, Json.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)), ringFront(key, json), 0.0F, -1,
                 "", null, 0.0F, 0.0F, 0.0F, null, strings(json, "requires"), ContentParserModPlanets.galaxySpace(key, json));
+    }
+
+    private static BodyRings.Front ringFront(ResourceLocation key, JsonObject json) {
+        String value = Json.getString(json, "ringFront", "bottom");
+        BodyRings.Front front = BodyRings.Front.parse(value);
+        if (front == null) {
+            ContentLog.LOGGER.error("Celestial {} gives ringFront '{}', which must be bottom, top, left or right, so it uses bottom", key, value);
+            return BodyRings.Front.BOTTOM;
+        }
+        return front;
     }
 
     @Nullable private static CelestialDef system(ResourceLocation key, JsonObject json) {
@@ -137,7 +147,7 @@ public final class ContentParserCelestial {
             return null;
         }
         String image = Json.getString(json, "galaxyImage", "").trim();
-        return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, 0.0F, -1,
+        return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, BodyRings.Front.BOTTOM, 0.0F, -1,
                 galaxy, image.isEmpty() ? null : new ResourceLocation(image),
                 Json.asFloat(at.get(0), "at", 0.0F), Json.asFloat(at.get(1), "at", 0.0F), at.size() > 2 ? Json.asFloat(at.get(2), "at", 0.0F) : 0.0F,
                 star, strings(json, "requires"), null);
@@ -178,6 +188,7 @@ public final class ContentParserCelestial {
                 ContentTypes.color(Json.getString(json, "ringColor", RING), key + " ringColor"),
                 ring,
                 Math.max(0.1F, Json.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)),
+                ringFront(key, json),
                 beltWidth,
                 CelestialDef.STAR.equals(kind) || CelestialDef.SUBSYSTEM.equals(kind) ? -1 : Json.getInt(json, "tier", tier),
                 "", null, 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));

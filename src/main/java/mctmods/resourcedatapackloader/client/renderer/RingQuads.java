@@ -23,17 +23,18 @@ import org.lwjgl.opengl.GL11;
     public static void sky(BodyRings.Ring ring, float bodySize, boolean front) {
         float across = bodySize * ring.size;
         float down = across / aspect(ring);
-        float near = front ? 0.0F : -down;
-        float far = front ? down : 0.0F;
-        float top = front ? 0.5F : 0.0F;
-        float bottom = front ? 1.0F : 0.5F;
+        float[] half = ring.front.half(front);
+        float left = -across + half[0] * 2.0F * across;
+        float right = -across + half[2] * 2.0F * across;
+        float near = -down + half[1] * 2.0F * down;
+        float far = -down + half[3] * 2.0F * down;
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(-across, 100.0D, near).tex(0.0D, top).endVertex();
-        buffer.pos(across, 100.0D, near).tex(1.0D, top).endVertex();
-        buffer.pos(across, 100.0D, far).tex(1.0D, bottom).endVertex();
-        buffer.pos(-across, 100.0D, far).tex(0.0D, bottom).endVertex();
+        buffer.pos(left, 100.0D, near).tex(half[0], half[1]).endVertex();
+        buffer.pos(right, 100.0D, near).tex(half[2], half[1]).endVertex();
+        buffer.pos(right, 100.0D, far).tex(half[2], half[3]).endVertex();
+        buffer.pos(left, 100.0D, far).tex(half[0], half[3]).endVertex();
         tessellator.draw();
     }
 }

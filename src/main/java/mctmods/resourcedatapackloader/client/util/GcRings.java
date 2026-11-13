@@ -83,7 +83,9 @@ import org.lwjgl.util.vector.Vector3f;
         float width = map.getWidthForCelestialBody(body) * ring.size;
         float height = width / RingQuads.aspect(ring);
         GL11.glColor4f(1.0F, 1.0F, 1.0F, alpha);
-        if (front) { map.drawTexturedModalRect(-width / 2.0F, 0.0F, width, height / 2.0F, 0.0F, 0.5F, 1.0F, 0.5F, false, false, 1.0F, 1.0F); }
-        else { map.drawTexturedModalRect(-width / 2.0F, -height / 2.0F, width, height / 2.0F, 0.0F, 0.0F, 1.0F, 0.5F, false, false, 1.0F, 1.0F); }
+        float[] half = ring.front.half(front);
+        float u = half[2] - half[0];
+        float v = half[3] - half[1];
+        map.drawTexturedModalRect(-width / 2.0F + half[0] * width, -height / 2.0F + half[1] * height, width * u, height * v, half[0], half[1], u, v, false, false, 1.0F, 1.0F);
     }
 }

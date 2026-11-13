@@ -40,7 +40,7 @@ public final class GcOverrides {
                 if (GcCelestial.GALAXY_SPACE && def.galaxySpace != null) { GsBodies.override(body, def.galaxySpace); }
                 if (client && def.ring != null) {
                     if (body instanceof Planet || body instanceof Moon) {
-                        BodyRings.register(body.getName(), def.ring, def.ringSize);
+                        BodyRings.register(body.getName(), def.ring, def.ringSize, def.ringFront);
                         ringed = true;
                     }
                     else { ContentLog.LOGGER.error("Celestial override {} sets a ring on {}, which is neither a planet nor a moon, ignoring it", def.key, body.getTranslationKey()); }

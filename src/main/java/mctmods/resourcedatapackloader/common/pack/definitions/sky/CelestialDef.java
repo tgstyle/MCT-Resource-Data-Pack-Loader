@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.common.pack.definitions.sky;
 
+import mctmods.resourcedatapackloader.common.util.dimension.BodyRings;
+
 import net.minecraft.util.ResourceLocation;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -26,6 +28,7 @@ public final class CelestialDef {
     public final int ringColor;
     @Nullable public final ResourceLocation ring;
     public final float ringSize;
+    public final BodyRings.Front ringFront;
     public final float beltWidth;
     public final int tier;
     public final String galaxy;
@@ -37,7 +40,7 @@ public final class CelestialDef {
     public final List<String> requires;
     @Nullable public final GalaxySpaceDef galaxySpace;
 
-    public CelestialDef(ResourceLocation key, String kind, String name, String parent, @Nullable ResourceLocation icon, float relativeSize, float distance, float scaledDistance, float orbitTime, float phaseShift, int ringColor, @Nullable ResourceLocation ring, float ringSize, float beltWidth, int tier, String galaxy, @Nullable ResourceLocation galaxyImage, float mapX, float mapY, float mapZ, @Nullable CelestialDef star, List<String> requires, @Nullable GalaxySpaceDef galaxySpace) {
+    public CelestialDef(ResourceLocation key, String kind, String name, String parent, @Nullable ResourceLocation icon, float relativeSize, float distance, float scaledDistance, float orbitTime, float phaseShift, int ringColor, @Nullable ResourceLocation ring, float ringSize, BodyRings.Front ringFront, float beltWidth, int tier, String galaxy, @Nullable ResourceLocation galaxyImage, float mapX, float mapY, float mapZ, @Nullable CelestialDef star, List<String> requires, @Nullable GalaxySpaceDef galaxySpace) {
         this.key = key;
         this.kind = kind;
         this.name = name;
@@ -51,6 +54,7 @@ public final class CelestialDef {
         this.ringColor = ringColor;
         this.ring = ring;
         this.ringSize = ringSize;
+        this.ringFront = ringFront;
         this.beltWidth = beltWidth;
         this.tier = tier;
         this.galaxy = galaxy;
