@@ -109,7 +109,7 @@ public final class ContentControl {
             "worldSpawnNpcs", "worldViewDistance", "worldSimulationDistance", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "terrainOffset", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
             "worldTypeExceptions", "blocks", "who", "onJoinTeam", "onDissolve", "removeAs", "dissolvePerTick", "checkTicks", "teamSource", "onFtbTeamDeleted",
-            "ftbPolicy", "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
+            "ftbPolicy", "ftbAllies", "ftbClaimsOnRdpl", "dissolveOnFtbLand", "fakePlayerBlocks", "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
             "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers",
             "denyMessage", "protectBreak", "protectPlace", "protectUse", "protectExplosions", "protectMobGriefing", "protectFluids", "protectPistons", "protectFire", "protectPvp",
             "useBlocks", "useExceptions", "message", "messageWilderness", "claimOnDissolve", "restore", "regenerate", "restorePerTick", "movePlayers", "entities");

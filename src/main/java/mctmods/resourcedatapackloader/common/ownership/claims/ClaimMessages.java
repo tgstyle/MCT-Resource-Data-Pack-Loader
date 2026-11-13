@@ -41,7 +41,7 @@ public final class ClaimMessages {
         if (index == null) { return; }
         int chunkX = player.blockPosition().getX() >> 4;
         int chunkZ = player.blockPosition().getZ() >> 4;
-        int owner = index.ownerAt(chunkX, chunkZ);
+        int owner = ClaimSettings.yieldsToForeign() ? ClaimGuard.covers(player.level(), player.blockPosition()) : index.ownerAt(chunkX, chunkZ);
         ResourceKey<Level> dimension = player.level().dimension();
         Seen last = SEEN.put(player.getUUID(), new Seen(dimension, chunkX, chunkZ, owner));
         if (last == null || last.owner == owner || (last.dimension.equals(dimension) && last.chunkX == chunkX && last.chunkZ == chunkZ)) { return; }

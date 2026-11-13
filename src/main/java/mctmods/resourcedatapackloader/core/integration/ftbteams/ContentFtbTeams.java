@@ -19,6 +19,7 @@ public final class ContentFtbTeams {
         installed = true;
         TeamDissolve.register(OwnerRecord.SOURCE_FTB, (server, key) -> FtbPartyTeams.live(key));
         FtbTeamDeleted.register();
+        FtbTeamRenamed.register();
     }
 
     public static void serverStarting() {

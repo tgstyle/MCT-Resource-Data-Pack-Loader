@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.ownership;
 
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimDissolve;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimOwners;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.util.world.PlacePositions;
 
 import com.mojang.brigadier.context.CommandContextBuilder;
@@ -31,7 +33,7 @@ public final class ContentOwnership {
     }
 
     private static void place(ServerLevel level, BlockPos pos, Entity entity) {
-        if (entity instanceof ServerPlayer player) {
+        if (entity instanceof ServerPlayer player && !(ClaimSettings.fakePlayerBlocksNone() && ClaimOwners.isFake(player))) {
             Block block = level.getBlockState(pos).getBlock();
             if (OwnershipSettings.tags(block)) {
                 int handle = OwnerTable.handleOf(player, OwnershipSettings.who());

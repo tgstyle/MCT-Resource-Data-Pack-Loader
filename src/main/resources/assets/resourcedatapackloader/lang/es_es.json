@@ -284,6 +284,7 @@
   "rdpl.claim.deny.touch": "Una reclamación nueva tiene que tocar un chunk que ya es tuyo",
   "rdpl.claim.deny.distance": "Este chunk está demasiado cerca de un terreno que pertenece a otra persona",
   "rdpl.claim.deny.ftbland": "Este chunk es terreno de FTB y no se puede reclamar aquí",
+  "rdpl.claim.ftbonrdpl": "Este chunk está ocupado por una reclamación de RDPL",
   "rdpl.claim.deny.ftbonly": "Aquí el terreno está reclamado con FTB Utilities, usa su comando de reclamación",
   "rdpl.claim.block.overlap": "Parte de ese cuadrado ya pertenece a otra persona, así que el bloque de reclamación no se puede colocar aquí",
   "rdpl.claim.block.released": "El bloque de reclamación ha desaparecido, así que sus %s chunks reclamados se han liberado",

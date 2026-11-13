@@ -284,6 +284,7 @@
   "rdpl.claim.deny.touch": "Une nouvelle revendication doit toucher un chunk que vous possédez déjà",
   "rdpl.claim.deny.distance": "Ce chunk est trop proche d'un terrain appartenant à quelqu'un d'autre",
   "rdpl.claim.deny.ftbland": "Ce chunk est un terrain de FTB et ne peut pas être revendiqué ici",
+  "rdpl.claim.ftbonrdpl": "Ce chunk est occupé par une revendication RDPL",
   "rdpl.claim.deny.ftbonly": "Ici, le terrain est revendiqué avec FTB Utilities, utilisez plutôt sa commande de revendication",
   "rdpl.claim.block.overlap": "Une partie de ce carré appartient déjà à quelqu'un d'autre, le bloc de revendication ne peut donc pas être placé ici",
   "rdpl.claim.block.released": "Le bloc de revendication a disparu, ses %s chunks revendiqués ont donc été libérés",

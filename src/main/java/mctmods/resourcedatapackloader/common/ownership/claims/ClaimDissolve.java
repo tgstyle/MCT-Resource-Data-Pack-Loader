@@ -94,6 +94,10 @@ public final class ClaimDissolve {
     private static boolean loaded(ServerLevel level, int chunkX, int chunkZ) { return level.getChunkSource().getChunkNow(chunkX, chunkZ) != null; }
 
     private static boolean work(ServerLevel level, ClaimIndex index, ClaimIndex.Pending pending, Job job, Budget budget) {
+        if (ClaimSettings.dissolveSkipsFtbLand() && ForeignClaimsHolder.get().isClaimed(level, job.x, job.z)) {
+            index.removePending(job.x, job.z);
+            return true;
+        }
         boolean replacing = ClaimSettings.restore() || ClaimSettings.regenerate();
         if (replacing && ClaimPlayers.occupied(level, job.x, job.z)) {
             if (!ClaimSettings.movePlayers()) { return false; }

@@ -65,6 +65,14 @@ public final class OwnerTable extends SavedData {
         return found == null ? 0 : found;
     }
 
+    public void relabelSource(String source, String key, String label) {
+        Integer found = live(OwnerRecord.KIND_TEAM, source, key);
+        OwnerRecord record = found == null ? null : records.get(found);
+        if (record == null || record.label.equals(label)) { return; }
+        record.label = label;
+        setDirty();
+    }
+
     public String sourceOf(int handle) {
         OwnerRecord record = records.get(handle);
         return record == null ? "" : record.source;

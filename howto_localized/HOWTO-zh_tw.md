@@ -8116,56 +8116,64 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "protectPvp": true,
     "message": true,
     "claimOnDissolve": "release",
-    "ftbPolicy": "independent"
+    "ftbPolicy": "independent",
+    "ftbAllies": "ally",
+    "ftbClaimsOnRdpl": "deny",
+    "dissolveOnFtbLand": "skip",
+    "fakePlayerBlocks": "none"
   }
 }
 ```
 
-| 設定                     | 類型   | 預設          | 作用                                                                                                                                     |
-| ------------------------ | ------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `methods`                | 清單   | 空            | 宣告的方式：`command` 為 `/rdplserver claim` 的各種形式，`item` 為宣告物品，`block` 為宣告方塊，可任意組合。為空則無法宣告任何區塊       |
-| `claimWho`               | 文字   | `team`        | 宣告歸誰所有。`team` 歸給宣告者所在的隊伍，需要有隊伍；`teamOrPlayer` 對沒有隊伍的宣告者歸其本人；`player` 永遠歸給宣告者                |
-| `commandRadius`          | 數字   | `3`           | `/rdplserver claim <radius>` 最多可以宣告的區塊數（每個方向）（0 到 64）                                                                 |
-| `commandLevel`           | 數字   | `0`           | 宣告、取消宣告和清單指令所需的權限等級。0 表示所有人（0 到 4）                                                                           |
-| `opLevel`                | 數字   | `2`           | 可以操作其他擁有者宣告的權限等級，並且 `claim for` 會略過下面的限制（0 到 4）                                                            |
-| `item`                   | 文字   | 空            | 宣告物品，格式為 `modid:name`。為空則沒有宣告物品                                                                                        |
-| `itemConsume`            | 布林值 | `false`       | 開啟時，每宣告一個區塊消耗一個宣告物品，取消宣告時不退還                                                                                 |
-| `block`                  | 文字   | 空            | 宣告方塊，格式為 `modid:name`。為空則沒有宣告方塊                                                                                        |
-| `blockRadius`            | 數字   | `0`           | 放置的宣告方塊會佔用其四周各方向的區塊數。0 表示只佔自己所在的區塊（0 到 64）                                                            |
-| `blockOverlap`           | 文字   | `refuse`      | 宣告方塊的正方形與其他擁有者的區塊相交時的處理方式。`refuse` 取消放置，`skip` 只佔用空閒的區塊                                           |
-| `claimCheckTicks`        | 數字   | `100`         | 多久檢查一次已載入的宣告方塊是否被破壞或移動，單位為 tick（1 到 1200）                                                                   |
-| `limitMode`              | 文字   | `flat`        | `flat` 給每人 `limit`；`perMember` 按隊伍中每名成員給 `limitPerMember`；`score` 讀取計分板目標 `limitScore`                              |
-| `limit`                  | 數字   | `16`          | `flat` 模式下，每個宣告者最多可持有的區塊數。0 表示該擁有者不能宣告                                                                      |
-| `limitPerMember`         | 數字   | `4`           | `perMember` 模式下，每名隊伍成員增加的區塊數。一名玩家即為一名成員                                                                       |
-| `limitScore`             | 文字   | 空            | `score` 模式下保存每個宣告者上限的目標。隊伍的上限為其成員分數之和                                                                       |
-| `mustTouch`              | 布林值 | `false`       | 開啟時，新區塊必須與擁有者已有的某個區塊共享一條邊，擁有者的第一次宣告除外                                                               |
-| `minDistance`            | 數字   | `0`           | 新宣告與其他擁有者的宣告之間至少保留的區塊數。0 允許相接                                                                                 |
-| `spawnRadius`            | 數字   | `0`           | 距離維度出生點此區塊數之內不允許宣告（0 到 64）                                                                                          |
-| `dimensions`             | 清單   | 空            | 允許宣告的維度 ID。為空則所有維度均可                                                                                                    |
-| `dimensionsAreBlacklist` | 布林值 | `false`       | 開啟時，宣告不在 `dimensions` 中生效；關閉時，只在其中生效                                                                               |
-| `orphanAccess`           | 文字   | `locked`      | 擁有者已不存在的土地。`locked` 將除管理員以外的人拒於門外；`open` 允許所有人進入並忽略其中的保護，但區塊仍保持被宣告狀態                 |
-| `fakePlayers`            | 文字   | `deny`        | 機器等假玩家能否在他人的宣告中行動。`deny` 阻止，`allow` 允許                                                                            |
-| `denyMessage`            | 布林值 | `true`        | 開啟時，被宣告阻止的玩家會收到提示，且至多每秒一次                                                                                       |
-| `protectBreak`           | 布林值 | `false`       | 開啟時，其他人不能在宣告內破壞方塊，也不能擊打物品展示框、畫和盔甲架                                                                     |
-| `protectPlace`           | 布林值 | `false`       | 開啟時，其他人不能在宣告內放置方塊或用桶裝填液體                                                                                         |
-| `protectUse`             | 布林值 | `false`       | 開啟時，其他人不能使用 `useBlocks` 所列的方塊，除非 `useExceptions` 允許；也不能打開宣告內實體的物品欄                                   |
-| `useBlocks`              | 清單   | `*`           | `protectUse` 阻止他人使用的方塊，格式為 `modid:name`、`modid:*`，或用 `*` 表示所有方塊                                                   |
-| `useExceptions`          | 清單   | 空            | 即使有 `protectUse`，他人仍可使用的方塊，寫法同 `useBlocks`                                                                              |
-| `protectExplosions`      | 布林值 | `false`       | 開啟時，爆炸不會破壞宣告內的方塊                                                                                                         |
-| `protectMobGriefing`     | 布林值 | `false`       | 開啟時，站在宣告內的生物不能改變其中的方塊，例如末影人拿走方塊或殭屍破壞門                                                               |
-| `protectFluids`          | 布林值 | `false`       | 開啟時，液體不會從他人所有的土地流入宣告內                                                                                               |
-| `protectPistons`         | 布林值 | `false`       | 開啟時，活塞不能從宣告外把方塊推入宣告內或推出宣告                                                                                       |
-| `protectFire`            | 布林值 | `false`       | 開啟時，火不會從宣告外蔓延進來，也不會燒毀其中的方塊                                                                                     |
-| `protectPvp`             | 布林值 | `false`       | 開啟時，玩家不能在宣告內互相傷害。擁有者的成員之間也不豁免                                                                               |
-| `message`                | 布林值 | `false`       | 開啟時，跨過宣告邊界的玩家會被告知這是誰的土地                                                                                           |
-| `messageWilderness`      | 布林值 | `false`       | 開啟時，玩家從宣告走入未宣告土地時也會被告知                                                                                             |
-| `claimOnDissolve`        | 文字   | `keep`        | 已消失的擁有者的宣告如何處理。`keep` 保留在已消失的擁有者名下；`release` 釋放為無主土地；`remove` 收回土地，並撤銷其上所建的內容         |
-| `restore`                | 布林值 | `false`       | 配合 `remove` 使用：若原始副本覆蓋該區塊，則先將其從原始副本還原                                                                         |
-| `regenerate`             | 布林值 | `false`       | 配合 `remove` 使用：還原時未被覆蓋的區塊，將根據世界種子重新生成                                                                         |
-| `restorePerTick`         | 數字   | `1`           | 每個 tick 還原或重新生成的段數，所有區塊合計（1 及以上）                                                                                 |
-| `movePlayers`            | 布林值 | `true`        | 開啟時，正在被還原或重新生成的區塊內的玩家會先被移出                                                                                     |
-| `entities`               | 文字   | `keep`        | 被還原或重新生成的區塊中的實體如何處理。`keep` 保留它們；`remove` 移除所有非玩家實體                                                     |
-| `ftbPolicy`              | 文字   | `independent` | 宣告如何與 FTB Chunks 的宣告並存。`independent` 忽略它們；`yield` 把 FTB 的區塊交給 FTB；`exclusive` 在 FTB 宣告生效期間拒絕 RDPL 的宣告 |
+| 設定                     | 類型   | 預設          | 作用                                                                                                                                           |
+| ------------------------ | ------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `methods`                | 清單   | 空            | 宣告的方式：`command` 為 `/rdplserver claim` 的各種形式，`item` 為宣告物品，`block` 為宣告方塊，可任意組合。為空則無法宣告任何區塊             |
+| `claimWho`               | 文字   | `team`        | 宣告歸誰所有。`team` 歸給宣告者所在的隊伍，需要有隊伍；`teamOrPlayer` 對沒有隊伍的宣告者歸其本人；`player` 永遠歸給宣告者                      |
+| `commandRadius`          | 數字   | `3`           | `/rdplserver claim <radius>` 最多可以宣告的區塊數（每個方向）（0 到 64）                                                                       |
+| `commandLevel`           | 數字   | `0`           | 宣告、取消宣告和清單指令所需的權限等級。0 表示所有人（0 到 4）                                                                                 |
+| `opLevel`                | 數字   | `2`           | 可以操作其他擁有者宣告的權限等級，並且 `claim for` 會略過下面的限制（0 到 4）                                                                  |
+| `item`                   | 文字   | 空            | 宣告物品，格式為 `modid:name`。為空則沒有宣告物品                                                                                              |
+| `itemConsume`            | 布林值 | `false`       | 開啟時，每宣告一個區塊消耗一個宣告物品，取消宣告時不退還                                                                                       |
+| `block`                  | 文字   | 空            | 宣告方塊，格式為 `modid:name`。為空則沒有宣告方塊                                                                                              |
+| `blockRadius`            | 數字   | `0`           | 放置的宣告方塊會佔用其四周各方向的區塊數。0 表示只佔自己所在的區塊（0 到 64）                                                                  |
+| `blockOverlap`           | 文字   | `refuse`      | 宣告方塊的正方形與其他擁有者的區塊相交時的處理方式。`refuse` 取消放置，`skip` 只佔用空閒的區塊                                                 |
+| `claimCheckTicks`        | 數字   | `100`         | 多久檢查一次已載入的宣告方塊是否被破壞或移動，單位為 tick（1 到 1200）                                                                         |
+| `limitMode`              | 文字   | `flat`        | `flat` 給每人 `limit`；`perMember` 按隊伍中每名成員給 `limitPerMember`；`score` 讀取計分板目標 `limitScore`                                    |
+| `limit`                  | 數字   | `16`          | `flat` 模式下，每個宣告者最多可持有的區塊數。0 表示該擁有者不能宣告                                                                            |
+| `limitPerMember`         | 數字   | `4`           | `perMember` 模式下，每名隊伍成員增加的區塊數。一名玩家即為一名成員                                                                             |
+| `limitScore`             | 文字   | 空            | `score` 模式下保存每個宣告者上限的目標。隊伍的上限為其成員分數之和                                                                             |
+| `mustTouch`              | 布林值 | `false`       | 開啟時，新區塊必須與擁有者已有的某個區塊共享一條邊，擁有者的第一次宣告除外                                                                     |
+| `minDistance`            | 數字   | `0`           | 新宣告與其他擁有者的宣告之間至少保留的區塊數。0 允許相接                                                                                       |
+| `spawnRadius`            | 數字   | `0`           | 距離維度出生點此區塊數之內不允許宣告（0 到 64）                                                                                                |
+| `dimensions`             | 清單   | 空            | 允許宣告的維度 ID。為空則所有維度均可                                                                                                          |
+| `dimensionsAreBlacklist` | 布林值 | `false`       | 開啟時，宣告不在 `dimensions` 中生效；關閉時，只在其中生效                                                                                     |
+| `orphanAccess`           | 文字   | `locked`      | 擁有者已不存在的土地。`locked` 將除管理員以外的人拒於門外；`open` 允許所有人進入並忽略其中的保護，但區塊仍保持被宣告狀態                       |
+| `fakePlayers`            | 文字   | `deny`        | 機器等假玩家能否在他人的宣告中行動。`deny` 阻止，`allow` 允許；`owner` 允許 UUID 屬於宣告擁有者成員的假玩家。沒有連線的玩家算作假玩家          |
+| `denyMessage`            | 布林值 | `true`        | 開啟時，被宣告阻止的玩家會收到提示，且至多每秒一次                                                                                             |
+| `protectBreak`           | 布林值 | `false`       | 開啟時，其他人不能在宣告內破壞方塊，也不能擊打物品展示框、畫和盔甲架                                                                           |
+| `protectPlace`           | 布林值 | `false`       | 開啟時，其他人不能在宣告內放置方塊或用桶裝填液體                                                                                               |
+| `protectUse`             | 布林值 | `false`       | 開啟時，其他人不能使用 `useBlocks` 所列的方塊，除非 `useExceptions` 允許；也不能打開宣告內實體的物品欄                                         |
+| `useBlocks`              | 清單   | `*`           | `protectUse` 阻止他人使用的方塊，格式為 `modid:name`、`modid:*`，或用 `*` 表示所有方塊                                                         |
+| `useExceptions`          | 清單   | 空            | 即使有 `protectUse`，他人仍可使用的方塊，寫法同 `useBlocks`                                                                                    |
+| `protectExplosions`      | 布林值 | `false`       | 開啟時，爆炸不會破壞宣告內的方塊                                                                                                               |
+| `protectMobGriefing`     | 布林值 | `false`       | 開啟時，站在宣告內的生物不能改變其中的方塊，例如末影人拿走方塊或殭屍破壞門                                                                     |
+| `protectFluids`          | 布林值 | `false`       | 開啟時，液體不會從他人所有的土地流入宣告內                                                                                                     |
+| `protectPistons`         | 布林值 | `false`       | 開啟時，活塞不能從宣告外把方塊推入宣告內或推出宣告                                                                                             |
+| `protectFire`            | 布林值 | `false`       | 開啟時，火不會從宣告外蔓延進來，也不會燒毀其中的方塊                                                                                           |
+| `protectPvp`             | 布林值 | `false`       | 開啟時，玩家不能在宣告內互相傷害。擁有者的成員之間也不豁免                                                                                     |
+| `message`                | 布林值 | `false`       | 開啟時，跨過宣告邊界的玩家會被告知這是誰的土地                                                                                                 |
+| `messageWilderness`      | 布林值 | `false`       | 開啟時，玩家從宣告走入未宣告土地時也會被告知                                                                                                   |
+| `claimOnDissolve`        | 文字   | `keep`        | 已消失的擁有者的宣告如何處理。`keep` 保留在已消失的擁有者名下；`release` 釋放為無主土地；`remove` 收回土地，並撤銷其上所建的內容               |
+| `restore`                | 布林值 | `false`       | 配合 `remove` 使用：若原始副本覆蓋該區塊，則先將其從原始副本還原                                                                               |
+| `regenerate`             | 布林值 | `false`       | 配合 `remove` 使用：還原時未被覆蓋的區塊，將根據世界種子重新生成                                                                               |
+| `restorePerTick`         | 數字   | `1`           | 每個 tick 還原或重新生成的段數，所有區塊合計（1 及以上）                                                                                       |
+| `movePlayers`            | 布林值 | `true`        | 開啟時，正在被還原或重新生成的區塊內的玩家會先被移出                                                                                           |
+| `entities`               | 文字   | `keep`        | 被還原或重新生成的區塊中的實體如何處理。`keep` 保留它們；`remove` 移除所有非玩家實體                                                           |
+| `ftbPolicy`              | 文字   | `independent` | 宣告如何與 FTB Chunks 的宣告並存。`independent` 忽略它們；`yield` 把 FTB 的區塊交給 FTB；`exclusive` 在 FTB 宣告生效期間拒絕 RDPL 的宣告       |
+| `ftbAllies`              | 文字   | `none`        | 當 `teamSource` 為 `ftb` 時：`none` 只允許宣告擁有者隊伍的成員進入；`ally` 也允許該隊伍的 FTB 盟友以成員身分進入                               |
+| `ftbClaimsOnRdpl`        | 文字   | `allow`       | `allow` 允許 FTB Chunks 宣告被 RDPL 宣告占有的區塊；`deny` 則拒絕，並顯示訊息「這個區塊已被 RDPL 認領占用」，`dimensions` 禁止的維度中同樣如此 |
+| `dissolveOnFtbLand`      | 文字   | `purge`       | 當 `claimOnDissolve` 為 `remove` 時：`purge` 會處理已釋放的區塊，即使 FTB 之後已宣告了它；`skip` 則放棄 FTB 所持有區塊的工作，不動其中任何東西 |
+| `fakePlayerBlocks`       | 文字   | `source`      | 假玩家在 `ownership` 下放置的方塊：`source` 給出隊伍來源為其 UUID 找到的擁有者；`none` 則在所有來源下都不設擁有者                              |
 
 **宣告。** `command` 僅在 `methods` 包含它時才列出 `/rdplserver claim` 的各種形式。`item` 對其所使用的區塊進行宣告；若在空中使用，則對玩家所站的區塊宣告；潛行時使用則取消宣告。`block` 對放置的宣告方塊所在的區塊宣告，或對其周圍 `blockRadius` 正方形內的每個區塊宣告；破壞該方塊會精確釋放它所宣告的區塊。由於計分板隊伍沒有隊長，隊伍中的任何成員都可以代表隊伍進行宣告和取消宣告。
 
@@ -8177,7 +8185,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 **消失。** 當隊伍從計分板中移除，或 FTB 隊伍依 `onFtbTeamDeleted` 被刪除時，由 `claimOnDissolve` 決定其宣告。`keep` 使宣告仍歸已消失的擁有者，因此由 `orphanAccess` 決定誰可以進入。`release` 立即取消宣告，該土地上的歸屬方塊遵循 `onDissolve`。`remove` 立即取消宣告，然後依順序逐個處理每個區塊：若 `restore` 開啟且原始副本覆蓋該區塊，則先還原；若 `regenerate` 開啟，則重新生成；否則只依 `removeAs` 的規定移除歸屬方塊。還原讀取存檔旁 `rdpl-pristine/<world>` 中保存的原始副本。重新生成只根據種子重建地形形狀，不包括樹木、礦石或結構，因此要得到忠實的結果，需要在預先生成的區域上進行還原。還原和重新生成會替換該區塊中的每個方塊，無論是誰放置的。這項工作是惰性的：區塊載入時入列，每個 tick 處理 `restorePerTick` 個段，若區塊內有玩家則等待，除非 `movePlayers` 將玩家移到所有待處理區塊之外最近的安全位置。`entities` 決定被還原區塊中的生物、物品和載具是否保留。
 
-**FTB Chunks。** `ftbPolicy` 單獨讀取，RDPL 的宣告與 FTB Chunks 的宣告是各自獨立的紀錄。`independent`（預設）忽略 FTB 的宣告。`yield` 拒絕對 FTB 所持有區塊的宣告，並把該處的保護交給 FTB，因此在 FTB 持有該區塊期間，之前的宣告不再提供保護。`exclusive` 拒絕所有 RDPL 宣告，並指引玩家使用 FTB 的宣告指令，且在 FTB 宣告生效期間關閉 RDPL 的保護。若沒有生效的 FTB 宣告，`yield` 和 `exclusive` 都依 `independent` 運作，並在伺服器啟動時記錄一行日誌。
+**FTB Chunks。** `ftbPolicy` 單獨讀取，RDPL 的宣告與 FTB Chunks 的宣告是各自獨立的紀錄。`independent`（預設）忽略 FTB 的宣告。`yield` 拒絕對 FTB 所持有區塊的宣告，並把該處的保護交給 FTB，因此在 FTB 持有該區塊期間，之前的宣告不再提供保護。`exclusive` 拒絕所有 RDPL 宣告，並指引玩家使用 FTB 的宣告指令，且在 FTB 宣告生效期間關閉 RDPL 的保護。若沒有生效的 FTB 宣告，`yield` 和 `exclusive` 都依 `independent` 運作，並在伺服器啟動時記錄一行日誌。FTB Chunks 的 `no_wilderness=true` 還會阻止在僅由 RDPL 宣告占有的區塊中建造，因為 FTB 將其視為未宣告；請關閉該選項執行，或使用 `yield` 並讓玩家透過 FTB 宣告。
 
 ## 計分
 

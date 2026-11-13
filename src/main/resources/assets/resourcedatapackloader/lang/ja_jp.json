@@ -284,6 +284,7 @@
   "rdpl.claim.deny.touch": "新しく確保する場合は、あなたが所有しているチャンクに接している必要があります",
   "rdpl.claim.deny.distance": "このチャンクは他の誰かの土地に近すぎます",
   "rdpl.claim.deny.ftbland": "このチャンクはFTBの土地なので、ここでは確保できません",
+  "rdpl.claim.ftbonrdpl": "このチャンクはRDPLのクレームで確保されています",
   "rdpl.claim.deny.ftbonly": "ここの土地はFTB Utilitiesで確保されています。そのコマンドを使ってください",
   "rdpl.claim.block.overlap": "その範囲の一部がすでに他の誰かのものなので、ここに確保ブロックを置けません",
   "rdpl.claim.block.released": "確保ブロックが失われたため、その確保チャンク %s 個が解放されました",

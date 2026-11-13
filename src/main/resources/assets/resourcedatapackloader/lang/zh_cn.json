@@ -284,6 +284,7 @@
   "rdpl.claim.deny.touch": "新的认领必须与你已拥有的区块相邻",
   "rdpl.claim.deny.distance": "这个区块离别人的领地太近",
   "rdpl.claim.deny.ftbland": "这个区块属于 FTB 领地，无法在此认领",
+  "rdpl.claim.ftbonrdpl": "这个区块已被 RDPL 认领占用",
   "rdpl.claim.deny.ftbonly": "这里的领地已通过 FTB Utilities 认领，请改用它的认领命令",
   "rdpl.claim.block.overlap": "该正方形的一部分已属于他人，因此无法在这里放置认领方块",
   "rdpl.claim.block.released": "认领方块已被移除，其 %s 个已认领区块已被释放",

@@ -284,6 +284,7 @@
   "rdpl.claim.deny.touch": "A new claim has to touch a chunk you already own",
   "rdpl.claim.deny.distance": "This chunk is too close to land that belongs to someone else",
   "rdpl.claim.deny.ftbland": "This chunk is FTB land and cannot be claimed here",
+  "rdpl.claim.ftbonrdpl": "This chunk is held by an RDPL claim",
   "rdpl.claim.deny.ftbonly": "Land here is claimed with FTB Utilities, use its claim command instead",
   "rdpl.claim.block.overlap": "Part of that square already belongs to someone else, so the claim block cannot be placed here",
   "rdpl.claim.block.released": "The claim block is gone, so its %s claimed chunks were released",
