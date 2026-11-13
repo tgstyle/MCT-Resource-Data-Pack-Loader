@@ -191,6 +191,13 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "walks", false),
                 Json.getBoolean(json, "throwReturns", false),
                 Json.getString(sounds, "throw", ""),
+                MathHelper.clamp(Json.getInt(json, "fleesLight", 0), 0, 15),
+                Math.max(0, Json.getInt(json, "followsPlayers", 0)),
+                Math.max(0, Json.getInt(json, "teleportsWhenHit", 0)),
+                Json.getBoolean(json, "pulls", false),
+                Math.max(1, Json.getInt(json, "pullReload", 5)) * 20,
+                Math.max(0.1F, Json.getFloat(json, "pullPower", 1.0F)),
+                Json.getString(json, "pullItem", "minecraft:ender_pearl").trim(),
                 rocket(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null),
                 Json.getString(json, "dialog", "").trim());
     }

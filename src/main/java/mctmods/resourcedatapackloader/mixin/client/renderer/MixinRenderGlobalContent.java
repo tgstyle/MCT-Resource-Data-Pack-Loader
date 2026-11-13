@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderers;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.client.renderer.sky.SeamSkyRenderer;
+import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionRules;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
@@ -14,7 +15,9 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldProvider;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
@@ -54,6 +57,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @WrapOperation(method = {"renderSky(FI)V", "renderClouds"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;isSurfaceWorld()Z")) private boolean rdpl$existingSurface(WorldProvider provider, Operation<Boolean> original) { return ContentDimensionRules.existingSurface(provider, original.call(provider)); }
 
     @WrapOperation(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/texture/TextureManager;bindTexture(Lnet/minecraft/util/ResourceLocation;)V")) private void rdpl$skyTexture(TextureManager textures, ResourceLocation resource, Operation<Void> original) { original.call(textures, ContentDimensionRules.skyTexture(world, resource)); }
+
+    @WrapOperation(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/WorldClient;getSkyColor(Lnet/minecraft/entity/Entity;F)Lnet/minecraft/util/math/Vec3d;")) private Vec3d rdpl$visionSky(WorldClient client, Entity viewer, float partialTicks, Operation<Vec3d> original) { return ContentDimensionRulesClient.vision(client, partialTicks, original.call(client, viewer, partialTicks)); }
 
     @WrapOperation(method = {"renderClouds", "renderCloudsFancy"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;getCloudHeight()F")) private float rdpl$existingCloudHeight(WorldProvider provider, Operation<Float> original) { return ContentDimensionRules.existingCloudHeight(world, original.call(provider)); }
 }

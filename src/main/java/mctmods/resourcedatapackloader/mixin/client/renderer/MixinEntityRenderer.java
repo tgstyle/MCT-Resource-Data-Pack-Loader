@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.client.renderer;
 
 import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
+import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.client.util.ContentReach;
 import mctmods.resourcedatapackloader.client.util.RainSplash;
 import mctmods.resourcedatapackloader.client.util.TrueDarkness;
@@ -104,6 +105,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @WrapOperation(method = "updateFogColor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;calcSunriseSunsetColors(FF)[F")) private float[] rdpl$existingSunrise(WorldProvider provider, float celestialAngle, float partialTicks, Operation<float[]> original) { return ContentDimensionRules.existingSunrise(mc.world, original.call(provider, celestialAngle, partialTicks)); }
 
     @ModifyExpressionValue(method = "updateFogColor", at = {@At(value = "FIELD", target = "Lnet/minecraft/client/renderer/EntityRenderer;fogColor1:F", opcode = Opcodes.GETFIELD), @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/EntityRenderer;fogColor2:F", opcode = Opcodes.GETFIELD)}) private float rdpl$existingFogLight(float own) { return ContentDimensionRules.existingFogLight(mc.world, own); }
+
+    @ModifyExpressionValue(method = "updateFogColor(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;getNightVisionBrightness(Lnet/minecraft/entity/EntityLivingBase;F)F")) private float rdpl$tintedVisionFog(float own) { return ContentDimensionRulesClient.tintsVision(mc.world) ? 0.0F : own; }
 
     @WrapOperation(method = "updateLightmap", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldProvider;getLightmapColors(FFFF[F)V", remap = false)) private void rdpl$existingLightmap(WorldProvider provider, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors, Operation<Void> original) {
         original.call(provider, partialTicks, sunBrightness, skyLight, blockLight, colors);

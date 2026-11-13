@@ -27,9 +27,10 @@ public final class DimensionTraitsDef {
     @Nullable public final Sky sky;
     @Nullable public final Moon moon;
     @Nullable public final AmbienceDef ambience;
+    @Nullable public final DarkDamage darkDamage;
 
     public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, boolean alwaysRain, @Nullable Cycle cycle, @Nullable RainDef rain,
-                              @Nullable Sky sky, @Nullable Moon moon, @Nullable AmbienceDef ambience) {
+                              @Nullable Sky sky, @Nullable Moon moon, @Nullable AmbienceDef ambience, @Nullable DarkDamage darkDamage) {
         this.gravity = gravity;
         this.fallDamage = fallDamage;
         this.arrowGravity = arrowGravity;
@@ -44,6 +45,7 @@ public final class DimensionTraitsDef {
         this.sky = sky;
         this.moon = moon;
         this.ambience = ambience;
+        this.darkDamage = darkDamage;
     }
 
     public static final class Moon {
@@ -125,6 +127,18 @@ public final class DimensionTraitsDef {
             this.angle = angle;
             this.tilt = tilt;
             this.followsTime = followsTime;
+        }
+    }
+
+    public static final class DarkDamage {
+        public final float damage;
+        public final int interval;
+        public final float brightness;
+
+        public DarkDamage(float damage, int interval, float brightness) {
+            this.damage = damage;
+            this.interval = interval;
+            this.brightness = brightness;
         }
     }
 }

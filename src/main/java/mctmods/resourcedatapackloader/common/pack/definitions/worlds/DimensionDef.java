@@ -18,6 +18,7 @@ public final class DimensionDef {
     public static final String VOID = "void";
     public static final String NETHER = "nether";
     public static final String END = "end";
+    public static final String CAVE = "cave";
     public static final String SINGLE = "single";
     public static final String INHERIT = "inherit";
     public static final String LIST = "list";
@@ -27,6 +28,7 @@ public final class DimensionDef {
     public final boolean keepLoaded;
     public final String terrain;
     public final String generatorOptions;
+    @Nullable public final CaveTerrainDef cave;
     public final boolean structures;
     public final String biomeSource;
     public final String biome;
@@ -63,13 +65,14 @@ public final class DimensionDef {
     @Nullable public final DarknessDef darkness;
     private final Set<String> given;
 
-    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, List<String> biomeList, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, @Nullable GalacticraftDef galacticraft, DimensionTraitsDef traits, @Nullable SkyLookDef look, List<TimeWindowDef> windows, @Nullable DarknessDef darkness, Set<String> given) {
+    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, @Nullable CaveTerrainDef cave, boolean structures, String biomeSource, String biome, List<String> biomeList, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, @Nullable GalacticraftDef galacticraft, DimensionTraitsDef traits, @Nullable SkyLookDef look, List<TimeWindowDef> windows, @Nullable DarknessDef darkness, Set<String> given) {
         this.registryName = registryName;
         this.id = id;
         this.suffix = suffix;
         this.keepLoaded = keepLoaded;
         this.terrain = terrain;
         this.generatorOptions = generatorOptions;
+        this.cave = cave;
         this.structures = structures;
         this.biomeSource = biomeSource;
         this.biome = biome;

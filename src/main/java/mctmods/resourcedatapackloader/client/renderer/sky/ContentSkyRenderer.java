@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.client.renderer.sky;
 
 import mctmods.resourcedatapackloader.client.renderer.Blends;
 import mctmods.resourcedatapackloader.client.renderer.RingQuads;
+import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.util.dimension.BodyRings;
@@ -70,7 +71,7 @@ import org.lwjgl.opengl.GL11;
         if (viewer == null) { return; }
         if (lists < 0) { build(); }
         GlStateManager.disableTexture2D();
-        Vec3d color = world.getSkyColor(viewer, partialTicks);
+        Vec3d color = ContentDimensionRulesClient.vision(world, partialTicks, world.getSkyColor(viewer, partialTicks));
         float[] tint = anaglyph(mc, (float) color.x, (float) color.y, (float) color.z);
         float red = tint[0];
         float green = tint[1];

@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDe
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.rules.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCaveWorld;
 import mctmods.resourcedatapackloader.core.util.math.Colors;
 
 import java.util.Map;
@@ -53,6 +54,7 @@ public final class ContentDimensionRules {
             case DimensionDef.VOID: return new ChunkGeneratorFlat(world, world.getSeed(), false, "3;minecraft:air;1");
             case DimensionDef.NETHER: return new ChunkGeneratorHell(world, def.structures, world.getSeed());
             case DimensionDef.END: return new ChunkGeneratorEnd(world, def.structures, world.getSeed(), new BlockPos(100, 50, 0));
+            case DimensionDef.CAVE: return new ContentCaveWorld(world, def);
             default: return new ChunkGeneratorOverworld(world, world.getSeed(), def.structures, def.generatorOptions);
         }
     }
@@ -115,7 +117,7 @@ public final class ContentDimensionRules {
         }
     }
 
-    static Vec3d color(int rgb) { return new Vec3d(Colors.red(rgb) / 255.0D, Colors.green(rgb) / 255.0D, Colors.blue(rgb) / 255.0D); }
+    public static Vec3d color(int rgb) { return new Vec3d(Colors.red(rgb) / 255.0D, Colors.green(rgb) / 255.0D, Colors.blue(rgb) / 255.0D); }
 
     @SideOnly(Side.CLIENT) static Vec3d skyColor(World world, int rgb, float partialTicks) {
         Vec3d sky = color(rgb).scale(daylight(world.getCelestialAngle(partialTicks)));

@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,12 +27,15 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 
 public final class ContentTeleporter implements ITeleporter {
     private static final int SEARCH_LOW = 4;
     private static final String PORTALS = "rdplPortals";
+    private static final String ORIGINS = "rdplPortalOrigins";
     private final PortalDef def;
     private final IBlockState portalState;
     @Nullable private final PortalFit fit;
@@ -53,6 +57,13 @@ public final class ContentTeleporter implements ITeleporter {
         if (linked == null) { linked = PortalStorage.nearest(world, mapped); }
         BlockPos portalPos;
         if (linked != null && world.getBlockState(linked).getBlock() instanceof ContentPortalBlock) { portalPos = linked; }
+        else if (def.sameLanding) {
+            int height = height();
+            portalPos = level(world, mapped, height);
+            int[] box = room(world, portalPos, height);
+            if (unbuilt(world, portalPos, false)) { world.setBlockState(portalPos, portalState, BlockFlags.UPDATE_CLIENTS); }
+            if (def.torches && def.platform) { torches(world, portalPos.getY(), box); }
+        }
         else {
             portalPos = landing(world, mapped);
             boolean adrift = def.platform && !occupied(world, portalPos.down());
@@ -93,6 +104,18 @@ public final class ContentTeleporter implements ITeleporter {
 
     private static void forget(Entity entity, int dimension) { PlayerPersisted.section(entity, PORTALS).removeTag(String.valueOf(dimension)); }
 
+    public static void cameFrom(Entity entity, int destination, int origin) { PlayerPersisted.section(entity, ORIGINS).setInteger(String.valueOf(destination), origin); }
+
+    public static int target(Entity entity, PortalDef shown) {
+        if (!shown.returnToOrigin) { return shown.returnDimension; }
+        NBTTagCompound origins = PlayerPersisted.read(entity, ORIGINS);
+        String key = String.valueOf(shown.dimension);
+        if (!origins.hasKey(key, Constants.NBT.TAG_INT)) { return shown.returnDimension; }
+        int origin = origins.getInteger(key);
+        if (origin == shown.dimension || !DimensionManager.isDimensionRegistered(origin)) { return shown.returnDimension; }
+        return origin;
+    }
+
     @Nullable private BlockPos remembered(Entity entity, int dimension) {
         NBTTagCompound portals = PlayerPersisted.read(entity, PORTALS);
         String key = String.valueOf(dimension);
@@ -129,6 +152,105 @@ public final class ContentTeleporter implements ITeleporter {
         for (BlockPos at : holes) { world.setBlockState(at, portalState, BlockFlags.UPDATE_CLIENTS); }
         ContentLog.LOGGER.debug("Built a frame of {} on arrival at {}, {} edge block(s) around {} of portal", fit.frame.name, landing, edges.size(), holes.size());
         return false;
+    }
+
+    private int height() {
+        if (fit == null || fit.holes.isEmpty()) { return 3; }
+        int top = Integer.MIN_VALUE;
+        for (BlockPos hole : fit.holes) { top = Math.max(top, hole.getY()); }
+        return top - lowest(fit.holes).getY() + 2;
+    }
+
+    private BlockPos level(World world, BlockPos mapped, int height) {
+        int y = standsOnTop() ? mapped.getY() - 1 : mapped.getY();
+        return new BlockPos(mapped.getX(), MathHelper.clamp(y, SEARCH_LOW + 1, world.provider.getActualHeight() - height - 1), mapped.getZ());
+    }
+
+    private boolean standsOnTop() {
+        return portalState.getBlock().getMetaFromState(portalState) == ContentPortals.FLAT || ((ContentPortalBlock) portalState.getBlock()).getDef().fullCube;
+    }
+
+    private List<BlockPos> frame(BlockPos landing) {
+        List<BlockPos> out = new ArrayList<>();
+        if (fit == null || fit.holes.isEmpty()) { out.add(landing); return out; }
+        BlockPos anchor = lowest(fit.holes);
+        for (BlockPos hole : fit.holes) { out.add(shift(hole, anchor, landing)); }
+        for (BlockPos edge : fit.edge.keySet()) { out.add(shift(edge, anchor, landing)); }
+        return out;
+    }
+
+    private int[] room(World world, BlockPos landing, int height) {
+        List<BlockPos> frame = frame(landing);
+        Set<BlockPos> framed = new HashSet<>(frame);
+        int[] box = span(frame);
+        int bottom = landing.getY();
+        for (int x = box[0]; x <= box[1]; x++) {
+            for (int z = box[2]; z <= box[3]; z++) {
+                for (int y = bottom; y < bottom + height; y++) {
+                    BlockPos at = new BlockPos(x, y, z);
+                    hold(world, at);
+                    if (framed.contains(at) || world.isAirBlock(at) || untouchable(world, at)) { continue; }
+                    world.setBlockToAir(at);
+                }
+            }
+        }
+        seal(world, landing, height, box);
+        if (def.platform) { floor(world, bottom - 1, box); }
+        return box;
+    }
+
+    private void seal(World world, BlockPos landing, int height, int[] box) {
+        Block wall = block(def.platformBlock);
+        int top = landing.getY() + height;
+        for (int x = box[0] - 1; x <= box[1] + 1; x++) {
+            for (int z = box[2] - 1; z <= box[3] + 1; z++) {
+                boolean ring = x < box[0] || x > box[1] || z < box[2] || z > box[3];
+                for (int y = landing.getY(); y <= top; y++) {
+                    if (!ring && y < top) { continue; }
+                    BlockPos at = new BlockPos(x, y, z);
+                    hold(world, at);
+                    if (!world.getBlockState(at).getMaterial().isLiquid() || untouchable(world, at)) { continue; }
+                    world.setBlockState(at, wall.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
+                }
+            }
+        }
+    }
+
+    private void floor(World world, int y, int[] box) {
+        Block floor = block(def.platformBlock);
+        for (int x = box[0]; x <= box[1]; x++) {
+            for (int z = box[2]; z <= box[3]; z++) {
+                BlockPos at = new BlockPos(x, y, z);
+                hold(world, at);
+                if (occupied(world, at)) { continue; }
+                world.setBlockState(at, floor.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
+            }
+        }
+    }
+
+    private static void torches(World world, int y, int[] box) {
+        for (BlockPos at : new BlockPos[] { new BlockPos(box[0], y, box[2]), new BlockPos(box[1], y, box[3]) }) {
+            if (world.isAirBlock(at) && Blocks.TORCH.canPlaceBlockAt(world, at)) { world.setBlockState(at, Blocks.TORCH.getDefaultState(), BlockFlags.UPDATE_CLIENTS); }
+        }
+    }
+
+    private static int[] span(List<BlockPos> frame) {
+        int minX = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int minZ = Integer.MAX_VALUE;
+        int maxZ = Integer.MIN_VALUE;
+        for (BlockPos at : frame) {
+            minX = Math.min(minX, at.getX());
+            maxX = Math.max(maxX, at.getX());
+            minZ = Math.min(minZ, at.getZ());
+            maxZ = Math.max(maxZ, at.getZ());
+        }
+        return new int[] { minX - 1, maxX + 1, minZ - 1, maxZ + 1 };
+    }
+
+    private static boolean untouchable(World world, BlockPos at) {
+        IBlockState state = world.getBlockState(at);
+        return state.getBlock() instanceof ContentPortalBlock || world.getTileEntity(at) != null || state.getBlockHardness(world, at) < 0.0F;
     }
 
     private static BlockPos shift(BlockPos from, BlockPos anchor, BlockPos landing) { return landing.add(from.getX() - anchor.getX(), from.getY() - anchor.getY(), from.getZ() - anchor.getZ()); }

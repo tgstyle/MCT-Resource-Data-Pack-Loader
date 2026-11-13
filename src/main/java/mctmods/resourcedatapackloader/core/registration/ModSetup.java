@@ -39,6 +39,7 @@ import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
+import mctmods.resourcedatapackloader.common.entities.behavior.ContentBlink;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentThreat;
@@ -47,6 +48,7 @@ import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
 import mctmods.resourcedatapackloader.common.environment.ContentCelestial;
+import mctmods.resourcedatapackloader.common.environment.ContentDarkDamage;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldEvents;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndexes;
@@ -233,6 +235,7 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ShieldEvents.class);
         MinecraftForge.EVENT_BUS.register(RespawnEvents.class);
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
+        if (ContentDarkDamage.enabled()) { MinecraftForge.EVENT_BUS.register(ContentDarkDamage.class); }
         VanillaFluidRules.load();
         if (VanillaFluidRules.wanted() || VanillaFluidRules.sourcesWanted()) { MinecraftForge.EVENT_BUS.register(VanillaFluidRules.class); }
         if (FluidReactionQueue.wanted()) { MinecraftForge.EVENT_BUS.register(FluidReactionQueue.class); }
@@ -261,6 +264,7 @@ public class ModSetup {
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(ContentMobExperience.class);
+            MinecraftForge.EVENT_BUS.register(ContentBlink.class);
             MinecraftForge.EVENT_BUS.register(EntityStorage.class);
             if (ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(ContentOrders.class); }
         }

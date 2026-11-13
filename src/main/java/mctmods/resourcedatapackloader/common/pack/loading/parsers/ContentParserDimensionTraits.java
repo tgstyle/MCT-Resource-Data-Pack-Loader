@@ -48,6 +48,9 @@ public final class ContentParserDimensionTraits {
     private static final int MUSIC_HIGH = 24000;
     private static final int RAIN_HIGH = 4600;
     private static final int CLEAR_HIGH = 3000;
+    private static final float DARK_DAMAGE = 2.0F;
+    private static final int DARK_INTERVAL = 100;
+    private static final float DARK_BRIGHTNESS = 0.05F;
     static final float SOUND_CHANCE = 0.0111F;
     static final float PARTICLE_CHANCE = 0.00625F;
 
@@ -84,7 +87,22 @@ public final class ContentParserDimensionTraits {
                 weather.has("rain") || weather.has("wind") ? rain(key, Json.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, Json.getJsonObject(weather, "wind")) : null) : null,
                 sky(key, sky),
                 sky.has("moon") ? moon(key, Json.getJsonObject(sky, "moon")) : null,
-                json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null);
+                json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null,
+                json.has("darkDamage") ? darkDamage(key, Json.getJsonObject(json, "darkDamage")) : null);
+    }
+
+    private static DimensionTraitsDef.DarkDamage darkDamage(ResourceLocation key, JsonObject json) {
+        float damage = Json.getFloat(json, "damage", DARK_DAMAGE);
+        if (!(damage > 0.0F)) {
+            ContentLog.LOGGER.error("Dimension {} gives darkDamage.damage of {}, which is not above zero, using {}", key, damage, DARK_DAMAGE);
+            damage = DARK_DAMAGE;
+        }
+        int interval = Json.getInt(json, "interval", DARK_INTERVAL);
+        if (interval < 1) {
+            ContentLog.LOGGER.error("Dimension {} gives darkDamage.interval of {}, which is below 1, using {}", key, interval, DARK_INTERVAL);
+            interval = DARK_INTERVAL;
+        }
+        return new DimensionTraitsDef.DarkDamage(damage, interval, Json.ranged(json, "brightness", DARK_BRIGHTNESS, 0.0F, 1.0F, "Dimension " + key + " darkDamage"));
     }
 
     private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {

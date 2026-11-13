@@ -42,6 +42,7 @@ public final class ContentEntityTypes {
             else { register(registry, entry.getKey(), entry.getValue(), base); }
         }
         if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(ReturningThrow.class).id(ResourceDataPackLoader.id("returning_throw"), network++).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
+        if (pulling()) { registry.register(EntityEntryBuilder.create().entity(PullingHand.class).id(ResourceDataPackLoader.id("pulling_hand"), network++).name(ResourceDataPackLoader.MOD_ID + ".pulling_hand").tracker(64, 1, true).build()); }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
     }
 
@@ -76,6 +77,13 @@ public final class ContentEntityTypes {
     private static boolean throwsReturning() {
         for (EntityVariantDef def : ContentEntities.DEFS.values()) {
             if (def.throwsItems && def.throwReturns) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean pulling() {
+        for (EntityVariantDef def : ContentEntities.DEFS.values()) {
+            if (def.pulls) { return true; }
         }
         return false;
     }

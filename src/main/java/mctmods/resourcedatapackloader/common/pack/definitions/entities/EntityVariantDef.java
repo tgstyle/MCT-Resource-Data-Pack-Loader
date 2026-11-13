@@ -122,6 +122,13 @@ public final class EntityVariantDef {
     public final boolean walks;
     public final boolean throwReturns;
     public final String throwSound;
+    public final int fleesLight;
+    public final int followsPlayers;
+    public final int teleportsWhenHit;
+    public final boolean pulls;
+    public final int pullReload;
+    public final float pullPower;
+    public final String pullItem;
     @Nullable public final RocketDef rocket;
     @Nullable public final StorageDef storage;
     public final SpawnGateDef gate;
@@ -139,7 +146,7 @@ public final class EntityVariantDef {
                             boolean picksUpLoot, boolean hideArmor, boolean hideHeld, int tint, List<String> tintParts, boolean showName,
                             boolean explodes, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower, float throwArc, float explosionPower, int explosionFuse, boolean explosionFire, Map<String, String> equipment, List<SpawnEntryDef> spawns,
                             List<String> biomes, List<String> biomeTypes, List<String> requires, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, int threatLeast, int threatHostile, List<TaskDef> tasks,
-                            float attackReach, int hurtResistance, float stepHeight, boolean hitFire, @Nullable Boolean climbs, boolean teleports, float knockback, boolean ownBlast, boolean digs, String targetSound, String explodeSound, float targetVaries, boolean bright, boolean collectsExperience, boolean walks, boolean throwReturns, String throwSound, @Nullable RocketDef rocket, @Nullable StorageDef storage, SpawnGateDef gate, @Nullable BossBarDef bossBar, List<PhaseDef> phases, String dialog) {
+                            float attackReach, int hurtResistance, float stepHeight, boolean hitFire, @Nullable Boolean climbs, boolean teleports, float knockback, boolean ownBlast, boolean digs, String targetSound, String explodeSound, float targetVaries, boolean bright, boolean collectsExperience, boolean walks, boolean throwReturns, String throwSound, int fleesLight, int followsPlayers, int teleportsWhenHit, boolean pulls, int pullReload, float pullPower, String pullItem, @Nullable RocketDef rocket, @Nullable StorageDef storage, SpawnGateDef gate, @Nullable BossBarDef bossBar, List<PhaseDef> phases, String dialog) {
         this.registryName = registryName;
         this.base = base;
         this.name = name;
@@ -249,6 +256,13 @@ public final class EntityVariantDef {
         this.walks = walks;
         this.throwReturns = throwReturns;
         this.throwSound = throwSound;
+        this.fleesLight = fleesLight;
+        this.followsPlayers = followsPlayers;
+        this.teleportsWhenHit = teleportsWhenHit;
+        this.pulls = pulls;
+        this.pullReload = pullReload;
+        this.pullPower = pullPower;
+        this.pullItem = pullItem;
         this.rocket = rocket;
         this.storage = storage;
         this.gate = gate;

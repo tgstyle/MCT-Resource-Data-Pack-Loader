@@ -56,7 +56,7 @@ public final class ReturningThrow extends Entity {
         motionX = (x / length + rand.nextGaussian() * SPREAD * inaccuracy) * velocity;
         motionY = (y / length + rand.nextGaussian() * SPREAD * inaccuracy) * velocity;
         motionZ = (z / length + rand.nextGaussian() * SPREAD * inaccuracy) * velocity;
-        face();
+        face(this);
         prevRotationYaw = rotationYaw;
         prevRotationPitch = rotationPitch;
     }
@@ -69,7 +69,7 @@ public final class ReturningThrow extends Entity {
         super.onUpdate();
         if (world.isRemote) {
             setPosition(posX + motionX, posY + motionY, posZ + motionZ);
-            face();
+            face(this);
             return;
         }
         age++;
@@ -113,7 +113,7 @@ public final class ReturningThrow extends Entity {
         motionY *= DRAG;
         motionZ *= DRAG;
         motionY -= 0.05D;
-        face();
+        face(this);
     }
 
     private void comeBack(@Nullable EntityLivingBase thrower) {
@@ -131,7 +131,7 @@ public final class ReturningThrow extends Entity {
         motionY = motionY * 0.95D + pull.y;
         motionZ = motionZ * 0.95D + pull.z;
         setPosition(posX + motionX, posY + toward.y * 0.015D * LOYALTY + motionY, posZ + motionZ);
-        face();
+        face(this);
     }
 
     private void handBack(EntityLivingBase thrower) {
@@ -172,12 +172,12 @@ public final class ReturningThrow extends Entity {
         return owner;
     }
 
-    private void face() {
-        float flat = MathHelper.sqrt(motionX * motionX + motionZ * motionZ);
-        prevRotationYaw = rotationYaw;
-        prevRotationPitch = rotationPitch;
-        rotationYaw = (float) (MathHelper.atan2(motionX, motionZ) * (180.0D / Math.PI));
-        rotationPitch = (float) (MathHelper.atan2(motionY, flat) * (180.0D / Math.PI));
+    static void face(Entity entity) {
+        float flat = MathHelper.sqrt(entity.motionX * entity.motionX + entity.motionZ * entity.motionZ);
+        entity.prevRotationYaw = entity.rotationYaw;
+        entity.prevRotationPitch = entity.rotationPitch;
+        entity.rotationYaw = (float) (MathHelper.atan2(entity.motionX, entity.motionZ) * (180.0D / Math.PI));
+        entity.rotationPitch = (float) (MathHelper.atan2(entity.motionY, flat) * (180.0D / Math.PI));
     }
 
     @Override public boolean attackEntityFrom(@Nonnull DamageSource source, float amount) { return false; }

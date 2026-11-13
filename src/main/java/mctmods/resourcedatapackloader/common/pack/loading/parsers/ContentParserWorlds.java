@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortalFrameDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.CelestialDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.GalacticraftDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CaveTerrainDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.CityMapDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
@@ -49,7 +50,7 @@ import net.minecraft.util.math.MathHelper;
 
 public final class ContentParserWorlds {
     private static final Set<String> KNOWN_TERRAIN = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
-            DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
+            DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END, DimensionDef.CAVE)));
     private static final List<String> AXES = Collections.unmodifiableList(Arrays.asList(PortalFrameDef.VERTICAL, PortalFrameDef.HORIZONTAL, PortalFrameDef.BOTH));
     private static final List<String> RETURNS = Collections.unmodifiableList(Arrays.asList(DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE));
     private static final List<String> DIRECTIONS = Collections.unmodifiableList(Arrays.asList(IntroPageDef.UP, IntroPageDef.DOWN));
@@ -472,6 +473,7 @@ public final class ContentParserWorlds {
                 Json.getBoolean(json, "keepLoaded", false),
                 type,
                 Json.getString(terrain, "generatorOptions", ""),
+                DimensionDef.CAVE.equals(type) ? cave(key, terrain) : null,
                 Json.getBoolean(terrain, "structures", true),
                 source,
                 Json.getString(biomes, "biome", "minecraft:plains"),
@@ -507,6 +509,14 @@ public final class ContentParserWorlds {
                 ContentParserTimeWindows.windows(key, json, traits.precipitation),
                 ContentParserDarkness.darkness(key, sky),
                 Json.paths(json));
+    }
+
+    private static CaveTerrainDef cave(ResourceLocation key, JsonObject terrain) {
+        if (terrain.has("generatorOptions")) { ContentLog.LOGGER.error("Dimension {} terrain is '{}', which does not read generatorOptions, ignoring it", key, DimensionDef.CAVE); }
+        int asked = Json.getInt(terrain, "seaLevel", 32);
+        int level = MathHelper.clamp(asked, 0, 255);
+        if (level != asked) { ContentLog.LOGGER.error("Dimension {} terrain sets seaLevel to {}, which is outside 0 to 255, using {}", key, asked, level); }
+        return new CaveTerrainDef(Json.getString(terrain, "fillBlock", "minecraft:stone").trim(), level, Json.getString(terrain, "seaFluid", "minecraft:water").trim());
     }
 
     private static Map<String, Boolean> structures(ResourceLocation key, JsonObject json) {

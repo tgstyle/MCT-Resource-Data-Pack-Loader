@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.worldgen.surface;
 
 import mctmods.resourcedatapackloader.common.blocks.ContentStates;
+import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.common.util.worldgen.BiomeNames;
@@ -151,6 +153,8 @@ public final class ContentBedrock {
         IBlockState perDimension = rules.byDimension.get(dimension);
         if (perDimension != null) { return perDimension; }
         if (rules.configured != null) { return rules.configured; }
+        DimensionDef def = ContentDimensions.byId(dimension);
+        if (def != null && def.cave != null) { return ContentCaveWorld.fill(def.registryName, def.cave); }
         switch (dimension) {
             case -1: return Blocks.NETHERRACK.getDefaultState();
             case 1: return Blocks.END_STONE.getDefaultState();

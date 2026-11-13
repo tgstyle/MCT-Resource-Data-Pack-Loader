@@ -45,12 +45,16 @@ public final class ContentOceanFluid {
         if (asked == null || !asked.isJsonPrimitive()) { return null; }
         String id = asked.getAsString().trim();
         if (id.isEmpty()) { return null; }
+        return fluidBlock(id, "oceanFluid");
+    }
+
+    @Nullable public static IBlockState fluidBlock(String id, String owner) {
         ResourceLocation key = new ResourceLocation(id);
         FluidDef def = ContentRegistry.fluidDef(key);
         Fluid fluid = FluidRegistry.getFluid(def == null ? key.getPath() : def.name);
         Block block = fluid == null ? null : fluid.getBlock();
         if (block != null) { return block.getDefaultState(); }
-        ContentLog.LOGGER.errorOnce(UNUSABLE, id, "The oceanFluid '{}' is not a loaded fluid with a block, so the oceans are made of what useLavaOceans says instead; this is said once", id);
+        ContentLog.LOGGER.errorOnce(UNUSABLE, owner + id, "The {} '{}' is not a loaded fluid with a block, so the fallback for it is used instead; this is said once", owner, id);
         return null;
     }
 }

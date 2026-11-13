@@ -4,11 +4,14 @@ import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ai.AnvilWorkGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.ChargeGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.DigGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.FleeLightGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.FleeWhenHurtGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.FollowPlayerGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.GustGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.KamikazeGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.PatrolGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.PounceGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.PullGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.SleepByDayGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.SniffGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.StrikeGoal;
@@ -24,6 +27,7 @@ import mctmods.resourcedatapackloader.core.util.Registries;
 
 import java.util.Collections;
 import java.util.List;
+import javax.annotation.Nullable;
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
@@ -45,6 +49,7 @@ import net.minecraft.entity.ai.EntityAISit;
 import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.ai.EntityAITempt;
 import net.minecraft.entity.monster.EntityMob;
+import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -80,10 +85,11 @@ public final class ContentEntityBehavior {
     }
 
     static void behavior(EntityLiving living, EntityVariantDef def) {
-        if (ContentLog.LOGGER.debugEnabled() && (def.charges || def.pounces || def.sniffs > 0 || def.sleepsByDay || def.home > 0 || def.fleesWhenHurt > 0.0F || def.patrols || def.swoops || def.gusts)) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}", def.registryName, (int) living.posX, (int) living.posY, (int) living.posZ, def.charges ? " charges" : "", def.pounces ? " pounces" : "", def.sniffs > 0 ? " sniffs " + def.sniffs : "", def.fleesWhenHurt > 0.0F ? " flees under " + def.fleesWhenHurt : "", def.sleepsByDay ? " sleeps by day" : "", def.home > 0 ? " home " + def.home : "", def.patrols ? " patrols" : "", def.swoops ? " swoops" : "", def.gusts ? " gusts " + def.gustPower : ""); }
+        if (ContentLog.LOGGER.debugEnabled() && (def.charges || def.pounces || def.sniffs > 0 || def.sleepsByDay || def.home > 0 || def.fleesWhenHurt > 0.0F || def.patrols || def.swoops || def.gusts || def.fleesLight > 0 || def.followsPlayers > 0 || def.teleportsWhenHit > 0 || def.pulls)) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}{}{}{}{}", def.registryName, (int) living.posX, (int) living.posY, (int) living.posZ, def.charges ? " charges" : "", def.pounces ? " pounces" : "", def.sniffs > 0 ? " sniffs " + def.sniffs : "", def.fleesWhenHurt > 0.0F ? " flees under " + def.fleesWhenHurt : "", def.sleepsByDay ? " sleeps by day" : "", def.home > 0 ? " home " + def.home : "", def.patrols ? " patrols" : "", def.swoops ? " swoops" : "", def.gusts ? " gusts " + def.gustPower : "", def.fleesLight > 0 ? " flees light " + def.fleesLight : "", def.followsPlayers > 0 ? " follows " + def.followsPlayers : "", def.teleportsWhenHit > 0 ? " teleports when hit " + def.teleportsWhenHit : "", def.pulls ? " pulls" : ""); }
         if (def.collectsExperience && living instanceof EntityCreature) { living.tasks.addTask(0, new AnvilWorkGoal((EntityCreature) living)); }
         if (living instanceof EntityCreature && ContentOrders.wants(def)) { living.tasks.addTask(3, new WorkOrderGoal((EntityCreature) living)); }
         settled(living, def);
+        stalks(living, def);
         if (def.passive) {
             AiTasks.clear(living.targetTasks);
             AiTasks.remove(living.tasks, EntityAIAttackMelee.class::isInstance);
@@ -170,11 +176,35 @@ public final class ContentEntityBehavior {
         if (def.sleepsByDay) { living.tasks.addTask(1, new SleepByDayGoal(creature)); }
     }
 
-    private static ItemStack carrying(EntityVariantDef def) {
-        String named = def.equipment.get("mainhand");
+    private static void stalks(EntityLiving living, EntityVariantDef def) {
+        if (def.fleesLight <= 0 && def.followsPlayers <= 0 && !def.pulls) { return; }
+        if (!(living instanceof EntityCreature)) {
+            ContentLog.LOGGER.error("Entity variant {} asks to flee light, follow players or pull, but {} does not walk the ground the way those behaviors need", def.registryName, def.base);
+            return;
+        }
+        EntityCreature creature = (EntityCreature) living;
+        if (def.fleesLight > 0) { living.tasks.addTask(1, new FleeLightGoal(creature, def.fleesLight, 1.2D)); }
+        if (def.followsPlayers > 0) { living.tasks.addTask(3, new FollowPlayerGoal(creature, def.followsPlayers, def.fleesLight, 1.0D)); }
+        if (!def.pulls) { return; }
+        if (!def.hostile && def.followsPlayers <= 0) {
+            ContentLog.LOGGER.error("Entity variant {} asks to pull, but is neither hostile nor follows players, so it never has anyone to pull", def.registryName);
+            return;
+        }
+        living.tasks.addTask(1, new PullGoal(creature, pullStack(def), def.pullReload, def.pullPower, def.followsPlayers > 0));
+    }
+
+    private static ItemStack carrying(EntityVariantDef def) { return stackOf(def.equipment.get("mainhand")); }
+
+    private static ItemStack pullStack(EntityVariantDef def) {
+        ItemStack named = stackOf(def.pullItem);
+        if (!named.isEmpty()) { return named; }
+        ContentLog.LOGGER.error("Entity variant {} names pull item {}, which nothing registers, so the hand is drawn as an ender pearl", def.registryName, def.pullItem);
+        return new ItemStack(Items.ENDER_PEARL);
+    }
+
+    private static ItemStack stackOf(@Nullable String named) {
         if (named == null) { return ItemStack.EMPTY; }
-        ResourceLocation name = new ResourceLocation(named);
-        Item item = Registries.find(ForgeRegistries.ITEMS, name);
+        Item item = Registries.find(ForgeRegistries.ITEMS, new ResourceLocation(named));
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 }

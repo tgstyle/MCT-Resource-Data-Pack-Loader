@@ -182,9 +182,13 @@ dependencies {
     if (companion('asmodeuscore')) { runtimeOnly deobf('curse.maven:asmodeuscore-303101:7180991') }
     if (companion('dynamictrees')) { runtimeOnly deobf("curse.maven:${common.dytr_version}") }
     if (companion('biomesoplenty')) { runtimeOnly deobf("curse.maven:${common.bopl_version}") }
+    if (companion('grue')) {
+        runtimeOnly deobf('curse.maven:grue-235133:3425511')
+        runtimeOnly deobf('curse.maven:darknesslib-349174:3672570')
+    }
 
     annotationProcessor 'org.ow2.asm:asm-debug-all:5.2'
-    annotationProcessor 'com.google.guava:guava:32.1.2-jre'
+    annotationProcessor 'com.google.guava:guava:33.8.0-jre'
     annotationProcessor 'com.google.code.gson:gson:2.8.9'
     String mixinBooter = modUtils.enableMixins('zone.rong:mixinbooter:10.7', 'mixins.resourcedatapackloader.refmap.json')
     api(mixinBooter) { transitive = false }

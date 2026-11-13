@@ -13,7 +13,9 @@ import mctmods.resourcedatapackloader.common.portals.ContentPortals;
 import mctmods.resourcedatapackloader.common.portals.PortalFit;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nonnull;
@@ -131,23 +133,48 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
     private void travel(World world, EntityPlayer player, PortalDef shown, IBlockState state, BlockPos pos) {
         if (!(player instanceof EntityPlayerMP)) { return; }
         if (recently(player, shown)) { return; }
+        ContentPortals.Binding binding = ContentPortals.forBlock(state.getBlock());
+        PortalFit fit = binding == null ? null : ContentPortals.fitAt(world, pos, binding);
+        if (!shown.mounted && player.isRiding()) {
+            player.sendStatusMessage(new TextComponentTranslation("rdpl.portal.mounted"), true);
+            return;
+        }
+        if (shown.useRange > 0 && !near(player, pos, state, fit, shown.useRange)) {
+            player.sendStatusMessage(new TextComponentTranslation("rdpl.portal.far"), true);
+            return;
+        }
         GateDef gate = shown.gate.isEmpty() ? null : ContentGates.find(shown.gate);
         if (gate != null && !ContentGates.admits(player, gate)) {
             ContentGates.refuse(player, gate);
             return;
         }
-        int target = player.dimension == shown.dimension ? shown.returnDimension : shown.dimension;
+        int target = player.dimension == shown.dimension ? ContentTeleporter.target(player, shown) : shown.dimension;
         if (target == player.dimension) { return; }
         sound(world, player, shown);
         RECENT.put(player.getUniqueID(), world.getTotalWorldTime());
         ContentTeleporter.remember(player, player.dimension, pos);
-        player.changeDimension(target, new ContentTeleporter(shown, state, returning(world, state, pos)));
+        if (player.dimension != shown.dimension) { ContentTeleporter.cameFrom(player, shown.dimension, player.dimension); }
+        player.changeDimension(target, new ContentTeleporter(shown, state, binding == null || binding.portal.noReturn() ? null : fit));
     }
 
-    @Nullable private PortalFit returning(World world, IBlockState state, BlockPos pos) {
-        ContentPortals.Binding binding = ContentPortals.forBlock(state.getBlock());
-        if (binding == null || binding.portal.noReturn()) { return null; }
-        return ContentPortals.fitAt(world, pos, binding);
+    private boolean near(EntityPlayer player, BlockPos pos, IBlockState state, @Nullable PortalFit fit, int range) {
+        List<BlockPos> holes = fit == null ? Collections.singletonList(pos) : fit.holes;
+        int low = Integer.MAX_VALUE;
+        int high = Integer.MIN_VALUE;
+        for (BlockPos hole : holes) {
+            low = Math.min(low, hole.getY());
+            high = Math.max(high, hole.getY());
+        }
+        if (state.getBlock().getMetaFromState(state) == ContentPortals.FLAT) { high = low + 1; }
+        int feet = player.getPosition().getY();
+        if (feet < low || feet > high) { return false; }
+        double reach = (double) range * range;
+        for (BlockPos hole : holes) {
+            double dx = player.posX - (hole.getX() + 0.5D);
+            double dz = player.posZ - (hole.getZ() + 0.5D);
+            if (dx * dx + dz * dz <= reach) { return true; }
+        }
+        return false;
     }
 
     public static void forget(UUID player) { RECENT.remove(player); }

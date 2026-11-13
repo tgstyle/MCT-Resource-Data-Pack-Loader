@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
+import mctmods.resourcedatapackloader.client.util.ContentDimensionRulesClient;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
@@ -113,5 +114,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         GlStateManager.setFog(GlStateManager.FogMode.LINEAR);
         GlStateManager.setFogStart(event.getFogMode() == -1 ? 0.0F : end * START);
         GlStateManager.setFogEnd(end);
+    }
+
+    @SubscribeEvent public static void onFogColors(EntityViewRenderEvent.FogColors event) {
+        Vec3d tinted = ContentDimensionRulesClient.vision(Minecraft.getMinecraft().world, (float) event.getRenderPartialTicks(), new Vec3d(event.getRed(), event.getGreen(), event.getBlue()));
+        event.setRed((float) tinted.x);
+        event.setGreen((float) tinted.y);
+        event.setBlue((float) tinted.z);
     }
 }

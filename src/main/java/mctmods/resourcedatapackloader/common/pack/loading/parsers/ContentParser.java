@@ -32,6 +32,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -55,6 +56,8 @@ public final class ContentParser {
     public static final String DEFAULT_STILL = "minecraft:blocks/water_still";
     public static final String DEFAULT_FLOW = "minecraft:blocks/water_flow";
     private static final int[] NO_CHANCE = new int[0];
+    private static final List<String> PORTAL_LANDINGS = Collections.unmodifiableList(Arrays.asList("surface", "same"));
+    private static final List<String> PORTAL_RETURNS = Collections.unmodifiableList(Arrays.asList("fixed", "origin"));
 
     private ContentParser() {}
 
@@ -159,6 +162,7 @@ public final class ContentParser {
     }
 
     static PortalDef portal(JsonObject entry, int dimension, boolean ownedDefault, boolean walkInDefault) {
+        String owner = "Portal to dimension " + dimension;
         return new PortalDef(dimension,
                 Json.getInt(entry, "returnDimension", 0),
                 Json.getString(entry, "gate", ""),
@@ -167,7 +171,12 @@ public final class ContentParser {
                 Json.getString(entry, "platformBlock", ""),
                 Json.getString(entry, "sound", ""),
                 Json.getBoolean(entry, "owned", ownedDefault),
-                Json.getBoolean(entry, "walkIn", walkInDefault));
+                Json.getBoolean(entry, "walkIn", walkInDefault),
+                "same".equals(Json.choice(entry, "landing", "surface", owner, PORTAL_LANDINGS)),
+                Json.getBoolean(entry, "torches", false),
+                Math.max(0, Json.getInt(entry, "useRange", 0)),
+                Json.getBoolean(entry, "mounted", true),
+                "origin".equals(Json.choice(entry, "returnTo", "fixed", owner, PORTAL_RETURNS)));
     }
 
     public static List<PotionEffectDef> effects(ResourceLocation key, JsonArray array, int durationDefault, boolean particlesDefault) {

@@ -38,8 +38,9 @@ public final class SkyLookDef {
     public final int grassTint;
     public final int foliageTint;
     public final int birchTint;
+    public final int nightVisionColor;
 
-    public SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWeight, int lightSkyColor, int lightBlockColor, float skyFactor, float cloudSpeed, List<CloudLayer> cloudLayers, float sunBrightness, float moonBrightness, @Nullable Heat heat, int snowColor, int waterFogColor, int lavaFogColor, int starColor, float starTwinkle, int lightningColor, @Nullable Skybox skybox, @Nullable Aurora aurora, boolean rainbow, int sunColor, int sunAuraColor, float sunAuraSize, float sunAuraHorizon, int sunLineCount, float sunLineStart, float sunLineLength, float sunLineWidth, int sunLineColor, int grassTint, int foliageTint, int birchTint) {
+    public SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWeight, int lightSkyColor, int lightBlockColor, float skyFactor, float cloudSpeed, List<CloudLayer> cloudLayers, float sunBrightness, float moonBrightness, @Nullable Heat heat, int snowColor, int waterFogColor, int lavaFogColor, int starColor, float starTwinkle, int lightningColor, @Nullable Skybox skybox, @Nullable Aurora aurora, boolean rainbow, int sunColor, int sunAuraColor, float sunAuraSize, float sunAuraHorizon, int sunLineCount, float sunLineStart, float sunLineLength, float sunLineWidth, int sunLineColor, int grassTint, int foliageTint, int birchTint, int nightVisionColor) {
         this.sampleFog = sampleFog;
         this.fogDensity = fogDensity;
         this.fogGroundWeight = fogGroundWeight;
@@ -72,6 +73,7 @@ public final class SkyLookDef {
         this.grassTint = grassTint;
         this.foliageTint = foliageTint;
         this.birchTint = birchTint;
+        this.nightVisionColor = nightVisionColor;
     }
 
     public boolean tintsPlants() { return grassTint != UNSET || foliageTint != UNSET || birchTint != UNSET; }
@@ -79,6 +81,8 @@ public final class SkyLookDef {
     public boolean tintsStars() { return starColor != UNSET || starTwinkle > 0.0F; }
 
     public boolean tintsLight() { return lightSkyColor != UNSET || lightBlockColor != UNSET || skyFactor < 1.0F; }
+
+    public boolean tintsVision() { return nightVisionColor != UNSET; }
 
     public boolean movesClouds() { return cloudSpeed != 1.0F || !cloudLayers.isEmpty(); }
 

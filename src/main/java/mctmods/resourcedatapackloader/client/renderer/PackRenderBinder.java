@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.renderer;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.blocks.bell.logic.TileEntityPackBell;
 import mctmods.resourcedatapackloader.common.blocks.container.logic.TileEntityPackContainer;
+import mctmods.resourcedatapackloader.common.entities.PullingHand;
 import mctmods.resourcedatapackloader.common.entities.ReturningThrow;
 
 import net.minecraftforge.client.event.ModelRegistryEvent;
@@ -19,5 +20,6 @@ import net.minecraftforge.fml.relauncher.Side;
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityPackContainer.class, new PackContainerRenderer());
         ClientRegistry.bindTileEntitySpecialRenderer(TileEntityPackBell.class, new PackBellRenderer());
         RenderingRegistry.registerEntityRenderingHandler(ReturningThrow.class, RenderReturningThrow::new);
+        RenderingRegistry.registerEntityRenderingHandler(PullingHand.class, RenderPullingHand::new);
     }
 }
