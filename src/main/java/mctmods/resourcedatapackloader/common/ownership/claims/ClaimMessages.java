@@ -38,7 +38,7 @@ public final class ClaimMessages {
     public static void onTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % WATCH_EVERY != 0 || !ClaimSettings.any() || !ClaimSettings.message()) { return; }
         ChunkPos at = player.chunkPosition();
-        int owner = ClaimIndex.obtain(player.level()).ownerAt(at.x(), at.z());
+        int owner = ClaimGuard.covers(player.level(), player.blockPosition());
         ResourceKey<Level> dimension = player.level().dimension();
         Seen last = SEEN.put(player.getUUID(), new Seen(dimension, at.x(), at.z(), owner));
         if (last == null || last.owner() == owner || (last.dimension().equals(dimension) && last.chunkX() == at.x() && last.chunkZ() == at.z())) { return; }

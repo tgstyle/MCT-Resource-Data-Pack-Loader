@@ -6,11 +6,10 @@ import mctmods.resourcedatapackloader.common.ownership.ScoreboardOwnerSource;
 import mctmods.resourcedatapackloader.common.ownership.TeamDissolve;
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
-import mctmods.resourcedatapackloader.common.util.entity.Scores;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.scores.PlayerTeam;
+import dev.ftb.mods.ftbteams.config.ServerConfig;
+import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 
 public final class ContentFtbTeams {
@@ -26,25 +25,23 @@ public final class ContentFtbTeams {
         installed = true;
         TeamDissolve.register(OwnerRecord.SOURCE_FTB, (_, key) -> FtbPartyTeams.live(key));
         NeoForge.EVENT_BUS.addListener(FtbTeamDeleted::onDeleted);
+        NeoForge.EVENT_BUS.addListener(FtbTeamRenamed::onChanged);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, FtbMirrorSeat::beforeFtb);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, FtbMirrorSeat::afterFtb);
     }
 
-    public static void serverStarting(MinecraftServer server) {
+    public static void serverStarting() {
         boolean wanted = OwnershipSettings.teamSource() == OwnershipSettings.TeamSource.FTB;
         if (!installed) {
             if (wanted) { ContentLog.LOGGER.info("ownership teamSource is ftb but FTB Teams is not loaded, so owners come from scoreboard teams"); }
             return;
         }
         ScoreboardOwnerSource.use(wanted ? new FtbOwnerSource() : null);
-        warnMirror(server);
+        warnMirror();
     }
 
-    private static void warnMirror(MinecraftServer server) {
-        if (!ContentTeams.any()) { return; }
-        for (PlayerTeam team : Scores.board(server).getPlayerTeams()) {
-            if (team.getName().startsWith(MIRROR_PREFIX)) {
-                ContentLog.LOGGER.warn("FTB Teams mirrors parties as scoreboard teams named {}* and this pack defines scoreboard teams, so those mirrored teams never count as owners", MIRROR_PREFIX);
-                return;
-            }
-        }
+    private static void warnMirror() {
+        if (!ContentTeams.any() || !ServerConfig.SCOREBOARD_TEAM_SYNC.get()) { return; }
+        ContentLog.LOGGER.warn("FTB Teams scoreboard_team team_sync_enabled is on and this pack defines scoreboard teams, so FTB moves players out of the pack's teams into {}* teams; turn the FTB sync off, or set ftbMirror to packWins to seat players back in their pack team at login", MIRROR_PREFIX);
     }
 }

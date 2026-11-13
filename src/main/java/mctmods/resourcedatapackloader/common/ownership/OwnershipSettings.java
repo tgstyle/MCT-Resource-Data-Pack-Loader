@@ -20,6 +20,8 @@ public final class OwnershipSettings {
 
     public enum FtbDeleted { FOLLOW, KEEP, RELEASE, REMOVE }
 
+    public enum FtbMirror { WARN, PACKWINS }
+
     private static final String GROUP = ContentControl.OWNERSHIP;
     private static volatile View view = build();
 
@@ -35,6 +37,7 @@ public final class OwnershipSettings {
         private int checkTicks;
         private TeamSource teamSource;
         private FtbDeleted onFtbTeamDeleted;
+        private FtbMirror ftbMirror;
     }
 
     public static void reload() { view = build(); }
@@ -56,6 +59,8 @@ public final class OwnershipSettings {
     public static int checkTicks() { return view.checkTicks; }
 
     public static TeamSource teamSource() { return view.teamSource; }
+
+    public static boolean packWinsMirror() { return view.ftbMirror == FtbMirror.PACKWINS; }
 
     public static Dissolve ftbDissolveMode(Dissolve follow) {
         return switch (view.onFtbTeamDeleted) {
@@ -81,6 +86,7 @@ public final class OwnershipSettings {
         built.checkTicks = ContentControl.ranged(GROUP, "checkTicks", Config.ownership.checkTicks(), 1, 1200);
         built.teamSource = ContentControl.choice(GROUP, "teamSource", "scoreboard", TeamSource.SCOREBOARD);
         built.onFtbTeamDeleted = ContentControl.choice(GROUP, "onFtbTeamDeleted", "follow", FtbDeleted.FOLLOW);
+        built.ftbMirror = ContentControl.choice(GROUP, "ftbMirror", "warn", FtbMirror.WARN);
         return built;
     }
 }

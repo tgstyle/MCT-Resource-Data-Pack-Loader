@@ -422,6 +422,7 @@
   "rdpl.claim.deny.touch": "Nový zábor musí sousedit s chunkem, který už vlastníš",
   "rdpl.claim.deny.distance": "Tento chunk je příliš blízko území, které patří někomu jinému",
   "rdpl.claim.deny.ftbland": "Tento chunk patří FTB a zabrat ho tady nejde",
+  "rdpl.claim.ftbonrdpl": "Tenhle chunk drží zábor RDPL",
   "rdpl.claim.deny.ftbonly": "Tady je území zabrané přes FTB Utilities, použij jejich příkaz pro zábor",
   "rdpl.claim.block.overlap": "Část toho čtverce už patří někomu jinému, takže zabírací blok sem nejde položit",
   "rdpl.claim.block.released": "Zabírací blok zmizel, takže jeho %s zabrané chunky byly uvolněny",

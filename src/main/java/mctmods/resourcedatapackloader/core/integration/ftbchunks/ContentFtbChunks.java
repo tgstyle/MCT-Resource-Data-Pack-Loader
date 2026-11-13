@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.common.ownership.claims.ForeignClaimsHolde
 import mctmods.resourcedatapackloader.common.pack.definitions.PackRequirements;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
+import net.neoforged.neoforge.common.NeoForge;
+
 public final class ContentFtbChunks {
     private ContentFtbChunks() {}
 
@@ -11,5 +13,6 @@ public final class ContentFtbChunks {
         if (!PackRequirements.modLoaded("ftbchunks")) { return; }
         ContentLog.LOGGER.info("FTB Chunks is loaded, so a pack can have claims yield to its chunk claims with claims ftbPolicy");
         ForeignClaimsHolder.set(new FtbChunksClaims());
+        NeoForge.EVENT_BUS.addListener(FtbChunksGate::onChange);
     }
 }

@@ -404,7 +404,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(ContentEntities::onJump);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentServer::onAboutToStart);
         NeoForge.EVENT_BUS.addListener(ContentServer::onStarting);
-        NeoForge.EVENT_BUS.addListener((ServerStartingEvent event) -> ContentFtbTeams.serverStarting(event.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStartingEvent _) -> ContentFtbTeams.serverStarting());
         NeoForge.EVENT_BUS.addListener((ServerStartingEvent _) -> ClaimSettings.announceForeign());
         NeoForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
         WorldgenSetup.serverListeners();

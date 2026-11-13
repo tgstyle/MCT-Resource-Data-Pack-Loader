@@ -1,15 +1,13 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.command.CommandShared;
-import mctmods.resourcedatapackloader.common.ownership.OwnerTable;
-import mctmods.resourcedatapackloader.common.util.entity.Scores;
+import mctmods.resourcedatapackloader.common.ownership.ScoreboardOwnerSource;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -17,7 +15,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.level.ChunkPos;
 
 public final class ClaimCommand {
@@ -65,11 +62,7 @@ public final class ClaimCommand {
         return asked;
     }
 
-    private static List<String> owners(MinecraftServer server) {
-        List<String> names = new ArrayList<>(Scores.board(server).getTeamNames());
-        names.addAll(List.of(server.getPlayerNames()));
-        return names;
-    }
+    private static List<String> owners(MinecraftServer server) { return ScoreboardOwnerSource.current().names(server); }
 
     private static int claimHere(CommandContext<CommandSourceStack> context, String name, int radius) throws CommandSyntaxException {
         CommandSourceStack source = context.getSource();
@@ -122,9 +115,8 @@ public final class ClaimCommand {
     }
 
     private static int ownerNamed(MinecraftServer server, String name) {
-        if (Scores.team(Scores.board(server), name) != null) { return OwnerTable.handleForTeam(server, name); }
-        NameAndId profile = server.services().nameToIdCache().get(name).orElse(null);
-        return profile == null ? 0 : OwnerTable.handleForPlayer(server, profile.id(), profile.name());
+        Integer handle = ScoreboardOwnerSource.current().byName(server, name);
+        return handle == null ? 0 : handle;
     }
 
     private static int reply(CommandSourceStack source, ClaimActions.Result result) {
