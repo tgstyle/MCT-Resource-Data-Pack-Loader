@@ -82,14 +82,22 @@ public final class OwnerTable extends WorldSavedData {
         return record == null ? "" : record.source;
     }
 
+    public static void relabelSource(@Nullable MinecraftServer server, String source, String key, String label) {
+        OwnerTable table = get(server);
+        Integer found = table == null ? null : table.live(OwnerRecord.KIND_TEAM, source, key);
+        if (found != null) { table.relabel(table.records.get(found), label); }
+    }
+
+    private void relabel(OwnerRecord record, String label) {
+        if (record.label.equals(label)) { return; }
+        record.label = label;
+        markDirty();
+    }
+
     private int liveHandle(String kind, String source, String key, String label) {
         Integer found = live(kind, source, key);
         if (found != null) {
-            OwnerRecord record = records.get(found);
-            if (!record.label.equals(label)) {
-                record.label = label;
-                markDirty();
-            }
+            relabel(records.get(found), label);
             return found;
         }
         OwnerRecord record = new OwnerRecord(next++, kind, source, key, label);

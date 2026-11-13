@@ -98,6 +98,10 @@ public final class ClaimDissolve {
     }
 
     private static boolean work(WorldServer world, ClaimIndex index, ClaimIndex.Pending pending, Job job, Budget budget) {
+        if (ClaimSettings.dissolveSkipsFtbLand() && ForeignClaimsHolder.get().isClaimed(world, job.x, job.z)) {
+            index.removePending(job.x, job.z);
+            return true;
+        }
         boolean replacing = ClaimSettings.restore() || ClaimSettings.regenerate();
         if (replacing && ClaimPlayers.occupied(world, job.x, job.z)) {
             if (!ClaimSettings.movePlayers()) { return false; }

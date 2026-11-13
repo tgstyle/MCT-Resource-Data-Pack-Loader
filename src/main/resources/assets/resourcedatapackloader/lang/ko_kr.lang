@@ -104,6 +104,7 @@ rdpl.claim.deny.touch=새로 점유하려면 당신이 이미 소유한 청크�
 rdpl.claim.deny.distance=이 청크는 다른 사람의 땅에 너무 가깝습니다
 rdpl.claim.deny.ftbland=이 청크는 FTB 땅이라 여기서는 점유할 수 없습니다
 rdpl.claim.deny.ftbonly=이곳의 땅은 FTB Utilities로 점유되어 있으니 대신 그 명령어를 사용하세요
+rdpl.claim.ftbonrdpl=이 청크는 RDPL 점유 중입니다
 rdpl.claim.block.overlap=그 정사각형의 일부는 이미 다른 사람의 것이라 점유 블록을 여기에 놓을 수 없습니다
 rdpl.claim.block.released=점유 블록이 사라져서 그 블록이 점유한 청크 %s개가 해제되었습니다
 rdpl.claim.protected=이 땅은 %s이(가) 점유하고 있어 여기서는 그렇게 할 수 없습니다

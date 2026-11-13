@@ -104,6 +104,7 @@ rdpl.claim.deny.touch=Una nuova rivendicazione deve toccare un chunk che possied
 rdpl.claim.deny.distance=Questo chunk è troppo vicino a un terreno che appartiene a qualcun altro
 rdpl.claim.deny.ftbland=Questo chunk è un terreno di FTB e non può essere rivendicato qui
 rdpl.claim.deny.ftbonly=Qui il terreno è rivendicato con FTB Utilities, usa invece il suo comando di rivendicazione
+rdpl.claim.ftbonrdpl=Questo chunk è trattenuto da una rivendicazione RDPL
 rdpl.claim.block.overlap=Parte di quel quadrato appartiene già a qualcun altro, quindi il blocco di rivendicazione non può essere piazzato qui
 rdpl.claim.block.released=Il blocco di rivendicazione è scomparso, quindi i suoi %s chunk rivendicati sono stati liberati
 rdpl.claim.protected=Questo terreno è rivendicato da %s, quindi qui non puoi farlo

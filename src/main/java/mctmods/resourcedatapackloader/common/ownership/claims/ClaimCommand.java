@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.ownership.OwnerTable;
-import mctmods.resourcedatapackloader.common.scoring.ContentTeams;
+import mctmods.resourcedatapackloader.common.ownership.ScoreboardOwnerSource;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import mctmods.resourcedatapackloader.core.util.text.Lang;
 
@@ -57,7 +57,8 @@ public final class ClaimCommand {
     }
 
     private static List<String> owners(MinecraftServer server) {
-        List<String> names = new ArrayList<>(ContentTeams.board(server).getTeamNames());
+        List<String> names = new ArrayList<>(ScoreboardOwnerSource.INSTANCE.names(server));
+        if (ScoreboardOwnerSource.current() != ScoreboardOwnerSource.INSTANCE) { names.addAll(ScoreboardOwnerSource.current().names(server)); }
         names.addAll(Arrays.asList(server.getOnlinePlayerNames()));
         return names;
     }
@@ -100,9 +101,9 @@ public final class ClaimCommand {
     }
 
     private static int ownerNamed(MinecraftServer server, ICommandSender sender, String name) throws CommandException {
-        int handle = 0;
-        if (ContentTeams.board(server).getTeamNames().contains(name)) { handle = OwnerTable.handleForTeam(server, name); }
-        else {
+        int handle = ScoreboardOwnerSource.current().byName(server, name);
+        if (handle == 0) { handle = ScoreboardOwnerSource.INSTANCE.byName(server, name); }
+        if (handle == 0) {
             GameProfile profile = server.getPlayerProfileCache().getGameProfileForUsername(name);
             if (profile != null) { handle = OwnerTable.handleForPlayer(server, profile.getId(), profile.getName()); }
         }

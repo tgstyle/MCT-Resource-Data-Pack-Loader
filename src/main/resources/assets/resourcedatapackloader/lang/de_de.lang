@@ -104,6 +104,7 @@ rdpl.claim.deny.touch=Eine neue Beanspruchung muss an einen Chunk anschließen, 
 rdpl.claim.deny.distance=Dieser Chunk liegt zu nah an Land, das jemand anderem gehört
 rdpl.claim.deny.ftbland=Dieser Chunk ist FTB-Gebiet und kann hier nicht beansprucht werden
 rdpl.claim.deny.ftbonly=Hier ist Land mit FTB Utilities beansprucht, nutze dafür dessen Befehl
+rdpl.claim.ftbonrdpl=Dieser Chunk wird von einem RDPL-Anspruch gehalten
 rdpl.claim.block.overlap=Ein Teil dieses Quadrats gehört schon jemand anderem, deshalb kann der Anspruchsblock hier nicht platziert werden
 rdpl.claim.block.released=Der Anspruchsblock ist weg, deshalb wurden seine %s beanspruchten Chunks freigegeben
 rdpl.claim.protected=Dieses Land gehört %s, deshalb darfst du das hier nicht tun

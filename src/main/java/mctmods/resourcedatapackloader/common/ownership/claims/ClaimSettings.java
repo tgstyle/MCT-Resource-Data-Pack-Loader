@@ -28,7 +28,15 @@ public final class ClaimSettings {
 
     public enum Orphan { LOCKED, OPEN }
 
-    public enum FakePlayers { DENY, ALLOW }
+    public enum FakePlayers { DENY, ALLOW, OWNER }
+
+    public enum FtbAllies { NONE, ALLY }
+
+    public enum FtbClaimsOnRdpl { ALLOW, DENY }
+
+    public enum DissolveOnFtbLand { PURGE, SKIP }
+
+    public enum FakePlayerBlocks { SOURCE, NONE }
 
     public enum Entities { KEEP, REMOVE }
 
@@ -85,6 +93,10 @@ public final class ClaimSettings {
         private boolean movePlayers;
         private Entities entities;
         private FtbPolicy ftbPolicy;
+        private FtbAllies ftbAllies;
+        private FtbClaimsOnRdpl ftbClaimsOnRdpl;
+        private DissolveOnFtbLand dissolveOnFtbLand;
+        private FakePlayerBlocks fakePlayerBlocks;
     }
 
     public static void reload() { view = build(); }
@@ -135,6 +147,16 @@ public final class ClaimSettings {
     public static boolean orphansOpen() { return view.orphanAccess == Orphan.OPEN; }
 
     public static boolean fakePlayersAllowed() { return view.fakePlayers == FakePlayers.ALLOW; }
+
+    public static boolean fakePlayersOwner() { return view.fakePlayers == FakePlayers.OWNER; }
+
+    public static boolean alliesPass() { return view.ftbAllies == FtbAllies.ALLY; }
+
+    public static boolean ftbClaimsDenied() { return view.ftbClaimsOnRdpl == FtbClaimsOnRdpl.DENY; }
+
+    public static boolean dissolveSkipsFtbLand() { return view.dissolveOnFtbLand == DissolveOnFtbLand.SKIP; }
+
+    public static boolean fakePlayerBlocksNone() { return view.fakePlayerBlocks == FakePlayerBlocks.NONE; }
 
     public static boolean denyMessage() { return view.denyMessage; }
 
@@ -236,6 +258,10 @@ public final class ClaimSettings {
         built.movePlayers = ContentControl.flag(GROUP, "movePlayers", set.movePlayers);
         built.entities = ContentControl.choice(GROUP, "entities", set.entities, Entities.KEEP);
         built.ftbPolicy = ContentControl.choice(GROUP, "ftbPolicy", "independent", FtbPolicy.INDEPENDENT);
+        built.ftbAllies = ContentControl.choice(GROUP, "ftbAllies", "none", FtbAllies.NONE);
+        built.ftbClaimsOnRdpl = ContentControl.choice(GROUP, "ftbClaimsOnRdpl", "allow", FtbClaimsOnRdpl.ALLOW);
+        built.dissolveOnFtbLand = ContentControl.choice(GROUP, "dissolveOnFtbLand", "purge", DissolveOnFtbLand.PURGE);
+        built.fakePlayerBlocks = ContentControl.choice(GROUP, "fakePlayerBlocks", "source", FakePlayerBlocks.SOURCE);
         return built;
     }
 

@@ -38,7 +38,7 @@ public final class ClaimMessages {
         if (index == null) { return; }
         int chunkX = Coords.getCubeXForEntity(player);
         int chunkZ = Coords.getCubeZForEntity(player);
-        int owner = index.ownerAt(chunkX, chunkZ);
+        int owner = ClaimSettings.yieldsToForeign() ? ClaimGuard.coversChunk(player.world, chunkX, chunkZ) : index.ownerAt(chunkX, chunkZ);
         int[] last = SEEN.put(player.getUniqueID(), new int[] {player.dimension, chunkX, chunkZ, owner});
         if (last == null || last[3] == owner || (last[0] == player.dimension && last[1] == chunkX && last[2] == chunkZ)) { return; }
         if (owner != 0) { enter(player, owner); }

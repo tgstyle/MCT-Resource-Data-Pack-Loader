@@ -7312,7 +7312,7 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
 
 *Rubic 世界*
 
-**立方体流式加载。** 四个 `chunks` 键决定立方体如何送达玩家，以及何时再次释放。它们只在 Rubic 世界中起作用，默认值就是该子系统调校时所用的数值，所以不去动它们的资源包不会付出任何代价。
+**立方体流式加载。** 五个 `chunks` 键决定立方体如何送达玩家，以及何时再次释放。它们只在 Rubic 世界中起作用，默认值就是该子系统调校时所用的数值，所以不去动它们的资源包不会付出任何代价。
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7322,17 +7322,19 @@ python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
     "verticalCubeLoadDistance": 8,
     "cubesSentPerTick": 649,
     "cubeGenMillisPerRound": 50,
-    "cubeGCInterval": 200
+    "cubeGCInterval": 200,
+    "forcedColumnCubeRange": [-4, 12]
   }
 }
 ```
 
-| 键                         | 值                 | 默认值 | 作用                                                                                                                                           |
-| -------------------------- | ------------------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `verticalCubeLoadDistance` | 整数，单位为立方体 | `8`    | 区块加载票据在玩家上方和下方各保持多少个立方体。同名的视频设置滑块是客户端自己的视距，由游玩的人而不是资源包设定                               |
-| `cubesSentPerTick`         | 整数，单位为立方体 | `649`  | 一刻内最多可向玩家发送多少个立方体。调高它会更快填满视野范围，也会让每刻的数据包更大；数据包仍会在 1024 个立方体或 512 KB 处拆分，以先到者为准 |
-| `cubeGenMillisPerRound`    | 整数，单位为毫秒   | `50`   | 一刻最多可以花多长时间生成玩家正在等待的立方体                                                                                                 |
-| `cubeGCInterval`           | 整数，单位为刻     | `200`  | 无人注视的立方体多久被释放一次                                                                                                                 |
+| 键                         | 值                     | 默认值 | 作用                                                                                                                                                                                          |
+| -------------------------- | ---------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verticalCubeLoadDistance` | 整数，单位为立方体     | `8`    | 区块加载票据在玩家上方和下方各保持多少个立方体。同名的视频设置滑块是客户端自己的视距，由游玩的人而不是资源包设定                                                                              |
+| `cubesSentPerTick`         | 整数，单位为立方体     | `649`  | 一刻内最多可向玩家发送多少个立方体。调高它会更快填满视野范围，也会让每刻的数据包更大；数据包仍会在 1024 个立方体或 512 KB 处拆分，以先到者为准                                                |
+| `cubeGenMillisPerRound`    | 整数，单位为毫秒       | `50`   | 一刻最多可以花多长时间生成玩家正在等待的立方体                                                                                                                                                |
+| `cubeGCInterval`           | 整数，单位为刻         | `200`  | 无人注视的立方体多久被释放一次                                                                                                                                                                |
+| `forcedColumnCubeRange`    | 两个整数，单位为立方体 | 未设置 | 区块加载票据为某一列强制加载时，在没有玩家注视该列期间保持的最低和最高立方体 Y 值，例如服务器重启后或其所有者不在时的 FTB 区块加载器。未设置时该处不保持任何立方体。每个票据最多 400 个立方体 |
 
 **客户端。** 视频设置中新增了一个垂直渲染距离滑块，是渲染距离在垂直方向上的对应项（即配置中的 `verticalCubeLoadDistance`，由游玩的人决定）。`terrain` 分组中的其余所有内容，包括预生成、世界物理、出生点和边界，对 Rubic 世界依然照常适用。
 
@@ -8852,56 +8854,65 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "protectPvp": true,
     "message": true,
     "claimOnDissolve": "release",
-    "ftbPolicy": "independent"
+    "ftbPolicy": "independent",
+    "ftbAllies": "ally",
+    "ftbClaimsOnRdpl": "deny",
+    "dissolveOnFtbLand": "skip",
+    "fakePlayers": "owner",
+    "fakePlayerBlocks": "none"
   }
 }
 ```
 
-| 设置                     | 类型   | 默认值        | 作用                                                                                                                                        |
-| ------------------------ | ------ | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `methods`                | 列表   | 空            | 声明的方式：`command` 为 `/rdplserver claim` 的各种形式，`item` 为声明物品，`block` 为声明方块，可任意组合。为空则无法声明任何区块          |
-| `claimWho`               | 文本   | `team`        | 声明归谁所有。`team` 归给声明者所在的队伍，需要有队伍；`teamOrPlayer` 对没有队伍的声明者归其本人；`player` 始终归给声明者                   |
-| `commandRadius`          | 数字   | `3`           | `/rdplserver claim <radius>` 最多可以声明的区块数（每个方向）（0 到 64）                                                                    |
-| `commandLevel`           | 数字   | `0`           | 声明、取消声明和列表命令所需的权限等级。0 表示所有人（0 到 4）                                                                              |
-| `opLevel`                | 数字   | `2`           | 可以操作其他所有者声明的权限等级，并且 `claim for` 会跳过下面的限制（0 到 4）                                                               |
-| `item`                   | 文本   | 空            | 声明物品，格式为 `modid:name`。为空则没有声明物品                                                                                           |
-| `itemConsume`            | 布尔值 | `false`       | 开启时，每声明一个区块消耗一个声明物品，取消声明时不退还                                                                                    |
-| `block`                  | 文本   | 空            | 声明方块，格式为 `modid:name`。为空则没有声明方块                                                                                           |
-| `blockRadius`            | 数字   | `0`           | 放置的声明方块会占用其四周各方向的区块数。0 表示只占自己所在的区块（0 到 64）                                                               |
-| `blockOverlap`           | 文本   | `refuse`      | 声明方块的正方形与其他所有者的区块相交时的处理方式。`refuse` 取消放置，`skip` 只占用空闲的区块                                              |
-| `claimCheckTicks`        | 数字   | `100`         | 多久检查一次已加载的声明方块是否被破坏或移动，单位为 tick（1 到 1200）                                                                      |
-| `limitMode`              | 文本   | `flat`        | `flat` 给每人 `limit`；`perMember` 按队伍中每名成员给 `limitPerMember`；`score` 读取计分板目标 `limitScore`                                 |
-| `limit`                  | 数字   | `16`          | `flat` 模式下，每个声明者最多可持有的区块数。0 表示该所有者不能声明                                                                         |
-| `limitPerMember`         | 数字   | `4`           | `perMember` 模式下，每名队伍成员增加的区块数。一名玩家即为一名成员                                                                          |
-| `limitScore`             | 文本   | 空            | `score` 模式下保存每个声明者上限的目标。队伍的上限为其成员分数之和                                                                          |
-| `mustTouch`              | 布尔值 | `false`       | 开启时，新区块必须与所有者已有的某个区块共享一条边，所有者的第一次声明除外                                                                  |
-| `minDistance`            | 数字   | `0`           | 新声明与其他所有者的声明之间至少保留的区块数。0 允许相接                                                                                    |
-| `spawnRadius`            | 数字   | `0`           | 距离维度出生点此区块数之内不允许声明（0 到 64）                                                                                             |
-| `dimensions`             | 列表   | 空            | 允许声明的维度 ID。为空则所有维度均可                                                                                                       |
-| `dimensionsAreBlacklist` | 布尔值 | `false`       | 开启时，声明不在 `dimensions` 中生效；关闭时，只在其中生效                                                                                  |
-| `orphanAccess`           | 文本   | `locked`      | 所有者已不存在的土地。`locked` 将除管理员以外的人拒之门外；`open` 允许所有人进入并忽略其中的保护，但区块仍保持被声明状态                    |
-| `fakePlayers`            | 文本   | `deny`        | 机器等假玩家能否在他人的声明中行动。`deny` 阻止，`allow` 允许                                                                               |
-| `denyMessage`            | 布尔值 | `true`        | 开启时，被声明阻止的玩家会收到提示，且至多每秒一次                                                                                          |
-| `protectBreak`           | 布尔值 | `false`       | 开启时，其他人不能在声明内破坏方块，也不能击打物品展示框、画和盔甲架                                                                        |
-| `protectPlace`           | 布尔值 | `false`       | 开启时，其他人不能在声明内放置方块或用桶装填液体                                                                                            |
-| `protectUse`             | 布尔值 | `false`       | 开启时，其他人不能使用 `useBlocks` 所列的方块，除非 `useExceptions` 允许；也不能打开声明内实体的物品栏                                      |
-| `useBlocks`              | 列表   | `*`           | `protectUse` 阻止他人使用的方块，格式为 `modid:name`、`modid:*`，或用 `*` 表示所有方块                                                      |
-| `useExceptions`          | 列表   | 空            | 即使有 `protectUse`，他人仍可使用的方块，写法同 `useBlocks`                                                                                 |
-| `protectExplosions`      | 布尔值 | `false`       | 开启时，爆炸不会破坏声明内的方块                                                                                                            |
-| `protectMobGriefing`     | 布尔值 | `false`       | 开启时，站在声明内的生物不能改变其中的方块，例如末影人拿走方块或僵尸破坏门                                                                  |
-| `protectFluids`          | 布尔值 | `false`       | 开启时，液体不会从他人所有的土地流入声明内                                                                                                  |
-| `protectPistons`         | 布尔值 | `false`       | 开启时，活塞不能从声明外把方块推入声明内或推出声明                                                                                          |
-| `protectFire`            | 布尔值 | `false`       | 开启时，火不会从声明外蔓延进来，也不会烧毁其中的方块                                                                                        |
-| `protectPvp`             | 布尔值 | `false`       | 开启时，玩家不能在声明内互相伤害。所有者的成员之间也不豁免                                                                                  |
-| `message`                | 布尔值 | `false`       | 开启时，跨过声明边界的玩家会被告知这是谁的土地                                                                                              |
-| `messageWilderness`      | 布尔值 | `false`       | 开启时，玩家从声明走入未声明土地时也会被告知                                                                                                |
-| `claimOnDissolve`        | 文本   | `keep`        | 已消失的所有者的声明如何处理。`keep` 保留在已消失的所有者名下；`release` 释放为无主土地；`remove` 收回土地，并撤销其上所建的内容            |
-| `restore`                | 布尔值 | `false`       | 配合 `remove` 使用：若原始副本覆盖该区块，则先将其从原始副本还原                                                                            |
-| `regenerate`             | 布尔值 | `false`       | 配合 `remove` 使用：还原时未被覆盖的区块，将根据世界种子重新生成                                                                            |
-| `restorePerTick`         | 数字   | `1`           | 每个 tick 还原或重新生成的段数，所有区块合计（1 及以上）                                                                                    |
-| `movePlayers`            | 布尔值 | `true`        | 开启时，正在被还原或重新生成的区块内的玩家会先被移出                                                                                        |
-| `entities`               | 文本   | `keep`        | 被还原或重新生成的区块中的实体如何处理。`keep` 保留它们；`remove` 移除所有非玩家实体                                                        |
-| `ftbPolicy`              | 文本   | `independent` | 声明如何与 FTB Utilities 的声明并存。`independent` 忽略它们；`yield` 把 FTB 的区块交给 FTB；`exclusive` 在 FTB 声明生效期间拒绝 RDPL 的声明 |
+| 设置                     | 类型   | 默认值        | 作用                                                                                                                                                                                                                       |
+| ------------------------ | ------ | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `methods`                | 列表   | 空            | 声明的方式：`command` 为 `/rdplserver claim` 的各种形式，`item` 为声明物品，`block` 为声明方块，可任意组合。为空则无法声明任何区块                                                                                         |
+| `claimWho`               | 文本   | `team`        | 声明归谁所有。`team` 归给声明者所在的队伍，需要有队伍；`teamOrPlayer` 对没有队伍的声明者归其本人；`player` 始终归给声明者                                                                                                  |
+| `commandRadius`          | 数字   | `3`           | `/rdplserver claim <radius>` 最多可以声明的区块数（每个方向）（0 到 64）                                                                                                                                                   |
+| `commandLevel`           | 数字   | `0`           | 声明、取消声明和列表命令所需的权限等级。0 表示所有人（0 到 4）                                                                                                                                                             |
+| `opLevel`                | 数字   | `2`           | 可以操作其他所有者声明的权限等级，并且 `claim for` 会跳过下面的限制（0 到 4）                                                                                                                                              |
+| `item`                   | 文本   | 空            | 声明物品，格式为 `modid:name`。为空则没有声明物品                                                                                                                                                                          |
+| `itemConsume`            | 布尔值 | `false`       | 开启时，每声明一个区块消耗一个声明物品，取消声明时不退还                                                                                                                                                                   |
+| `block`                  | 文本   | 空            | 声明方块，格式为 `modid:name`。为空则没有声明方块                                                                                                                                                                          |
+| `blockRadius`            | 数字   | `0`           | 放置的声明方块会占用其四周各方向的区块数。0 表示只占自己所在的区块（0 到 64）                                                                                                                                              |
+| `blockOverlap`           | 文本   | `refuse`      | 声明方块的正方形与其他所有者的区块相交时的处理方式。`refuse` 取消放置，`skip` 只占用空闲的区块                                                                                                                             |
+| `claimCheckTicks`        | 数字   | `100`         | 多久检查一次已加载的声明方块是否被破坏或移动，单位为 tick（1 到 1200）                                                                                                                                                     |
+| `limitMode`              | 文本   | `flat`        | `flat` 给每人 `limit`；`perMember` 按队伍中每名成员给 `limitPerMember`；`score` 读取计分板目标 `limitScore`                                                                                                                |
+| `limit`                  | 数字   | `16`          | `flat` 模式下，每个声明者最多可持有的区块数。0 表示该所有者不能声明                                                                                                                                                        |
+| `limitPerMember`         | 数字   | `4`           | `perMember` 模式下，每名队伍成员增加的区块数。一名玩家即为一名成员                                                                                                                                                         |
+| `limitScore`             | 文本   | 空            | `score` 模式下保存每个声明者上限的目标。队伍的上限为其成员分数之和                                                                                                                                                         |
+| `mustTouch`              | 布尔值 | `false`       | 开启时，新区块必须与所有者已有的某个区块共享一条边，所有者的第一次声明除外                                                                                                                                                 |
+| `minDistance`            | 数字   | `0`           | 新声明与其他所有者的声明之间至少保留的区块数。0 允许相接                                                                                                                                                                   |
+| `spawnRadius`            | 数字   | `0`           | 距离维度出生点此区块数之内不允许声明（0 到 64）                                                                                                                                                                            |
+| `dimensions`             | 列表   | 空            | 允许声明的维度 ID。为空则所有维度均可                                                                                                                                                                                      |
+| `dimensionsAreBlacklist` | 布尔值 | `false`       | 开启时，声明不在 `dimensions` 中生效；关闭时，只在其中生效                                                                                                                                                                 |
+| `orphanAccess`           | 文本   | `locked`      | 所有者已不存在的土地。`locked` 将除管理员以外的人拒之门外；`open` 允许所有人进入并忽略其中的保护，但区块仍保持被声明状态                                                                                                   |
+| `fakePlayers`            | 文本   | `deny`        | 机器等假玩家能否在他人的声明中行动。`deny` 阻止，`allow` 允许；`owner` 只允许携带该声明所属方某成员 UUID 的假玩家（即由成员放置的机器，与 FTB 的做法一致），其余一律阻止。假玩家指没有连接的玩家，或 Forge 的 `FakePlayer` |
+| `fakePlayerBlocks`       | 文本   | `source`      | 假玩家放置的方块归谁所有，前提是开启了所有权标记：`source` 跟随团队来源，因此携带成员 UUID 的假玩家会把方块记到 FTB 队伍名下，但不会记到计分板队伍名下；`none` 让所有此类方块都没有所有者                                  |
+| `ftbAllies`              | 文本   | `none`        | 与 `teamSource` `ftb` 一起读取：`none` 只允许所有者的成员进入；`ally` 还允许 FTB 队伍设置的盟友进入（FTB 对编辑和交互的默认设置是盟友）。盟友可以使用和建造，但不能解除声明                                                |
+| `ftbClaimsOnRdpl`        | 文本   | `allow`       | FTB Utilities 的区块认领命令能否认领被 RDPL 声明占用或仍在清理中的区块：`allow` 交由 FTB 处理；`deny` 取消 FTB 的认领，并告知玩家“这个区块已被 RDPL 认领占用”。FTB 的管理员认领不受阻止                                    |
+| `dissolveOnFtbLand`      | 文本   | `purge`       | 配合 `claimOnDissolve` 为 `remove` 时使用：`purge` 会清理已释放的区块，即使 FTB Utilities 之后已认领它；`skip` 则不清理 FTB 所持有的区块，并保持其方块不动                                                                 |
+| `denyMessage`            | 布尔值 | `true`        | 开启时，被声明阻止的玩家会收到提示，且至多每秒一次                                                                                                                                                                         |
+| `protectBreak`           | 布尔值 | `false`       | 开启时，其他人不能在声明内破坏方块，也不能击打物品展示框、画和盔甲架                                                                                                                                                       |
+| `protectPlace`           | 布尔值 | `false`       | 开启时，其他人不能在声明内放置方块或用桶装填液体                                                                                                                                                                           |
+| `protectUse`             | 布尔值 | `false`       | 开启时，其他人不能使用 `useBlocks` 所列的方块，除非 `useExceptions` 允许；也不能打开声明内实体的物品栏                                                                                                                     |
+| `useBlocks`              | 列表   | `*`           | `protectUse` 阻止他人使用的方块，格式为 `modid:name`、`modid:*`，或用 `*` 表示所有方块                                                                                                                                     |
+| `useExceptions`          | 列表   | 空            | 即使有 `protectUse`，他人仍可使用的方块，写法同 `useBlocks`                                                                                                                                                                |
+| `protectExplosions`      | 布尔值 | `false`       | 开启时，爆炸不会破坏声明内的方块                                                                                                                                                                                           |
+| `protectMobGriefing`     | 布尔值 | `false`       | 开启时，站在声明内的生物不能改变其中的方块，例如末影人拿走方块或僵尸破坏门                                                                                                                                                 |
+| `protectFluids`          | 布尔值 | `false`       | 开启时，液体不会从他人所有的土地流入声明内                                                                                                                                                                                 |
+| `protectPistons`         | 布尔值 | `false`       | 开启时，活塞不能从声明外把方块推入声明内或推出声明                                                                                                                                                                         |
+| `protectFire`            | 布尔值 | `false`       | 开启时，火不会从声明外蔓延进来，也不会烧毁其中的方块                                                                                                                                                                       |
+| `protectPvp`             | 布尔值 | `false`       | 开启时，玩家不能在声明内互相伤害。所有者的成员之间也不豁免                                                                                                                                                                 |
+| `message`                | 布尔值 | `false`       | 开启时，跨过声明边界的玩家会被告知这是谁的土地                                                                                                                                                                             |
+| `messageWilderness`      | 布尔值 | `false`       | 开启时，玩家从声明走入未声明土地时也会被告知                                                                                                                                                                               |
+| `claimOnDissolve`        | 文本   | `keep`        | 已消失的所有者的声明如何处理。`keep` 保留在已消失的所有者名下；`release` 释放为无主土地；`remove` 收回土地，并撤销其上所建的内容                                                                                           |
+| `restore`                | 布尔值 | `false`       | 配合 `remove` 使用：若原始副本覆盖该区块，则先将其从原始副本还原                                                                                                                                                           |
+| `regenerate`             | 布尔值 | `false`       | 配合 `remove` 使用：还原时未被覆盖的区块，将根据世界种子重新生成                                                                                                                                                           |
+| `restorePerTick`         | 数字   | `1`           | 每个 tick 还原或重新生成的段数，所有区块合计（1 及以上）                                                                                                                                                                   |
+| `movePlayers`            | 布尔值 | `true`        | 开启时，正在被还原或重新生成的区块内的玩家会先被移出                                                                                                                                                                       |
+| `entities`               | 文本   | `keep`        | 被还原或重新生成的区块中的实体如何处理。`keep` 保留它们；`remove` 移除所有非玩家实体                                                                                                                                       |
+| `ftbPolicy`              | 文本   | `independent` | 声明如何与 FTB Utilities 的声明并存。`independent` 忽略它们；`yield` 把 FTB 的区块交给 FTB；`exclusive` 在 FTB 声明生效期间拒绝 RDPL 的声明                                                                                |
 
 **声明。** `command` 仅在 `methods` 包含它时才列出 `/rdplserver claim` 的各种形式。`item` 对其所使用的区块进行声明；若在空中使用，则对玩家所站的区块声明；潜行时使用则取消声明。`block` 对放置的声明方块所在的区块声明，或对其周围 `blockRadius` 正方形内的每个区块声明；破坏该方块会精确释放它所声明的区块。由于计分板队伍没有队长，队伍中的任何成员都可以代表队伍进行声明和取消声明。
 
@@ -8913,7 +8924,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 **消失。** 当队伍从计分板中移除，或 FTB 队伍按 `onFtbTeamDeleted` 被删除时，由 `claimOnDissolve` 决定其声明。`keep` 使声明仍归已消失的所有者，因此由 `orphanAccess` 决定谁可以进入。`release` 立即解除声明，该土地上的归属方块遵循 `onDissolve`。`remove` 立即解除声明，然后按顺序逐个处理每个区块：若 `restore` 开启且原始副本覆盖该区块，则先还原；若 `regenerate` 开启，则重新生成；否则只按 `removeAs` 的规定移除归属方块。还原读取存档旁 `rdpl-pristine/<world>` 中保存的原始副本。重新生成只根据种子重建地形形状，不包括树木、矿石或结构，因此要得到忠实的结果，需要在预生成的区域上进行还原。还原和重新生成会替换该区块中的每个方块，无论是谁放置的。这项工作是惰性的：区块加载时入队，每个 tick 处理 `restorePerTick` 个段，若区块内有玩家则等待，除非 `movePlayers` 将玩家移到所有待处理区块之外最近的安全位置。`entities` 决定被还原区块中的生物、物品和载具是否保留。
 
-**FTB Utilities。** `ftbPolicy` 单独读取，RDPL 的声明与 FTB Utilities 的声明是各自独立的记录。`independent`（默认）忽略 FTB 的声明。`yield` 拒绝对 FTB 所持有区块的声明，并把该处的保护交给 FTB，因此在 FTB 持有该区块期间，之前的声明不再提供保护。`exclusive` 拒绝所有 RDPL 声明，并指引玩家使用 FTB 的声明命令，且在 FTB 声明生效期间关闭 RDPL 的保护。若没有生效的 FTB 声明，`yield` 和 `exclusive` 都按 `independent` 运行，并在服务器启动时记录一行日志。
+**FTB Utilities。** `ftbPolicy` 单独读取，RDPL 的声明与 FTB Utilities 的声明是各自独立的记录。`independent`（默认）忽略 FTB 的声明。`yield` 拒绝对 FTB 所持有区块的声明，并把该处的保护交给 FTB，因此在 FTB 持有该区块期间，之前的声明不再提供保护。`exclusive` 拒绝所有 RDPL 声明，并指引玩家使用 FTB 的声明命令，且在 FTB 声明生效期间关闭 RDPL 的保护。若没有生效的 FTB 声明，`yield` 和 `exclusive` 都按 `independent` 运行，并在服务器启动时记录一行日志。在 `yield` 模式下，进入和离开的消息会忽略 FTB 所持有的领地。当 `teamSource` 为 `ftb` 时，`perMember` 和 `score` 限制统计 FTB 队伍的成员，`claim for` 和 `claims` 接受队伍的 ID 或名称。
 
 ## 计分
 

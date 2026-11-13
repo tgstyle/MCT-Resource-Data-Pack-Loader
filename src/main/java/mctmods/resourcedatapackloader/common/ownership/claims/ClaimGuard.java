@@ -12,12 +12,12 @@ import net.minecraft.world.World;
 public final class ClaimGuard {
     private ClaimGuard() {}
 
-    public static int covers(World world, BlockPos pos) {
+    public static int covers(World world, BlockPos pos) { return coversChunk(world, Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getZ())); }
+
+    public static int coversChunk(World world, int chunkX, int chunkZ) {
         if (world.isRemote || !ClaimSettings.any()) { return 0; }
         ClaimIndex index = ClaimIndex.obtain(world);
         if (index == null) { return 0; }
-        int chunkX = Coords.blockToCube(pos.getX());
-        int chunkZ = Coords.blockToCube(pos.getZ());
         int owner = index.ownerAt(chunkX, chunkZ);
         return owner != 0 && ClaimSettings.yieldsToForeign() && (ClaimSettings.ftbPolicy() == ClaimSettings.FtbPolicy.EXCLUSIVE || ForeignClaimsHolder.get().isClaimed(world, chunkX, chunkZ)) ? 0 : owner;
     }

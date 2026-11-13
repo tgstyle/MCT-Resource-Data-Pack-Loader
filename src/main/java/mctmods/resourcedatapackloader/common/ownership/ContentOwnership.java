@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.ownership;
 
 import mctmods.resourcedatapackloader.common.ownership.claims.ClaimDissolve;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimOwners;
+import mctmods.resourcedatapackloader.common.ownership.claims.ClaimSettings;
 import mctmods.resourcedatapackloader.common.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.common.util.world.PlacePositions;
 import mctmods.resourcedatapackloader.common.util.worldgen.GenHeights;
@@ -34,7 +36,7 @@ public final class ContentOwnership {
     }
 
     private static void place(World world, BlockPos pos, Entity entity) {
-        if (entity instanceof EntityPlayer) {
+        if (entity instanceof EntityPlayer && !(ClaimOwners.isFake((EntityPlayer) entity) && ClaimSettings.fakePlayerBlocksNone())) {
             EntityPlayer player = (EntityPlayer) entity;
             Block block = world.getBlockState(pos).getBlock();
             if (OwnershipSettings.tags(block)) {

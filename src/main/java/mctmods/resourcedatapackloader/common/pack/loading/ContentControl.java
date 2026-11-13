@@ -74,7 +74,7 @@ public final class ContentControl {
             "villagePlotsMost", "villagePlotsBackRow", "villageTieStreets", "villageCitySpacing", "villageBlockSizes", "villageLayout", "biomes", "voidPlatformBlock",
             "blocks", "who", "onJoinTeam", "onDissolve", "removeAs", "dissolvePerTick", "checkTicks", "teamSource", "onFtbTeamDeleted", "ftbPolicy",
             "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
-            "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers",
+            "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers", "ftbAllies", "ftbClaimsOnRdpl", "dissolveOnFtbLand", "fakePlayerBlocks", "forcedColumnCubeRange",
             "denyMessage", "protectBreak", "protectPlace", "protectUse", "protectExplosions", "protectMobGriefing", "protectFluids", "protectPistons", "protectFire", "protectPvp",
             "useBlocks", "useExceptions", "message", "messageWilderness", "claimOnDissolve", "restore", "regenerate", "restorePerTick", "movePlayers", "entities",
             "voidPlatformHeight", "voidPlatformSize", "voidWorld", "voidWorldDimensions",

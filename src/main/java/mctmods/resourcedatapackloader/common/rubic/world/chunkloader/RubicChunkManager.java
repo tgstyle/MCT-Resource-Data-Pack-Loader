@@ -104,7 +104,18 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
         PlayerCubeMap cubeMap = (PlayerCubeMap) worldInstance.getPlayerChunkMap();
         PlayerChunkMapEntry columnWatcher = cubeMap.getEntry(event.getLocation().x, event.getLocation().z);
         if (columnWatcher == null) {
-            ((IRubicTicketInternal) ticket).rdpl$setForcedChunkCubes(event.getLocation(), new IntArraySet());
+            IntSet unwatched = new IntArraySet();
+            int[] range = ContentControl.numbers(ContentControl.CHUNKS, "forcedColumnCubeRange", new int[0]);
+            if (range.length == 2) {
+                int lowest = Math.min(range[0], range[1]);
+                int highest = Math.min(Math.max(range[0], range[1]), lowest + MAX_FORCED_CUBES_PER_TICKET - 1);
+                for (int cubeY = lowest; cubeY <= highest; cubeY++) {
+                    ((IRubicWorldInternal) ticket.world).rdpl$getCubeFromCubeCoords(event.getLocation().x, cubeY, event.getLocation().z).getTickets().add((ITicket) ticket);
+                    unwatched.add(cubeY);
+                }
+            }
+            ((IRubicTicketInternal) ticket).rdpl$setForcedChunkCubes(event.getLocation(), unwatched);
+            ((IRubicTicketInternal) ticket).rdpl$capForcedCubes(MAX_FORCED_CUBES_PER_TICKET);
             return;
         }
         List<EntityPlayerMP> players = columnWatcher.getWatchingPlayers();

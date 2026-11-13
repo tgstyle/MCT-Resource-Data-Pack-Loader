@@ -104,6 +104,7 @@ rdpl.claim.deny.touch=Нове захоплення має межувати з �
 rdpl.claim.deny.distance=Цей чанк надто близько до землі, що належить комусь іншому
 rdpl.claim.deny.ftbland=Цей чанк належить FTB, захопити його тут не можна
 rdpl.claim.deny.ftbonly=Тут земля захоплена через FTB Utilities, скористайтеся його командою захоплення
+rdpl.claim.ftbonrdpl=Цей чанк утримується захватом RDPL
 rdpl.claim.block.overlap=Частина цього квадрата вже належить комусь іншому, тому блок захоплення тут не можна поставити
 rdpl.claim.block.released=Блок захоплення зник, тож звільнено захоплених чанків: %s
 rdpl.claim.protected=Цю землю захопив %s, тож тут так робити не можна

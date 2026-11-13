@@ -195,7 +195,7 @@ import mctmods.resourcedatapackloader.core.MCTMixin;
         @net.minecraftforge.common.config.Config.Comment("Dimensions claims work in. Empty means every dimension") public int[] dimensions = {};
         @net.minecraftforge.common.config.Config.Comment("On, claims do not work in these dimensions. Off, they work only in them [Default=false]") public boolean dimensionsAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("What a claim does while its owner is gone, such as a dissolved team. locked keeps everyone out, open lets everyone in [locked|open] [Default=locked]") public String orphanAccess = "locked";
-        @net.minecraftforge.common.config.Config.Comment("Whether fake players, such as machines, may act in claims of others. deny stops them, allow lets them [deny|allow] [Default=deny]") public String fakePlayers = "deny";
+        @net.minecraftforge.common.config.Config.Comment("Whether fake players, such as machines, may act in claims of others. deny stops them, allow lets them, owner lets one that carries the UUID of a member of the claim's owner [deny|allow|owner] [Default=deny]") public String fakePlayers = "deny";
         @net.minecraftforge.common.config.Config.Comment("On, a player stopped by a claim is told so [Default=true]") public boolean denyMessage = true;
         @net.minecraftforge.common.config.Config.Comment("On, others cannot break blocks in a claim [Default=false]") public boolean protectBreak = false;
         @net.minecraftforge.common.config.Config.Comment("On, others cannot place blocks in a claim [Default=false]") public boolean protectPlace = false;

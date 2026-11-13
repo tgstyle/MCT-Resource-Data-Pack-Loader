@@ -19,6 +19,7 @@ public final class ContentFtbLib {
         installed = true;
         TeamDissolve.register(OwnerRecord.SOURCE_FTB, (server, key) -> FtbLibTeams.live(key));
         MinecraftForge.EVENT_BUS.register(FtbLibTeamDeleted.class);
+        MinecraftForge.EVENT_BUS.register(FtbLibTeamRenamed.class);
     }
 
     public static void serverStarting() {
