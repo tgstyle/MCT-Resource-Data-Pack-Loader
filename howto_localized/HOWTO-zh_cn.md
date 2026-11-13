@@ -8124,7 +8124,12 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
     "protectPvp": true,
     "message": true,
     "claimOnDissolve": "release",
-    "ftbPolicy": "independent"
+    "ftbPolicy": "independent",
+    "ftbAllies": "ally",
+    "ftbClaimsOnRdpl": "deny",
+    "dissolveOnFtbLand": "skip",
+    "fakePlayers": "owner",
+    "fakePlayerBlocks": "none"
   }
 }
 ```
@@ -8152,7 +8157,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `dimensions`             | 列表   | 空            | 允许声明的维度 ID。为空则所有维度均可                                                                                                    |
 | `dimensionsAreBlacklist` | 布尔值 | `false`       | 开启时，声明不在 `dimensions` 中生效；关闭时，只在其中生效                                                                               |
 | `orphanAccess`           | 文本   | `locked`      | 所有者已不存在的土地。`locked` 将除管理员以外的人拒之门外；`open` 允许所有人进入并忽略其中的保护，但区块仍保持被声明状态                 |
-| `fakePlayers`            | 文本   | `deny`        | 机器等假玩家能否在他人的声明中行动。`deny` 阻止，`allow` 允许                                                                            |
+| `fakePlayers`            | 文本   | `deny`        | 机器等假玩家能否在他人的声明中行动。`deny` 阻止，`allow` 允许，`owner` 只允许携带该声明所有者成员 UUID 的假玩家在其中行动，其余阻止      |
 | `denyMessage`            | 布尔值 | `true`        | 开启时，被声明阻止的玩家会收到提示，且至多每秒一次                                                                                       |
 | `protectBreak`           | 布尔值 | `false`       | 开启时，其他人不能在声明内破坏方块，也不能击打物品展示框、画和盔甲架                                                                     |
 | `protectPlace`           | 布尔值 | `false`       | 开启时，其他人不能在声明内放置方块或用桶装填液体                                                                                         |
@@ -8174,6 +8179,10 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `movePlayers`            | 布尔值 | `true`        | 开启时，正在被还原或重新生成的区块内的玩家会先被移出                                                                                     |
 | `entities`               | 文本   | `keep`        | 被还原或重新生成的区块中的实体如何处理。`keep` 保留它们；`remove` 移除所有非玩家实体                                                     |
 | `ftbPolicy`              | 文本   | `independent` | 声明如何与 FTB Chunks 的声明并存。`independent` 忽略它们；`yield` 把 FTB 的区块交给 FTB；`exclusive` 在 FTB 声明生效期间拒绝 RDPL 的声明 |
+| `ftbAllies`              | 文本   | `none`        | 当 `teamSource` 为 `ftb` 时：`none` 只允许所有者的成员进入声明；`ally` 同样允许 FTB 队伍的盟友进入，与 FTB 一致                          |
+| `ftbClaimsOnRdpl`        | 文本   | `allow`       | FTB Chunks 能否声明被 RDPL 声明占有的区块，或仍在清理中的区块。`allow` 交由 FTB 决定；`deny` 以提示拒绝 FTB 的声明                       |
+| `dissolveOnFtbLand`      | 文本   | `purge`       | 配合 `remove`，对之后被 FTB Chunks 声明的区块，排队中的清理工作。`purge` 继续执行；`skip` 放弃该任务，区块保持原样                       |
+| `fakePlayerBlocks`       | 文本   | `source`      | 假玩家放置的方块是否有所有者。`source` 跟随队伍来源，因此 FTB 队伍拥有它们；`none` 在任何来源下都不给予所有者                            |
 
 **声明。** `command` 仅在 `methods` 包含它时才列出 `/rdplserver claim` 的各种形式。`item` 对其所使用的区块进行声明；若在空中使用，则对玩家所站的区块声明；潜行时使用则取消声明。`block` 对放置的声明方块所在的区块声明，或对其周围 `blockRadius` 正方形内的每个区块声明；破坏该方块会精确释放它所声明的区块。由于计分板队伍没有队长，队伍中的任何成员都可以代表队伍进行声明和取消声明。
 
@@ -8185,7 +8194,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 **消失。** 当队伍从计分板中移除，或 FTB 队伍按 `onFtbTeamDeleted` 被删除时，由 `claimOnDissolve` 决定其声明。`keep` 使声明仍归已消失的所有者，因此由 `orphanAccess` 决定谁可以进入。`release` 立即解除声明，该土地上的归属方块遵循 `onDissolve`。`remove` 立即解除声明，然后按顺序逐个处理每个区块：若 `restore` 开启且原始副本覆盖该区块，则先还原；若 `regenerate` 开启，则重新生成；否则只按 `removeAs` 的规定移除归属方块。还原读取存档旁 `rdpl-pristine/<world>` 中保存的原始副本。重新生成只根据种子重建地形形状，不包括树木、矿石或结构，因此要得到忠实的结果，需要在预生成的区域上进行还原。还原和重新生成会替换该区块中的每个方块，无论是谁放置的。这项工作是惰性的：区块加载时入队，每个 tick 处理 `restorePerTick` 个段，若区块内有玩家则等待，除非 `movePlayers` 将玩家移到所有待处理区块之外最近的安全位置。`entities` 决定被还原区块中的生物、物品和载具是否保留。
 
-**FTB Chunks。** `ftbPolicy` 单独读取，RDPL 的声明与 FTB Chunks 的声明是各自独立的记录。`independent`（默认）忽略 FTB 的声明。`yield` 拒绝对 FTB 所持有区块的声明，并把该处的保护交给 FTB，因此在 FTB 持有该区块期间，之前的声明不再提供保护。`exclusive` 拒绝所有 RDPL 声明，并指引玩家使用 FTB 的声明命令，且在 FTB 声明生效期间关闭 RDPL 的保护。若没有生效的 FTB 声明，`yield` 和 `exclusive` 都按 `independent` 运行，并在服务器启动时记录一行日志。
+**FTB Chunks。** `ftbPolicy` 单独读取，RDPL 的声明与 FTB Chunks 的声明是各自独立的记录。`independent`（默认）忽略 FTB 的声明。`yield` 拒绝对 FTB 所持有区块的声明，并把该处的保护交给 FTB，因此在 FTB 持有该区块期间，之前的声明不再提供保护。`exclusive` 拒绝所有 RDPL 声明，并指引玩家使用 FTB 的声明命令，且在 FTB 声明生效期间关闭 RDPL 的保护。若没有生效的 FTB 声明，`yield` 和 `exclusive` 都按 `independent` 运行，并在服务器启动时记录一行日志。在 FTB Chunks 中开启 `no_wilderness=true` 时，只被 RDPL 声明占用的区块也会禁止建造，因为 FTB 把它视为未声明。请关闭该选项运行，或使用 `yield` 并让玩家通过 FTB 声明。当 `teamSource` 为 `ftb` 时，声明上限、`claim for` 和 `claims` 可按名称接受 FTB 队伍，队伍改名后，提示中的所有者名称会立即更新。
 
 ## 计分
 

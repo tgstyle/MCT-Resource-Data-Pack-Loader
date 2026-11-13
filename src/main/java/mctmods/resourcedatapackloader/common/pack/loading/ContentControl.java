@@ -112,6 +112,7 @@ public final class ContentControl {
             "teamSource", "onFtbTeamDeleted", "ftbPolicy",
             "methods", "claimWho", "commandRadius", "commandLevel", "opLevel", "item", "itemConsume", "block", "blockRadius", "blockOverlap", "claimCheckTicks",
             "limitMode", "limit", "limitPerMember", "limitScore", "mustTouch", "minDistance", "spawnRadius", "dimensions", "dimensionsAreBlacklist", "orphanAccess", "fakePlayers",
+            "ftbAllies", "ftbClaimsOnRdpl", "dissolveOnFtbLand", "fakePlayerBlocks",
             "denyMessage", "protectBreak", "protectPlace", "protectUse", "protectExplosions", "protectMobGriefing", "protectFluids", "protectPistons", "protectFire", "protectPvp",
             "useBlocks", "useExceptions", "message", "messageWilderness", "claimOnDissolve", "restore", "regenerate", "restorePerTick", "movePlayers", "entities");
     private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();

@@ -1,11 +1,19 @@
 package mctmods.resourcedatapackloader.common.ownership;
 
+import mctmods.resourcedatapackloader.common.util.entity.Scores;
 import mctmods.resourcedatapackloader.common.util.entity.Standing;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.scores.PlayerTeam;
 
 public final class ScoreboardOwnerSource implements OwnerSource {
     public static final ScoreboardOwnerSource INSTANCE = new ScoreboardOwnerSource();
+    private static final Map<String, OwnerSource> BY_RECORD = new ConcurrentHashMap<>();
     private static volatile OwnerSource current = INSTANCE;
 
     private ScoreboardOwnerSource() {}
@@ -14,8 +22,20 @@ public final class ScoreboardOwnerSource implements OwnerSource {
 
     public static void use(OwnerSource source) { current = source == null ? INSTANCE : source; }
 
+    public static void register(String recordSource, OwnerSource source) { BY_RECORD.put(recordSource, source); }
+
+    public static OwnerSource forSource(String recordSource) { return BY_RECORD.getOrDefault(recordSource, INSTANCE); }
+
     @Override public int teamOf(ServerPlayer player) {
         int handle = OwnerTable.handleForTeam(player.server, Standing.teamOf(player));
         return OwnerTable.get(player.server).isLive(handle) ? handle : 0;
+    }
+
+    @Override public List<String> memberNames(MinecraftServer server, int handle) {
+        OwnerTable table = OwnerTable.get(server);
+        if (!table.isLive(handle)) { return List.of(); }
+        if (!table.isTeam(handle)) { return List.of(table.labelOf(handle)); }
+        PlayerTeam team = Scores.team(Scores.board(server), table.keyOf(handle));
+        return team == null ? List.of() : new ArrayList<>(team.getPlayers());
     }
 }

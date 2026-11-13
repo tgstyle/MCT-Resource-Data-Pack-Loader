@@ -13,5 +13,6 @@ public final class ContentFtbChunks {
         if (!PackRequirements.modLoaded(MOD_ID)) { return; }
         ContentLog.LOGGER.info("FTB Chunks is loaded, so a pack can have claims yield to its chunk claims with claims ftbPolicy");
         ForeignClaimsHolder.set(new FtbChunksClaims());
+        FtbChunksGate.register();
     }
 }

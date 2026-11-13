@@ -70,7 +70,7 @@ public final class ConfigClaims {
         dimensions = builder.comment("Dimensions claims work in, as ids such as minecraft:overworld, minecraft:the_nether or minecraft:the_end. Empty means every dimension [Default={}]").defineListAllowEmpty("dimensions", List.of(), ConfigCore.IS_TEXT);
         dimensionsAreBlacklist = builder.comment("On, claims do not work in these dimensions. Off, they work only in them [Default=false]").define("dimensionsAreBlacklist", false);
         orphanAccess = builder.comment("What a claim does while its owner is gone, such as a dissolved team. locked keeps everyone out, open lets everyone in [locked|open] [Default=locked]").define("orphanAccess", "locked");
-        fakePlayers = builder.comment("Whether fake players, such as machines, may act in claims of others. deny stops them, allow lets them [deny|allow] [Default=deny]").define("fakePlayers", "deny");
+        fakePlayers = builder.comment("Whether fake players, such as machines, may act in claims of others. deny stops them, allow lets them, owner lets one carrying the UUID of a member of the claim's owner [deny|allow|owner] [Default=deny]").define("fakePlayers", "deny");
         denyMessage = builder.comment("On, a player stopped by a claim is told so [Default=true]").define("denyMessage", true);
         protectBreak = builder.comment("On, others cannot break blocks in a claim [Default=false]").define("protectBreak", false);
         protectPlace = builder.comment("On, others cannot place blocks in a claim [Default=false]").define("protectPlace", false);

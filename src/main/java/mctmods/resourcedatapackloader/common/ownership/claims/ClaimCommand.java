@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.command.CommandShared;
 import mctmods.resourcedatapackloader.common.ownership.OwnerTable;
+import mctmods.resourcedatapackloader.common.ownership.ScoreboardOwnerSource;
 import mctmods.resourcedatapackloader.common.util.entity.Scores;
 
 import com.mojang.authlib.GameProfile;
@@ -60,6 +61,7 @@ public final class ClaimCommand {
 
     private static List<String> owners(MinecraftServer server) {
         List<String> names = new ArrayList<>(Scores.board(server).getTeamNames());
+        names.addAll(ScoreboardOwnerSource.current().names(server));
         names.addAll(List.of(server.getPlayerNames()));
         return names;
     }
@@ -121,6 +123,8 @@ public final class ClaimCommand {
 
     private static int ownerNamed(MinecraftServer server, String name) {
         if (Scores.board(server).getTeamNames().contains(name)) { return OwnerTable.handleForTeam(server, name); }
+        int party = ScoreboardOwnerSource.current().byName(server, name);
+        if (party != 0) { return party; }
         Optional<GameProfile> profile = server.getProfileCache() == null ? Optional.empty() : server.getProfileCache().get(name);
         return profile.map(found -> OwnerTable.handleForPlayer(server, found.getId(), found.getName())).orElse(0);
     }

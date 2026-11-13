@@ -1,14 +1,15 @@
 package mctmods.resourcedatapackloader.common.ownership.claims;
 
 import mctmods.resourcedatapackloader.common.ownership.OwnerTable;
+import mctmods.resourcedatapackloader.common.ownership.ScoreboardOwnerSource;
 import mctmods.resourcedatapackloader.common.util.entity.Scores;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
 public final class ClaimRules {
@@ -70,28 +71,20 @@ public final class ClaimRules {
         return false;
     }
 
-    @Nullable private static PlayerTeam teamOf(MinecraftServer server, OwnerTable table, int handle) { return table.isTeam(handle) ? Scores.team(Scores.board(server), table.keyOf(handle)) : null; }
-
-    private static int members(MinecraftServer server, int handle) {
+    private static List<String> memberNames(MinecraftServer server, int handle) {
         OwnerTable table = OwnerTable.get(server);
-        if (!table.isLive(handle)) { return 0; }
-        if (!table.isTeam(handle)) { return 1; }
-        PlayerTeam team = teamOf(server, table, handle);
-        return team == null ? 0 : team.getPlayers().size();
+        int live = table.resolve(handle);
+        return live == 0 ? List.of() : ScoreboardOwnerSource.forSource(table.sourceOf(live)).memberNames(server, live);
     }
 
+    private static int members(MinecraftServer server, int handle) { return memberNames(server, handle).size(); }
+
     private static int scoreOf(MinecraftServer server, int handle) {
-        OwnerTable table = OwnerTable.get(server);
-        if (!table.isLive(handle)) { return 0; }
         Scoreboard board = Scores.board(server);
         Objective objective = Scores.objective(board, ClaimSettings.limitScore());
         if (objective == null) { return 0; }
-        if (!table.isTeam(handle)) { return score(board, objective, table.labelOf(handle)); }
-        PlayerTeam team = teamOf(server, table, handle);
         int total = 0;
-        if (team != null) {
-            for (String member : team.getPlayers()) { total += score(board, objective, member); }
-        }
+        for (String member : memberNames(server, handle)) { total += score(board, objective, member); }
         return total;
     }
 
