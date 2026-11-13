@@ -82,6 +82,7 @@ public final class ContentEntities {
     static final Map<EntityType<?>, EntityType<?>> BASES = new IdentityHashMap<>();
     static final Map<ResourceLocation, EntityType<?>> TYPES = new LinkedHashMap<>();
     @Nullable static EntityType<ReturningThrow> returningThrow;
+    @Nullable static EntityType<PullingHand> pullingHand;
     private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
     private static final String BORN = "rdplBorn";
     private static final String CALM = "rdplCalmAt";
@@ -149,6 +150,8 @@ public final class ContentEntities {
     @Nullable public static EntityType<?> base(EntityType<?> variant) { return BASES.get(variant); }
 
     @Nullable public static EntityType<ReturningThrow> returningThrow() { return returningThrow; }
+
+    @Nullable public static EntityType<PullingHand> pullingHand() { return pullingHand; }
 
     @Nullable public static ResourceLocation texture(Entity entity) {
         EntityVariantDef def = def(entity);

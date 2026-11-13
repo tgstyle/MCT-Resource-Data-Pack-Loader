@@ -158,7 +158,23 @@ public final class ContentParser {
         }
         return new PortalDef(dimension, back, Json.getString(entry, "gate", "").trim(), Math.max(0, Json.getInt(entry, "cooldown", 60)),
                 Json.getBoolean(entry, "platform", true), Json.getString(entry, "platformBlock", "").trim(), Json.getString(entry, "sound", "").trim(),
-                Json.getBoolean(entry, "owned", ownedDefault), Json.getBoolean(entry, "walkIn", walkInDefault));
+                Json.getBoolean(entry, "owned", ownedDefault), Json.getBoolean(entry, "walkIn", walkInDefault),
+                sameLanding(key, entry), Json.getBoolean(entry, "torches", false), Math.max(0, Json.getInt(entry, "useRange", 0)),
+                Json.getBoolean(entry, "mounted", true), returnToOrigin(key, entry));
+    }
+
+    private static boolean sameLanding(ResourceLocation key, JsonObject entry) {
+        String landing = Settings.lower(Json.getString(entry, "landing", "surface"));
+        if (landing.equals("same") || landing.equals("surface")) { return landing.equals("same"); }
+        ContentLog.LOGGER.error("The portal of {} names landing '{}', which is neither surface nor same, so it lands on the surface", key, landing);
+        return false;
+    }
+
+    private static boolean returnToOrigin(ResourceLocation key, JsonObject entry) {
+        String returnTo = Settings.lower(Json.getString(entry, "returnTo", "fixed"));
+        if (returnTo.equals("fixed") || returnTo.equals("origin")) { return returnTo.equals("origin"); }
+        ContentLog.LOGGER.error("The portal of {} names returnTo '{}', which is neither fixed nor origin, so it returns to the fixed dimension", key, returnTo);
+        return false;
     }
 
     @Nullable private static ResourceLocation variantId(ResourceLocation key, String name, String kind) {

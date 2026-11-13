@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.sky.WindDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.worldgen.biome.ContentListBiomes;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCaveWorld;
 import mctmods.resourcedatapackloader.core.config.Settings;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.VanillaClients;
@@ -57,7 +58,10 @@ public final class ContentDimensionParser {
     private static final String MOON = "minecraft:textures/environment/moon_phases.png";
     private static final int STARS = 1500;
     private static final float STAR_SIZE = 0.15F;
-    private static final Set<String> KNOWN_TERRAIN = Set.of(DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END);
+    private static final float DARK_DAMAGE = 2.0F;
+    private static final int DARK_INTERVAL = 100;
+    private static final float DARK_BRIGHTNESS = 0.05F;
+    private static final Set<String> KNOWN_TERRAIN = Set.of(DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END, DimensionDef.CAVE);
     private static final List<String> COLOR_MODES = List.of("multiply", "solid");
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
 
@@ -98,7 +102,13 @@ public final class ContentDimensionParser {
         }
         int minHeight = terrain.has("minHeight") ? Json.getInt(terrain, "minHeight") : DimensionDef.UNSET;
         int maxHeight = terrain.has("maxHeight") ? Json.getInt(terrain, "maxHeight") : DimensionDef.UNSET;
-        if ((minHeight == DimensionDef.UNSET) != (maxHeight == DimensionDef.UNSET)) {
+        boolean cave = DimensionDef.CAVE.equals(type);
+        if (cave) {
+            if (minHeight != DimensionDef.UNSET || maxHeight != DimensionDef.UNSET) { ContentLog.LOGGER.error("Dimension {} terrain is '{}', which does not read minHeight or maxHeight, ignoring them", key, "cave"); }
+            minHeight = DimensionDef.UNSET;
+            maxHeight = DimensionDef.UNSET;
+        }
+        else if ((minHeight == DimensionDef.UNSET) != (maxHeight == DimensionDef.UNSET)) {
             ContentLog.LOGGER.error("Dimension {} names only one of minHeight and maxHeight, so both are left to the terrain type", key);
             minHeight = DimensionDef.UNSET;
             maxHeight = DimensionDef.UNSET;
@@ -112,7 +122,9 @@ public final class ContentDimensionParser {
                 maxHeight = DimensionDef.UNSET;
             }
         }
-        JsonObject options = customized(key, terrain);
+        if (cave && terrain.has("generatorOptions")) { ContentLog.LOGGER.error("Dimension {} terrain is '{}', which does not read generatorOptions, ignoring it", key, "cave"); }
+        JsonObject options = cave ? new JsonObject() : customized(key, terrain);
+        int seaLevel = cave ? caveSea(key, terrain) : options.has("seaLevel") ? Json.getInt(options, "seaLevel") : -1;
         String fog = ContentParserSkyLook.samples(sky) ? "" : Json.getString(sky, "fogColor", "").trim();
         String skyColor = Json.getString(sky, "skyColor", "").trim();
         String cloudColor = Json.getString(sky, "cloudColor", "").trim();
@@ -124,7 +136,8 @@ public final class ContentDimensionParser {
         DimensionTraitsDef traits = traits(key, json);
         return new DimensionDef(key, type, flatOptions(terrain), Json.getBoolean(terrain, "structures", true), source,
                 Json.getString(biomes, "biome", "minecraft:plains").trim(), biomeList, minHeight, maxHeight,
-                options.has("seaLevel") ? Json.getInt(options, "seaLevel") : -1, Json.getBoolean(options, "useLavaOceans", false), Json.getString(options, "oceanFluid", "").trim(),
+                seaLevel, Json.getBoolean(options, "useLavaOceans", false), cave ? Json.getString(terrain, "seaFluid", ContentCaveWorld.DEFAULT_FLUID).trim() : Json.getString(options, "oceanFluid", "").trim(),
+                cave ? Json.getString(terrain, "fillBlock", ContentCaveWorld.DEFAULT_FILL).trim() : "",
                 Json.getBoolean(sky, "hasSkyLight", true), Json.getBoolean(sky, "surfaceWorld", true), Json.getBoolean(sky, "spawning", true),
                 cloudHeight, Math.max(1.0E-5D, Json.getDouble(sky, "movementFactor", 1.0D)),
                 fog.isEmpty() ? -1 : ContentParser.color(fog, key + " fogColor") & 0xFFFFFF, skyColor.isEmpty() ? -1 : ContentParser.color(skyColor, key + " skyColor") & 0xFFFFFF,
@@ -135,6 +148,13 @@ public final class ContentDimensionParser {
                 Json.getBoolean(sky, "renderWeather", true), respawnDimension, Json.getBoolean(sky, "respawn", true),
                 Json.getInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits,
                 ContentParserSkyLook.look(key, sky, cloudHeight, clouds), ContentParserTimeWindows.windows(key, json, traits.precipitation()), ContentParserDarkness.darkness(key, sky), Json.paths(json));
+    }
+
+    private static int caveSea(ResourceLocation key, JsonObject terrain) {
+        int asked = Json.getInt(terrain, "seaLevel", ContentCaveWorld.DEFAULT_SEA);
+        int level = Mth.clamp(asked, 0, ContentCaveWorld.HEIGHT - 1);
+        if (level != asked) { ContentLog.LOGGER.error("Dimension {} terrain sets seaLevel to {}, which is outside 0 to 255, using {}", key, asked, level); }
+        return level;
     }
 
     private static DimensionTraitsDef traits(ResourceLocation key, JsonObject json) {
@@ -157,7 +177,15 @@ public final class ContentDimensionParser {
                 precipitation, Json.getBoolean(weather, "lightning", true), Json.getBoolean(weather, "snow", true),
                 Json.getBoolean(weather, "freeze", true), alwaysRain, weather.has("cycle") ? cycle(key, Json.getJsonObject(weather, "cycle")) : null,
                 weather.has("rain") || weather.has("wind") ? rain(key, Json.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, Json.getJsonObject(weather, "wind")) : null) : null, sky(key, sky),
-                sky.has("moon") ? moon(key, Json.getJsonObject(sky, "moon")) : null, json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null);
+                sky.has("moon") ? moon(key, Json.getJsonObject(sky, "moon")) : null, json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null, darkDamage(key, json));
+    }
+
+    @Nullable private static DimensionTraitsDef.DarkDamage darkDamage(ResourceLocation key, JsonObject json) {
+        if (!json.has("darkDamage")) { return null; }
+        JsonObject dark = Json.getJsonObject(json, "darkDamage", new JsonObject());
+        String owner = "Dimension " + key + " darkDamage";
+        return new DimensionTraitsDef.DarkDamage(Json.ranged(dark, "damage", DARK_DAMAGE, Float.MIN_VALUE, Float.MAX_VALUE, owner), Math.max(1, Json.getInt(dark, "interval", DARK_INTERVAL)),
+                Json.ranged(dark, "brightness", DARK_BRIGHTNESS, 0.0F, 1.0F, owner));
     }
 
     private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {

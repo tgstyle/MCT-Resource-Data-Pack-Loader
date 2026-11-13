@@ -75,6 +75,7 @@ public class ClientSetup {
         MinecraftForge.EVENT_BUS.addListener(SeamSkyRenderer::onRenderStage);
         MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onFog);
         MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onTick);
+        MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onFogColor);
         MinecraftForge.EVENT_BUS.addListener(ContentSeasonTint::onTick);
         MinecraftForge.EVENT_BUS.addListener(SeasonClock::onClientTick);
         MinecraftForge.EVENT_BUS.addListener(ContentHeatShimmer::onTick);

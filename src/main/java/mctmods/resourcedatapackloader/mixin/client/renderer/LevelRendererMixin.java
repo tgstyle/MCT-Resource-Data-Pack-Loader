@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.client.renderer;
 
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionEffects;
+import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.common.blocks.shield.ShieldIndex;
@@ -96,6 +97,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         }
         ContentStars.VANILLA.draw(level, RenderSystem.getShaderColor()[3], modelViewMatrix, projectionMatrix, Minecraft.getInstance().getFrameTime(), 0.0F);
     }
+
+    @Redirect(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/ClientLevel;getSkyColor(Lnet/minecraft/world/phys/Vec3;F)Lnet/minecraft/world/phys/Vec3;")) private Vec3 rdpl$nightVisionSky(ClientLevel world, Vec3 pos, float partialTick) { return ContentFogSampler.vision(world, Minecraft.getInstance().getCameraEntity(), partialTick, world.getSkyColor(pos, partialTick)); }
 
     @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V")) private void rdpl$skybox(PoseStack poseStack, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { ContentSkyExtras.backdrop(level, poseStack.last().pose(), partialTick); }
 

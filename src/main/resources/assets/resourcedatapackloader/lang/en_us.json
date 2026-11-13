@@ -129,6 +129,8 @@
   "rdpl.gui.packList.override": "RDPL Overriding Pack",
   "rdpl.gui.packList.override.title": "RDPL (overriding)",
   "rdpl.portal.owned": "This portal belongs to someone else",
+  "rdpl.portal.mounted": "Get off your mount to use this portal",
+  "rdpl.portal.far": "Stand closer to the portal to use it",
   "rdpl.diet.repeat": "This food is getting dull",
   "rdpl.diet.variety": "A varied diet feels good",
   "rdpl.diet.tooltip.eaten": "Diet: already tasted",
@@ -436,5 +438,6 @@
   "rdpl.sleep.spawnUpdated": "Spawn point moved to this bed",
   "rdpl.sleep.asleep": "%1$s is asleep (%2$s of %3$s)",
   "rdpl.sleep.awake": "%1$s got out of bed (%2$s of %3$s asleep)",
-  "rdpl.sleep.morning": "The night has passed. Good morning!"
+  "rdpl.sleep.morning": "The night has passed. Good morning!",
+  "death.attack.rdpl.darkness": "%1$s was swallowed by the darkness"
 }

@@ -38,7 +38,7 @@ public final class OceanFluid {
         BlockState block = fluid == null ? null : fluid.defaultFluidState().createLegacyBlock();
         ResourceLocation id = block != null && block.getBlock() instanceof LiquidBlock ? ForgeRegistries.BLOCKS.getKey(block.getBlock()) : null;
         if (id != null) { return id.toString(); }
-        ContentLog.LOGGER.errorOnce(UNUSABLE, owner + "|" + oceanFluid, "{} names oceanFluid '{}', which is not a loaded fluid with a liquid block, so the oceans are made of what useLavaOceans says instead", owner, oceanFluid);
+        ContentLog.LOGGER.errorOnce(UNUSABLE, owner + "|" + oceanFluid, "The {} '{}' is not a loaded fluid with a block, so the fallback for it is used instead; this is said once", owner, oceanFluid);
         return null;
     }
 }

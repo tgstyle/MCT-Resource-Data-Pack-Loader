@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
@@ -63,6 +64,14 @@ public final class ContentFogSampler {
     public static int lightning() {
         SkyLookDef look = look(Minecraft.getInstance().level);
         return look == null ? SkyLookDef.UNSET : look.lightningColor();
+    }
+
+    @Nullable public static SkyLookDef visionLook(@Nullable Level level) { SkyLookDef look = look(level); return look != null && look.tintsVision() ? look : null; }
+
+    public static Vec3 vision(@Nullable Level level, @Nullable Entity camera, float partialTick, Vec3 own) {
+        SkyLookDef look = visionLook(level);
+        if (look == null || !(camera instanceof LivingEntity living) || !living.hasEffect(MobEffects.NIGHT_VISION)) { return own; }
+        return own.lerp(Vec3.fromRGB24(look.nightVisionColor()), GameRenderer.getNightVisionScale(living, partialTick));
     }
 
     public static void onTick(TickEvent.ClientTickEvent event) {
@@ -134,5 +143,12 @@ public final class ContentFogSampler {
         }
         event.setFogShape(FogShape.SPHERE);
         event.setCanceled(true);
+    }
+
+    public static void onFogColor(ViewportEvent.ComputeFogColor event) {
+        Vec3 shown = vision(Minecraft.getInstance().level, Minecraft.getInstance().getCameraEntity(), (float) event.getPartialTick(), new Vec3(event.getRed(), event.getGreen(), event.getBlue()));
+        event.setRed((float) shown.x);
+        event.setGreen((float) shown.y);
+        event.setBlue((float) shown.z);
     }
 }

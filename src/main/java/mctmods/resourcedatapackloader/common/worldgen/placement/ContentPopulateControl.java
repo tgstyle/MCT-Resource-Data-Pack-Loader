@@ -40,7 +40,7 @@ public final class ContentPopulateControl {
     private static final Map<String, List<String>> FEATURES = Map.of(
             "dungeons", List.of("monster_room", "monster_room_deep"), "waterlakes", List.of(), "lavalakes", List.of("lake_lava_underground", "lake_lava_surface"),
             "netherlava", List.of("spring_open", "spring_delta"), "fire", List.of("patch_fire", "patch_soul_fire"), "glowstone", List.of("glowstone", "glowstone_extra"),
-            "ice", List.of("freeze_top_layer"));
+            "ice", List.of("freeze_top_layer"), "geodes", List.of("amethyst_geode"));
     private static final Map<String, List<String>> CARVERS = Map.of("caves", List.of("cave", "cave_extra_underground", "nether_cave"), "ravines", List.of("canyon"));
     private static final Map<String, String> OPTIONS = Map.ofEntries(Map.entry("useCaves", "caves"), Map.entry("useRavines", "ravines"), Map.entry("useDungeons", "dungeons"), Map.entry("useWaterLakes", "waterlakes"),
             Map.entry("useLavaLakes", "lavalakes"), Map.entry("useStrongholds", "strongholds"), Map.entry("useVillages", "villages"), Map.entry("useMineShafts", "mineshafts"), Map.entry("useTemples", "temples"),
@@ -111,6 +111,7 @@ public final class ContentPopulateControl {
         DimensionDef def = ContentDimensions.def(level);
         JsonObject options = level.dimension() == Level.OVERWORLD ? ContentTerrain.customizedOptions() : def == null || !ContentDimensions.shapes(def) ? null : def.options();
         Set<String> out = new LinkedHashSet<>();
+        if (def != null && DimensionDef.CAVE.equals(def.terrain())) { out.addAll(List.of("dungeons", "lavalakes", "geodes")); }
         if (options == null) { return out; }
         for (Map.Entry<String, String> option : OPTIONS.entrySet()) {
             JsonElement value = options.get(option.getKey());
