@@ -37,8 +37,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 
 public final class ContentBedrock {
-    private static final String BEDROCK_FLOOR = "bedrock_floor";
-    private static final String BEDROCK_ROOF = "bedrock_roof";
+    static final String BEDROCK_FLOOR = "bedrock_floor";
+    static final String BEDROCK_ROOF = "bedrock_roof";
     private static final TemplateMemo<Rules> RULES = new TemplateMemo<>();
 
     private record Rules(List<String> biomeNames, List<TagKey<Biome>> biomeTypes, Map<String, String> fillers, @Nullable String configured) {}

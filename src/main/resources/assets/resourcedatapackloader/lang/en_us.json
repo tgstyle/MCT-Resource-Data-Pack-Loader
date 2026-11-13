@@ -1,4 +1,5 @@
 {
+  "death.attack.rdpl.darkness": "%1$s was swallowed by the darkness",
   "rdpl.command.allused": "Every file in your pack has been requested at least once",
   "rdpl.command.clickhint": "Click to look up a file in this namespace",
   "rdpl.command.clientonly": "Only your own resources were reloaded",
@@ -81,6 +82,8 @@
   "rdpl.gui.packList.normal.title": "RDPL",
   "rdpl.gui.packList.override": "RDPL Overriding Pack",
   "rdpl.gui.packList.override.title": "RDPL (overriding)",
+  "rdpl.portal.far": "Stand closer to the portal to use it",
+  "rdpl.portal.mounted": "Get off your mount to use this portal",
   "rdpl.portal.owned": "This portal belongs to someone else",
   "rdpl.diet.repeat": "This food is getting dull",
   "rdpl.diet.variety": "A varied diet feels good",

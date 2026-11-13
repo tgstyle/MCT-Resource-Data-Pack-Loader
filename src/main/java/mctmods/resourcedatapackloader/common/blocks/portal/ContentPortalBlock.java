@@ -13,6 +13,8 @@ import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.HashMap;
+import java.util.IntSummaryStatistics;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nonnull;
@@ -20,11 +22,11 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -132,23 +134,41 @@ public final class ContentPortalBlock extends ContentBlock {
 
     private void travel(ServerPlayer player, BlockState state, BlockPos pos) {
         if (recently(player)) { return; }
+        ContentPortals.Binding binding = ContentPortals.forBlock(this);
+        PortalFit fit = binding == null ? null : ContentPortals.fitAt(player.level(), pos, binding);
+        if (!portal.mounted() && player.isPassenger()) {
+            player.displayClientMessage(Component.translatable("rdpl.portal.mounted"), true);
+            return;
+        }
+        if (portal.useRange() > 0 && !near(player, state, pos, fit, portal.useRange())) {
+            player.displayClientMessage(Component.translatable("rdpl.portal.far"), true);
+            return;
+        }
         GateDef gate = portal.gate().isEmpty() ? null : ContentGates.find(portal.gate());
         if (gate != null && !ContentGates.admits(player, gate)) {
             ContentGates.refuse(player, gate);
             return;
         }
-        ResourceLocation here = player.level().dimension().location();
-        ResourceLocation target = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
-        if (target.equals(here)) { return; }
+        if (ContentTeleporter.target(player, portal).equals(player.level().dimension().location())) { return; }
         sound(player);
         RECENT.put(player.getUUID(), player.level().getGameTime());
-        ContentTeleporter.travel(player, portal, state, pos, returning(player.level(), pos));
+        ContentTeleporter.travel(player, portal, state, pos, binding == null || binding.portal().noReturn() ? null : fit);
     }
 
-    @Nullable private PortalFit returning(Level level, BlockPos pos) {
-        ContentPortals.Binding binding = ContentPortals.forBlock(this);
-        if (binding == null || binding.portal().noReturn()) { return null; }
-        return ContentPortals.fitAt(level, pos, binding);
+    private static boolean near(ServerPlayer player, BlockState state, BlockPos pos, @Nullable PortalFit fit, int range) {
+        List<BlockPos> holes = fit == null || fit.holes().isEmpty() ? List.of(pos) : fit.holes();
+        boolean flat = fit == null ? state.getValue(AXIS) == Direction.Axis.Y : fit.flat();
+        IntSummaryStatistics span = holes.stream().mapToInt(BlockPos::getY).summaryStatistics();
+        int low = span.getMin();
+        int high = flat ? low + 1 : span.getMax();
+        int feet = Mth.floor(player.getY());
+        if (feet < low || feet > high) { return false; }
+        for (BlockPos hole : holes) {
+            double dx = hole.getX() + 0.5D - player.getX();
+            double dz = hole.getZ() + 0.5D - player.getZ();
+            if (dx * dx + dz * dz <= (double) range * range) { return true; }
+        }
+        return false;
     }
 
     public static void forget(UUID player) { RECENT.remove(player); }

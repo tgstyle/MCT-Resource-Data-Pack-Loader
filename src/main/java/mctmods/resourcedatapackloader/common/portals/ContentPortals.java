@@ -89,6 +89,11 @@ public final class ContentPortals {
         travel.addProperty("platformBlock", portal.travel().platformBlock());
         travel.addProperty("sound", portal.travel().sound());
         travel.addProperty("owned", portal.travel().owned());
+        travel.addProperty("landing", portal.travel().sameLanding() ? "same" : "surface");
+        travel.addProperty("torches", portal.travel().torches());
+        travel.addProperty("useRange", portal.travel().useRange());
+        travel.addProperty("mounted", portal.travel().mounted());
+        travel.addProperty("returnTo", portal.travel().returnToOrigin() ? "origin" : "fixed");
         travel.addProperty("walkIn", true);
         return travel;
     }

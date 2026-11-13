@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.dimension;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.environment.ContentDarkDamage;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
 import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
@@ -18,6 +19,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOptionOres;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
 import mctmods.resourcedatapackloader.common.worldgen.structure.map.ContentStructureMaps;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentBedrock;
+import mctmods.resourcedatapackloader.common.worldgen.surface.ContentCaveWorld;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentFlatSource;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSeams;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSkyLand;
@@ -86,6 +88,7 @@ public final class ContentDimensions {
             ContentEnvironments.parse(key, contents);
             if (VANILLA.contains(key) || GameData.has(ResourceLocation.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + PackManager.JSON_SUFFIX))) { EXISTING.add(key); }
         });
+        ContentDarkDamage.arm(DEFS.values());
         if (!DEFS.isEmpty()) { Summary.info("dimensions", "Loaded " + DEFS.size() + " dimension definition(s) from packs"); }
     }
 
@@ -176,7 +179,13 @@ public final class ContentDimensions {
         if (sets(def, "sky.ambientLight")) { type.addProperty("ambient_light", def.ambientLight()); }
         if (sets(def, "sky.fixedTime") && def.fixedTime() >= 0) { type.addProperty("fixed_time", def.fixedTime()); }
         else if (sets(def, "sky.fixedTime")) { type.remove("fixed_time"); }
-        if (shapes(def) && def.shapesHeight()) {
+        if (shapes(def) && DimensionDef.CAVE.equals(def.terrain())) {
+            type.addProperty("min_y", 0);
+            type.addProperty("height", ContentCaveWorld.HEIGHT);
+            type.addProperty("logical_height", ContentCaveWorld.HEIGHT);
+            type.addProperty("has_ceiling", true);
+        }
+        else if (shapes(def) && def.shapesHeight()) {
             type.addProperty("min_y", def.minHeight());
             type.addProperty("height", def.maxHeight() - def.minHeight());
             type.addProperty("logical_height", def.maxHeight() - def.minHeight());
@@ -223,8 +232,9 @@ public final class ContentDimensions {
         }
         generator.addProperty("type", "minecraft:noise");
         generator.add("biome_source", biomeSource(def, dimension));
-        boolean overworldNoise = !DimensionDef.NETHER.equals(def.terrain()) && !DimensionDef.END.equals(def.terrain());
-        String vanillaSettings = overworldNoise ? "overworld" : DimensionDef.NETHER.equals(def.terrain()) ? "nether" : "end";
+        boolean cave = DimensionDef.CAVE.equals(def.terrain());
+        boolean overworldNoise = !cave && !DimensionDef.NETHER.equals(def.terrain()) && !DimensionDef.END.equals(def.terrain());
+        String vanillaSettings = overworldNoise ? "overworld" : cave || DimensionDef.NETHER.equals(def.terrain()) ? "nether" : "end";
         String settingsId = "minecraft:" + vanillaSettings;
         if (overworldNoise) { ContentOptionOres.dimension(def.key(), def.options()); }
         boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
@@ -235,6 +245,7 @@ public final class ContentDimensions {
             JsonObject settings = GameData.noiseSettings(vanillaSettings);
             ContentSkyLand.Land land = null;
             if (settings != null) {
+                if (cave) { ContentCaveWorld.shape(settings, def); }
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
                 if (veinless) { settings.addProperty("ore_veins_enabled", false); }
                 if (grounded) { ContentBiomes.surface(settings); }
@@ -248,7 +259,7 @@ public final class ContentDimensions {
                     land = overworldNoise ? ContentSkyLand.raise(settings, def.maxHeight(), dimension, "Dimension " + dimension) : null;
                 }
                 if (def.seaLevel() >= 0) { settings.addProperty("sea_level", def.seaLevel()); }
-                JsonObject sea = OceanFluid.state(def.oceanFluid(), def.lavaOceans(), "Dimension " + dimension);
+                JsonObject sea = OceanFluid.state(def.oceanFluid(), def.lavaOceans(), "Dimension " + dimension + (cave ? " seaFluid" : " oceanFluid"));
                 if (sea != null) { settings.add("default_fluid", sea); }
                 ResourceLocation id = ResourceLocation.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
                 GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX, settings.toString());

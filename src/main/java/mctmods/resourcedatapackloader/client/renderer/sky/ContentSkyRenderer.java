@@ -75,7 +75,7 @@ final class ContentSkyRenderer {
         }
         PoseStack poseStack = new PoseStack();
         poseStack.mulPose(modelView);
-        Vec3 color = level.getSkyColor(camera.getPosition(), partialTick);
+        Vec3 color = ContentFogSampler.vision(level, camera.getEntity(), partialTick, level.getSkyColor(camera.getPosition(), partialTick));
         FogRenderer.levelFogColor();
         RenderSystem.depthMask(false);
         RenderSystem.setShaderColor((float) color.x, (float) color.y, (float) color.z, 1.0F);

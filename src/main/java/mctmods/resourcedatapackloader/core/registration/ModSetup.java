@@ -40,6 +40,7 @@ import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.entities.ContentEntityTypes;
 import mctmods.resourcedatapackloader.common.entities.EntityStorage;
+import mctmods.resourcedatapackloader.common.entities.behavior.ContentBlink;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentEntityTicks;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentMobExperience;
 import mctmods.resourcedatapackloader.common.entities.behavior.ContentRanks;
@@ -49,6 +50,7 @@ import mctmods.resourcedatapackloader.common.entities.orders.ContentOrders;
 import mctmods.resourcedatapackloader.common.entities.spawning.ContentEntitySpawns;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnLocks;
 import mctmods.resourcedatapackloader.common.entities.spawning.SpawnSwaps;
+import mctmods.resourcedatapackloader.common.environment.ContentDarkDamage;
 import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasonSnow;
 import mctmods.resourcedatapackloader.common.environment.ContentSeasons;
@@ -327,6 +329,7 @@ public class ModSetup {
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, ContentEntities::onExperience);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onBreathe);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onHurt);
+        NeoForge.EVENT_BUS.addListener(ContentBlink::onAttacked);
         NeoForge.EVENT_BUS.addListener(EntityTickEvent.Post.class, event -> {
             if (!(event.getEntity() instanceof LivingEntity living)) { return; }
             ContentEntities.tick(living);
@@ -336,6 +339,7 @@ public class ModSetup {
         });
         NeoForge.EVENT_BUS.addListener(ContentPhysics::onFall);
         NeoForge.EVENT_BUS.addListener(ContentPhysics::onJump);
+        NeoForge.EVENT_BUS.addListener(ContentDarkDamage::onPlayerTick);
         NeoForge.EVENT_BUS.addListener(ContentDimensions::onClone);
         NeoForge.EVENT_BUS.addListener(ContentDimensions::onRespawn);
         NeoForge.EVENT_BUS.addListener(ContentDimensions::onLogout);

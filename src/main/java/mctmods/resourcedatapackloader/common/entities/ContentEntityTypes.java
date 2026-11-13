@@ -47,6 +47,7 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ContentEntityTypes {
     private static final ResourceLocation RETURNING_THROW = ResourceDataPackLoader.id("returning_throw");
+    private static final ResourceLocation PULLING_HAND = ResourceDataPackLoader.id("pulling_hand");
     private static final String SPAWN_EGG_MODEL = "{\"parent\":\"minecraft:item/template_spawn_egg\"}";
     private static final Map<String, Set<String>> TAGS = new LinkedHashMap<>();
 
@@ -81,12 +82,23 @@ public final class ContentEntityTypes {
             ContentEntities.returningThrow = EntityType.Builder.<ReturningThrow>of(ReturningThrow::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true).build(RETURNING_THROW.toString());
             helper.register(RETURNING_THROW, ContentEntities.returningThrow);
         }
+        if (pulling()) {
+            ContentEntities.pullingHand = EntityType.Builder.<PullingHand>of(PullingHand::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true).build(PULLING_HAND.toString());
+            helper.register(PULLING_HAND, ContentEntities.pullingHand);
+        }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
     }
 
     private static boolean throwsReturning() {
         for (EntityVariantDef def : ContentEntities.DEFS.values()) {
             if (def.combat().throwsItems() && def.combat().throwReturns()) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean pulling() {
+        for (EntityVariantDef def : ContentEntities.DEFS.values()) {
+            if (def.stalk().pulls()) { return true; }
         }
         return false;
     }

@@ -37,7 +37,7 @@ public final class OceanFluid {
         if (fluid instanceof FlowingFluid flowing) { fluid = flowing.getSource(); }
         BlockState block = fluid == null ? null : fluid.defaultFluidState().createLegacyBlock();
         if (block != null && block.getBlock() instanceof LiquidBlock) { return BuiltInRegistries.BLOCK.getKey(block.getBlock()).toString(); }
-        ContentLog.LOGGER.errorOnce(UNUSABLE, owner + "|" + oceanFluid, "{} names oceanFluid '{}', which is not a loaded fluid with a liquid block, so the oceans are made of what useLavaOceans says instead", owner, oceanFluid);
+        ContentLog.LOGGER.errorOnce(UNUSABLE, owner + "|" + oceanFluid, "The {} '{}' is not a loaded fluid with a block, so the fallback for it is used instead; this is said once", owner, oceanFluid);
         return null;
     }
 }

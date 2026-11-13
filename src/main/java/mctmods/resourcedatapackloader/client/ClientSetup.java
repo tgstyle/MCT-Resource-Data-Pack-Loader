@@ -84,6 +84,7 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(ChatHistoryKeeper::onOpening);
         NeoForge.EVENT_BUS.addListener(SeamSkyRenderer::onRenderStage);
         NeoForge.EVENT_BUS.addListener(ContentFogSampler::onFog);
+        NeoForge.EVENT_BUS.addListener(ContentFogSampler::onFogColor);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ContentFogSampler.tick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ContentHeatShimmer.tick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ContentSeasonTint.tick());

@@ -395,7 +395,7 @@ public final class ContentWorldShape {
         noise.addProperty("min_y", shape.minY());
         noise.addProperty("height", shape.maxY() - shape.minY());
         if (shape.seaLevel() >= 0) { settings.addProperty("sea_level", shape.seaLevel()); }
-        JsonObject sea = OceanFluid.state(shape.oceanFluid(), shape.lavaOceans(), "generatorOptions");
+        JsonObject sea = OceanFluid.state(shape.oceanFluid(), shape.lavaOceans(), "generatorOptions oceanFluid");
         if (sea != null) { settings.add("default_fluid", sea); }
         ContentOptionNoise.Shifted shifted = ContentOptionNoise.apply(settings, shape.id(), "large_biomes".equals(shape.base()[0]), shape.maxY());
         if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, ownId(shape, "overworld"), shape.minY(), shifted); }
