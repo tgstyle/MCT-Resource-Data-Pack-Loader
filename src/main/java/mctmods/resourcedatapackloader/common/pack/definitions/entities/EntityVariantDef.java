@@ -12,7 +12,7 @@ public record EntityVariantDef(Identifier key, Identifier base, String name, boo
                                List<PickDef> becomes, Sounds sounds, List<String> immuneTo, List<String> ignoresEffects, Physics physics, int experience, float absorption, String creatureAttribute, Map<String, Integer> effects,
                                boolean despawns, int despawnTicks, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
                                Egg egg, Tracking tracking, Map<String, Double> attributes, boolean hostile, boolean passive, List<String> targets, int tint, List<String> tintParts,
-                               Combat combat, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
+                               Combat combat, Stalk stalk, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
                                List<String> requires, List<TaskDef> tasks, @Nullable StorageDef storage, SpawnGateDef gate, @Nullable BossBarDef bossBar, List<PhaseDef> phases, String dialog) {
     public static final String BODY = "body";
     public static final String ARMOR = "armor";
@@ -33,6 +33,12 @@ public record EntityVariantDef(Identifier key, Identifier base, String name, boo
     public record Combat(boolean explodes, float explosionPower, int explosionFuse, boolean explosionFire, boolean throwsItems, int throwReload, int throwRetreat, int throwAmmo, float throwPower,
                          float throwArc, boolean throwReturns, boolean charges, boolean pounces, int sniffs, boolean sleepsByDay, int home, float fleesWhenHurt, boolean patrols, boolean swoops, boolean gusts, float gustPower, float attackReach, float knockback, boolean hitEffects, boolean hitFire, boolean digs, boolean ownBlast) {
         public boolean any() { return explodes || throwsItems || charges || pounces || sniffs > 0 || fleesWhenHurt > 0.0F || patrols || swoops || gusts; }
+    }
+
+    public record Stalk(int fleesLight, int followsPlayers, int teleportsWhenHit, boolean pulls, int pullReload, float pullPower, String pullItem) {
+        public boolean walks() { return fleesLight > 0 || followsPlayers > 0 || pulls; }
+
+        public boolean any() { return walks() || teleportsWhenHit > 0; }
     }
 
     public boolean keepsSize() { return scale == 1.0F && angryScale == scale; }

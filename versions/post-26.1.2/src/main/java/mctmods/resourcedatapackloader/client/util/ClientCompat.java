@@ -5,13 +5,19 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
+import net.minecraft.world.entity.LivingEntity;
 import javax.annotation.Nullable;
 
 public final class ClientCompat {
+    public static final String NIGHT_VISION_SCALE = "Lnet/minecraft/client/renderer/GameRenderer;nightVisionScale(Lnet/minecraft/world/entity/LivingEntity;F)F";
+
     private ClientCompat() {}
+
+    public static float nightVision(LivingEntity living, float partialTick) { return GameRenderer.nightVisionScale(living, partialTick); }
 
     @Nullable public static Screen screen(Minecraft mc) { return mc.gui.screen(); }
 

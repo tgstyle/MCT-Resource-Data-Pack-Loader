@@ -118,6 +118,7 @@
         "client.renderer.SkyRendererMixin",
         "client.renderer.CloudRendererLookMixin",
         "client.renderer.fog.environment.LavaFogEnvironmentMixin",
+        "client.renderer.fog.FogRendererMixin",
         "client.renderer.entity.LightningBoltRendererMixin",
         "client.renderer.block.ModelBlockRendererMixin",
         "client.gui.components.ChatComponentMixin",

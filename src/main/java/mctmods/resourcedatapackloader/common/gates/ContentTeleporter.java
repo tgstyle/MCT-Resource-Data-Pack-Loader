@@ -37,9 +37,12 @@ import net.minecraft.world.phys.Vec3;
 public final class ContentTeleporter {
     private static final int SEARCH_LOW = 4;
     private static final String PORTALS = "rdplPortals";
+    private static final String ORIGINS = "rdplPortalOrigins";
     private final PortalDef def;
     private final BlockState portalState;
     @Nullable private final PortalFit fit;
+
+    private record Room(BlockPos low, BlockPos high) {}
 
     private ContentTeleporter(PortalDef def, BlockState portalState, @Nullable PortalFit fit) {
         this.def = def;
@@ -47,15 +50,26 @@ public final class ContentTeleporter {
         this.fit = fit;
     }
 
+    public static Identifier target(ServerPlayer player, PortalDef portal) {
+        Identifier here = player.level().dimension().identifier();
+        if (!here.equals(portal.dimension())) { return portal.dimension(); }
+        if (portal.returnToOrigin()) {
+            Identifier origin = origin(player, here);
+            if (origin != null) { return origin; }
+        }
+        return portal.returnDimension();
+    }
+
     public static void travel(ServerPlayer player, PortalDef portal, BlockState state, BlockPos pos, @Nullable PortalFit fit) {
         Identifier here = player.level().dimension().identifier();
-        Identifier targetId = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
+        Identifier targetId = target(player, portal);
         if (targetId.equals(here)) { return; }
         ServerLevel target = player.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, targetId));
         if (target == null) {
             ContentLog.LOGGER.error("A portal at {} leads to {}, which is not a loaded dimension, so nobody goes anywhere", pos, targetId);
             return;
         }
+        if (!here.equals(portal.dimension())) { cameFrom(player, portal.dimension(), here); }
         remember(player, here, pos);
         BlockPos step = new ContentTeleporter(portal, state, fit).arrive(target, player);
         player.teleport(new TeleportTransition(target, new Vec3(step.getX() + 0.5D, step.getY(), step.getZ() + 0.5D), Vec3.ZERO, player.getYRot(), player.getXRot(), TeleportTransition.DO_NOTHING));
@@ -72,6 +86,7 @@ public final class ContentTeleporter {
         if (linked == null) { linked = PortalStorage.nearest(level, mapped); }
         BlockPos portalPos;
         if (linked != null && level.getBlockState(linked).getBlock() instanceof ContentPortalBlock) { portalPos = linked; }
+        else if (def.sameLanding()) { portalPos = arriveSame(level, mapped); }
         else {
             portalPos = landing(level, mapped);
             boolean adrift = def.platform() && !occupied(level, portalPos.below());
@@ -86,11 +101,15 @@ public final class ContentTeleporter {
         return stepOut(level, portalPos);
     }
 
+    private static boolean onTop(BlockState held) {
+        if (!(held.getBlock() instanceof ContentPortalBlock block)) { return true; }
+        return held.getValue(ContentPortalBlock.AXIS) == Direction.Axis.Y || block.getDef().fullCube();
+    }
+
     private static BlockPos stepOut(ServerLevel level, BlockPos portalPos) {
         BlockState held = level.getBlockState(portalPos);
-        if (!(held.getBlock() instanceof ContentPortalBlock block)) { return portalPos.above(); }
+        if (onTop(held)) { return portalPos.above(); }
         Direction.Axis axis = held.getValue(ContentPortalBlock.AXIS);
-        if (axis == Direction.Axis.Y || block.getDef().fullCube()) { return portalPos.above(); }
         Direction[] sides = axis == Direction.Axis.X ? new Direction[] { Direction.NORTH, Direction.SOUTH } : new Direction[] { Direction.WEST, Direction.EAST };
         for (Direction side : sides) {
             BlockPos beside = portalPos.relative(side);
@@ -110,6 +129,96 @@ public final class ContentTeleporter {
         CompoundTag portals = PlayerPersisted.read(entity, PORTALS);
         String key = dimension.toString();
         return portals.contains(key) ? BlockPos.of(portals.getLongOr(key, 0L)) : null;
+    }
+
+    private static void cameFrom(Entity entity, Identifier destination, Identifier origin) { PlayerPersisted.section(entity, ORIGINS).putString(destination.toString(), origin.toString()); }
+
+    @Nullable private static Identifier origin(ServerPlayer player, Identifier destination) {
+        Identifier found = Identifier.tryParse(PlayerPersisted.read(player, ORIGINS).getStringOr(destination.toString(), ""));
+        if (found == null || found.equals(destination)) { return null; }
+        return player.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, found)) == null ? null : found;
+    }
+
+    private BlockPos arriveSame(ServerLevel level, BlockPos mapped) {
+        int height = roomHeight();
+        BlockPos at = sameSpot(level, mapped, height);
+        Set<BlockPos> frame = frameAt(at);
+        Room room = room(level, at, height, frame);
+        if (unbuilt(level, at, false)) { level.setBlock(at, portalState, Block.UPDATE_CLIENTS); }
+        if (def.torches() && def.platform()) { torches(level, room); }
+        return at;
+    }
+
+    private int roomHeight() {
+        if (fit == null || fit.holes().isEmpty()) { return 3; }
+        int low = Integer.MAX_VALUE;
+        int high = Integer.MIN_VALUE;
+        for (BlockPos hole : fit.holes()) {
+            low = Math.min(low, hole.getY());
+            high = Math.max(high, hole.getY());
+        }
+        return Math.max(3, high - low + 2);
+    }
+
+    private BlockPos sameSpot(ServerLevel level, BlockPos mapped, int height) {
+        int y = mapped.getY() - (onTop(portalState) ? 1 : 0);
+        int low = level.getMinY() + SEARCH_LOW + 1;
+        int high = level.getMinY() + level.dimensionType().logicalHeight() - height - 1;
+        return new BlockPos(mapped.getX(), Mth.clamp(y, low, high), mapped.getZ());
+    }
+
+    private Set<BlockPos> frameAt(BlockPos landing) {
+        Set<BlockPos> frame = new LinkedHashSet<>();
+        if (fit == null || fit.holes().isEmpty()) { return frame; }
+        BlockPos anchor = lowest(fit.holes());
+        for (BlockPos hole : fit.holes()) { frame.add(shift(hole, anchor, landing)); }
+        for (BlockPos edge : fit.edge().keySet()) { frame.add(shift(edge, anchor, landing)); }
+        return frame;
+    }
+
+    private Room room(ServerLevel level, BlockPos at, int height, Set<BlockPos> frame) {
+        int minX = at.getX();
+        int maxX = at.getX();
+        int minZ = at.getZ();
+        int maxZ = at.getZ();
+        for (BlockPos spot : frame) {
+            minX = Math.min(minX, spot.getX());
+            maxX = Math.max(maxX, spot.getX());
+            minZ = Math.min(minZ, spot.getZ());
+            maxZ = Math.max(maxZ, spot.getZ());
+        }
+        BlockPos low = new BlockPos(minX - 1, at.getY(), minZ - 1);
+        BlockPos high = new BlockPos(maxX + 1, at.getY() + height, maxZ + 1);
+        for (BlockPos spot : BlockPos.betweenClosed(low, new BlockPos(high.getX(), high.getY() - 1, high.getZ()))) {
+            hold(level, spot);
+            if (!frame.contains(spot) && !keep(level, spot)) { level.setBlock(spot, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS); }
+        }
+        Block floor = block(def.platformBlock());
+        for (BlockPos spot : BlockPos.betweenClosed(low.offset(-1, 0, -1), high.offset(1, 0, 1))) {
+            hold(level, spot);
+            if (level.getBlockState(spot).getBlock() instanceof LiquidBlock) { level.setBlock(spot, floor.defaultBlockState(), Block.UPDATE_CLIENTS); }
+        }
+        if (def.platform()) {
+            for (BlockPos spot : BlockPos.betweenClosed(low.offset(0, -1, 0), new BlockPos(high.getX(), low.getY() - 1, high.getZ()))) {
+                hold(level, spot);
+                if (!occupied(level, spot)) { level.setBlock(spot, floor.defaultBlockState(), Block.UPDATE_CLIENTS); }
+            }
+        }
+        return new Room(low, high);
+    }
+
+    private static boolean keep(ServerLevel level, BlockPos at) {
+        BlockState state = level.getBlockState(at);
+        return state.isAir() || state.hasBlockEntity() || state.getDestroySpeed(level, at) < 0.0F || state.getBlock() instanceof ContentPortalBlock;
+    }
+
+    private static void torches(ServerLevel level, Room room) {
+        BlockPos low = room.low();
+        BlockPos high = new BlockPos(room.high().getX(), low.getY(), room.high().getZ());
+        BlockState torch = Blocks.TORCH.defaultBlockState();
+        for (BlockPos corner : List.of(low, high)) {
+            if (level.isEmptyBlock(corner) && torch.canSurvive(level, corner)) { level.setBlock(corner, torch, Block.UPDATE_CLIENTS); }
+        }
     }
 
     private static BlockPos scale(Entity entity, ServerLevel destination) {

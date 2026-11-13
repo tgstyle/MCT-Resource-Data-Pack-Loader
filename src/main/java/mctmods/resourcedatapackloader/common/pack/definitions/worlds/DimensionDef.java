@@ -14,7 +14,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.resources.Identifier;
 
-public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, List<PickDef> biomeList, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans, String oceanFluid,
+public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, List<PickDef> biomeList, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans, String oceanFluid, String fillBlock,
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
                            @Nullable Identifier respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options,
@@ -24,6 +24,7 @@ public record DimensionDef(Identifier key, String terrain, List<String> flatOpti
     public static final String VOID = "void";
     public static final String NETHER = "nether";
     public static final String END = "end";
+    public static final String CAVE = "cave";
     public static final String SINGLE = "single";
     public static final String INHERIT = "inherit";
     public static final String LIST = "list";
@@ -33,7 +34,7 @@ public record DimensionDef(Identifier key, String terrain, List<String> flatOpti
 
     public boolean shapesHeight() { return minHeight != UNSET && maxHeight != UNSET; }
 
-    public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans || !oceanFluid.isEmpty() || LegacyTerrainShape.of(options).any(); }
+    public boolean shapesNoise() { return CAVE.equals(terrain) || shapesHeight() || seaLevel >= 0 || lavaOceans || !oceanFluid.isEmpty() || LegacyTerrainShape.of(options).any(); }
 
     public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld || traits.sky() != null || traits.rain() != null; }
 

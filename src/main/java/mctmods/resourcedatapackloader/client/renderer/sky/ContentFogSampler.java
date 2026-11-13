@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client.renderer.sky;
 
+import mctmods.resourcedatapackloader.client.util.ClientCompat;
 import mctmods.resourcedatapackloader.client.util.LineClientCompat;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensions;
 import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
@@ -119,13 +120,29 @@ public final class ContentFogSampler {
         return new Vec3(red / count * light, green / count * light, blue / count * light);
     }
 
+    public static float visionStrength(@Nullable SkyLookDef look, @Nullable Entity camera, float partialTick) {
+        return look == null || !look.tintsVision() || !(camera instanceof LivingEntity living) || !living.hasEffect(MobEffects.NIGHT_VISION) ? 0.0F : ClientCompat.nightVision(living, partialTick);
+    }
+
+    private static void tintVision(ViewportEvent.ComputeFogColor event, @Nullable SkyLookDef look, Camera camera, float partialTick) {
+        float strength = visionStrength(look, camera.entity(), partialTick);
+        if (strength <= 0.0F || look == null) { return; }
+        event.setRed(Mth.lerp(strength, event.getRed(), ARGB.redFloat(look.nightVisionColor())));
+        event.setGreen(Mth.lerp(strength, event.getGreen(), ARGB.greenFloat(look.nightVisionColor())));
+        event.setBlue(Mth.lerp(strength, event.getBlue(), ARGB.blueFloat(look.nightVisionColor())));
+    }
+
     public static void onFogColor(ViewportEvent.ComputeFogColor event) {
         Camera camera = event.getCamera();
         ClientLevel level = Minecraft.getInstance().level;
         SkyLookDef look = look(level);
         boolean samples = look != null && look.sampleFog() && sampled;
-        if (!samples && !ContentWindowLook.colorsFog(level) || camera.getFluidInCamera() != FogType.NONE) { return; }
         float partialTick = LineClientCompat.partialTick(event);
+        if (camera.getFluidInCamera() != FogType.NONE) { return; }
+        if (!samples && !ContentWindowLook.colorsFog(level)) {
+            tintVision(event, look, camera, partialTick);
+            return;
+        }
         Vec3 sky = LineClientCompat.skyColor(camera, partialTick);
         double weight = look == null ? ContentParserSkyLook.GROUND_WEIGHT : look.fogGroundWeight();
         Vec3 ground = current == null ? sky : sky.scale(1.0D - weight).add(current.scale(weight));
@@ -134,6 +151,7 @@ public final class ContentFogSampler {
         event.setRed((float) color.x);
         event.setGreen((float) color.y);
         event.setBlue((float) color.z);
+        tintVision(event, look, camera, partialTick);
     }
 
     public static void onFog(ViewportEvent.RenderFog event) {

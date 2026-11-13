@@ -6,19 +6,26 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStarField;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentWindowLook;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.RenderPass;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SkyRenderer;
 import net.minecraft.client.renderer.state.level.SkyRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.level.MoonPhase;
 import org.joml.Vector3fc;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -45,6 +52,12 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
     }
 
     @Inject(method = "renderSkyDisc(Lcom/mojang/renderpearl/api/commands/RenderPass;Lorg/joml/Vector3fc;)V", at = @At("TAIL")) private void rdpl$skybox(RenderPass renderPass, Vector3fc skyColor, CallbackInfo ci) { ContentSkyExtras.backdrop(renderPass); }
+
+    @WrapOperation(method = "extractRenderState(Lnet/minecraft/client/multiplayer/ClientLevel;FLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/state/level/SkyRenderState;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/state/level/SkyRenderState;skyColor:Lorg/joml/Vector3fc;", opcode = Opcodes.PUTFIELD)) private void rdpl$visionSky(SkyRenderState state, Vector3fc sky, Operation<Void> original, @Local(argsOnly = true) ClientLevel level, @Local(argsOnly = true) float partialTicks, @Local(argsOnly = true) Camera camera) {
+        SkyLookDef look = ContentFogSampler.look(level);
+        float vision = ContentFogSampler.visionStrength(look, camera.entity(), partialTicks);
+        original.call(state, vision > 0.0F && look != null ? ARGB.srgbLerp(vision, sky, ARGB.vector3fFromRGB24(look.nightVisionColor())) : sky);
+    }
 
     @Inject(method = "renderStars(Lcom/mojang/renderpearl/api/commands/RenderPass;FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD"), cancellable = true) private void rdpl$tintStars(RenderPass renderPass, float starBrightness, PoseStack poseStack, CallbackInfo ci) {
         if (!ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { return; }

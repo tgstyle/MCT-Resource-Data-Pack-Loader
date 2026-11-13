@@ -6,15 +6,23 @@ import mctmods.resourcedatapackloader.client.renderer.sky.ContentSkyRenderer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStarField;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentStars;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentWindowLook;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyLookDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.SkyRenderer;
+import net.minecraft.client.renderer.state.level.SkyRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.level.MoonPhase;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,6 +42,12 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
     @Inject(method = "renderSun(FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD")) private void rdpl$underSun(float rainBrightness, PoseStack poseStack, CallbackInfo ci) { ContentSkyExtras.underSun(poseStack, DimensionTraitsDef.VANILLA_SUN, rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level), celestialsAtlas, sunBuffer); }
 
     @Inject(method = "renderSkyDisc(I)V", at = @At("TAIL")) private void rdpl$skybox(int skyColor, CallbackInfo ci) { ContentSkyExtras.backdrop(); }
+
+    @WrapOperation(method = "extractRenderState(Lnet/minecraft/client/multiplayer/ClientLevel;FLnet/minecraft/client/Camera;Lnet/minecraft/client/renderer/state/level/SkyRenderState;)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/state/level/SkyRenderState;skyColor:I", opcode = Opcodes.PUTFIELD)) private void rdpl$visionSky(SkyRenderState state, int sky, Operation<Void> original, @Local(argsOnly = true) ClientLevel level, @Local(argsOnly = true) float partialTicks, @Local(argsOnly = true) Camera camera) {
+        SkyLookDef look = ContentFogSampler.look(level);
+        float vision = ContentFogSampler.visionStrength(look, camera.entity(), partialTicks);
+        original.call(state, vision > 0.0F && look != null ? ARGB.srgbLerp(vision, sky, ARGB.opaque(look.nightVisionColor())) : sky);
+    }
 
     @Inject(method = "renderSunMoonAndStars(Lcom/mojang/blaze3d/vertex/PoseStack;FFFLnet/minecraft/world/level/MoonPhase;FF)V", at = @At("HEAD"), cancellable = true) private void rdpl$packSky(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
         ContentSkyExtras.overlay(poseStack, sunAngle);

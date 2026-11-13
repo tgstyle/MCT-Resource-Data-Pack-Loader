@@ -48,6 +48,7 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 
 public final class ContentEntityTypes {
     private static final Identifier RETURNING_THROW = ResourceDataPackLoader.id("returning_throw");
+    private static final Identifier PULLING_HAND = ResourceDataPackLoader.id("pulling_hand");
     private static final String EGG_TEMPLATE = ResourceDataPackLoader.MOD_ID + ":item/template_spawn_egg";
     private static final Map<String, Set<String>> TAGS = new LinkedHashMap<>();
     private static final int EGG_PRIMARY = 0xFFFFFF;
@@ -72,7 +73,7 @@ public final class ContentEntityTypes {
                     .sized(width, height)
                     .clientTrackingRange(def.tracking().range()).updateInterval(def.tracking().frequency()).setShouldReceiveVelocityUpdates(def.tracking().velocity());
             if (def.flags().fireproof()) { builder = builder.fireImmune(); }
-            EntityType<Entity> type = builder.build(ResourceKey.create(Registries.ENTITY_TYPE, def.key()));
+            EntityType<Entity> type = built(builder, def.key());
             helper.register(def.key(), type);
             ContentEntities.BY_TYPE.put(type, def);
             ContentEntities.BASES.put(type, base);
@@ -81,8 +82,12 @@ public final class ContentEntityTypes {
             ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", def.key(), def.attributes(), def.equipment());
         }
         if (throwsReturning()) {
-            ContentEntities.returningThrow = EntityType.Builder.<ReturningThrow>of(ReturningThrow::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true).build(ResourceKey.create(Registries.ENTITY_TYPE, RETURNING_THROW));
+            ContentEntities.returningThrow = built(EntityType.Builder.<ReturningThrow>of(ReturningThrow::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true), RETURNING_THROW);
             helper.register(RETURNING_THROW, ContentEntities.returningThrow);
+        }
+        if (pulling()) {
+            ContentEntities.pullingHand = built(EntityType.Builder.<PullingHand>of(PullingHand::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true), PULLING_HAND);
+            helper.register(PULLING_HAND, ContentEntities.pullingHand);
         }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
     }
@@ -90,6 +95,18 @@ public final class ContentEntityTypes {
     private static boolean throwsReturning() {
         for (EntityVariantDef def : ContentEntities.DEFS.values()) {
             if (def.combat().throwsItems() && def.combat().throwReturns()) { return true; }
+        }
+        return false;
+    }
+
+    private static <T extends Entity> EntityType<T> built(EntityType.Builder<T> builder, Identifier id) {
+        ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, id);
+        return builder.build(key);
+    }
+
+    private static boolean pulling() {
+        for (EntityVariantDef def : ContentEntities.DEFS.values()) {
+            if (def.stalk().pulls()) { return true; }
         }
         return false;
     }

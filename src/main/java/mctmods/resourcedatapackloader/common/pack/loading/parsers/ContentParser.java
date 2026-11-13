@@ -158,9 +158,15 @@ public final class ContentParser {
             ContentLog.LOGGER.error("The portal of {} names return dimension '{}', which is not a dimension id, returning to the overworld", key, backNamed);
             back = Identifier.parse(ContentBiomes.OVERWORLD);
         }
+        String landing = Settings.lower(Json.getString(entry, "landing", "surface"));
+        if (!landing.equals("surface") && !landing.equals("same")) { ContentLog.LOGGER.error("The portal of {} sets landing '{}', which is neither surface nor same, using surface", key, landing); }
+        String returnTo = Settings.lower(Json.getString(entry, "returnTo", "fixed"));
+        if (!returnTo.equals("fixed") && !returnTo.equals("origin")) { ContentLog.LOGGER.error("The portal of {} sets returnTo '{}', which is neither fixed nor origin, using fixed", key, returnTo); }
         return new PortalDef(dimension, back, Json.getString(entry, "gate", "").trim(), Math.max(0, Json.getInt(entry, "cooldown", 60)),
                 Json.getBoolean(entry, "platform", true), Json.getString(entry, "platformBlock", "").trim(), Json.getString(entry, "sound", "").trim(),
-                Json.getBoolean(entry, "owned", ownedDefault), Json.getBoolean(entry, "walkIn", walkInDefault));
+                Json.getBoolean(entry, "owned", ownedDefault), Json.getBoolean(entry, "walkIn", walkInDefault),
+                landing.equals("same"), Json.getBoolean(entry, "torches", false), Math.max(0, Json.getInt(entry, "useRange", 0)),
+                Json.getBoolean(entry, "mounted", true), returnTo.equals("origin"));
     }
 
     @Nullable private static Identifier variantId(Identifier key, String name, String kind) {

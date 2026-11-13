@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.client.renderer.ContentBannerRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentContainerRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentSeasonClockProperty;
+import mctmods.resourcedatapackloader.client.renderer.PullingHandRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ReturningThrowRenderer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
@@ -21,6 +22,7 @@ import mctmods.resourcedatapackloader.common.blocks.container.logic.ContentConta
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.containers.ContentContainers;
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
+import mctmods.resourcedatapackloader.common.entities.PullingHand;
 import mctmods.resourcedatapackloader.common.entities.ReturningThrow;
 import mctmods.resourcedatapackloader.common.generated.ContentGeneratedItems;
 import mctmods.resourcedatapackloader.common.gui.ContentContainerMenu;
@@ -105,6 +107,8 @@ public final class ContentClient {
         if (bells != null) { event.registerBlockEntityRenderer(bells, ContentBellRenderer::new); }
         EntityType<ReturningThrow> returning = ContentEntities.returningThrow();
         if (returning != null) { event.registerEntityRenderer(returning, ReturningThrowRenderer::new); }
+        EntityType<PullingHand> pulling = ContentEntities.pullingHand();
+        if (pulling != null) { event.registerEntityRenderer(pulling, PullingHandRenderer::new); }
         Map<EntityType<?>, EntityRendererProvider<?>> providers = EntityRenderers.PROVIDERS;
         for (EntityType<?> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);

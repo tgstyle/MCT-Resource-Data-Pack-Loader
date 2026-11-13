@@ -4,10 +4,13 @@ import mctmods.resourcedatapackloader.common.entities.ai.AnvilWorkGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.ChargeGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.DigGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.FleeWhenHurtGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.FleeLightGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.FollowPlayerGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.GustGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.KamikazeGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.PatrolGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.PounceGoal;
+import mctmods.resourcedatapackloader.common.entities.ai.PullGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.SleepByDayGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.SniffGoal;
 import mctmods.resourcedatapackloader.common.entities.ai.StrikeGoal;
@@ -48,9 +51,11 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public final class ContentEntityBehavior {
     private static final List<String> PLAYER_ONLY = List.of("minecraft:player");
+    private static final String PULL_DEFAULT = "minecraft:ender_pearl";
     private static final String HOME_X = "rdplHomeX";
     private static final String HOME_Y = "rdplHomeY";
     private static final String HOME_Z = "rdplHomeZ";
@@ -77,10 +82,12 @@ public final class ContentEntityBehavior {
 
     static void behavior(Mob mob, EntityVariantDef def) {
         EntityVariantDef.Combat combat = def.combat();
-        if (ContentLog.LOGGER.debugEnabled() && (combat.charges() || combat.pounces() || combat.sniffs() > 0 || combat.sleepsByDay() || combat.home() > 0 || combat.fleesWhenHurt() > 0.0F || combat.patrols() || combat.swoops() || combat.gusts())) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}", def.key(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), combat.charges() ? " charges" : "", combat.pounces() ? " pounces" : "", combat.sniffs() > 0 ? " sniffs " + combat.sniffs() : "", combat.fleesWhenHurt() > 0.0F ? " flees under " + combat.fleesWhenHurt() : "", combat.sleepsByDay() ? " sleeps by day" : "", combat.home() > 0 ? " home " + combat.home() : "", combat.patrols() ? " patrols" : "", combat.swoops() ? " swoops" : "", combat.gusts() ? " gusts " + combat.gustPower() : ""); }
+        EntityVariantDef.Stalk stalk = def.stalk();
+        if (ContentLog.LOGGER.debugEnabled() && (combat.charges() || combat.pounces() || combat.sniffs() > 0 || combat.sleepsByDay() || combat.home() > 0 || combat.fleesWhenHurt() > 0.0F || combat.patrols() || combat.swoops() || combat.gusts() || stalk.any())) { ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}{}{}{}{}", def.key(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), combat.charges() ? " charges" : "", combat.pounces() ? " pounces" : "", combat.sniffs() > 0 ? " sniffs " + combat.sniffs() : "", combat.fleesWhenHurt() > 0.0F ? " flees under " + combat.fleesWhenHurt() : "", combat.sleepsByDay() ? " sleeps by day" : "", combat.home() > 0 ? " home " + combat.home() : "", combat.patrols() ? " patrols" : "", combat.swoops() ? " swoops" : "", combat.gusts() ? " gusts " + combat.gustPower() : "", stalk.fleesLight() > 0 ? " flees light " + stalk.fleesLight() : "", stalk.followsPlayers() > 0 ? " follows " + stalk.followsPlayers() : "", stalk.teleportsWhenHit() > 0 ? " teleports when hit " + stalk.teleportsWhenHit() : "", stalk.pulls() ? " pulls" : ""); }
         if (def.flags().collectsExperience() && mob instanceof PathfinderMob creature) { mob.goalSelector.addGoal(0, new AnvilWorkGoal(creature)); }
         if (mob instanceof PathfinderMob creature && ContentOrders.wants(def)) { mob.goalSelector.addGoal(3, new WorkOrderGoal(creature)); }
         settled(mob, def);
+        stalks(mob, def);
         if (def.passive()) {
             Goals.remove(mob.targetSelector, _ -> true);
             removeMelee(mob.goalSelector);
@@ -169,6 +176,27 @@ public final class ContentEntityBehavior {
             mob.goalSelector.addGoal(4, new MoveTowardsRestrictionGoal(creature, 1.0D));
         }
         if (combat.sleepsByDay()) { mob.goalSelector.addGoal(1, new SleepByDayGoal(creature)); }
+    }
+
+    private static void stalks(Mob mob, EntityVariantDef def) {
+        EntityVariantDef.Stalk stalk = def.stalk();
+        if (!stalk.walks()) { return; }
+        if (!(mob instanceof PathfinderMob creature)) {
+            ContentLog.LOGGER.error("Entity variant {} asks to flee light, follow players or pull, but {} does not walk the ground the way those behaviors need", def.key(), def.base());
+            return;
+        }
+        if (stalk.fleesLight() > 0) { mob.goalSelector.addGoal(1, new FleeLightGoal(creature, stalk.fleesLight(), 1.2D)); }
+        if (stalk.followsPlayers() > 0) { mob.goalSelector.addGoal(3, new FollowPlayerGoal(creature, stalk.followsPlayers(), stalk.fleesLight(), 1.0D)); }
+        if (!stalk.pulls()) { return; }
+        if (!def.hostile() && stalk.followsPlayers() == 0) { ContentLog.LOGGER.error("Entity variant {} asks to pull, but is neither hostile nor follows players, so it never has anyone to pull", def.key()); }
+        else { mob.goalSelector.addGoal(1, new PullGoal(creature, pullStack(def), stalk.pullReload(), stalk.pullPower(), stalk.followsPlayers() > 0)); }
+    }
+
+    private static ItemStack pullStack(EntityVariantDef def) {
+        Item item = ContentStacks.item(Identifier.tryParse(def.stalk().pullItem()));
+        if (item != null) { return new ItemStack(item); }
+        ContentLog.LOGGER.error("Entity variant {} names pullItem {}, which nothing registers, using {}", def.key(), def.stalk().pullItem(), PULL_DEFAULT);
+        return new ItemStack(Items.ENDER_PEARL);
     }
 
     private static void removeMelee(GoalSelector selector) { Goals.remove(selector, goal -> goal instanceof MeleeAttackGoal); }

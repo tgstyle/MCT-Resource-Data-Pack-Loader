@@ -260,6 +260,8 @@ public final class LineCompat {
 
     public static void markVelocity(Entity entity) { entity.syncVelocity = true; }
 
+    public static boolean randomTeleport(LivingEntity mob, double x, double y, double z) { return mob.randomTeleport(x, y, z, true, _ -> false); }
+
     public static void clearDamageCooldown(LivingEntity entity) { entity.damageCooldownTime = 0; }
 
     public static void makeInvulnerable(Entity entity) { entity.setPermanentlyInvulnerable(true); }

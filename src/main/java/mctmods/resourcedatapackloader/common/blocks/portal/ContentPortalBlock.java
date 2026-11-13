@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.common.sounds.ContentSounds;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nonnull;
@@ -20,7 +21,6 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -134,23 +134,44 @@ public final class ContentPortalBlock extends ContentBlock {
 
     private void travel(ServerPlayer player, BlockState state, BlockPos pos) {
         if (recently(player)) { return; }
+        ContentPortals.Binding binding = ContentPortals.forBlock(this);
+        PortalFit fit = binding == null ? null : ContentPortals.fitAt(player.level(), pos, binding);
+        if (!portal.mounted() && player.isPassenger()) {
+            player.sendOverlayMessage(Component.translatable("rdpl.portal.mounted"));
+            return;
+        }
+        if (portal.useRange() > 0 && !near(player, state, pos, fit, portal.useRange())) {
+            player.sendOverlayMessage(Component.translatable("rdpl.portal.far"));
+            return;
+        }
         GateDef gate = portal.gate().isEmpty() ? null : ContentGates.find(portal.gate());
         if (gate != null && !ContentGates.admits(player, gate)) {
             ContentGates.refuse(player, gate);
             return;
         }
-        Identifier here = player.level().dimension().identifier();
-        Identifier target = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
-        if (target.equals(here)) { return; }
+        if (ContentTeleporter.target(player, portal).equals(player.level().dimension().identifier())) { return; }
         sound(player);
         RECENT.put(player.getUUID(), player.level().getGameTime());
-        ContentTeleporter.travel(player, portal, state, pos, returning(player.level(), pos));
+        ContentTeleporter.travel(player, portal, state, pos, (binding == null || binding.portal().noReturn()) ? null : fit);
     }
 
-    @Nullable private PortalFit returning(Level level, BlockPos pos) {
-        ContentPortals.Binding binding = ContentPortals.forBlock(this);
-        if (binding == null || binding.portal().noReturn()) { return null; }
-        return ContentPortals.fitAt(level, pos, binding);
+    private static boolean near(ServerPlayer player, BlockState state, BlockPos pos, @Nullable PortalFit fit, int range) {
+        List<BlockPos> holes = fit == null ? List.of(pos) : fit.holes();
+        int low = Integer.MAX_VALUE;
+        int high = Integer.MIN_VALUE;
+        for (BlockPos hole : holes) {
+            low = Math.min(low, hole.getY());
+            high = Math.max(high, hole.getY());
+        }
+        if (state.getValue(AXIS) == Direction.Axis.Y) { high = low + 1; }
+        int feet = player.blockPosition().getY();
+        if (feet < low || feet > high) { return false; }
+        for (BlockPos hole : holes) {
+            double dx = player.getX() - (hole.getX() + 0.5D);
+            double dz = player.getZ() - (hole.getZ() + 0.5D);
+            if (dx * dx + dz * dz <= (double) range * range) { return true; }
+        }
+        return false;
     }
 
     public static void forget(UUID player) { RECENT.remove(player); }

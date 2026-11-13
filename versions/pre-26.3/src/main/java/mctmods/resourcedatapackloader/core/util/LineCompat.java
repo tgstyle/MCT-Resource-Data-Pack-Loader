@@ -237,6 +237,8 @@ public final class LineCompat {
 
     public static void markVelocity(Entity entity) { entity.hurtMarked = true; }
 
+    public static boolean randomTeleport(LivingEntity mob, double x, double y, double z) { return mob.randomTeleport(x, y, z, true); }
+
     public static void clearDamageCooldown(LivingEntity entity) { entity.invulnerableTime = 0; }
 
     public static void makeInvulnerable(Entity entity) { entity.setInvulnerable(true); }
