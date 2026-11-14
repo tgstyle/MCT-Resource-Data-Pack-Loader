@@ -122,7 +122,7 @@ public final class ContentParser {
                 ContentParserSeasons.sensor(json),
                 Collections.unmodifiableList(Json.strings(json, "spreadsOnto")),
                 ContentParserPortways.portway(key, json), ContentParserWeights.weight(json, key), ContentParserCrops.tall(json, key, maxAge),
-                ContentParserShields.spawns(json, key), ContentParserShields.weather(json));
+                ContentParserShields.spawns(json, key), ContentParserShields.weather(json), Json.getBoolean(json, "needsOxygen", true));
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {

@@ -6,7 +6,9 @@ import mctmods.resourcedatapackloader.common.environment.ContentPhysics;
 import mctmods.resourcedatapackloader.common.generated.ContentFormats;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.AdAstraDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.SkyPoseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParserAdAstra;
@@ -36,6 +38,7 @@ public final class AdAstraPlanets {
     private static final ResourceLocation DEFAULT_RECIPE = ResourceLocation.fromNamespaceAndPath(ContentAdAstra.MOD_ID, ContentFormats.RECIPE_FOLDER + STATION_FOLDER + "earth_orbit" + STATION_SUFFIX + PackManager.JSON_SUFFIX);
     private static final String SUN = ContentAdAstra.MOD_ID + ":textures/environment/sun.png";
     private static final String BODY_FALLBACK = ContentAdAstra.MOD_ID + ":textures/environment/moon.png";
+    private static final float HOME_SIZE = 80.0F;
     private static final int[] STAR_COLORS = {-1447239681, -1143472129, -726785, -3038977, -7697665, -12254977, -2817, -464897, -256, -65536};
     private static final int[] STAR_WEIGHTS = {3, 5, 100, 80, 150, 10, 60, 40, 20, 1};
 
@@ -148,7 +151,8 @@ public final class AdAstraPlanets {
             GeneratedResources.put(PackType.SERVER_DATA, orbit.getNamespace(), ContentFormats.RECIPE_FOLDER + STATION_FOLDER + orbit.getPath() + STATION_SUFFIX + PackManager.JSON_SUFFIX, recipe.toString());
         }
         boolean ownSky = ContentEnvironments.givesSky(orbit, station.def());
-        if (!ownSky) { GeneratedResources.put(PackType.CLIENT_RESOURCES, orbit.getNamespace(), "planet_renderers/" + orbit.getPath() + PackManager.JSON_SUFFIX, renderer(orbit, home).toString()); }
+        if (ownSky) { homeBody(station.def(), home); }
+        else { GeneratedResources.put(PackType.CLIENT_RESOURCES, orbit.getNamespace(), "planet_renderers/" + orbit.getPath() + PackManager.JSON_SUFFIX, renderer(orbit, home).toString()); }
         ContentLog.LOGGER.info("Wrote Ad Astra station {} over {} ({} recipe, {} sky)", orbit, home.key(), station.station().recipe().isEmpty() ? "Ad Astra's earth_orbit" : "its own", ownSky ? "RDPL's" : "Ad Astra's");
     }
 
@@ -195,11 +199,22 @@ public final class AdAstraPlanets {
     }
 
     private static JsonArray renderables(DimensionDef home) {
-        AdAstraDef body = home.adastra();
         JsonArray renderables = new JsonArray();
         renderables.add(renderable(SUN, 9.0F, 0.0F, "TIME_OF_DAY", -39, 27.0F));
-        renderables.add(renderable(body != null && body.map() != null ? body.map().icon().toString() : BODY_FALLBACK, 80.0F, 180.0F, "STATIC", -5261108, 240.0F));
+        renderables.add(renderable(homeIcon(home), HOME_SIZE, 180.0F, "STATIC", -5261108, 240.0F));
         return renderables;
+    }
+
+    private static String homeIcon(DimensionDef home) {
+        AdAstraDef body = home.adastra();
+        return body != null && body.map() != null ? body.map().icon().toString() : BODY_FALLBACK;
+    }
+
+    private static void homeBody(DimensionDef station, DimensionDef home) {
+        ResourceLocation icon = ResourceLocation.parse(homeIcon(home));
+        DimensionTraitsDef.Sky sky = station.traits().sky();
+        if (sky != null && sky.bodies() != null && sky.bodies().stream().anyMatch(held -> held.texture().equals(icon))) { return; }
+        ContentDimensions.addSkyBody(station.key(), new DimensionTraitsDef.Body(icon, HOME_SIZE, 180.0F, 0.0F, false, SkyPoseDef.NONE, ""));
     }
 
     private static JsonArray starColors() {
