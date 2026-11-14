@@ -124,7 +124,8 @@ public final class ContentParser {
                 ContentParserWeights.weight(json, key),
                 ContentParserCrops.tall(json, key, maxAge),
                 ContentParserShields.spawns(json, key),
-                ContentParserShields.weather(json));
+                ContentParserShields.weather(json),
+                Json.getBoolean(json, "needsOxygen", true));
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {

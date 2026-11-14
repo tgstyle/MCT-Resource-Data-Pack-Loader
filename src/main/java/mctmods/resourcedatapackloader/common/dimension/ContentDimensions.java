@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.common.environment.ContentDarkDamage;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.worlds.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.common.pack.io.GeneratedResources;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentControl;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentInherits;
@@ -147,6 +148,13 @@ public final class ContentDimensions {
         if (!make(def)) { return false; }
         DEFS.put(key, def);
         return true;
+    }
+
+    public static void addSkyBody(ResourceLocation key, DimensionTraitsDef.Body body) {
+        DimensionDef def = DEFS.get(key);
+        if (def == null) { return; }
+        DimensionTraitsDef.Sky sky = def.traits().sky();
+        DEFS.put(key, def.withTraits(def.traits().withSky((sky == null ? ContentDimensionParser.defaultSky(key) : sky).with(body))));
     }
 
     private static boolean make(DimensionDef def) {

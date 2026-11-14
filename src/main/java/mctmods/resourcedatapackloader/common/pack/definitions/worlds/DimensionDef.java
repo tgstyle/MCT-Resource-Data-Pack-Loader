@@ -32,6 +32,11 @@ public record DimensionDef(ResourceLocation key, String terrain, List<String> fl
 
     public boolean gives(String option) { return given.contains(option); }
 
+    public DimensionDef withTraits(DimensionTraitsDef held) {
+        return new DimensionDef(key, terrain, flatOptions, structures, biomeSource, biome, biomeList, minHeight, maxHeight, seaLevel, lavaOceans, oceanFluid, fillBlock, hasSkyLight, surfaceWorld, spawning, cloudHeight, movementFactor, fogColor, skyColor, cloudColor, fixedTime, sunriseColors,
+                nether, beds, waterVaporizes, showFog, ambientLight, starBrightness, renderSky, renderClouds, renderWeather, respawnDimension, respawn, groundLevel, gameRules, requires, portal, options, held, look, windows, darkness, adastra, given);
+    }
+
     public boolean shapesHeight() { return minHeight != UNSET && maxHeight != UNSET; }
 
     public boolean shapesNoise() { return CAVE.equals(terrain) || shapesHeight() || seaLevel >= 0 || lavaOceans || !oceanFluid.isEmpty() || LegacyTerrainShape.of(options).any(); }

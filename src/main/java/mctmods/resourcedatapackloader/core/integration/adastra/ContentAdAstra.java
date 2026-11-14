@@ -44,6 +44,7 @@ public final class ContentAdAstra {
         warnNotRockets();
         if (!active()) { return; }
         AdAstraGravity.register();
+        AdAstraOxygen.register();
         ContentLog.LOGGER.info("Ad Astra is loaded, so a dimension can be a planet or moon with an adastra block");
     }
 

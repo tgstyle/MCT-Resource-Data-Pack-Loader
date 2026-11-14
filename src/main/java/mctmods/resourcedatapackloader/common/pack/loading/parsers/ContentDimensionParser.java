@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.resources.ResourceLocation;
@@ -241,6 +242,12 @@ public final class ContentDimensionParser {
         ResourceLocation sunTexture = texture(key, Json.getString(sun, "texture", SUN));
         return new DimensionTraitsDef.Sky(sunTexture == null ? ResourceLocation.parse(SUN) : sunTexture, Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), ContentParserSkyLook.finite(key, sun, "sky.sun", "tilt"), ContentParserSkyLook.pose(key, sun, "sky.sun"), bodies,
                 Math.max(0, Json.getInt(stars, "count", STARS)), Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
+    }
+
+    public static DimensionTraitsDef.Sky defaultSky(ResourceLocation key) {
+        JsonObject sky = new JsonObject();
+        sky.add("stars", new JsonObject());
+        return Objects.requireNonNull(sky(key, sky));
     }
 
     @Nullable private static ResourceLocation texture(ResourceLocation key, String named) {
