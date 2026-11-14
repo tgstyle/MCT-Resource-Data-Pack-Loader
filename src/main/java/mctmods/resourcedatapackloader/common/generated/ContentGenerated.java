@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.blocks.container.ContentContainerBl
 import mctmods.resourcedatapackloader.common.blocks.fluid.ContentFluids;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentCropBlock;
 import mctmods.resourcedatapackloader.common.blocks.plant.ContentPlantPartBlock;
+import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.loot.LootFunctions;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
@@ -16,6 +17,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.TallDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.ContainerDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.effects.PotionDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.CurioSlotDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.io.FallbackIcon;
@@ -26,6 +28,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.potions.ContentPotions;
 import mctmods.resourcedatapackloader.common.stacks.ContentStacks;
 import mctmods.resourcedatapackloader.common.types.ContentBlockTypes;
+import mctmods.resourcedatapackloader.common.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.common.types.ContentTypes;
 import mctmods.resourcedatapackloader.common.util.plant.TallPlants;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeTrunk;
@@ -160,8 +163,9 @@ public final class ContentGenerated {
         String name = entry.id().getPath();
         ItemDef def = entry.def();
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + PackManager.JSON_SUFFIX)) {
+            ResourceLocation rocket = rocketBase(def);
             String parent = def != null && "tool".equals(def.type()) ? ITEM_HANDHELD : ITEM_GENERATED;
-            asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, Json.obj("parent", parent, "textures", Json.obj("layer0", namespace + ":item/" + name)));
+            asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, rocket != null ? Json.obj("parent", rocket.getNamespace() + ":item/" + rocket.getPath()) : Json.obj("parent", parent, "textures", Json.obj("layer0", namespace + ":item/" + name)));
         }
         if (entry.variant() != null) {
             for (String tag : entry.variant().tags()) { tag(itemTags, tag, entry.id()); }
@@ -170,6 +174,13 @@ public final class ContentGenerated {
             for (String tag : ContentFormats.equipmentTags(def)) { tag(itemTags, tag, entry.id()); }
             if (def.slotted()) { tag(itemTags, "curios:" + def.curioSlot(), entry.id()); }
         }
+    }
+
+    @Nullable private static ResourceLocation rocketBase(@Nullable ItemDef def) {
+        if (def == null || !ContentItemTypes.ROCKET.equals(def.type())) { return null; }
+        ResourceLocation rocket = ContentParser.location(def.rocket());
+        EntityVariantDef variant = rocket == null ? null : ContentEntities.variant(rocket);
+        return variant == null ? null : variant.base();
     }
 
     private static JsonObject loot(ContentRegistry.BlockEntry entry, String type) {

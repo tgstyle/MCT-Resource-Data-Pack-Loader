@@ -148,7 +148,7 @@ neoForge {
 
 def devSyncScript = null
 for (def dir = rootDir; dir != null && devSyncScript == null; dir = dir.parentFile) {
-    def candidate = new File(dir, '#scripts/mods-devsync.gradle')
+    def candidate = new File(dir, '#scripts/gradle/mods-devsync.gradle')
     if (candidate.isFile()) { devSyncScript = candidate }
 }
 if (devSyncScript != null) { apply from: devSyncScript }
@@ -165,6 +165,7 @@ repositories {
     maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
     maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
     maven { url = 'https://www.cursemaven.com' ; content { includeGroup 'curse.maven' } }
+    maven { name = 'Resourceful' ; url = 'https://maven.teamresourceful.com/repository/maven-public/' ; content { includeGroup 'earth.terrarium.common_storage_lib' } }
 }
 
 configurations {
@@ -180,6 +181,12 @@ dependencies {
     if (companion('ftbchunks')) { runtimeOnly "curse.maven:ftb-chunks-314906:9374151" }
     if (companion('ftblibrary')) { runtimeOnly "curse.maven:ftb-library-404465:9350706" }
     if (companion('architectury')) { runtimeOnly "curse.maven:architectury-api-419699:8492726" }
+    if (companion('adastra')) {
+        runtimeOnly "curse.maven:ad-astra-635042:8874894"
+        runtimeOnly "curse.maven:resourceful-lib-570073:5973188"
+        runtimeOnly "curse.maven:resourceful-config-714059:6467772"
+        runtimeOnly "curse.maven:common-storage-lib-1028211:8421542"
+    }
     if (companion('dynamictrees')) { runtimeOnly "curse.maven:dynamictrees-252818:8227322" }
     if (companion('biomesoplenty')) {
         runtimeOnly "curse.maven:biomes-o-plenty-220318:8288121"
@@ -190,6 +197,13 @@ dependencies {
     compileOnly "curse.maven:ftb-chunks-314906:9374151"
     compileOnly "curse.maven:ftb-library-404465:9350706"
     compileOnly "curse.maven:architectury-api-419699:8492726"
+    compileOnly "curse.maven:ad-astra-635042:8874894"
+    compileOnly "curse.maven:resourceful-lib-570073:5973188"
+    compileOnly "curse.maven:resourceful-config-714059:6467772"
+    compileOnly "curse.maven:common-storage-lib-1028211:8421542"
+    compileOnly "earth.terrarium.common_storage_lib:common-storage-lib-data-neoforge-1.21.1:0.0.10"
+    compileOnly "earth.terrarium.common_storage_lib:common-storage-lib-resources-neoforge-1.21.1:0.0.10"
+    compileOnly "earth.terrarium.common_storage_lib:common-storage-lib-lookup-neoforge-1.21.1:0.0.10"
     runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
     runtimeOnly 'maven.modrinth:betterf3:maXNB1dn'
     runtimeOnly 'maven.modrinth:cloth-config:izKINKFg'

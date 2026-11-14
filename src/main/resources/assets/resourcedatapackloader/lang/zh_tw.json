@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s：%s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "空",
+  "rdpl.rocket.payloadMissing": "貨艙裡沒有 %s x %s 就無法發射這枚火箭",
   "rdpl.game.coin": "{player} 擲了一枚硬幣：{result}",
   "rdpl.game.heads": "正面",
   "rdpl.game.tails": "反面",

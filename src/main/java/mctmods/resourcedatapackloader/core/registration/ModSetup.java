@@ -128,6 +128,7 @@ import mctmods.resourcedatapackloader.common.weights.WeightStacks;
 import mctmods.resourcedatapackloader.common.weights.WeightSync;
 import mctmods.resourcedatapackloader.common.welcome.ContentWelcome;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurioSlots;
 import mctmods.resourcedatapackloader.core.integration.ftbchunks.ContentFtbChunks;
@@ -502,6 +503,7 @@ public class ModSetup {
         PackManager.get().warnAboutDisabledFeatures();
         ContentFtbTeams.install();
         ContentFtbChunks.install();
+        ContentAdAstra.install();
         event.enqueueWork(ContentRegistry::resolveStacks);
         event.enqueueWork(ContentRegistry::resolveFluidReactions);
         Set<String> missing = PackRequirements.required();

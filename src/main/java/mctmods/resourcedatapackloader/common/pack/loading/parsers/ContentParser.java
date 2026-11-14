@@ -354,7 +354,8 @@ public final class ContentParser {
                 ContentParserPortways.item(key, json),
                 Json.getBoolean(json, "sleepingBag", false), ContentParserContainers.upgrade(key, json), ContentParserWeights.weight(json, key),
                 ContentParserFireworks.firework(key, json),
-                ContentParserSeasons.clock(json));
+                ContentParserSeasons.clock(json),
+                Json.getString(json, "rocket", "").trim());
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.AdvancementHolder;
@@ -91,6 +92,15 @@ public final class ContentGates {
     public static boolean idle() { return USABLE.isEmpty(); }
 
     public static List<GateDef> forDimension(ResourceLocation dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
+
+    public static Set<ResourceLocation> guarded() { return Collections.unmodifiableSet(BY_DIMENSION.keySet()); }
+
+    public static boolean barsDimension(ServerPlayer player, ResourceLocation dimension) {
+        for (GateDef def : forDimension(dimension)) {
+            if (bars(player, def)) { return true; }
+        }
+        return false;
+    }
 
     public static Collection<GateDef> all() { return Collections.unmodifiableCollection(DEFS.values()); }
 

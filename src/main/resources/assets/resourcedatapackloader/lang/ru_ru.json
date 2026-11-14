@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s мВ",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Пусто",
+  "rdpl.rocket.payloadMissing": "Ракета не взлетит, пока в грузовом отсеке нет %s x %s",
   "rdpl.game.coin": "{player} подбрасывает монету: {result}",
   "rdpl.game.heads": "орёл",
   "rdpl.game.tails": "решка",

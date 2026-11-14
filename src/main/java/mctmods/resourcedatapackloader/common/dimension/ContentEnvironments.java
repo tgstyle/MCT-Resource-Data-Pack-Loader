@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -259,9 +260,13 @@ public final class ContentEnvironments {
         return set != null && PLACES.containsKey(set);
     }
 
-    public static boolean hasEffects(ResourceLocation dimension, DimensionDef base) {
-        if (base.hasEffects()) { return true; }
-        for (DimensionDef set : SETS.getOrDefault(dimension, Map.of()).values()) { if (set.hasEffects()) { return true; } }
+    public static boolean hasEffects(ResourceLocation dimension, DimensionDef base) { return anyOf(dimension, base, DimensionDef::hasEffects); }
+
+    public static boolean givesSky(ResourceLocation dimension, DimensionDef base) { return anyOf(dimension, base, DimensionDef::givesSky); }
+
+    private static boolean anyOf(ResourceLocation dimension, DimensionDef base, Predicate<DimensionDef> test) {
+        if (test.test(base)) { return true; }
+        for (DimensionDef set : SETS.getOrDefault(dimension, Map.of()).values()) { if (test.test(set)) { return true; } }
         return false;
     }
 

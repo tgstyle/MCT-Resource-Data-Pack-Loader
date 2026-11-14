@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.util;
 import mctmods.resourcedatapackloader.client.gui.ContentContainerScreen;
 import mctmods.resourcedatapackloader.client.gui.ContentPortwayScreen;
 import mctmods.resourcedatapackloader.client.gui.EntityStorageScreen;
+import mctmods.resourcedatapackloader.client.integration.adastra.AdAstraRocketItems;
 import mctmods.resourcedatapackloader.client.renderer.ContentBannerItemRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentBannerRenderer;
 import mctmods.resourcedatapackloader.client.renderer.ContentBellRenderer;
@@ -33,13 +34,13 @@ import mctmods.resourcedatapackloader.common.items.ContentPotionItem;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.core.config.Settings;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.mojang.blaze3d.shaders.FogShape;
 import com.mojang.blaze3d.systems.RenderSystem;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import javax.annotation.Nonnull;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -49,8 +50,10 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.EntityRenderers;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import net.minecraft.client.renderer.item.CompassItemPropertyFunction;
 import net.minecraft.client.renderer.item.ItemProperties;
 import net.minecraft.core.BlockPos;
@@ -123,13 +126,17 @@ public final class ContentClient {
         if (returning != null) { event.registerEntityRenderer(returning, ReturningThrowRenderer::new); }
         EntityType<PullingHand> hand = ContentEntities.pullingHand();
         if (hand != null) { event.registerEntityRenderer(hand, PullingHandRenderer::new); }
-        Map<EntityType<?>, EntityRendererProvider<?>> providers = EntityRenderers.PROVIDERS;
         for (EntityType<?> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
-            EntityRendererProvider<?> provider = base == null ? null : providers.get(base);
-            if (provider == null) { ContentLog.LOGGER.error("Entity variant {} has no renderer to borrow from {}", variant, base); }
-            else { event.registerEntityRenderer(variant, provider(provider)); }
+            event.registerEntityRenderer(variant, context -> borrowed(variant, base, context));
         }
+    }
+
+    private static EntityRenderer<Entity> borrowed(EntityType<?> variant, EntityType<?> base, EntityRendererProvider.Context context) {
+        EntityRendererProvider<?> provider = base == null ? null : EntityRenderers.PROVIDERS.get(base);
+        if (provider != null) { return provider(provider).create(context); }
+        ContentLog.LOGGER.error("Entity variant {} has no renderer to borrow from {}", variant, base);
+        return new NoopRenderer<>(context);
     }
 
     @SuppressWarnings("unchecked") private static EntityRendererProvider<Entity> provider(EntityRendererProvider<?> provider) { return (EntityRendererProvider<Entity>) provider; }
@@ -159,6 +166,7 @@ public final class ContentClient {
                 ItemProperties.register(entry.item(), ResourceLocation.fromNamespaceAndPath("rdpl", "year"), ClientSeasonClock.year(entry.def().seasonClock()));
                 ItemProperties.register(entry.item(), ResourceLocation.fromNamespaceAndPath("rdpl", "season"), ClientSeasonClock.season(entry.def().seasonClock()));
             }
+            if (ContentAdAstra.active()) { AdAstraRocketItems.borrow(); }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());

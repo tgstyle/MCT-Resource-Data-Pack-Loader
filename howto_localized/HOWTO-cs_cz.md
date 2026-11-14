@@ -89,6 +89,7 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 
 **Tvorové a nebezpečí**
 - [Varianty entit](#varianty-entit)
+  - [Rakety Ad Astra](#rakety-ad-astra)
 - [Hodnosti mobů](#hodnosti-mobů)
 - [Odměny za maximální zdraví](#odměny-za-maximální-zdraví)
 - [Zakázky](#zakázky)
@@ -99,6 +100,10 @@ Tento průvodce platí pro verze 1.20.1 a 1.21.1. Čtou stejné balíčky; těch
 - [Herní pravidla](#herní-pravidla)
 - [Biomy](#biomy)
 - [Dimenze](#dimenze)
+  - [Planety Ad Astra](#planety-ad-astra)
+  - [Hvězdné systémy Ad Astra](#hvězdné-systémy-ad-astra)
+  - [Klíče mapy (Ad Astra)](#klíče-mapy-ad-astra)
+  - [Vesmírné stanice Ad Astra](#vesmírné-stanice-ad-astra)
 - [Portály a brány](#portály-a-brány)
 - [Hluboký svět](#hluboký-svět)
 - [Oblasti jeskyní](#oblasti-jeskyní)
@@ -176,6 +181,7 @@ V `data/`:
 | `<namespace>/worldgen/*.json`                | Co se generuje a kde. [Položky worldgenu](#položky-worldgenu)                                                                                                                                        |
 | `<namespace>/caveregions/*.json`             | Pojmenované oblasti rozprostřené po podzemí. [Oblasti jeskyní](#oblasti-jeskyní)                                                                                                                     |
 | `<namespace>/dimensions/*.json`              | Definice dimenzí. [Dimenze](#dimenze)                                                                                                                                                                |
+| `<namespace>/celestial/*.json`               | Hvězdné systémy a tělesa jen na mapě planet Ad Astra. [Hvězdné systémy Ad Astra](#hvězdné-systémy-ad-astra)                                                                                          |
 | `<namespace>/worldtemplates/*.json`          | Nastavení celého světa v jednom souboru. [Šablony světa](#šablony-světa)                                                                                                                             |
 | `<namespace>/worldintro/*.json`              | Stránky zobrazené, když hráč vstoupí do světa. [Úvod do světa](#úvod-do-světa)                                                                                                                       |
 | `<namespace>/gates/*.json`                   | Podmínky pro portály a dimenze. [Portály a brány](#portály-a-brány)                                                                                                                                  |
@@ -4881,6 +4887,61 @@ Položka filtru. Rozhoduje první položka, která odpovídá, a cokoli, čemu �
 | `fluid` | jedno ze tří | id tekutiny      | žádný   | Tekutina podle svého id, například `minecraft:water`. Čte ji jen filtr tekutin                             |
 | `max`   | ne           | celé číslo       | `0`     | Nejvíce, co se z toho drží najednou, počítáno přes všechny sloty, nebo v mB u tekutiny. `0` je bez omezení |
 
+### Rakety Ad Astra
+
+*varianty entit*
+
+Varianta rakety Ad Astra může změnit její úroveň, palivovou nádrž, náklad a užitečné zatížení. Potřebuje nainstalovaný Ad Astra a bez něj nedělá nic: objekt `adastra` se ignoruje, předmět typu `rocket` se vynechá a o tom to píše do logu. `RDPLExampleAdAstra.zip` (namespace `rdplplanets`) obsahuje funkční balíček.
+
+```json
+{
+  "entity": "ad_astra:tier_1_rocket",
+  "name": "Supply Rocket",
+  "adastra": {
+    "tier": 2,
+    "fuelTank": 6000,
+    "cargo": [
+      { "item": "minecraft:iron_ingot", "max": 128 },
+      { "tag": "forge:ingots/copper" }
+    ],
+    "requiredPayload": [
+      { "item": "minecraft:iron_ingot", "count": 64 }
+    ],
+    "payload": [
+      { "item": "minecraft:iron_ingot", "count": 64 }
+    ]
+  }
+}
+```
+
+Předmět, který ji položí, leží v `<namespace>/items/supply_rocket.json`. Jeho `rocket` jmenuje variantu:
+
+```json
+{
+  "type": "rocket",
+  "rocket": "mypack:supply_rocket"
+}
+```
+
+Raketu lze postavit na `ad_astra:tier_1_rocket`, `ad_astra:tier_2_rocket`, `ad_astra:tier_3_rocket` nebo `ad_astra:tier_4_rocket`, nebo na libovolné rakete, kterou jiný mód přidá do tabulky raket Ad Astry. U jiné entity se objekt ignoruje a o tom log píše. Předmět položí raketu stejně jako vlastní raketové předměty Ad Astry, skládá se jen po jednom kuse a nehoří. Její palivová nádrž pojme `fuelTank`.
+
+Dejte předmětu model, jehož rodičem je model základního předmětu rakety, v souboru `assets/<namespace>/models/item/supply_rocket.json`. Pak se raketa v ruce i v inventáři zobrazí stejně jako vlastní raketové předměty Ad Astry. Bez něj předmět ukáže chybějící model.
+
+```json
+{
+  "parent": "ad_astra:item/tier_1_rocket"
+}
+```
+
+| Klíč              | Povinné | Hodnota               | Výchozí         | Co dělá                                                                                                                                                                                  |
+| ----------------- | ------- | --------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tier`            | ne      | int                   | základní rakety | Úroveň rakety, která určuje, kam doletí                                                                                                                                                  |
+| `fuelTank`        | ne      | int, mB               | základní rakety | Velikost palivové nádrže                                                                                                                                                                 |
+| `cargoSlots`      | ne      | int                   | žádný           | Ignoruje se. Menu rakety Ad Astra má na každé úrovni pevných 2x4 nákladní sloty, takže varianta, která ho nastaví, dostane jedno varování v logu                                         |
+| `cargo`           | ne      | seznam položek filtru | žádný           | Co nákladní sloty přijmou. Bez něj přijmou cokoli. Položky jsou jako u [`storage`](#úložiště) s `item` nebo `tag` a `max`; položka `oreDict` se přeskočí s varováním, takže pojmenuj tag |
+| `requiredPayload` | ne      | seznam                | žádný           | Co musí být v nákladu, než raketa odstartuje. Každá položka je `item` nebo `tag` a `count`, výchozí `1`. Dokud tam není, raketa zůstává na zemi a cestující dostane zprávu, co chybí     |
+| `payload`         | ne      | seznam                | žádný           | Co nese nově vyrobený předmět rakety, naložené do nákladu při prvním položení. Každá položka je `item` a `count`, výchozí `1`. Raketa vzatá a položená znovu se nenaloží znovu           |
+
 ## Hodnosti mobů
 
 *tvorové a nebezpečí*
@@ -6466,6 +6527,205 @@ A jeho blockstate, `assets/mypack/blockstates/season_sensor.json`, s jednou polo
 
 Síla je stav bloku `power`, takže blockstate potřebuje variantu pro každou z jeho 16 hodnot. V dimenzi bez ročních období zůstává 0. Období v `output` se jmenuje podle prvního prostředí své položky v `order`.
 
+### Planety Ad Astra
+
+*dimenze*
+
+`<namespace>/dimensions/*.json`
+
+Blok `adastra` v souboru dimenze z ní udělá planetu nebo měsíc na planetární obrazovce Ad Astry, takže na ni může letět raketa. Potřebuje nainstalovaný Ad Astra a bez něj nedělá nic: blok se přeskočí a log to napíše. Přijme ho jen dimenze, kterou balíček vytváří sám, ne existující dimenze jako `minecraft:overworld`. Vše mimo blok, obloha, fyzika, čas a počasí, zůstává vlastní věcí dimenze a funguje stejně s Ad Astra i bez něj. `RDPLExampleAdAstra.zip` (namespace `rdplplanets`) obsahuje funkční balíček.
+
+```json
+{
+  "physics": { "gravity": 0.4 },
+  "adastra": {
+    "kind": "planet",
+    "parent": "mypack:ember",
+    "tier": 2,
+    "minTier": 2,
+    "reachable": true,
+    "launchFrom": ["minecraft:overworld"],
+    "atmosphere": {
+      "breathable": false,
+      "temperature": 0.6,
+      "corrosive": true
+    },
+    "solarEnergy": 1.6,
+    "exitHeight": 800,
+    "landingHeight": 900,
+    "fuelMultiplier": 0.9,
+    "name": "cinder",
+    "distance": 0.75,
+    "orbitTime": 2.5
+  }
+}
+```
+
+| Klíč             | Povinné   | Hodnota                     | Výchozí           | Co dělá                                                                                                                                                                                                                                 |
+| ---------------- | --------- | --------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`           | ne        | `planet`, `moon`, `station` | `planet`          | Čím dimenze je. [Stanice](#vesmírné-stanice-ad-astra) má vlastní sekci. `asteroids` se přeskočí, protože Ad Astra nemá dimenzi asteroidů                                                                                                |
+| `parent`         | pro měsíc | název                       | `sol` pro planetu | Hvězdný systém planety: `sol` pro vlastní Sluneční soustavu Ad Astry, nebo [balíčkový hvězdný systém](#hvězdné-systémy-ad-astra) podle id (`mypack:ember`), nebo podle cesty v namespace dimenze. U měsíce planeta, podle id nebo cesty |
+| `tier`           | ne        | int                         | `1`               | Úroveň rakety, kterou planeta potřebuje                                                                                                                                                                                                 |
+| `minTier`        | ne        | int                         | `tier`            | Nejnižší úroveň rakety, která smí přistát. Když jsou nastaveny obě, rozhoduje tato                                                                                                                                                      |
+| `reachable`      | ne        | boolean                     | `true`            | Vypnuto: planeta se nezapíše, takže není na planetární obrazovce a žádná raketa tam neletí. Na mapě zůstává na svém místě                                                                                                               |
+| `launchFrom`     | ne        | seznam id dimenzí           | žádný             | Další dimenze, odkud sem raketa smí startovat. Položka, která není id, se přeskočí s chybou                                                                                                                                             |
+| `solarEnergy`    | ne        | desetinné číslo, 0 a více   | `1.0`             | Výkon solárního panelu. `1.0` je výkon Overworldu                                                                                                                                                                                       |
+| `exitHeight`     | ne        | int, nad 0                  | viz níže          | Výška, ve které raketa opouštějící tuto dimenzi ji opustí                                                                                                                                                                               |
+| `landingHeight`  | ne        | int, nad 0                  | viz níže          | Výška, do které hráč přiletí                                                                                                                                                                                                            |
+| `fuelMultiplier` | ne        | desetinné číslo, 0 a více   | `1.0`             | Palivo, které raketa spálí při startu odsud                                                                                                                                                                                             |
+
+Blok přijímá i [klíče mapy](#klíče-mapy-ad-astra), které těleso umístí na mapu hvězdného systému.
+
+| Klíč `atmosphere` | Povinné | Hodnota                  | Výchozí | Co dělá                                                                                                                                                                                     |
+| ----------------- | ------- | ------------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `breathable`      | ne      | boolean                  | `false` | Zda hráči dýchají bez skafandru                                                                                                                                                             |
+| `temperature`     | ne      | desetinné číslo, -1 až 1 | `0`     | `0` je 22 stupňů Celsia, `1` je 71 a `-1` je -51, hodnoty mezi nimi jsou rovnoměrně rozloženy na obě strany. Za tímto rozsahem se drží na kraji                                             |
+| `corrosive`       | ne      | boolean                  | `false` | Padá kyselý déšť. Biomy dimenze se připojí k tagu Ad Astry `ad_astra:has_acid_rain`, takže `biomes.source` musí být `single` nebo `list`; s jiným zdrojem se nic nepřipojí a o tom log píše |
+
+Gravitace je vlastní `physics.gravity` dimenze krát 9.807 a Ad Astra ji uplatní. Každá planeta nebo měsíc dostane navíc prázdnou orbitální dimenzi `<namespace>:<path>_orbit`, do které raketa doletí stoupáním: bez kyslíku, bez gravitace, na -270 stupních a se solárním výkonem 32. Těleso, které nejde zapsat, protože jeho dimenze balíček negeneruje, nebo protože nejde vytvořit jeho orbita, planetu nedostane a log napíše proč.
+
+**Výšky.** Ad Astra používá jednu pevnou výšku, 600 (jeho nastavení `atmosphereLeave`), pro opuštění planety, přistání, přílet z orbity i pád z orbity. Vynechaný `exitHeight` nebo `landingHeight` je větší z čísel 600 a horní hranice stavby dimenze plus 280, takže raketa vysoké dimenze zůstane nad svým stavebním limitem. Hodnota 0 nebo menší se zapíše do logu a použije se výchozí. Skrývání je jen vizuální: s `exitHeight` nad 600 se raketa a cestující mezi 600 a výškou výstupu nekreslí, a s hodnotou pod 600 se nikdy neschová.
+
+**Názvy.** Ad Astra zobrazí planetu pod klíčem jazyka `planet.<namespace>.<path>` a její orbitu pod `planet.<namespace>.<path>_orbit`. Hvězdný systém bere `solar_system.<namespace>.<path>`. Ulož je do jazykového souboru balíčku.
+
+### Hvězdné systémy Ad Astra
+
+*dimenze*
+
+`<namespace>/celestial/*.json`
+
+Soubor v této složce je hvězdný systém, nebo planeta, měsíc či pás asteroidů, který sedí na mapě balíčkového hvězdného systému a nemá kam přistát. Potřebuje Ad Astra a bez něj jsou soubory ignorovány. Těleso, na které lze přistát, je dimenze s [blokem `adastra`](#planety-ad-astra), který se umisťuje stejnými klíči mapy. Přidaná tělesa na mapě se kreslí jen u balíčkových hvězdných systémů. Kolem `sol` Ad Astra kreslí vlastní Sluneční soustavu z dat svých planet, takže tam se těleso, které je jen na mapě, nevykreslí.
+
+```json
+{
+  "kind": "system",
+  "name": "ember",
+  "requires": ["mypack"],
+  "star": {
+    "icon": "ad_astra:textures/environment/sun.png",
+    "relativeSize": 1.2
+  }
+}
+```
+
+```json
+{
+  "kind": "planet",
+  "name": "ash",
+  "parent": "mypack:ember",
+  "icon": "ad_astra:textures/environment/mars.png",
+  "relativeSize": 0.5,
+  "distance": 1.4,
+  "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5
+}
+```
+
+```json
+{
+  "kind": "moon",
+  "name": "clinker",
+  "parent": "ash"
+}
+```
+
+```json
+{
+  "kind": "planet",
+  "name": "slag",
+  "parent": "mypack:ember",
+  "distance": 2.0,
+  "beltWidth": 0.15,
+  "ringColor": "8A8A8A"
+}
+```
+
+| Klíč       | Povinné | Hodnota                               | Výchozí | Co dělá                                                                                                          |
+| ---------- | ------- | ------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| `kind`     | ano     | `system`, `planet`, `moon`            |         | Co soubor vytvoří. `subsystem` a `override` se přeskočí s poznámkou v logu, každá jiná hodnota se z mapy vynechá |
+| `star`     | ne      | objekt                                |         | Hvězda systému, nakreslená ve středu. Bere `icon`, výchozí je slunce z Ad Astry, a `relativeSize`, výchozí `1.0` |
+| `requires` | ne      | seznam id módů nebo namespace balíčků | žádný   | Soubor se přeskočí, dokud nejsou přítomny všechny                                                                |
+
+`system` bere také `name` a `ringColor`. Planeta nebo měsíc bere klíče mapy níže. Těleso, jehož hvězdný systém žádný soubor `celestial/` nedefinuje, se z mapy vynechá a log to řekne. Klíče psané pro 1.12.2, které tato verze nečte (`galaxy`, `galaxyImage`, `mapPosition`, `subsystem`, `scaledDistance`, `galaxyspace`, `extraplanets`), se přeskočí s poznámkou v logu.
+
+### Klíče mapy (Ad Astra)
+
+*dimenze*
+
+Každé těleso, ať ze souboru `celestial/`, nebo z bloku `adastra` dimenze, se na mapě umisťuje těmito klíči.
+
+| Klíč           | Povinné   | Hodnota                  | Výchozí                                           | Co dělá                                                                                                                                                                                                    |
+| -------------- | --------- | ------------------------ | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | ne        | text                     | název souboru nebo dimenze                        | Jméno, kterým se na těleso dá odkázat v `parent`, vedle jeho id a cesty. Prázdné jméno těleso z mapy vynechá                                                                                               |
+| `parent`       | pro měsíc | název                    | `sol` pro planetu                                 | Hvězdný systém, kolem kterého planeta obíhá, nebo planeta, kolem které obíhá měsíc, podle id, cesty nebo `name`. Měsíc bez rodiče se z mapy vynechá                                                        |
+| `icon`         | ne        | cesta k textuře          | obrázek Marsu z Ad Astry, u měsíce obrázek měsíce | Obrázek na mapě                                                                                                                                                                                            |
+| `relativeSize` | ne        | desetinné číslo          | `1.0`, měsíc `0.2667`                             | Velikost na mapě                                                                                                                                                                                           |
+| `distance`     | ne        | desetinné číslo          | `1.0`, měsíc `13`                                 | Jak daleko obíhá                                                                                                                                                                                           |
+| `orbitTime`    | ne        | desetinné číslo          | `1.0`, měsíc `100`                                | Jak dlouho trvá jeden oběh na mapě. `0` nebo méně ho drží na místě                                                                                                                                         |
+| `phaseShift`   | ne        | desetinné číslo, radiány | `0`                                               | Kde na své dráze začíná                                                                                                                                                                                    |
+| `ring`         | ne        | cesta k textuře          | žádný                                             | Obrázek samotného prstence, viděný šikmo a širší než vyšší, kreslený kolem tělesa na mapě, za tělesem a před ním                                                                                           |
+| `ringSize`     | ne        | desetinné číslo, od 0.1  | `2.5`                                             | Šířka prstence jako násobek šířky tělesa na mapě                                                                                                                                                           |
+| `ringFront`    | ne        | text                     | `bottom`                                          | Která polovina obrázku `ring` prochází před tělesem: `bottom`, `top`, `left` nebo `right`. Jiná hodnota se zapíše do logu a použije se `bottom`                                                            |
+| `ringColor`    | ne        | hex barva                | `19E599`                                          | Čára dráhy                                                                                                                                                                                                 |
+| `beltWidth`    | ne        | desetinné číslo, od 0    | `0`                                               | Nad `0` je těleso pás asteroidů: pás té šířky, v jednotkách `distance`, vycentrovaný na své dráze a orámovaný a vyplněný barvou `ringColor`, bez vykresleného tělesa a bez něčeho, co by kolem něj obíhalo |
+
+**Pásy asteroidů.** Ad Astra nemá dimenzi asteroidů, takže pás se kreslí jen na mapě. Dej souboru `celestial/` `beltWidth`, jako v posledním příkladu výše. Dimenze, jejíž blok `adastra` říká `"kind": "asteroids"`, se přeskočí jako planeta a dimenze sama se načte jako obyčejná dimenze.
+
+### Vesmírné stanice Ad Astra
+
+*dimenze*
+
+`<namespace>/dimensions/*.json`
+
+Dimenze, jejíž blok `adastra` má `kind: "station"`, dovolí hráčům postavit vesmírnou stanici na orbitě kolem balíčkové planety nebo měsíce, přes tlačítko „+“ na planetární obrazovce Ad Astry. Potřebuje Ad Astra a bez něj blok nedělá nic: přeskočí se a log to napíše.
+
+```json
+{
+  "adastra": {
+    "kind": "station",
+    "parent": "cinder",
+    "tier": 2,
+    "recipe": {
+      "minecraft:iron_block": 8,
+      "#forge:ingots/tin": 24
+    },
+    "structure": "ad_astra:space_station"
+  }
+}
+```
+
+| Klíč        | Povinné | Hodnota                    | Výchozí                                 | Co dělá                                                                                                  |
+| ----------- | ------- | -------------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `kind`      | ano     | `station`                  |                                         | Udělá ze souboru stanici                                                                                 |
+| `parent`    | ano     | název                      |                                         | Planeta nebo měsíc, kolem kterého obíhá: dosažitelný, který balíček dimenzí vytváří, podle id nebo cesty |
+| `tier`      | ne      | int                        | úroveň rodičovské planety               | Úroveň rakety, která stanici doletí                                                                      |
+| `minTier`   | ne      | int                        | `tier`                                  | Totéž, a rozhoduje, když jsou nastaveny obě                                                              |
+| `recipe`    | ne      | objekt ingredience a počtu | recept stanice `earth_orbit` z Ad Astry | Co stavba stanice stojí. Ingredience je `namespace:item` nebo `#namespace:tag`, počet je 1 nebo více     |
+| `structure` | ne      | id struktury               | `ad_astra:space_station`                | Struktura postavená na orbitě                                                                            |
+
+Svět stanice je vždy prázdný orbitální svět RDPL se stavebním rozsahem -64 až 320, takže `terrain` a `biomes` se ignorují s chybou v logu. Stanice je orbita jako planetární: bez kyslíku, bez gravitace, na -270 stupních a se solárním výkonem 32. Klíč dimenze je klíčem stanice a její jméno přichází z `planet.<namespace>.<path>`.
+
+**Co stanice nedělá.**
+
+- Stanice se neobjeví na mapě Ad Astry. Ad Astra ji uvádí na stránce planety.
+- Id předmětu v `recipe` se kontroluje jen podle tvaru. Je-li předmět neznámý, Ad Astra celý recept při znovunačtení odmítne.
+- Ingredience s metadaty (`namespace:item:meta`) nebo holé jméno slovníku rud se odmítne, po jednom klíči, a log to řekne.
+- `showName` a `checklist` nemají žádný účinek.
+- Odmítnutá stanice, tedy ta se špatným `parent` nebo druhá na rodiči, který už stanici má, se načte jako obyčejná prázdná dimenze bez záznamu planety.
+
+**Obloha.** Když ji nechá být, dostane stanice od Ad Astry tuto oblohu:
+
+| Část              | Výchozí                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------- |
+| Slunce            | Slunce Ad Astry, velikost 9, přecházející oblohou s denní dobou                         |
+| Rodičovské těleso | Mapová `icon` rodiče, nebo obrázek měsíce Ad Astry bez ní, velikost 80, pevné na obloze |
+| Hvězdy            | 13000 hvězd, jas 0.6                                                                    |
+| Mraky             | Kreslí se                                                                               |
+| Mlha, počasí      | Žádné                                                                                   |
+
+Když dimenze nastaví jakýkoli klíč vzhledu oblohy, místo ní se kreslí obloha RDPL a rodičovské těleso kreslí balíček sám přes `sky.bodies`.
+
 ## Portály a brány
 
 *svět*
@@ -6682,6 +6942,8 @@ Brány hlídají i herní vlastní dimenze: brána, jejíž `dimension` je `mine
 ```
 
 `/rdplserver gate list` ukáže u brány bez dimenze `-`.
+
+**Ad Astra.** Na 1.20.1 a 1.21.1 je planeta za bránou skrytá na planetární obrazovce Ad Astry pro hráče, kterého brána nepouští, a přistání tam je odmítnuto. Stavbu stanice za bránou server odmítne, ale tlačítko „+“ stanice zůstává vykreslené, zatímco je rodič za bránou. Viz [Planety Ad Astra](#planety-ad-astra).
 
 ## Hluboký svět
 
@@ -11173,7 +11435,7 @@ Co může balíček pro 1.12.2 napsat, co tato verze nečte, a proč. Balíček,
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `meta`                                                                                                                                                                 | bloky, předměty, worldgen, dropy z bloků                                                        | Id po zploštění nenesou metadata. Konverze provede každé `name:meta` přes datové opravy hry a klíč zahodí                                                                                                                                                                                                                                                        |
 | `oreDict`                                                                                                                                                              | bloky, předměty, pec, paliva, filtry úložiště entit                                             | Slovník rud je pryč. Konverze ho změní na `tags` s konvenčními tagy a položku paliva nebo filtru úložiště na `tag`                                                                                                                                                                                                                                               |
-| `galacticraft`                                                                                                                                                         | varianty entit                                                                                  | Pro tuto verzi žádný Galacticraft neexistuje, takže varianta nemá raketový stupeň, palivovou nádrž, náklad ani užitečné zatížení k nastavení                                                                                                                                                                                                                     |
+| `galacticraft`                                                                                                                                                         | varianty entit                                                                                  | Pro tuto verzi žádný Galacticraft neexistuje. Ekvivalentem pro Ad Astra je objekt `adastra` u varianty a blok `adastra` u dimenze, viz Rakety Ad Astra a Planety Ad Astra                                                                                                                                                                                        |
 | `oreDictionary`                                                                                                                                                        | nastavení                                                                                       | Slovník rud je pryč, takže nezbývají žádné soubory slovníku rud k vypnutí. Jeho práci dělají tagy a konverze je zapisuje z `oreDict` balíčku                                                                                                                                                                                                                     |
 | `modelMeta`                                                                                                                                                            | bloky                                                                                           | Modely se generují pro každou variantu, takže není žádné metadato, podle něhož by se mapovaly                                                                                                                                                                                                                                                                    |
 | `disableOverrides`, `tolerateMissingInAdvancements`                                                                                                                    | nastavení                                                                                       | Datový balíček nahradí vanilla recept nebo advancement tím, že dodá jeden pod stejným názvem                                                                                                                                                                                                                                                                     |

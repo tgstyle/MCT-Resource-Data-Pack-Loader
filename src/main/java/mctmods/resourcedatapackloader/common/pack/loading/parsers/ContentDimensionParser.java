@@ -68,7 +68,8 @@ public final class ContentDimensionParser {
 
     private ContentDimensionParser() {}
 
-    public static DimensionDef parse(ResourceLocation key, JsonObject json) {
+    public static DimensionDef parse(ResourceLocation key, JsonObject file) {
+        JsonObject json = ContentParserAdAstra.stationed(key, file);
         JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());
         JsonObject biomes = Json.getJsonObject(json, "biomes", new JsonObject());
         JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
@@ -136,7 +137,7 @@ public final class ContentDimensionParser {
                 Json.getFloat(sky, "starBrightness", -1.0F), Json.getBoolean(sky, "renderSky", true), Json.getBoolean(sky, "renderClouds", true),
                 Json.getBoolean(sky, "renderWeather", true), respawnDimension, Json.getBoolean(sky, "respawn", true),
                 Json.getInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits,
-                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), ContentParserTimeWindows.windows(key, json, traits.precipitation()), ContentParserDarkness.darkness(key, sky), Json.paths(json));
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), ContentParserTimeWindows.windows(key, json, traits.precipitation()), ContentParserDarkness.darkness(key, sky), ContentParserAdAstra.adastra(key, json), Json.paths(json));
     }
 
     private static int caveSea(ResourceLocation key, JsonObject terrain) {

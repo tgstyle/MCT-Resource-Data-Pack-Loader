@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "空",
+  "rdpl.rocket.payloadMissing": "このロケットは積荷に %s × %s がないと発射しません",
   "rdpl.game.coin": "{player} がコインを投げました: {result}",
   "rdpl.game.heads": "表",
   "rdpl.game.tails": "裏",

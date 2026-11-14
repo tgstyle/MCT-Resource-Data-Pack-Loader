@@ -68,6 +68,7 @@ public final class ContentDimensions {
     private static final String TERRAIN_TYPE = "terrain.type";
     private static final Map<ResourceLocation, DimensionDef> DEFS = new LinkedHashMap<>();
     private static final Set<ResourceLocation> EXISTING = new HashSet<>();
+    private static final Set<ResourceLocation> MADE = new HashSet<>();
     private static final Map<UUID, ResourceLocation> DIED_IN = new HashMap<>();
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
     private static boolean loaded;
@@ -131,17 +132,32 @@ public final class ContentDimensions {
                 applied.add(def.key().toString());
                 continue;
             }
-            JsonObject type = GameData.json(ResourceLocation.withDefaultNamespace("dimension_type/" + def.base() + PackManager.JSON_SUFFIX));
-            if (type == null) { continue; }
-            retype(def, type);
-            type.addProperty("effects", ContentEnvironments.hasEffects(def.key(), def) ? def.key().toString() : OVERWORLD.toString());
-            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + PackManager.JSON_SUFFIX, type.toString());
-            stem(def, def.key());
-            made.add(def.key().toString());
+            if (make(def)) { made.add(def.key().toString()); }
         }
         if (!made.isEmpty()) { Summary.info("dimensions.generated", "Generated " + made.size() + " dimension(s) with their types: " + String.join(", ", made)); }
         if (!applied.isEmpty()) { Summary.info("dimensions.existing", "Applied " + applied.size() + " dimension file(s) to existing dimensions: " + String.join(", ", applied)); }
         ContentForeignDimensions.generate();
+    }
+
+    public static boolean generated(ResourceLocation dimension) { return MADE.contains(dimension); }
+
+    public static boolean generateExtra(ResourceLocation key, JsonObject json) {
+        if (DEFS.containsKey(key)) { return MADE.contains(key); }
+        DimensionDef def = ContentDimensionParser.parse(key, json);
+        if (!make(def)) { return false; }
+        DEFS.put(key, def);
+        return true;
+    }
+
+    private static boolean make(DimensionDef def) {
+        JsonObject type = GameData.json(ResourceLocation.withDefaultNamespace("dimension_type/" + def.base() + PackManager.JSON_SUFFIX));
+        if (type == null) { return false; }
+        retype(def, type);
+        type.addProperty("effects", ContentEnvironments.hasEffects(def.key(), def) || (def.adastra() != null && def.adastra().isStation()) ? def.key().toString() : OVERWORLD.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + PackManager.JSON_SUFFIX, type.toString());
+        stem(def, def.key());
+        MADE.add(def.key());
+        return true;
     }
 
     private static void existing(DimensionDef def) {

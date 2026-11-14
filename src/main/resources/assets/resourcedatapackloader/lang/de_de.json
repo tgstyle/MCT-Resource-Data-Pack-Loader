@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Leer",
+  "rdpl.rocket.payloadMissing": "Diese Rakete startet erst mit %s x %s im Frachtraum",
   "rdpl.game.coin": "{player} wirft eine Münze: {result}",
   "rdpl.game.heads": "Kopf",
   "rdpl.game.tails": "Zahl",

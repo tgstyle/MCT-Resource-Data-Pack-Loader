@@ -20,9 +20,9 @@ This page is a signpost. Every language file holds the whole guide, not a summar
 
 **English is the source.** Translations follow it, so if something reads oddly or looks out of date, check the English file.
 
-### Twelve working examples
+### Thirteen working examples
 
-Drop any of them straight into `rdploader` and look at how each file is written. Eleven exist for all four versions; take the zip for yours. One works with a 1.12.2 mod and exists for 1.12.2 only.
+Drop any of them straight into `rdploader` and look at how each file is written. Eleven exist for all four versions; take the zip for yours. One works with a 1.12.2 mod and exists for 1.12.2 only, and one works with Ad Astra and exists for 1.20.1 and 1.21.1.
 
 #### All versions
 
@@ -41,6 +41,10 @@ Drop any of them straight into `rdploader` and look at how each file is written.
 #### 1.12.2 only
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) needs Galacticraft and puts a star system of its own on the star map, with a planet reached by a tier 2 rocket that has its own sky, gravity, day length, weather and atmosphere, a planet to look at but never land on, and, with GalaxySpace, an ice planet around Tau Ceti.
+
+#### 1.20.1 and 1.21.1 only
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) needs Ad Astra and puts a star system of its own on the planet map, with a planet reached by a tier 2 rocket that has its own sky, gravity, day length, weather and atmosphere, an ice planet for a tier 3 rocket, a planet to look at but never land on, a space station over the first planet and a rocket of its own.
 
 ### Adding a language
 
@@ -64,9 +68,9 @@ Diese Seite ist nur ein Wegweiser. In jeder Sprachdatei steht das ganze Handbuch
 
 **Englisch ist die Quelle.** Die Übersetzungen folgen ihr, wenn sich also etwas seltsam liest oder veraltet wirkt, sieh in der englischen Datei nach.
 
-### Zwölf fertige Beispiele
+### Dreizehn fertige Beispiele
 
-Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist. Elf gibt es für alle vier Versionen; nimm das Zip für deine. Eines arbeitet mit einer Mod für 1.12.2 und gibt es nur für 1.12.2.
+Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist. Elf gibt es für alle vier Versionen; nimm das Zip für deine. Eines arbeitet mit einer Mod für 1.12.2 und gibt es nur für 1.12.2, und eines arbeitet mit Ad Astra und gibt es für 1.20.1 und 1.21.1.
 
 #### Alle Versionen
 
@@ -85,6 +89,10 @@ Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieb
 #### Nur 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) Braucht Galacticraft und setzt ein eigenes Sternsystem auf die Sternenkarte, mit einem Planeten, den man mit einer Rakete der Stufe 2 erreicht und der eigenen Himmel, eigene Schwerkraft, Tageslänge, eigenes Wetter und eigene Atmosphäre hat, einem Planeten, den man nur ansehen, aber nie betreten kann, und, mit GalaxySpace, einem Eisplaneten um Tau Ceti.
+
+#### Nur 1.20.1 und 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) Braucht Ad Astra und setzt ein eigenes Sternsystem auf die Planetenkarte, mit einem Planeten, den man mit einer Rakete der Stufe 2 erreicht und der eigenen Himmel, eigene Schwerkraft, Tageslänge, eigenes Wetter und eigene Atmosphäre hat, einem Eisplaneten für eine Rakete der Stufe 3, einem Planeten, den man nur ansehen, aber nie betreten kann, einer Raumstation über dem ersten Planeten und einer eigenen Rakete.
 
 ### Sprache hinzufügen
 
@@ -108,9 +116,9 @@ Kopiere `howto_localized/HOWTO-en_us.md` im Branch jeder Version nach `howto_loc
 
 **Английский — исходный язык.** Переводы идут за ним, так что если что-то читается странно или выглядит устаревшим, сверьтесь с английским файлом.
 
-### Двенадцать готовых примеров
+### Тринадцать готовых примеров
 
-Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл. Одиннадцать есть для всех четырёх версий; берите zip для своей. Один работает с модом для 1.12.2 и есть только для 1.12.2.
+Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл. Одиннадцать есть для всех четырёх версий; берите zip для своей. Один работает с модом для 1.12.2 и есть только для 1.12.2, а один работает с Ad Astra и есть для 1.20.1 и 1.21.1.
 
 #### Все версии
 
@@ -129,6 +137,10 @@ Kopiere `howto_localized/HOWTO-en_us.md` im Branch jeder Version nach `howto_loc
 #### Только 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) Требует Galacticraft и добавляет на звёздную карту собственную звёздную систему: планету, куда летят на ракете 2-го уровня, со своим небом, гравитацией, длиной дня, погодой и атмосферой, планету, на которую можно только смотреть, но не садиться, а с GalaxySpace ещё и ледяную планету у Тау Кита.
+
+#### Только 1.20.1 и 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) Требует Ad Astra и добавляет на карту планет собственную звёздную систему: планету, куда летят на ракете 2-го уровня, со своим небом, гравитацией, длиной дня, погодой и атмосферой, ледяную планету для ракеты 3-го уровня, планету, на которую можно только смотреть, но не садиться, космическую станцию над первой планетой и собственную ракету.
 
 ### Добавить язык
 
@@ -152,9 +164,9 @@ Kopiere `howto_localized/HOWTO-en_us.md` im Branch jeder Version nach `howto_loc
 
 **英文是源语言。** 译文以英文为准，所以如果某处读起来别扭或似乎已经过时，请查看英文文件。
 
-### 十二个可用的示例
+### 十三个可用的示例
 
-把任意一个直接放进 `rdploader`，看看每个文件是怎么写的。其中十一个适用于全部四个版本，请下载对应你所用版本的 zip。另有一个配合 1.12.2 的模组使用，只有 1.12.2 版本。
+把任意一个直接放进 `rdploader`，看看每个文件是怎么写的。其中十一个适用于全部四个版本，请下载对应你所用版本的 zip。另有一个配合 1.12.2 的模组使用，只有 1.12.2 版本；还有一个配合 Ad Astra 使用，适用于 1.20.1 和 1.21.1 版本。
 
 #### 所有版本
 
@@ -173,6 +185,10 @@ Kopiere `howto_localized/HOWTO-en_us.md` im Branch jeder Version nach `howto_loc
 #### 仅限 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) 需要 Galacticraft，并在星图上加入一个自有的星系：其中有一颗乘坐二级火箭抵达的行星，拥有自己的天空、重力、昼长、天气和大气；有一颗只能观看、无法降落的行星；若装有 GalaxySpace，还有一颗环绕天仓五的冰雪行星。
+
+#### 仅限 1.20.1 和 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) 需要 Ad Astra，并在星球地图上加入自己专属的恒星系：其中有一颗可乘坐二级火箭抵达的行星，拥有自己的天空、重力、昼长、天气与大气；一颗冰行星，需三级火箭才能抵达；一颗只能远观、无法降落的行星；第一颗行星上空的太空站；以及一艘专属的火箭。
 
 ### 添加语言
 
@@ -196,9 +212,9 @@ Esta página es solo un indicador. Cada archivo de idioma contiene la guía comp
 
 **El inglés es la fuente.** Las traducciones lo siguen, así que si algo suena raro o parece desactualizado, consulta el archivo en inglés.
 
-### Doce ejemplos listos para usar
+### Trece ejemplos listos para usar
 
-Suelta cualquiera de ellos directamente en `rdploader` y mira cómo está escrito cada archivo. Once existen para las cuatro versiones; coge el zip de la tuya. Uno funciona con un mod de 1.12.2 y solo existe para 1.12.2.
+Suelta cualquiera de ellos directamente en `rdploader` y mira cómo está escrito cada archivo. Once existen para las cuatro versiones; coge el zip de la tuya. Uno funciona con un mod de 1.12.2 y solo existe para 1.12.2, y otro funciona con Ad Astra y existe para 1.20.1 y 1.21.1.
 
 #### Todas las versiones
 
@@ -217,6 +233,10 @@ Suelta cualquiera de ellos directamente en `rdploader` y mira cómo está escrit
 #### Solo 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) necesita Galacticraft y coloca en el mapa estelar un sistema estelar propio, con un planeta al que se llega en un cohete de nivel 2 que tiene su propio cielo, gravedad, duración del día, clima y atmósfera, un planeta para mirar pero en el que nunca se puede aterrizar y, con GalaxySpace, un planeta de hielo alrededor de Tau Ceti.
+
+#### Solo 1.20.1 y 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) necesita Ad Astra y coloca en el mapa de planetas un sistema estelar propio, con un planeta al que se llega en un cohete de nivel 2 que tiene su propio cielo, gravedad, duración del día, clima y atmósfera, un planeta de hielo para un cohete de nivel 3, un planeta para mirar pero en el que nunca se puede aterrizar, una estación espacial sobre el primer planeta y un cohete propio.
 
 ### Añadir un idioma
 
@@ -240,9 +260,9 @@ Esta página é apenas um indicador. Cada arquivo de idioma contém o guia compl
 
 **O inglês é a fonte.** As traduções o seguem, então, se algo parecer estranho ou desatualizado, confira o arquivo em inglês.
 
-### Doze exemplos prontos para usar
+### Treze exemplos prontos para usar
 
-Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo foi escrito. Onze existem para as quatro versões; baixe o zip da sua. Um funciona com um mod da 1.12.2 e existe só para a 1.12.2.
+Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo foi escrito. Onze existem para as quatro versões; baixe o zip da sua. Um funciona com um mod da 1.12.2 e existe só para a 1.12.2, e outro funciona com o Ad Astra e existe para a 1.20.1 e a 1.21.1.
 
 #### Todas as versões
 
@@ -261,6 +281,10 @@ Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo foi esc
 #### Somente 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) precisa do Galacticraft e coloca no mapa estelar um sistema estelar próprio, com um planeta alcançado por um foguete de nível 2 que tem céu, gravidade, duração do dia, clima e atmosfera próprios, um planeta só para olhar, onde nunca se pousa e, com o GalaxySpace, um planeta de gelo em volta de Tau Ceti.
+
+#### Somente 1.20.1 e 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) precisa do Ad Astra e coloca no mapa de planetas um sistema estelar próprio, com um planeta alcançado por um foguete de nível 2 que tem céu, gravidade, duração do dia, clima e atmosfera próprios, um planeta de gelo para um foguete de nível 3, um planeta só para olhar, onde nunca se pousa, uma estação espacial sobre o primeiro planeta e um foguete próprio.
 
 ### Adicionar um idioma
 
@@ -284,9 +308,9 @@ Cette page n'est qu'un panneau indicateur. Chaque fichier de langue contient le 
 
 **L'anglais est la source.** Les traductions le suivent ; si quelque chose te semble étrange ou périmé, consulte le fichier anglais.
 
-### Douze exemples prêts à l'emploi
+### Treize exemples prêts à l'emploi
 
-Dépose n'importe lequel directement dans `rdploader` et regarde comment chaque fichier est écrit. Onze existent pour les quatre versions ; prends le zip de la tienne. Un seul fonctionne avec un mod 1.12.2 et n'existe que pour la 1.12.2.
+Dépose n'importe lequel directement dans `rdploader` et regarde comment chaque fichier est écrit. Onze existent pour les quatre versions ; prends le zip de la tienne. Un seul fonctionne avec un mod 1.12.2 et n'existe que pour la 1.12.2, et un autre fonctionne avec Ad Astra et existe pour les 1.20.1 et 1.21.1.
 
 #### Toutes les versions
 
@@ -305,6 +329,10 @@ Dépose n'importe lequel directement dans `rdploader` et regarde comment chaque 
 #### Uniquement 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) nécessite Galacticraft et place sur la carte stellaire un système stellaire à lui, avec une planète atteinte par une fusée de niveau 2 qui a son propre ciel, sa propre gravité, sa durée du jour, sa météo et son atmosphère, une planète à regarder sans jamais s'y poser et, avec GalaxySpace, une planète de glace autour de Tau Ceti.
+
+#### Uniquement 1.20.1 et 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) nécessite Ad Astra et place sur la carte des planètes un système stellaire à lui, avec une planète atteinte par une fusée de niveau 2 qui a son propre ciel, sa propre gravité, sa durée du jour, sa météo et son atmosphère, une planète de glace atteinte par une fusée de niveau 3, une planète à regarder sans jamais s'y poser, une station spatiale au-dessus de la première planète et une fusée à lui.
 
 ### Ajouter une langue
 
@@ -328,9 +356,9 @@ Tahle stránka je jen rozcestník. Každý jazykový soubor obsahuje celého pr�
 
 **Angličtina je zdroj.** Překlady z ní vycházejí, takže pokud něco působí divně nebo zastarale, podívej se do anglického souboru.
 
-### Dvanáct funkčních příkladů
+### Třináct funkčních příkladů
 
-Vlož kterýkoli z nich přímo do `rdploader` a podívej se, jak je každý soubor napsaný. Jedenáct jich existuje pro všechny čtyři verze; vezmi si zip pro svou. Jeden funguje s modem pro 1.12.2 a existuje jen pro 1.12.2.
+Vlož kterýkoli z nich přímo do `rdploader` a podívej se, jak je každý soubor napsaný. Jedenáct jich existuje pro všechny čtyři verze; vezmi si zip pro svou. Jeden funguje s modem pro 1.12.2 a existuje jen pro 1.12.2, a jeden funguje s Ad Astra a existuje pro 1.20.1 a 1.21.1.
 
 #### Všechny verze
 
@@ -349,6 +377,10 @@ Vlož kterýkoli z nich přímo do `rdploader` a podívej se, jak je každý sou
 #### Jen 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) vyžaduje Galacticraft a umístí na hvězdnou mapu vlastní hvězdný systém, s planetou dosažitelnou raketou tier 2, která má vlastní oblohu, gravitaci, délku dne, počasí a atmosféru, s planetou, na kterou se dá jen dívat a nikdy na ní nepřistát, a s GalaxySpace i s ledovou planetou kolem Tau Ceti.
+
+#### Jen 1.20.1 a 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) vyžaduje Ad Astra a umístí na mapu planet vlastní hvězdný systém, s planetou dosažitelnou raketou tier 2, která má vlastní oblohu, gravitaci, délku dne, počasí a atmosféru, s ledovou planetou pro raketu tier 3, s planetou, na kterou se dá jen dívat a nikdy na ní nepřistát, s vesmírnou stanicí nad první planetou a s vlastní raketou.
 
 ### Přidání jazyka
 
@@ -372,9 +404,9 @@ Questa pagina è solo un'indicazione. Ogni file di lingua contiene l'intera guid
 
 **L'inglese è la fonte.** Le traduzioni lo seguono, quindi se qualcosa ti sembra strano o non aggiornato, controlla il file inglese.
 
-### Dodici esempi funzionanti
+### Tredici esempi funzionanti
 
-Trascina uno qualsiasi direttamente in `rdploader` e guarda come è scritto ogni file. Undici esistono per tutte e quattro le versioni; prendi lo zip della tua. Uno funziona con una mod per 1.12.2 ed esiste solo per la 1.12.2.
+Trascina uno qualsiasi direttamente in `rdploader` e guarda come è scritto ogni file. Undici esistono per tutte e quattro le versioni; prendi lo zip della tua. Uno funziona con una mod per 1.12.2 ed esiste solo per la 1.12.2, e un altro funziona con Ad Astra ed esiste per la 1.20.1 e la 1.21.1.
 
 #### Tutte le versioni
 
@@ -393,6 +425,10 @@ Trascina uno qualsiasi direttamente in `rdploader` e guarda come è scritto ogni
 #### Solo 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) richiede Galacticraft e mette sulla mappa stellare un sistema stellare tutto suo, con un pianeta raggiunto da un razzo di livello 2 che ha il proprio cielo, la propria gravità, la propria durata del giorno, il proprio meteo e la propria atmosfera, un pianeta da guardare ma su cui non atterrare mai e, con GalaxySpace, un pianeta di ghiaccio attorno a Tau Ceti.
+
+#### Solo 1.20.1 e 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) richiede Ad Astra e mette sulla mappa dei pianeti un sistema stellare tutto suo, con un pianeta raggiunto da un razzo di livello 2 che ha il proprio cielo, la propria gravità, la propria durata del giorno, il proprio meteo e la propria atmosfera, un pianeta di ghiaccio raggiunto da un razzo di livello 3, un pianeta da guardare ma su cui non atterrare mai, una stazione spaziale sopra il primo pianeta e un razzo tutto suo.
 
 ### Aggiungere una lingua
 
@@ -416,9 +452,9 @@ Minecraftのバージョンごとに専用のガイドがあります。1.12.2�
 
 **英語が原文です**。翻訳は英語版に従っているため、不自然な箇所や古い箇所があれば、英語版のファイルを確認してください。
 
-### 12個の動作するサンプル
+### 13個の動作するサンプル
 
-どれでもそのまま`rdploader`に入れて、各ファイルがどう書かれているか確認してください。11個は4つのバージョンすべてに用意されています。お使いのバージョンのzipを選んでください。1個は1.12.2のMODで動作し、1.12.2専用です。
+どれでもそのまま`rdploader`に入れて、各ファイルがどう書かれているか確認してください。11個は4つのバージョンすべてに用意されています。お使いのバージョンのzipを選んでください。1個は1.12.2のMODで動作し、1.12.2専用です。もう1個はAd Astraで動作し、1.20.1と1.21.1で使えます。
 
 #### すべてのバージョン
 
@@ -437,6 +473,10 @@ Minecraftのバージョンごとに専用のガイドがあります。1.12.2�
 #### 1.12.2専用
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip))はGalacticraftが必要で、スターマップに独自の恒星系を追加します。ティア2のロケットで到達できる惑星には、独自の空、重力、1日の長さ、天候、大気があります。眺めるだけで着陸はできない惑星もあり、GalaxySpaceがあれば、タウ・セティの周りを回る氷の惑星もあります。
+
+#### 1.20.1と1.21.1専用
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip))はAd Astraが必要で、惑星マップに独自の恒星系を追加します。ティア2のロケットで到達できる惑星には、独自の空、重力、1日の長さ、天候、大気があります。ティア3のロケットで行ける氷の惑星、眺めるだけで着陸はできない惑星、最初の惑星の上空の宇宙ステーション、独自のロケットもあります。
 
 ### 言語を追加する
 
@@ -460,9 +500,9 @@ Minecraft 버전마다 자체 가이드가 있습니다: 1.12.2, 1.20.1, 1.21.1,
 
 **영어가 원문입니다.** 번역은 영어를 따르므로, 어색하거나 오래된 부분이 있으면 영어 파일을 확인하세요.
 
-### 바로 쓸 수 있는 예시 열두 개
+### 바로 쓸 수 있는 예시 열세 개
 
-아무 팩이나 그대로 `rdploader`에 넣고 각 파일이 어떻게 작성되었는지 살펴보세요. 열한 개는 네 버전 모두에 있으니 사용하는 버전의 zip을 받으세요. 하나는 1.12.2 모드와 함께 작동하며 1.12.2에만 있습니다.
+아무 팩이나 그대로 `rdploader`에 넣고 각 파일이 어떻게 작성되었는지 살펴보세요. 열한 개는 네 버전 모두에 있으니 사용하는 버전의 zip을 받으세요. 하나는 1.12.2 모드와 함께 작동하며 1.12.2에만 있고, 다른 하나는 Ad Astra와 함께 작동하며 1.20.1과 1.21.1에 있습니다.
 
 #### 모든 버전
 
@@ -481,6 +521,10 @@ Minecraft 버전마다 자체 가이드가 있습니다: 1.12.2, 1.20.1, 1.21.1,
 #### 1.12.2 전용
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) 파일은 Galacticraft가 필요하며, 별 지도에 고유한 항성계를 추가합니다. 티어 2 로켓으로 갈 수 있는 행성에는 고유한 하늘, 중력, 낮 길이, 날씨, 대기가 있고, 보기만 할 뿐 착륙할 수는 없는 행성도 있으며, GalaxySpace가 있으면 타우 세티 주위의 얼음 행성도 있습니다.
+
+#### 1.20.1 및 1.21.1 전용
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) 파일은 Ad Astra가 필요하며, 행성 지도에 고유한 항성계를 추가합니다. 티어 2 로켓으로 갈 수 있는 행성에는 고유한 하늘, 중력, 낮 길이, 날씨, 대기가 있고, 티어 3 로켓으로 갈 수 있는 얼음 행성, 보기만 할 뿐 착륙할 수는 없는 행성, 첫 번째 행성 위의 우주 정거장, 고유한 로켓도 있습니다.
 
 ### 언어 추가하기
 
@@ -504,9 +548,9 @@ Esta página é apenas um sinal de orientação. Cada ficheiro de idioma contém
 
 **O inglês é a fonte.** As traduções seguem-no, por isso, se algo te parecer estranho ou desatualizado, consulta o ficheiro em inglês.
 
-### Doze exemplos prontos a usar
+### Treze exemplos prontos a usar
 
-Larga qualquer um deles diretamente em `rdploader` e vê como cada ficheiro está escrito. Onze existem para as quatro versões; transfere o zip da tua. Um funciona com um mod da 1.12.2 e existe apenas para a 1.12.2.
+Larga qualquer um deles diretamente em `rdploader` e vê como cada ficheiro está escrito. Onze existem para as quatro versões; transfere o zip da tua. Um funciona com um mod da 1.12.2 e existe apenas para a 1.12.2, e outro funciona com o Ad Astra e existe para a 1.20.1 e a 1.21.1.
 
 #### Todas as versões
 
@@ -525,6 +569,10 @@ Larga qualquer um deles diretamente em `rdploader` e vê como cada ficheiro est�
 #### Apenas 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) requer o Galacticraft e coloca no mapa estelar um sistema estelar próprio, com um planeta alcançado por um foguetão de nível 2 que tem o seu próprio céu, gravidade, duração do dia, meteorologia e atmosfera, um planeta para ver mas onde nunca se aterra e, com o GalaxySpace, um planeta de gelo à volta de Tau Ceti.
+
+#### Apenas 1.20.1 e 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) requer o Ad Astra e coloca no mapa de planetas um sistema estelar próprio, com um planeta alcançado por um foguetão de nível 2 que tem o seu próprio céu, gravidade, duração do dia, meteorologia e atmosfera, um planeta de gelo para um foguetão de nível 3, um planeta para ver mas onde nunca se aterra, uma estação espacial sobre o primeiro planeta e um foguetão próprio.
 
 ### Acrescentar um idioma
 
@@ -548,9 +596,9 @@ Copia `howto_localized/HOWTO-en_us.md` para `howto_localized/HOWTO-<code>.md` no
 
 **Англійська — першоджерело.** Переклади йдуть за нею, тож якщо щось звучить дивно чи здається застарілим, перевірте англійський файл.
 
-### Дванадцять робочих прикладів
+### Тринадцять робочих прикладів
 
-Киньте будь-який із них просто в `rdploader` і подивіться, як написано кожен файл. Одинадцять існують для всіх чотирьох версій; беріть zip для своєї. Один працює з модом для 1.12.2 і є лише для 1.12.2.
+Киньте будь-який із них просто в `rdploader` і подивіться, як написано кожен файл. Одинадцять існують для всіх чотирьох версій; беріть zip для своєї. Один працює з модом для 1.12.2 і є лише для 1.12.2, а ще один працює з Ad Astra і є для 1.20.1 та 1.21.1.
 
 #### Усі версії
 
@@ -569,6 +617,10 @@ Copia `howto_localized/HOWTO-en_us.md` para `howto_localized/HOWTO-<code>.md` no
 #### Лише 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) потребує Galacticraft і розміщує на зоряній мапі власну зоряну систему з планетою, до якої летить ракета 2 рівня, що має власне небо, гравітацію, тривалість доби, погоду та атмосферу, з планетою, на яку можна лише дивитися й ніколи не сісти, та, з GalaxySpace, з крижаною планетою навколо Тау Кита.
+
+#### Лише 1.20.1 та 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) потребує Ad Astra і розміщує на мапі планет власну зоряну систему з планетою, до якої летить ракета 2 рівня, що має власне небо, гравітацію, тривалість доби, погоду та атмосферу, крижаною планетою для ракети 3 рівня, планетою, на яку можна лише дивитися й ніколи не сісти, космічною станцією над першою планетою та власною ракетою.
 
 ### Додавання мови
 
@@ -592,9 +644,9 @@ Copia `howto_localized/HOWTO-en_us.md` para `howto_localized/HOWTO-<code>.md` no
 
 **英文是原文**。譯文以英文為準，所以如果有地方讀起來怪怪的或看起來過時，請查看英文檔案。
 
-### 十二個可直接使用的範例
+### 十三個可直接使用的範例
 
-把任何一個直接丟進 `rdploader`，看看每個檔案是怎麼寫的。十一個適用於全部四個版本，請取用你所用版本的 zip。有一個搭配 1.12.2 的模組使用，只提供 1.12.2 版。
+把任何一個直接丟進 `rdploader`，看看每個檔案是怎麼寫的。十一個適用於全部四個版本，請取用你所用版本的 zip。有一個搭配 1.12.2 的模組使用，只提供 1.12.2 版；另有一個搭配 Ad Astra 使用，適用於 1.20.1 與 1.21.1 版。
 
 #### 所有版本
 
@@ -613,6 +665,10 @@ Copia `howto_localized/HOWTO-en_us.md` para `howto_localized/HOWTO-<code>.md` no
 #### 僅限 1.12.2
 
 - **RDPLExampleGalacticraft.zip** ([1.12.2](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip)) 需要 Galacticraft，並在星圖上加入自己專屬的恆星系，其中有一顆可搭乘二階火箭抵達的行星，擁有自己的天空、重力、晝長、天氣與大氣；還有一顆只能遠觀、無法登陸的行星；搭配 GalaxySpace 時，Tau Ceti 周圍還有一顆冰行星。
+
+#### 僅限 1.20.1 與 1.21.1
+
+- **RDPLExampleAdAstra.zip** ([1.20.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.20.1-2.0-Release/example/RDPLExampleAdAstra.zip) · [1.21.1](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.21.1-3.0-Release/example/RDPLExampleAdAstra.zip)) 需要 Ad Astra，並在星球地圖上加入自己專屬的恆星系，其中有一顆可搭乘二階火箭抵達的行星，擁有自己的天空、重力、晝長、天氣與大氣；一顆需三階火箭才能抵達的冰行星；一顆只能遠觀、無法登陸的行星；第一顆行星上空的太空站；以及專屬的火箭。
 
 ### 新增語言
 

@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Vuoto",
+  "rdpl.rocket.payloadMissing": "Questo razzo non parte senza %s x %s nel suo carico",
   "rdpl.game.coin": "{player} lancia una moneta: {result}",
   "rdpl.game.heads": "testa",
   "rdpl.game.tails": "croce",

@@ -99,7 +99,13 @@
         "world.level.block.DirtPathBlockMixin",
         "server.network.ServerGamePacketListenerImplMixin",
         "server.dedicated.DedicatedServerMixin",
-        "server.dedicated.WorldDimensionDataMixin"
+        "server.dedicated.WorldDimensionDataMixin",
+        "integration.adastra.ModUtilsMixin",
+        "integration.adastra.PlanetsMenuProviderMixin",
+        "integration.adastra.RocketMenuMixin",
+        "integration.adastra.RocketMixin",
+        "integration.adastra.ServerboundConstructSpaceStationPacketTypeMixin",
+        "integration.adastra.ServerboundLandPacketMixin"
     ],
     "client": [
         "client.renderer.entity.EntityRendererMixin",
@@ -133,7 +139,9 @@
         "client.gui.font.FontManagerMixin",
         "client.gui.FontStringRenderOutputMixin",
         "client.gui.screens.LevelLoadingScreenMixin",
-        "client.world.level.biome.BiomeSeasonTintMixin"
+        "client.world.level.biome.BiomeSeasonTintMixin",
+        "integration.adastra.OverlayScreenMixin",
+        "integration.adastra.EntityRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 1

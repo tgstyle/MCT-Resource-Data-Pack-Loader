@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Prázdné",
+  "rdpl.rocket.payloadMissing": "Tato raketa nevzletí bez %s x %s v nákladu",
   "rdpl.game.coin": "{player} hodil mincí: {result}",
   "rdpl.game.heads": "orel",
   "rdpl.game.tails": "panna",

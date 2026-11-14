@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.mixin.world.entity;
 
 import mctmods.resourcedatapackloader.common.entities.ContentEntities;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.EntityVariantDef;
+import mctmods.resourcedatapackloader.core.integration.adastra.AdAstraHeights;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.sounds.SoundEvent;
@@ -21,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LivingEntity.class) public abstract class LivingEntityMixin {
@@ -74,4 +77,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @ModifyConstant(method = "hurt", constant = @Constant(floatValue = 10.0F, ordinal = 0)) private float rdpl$halfWay(float was) { return ContentEntities.hurtResistance((LivingEntity) (Object) this, 20) / 2.0F; }
+
+    @Inject(method = "stopRiding", at = @At("HEAD"), cancellable = true) private void rdpl$landerHold(CallbackInfo ci) {
+        if (!ContentAdAstra.active()) { return; }
+        if (AdAstraHeights.holdsLander((LivingEntity) (Object) this)) { ci.cancel(); }
+    }
 }

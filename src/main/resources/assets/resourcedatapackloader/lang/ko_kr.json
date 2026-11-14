@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "비어 있음",
+  "rdpl.rocket.payloadMissing": "화물칸에 %s x %s이(가) 없으면 이 로켓은 발사되지 않습니다",
   "rdpl.game.coin": "{player}이(가) 동전을 던집니다: {result}",
   "rdpl.game.heads": "앞면",
   "rdpl.game.tails": "뒷면",

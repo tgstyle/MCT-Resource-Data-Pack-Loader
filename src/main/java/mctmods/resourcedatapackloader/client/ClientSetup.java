@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.hud.PackTooltips;
 import mctmods.resourcedatapackloader.client.gui.hud.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.gui.hud.WeightHud;
+import mctmods.resourcedatapackloader.client.integration.adastra.AdAstraSystemMap;
 import mctmods.resourcedatapackloader.client.renderer.particle.FireworkBurstParticle;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentDimensionAmbience;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
@@ -38,6 +39,7 @@ import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.fireworks.FireworkParticles;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.common.weights.ContentWeights;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 import mctmods.resourcedatapackloader.core.config.Config;
 
 import net.minecraft.client.Minecraft;
@@ -89,6 +91,7 @@ public class ClientSetup {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ContentHeatShimmer.tick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> ContentSeasonTint.tick());
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> SeasonClock.tick());
+        if (ContentAdAstra.active()) { AdAstraSystemMap.register(); }
         NeoForge.EVENT_BUS.addListener(ContentHeatShimmer::onStage);
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, HoldView::onFog);
         NeoForge.EVENT_BUS.addListener(HoldView::onHud);

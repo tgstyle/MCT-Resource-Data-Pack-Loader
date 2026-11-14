@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s : %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Vide",
+  "rdpl.rocket.payloadMissing": "Cette fusée ne décollera pas sans %s x %s dans sa soute",
   "rdpl.game.coin": "{player} lance une pièce : {result}",
   "rdpl.game.heads": "face",
   "rdpl.game.tails": "pile",

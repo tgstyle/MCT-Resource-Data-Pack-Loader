@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 
 public final class ContentFormats {
     public static final String LOOT_FOLDER = "loot_table";
+    public static final String RECIPE_FOLDER = "recipe";
     public static final String BLOCK_TAGS = "tags/block";
     public static final String ITEM_TAGS = "tags/item";
     public static final String BIOME_TAGS = "tags/worldgen/biome";

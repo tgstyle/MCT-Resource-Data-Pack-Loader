@@ -305,6 +305,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Vacío",
+  "rdpl.rocket.payloadMissing": "Este cohete no despegará sin %s x %s en su carga",
   "rdpl.game.coin": "{player} lanza una moneda: {result}",
   "rdpl.game.heads": "cara",
   "rdpl.game.tails": "cruz",

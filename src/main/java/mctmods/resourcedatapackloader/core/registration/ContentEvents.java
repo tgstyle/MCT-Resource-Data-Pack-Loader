@@ -84,6 +84,7 @@ import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSkyLand;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentSkyLandFunction;
 import mctmods.resourcedatapackloader.common.worldgen.surface.ContentWorldShape;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.integration.adastra.AdAstraPlanets;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
 
@@ -273,6 +274,7 @@ public final class ContentEvents {
         ContentCity.generate();
         ContentWorldShape.generate();
         ContentDimensions.generate();
+        AdAstraPlanets.generate();
         ContentWorldgen.generate();
     }
 
