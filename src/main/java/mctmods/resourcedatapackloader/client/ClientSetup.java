@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.client.gui.hud.HoldView;
 import mctmods.resourcedatapackloader.client.gui.hud.PackTooltips;
 import mctmods.resourcedatapackloader.client.gui.hud.ProspectTooltip;
 import mctmods.resourcedatapackloader.client.gui.hud.WeightHud;
+import mctmods.resourcedatapackloader.client.integration.adastra.AdAstraSystemMap;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.renderer.sky.ContentSeasonTint;
@@ -34,6 +35,7 @@ import mctmods.resourcedatapackloader.common.dimension.ContentEnvironments;
 import mctmods.resourcedatapackloader.common.environment.SeasonClock;
 import mctmods.resourcedatapackloader.common.util.messages.Toasts;
 import mctmods.resourcedatapackloader.core.config.Config;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -78,6 +80,7 @@ public class ClientSetup {
         MinecraftForge.EVENT_BUS.addListener(ContentFogSampler::onFogColor);
         MinecraftForge.EVENT_BUS.addListener(ContentSeasonTint::onTick);
         MinecraftForge.EVENT_BUS.addListener(SeasonClock::onClientTick);
+        if (ContentAdAstra.active()) { AdAstraSystemMap.register(); }
         MinecraftForge.EVENT_BUS.addListener(ContentHeatShimmer::onTick);
         MinecraftForge.EVENT_BUS.addListener(ContentHeatShimmer::onStage);
         MinecraftForge.EVENT_BUS.addListener(EventPriority.NORMAL, true, HoldView::onFog);

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.core;
 
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 import mctmods.resourcedatapackloader.core.util.SplashSlate;
 
 import com.google.gson.Gson;
@@ -28,6 +29,8 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final Set<String> LIGHT = Set.of("DataLayerStorageMapMixin", "BlockLightStorageMapMixin", "SkyLightStorageMapMixin");
     private static final List<String> LIGHT_ENGINES = List.of("starlight", "scalablelux", "moonrise");
     private static Boolean vanillaLight;
+    private static final String AD_ASTRA_MIXINS = "mctmods.resourcedatapackloader.mixin.integration.adastra.";
+    private static Boolean adAstra;
 
     @Override public void onLoad(String mixinPackage) {
         checkGateNames();
@@ -59,7 +62,18 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     @Override public String getRefMapperConfig() { return null; }
 
-    @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) { return !LIGHT.contains(mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1)) || vanillaLight(); }
+    @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
+        if (mixinClassName.startsWith(AD_ASTRA_MIXINS)) { return adAstra(); }
+        return !LIGHT.contains(mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1)) || vanillaLight();
+    }
+
+    private static boolean adAstra() {
+        if (adAstra == null) {
+            adAstra = LoadingModList.get().getModFileById(ContentAdAstra.MOD_ID) != null;
+            if (!adAstra) { LOGGER.info("The Ad Astra mixins stand down, since Ad Astra is not loaded"); }
+        }
+        return adAstra;
+    }
 
     private static boolean vanillaLight() {
         if (vanillaLight == null) {

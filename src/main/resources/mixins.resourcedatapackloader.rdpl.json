@@ -99,7 +99,13 @@
         "server.dedicated.DedicatedServerMixin",
         "server.dedicated.WorldDimensionDataMixin",
         "server.MinecraftServerMixin",
-        "server.MinecraftServerSpawnWaitMixin"
+        "server.MinecraftServerSpawnWaitMixin",
+        "integration.adastra.ModUtilsMixin",
+        "integration.adastra.PlanetsMenuProviderMixin",
+        "integration.adastra.RocketMenuMixin",
+        "integration.adastra.RocketMixin",
+        "integration.adastra.ServerboundConstructSpaceStationPacketTypeMixin",
+        "integration.adastra.ServerboundLandPacketMixin"
     ],
     "client": [
         "client.renderer.entity.EntityRendererMixin",
@@ -132,7 +138,9 @@
         "client.gui.FontStringRenderOutputMixin",
         "client.gui.screens.LevelLoadingScreenMixin",
         "client.world.level.ExplosionMixin",
-        "client.world.level.biome.BiomeSeasonTintMixin"
+        "client.world.level.biome.BiomeSeasonTintMixin",
+        "integration.adastra.OverlayScreenMixin",
+        "integration.adastra.EntityRendererMixin"
     ],
     "injectors": {
         "defaultRequire": 1

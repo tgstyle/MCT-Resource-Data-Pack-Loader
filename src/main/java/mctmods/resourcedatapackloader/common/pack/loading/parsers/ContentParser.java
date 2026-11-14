@@ -358,7 +358,8 @@ public final class ContentParser {
                 ContentParserContainers.upgrade(key, Settings.lower(Json.getString(json, "type", DEFAULT_TYPE)), json),
                 ContentParserWeights.weight(json, key),
                 ContentParserFireworks.firework(key, json),
-                ContentParserSeasons.clock(json));
+                ContentParserSeasons.clock(json),
+                Json.getString(json, "rocket", "").trim());
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

@@ -302,6 +302,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Vazio",
+  "rdpl.rocket.payloadMissing": "Este foguete não será lançado sem %s x %s em sua carga",
   "rdpl.game.coin": "{player} joga uma moeda: {result}",
   "rdpl.game.heads": "cara",
   "rdpl.game.tails": "coroa",

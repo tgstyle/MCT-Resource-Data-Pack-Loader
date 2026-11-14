@@ -141,6 +141,8 @@ public final class ContentEntities {
 
     public static Collection<EntityVariantDef> variants() { return DEFS.values(); }
 
+    @Nullable public static EntityVariantDef variant(ResourceLocation id) { return DEFS.get(id); }
+
     public static Map<ResourceLocation, EntityType<?>> types() { return Collections.unmodifiableMap(TYPES); }
 
     @Nullable public static EntityVariantDef def(Entity entity) { return def(entity.getType()); }

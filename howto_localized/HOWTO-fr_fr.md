@@ -88,6 +88,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 
 **Créatures et dangers**
 - [Variantes d'entités](#variantes-dentités)
+  - [Fusées Ad Astra](#fusées-ad-astra)
 - [Rangs de mobs](#rangs-de-mobs)
 - [Récompenses de santé maximale](#récompenses-de-santé-maximale)
 - [Ordres de travail](#ordres-de-travail)
@@ -98,6 +99,10 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Règles de jeu](#règles-de-jeu)
 - [Biomes](#biomes)
 - [Dimensions](#dimensions)
+  - [Planètes Ad Astra](#planètes-ad-astra)
+  - [Systèmes stellaires Ad Astra](#systèmes-stellaires-ad-astra)
+  - [Clés de carte (Ad Astra)](#clés-de-carte-ad-astra)
+  - [Stations spatiales Ad Astra](#stations-spatiales-ad-astra)
 - [Portails et passages](#portails-et-passages)
 - [Le monde profond](#le-monde-profond)
 - [Régions de grottes](#régions-de-grottes)
@@ -175,6 +180,7 @@ Sous `data/` :
 | `<namespace>/worldgen/*.json`                | Ce qui se génère, et où. [Entrées de worldgen](#entrées-de-worldgen)                                                                                                                                                     |
 | `<namespace>/caveregions/*.json`             | Régions nommées peintes sur le sous-sol. [Régions de grottes](#régions-de-grottes)                                                                                                                                       |
 | `<namespace>/dimensions/*.json`              | Définitions de dimensions. [Dimensions](#dimensions)                                                                                                                                                                     |
+| `<namespace>/celestial/*.json`               | Systèmes stellaires et corps qui ne figurent que sur la carte de planètes d'Ad Astra. [Systèmes stellaires Ad Astra](#systèmes-stellaires-ad-astra)                                                                      |
 | `<namespace>/worldtemplates/*.json`          | Tous les réglages d'un monde dans un seul fichier. [Modèles de monde](#modèles-de-monde)                                                                                                                                 |
 | `<namespace>/worldintro/*.json`              | Pages affichées quand un joueur entre dans le monde. [Introduction au monde](#introduction-au-monde)                                                                                                                     |
 | `<namespace>/gates/*.json`                   | Conditions des portails et des dimensions. [Portails et passages](#portails-et-passages)                                                                                                                                 |
@@ -4887,6 +4893,61 @@ Une entrée de filtre. La première entrée qui correspond décide, et tout ce q
 | `fluid` | l'une des trois | id de fluide      | aucun  | Un fluide par son id, comme `minecraft:water`. Lu seulement par un filtre de fluide                                               |
 | `max`   | non             | entier            | `0`    | La plus grande quantité conservée à la fois, comptée sur tous les emplacements, ou en mB pour un fluide. `0` signifie sans limite |
 
+### Fusées Ad Astra
+
+*variantes d'entités*
+
+Une variante de fusée Ad Astra peut changer son palier, son réservoir, sa cargaison et sa charge utile. Cela demande qu'Ad Astra soit installé et ne fait rien sans lui : l'objet `adastra` est ignoré, un objet de type `rocket` est écarté, et le journal le signale. `RDPLExampleAdAstra.zip` (namespace `rdplplanets`) contient un pack qui fonctionne.
+
+```json
+{
+  "entity": "ad_astra:tier_1_rocket",
+  "name": "Supply Rocket",
+  "adastra": {
+    "tier": 2,
+    "fuelTank": 6000,
+    "cargo": [
+      { "item": "minecraft:iron_ingot", "max": 128 },
+      { "tag": "forge:ingots/copper" }
+    ],
+    "requiredPayload": [
+      { "item": "minecraft:iron_ingot", "count": 64 }
+    ],
+    "payload": [
+      { "item": "minecraft:iron_ingot", "count": 64 }
+    ]
+  }
+}
+```
+
+L'objet qui la pose se trouve à `<namespace>/items/supply_rocket.json`. Son `rocket` nomme la variante :
+
+```json
+{
+  "type": "rocket",
+  "rocket": "mypack:supply_rocket"
+}
+```
+
+La fusée peut être construite sur `ad_astra:tier_1_rocket`, `ad_astra:tier_2_rocket`, `ad_astra:tier_3_rocket` ou `ad_astra:tier_4_rocket`, ou sur toute fusée qu'un autre mod ajoute à la table de fusées d'Ad Astra. Sur une autre entité, l'objet est ignoré et le journal le signale. L'objet pose la fusée comme le font les objets fusées propres à Ad Astra, il s'empile par 1 et ne brûle pas. Son réservoir contient `fuelTank`.
+
+Donnez à l'objet un modèle dont le parent est le modèle d'objet de la fusée de base, à `assets/<namespace>/models/item/supply_rocket.json`, et il montre la fusée en main et dans l'inventaire comme le font les objets fusées propres à Ad Astra. Sans lui, il affiche le modèle manquant.
+
+```json
+{
+  "parent": "ad_astra:item/tier_1_rocket"
+}
+```
+
+| Clé               | Requis | Valeur                    | Défaut                    | Rôle                                                                                                                                                                                                                                       |
+| ----------------- | ------ | ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tier`            | non    | entier                    | celui de la fusée de base | Le palier de la fusée, qui décide des planètes qu'elle atteint                                                                                                                                                                             |
+| `fuelTank`        | non    | entier, en mB             | celui de la fusée de base | La taille du réservoir de carburant                                                                                                                                                                                                        |
+| `cargoSlots`      | non    | entier                    | aucun                     | Ignoré. Le menu de fusée d'Ad Astra est une grille fixe de 2x4 emplacements de cargaison sur chaque palier, donc une variante qui le règle reçoit un seul avertissement dans le journal                                                    |
+| `cargo`           | non    | liste d'entrées de filtre | aucun                     | Ce que les emplacements de cargaison acceptent. Sans lui, ils acceptent tout. Les entrées sont celles de [`storage`](#stockage) avec `item` ou `tag` et `max` ; une entrée `oreDict` est ignorée avec un avertissement, donc nommez un tag |
+| `requiredPayload` | non    | liste                     | aucun                     | Ce qui doit être dans la cargaison avant que la fusée décolle. Chaque entrée est un `item` ou un `tag`, et un `count` qui vaut `1` par défaut. Tant que ce n'est pas là, la fusée reste au sol et un passager est prévenu de ce qui manque |
+| `payload`         | non    | liste                     | aucun                     | Ce qu'un objet fusée neuf transporte, chargé dans la cargaison à sa première pose. Chaque entrée est un `item` et un `count`, par défaut `1`. Une fusée ramassée puis reposée n'est pas chargée à nouveau                                  |
+
 ## Rangs de mobs
 
 *créatures et dangers*
@@ -6472,6 +6533,205 @@ Et son état de bloc, `assets/mypack/blockstates/season_sensor.json`, avec une e
 
 La puissance est l'état de bloc `power`, donc l'état de bloc doit avoir une variante pour chacune de ses 16 valeurs. Une dimension sans saisons la laisse à 0. Une saison de `output` porte le nom du premier environnement de son entrée dans `order`.
 
+### Planètes Ad Astra
+
+*dimensions*
+
+`<namespace>/dimensions/*.json`
+
+Un bloc `adastra` dans un fichier de dimension fait de cette dimension une planète ou une lune sur l'écran des planètes d'Ad Astra, pour qu'une fusée puisse s'y rendre. Cela demande qu'Ad Astra soit installé et ne fait rien sans lui : le bloc est ignoré et le journal le signale. Seule une dimension que le pack crée lui-même prend le bloc, pas une dimension existante comme `minecraft:overworld`. Tout ce qui est hors du bloc, le ciel, la physique, l'heure et la météo, reste celui de la dimension et fonctionne de la même façon avec ou sans Ad Astra. `RDPLExampleAdAstra.zip` (namespace `rdplplanets`) contient un pack qui fonctionne.
+
+```json
+{
+  "physics": { "gravity": 0.4 },
+  "adastra": {
+    "kind": "planet",
+    "parent": "mypack:ember",
+    "tier": 2,
+    "minTier": 2,
+    "reachable": true,
+    "launchFrom": ["minecraft:overworld"],
+    "atmosphere": {
+      "breathable": false,
+      "temperature": 0.6,
+      "corrosive": true
+    },
+    "solarEnergy": 1.6,
+    "exitHeight": 800,
+    "landingHeight": 900,
+    "fuelMultiplier": 0.9,
+    "name": "cinder",
+    "distance": 0.75,
+    "orbitTime": 2.5
+  }
+}
+```
+
+| Clé              | Requis        | Valeur                      | Défaut                 | Rôle                                                                                                                                                                                                                                                                                               |
+| ---------------- | ------------- | --------------------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`           | non           | `planet`, `moon`, `station` | `planet`               | Ce qu'est la dimension. Une [station](#stations-spatiales-ad-astra) a sa propre section. `asteroids` est ignoré, car Ad Astra n'a pas de dimension d'astéroïdes                                                                                                                                    |
+| `parent`         | pour une lune | nom                         | `sol` pour une planète | Le système stellaire d'une planète : `sol` pour le Système solaire propre à Ad Astra, ou un [système stellaire du pack](#systèmes-stellaires-ad-astra) par son id (`mypack:ember`) ou par son chemin dans le namespace de la dimension. Pour une lune, la planète qu'elle orbite, par id ou chemin |
+| `tier`           | non           | entier                      | `1`                    | Le palier de fusée dont la planète a besoin                                                                                                                                                                                                                                                        |
+| `minTier`        | non           | entier                      | `tier`                 | Le palier de fusée le plus bas pouvant atterrir. Quand les deux sont réglés, celui-ci décide                                                                                                                                                                                                       |
+| `reachable`      | non           | booléen                     | `true`                 | Désactivé, aucune planète n'est écrite : elle n'est pas sur l'écran des planètes et aucune fusée n'y va. Elle garde tout de même sa place sur la carte                                                                                                                                             |
+| `launchFrom`     | non           | liste d'ids de dimension    | aucun                  | D'autres dimensions d'où une fusée peut décoller pour atteindre cette planète. Une entrée qui n'est pas un id est ignorée avec une erreur                                                                                                                                                          |
+| `solarEnergy`    | non           | flottant, 0 ou plus         | `1.0`                  | La production des panneaux solaires. `1.0` est celle de l'Overworld                                                                                                                                                                                                                                |
+| `exitHeight`     | non           | entier, supérieur à 0       | voir plus bas          | La hauteur à laquelle une fusée qui quitte cette dimension la quitte                                                                                                                                                                                                                               |
+| `landingHeight`  | non           | entier, supérieur à 0       | voir plus bas          | La hauteur à laquelle arrive un joueur                                                                                                                                                                                                                                                             |
+| `fuelMultiplier` | non           | flottant, 0 ou plus         | `1.0`                  | Le carburant qu'une fusée brûle en décollant d'ici                                                                                                                                                                                                                                                 |
+
+Le bloc prend aussi les [clés de carte](#clés-de-carte-ad-astra), qui placent le corps sur la carte du système stellaire.
+
+| Clé de `atmosphere` | Requis | Valeur              | Défaut  | Rôle                                                                                                                                                                                                                             |
+| ------------------- | ------ | ------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `breathable`        | non    | booléen             | `false` | Si les joueurs respirent sans combinaison                                                                                                                                                                                        |
+| `temperature`       | non    | flottant, de -1 à 1 | `0`     | `0` correspond à 22 degrés Celsius, `1` à 71 et `-1` à -51, les valeurs intermédiaires étant réparties également de chaque côté. Au-delà de cette plage, elle reste bloquée à l'extrémité                                        |
+| `corrosive`         | non    | booléen             | `false` | Une pluie acide tombe. Les biomes de la dimension rejoignent le tag `ad_astra:has_acid_rain` d'Ad Astra, donc `biomes.source` doit valoir `single` ou `list` ; avec toute autre source, rien ne rejoint et le journal le signale |
+
+La gravité est le `physics.gravity` propre à la dimension multiplié par 9.807, et Ad Astra l'applique. Chaque planète ou lune reçoit aussi une dimension d'orbite vide, `<namespace>:<path>_orbit`, que la fusée atteint en montant : pas d'oxygène, pas de gravité, -270 degrés et une énergie solaire de 32. Un corps qui ne peut pas être écrit, parce que sa dimension n'est pas générée par le pack ou que son orbite ne peut pas être créée, n'obtient aucune planète, et le journal dit pourquoi.
+
+**Hauteurs.** Ad Astra utilise une hauteur fixe, 600 (son réglage `atmosphereLeave`), pour quitter une planète, atterrir, arriver depuis l'orbite et tomber hors de l'orbite. Un `exitHeight` ou un `landingHeight` omis vaut le plus grand de 600 et du sommet de construction de la dimension plus 280, ce qui garde la fusée d'une dimension haute au-dessus de sa limite de construction. Une valeur de 0 ou moins est signalée dans le journal, et la valeur par défaut est utilisée. Le masquage n'est que visuel : avec un `exitHeight` supérieur à 600, la fusée et son passager ne sont pas dessinés entre 600 et cette hauteur de sortie, et avec une valeur inférieure à 600 ils ne se masquent jamais.
+
+**Noms.** Ad Astra affiche une planète sous la clé de langue `planet.<namespace>.<path>`, et son orbite sous `planet.<namespace>.<path>_orbit`. Un système stellaire prend `solar_system.<namespace>.<path>`. Mettez-les dans le fichier de langue du pack.
+
+### Systèmes stellaires Ad Astra
+
+*dimensions*
+
+`<namespace>/celestial/*.json`
+
+Un fichier ici décrit un système stellaire, ou une planète, une lune ou une ceinture d'astéroïdes qui se place sur la carte d'un système stellaire du pack sans endroit où atterrir. Cela demande qu'Ad Astra soit installé et ne fait rien sans lui : les fichiers sont ignorés. Un corps sur lequel on peut atterrir est une dimension avec un [bloc `adastra`](#planètes-ad-astra), qui se place lui-même avec les mêmes clés de carte. Les ajouts à la carte ne sont dessinés que sur les systèmes stellaires du pack. Autour de `sol`, Ad Astra dessine son propre Système solaire à partir de ses données de planètes, donc un corps qui ne figure que sur la carte n'y est pas dessiné.
+
+```json
+{
+  "kind": "system",
+  "name": "ember",
+  "requires": ["mypack"],
+  "star": {
+    "icon": "ad_astra:textures/environment/sun.png",
+    "relativeSize": 1.2
+  }
+}
+```
+
+```json
+{
+  "kind": "planet",
+  "name": "ash",
+  "parent": "mypack:ember",
+  "icon": "ad_astra:textures/environment/mars.png",
+  "relativeSize": 0.5,
+  "distance": 1.4,
+  "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5
+}
+```
+
+```json
+{
+  "kind": "moon",
+  "name": "clinker",
+  "parent": "ash"
+}
+```
+
+```json
+{
+  "kind": "planet",
+  "name": "slag",
+  "parent": "mypack:ember",
+  "distance": 2.0,
+  "beltWidth": 0.15,
+  "ringColor": "8A8A8A"
+}
+```
+
+| Clé        | Requis | Valeur                                      | Défaut | Rôle                                                                                                                                           |
+| ---------- | ------ | ------------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`     | oui    | `system`, `planet`, `moon`                  |        | Ce que crée le fichier. `subsystem` et `override` sont ignorés avec une note dans le journal, et toute autre valeur est retirée de la carte    |
+| `star`     | non    | objet                                       |        | L'étoile d'un système, dessinée en son centre. Elle prend `icon`, par défaut l'image du soleil d'Ad Astra, et `relativeSize`, par défaut `1.0` |
+| `requires` | non    | liste d'ids de mod ou de namespaces de pack | aucun  | Le fichier est ignoré sauf si tous sont présents                                                                                               |
+
+Un `system` prend aussi `name` et `ringColor`. Une planète ou une lune prend les clés de carte ci-dessous. Un corps dont aucun fichier `celestial/` ne définit le système stellaire est retiré de la carte, et le journal le signale. Les clés écrites pour 1.12.2 que cette version ne lit pas (`galaxy`, `galaxyImage`, `mapPosition`, `subsystem`, `scaledDistance`, `galaxyspace`, `extraplanets`) sont ignorées avec une note dans le journal.
+
+### Clés de carte (Ad Astra)
+
+*dimensions*
+
+Chaque corps, qu'il vienne d'un fichier `celestial/` ou du bloc `adastra` d'une dimension, se place sur la carte avec ces clés.
+
+| Clé            | Requis        | Valeur                | Défaut                                                       | Rôle                                                                                                                                                                                                                                |
+| -------------- | ------------- | --------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`         | non           | chaîne                | le nom du fichier ou de la dimension                         | Le nom par lequel un `parent` peut désigner le corps, en plus de son id et de son chemin. Un nom vide retire le corps de la carte                                                                                                   |
+| `parent`       | pour une lune | nom                   | `sol` pour une planète                                       | Le système stellaire qu'une planète orbite, ou la planète qu'une lune orbite, par id, chemin ou `name`. Une lune sans `parent` est retirée de la carte                                                                              |
+| `icon`         | non           | chemin de texture     | l'image de Mars d'Ad Astra, et l'image de lune pour une lune | L'image sur la carte                                                                                                                                                                                                                |
+| `relativeSize` | non           | flottant              | `1.0`, une lune `0.2667`                                     | Sa taille sur la carte                                                                                                                                                                                                              |
+| `distance`     | non           | flottant              | `1.0`, une lune `13`                                         | La distance à laquelle il tourne                                                                                                                                                                                                    |
+| `orbitTime`    | non           | flottant              | `1.0`, une lune `100`                                        | La durée d'une orbite sur la carte. `0` ou moins le laisse immobile                                                                                                                                                                 |
+| `phaseShift`   | non           | flottant, en radians  | `0`                                                          | Où il commence sur son orbite                                                                                                                                                                                                       |
+| `ring`         | non           | chemin de texture     | aucun                                                        | Une image d'anneau seul, vu de biais et plus large que haut, dessiné autour du corps sur la carte, derrière et devant lui                                                                                                           |
+| `ringSize`     | non           | flottant, 0.1 ou plus | `2.5`                                                        | La largeur de l'anneau, en multiple de la largeur du corps sur la carte                                                                                                                                                             |
+| `ringFront`    | non           | texte                 | `bottom`                                                     | La moitié de l'image `ring` qui passe devant le corps : `bottom`, `top`, `left` ou `right`. Toute autre valeur est signalée dans le journal et `bottom` est utilisé                                                                 |
+| `ringColor`    | non           | couleur hexadécimale  | `19E599`                                                     | La ligne d'orbite                                                                                                                                                                                                                   |
+| `beltWidth`    | non           | flottant, 0 ou plus   | `0`                                                          | Au-dessus de `0`, le corps est une ceinture d'astéroïdes : une bande de cette largeur, dans les unités de `distance`, centrée sur son orbite et bordée et remplie de `ringColor`, sans corps dessiné et sans rien qui tourne autour |
+
+**Ceintures d'astéroïdes.** Ad Astra n'a pas de dimension d'astéroïdes, donc une ceinture n'est dessinée que sur la carte. Donnez à un fichier `celestial/` un `beltWidth`, comme dans le dernier exemple ci-dessus. Une dimension dont le bloc `adastra` indique `"kind": "asteroids"` est ignorée comme planète, et la dimension elle-même se charge comme une dimension ordinaire.
+
+### Stations spatiales Ad Astra
+
+*dimensions*
+
+`<namespace>/dimensions/*.json`
+
+Un fichier de dimension dont le bloc `adastra` porte `kind: "station"` permet aux joueurs de construire une station spatiale en orbite autour d'une planète ou d'une lune du pack, par le bouton « + » de l'écran des planètes d'Ad Astra. Cela demande qu'Ad Astra soit installé et ne fait rien sans lui : le bloc est ignoré et le journal le signale.
+
+```json
+{
+  "adastra": {
+    "kind": "station",
+    "parent": "cinder",
+    "tier": 2,
+    "recipe": {
+      "minecraft:iron_block": 8,
+      "#forge:ingots/tin": 24
+    },
+    "structure": "ad_astra:space_station"
+  }
+}
+```
+
+| Clé         | Requis | Valeur                            | Défaut                                                     | Rôle                                                                                                                        |
+| ----------- | ------ | --------------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `kind`      | oui    | `station`                         |                                                            | Fait du fichier une station                                                                                                 |
+| `parent`    | oui    | nom                               |                                                            | La planète ou la lune qu'elle orbite : une planète accessible que crée une dimension du pack, par id ou chemin              |
+| `tier`      | non    | entier                            | celui de la planète parente                                | Le palier de fusée qui atteint la station                                                                                   |
+| `minTier`   | non    | entier                            | `tier`                                                     | Le même, et c'est lui qui décide quand les deux sont réglés                                                                 |
+| `recipe`    | non    | objet d'ingrédients et de nombres | la recette de station d'orbite de `earth_orbit` d'Ad Astra | Ce que coûte la construction de la station. Un ingrédient est `namespace:item` ou `#namespace:tag`, un nombre est 1 ou plus |
+| `structure` | non    | id de structure                   | `ad_astra:space_station`                                   | La structure construite en orbite                                                                                           |
+
+Le monde de la station est toujours un monde d'orbite vide RDPL avec une plage de construction de -64 à 320, donc `terrain` et `biomes` sont ignorés avec une erreur dans le journal. La station est une orbite comme celle d'une planète : pas d'oxygène, pas de gravité, -270 degrés et une énergie solaire de 32. La clé de la dimension est celle de la station, et son nom vient de `planet.<namespace>.<path>`.
+
+**Ce que fait et ne fait pas la station.**
+
+- Une station n'apparaît pas sur la carte d'Ad Astra. Ad Astra la liste sur la page de la planète.
+- Un id d'objet dans une `recipe` n'est vérifié que pour sa forme. Si un objet est inconnu, Ad Astra refuse toute la recette au rechargement.
+- Un ingrédient avec des métadonnées (`namespace:item:meta`) ou un simple nom de dictionnaire de minerai est refusé, une clé à la fois, et le journal le signale.
+- `showName` et `checklist` n'ont aucun effet.
+- Une station refusée, avec un `parent` invalide ou une seconde station sur un parent qui en a déjà une, se charge tout de même comme une dimension vide simple, sans entrée de planète.
+
+**Ciel.** Laissée telle quelle, une station reçoit ce ciel d'Ad Astra :
+
+| Partie            | Défaut                                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------- |
+| Soleil            | Le soleil d'Ad Astra, de taille 9, traversant le ciel avec l'heure du jour                               |
+| Corps parent      | L'`icon` de la carte du parent, ou l'image de lune d'Ad Astra sans elle, de taille 80, fixe dans le ciel |
+| Étoiles           | 13000, à une luminosité de 0.6                                                                           |
+| Nuages            | Dessinés                                                                                                 |
+| Brouillard, météo | Aucun                                                                                                    |
+
+Quand la dimension règle une clé d'aspect du ciel, le ciel de RDPL est dessiné à la place, et le pack dessine lui-même le corps parent par `sky.bodies`.
+
 ## Portails et passages
 
 *le monde*
@@ -6686,6 +6946,8 @@ Les passages gardent aussi les dimensions du jeu : un passage dont la `dimension
 ```
 
 `/rdplserver gate list` affiche `-` pour un passage sans dimension.
+
+**Ad Astra.** Sur 1.20.1 et 1.21.1, une planète derrière un passage est masquée de l'écran des planètes d'Ad Astra pour un joueur que le passage bloque, et un atterrissage y est refusé. Une construction de station derrière un passage est refusée par le serveur, bien que le bouton « + » de la station reste affiché quand sa planète parente est bloquée. Voir [Planètes Ad Astra](#planètes-ad-astra).
 
 ## Le monde profond
 
@@ -11179,7 +11441,7 @@ Ce qu'un pack 1.12.2 peut écrire et que cette version ne lit pas, et pourquoi. 
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `meta`                                                                                                                                                              | blocs, objets, worldgen, drops de blocs                                                             | Les ids ne portent plus de métadonnées depuis l'aplatissement. Le portage fait passer chaque `name:meta` par les correcteurs de données du jeu et supprime la clé                                                                                                                                                                                                                                                 |
 | `oreDict`                                                                                                                                                           | blocs, objets, four, combustibles, filtres de stockage d'entité                                     | Le dictionnaire de minerais a disparu. Le portage le convertit en `tags` sur les tags de convention, et celui d'un combustible ou d'une entrée de filtre de stockage en `tag`                                                                                                                                                                                                                                     |
-| `galacticraft`                                                                                                                                                      | variantes d'entité                                                                                  | Il n'existe pas de Galacticraft pour cette version, donc une variante n'a ni niveau de fusée, ni réservoir de carburant, ni soute, ni charge utile à définir                                                                                                                                                                                                                                                      |
+| `galacticraft`                                                                                                                                                      | variantes d'entité                                                                                  | Il n'existe pas de Galacticraft pour cette version. L'équivalent pour Ad Astra est l'objet `adastra` d'une variante et le bloc `adastra` d'une dimension, voir [Fusées Ad Astra](#fusées-ad-astra) et [Planètes Ad Astra](#planètes-ad-astra)                                                                                                                                                                     |
 | `oreDictionary`                                                                                                                                                     | réglages                                                                                            | Le dictionnaire de minerais a disparu, donc il ne reste aucun fichier de dictionnaire de minerais à désactiver. Les tags font son travail, et le portage les écrit d'après les `oreDict` d'un pack                                                                                                                                                                                                                |
 | `modelMeta`                                                                                                                                                         | blocs                                                                                               | Les modèles sont générés par variante, donc il n'y a pas de métadonnées pour les associer                                                                                                                                                                                                                                                                                                                         |
 | `disableOverrides`, `tolerateMissingInAdvancements`                                                                                                                 | réglages                                                                                            | Un pack de données remplace une recette ou un progrès vanilla en en fournissant un sous le même nom                                                                                                                                                                                                                                                                                                               |

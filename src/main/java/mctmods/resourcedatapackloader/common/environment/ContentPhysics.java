@@ -3,10 +3,13 @@ package mctmods.resourcedatapackloader.common.environment;
 import mctmods.resourcedatapackloader.common.dimension.ContentDimensionSetting;
 import mctmods.resourcedatapackloader.core.config.Config;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -21,6 +24,7 @@ import net.minecraftforge.event.entity.living.LivingFallEvent;
 public final class ContentPhysics {
     private static final double VANILLA_TERMINAL = 3.92D;
     private static final UUID GRAVITY_ID = UUID.fromString("6f2b1c0e-3d7a-4b8e-9c21-5e0f7a1d2b34");
+    private static final Set<ResourceLocation> SPACE = new HashSet<>();
     private static final ContentDimensionSetting<Double> GRAVITY = scale("worldGravity", Config.worldgen::worldGravity);
     private static final ContentDimensionSetting<Double> FALL_DAMAGE = scale("worldFallDamage", Config.worldgen::worldFallDamage);
     private static final ContentDimensionSetting<Double> JUMP = scale("worldJumpStrength", Config.worldgen::worldJumpStrength);
@@ -52,9 +56,14 @@ public final class ContentPhysics {
         return held == null ? value : value / (1.0D + held.getAmount());
     }
 
-    public static double gravity(Level level) { return factor(GRAVITY, level, ContentWeather.traits(level).gravity()); }
+    public static void leaveGravityTo(ResourceLocation dimension) { SPACE.add(dimension); }
+
+    public static double authoredGravity(ResourceLocation dimension, double own) { return factor(GRAVITY, dimension, own); }
+
+    public static double gravity(Level level) { return SPACE.contains(level.dimension().location()) ? 1.0D : authoredGravity(level.dimension().location(), ContentWeather.traits(level).gravity()); }
 
     public static double arrowGravity(Level level) {
+        if (SPACE.contains(level.dimension().location())) { return 1.0D; }
         double own = ContentWeather.traits(level).arrowGravity();
         return own > 0.0D ? own : gravity(level);
     }
@@ -93,8 +102,10 @@ public final class ContentPhysics {
 
     private static ContentDimensionSetting<Double> scale(String key, Supplier<List<String>> configured) { return new ContentDimensionSetting<>(key, configured, ContentPhysics::positive, "which is not a number above zero"); }
 
-    private static double factor(ContentDimensionSetting<Double> scale, Level level, double own) {
-        Double found = scale.at(level.dimension().location().toString(), own > 0.0D ? own : null);
+    private static double factor(ContentDimensionSetting<Double> scale, Level level, double own) { return factor(scale, level.dimension().location(), own); }
+
+    private static double factor(ContentDimensionSetting<Double> scale, ResourceLocation dimension, double own) {
+        Double found = scale.at(dimension.toString(), own > 0.0D ? own : null);
         return found == null ? 1.0D : found;
     }
 

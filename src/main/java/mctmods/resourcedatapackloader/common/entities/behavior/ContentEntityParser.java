@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.common.pack.definitions.entities.PhaseDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnEntryDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.entities.SpawnGateDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.RocketDef;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.ContentAttributes;
 import mctmods.resourcedatapackloader.common.util.messages.BossBars;
@@ -125,7 +126,7 @@ public final class ContentEntityParser {
                 equipment(key, json),
                 spawns(key, json),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
-                ContentTasks.parse(key, json), storage(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null),
+                ContentTasks.parse(key, json), storage(key, json), rocket(key, json), SpawnGateDef.read(key, json, "Entity variant"), bar, phases(key, json, bar != null),
                 Json.getString(json, "dialog", "").trim());
     }
 
@@ -177,6 +178,14 @@ public final class ContentEntityParser {
         return phases;
     }
 
+    @Nullable private static RocketDef rocket(ResourceLocation key, JsonObject json) {
+        if (!json.has("adastra")) { return null; }
+        JsonObject rocket = Json.getJsonObject(json, "adastra");
+        if (rocket.has("cargoSlots")) { ContentLog.LOGGER.warn("Entity variant {} sets cargoSlots, which this line does not read: an Ad Astra rocket always has 8 cargo slots", key); }
+        return new RocketDef(Math.max(RocketDef.BASE, Json.getInt(rocket, "tier", RocketDef.BASE)), Math.max(RocketDef.BASE, Json.getInt(rocket, "fuelTank", RocketDef.BASE)),
+                new FilterDef(entries(key, rocket, "cargo", "max", 0)), entries(key, rocket, "requiredPayload", "count", 1), entries(key, rocket, "payload", "count", 1));
+    }
+
     @Nullable private static StorageDef storage(ResourceLocation key, JsonObject json) {
         if (!json.has("storage")) { return null; }
         JsonObject storage = Json.getJsonObject(json, "storage");
@@ -187,7 +196,7 @@ public final class ContentEntityParser {
         int energyCapacity = Math.max(0, Json.getInt(energy, "capacity", 0));
         int energyTransfer = Mth.clamp(Json.getInt(energy, "transfer", energyCapacity), 0, energyCapacity);
         boolean hasItems = storage.has("items");
-        StorageDef def = new StorageDef(hasItems, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
+        StorageDef def = new StorageDef(hasItems, new FilterDef(entries(key, items, "filter", "max", 0)), fluidCapacity, new FilterDef(entries(key, fluid, "filter", "max", 0)), energyCapacity, energyTransfer,
                 Json.getBoolean(fluid, "buckets", false), Json.getBoolean(storage, "dropsOnDeath", true), Math.max(0, Json.getInt(fluid, "use", 0)),
                 Math.max(0, Json.getInt(energy, "use", 0)), runsDry(key, storage));
         if (!hasItems && def.gauges() == 0) {
@@ -205,20 +214,20 @@ public final class ContentEntityParser {
         return StorageDef.Dry.STOPS;
     }
 
-    private static List<FilterDef.Entry> entries(ResourceLocation key, JsonObject json) {
+    private static List<FilterDef.Entry> entries(ResourceLocation key, JsonObject json, String list, String amount, int least) {
         List<FilterDef.Entry> entries = new ArrayList<>();
-        if (!json.has("filter")) { return entries; }
-        for (JsonElement element : Json.getJsonArray(json, "filter")) {
+        if (!json.has(list)) { return entries; }
+        for (JsonElement element : Json.getJsonArray(json, list)) {
             JsonObject entry = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
-            if (entry.has("oreDict")) { ContentLog.LOGGER.warn("A filter entry in {} uses 'oreDict', which this line does not read. Name a tag under 'tag' instead, such as c:ingots/iron or forge:ingots/iron", key); }
+            if (entry.has("oreDict")) { ContentLog.LOGGER.warn("A {} entry in {} uses 'oreDict', which this line does not read. Name a tag under 'tag' instead, such as c:ingots/iron or forge:ingots/iron", list, key); }
             String item = Json.getString(entry, "item", "").trim();
             ResourceLocation tag = ContentParser.location(Json.getString(entry, "tag", "").trim());
             ResourceLocation held = ContentParser.location(Json.getString(entry, "fluid", "").trim());
             if (item.isEmpty() && tag == null && held == null) {
-                ContentLog.LOGGER.error("A filter entry in {} names no item, tag or fluid, skipping it", key);
+                ContentLog.LOGGER.error("A {} entry in {} names no item, tag or fluid, skipping it", list, key);
                 continue;
             }
-            entries.add(new FilterDef.Entry(key, item, tag == null ? null : TagKey.create(Registries.ITEM, tag), held, Math.max(0, Json.getInt(entry, "max", 0))));
+            entries.add(new FilterDef.Entry(key, item, tag == null ? null : TagKey.create(Registries.ITEM, tag), held, Math.max(least, Json.getInt(entry, amount, least))));
         }
         return entries;
     }

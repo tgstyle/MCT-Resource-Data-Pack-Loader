@@ -50,13 +50,19 @@ public record FilterDef(List<Entry> entries) {
             this.amount = amount;
         }
 
-        @Nullable private Item item() {
+        @Nullable public Item item() {
             if (!looked) {
                 looked = true;
                 found = item.isEmpty() ? null : ContentStacks.find(owner, item);
             }
             return found;
         }
+
+        public int amount() { return amount; }
+
+        @Nullable public TagKey<Item> tag() { return tag; }
+
+        public String named() { return item; }
 
         public boolean matches(ItemStack held) {
             if (held.isEmpty()) { return false; }

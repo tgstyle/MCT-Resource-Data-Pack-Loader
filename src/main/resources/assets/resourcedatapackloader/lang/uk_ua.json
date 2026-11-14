@@ -302,6 +302,7 @@
   "rdpl.storage.fluid": "%s: %s / %s мБ",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Порожньо",
+  "rdpl.rocket.payloadMissing": "Ця ракета не полетить без %s x %s у своєму вантажі",
   "rdpl.game.coin": "{player} підкидає монету: {result}",
   "rdpl.game.heads": "орел",
   "rdpl.game.tails": "решка",

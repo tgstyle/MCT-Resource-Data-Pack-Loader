@@ -18,8 +18,11 @@ import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.items.ItemVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.portals.PortwayItemDef;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.ContentEffects;
 import mctmods.resourcedatapackloader.common.util.ContentMaterials;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
+import mctmods.resourcedatapackloader.core.integration.adastra.PackRocketItem;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.Map;
@@ -52,7 +55,8 @@ public final class ContentItemTypes {
     public static final String CONTAINER = "container";
     public static final String PORTWAY = "portway";
     public static final String CONTAINER_UPGRADE = "container_upgrade";
-    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, PORTWAY, CONTAINER_UPGRADE);
+    public static final String ROCKET = "rocket";
+    private static final Set<String> KNOWN = Set.of(BASIC, FOOD, DRINK, TOOL, ARMOR, SEED, POTION, POTION_BOTTLE, CONTAINER, PORTWAY, CONTAINER_UPGRADE, ROCKET);
     private static final ContainerDef POUCH = new ContainerDef(1, 9, "", false, null, null, 0, 0, false);
     private static final TagKey<Block> SWORD_MINEABLE = TagKey.create(Registries.BLOCK, ResourceLocation.parse(ContentFormats.MINEABLE_SWORD));
     private static final Map<String, ArmorItem.Type> SLOTS = Map.of("helmet", ArmorItem.Type.HELMET, "head", ArmorItem.Type.HELMET, "chestplate", ArmorItem.Type.CHESTPLATE, "chest", ArmorItem.Type.CHESTPLATE,
@@ -80,6 +84,7 @@ public final class ContentItemTypes {
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
             case CONTAINER_UPGRADE -> new ContentContainerUpgradeItem(def, properties);
             case PORTWAY -> portway(def, properties);
+            case ROCKET -> rocket(def, properties);
             default -> def.locates().isEmpty() ? def.rolls().isEmpty() && !def.passesTurn() ? plain(def, properties) : new ContentRollItem(def, properties) : new ContentLocatorItem(def, properties.stacksTo(1));
         };
     }
@@ -92,6 +97,13 @@ public final class ContentItemTypes {
     private static Item portway(ItemDef def, Item.Properties properties) {
         PortwayItemDef held = def.portway() == null ? PortwayItemDef.PLAIN : def.portway();
         return new ContentPortwayItem(held, held.bind() ? properties.stacksTo(1) : properties);
+    }
+
+    @Nullable private static Item rocket(ItemDef def, Item.Properties properties) {
+        ResourceLocation rocket = ContentParser.location(def.rocket());
+        if (ContentAdAstra.active() && rocket != null) { return PackRocketItem.of(rocket, properties); }
+        ContentLog.LOGGER.error("Rocket item {} needs Ad Astra and a rocket variant to place, leaving it out", def.key());
+        return null;
     }
 
     private static FoodProperties food(ItemDef def, ItemVariant variant, @Nullable MobEffectInstance effect) {

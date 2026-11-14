@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.common.pack.definitions.entities;
 
 import mctmods.resourcedatapackloader.common.pack.definitions.containers.StorageDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.games.PickDef;
+import mctmods.resourcedatapackloader.common.pack.definitions.sky.RocketDef;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,7 @@ public record EntityVariantDef(ResourceLocation key, ResourceLocation base, Stri
                                boolean despawns, int despawnTicks, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
                                Egg egg, Tracking tracking, Map<String, Double> attributes, boolean hostile, boolean passive, List<String> targets, int tint, List<String> tintParts,
                                Combat combat, Stalk stalk, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
-                               List<String> requires, List<TaskDef> tasks, @Nullable StorageDef storage, SpawnGateDef gate, @Nullable BossBarDef bossBar, List<PhaseDef> phases, String dialog) {
+                               List<String> requires, List<TaskDef> tasks, @Nullable StorageDef storage, @Nullable RocketDef rocket, SpawnGateDef gate, @Nullable BossBarDef bossBar, List<PhaseDef> phases, String dialog) {
     public static final String BODY = "body";
     public static final String ARMOR = "armor";
     public static final String HELD = "held";

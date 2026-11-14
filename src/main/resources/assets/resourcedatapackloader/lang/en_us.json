@@ -304,6 +304,7 @@
   "rdpl.storage.fluid": "%s: %s / %s mB",
   "rdpl.storage.energy": "%s / %s FE",
   "rdpl.storage.empty": "Empty",
+  "rdpl.rocket.payloadMissing": "This rocket will not launch without %s x %s in its cargo",
   "rdpl.game.coin": "{player} flips a coin: {result}",
   "rdpl.game.heads": "heads",
   "rdpl.game.tails": "tails",

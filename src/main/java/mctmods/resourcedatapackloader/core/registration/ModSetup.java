@@ -127,6 +127,7 @@ import mctmods.resourcedatapackloader.core.config.AtomicModConfig;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.curios.ContentCurioSlots;
+import mctmods.resourcedatapackloader.core.integration.adastra.ContentAdAstra;
 import mctmods.resourcedatapackloader.core.integration.ftbchunks.ContentFtbChunks;
 import mctmods.resourcedatapackloader.core.integration.ftbteams.ContentFtbTeams;
 import mctmods.resourcedatapackloader.core.network.RDPLNetwork;
@@ -506,6 +507,7 @@ public class ModSetup {
         event.enqueueWork(ContentPotions::applyBrewing);
         ContentFtbTeams.install();
         ContentFtbChunks.install();
+        ContentAdAstra.install();
         Set<String> missing = PackRequirements.required();
         if (missing.isEmpty()) {
             RegistryRemaps.reload();
