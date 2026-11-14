@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.common.util.dimension;
 
+import net.minecraft.network.protocol.game.ClientboundUpdateMobEffectPacket;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -19,6 +21,7 @@ public final class Travel {
         Entity moved = entity;
         if (crossing) { moved = Objects.requireNonNullElse(level.getEntity(entity.getUUID()), entity); }
         if (moved.level() != level) { return null; }
+        if (crossing && moved instanceof ServerPlayer player) { player.getActiveEffects().forEach(effect -> player.connection.send(new ClientboundUpdateMobEffectPacket(player.getId(), effect))); }
         moved.resetFallDistance();
         moved.setDeltaMovement(Vec3.ZERO);
         moved.setYHeadRot(yaw);
