@@ -5660,7 +5660,7 @@ Název souboru si zvolíš sám, čte se jen složka a víc souborů se skládá
 }
 ```
 
-Každý klíč je id světa, ke kterému pravidla patří: `0` pro Overworld, `-1` pro nether, `1` pro End a cokoli, co mód používá pro vlastní dimenze. Hodnoty jsou řetězce, stejně jako v příkazu `/gamerule`, takže `"false"` a ne `false`. Uplatní se na nové světy. Soubor dimenze nese stejná pravidla v bloku `gameRules`, který platí vždy jen pro daný svět.
+Každý klíč je id světa, ke kterému pravidla patří: `0` pro Overworld, `-1` pro nether, `1` pro End a cokoli, co mód používá pro vlastní dimenze. Hodnoty jsou řetězce, stejně jako v příkazu `/gamerule`, takže `"false"` a ne `false`. Uplatní se na nové světy. Soubor dimenze nese stejná pravidla v bloku `gameRules`, který platí vždy jen pro daný svět. Pravidlo změněné ve hře, příkazem `/gamerule` operátora nebo jiným modem, se uloží se světem a po restartu platí místo hodnoty z balíčku; jeho vrácení na hodnotu z balíčku uloženou změnu zruší.
 
 ## Biomy
 

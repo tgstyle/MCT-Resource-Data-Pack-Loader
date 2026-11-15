@@ -5660,7 +5660,7 @@ Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cu
 }
 ```
 
-Chaque clé est l'identifiant du monde auquel les règles appartiennent : `0` pour l'Overworld, `-1` pour le Nether, `1` pour l'End, et ce qu'un mod utilise pour les siens. Les valeurs sont des textes, comme dans la commande `/gamerule`, donc `"false"` plutôt que `false`. Elles s'appliquent aux nouveaux mondes. Un fichier de dimension porte les mêmes règles dans un bloc `gameRules`, qui ne s'applique alors qu'à ce monde.
+Chaque clé est l'identifiant du monde auquel les règles appartiennent : `0` pour l'Overworld, `-1` pour le Nether, `1` pour l'End, et ce qu'un mod utilise pour les siens. Les valeurs sont des textes, comme dans la commande `/gamerule`, donc `"false"` plutôt que `false`. Elles s'appliquent aux nouveaux mondes. Un fichier de dimension porte les mêmes règles dans un bloc `gameRules`, qui ne s'applique alors qu'à ce monde. Une règle modifiée en jeu, par le `/gamerule` d'un opérateur ou par un autre mod, est enregistrée avec le monde et l'emporte sur la valeur du pack après un redémarrage ; la remettre à la valeur du pack efface la modification enregistrée.
 
 ## Biomes
 

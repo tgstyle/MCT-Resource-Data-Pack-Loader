@@ -5660,7 +5660,7 @@ O nome do ficheiro és tu quem escolhe, só a pasta é lida, e vários ficheiros
 }
 ```
 
-Cada chave é o id do mundo a que as regras pertencem: `0` para a Superfície, `-1` para o Nether, `1` para o End, e o que um mod usar para os seus. Os valores são texto, como no comando `/gamerule`, por isso `"false"` em vez de `false`. Aplicam-se a mundos novos. Um ficheiro de dimensão traz as mesmas regras num bloco `gameRules`, que só se aplica a esse mundo.
+Cada chave é o id do mundo a que as regras pertencem: `0` para a Superfície, `-1` para o Nether, `1` para o End, e o que um mod usar para os seus. Os valores são texto, como no comando `/gamerule`, por isso `"false"` em vez de `false`. Aplicam-se a mundos novos. Um ficheiro de dimensão traz as mesmas regras num bloco `gameRules`, que só se aplica a esse mundo. Uma regra alterada no jogo, pelo `/gamerule` de um operador ou por outro mod, é guardada com o mundo e prevalece sobre o valor do pacote depois de um reinício; repô-la no valor do pacote descarta a alteração guardada.
 
 ## Biomas
 

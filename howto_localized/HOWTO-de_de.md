@@ -5660,7 +5660,7 @@ Den Dateinamen wählst du selbst, gelesen wird nur der Ordner, und mehrere Datei
 }
 ```
 
-Jeder Schlüssel ist die ID der Welt, zu der die Regeln gehören: `0` für die Oberwelt, `-1` für den Nether, `1` für das Ende und was immer ein Mod für seine eigenen Welten nutzt. Werte sind Texte, so wie im Befehl `/gamerule`, also `"false"` statt `false`. Sie werden auf neue Welten angewendet. Eine Dimensionsdatei trägt dieselben Regeln stattdessen in einem `gameRules`-Block, der immer nur für diese eine Welt gilt.
+Jeder Schlüssel ist die ID der Welt, zu der die Regeln gehören: `0` für die Oberwelt, `-1` für den Nether, `1` für das Ende und was immer ein Mod für seine eigenen Welten nutzt. Werte sind Texte, so wie im Befehl `/gamerule`, also `"false"` statt `false`. Sie werden auf neue Welten angewendet. Eine Dimensionsdatei trägt dieselben Regeln stattdessen in einem `gameRules`-Block, der immer nur für diese eine Welt gilt. Eine im Spiel geänderte Regel, per `/gamerule` eines Operators oder durch eine andere Mod, wird mit der Welt gespeichert und gilt nach einem Neustart statt des Werts aus dem Pack; wer sie wieder auf den Wert des Packs setzt, verwirft die gespeicherte Änderung.
 
 ## Biome
 

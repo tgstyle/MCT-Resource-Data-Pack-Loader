@@ -5660,7 +5660,7 @@ Il nome del file lo scegli tu, viene letta solo la cartella, e più file si somm
 }
 ```
 
-Ogni chiave è l'id del mondo a cui appartengono le regole: `0` per l'overworld, `-1` per il Nether, `1` per l'End, e quello che una mod usa per i suoi. I valori sono stringhe, come nel comando `/gamerule`, quindi `"false"` e non `false`. Vengono applicate ai nuovi mondi. Un file di dimensione riporta le stesse regole in un blocco `gameRules`, che si applica sempre e solo a quel mondo.
+Ogni chiave è l'id del mondo a cui appartengono le regole: `0` per l'overworld, `-1` per il Nether, `1` per l'End, e quello che una mod usa per i suoi. I valori sono stringhe, come nel comando `/gamerule`, quindi `"false"` e non `false`. Vengono applicate ai nuovi mondi. Un file di dimensione riporta le stesse regole in un blocco `gameRules`, che si applica sempre e solo a quel mondo. Una regola cambiata in gioco, con il `/gamerule` di un operatore o da un'altra mod, viene salvata con il mondo e prevale sul valore del pack dopo un riavvio; riportarla al valore del pack cancella la modifica salvata.
 
 ## Biomi
 

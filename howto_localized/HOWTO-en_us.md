@@ -5660,7 +5660,7 @@ The file name is yours to choose, only the folder is read, and several files sta
 }
 ```
 
-Each key is the id of the world the rules belong to, `0` for the overworld, `-1` for the nether, `1` for the end, and whatever a mod uses for its own. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world.
+Each key is the id of the world the rules belong to, `0` for the overworld, `-1` for the nether, `1` for the end, and whatever a mod uses for its own. Values are strings, as they are in the `/gamerule` command, so `"false"` rather than `false`. These are applied to new worlds. A dimension file carries the same rules in a `gameRules` block instead, which only ever applies to that world. A rule changed in game, by an op's `/gamerule` or by another mod, is saved with the world and kept over the pack's value after a restart; setting it back to the pack's value drops the saved change.
 
 ## Biomes
 
