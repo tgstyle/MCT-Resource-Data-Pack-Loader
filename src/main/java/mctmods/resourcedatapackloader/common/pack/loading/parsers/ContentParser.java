@@ -556,14 +556,14 @@ public final class ContentParser {
         JsonObject entry = Json.getJsonObject(json, "sapling");
         return new SaplingDef(Json.strings(entry, "soil"),
                 Math.max(1, Json.getInt(entry, "stages", 2)),
-                Math.max(1, Json.getInt(entry, "chance", 7)),
+                Math.max(1, Json.getInt(entry, "chance", ContentParserTrees.SAPLING_CHANCE)),
                 Math.max(0, Json.getInt(entry, "light", 9)),
                 Json.getString(entry, "structure", "").trim(),
                 ContentWorldgenParser.picks(entry, "structures", "structure"),
                 Json.getString(entry, "log", "minecraft:oak_log").trim(),
                 Json.getString(entry, "leaves", "minecraft:oak_leaves").trim(),
                 Math.max(1, Json.getInt(entry, "height", 4)),
-                Json.getBoolean(entry, "vines", false));
+                Json.getBoolean(entry, "vines", false), ContentParserTrees.growth(entry));
     }
 
     public static AmountDef amount(JsonObject json, String key, int fallback, int floor) {

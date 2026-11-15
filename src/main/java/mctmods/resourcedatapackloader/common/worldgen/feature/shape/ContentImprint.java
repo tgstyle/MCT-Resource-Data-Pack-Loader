@@ -203,8 +203,8 @@ public final class ContentImprint implements IContentShape {
         Loaded found = load(level, random, report);
         if (found == null) { return null; }
         StructureTemplate loaded = found.template();
-        Rotation rotation = turn(random);
-        Mirror mirror = mirror(random);
+        Rotation rotation = Turns.turn(shape.turns(), random);
+        Mirror mirror = Turns.mirror(shape.mirrors(), random);
         Vec3i span = loaded.getSize(rotation);
         return new Seat(loaded, found.name(), rotation, mirror, span, within(originX, span.getX()), within(originZ, span.getZ()));
     }
@@ -253,22 +253,6 @@ public final class ContentImprint implements IContentShape {
     }
 
     private static boolean blocked(ContentPlacer placer, int cornerX, int cornerZ, Vec3i span) { return placer.unwritable(cornerX, cornerZ) || placer.unwritable(cornerX + span.getX() - 1, cornerZ + span.getZ() - 1); }
-
-    private Rotation turn(RandomSource random) {
-        String named = PickDef.pick(shape.turns(), random);
-        if (ShapeDef.NO_TURN.equals(named)) { return Rotation.NONE; }
-        if (ShapeDef.QUARTER.equals(named)) { return Rotation.CLOCKWISE_90; }
-        if (ShapeDef.HALF.equals(named)) { return Rotation.CLOCKWISE_180; }
-        if (ShapeDef.THREEQUARTER.equals(named)) { return Rotation.COUNTERCLOCKWISE_90; }
-        return Turns.ALL[random.nextInt(Turns.ALL.length)];
-    }
-
-    private Mirror mirror(RandomSource random) {
-        String named = PickDef.pick(shape.mirrors(), random);
-        if (ShapeDef.LEFTRIGHT.equals(named)) { return Mirror.LEFT_RIGHT; }
-        if (ShapeDef.FRONTBACK.equals(named)) { return Mirror.FRONT_BACK; }
-        return Mirror.NONE;
-    }
 
     private static int within(int origin, int span) {
         int start = origin - span / 2;

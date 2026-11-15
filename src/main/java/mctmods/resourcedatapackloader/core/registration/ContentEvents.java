@@ -43,6 +43,7 @@ import mctmods.resourcedatapackloader.common.worldgen.feature.ContentOreControl;
 import mctmods.resourcedatapackloader.common.worldgen.feature.ContentSkyStoneFeature;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentCoverFeature;
 import mctmods.resourcedatapackloader.common.worldgen.feature.shape.ContentShapeFeature;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentChunkTokens;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.common.worldgen.placement.ContentSpreadPlacement;
@@ -169,6 +170,7 @@ public final class ContentEvents {
             helper.register(id("owned_blocks"), OwnedBlocksStore.type());
             helper.register(EntityStorage.KEY, EntityStorage.TYPE);
             helper.register(id("table_lapis"), TableLapis.TYPE);
+            helper.register(id("trees"), ContentTreeStore.TREES);
         });
         if (Config.contentOff()) {
             event.register(Registries.ITEM, helper -> generateData());

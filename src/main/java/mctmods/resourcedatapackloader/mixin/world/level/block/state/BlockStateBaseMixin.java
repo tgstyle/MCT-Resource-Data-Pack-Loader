@@ -4,9 +4,12 @@ import mctmods.resourcedatapackloader.common.blocks.ContentOverrides;
 import mctmods.resourcedatapackloader.common.enchantments.TableLapis;
 import mctmods.resourcedatapackloader.common.hardness.ContentHardness;
 import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -47,5 +50,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "onRemove", at = @At("HEAD")) private void rdpl$tableLapis(Level level, BlockPos pos, BlockState newState, boolean movedByPiston, CallbackInfo ci) {
         if (getBlock() instanceof EnchantingTableBlock && !newState.is(getBlock())) { TableLapis.broken(level, pos); }
+    }
+
+    @SuppressWarnings("ConstantValue") @Inject(method = "randomTick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V", at = @At("HEAD"), cancellable = true) private void rdpl$treeTick(ServerLevel level, BlockPos pos, RandomSource random, CallbackInfo ci) {
+        if ((Object) this instanceof BlockState state && ContentTreeEvents.randomTick(level, pos, state, random)) { ci.cancel(); }
     }
 }

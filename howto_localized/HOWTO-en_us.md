@@ -243,6 +243,7 @@ Under `data/`:
 | `<namespace>/diets/*.json`                   | Rules that make a repeated food feed less and a varied diet feed more. [Food variety](#food-variety)                                                                           |
 | `<namespace>/columns/*.json`                 | Runs of falling blocks that break together above a block a player breaks. [Falling columns](#falling-columns)                                                                  |
 | `<namespace>/leaf_decay/*.json`              | Leaves next to a block that changes decay on a short timer. [Leaf decay](#leaf-decay)                                                                                          |
+| `<namespace>/tree_growth/*.json`             | Vanilla and other mods' saplings grow their trees a few blocks at a time. [Tree growth rules](#tree-growth-rules)                                                              |
 | `<namespace>/flower_spreads/*.json`          | Extra flowers placed around grass or another block when bone meal is used on it. [Flower spreading](#flower-spreading)                                                         |
 | `<namespace>/paired_doors/*.json`            | A door's mirrored neighbor opens and closes with it. [Paired doors](#paired-doors)                                                                                             |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                                                                  |
@@ -1120,6 +1121,88 @@ A `structure` replaces the generated tree with one of your templates, which is t
 | `vines`      | no       | boolean             | `false`                | Hang vines from the leaves                                                                                                                                                          |
 | `structure`  | no       | `namespace:name`    | none                   | Grow into this template instead of a generated tree                                                                                                                                 |
 | `structures` | no       | list                | none                   | Several templates to grow into, one chosen each time it grows. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
+
+**Growing trees.** Give the sapling a `trees` list and it no longer drops its tree in one piece. After its own stages it starts a tree that grows a few blocks at a time, up to the final shape you list. Every key below is optional, and without `trees` none of them is read, so the sapling works as above. With `trees` present, `structure` and `structures` are ignored and the load logs one warning.
+
+```json
+{
+  "sapling": {
+    "stages": 2,
+    "chance": 5,
+    "light": 9,
+    "trees": [
+      { "structure": "mypack:oak_tall", "weight": 3, "turns": ["none", "half"], "mirrors": ["none", "leftright"] },
+      { "vanilla": "minecraft:birch_sapling", "weight": 1 },
+      { "own": true, "weight": 1, "inSteps": true }
+    ],
+    "steps": 0,
+    "blocked": "wait",
+    "growBy": "time",
+    "stepTicks": 1200,
+    "catchUp": "world",
+    "catchUpLimit": 0,
+    "bonemeal": "step",
+    "bonemealTicks": 600,
+    "bonemealChecks": false,
+    "biomes": ["minecraft:forest"],
+    "needsSky": false,
+    "needsWater": false,
+    "waterRange": 1
+  }
+}
+```
+
+| Key              | Required             | Value                   | Default                                                    | What it does                                                                                                                                                                                                                                                                                                 |
+| ---------------- | -------------------- | ----------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `trees`          | no                   | list of tree entries    | none                                                       | The final shapes the sapling can grow into, each with an optional `weight` (a whole number, 1 or more, default 1). One is picked when the tree starts. See Tree entries below                                                                                                                                |
+| `steps`          | no                   | `0`, or 4 to 64         | `0`                                                        | How many steps the tree takes from start to full size. `0` works it out from the picked shape's height and width, within 4 to 64. Another value outside 4 to 64 is clamped and logs one warning. `stages` are the sapling's own stages before the tree starts; `steps` are the growth of the tree after that |
+| `blocked`        | no                   | `wait`, `reset`, `drop` | `wait`                                                     | What happens when a step has no room for its logs. `wait` tries again at the next chance. `reset` takes away everything the tree placed and sets the sapling back to stage 0. `drop` takes everything away and drops the sapling as an item                                                                  |
+| `growBy`         | no                   | `chance`, `time`        | `chance`                                                   | `chance` makes one step each time a growth tick passes `chance` and the conditions. `time` makes a step every `stepTicks` ticks of game time while the conditions hold                                                                                                                                       |
+| `stepTicks`      | with `growBy` `time` | int, 1 or more          | none                                                       | Ticks per step in timed mode. The sapling's own stages count too, so planting to full tree takes `stepTicks` times the stages plus `steps`. Missing with `growBy` `time`, the sapling grows by chance and the load logs one error                                                                            |
+| `catchUp`        | no                   | `world`, `pause`        | `world`                                                    | Timed mode while the chunk is unloaded. `world` credits that time when the chunk loads again, judged by the conditions as they are at load time. `pause` does not                                                                                                                                            |
+| `catchUpLimit`   | no                   | int, 0 or more          | `0` (no limit)                                             | The most steps one chunk load may catch up. The rest of the earned time is dropped                                                                                                                                                                                                                           |
+| `bonemeal`       | no                   | `step`, `time`, `off`   | sapling: one stage per use as before; growing tree: `step` | `step` gives one step per use, a sapling stage or a growth step, with no chance roll. `time` adds `bonemealTicks` to the clock; in chance mode it acts as `step`. `off` makes bone meal do nothing and not be used up, on the sapling and on the tree. Sneak grow's bone meal mode follows this key          |
+| `bonemealTicks`  | no                   | int, 0 or more          | `0`                                                        | Ticks one use adds with `bonemeal` `time`                                                                                                                                                                                                                                                                    |
+| `bonemealChecks` | no                   | boolean                 | `false`                                                    | Whether a bone meal step also needs the conditions. Room is always checked                                                                                                                                                                                                                                   |
+| `biomes`         | no                   | list of biome ids       | any biome                                                  | The tree grows only in these biomes                                                                                                                                                                                                                                                                          |
+| `needsSky`       | no                   | boolean                 | `false`                                                    | As for plants: the growing tip must see the sky                                                                                                                                                                                                                                                              |
+| `needsWater`     | no                   | boolean                 | `false`                                                    | As for plants: water must be near the base                                                                                                                                                                                                                                                                   |
+| `waterRange`     | no                   | int                     | `1`                                                        | How far from the base to look for water                                                                                                                                                                                                                                                                      |
+
+`light`, `biomes`, `needsSky` and `needsWater` are the conditions, in both modes. `chance` is read only when `growBy` is `chance`; on a sapling it keeps its one in N meaning, and each growth step passes at the same one in N odds as a stage. Water and biome are checked at the base of the tree. Light and sky are read at the growing tip, so the tree's own canopy never shades it. The water rules a sapling block already has still apply while it is a sapling.
+
+In timed mode a tree that has been unloaded is credited with the time it missed when its chunk loads, judged by the conditions as they are at that moment. A night or a dry spell that fell in the unloaded time is not subtracted separately. A tree that grew in `time` mode keeps growing at randomTickSpeed 0, but a sapling that worldgen or a structure placed starts only from a random tick, so at randomTickSpeed 0 it waits.
+
+The trunk of a `structure` template must stand on its center column, which is the middle of the template's width and depth, rounded down. The tree turns and mirrors about that column, so the trunk stays where the sapling was at every turn. A template with no log within one block of the column is placed whole at once, and so is one with no logs at all.
+
+Bone meal works on any log of the trunk, on every column of a 2x2 trunk and every log up it, not only the base. It follows `bonemeal`, and the tree grows a step.
+
+A 2x2 of timed saplings makes one tree: the first sapling of the square to reach its time grows the mega tree, and the other three are used up by it.
+
+If you edit a template or the `trees` list, or remove the sapling, the trees already growing from it stop growing; the blocks stay where they are and the log says why. A block of the tree's own kind that a command such as `/setblock` puts in a tree's place between two checks counts as part of the tree.
+
+A shape over 4096 blocks, or outside a box 48 blocks wide, 64 high and 48 deep around the start, grows whole at once with one log line. That box reaches 24 blocks each way sideways, 16 below and 47 above.
+
+Each tree entry is one of `structure`, `vanilla` or `own`:
+
+```json
+{
+  "trees": [
+    { "structure": "mypack:oak_tall", "weight": 3, "turns": [{ "turn": "half", "weight": 2 }, "none"], "mirrors": ["none", "frontback"] },
+    { "vanilla": "minecraft:dark_oak_sapling" },
+    { "own": true, "inSteps": true }
+  ]
+}
+```
+
+| Field              | Value                                            | Default                                                                                                               | What it does                                                                                                                                                                    |
+| ------------------ | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structure`        | `namespace:name` of a template                   | none                                                                                                                  | The final shape is the template, centered on the sapling like a `structure` above, then mirrored and turned about its center column. The trunk must stand on that column        |
+| `turns`, `mirrors` | lists, as for an imprint's `turns` and `mirrors` | `none` only                                                                                                           | Picked once when the tree starts. Only a `structure` entry reads them; elsewhere they log one warning                                                                           |
+| `vanilla`          | `minecraft:<name>_sapling`                       | none                                                                                                                  | The final shape is the tree that vanilla sapling would grow at this spot, with vanilla's own odds and its 2x2 rule. An id from another mod is an error and the entry is dropped |
+| `own`              | `true`                                           | none                                                                                                                  | The final shape is the tree the matched sapling grows itself. A block of yours uses its generated tree; a vanilla sapling uses its own, as with `vanilla`                       |
+| `inSteps`          | boolean                                          | `true` for `structure`, `vanilla`, and `own` on a vanilla or RDPL sapling; `false` for `own` on another mod's sapling | `true` grows the tree in steps. `false` places the shape whole when the tree starts, so a modded tree grows as its mod drew it unless you opt in                                |
+| `weight`           | int, 1 or more                                   | `1`                                                                                                                   | Its share in the pick                                                                                                                                                           |
 
 ## Containers
 
@@ -3690,6 +3773,43 @@ When a block next to a leaf changes, such as a log being removed, that leaf is s
 | `maxTicks`   | no               | int, 1 to 1200                                                                 | `60`            | Longest delay. It must not be below `minTicks`.                                                       |
 
 A rule needs at least one of `blocks`, `tag` or `all`; a file with none is ignored with an error line, and so is one whose `maxTicks` is below `minTicks`. The first rule, in file order, that covers the leaf and the dimension and does not except it sets the delay. Only leaves vanilla lets decay are covered, and only at positions the level ticks. Dynamic Trees leaves are never touched, even when a file lists them. This is server pack data and needs nothing on the client; with no file there is no extra work and leaves behave as they do today. The rules load at server start, so a first `leaf_decay` file needs a restart. A load logs `Loaded N leaf decay rule(s)`. A file whose `blocks` name no registered block and whose `tag` gives no valid id logs `Leaf decay <key> names no registered blocks, ignoring it`, and a `tag` that is not a valid id logs that it is skipped.
+
+## Tree growth rules
+
+*crafting, loot and trade*
+
+`<namespace>/tree_growth/*.json`
+
+A rule gives growing trees to saplings that are not yours: the vanilla saplings or another mod's. It has the same growth keys as the `sapling` block in [Saplings](#saplings), and it registers nothing. The file name is yours to choose, only the folder is read, and several files stack.
+
+```json
+{
+  "saplings": ["minecraft:oak_sapling", {"block": "minecraft:birch_sapling"}, "#minecraft:saplings"],
+  "chance": 0.2,
+  "light": 9,
+  "trees": [
+    { "vanilla": "minecraft:birch_sapling", "weight": 2 },
+    { "own": true }
+  ],
+  "growBy": "chance",
+  "bonemeal": "step"
+}
+```
+
+| Key                                | Required | Value                  | Default                                   | What it does                                                                                                                                                                                                                                       |
+| ---------------------------------- | -------- | ---------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `saplings`                         | yes      | one target or a list   |                                           | The sapling states the rule takes. A target is `"minecraft:oak_sapling"`, `{"block": "minecraft:birch_sapling"}`, or a block tag `"#minecraft:saplings"`. When two rules match one state, the first one loaded wins and the other logs one warning |
+| `chance`                           | no       | number from `0` to `1` | none: the block's own random tick decides | Odds that a random tick or growth tick counts, `0.2` for one in five. When given, RDPL decides the sapling's random tick instead of the block                                                                                                      |
+| `light`                            | no       | int, as in Saplings    | none: the block's own random tick decides | When given, RDPL decides the sapling's random tick instead of the block                                                                                                                                                                            |
+| every other growth key in Saplings | no       | as in Saplings         | as in Saplings                            | `trees`, `steps`, `blocked`, `growBy`, `stepTicks`, `catchUp`, `catchUpLimit`, `bonemeal`, `bonemealTicks`, `bonemealChecks`, `biomes`, `needsSky`, `needsWater` and `waterRange` work the same here                                               |
+
+Without `trees` a rule only changes what its other keys change. A rule with no key besides `saplings` logs one warning and does nothing.
+
+A rule never reads `stages`, `soil`, `log`, `leaves`, `height`, `structure` or `structures`: the block's own stage, its survival test and its own tree decide those. A rule that names one of your RDPL `sapling` blocks is skipped with one warning, because that block's own JSON is its rule. A matched block that cannot be bone mealed and takes no random ticks is skipped with one warning, since RDPL has no way to start it.
+
+Dynamic Trees saplings are always left to Dynamic Trees. A rule that names one is skipped and the log says so.
+
+Growth by chance and by random tick needs randomTickSpeed above 0; at 0 nothing of that kind grows. A sapling that worldgen or a structure placed under a `time` rule starts only from a random tick, so at randomTickSpeed 0 it waits while a sapling a player placed grows.
 
 ## Flower spreading
 
@@ -11057,16 +11177,17 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 
 *server commands*
 
-| Command                             | Level | What it does                                                                                                                                                                                                                                              |
-| ----------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/rdplserver oregen`                | 3     | Running totals of ore generation that was blocked, per mod and type                                                                                                                                                                                       |
-| `/rdplserver generators`            | 3     | Running totals of world generators that were blocked, per mod and type                                                                                                                                                                                    |
-| `/rdplserver biome list [all]`      | 3     | Every biome that can generate on the server, with its number, id and name; `all` includes the ones nothing can generate                                                                                                                                   |
-| `/rdplserver biome`                 | 3     | The biome you are standing in and what the pack does with it: its id, number and name, whether `blockBiomes` is on and which world template is active, and the ground, the block under it and the stone at y 40                                           |
-| `/rdplserver biome here [player]`   | 3     | The biome you, or the player named, are standing in: its name, id and number. The console names a player                                                                                                                                                  |
-| `/rdplserver biome find <name>`     | 3     | The nearest place within 6400 blocks where a biome matching that id or shown name generates: its coordinates and the distance from where it is run. Says so when none is that close, or when the name matches no biome. `/rdpl biome find` forwards to it |
-| `/rdplserver dimensions`            | 3     | Every dimension, including the ones packs added                                                                                                                                                                                                           |
-| `/rdplserver vein <entry> [radius]` | 3     | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (1 to 64, default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it                                              |
+| Command                                   | Level | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ----------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver oregen`                      | 3     | Running totals of ore generation that was blocked, per mod and type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `/rdplserver generators`                  | 3     | Running totals of world generators that were blocked, per mod and type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `/rdplserver biome list [all]`            | 3     | Every biome that can generate on the server, with its number, id and name; `all` includes the ones nothing can generate                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `/rdplserver biome`                       | 3     | The biome you are standing in and what the pack does with it: its id, number and name, whether `blockBiomes` is on and which world template is active, and the ground, the block under it and the stone at y 40                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `/rdplserver biome here [player]`         | 3     | The biome you, or the player named, are standing in: its name, id and number. The console names a player                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `/rdplserver biome find <name>`           | 3     | The nearest place within 6400 blocks where a biome matching that id or shown name generates: its coordinates and the distance from where it is run. Says so when none is that close, or when the name matches no biome. `/rdpl biome find` forwards to it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `/rdplserver dimensions`                  | 3     | Every dimension, including the ones packs added                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `/rdplserver vein <entry> [radius]`       | 3     | Where a `vein` shaped worldgen entry has its veins seeded within that many chunks (1 to 64, default 8) of where it is run, nearest first, whether or not those chunks exist yet. `/rdpl vein` forwards to it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `/rdplserver tree <x> <y> <z> [grow [n]]` | 3     | With no `grow`, prints the growing tree at that base or sapling, or at any block that tree placed: its rule or sapling, the picked shape with its turn and mirror, step so far out of the total, height and width of the final shape, phase, mode, progress toward the next step, age, the last reason it did not grow, how many blocks it owns and has lost, and how many logs sit loose from the trunk (0 when it is sound). A felled tree says how many leaves it still has to release. Says `no tree at x y z` when there is none. `grow n` (1 by default, at most 64) runs n steps at once, sapling stages first, with no chance, light or condition test; room is still checked. On a matched sapling with `trees` and no tree yet, the first `grow` starts it |
 
 #### Gate commands
 

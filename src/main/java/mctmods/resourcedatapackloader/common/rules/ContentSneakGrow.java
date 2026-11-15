@@ -8,6 +8,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowSwitchD
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDef;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.common.util.plant.DynamicTrees;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.google.gson.JsonElement;
@@ -235,7 +238,7 @@ public final class ContentSneakGrow {
         if (sneaking && player.onGround() && !player.isPassenger()) { crouch(player, state); }
     }
 
-    private static boolean sapling(BlockState state) { return state.getBlock() instanceof SaplingBlock || state.getBlock() instanceof ContentSaplingBlock || state.is(BlockTags.SAPLINGS); }
+    private static boolean sapling(BlockState state) { return state.getBlock() instanceof SaplingBlock || state.getBlock() instanceof ContentSaplingBlock || state.is(BlockTags.SAPLINGS) || DynamicTrees.isSapling(state.getBlock()); }
 
     private static boolean plant(BlockState state) {
         Block block = state.getBlock();
@@ -318,7 +321,7 @@ public final class ContentSneakGrow {
         Block block = state.getBlock();
         if (state.isAir() || listed(def.except, block)) { return false; }
         boolean plain = dirt && block == Blocks.DIRT;
-        if (!plain && !(def.blocks == null ? plant(state) : listed(def.blocks, block))) { return false; }
+        if (!plain && ContentTreeStore.get(level, pos.asLong()) == null && !(def.blocks == null ? plant(state) : listed(def.blocks, block))) { return false; }
         if (level.getRandom().nextFloat() >= def.chance) { return false; }
         if (plain) { return level.setBlockAndUpdate(pos, Blocks.GRASS_BLOCK.defaultBlockState()); }
         if (def.mode == SneakGrowDef.TICK) { return tick(level, pos, state, def.ticks); }
@@ -326,6 +329,7 @@ public final class ContentSneakGrow {
     }
 
     private static boolean bonemeal(ServerLevel level, BlockPos pos, BlockState state) {
+        if (ContentTreeEvents.sneak(level, pos, state, true)) { return true; }
         Block block = state.getBlock();
         if (!(block instanceof BonemealableBlock growable) || ContentGrowSwitch.stopped(level, pos, block, sapling(state) ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS)) { return false; }
         if (!growable.isValidBonemealTarget(level, pos, state) || !growable.isBonemealSuccess(level, level.getRandom(), pos, state)) { return false; }
@@ -339,7 +343,7 @@ public final class ContentSneakGrow {
         for (int index = 0; index < ticks; index++) {
             BlockState now = level.getBlockState(pos);
             if (now.getBlock() != block) { break; }
-            now.randomTick(level, pos, level.getRandom());
+            if (!ContentTreeEvents.sneak(level, pos, now, false)) { now.randomTick(level, pos, level.getRandom()); }
         }
         return true;
     }

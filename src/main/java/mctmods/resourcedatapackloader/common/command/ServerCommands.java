@@ -65,6 +65,7 @@ public final class ServerCommands {
                 .then(CommandTalk.talk(NAME))
                 .then(CommandWeight.weight(NAME))
                 .then(SneakCommand.sneak(NAME))
+                .then(TreeCommand.tree(NAME))
                 .then(OwnershipCommand.ownership(NAME))
                 .then(ClaimCommand.claim(NAME))
                 .then(ClaimCommand.unclaim(NAME))

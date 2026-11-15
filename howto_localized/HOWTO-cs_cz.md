@@ -243,6 +243,7 @@ V `data/`:
 | `<namespace>/diets/*.json`                   | Pravidla, díky kterým opakované jídlo sytí méně a pestrý jídelníček více. [Pestrost jídla](#pestrost-jídla)                                                                                          |
 | `<namespace>/columns/*.json`                 | Řady padajících bloků, které se rozbijí spolu s blokem pod nimi, když hráč rozbije blok. [Padající sloupce](#padající-sloupce)                                                                       |
 | `<namespace>/leaf_decay/*.json`              | Listí u změněného bloku opadá po krátké prodlevě. [Rychlé opadávání listí](#rychlé-opadávání-listí)                                                                                                  |
+| `<namespace>/tree_growth/*.json`             | Vanilla a sazenice jiných modů rostou do stromů po několika blocích. [Pravidla růstu stromů](#pravidla-růstu-stromů)                                                                                 |
 | `<namespace>/flower_spreads/*.json`          | Další květiny kolem trávy nebo jiného bloku, když se na něj použije kostní moučka. [Šíření květin](#šíření-květin)                                                                                   |
 | `<namespace>/paired_doors/*.json`            | Dveře vedle zrcadlového souseda se otevírají a zavírají spolu s ním. [Spárované dveře](#spárované-dveře)                                                                                             |
 | `<namespace>/advancements/*.json`            | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat)                                                                                                                                                       |
@@ -1120,6 +1121,88 @@ Položka `structure` nahradí vygenerovaný strom některou z tvých šablon, co
 | `vines`      | ne      | boolean            | `false`                | Nechá z listí viset liány                                                                                                                                                                  |
 | `structure`  | ne      | `namespace:name`   | žádný                  | Vyroste v tuto šablonu místo vygenerovaného stromu                                                                                                                                         |
 | `structures` | ne      | seznam             | žádný                  | Několik šablon, do nichž vyroste, při každém růstu se vybere jedna. Každý záznam je `{ "structure": "namespace:name", "weight": 3 }` nebo holý název pro stejné šance. Přebíjí `structure` |
+
+**Rostoucí stromy.** Dej sazenici seznam `trees` a ta už nespadne jako celý strom. Po vlastních fázích začne strom, který roste po několika blocích, až do konečného tvaru, který uvedeš. Každý klíč níže je volitelný a bez `trees` se žádný z nich nečte, takže sazenice funguje jako výše. Když je `trees` přítomen, `structure` a `structures` se ignorují a načtení zapíše jedno varování.
+
+```json
+{
+  "sapling": {
+    "stages": 2,
+    "chance": 5,
+    "light": 9,
+    "trees": [
+      { "structure": "mypack:oak_tall", "weight": 3, "turns": ["none", "half"], "mirrors": ["none", "leftright"] },
+      { "vanilla": "minecraft:birch_sapling", "weight": 1 },
+      { "own": true, "weight": 1, "inSteps": true }
+    ],
+    "steps": 0,
+    "blocked": "wait",
+    "growBy": "time",
+    "stepTicks": 1200,
+    "catchUp": "world",
+    "catchUpLimit": 0,
+    "bonemeal": "step",
+    "bonemealTicks": 600,
+    "bonemealChecks": false,
+    "biomes": ["minecraft:forest"],
+    "needsSky": false,
+    "needsWater": false,
+    "waterRange": 1
+  }
+}
+```
+
+| Klíč             | Povinné           | Hodnota                 | Výchozí                                                           | Co dělá                                                                                                                                                                                                                                                                                                      |
+| ---------------- | ----------------- | ----------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `trees`          | ne                | seznam položek stromu   | žádný                                                             | Konečné tvary, do kterých sazenice může vyrůst, každý s volitelným `weight` (celé číslo, 1 nebo více, výchozí 1). Jeden se vybere ve chvíli, kdy strom začne. Viz Položky stromu níže                                                                                                                        |
+| `steps`          | ne                | `0`, nebo 4 až 64       | `0`                                                               | Kolik kroků strom udělá od začátku do plné velikosti. `0` to spočítá z výšky a šířky vybraného tvaru, v rozsahu 4 až 64. Jiná hodnota mimo 4 až 64 se ořízne a zapíše jedno varování. `stages` jsou vlastní fáze sazenice před začátkem stromu, `steps` je růst stromu po něm                                |
+| `blocked`        | ne                | `wait`, `reset`, `drop` | `wait`                                                            | Co se stane, když krok nemá místo pro své kmeny. `wait` zkusí znovu při další šanci. `reset` odebere všechno, co strom postavil, a vrátí sazenici na fázi 0. `drop` odebere všechno a sazenice vypadne jako předmět                                                                                          |
+| `growBy`         | ne                | `chance`, `time`        | `chance`                                                          | `chance` udělá jeden krok pokaždé, když růstový tik projde šancí `chance` a platí podmínky. `time` udělá krok každých `stepTicks` herních ticků, dokud podmínky platí                                                                                                                                        |
+| `stepTicks`      | s `growBy` `time` | celé číslo, 1 nebo více | žádný                                                             | Ticky na krok v časovaném režimu. Počítají se i vlastní fáze sazenice, takže od zasazení po plný strom je to `stepTicks` krát počet fází plus `steps`. Při `growBy` `time` bez tohoto klíče sazenice roste podle šance a načtení zapíše jednu chybu                                                          |
+| `catchUp`        | ne                | `world`, `pause`        | `world`                                                           | Časovaný režim, když je chunk nenačtený. `world` připíše ten čas, až se chunk znovu načte, a posoudí se podle podmínek v okamžiku načtení. `pause` ne                                                                                                                                                        |
+| `catchUpLimit`   | ne                | celé číslo, 0 nebo více | `0` (bez limitu)                                                  | Nejvíc kroků, které může jedno načtení chunku dohnat. Zbytek získaného času se zahodí                                                                                                                                                                                                                        |
+| `bonemeal`       | ne                | `step`, `time`, `off`   | sazenice: jedna fáze na použití jako dřív; rostoucí strom: `step` | `step` dá jeden krok na použití, fázi sazenice nebo krok růstu, bez losování šance. `time` přidá `bonemealTicks` k hodinám; v režimu šance funguje jako `step`. `off` způsobí, že kostní moučka nedělá nic a nespotřebuje se, na sazenici i na stromu. Režim kostní moučky u sneak grow se řídí tímto klíčem |
+| `bonemealTicks`  | ne                | celé číslo, 0 nebo více | `0`                                                               | Ticky, které jedno použití přidá při `bonemeal` `time`                                                                                                                                                                                                                                                       |
+| `bonemealChecks` | ne                | logická hodnota         | `false`                                                           | Zda krok kostní moučkou potřebuje i podmínky. Místo se vždy kontroluje                                                                                                                                                                                                                                       |
+| `biomes`         | ne                | seznam id biomů         | jakýkoli biom                                                     | Strom roste jen v těchto biomech                                                                                                                                                                                                                                                                             |
+| `needsSky`       | ne                | logická hodnota         | `false`                                                           | Jako u rostlin: růstový vrchol musí vidět oblohu                                                                                                                                                                                                                                                             |
+| `needsWater`     | ne                | logická hodnota         | `false`                                                           | Jako u rostlin: voda musí být blízko základu                                                                                                                                                                                                                                                                 |
+| `waterRange`     | ne                | celé číslo              | `1`                                                               | Jak daleko od základu hledat vodu                                                                                                                                                                                                                                                                            |
+
+`light`, `biomes`, `needsSky` a `needsWater` jsou podmínky, v obou režimech. `chance` se čte jen tehdy, když je `growBy` `chance`; u sazenice si zachová význam jedna z N a každý růstový krok projde se stejnými šancemi jedna z N jako fáze. Voda a biom se kontrolují na základu stromu. Světlo a obloha se čtou na růstovém vrcholu, takže vlastní koruna stromu ho nikdy nezastíní. Pravidla vody, která už blok sazenice má, platí dál, dokud je sazenicí.
+
+V časovaném režimu se stromu, který byl nenačtený, připíše čas, který zmeškal, až se jeho chunk načte, a posoudí se podle podmínek v ten okamžik. Noc nebo sucho, které spadly do nenačteného času, se neodečítají zvlášť. Strom, který rostl v režimu `time`, roste dál při randomTickSpeed 0, ale sazenice, kterou zasadila generace světa nebo struktura, začne jen z náhodného ticku, takže při randomTickSpeed 0 čeká.
+
+Kmen šablony `structure` musí stát na svém středovém sloupci, což je střed šířky a hloubky šablony zaokrouhlený dolů. Strom se otáčí a zrcadlí kolem tohoto sloupce, takže kmen zůstává tam, kde byla sazenice, při každém otočení. Šablona bez kmene do jednoho bloku od sloupce se postaví celá naráz, stejně tak šablona bez jediného kmene.
+
+Kostní moučka funguje na jakémkoli kmeni stromu, na každém sloupci kmene 2x2 a na každém kmeni nad ním, ne jen na základně. Řídí se `bonemeal` a strom udělá jeden krok.
+
+2x2 časovaných sazenic udělá jeden strom: první sazenice čtverce, která dosáhne svého času, vyroste v obří strom a ostatní tři jsou jím spotřebovány.
+
+Když upravíš šablonu nebo seznam `trees`, nebo sazenici odstraníš, stromy, které z ní už rostou, přestanou růst; bloky zůstanou, kde jsou, a log řekne proč. Blok téhož druhu jako strom, který příkaz jako `/setblock` položí na místo stromu mezi dvěma kontrolami, se počítá jako část stromu.
+
+Tvar větší než 4096 bloků, nebo mimo krabici 48 bloků široko, 64 vysoko a 48 hluboko kolem začátku, vyroste celý naráz s jedním řádkem v logu. Ta krabice sahá 24 bloků každým směrem do stran, 16 dolů a 47 nahoru.
+
+Každá položka stromu je jedna z `structure`, `vanilla` nebo `own`:
+
+```json
+{
+  "trees": [
+    { "structure": "mypack:oak_tall", "weight": 3, "turns": [{ "turn": "half", "weight": 2 }, "none"], "mirrors": ["none", "frontback"] },
+    { "vanilla": "minecraft:dark_oak_sapling" },
+    { "own": true, "inSteps": true }
+  ]
+}
+```
+
+| Pole               | Hodnota                                    | Výchozí                                                                                                        | Co dělá                                                                                                                                                              |
+| ------------------ | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structure`        | `namespace:name` šablony                   | žádný                                                                                                          | Konečný tvar je šablona, vycentrovaná na sazenici jako `structure` výše, pak zrcadlená a otočená kolem svého středového sloupce. Kmen na tomto sloupci musí stát     |
+| `turns`, `mirrors` | seznamy, jako u `turns` a `mirrors` otisku | jen `none`                                                                                                     | Vybere se jednou, když strom začne. Čte je jen položka `structure`; jinde zapíšou jedno varování                                                                     |
+| `vanilla`          | `minecraft:<name>_sapling`                 | žádný                                                                                                          | Konečný tvar je strom, který by na tomto místě vyrostl z té vanilla sazenice, s vanilla šancemi a jejím pravidlem 2x2. Id z jiného modu je chyba a položka se zahodí |
+| `own`              | `true`                                     | žádný                                                                                                          | Konečný tvar je strom, který sám vyroste přiřazená sazenice. Tvůj blok použije svůj vygenerovaný strom; vanilla sazenice použije svůj vlastní, jako u `vanilla`      |
+| `inSteps`          | logická hodnota                            | `true` u `structure`, `vanilla` a `own` na vanilla nebo RDPL sazenici; `false` u `own` na sazenici jiného modu | `true` roste strom po krocích. `false` postaví tvar celý, když strom začne, takže modový strom roste tak, jak ho jeho mod nakreslil, pokud se nerozhodneš jinak      |
+| `weight`           | celé číslo, 1 nebo více                    | `1`                                                                                                            | Jeho podíl při výběru                                                                                                                                                |
 
 ## Kontejnery
 
@@ -3692,6 +3775,43 @@ Když se změní blok vedle listí, třeba když se odstraní kmen, ten list se 
 | `maxTicks`   | ne           | int, 1 až 1200                                                                  | `60`            | Nejdelší prodleva. Nesmí být menší než `minTicks`.                                                                       |
 
 Pravidlo potřebuje aspoň jeden z klíčů `blocks`, `tag` nebo `all`; soubor bez nich se ignoruje a zapíše chybu, stejně jako soubor, jehož `maxTicks` je menší než `minTicks`. Prodlevu určí první pravidlo v pořadí souborů, které pokrývá list i dimenzi a nevyjímá ho. Pokrývá se jen listí, které vanilla nechává rozpadat, a jen na pozicích, na kterých svět provádí tiky. Listí z Dynamic Trees se nikdy nedotkne, ani když ho soubor uvádí. Jsou to serverová data balíčku a na klientovi nic nevyžadují; bez souboru se nedělá nic navíc a listí se chová jako dosud. Pravidla se načtou při startu serveru, takže první soubor `leaf_decay` vyžaduje restart. Při načtení se zapíše `Loaded N leaf decay rule(s)`. Soubor, jehož `blocks` nepojmenují žádný registrovaný blok a jehož `tag` nedá platné id, zapíše `Leaf decay <key> names no registered blocks, ignoring it`, a `tag`, které není platné id, se přeskočí s hlášením.
+
+## Pravidla růstu stromů
+
+*výroba, kořist a obchod*
+
+`<namespace>/tree_growth/*.json`
+
+Pravidlo dává rostoucí stromy sazenicím, které nejsou tvoje: vanilla sazenicím nebo sazenicím jiných modů. Má stejné klíče růstu jako blok `sapling` v [Sazenice](#sazenice) a nic nezaregistruje. Název souboru si zvolíš sám, čte se jen složka, a více souborů se sčítá.
+
+```json
+{
+  "saplings": ["minecraft:oak_sapling", { "block": "minecraft:birch_sapling" }, "#minecraft:saplings"],
+  "chance": 0.2,
+  "light": 9,
+  "trees": [
+    { "vanilla": "minecraft:birch_sapling", "weight": 2 },
+    { "own": true }
+  ],
+  "growBy": "chance",
+  "bonemeal": "step"
+}
+```
+
+| Klíč                                | Povinný | Hodnota                    | Výchozí                                   | Co dělá                                                                                                                                                                                                                                                        |
+| ----------------------------------- | ------- | -------------------------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `saplings`                          | ano     | jeden cíl nebo seznam      |                                           | Stavy sazenic, které pravidlo přebírá. Cíl je `"minecraft:oak_sapling"` (blok), `{ "block": "minecraft:birch_sapling" }`, nebo značka bloků `"#minecraft:saplings"`. Když dvě pravidla sedí na jeden stav, vyhraje první načtené a druhé zapíše jedno varování |
+| `chance`                            | ne      | číslo od `0` do `1`        | žádný: rozhodne vlastní náhodný tik bloku | Šance, že se počítá náhodný tik nebo růstový tik, `0.2` znamená jeden z pěti. Když je zadáno, RDPL rozhodne o náhodném ticku sazenice místo bloku                                                                                                              |
+| `light`                             | ne      | celé číslo, jako u Sazenic | žádný: rozhodne vlastní náhodný tik bloku | Když je zadáno, RDPL rozhodne o náhodném ticku sazenice místo bloku                                                                                                                                                                                            |
+| každý další klíč růstu v Sazenicích | ne      | jako u Sazenic             | jako u Sazenic                            | `trees`, `steps`, `blocked`, `growBy`, `stepTicks`, `catchUp`, `catchUpLimit`, `bonemeal`, `bonemealTicks`, `bonemealChecks`, `biomes`, `needsSky`, `needsWater` a `waterRange` fungují stejně i tady                                                          |
+
+Bez `trees` pravidlo mění jen to, co mění jeho ostatní klíče. Pravidlo bez jiného klíče než `saplings` zapíše jedno varování a nedělá nic.
+
+Pravidlo nikdy nečte `stages`, `soil`, `log`, `leaves`, `height`, `structure` ani `structures`: o tom rozhodne vlastní fáze bloku, jeho test přežití a jeho vlastní strom. Pravidlo, které jmenuje jeden z tvých bloků `sapling` z RDPL, se přeskočí s jedním varováním, protože o něm rozhoduje JSON toho bloku. Odpovídající blok, který nejde kostní moučkou a nebere náhodné ticky, se přeskočí s jedním varováním, protože RDPL nemá způsob, jak ho rozjet.
+
+Sazenice Dynamic Trees zůstávají vždy v Dynamic Trees. Pravidlo, které jednu jmenuje, se přeskočí a log to řekne.
+
+Růst podle šance a podle náhodného ticku potřebuje randomTickSpeed nad 0; na 0 tohoto druhu nic neroste. Sazenice, kterou zasadila generace světa nebo struktura pod pravidlem `time`, začne jen z náhodného ticku, takže při randomTickSpeed 0 čeká, zatímco sazenice, kterou zasadil hráč, roste.
 
 ## Šíření květin
 
@@ -11052,16 +11172,17 @@ Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky 
 
 *příkazy serveru*
 
-| Příkaz                              | Úroveň | Co dělá                                                                                                                                                                                                                                                                               |
-| ----------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/rdplserver oregen`                | 3      | Průběžné součty generování rud, které bylo zablokováno, podle módu a typu                                                                                                                                                                                                             |
-| `/rdplserver generators`            | 3      | Průběžné součty generátorů světa, které byly zablokovány, podle módu a typu                                                                                                                                                                                                           |
-| `/rdplserver biome list [all]`      | 3      | Každý biom, který se může na serveru generovat, s jeho číslem, id a názvem; `all` zahrnuje i ty, které nic nemůže vygenerovat                                                                                                                                                         |
-| `/rdplserver biome`                 | 3      | Biom, ve kterém stojíš, a co s ním balíček dělá: jeho id, číslo a název, zda je `blockBiomes` zapnuto a která šablona světa je aktivní, a povrch, blok pod ním a kámen na y 40                                                                                                        |
-| `/rdplserver biome here [player]`   | 3      | Biom, ve kterém stojíš ty, nebo uvedený hráč: jeho název, id a číslo. Konzole hráče pojmenuje                                                                                                                                                                                         |
-| `/rdplserver biome find <name>`     | 3      | Nejbližší místo do 6400 bloků, kde se generuje biom odpovídající tomuto id nebo zobrazenému názvu: jeho souřadnice a vzdálenost od místa, kde se příkaz spustil. Řekne to, když žádné není tak blízko, nebo když název neodpovídá žádnému biomu. Předává se do něj `/rdpl biome find` |
-| `/rdplserver dimensions`            | 3      | Každá dimenze, včetně těch, které přidaly balíčky                                                                                                                                                                                                                                     |
-| `/rdplserver vein <entry> [radius]` | 3      | Kde má položka worldgenu tvaru `vein` podle seedu své žíly do vzdálenosti tolika chunků (1 až 64, výchozí 8) od místa spuštění, od nejbližší, ať tyto chunky už existují, nebo ne. `/rdpl vein` na něj přesměrovává                                                                   |
+| Příkaz                                    | Úroveň | Co dělá                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ----------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver oregen`                      | 3      | Průběžné součty generování rud, které bylo zablokováno, podle módu a typu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `/rdplserver generators`                  | 3      | Průběžné součty generátorů světa, které byly zablokovány, podle módu a typu                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `/rdplserver biome list [all]`            | 3      | Každý biom, který se může na serveru generovat, s jeho číslem, id a názvem; `all` zahrnuje i ty, které nic nemůže vygenerovat                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `/rdplserver biome`                       | 3      | Biom, ve kterém stojíš, a co s ním balíček dělá: jeho id, číslo a název, zda je `blockBiomes` zapnuto a která šablona světa je aktivní, a povrch, blok pod ním a kámen na y 40                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `/rdplserver biome here [player]`         | 3      | Biom, ve kterém stojíš ty, nebo uvedený hráč: jeho název, id a číslo. Konzole hráče pojmenuje                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `/rdplserver biome find <name>`           | 3      | Nejbližší místo do 6400 bloků, kde se generuje biom odpovídající tomuto id nebo zobrazenému názvu: jeho souřadnice a vzdálenost od místa, kde se příkaz spustil. Řekne to, když žádné není tak blízko, nebo když název neodpovídá žádnému biomu. Předává se do něj `/rdpl biome find`                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `/rdplserver dimensions`                  | 3      | Každá dimenze, včetně těch, které přidaly balíčky                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `/rdplserver vein <entry> [radius]`       | 3      | Kde má položka worldgenu tvaru `vein` podle seedu své žíly do vzdálenosti tolika chunků (1 až 64, výchozí 8) od místa spuštění, od nejbližší, ať tyto chunky už existují, nebo ne. `/rdpl vein` na něj přesměrovává                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `/rdplserver tree <x> <y> <z> [grow [n]]` | 3      | Bez `grow` vypíše rostoucí strom na tom základu nebo sazenici, nebo na libovolném bloku, který ten strom postavil: jeho pravidlo nebo sazenici, vybraný tvar s jeho otočením a zrcadlením, dosavadní krok z celkového počtu, výšku a šířku konečného tvaru, fázi, režim, postup k dalšímu kroku, věk, poslední důvod, proč nerostl, kolik bloků vlastní a ztratil, a kolik kmenů leží volně mimo kmen (0, když je strom pevný). Pokácený strom řekne, kolik listí ještě musí uvolnit. Když tam žádný není, řekne `no tree at x y z`. `grow n` (výchozí 1, nejvíc 64) provede n kroků naráz, nejdřív fáze sazenice, bez testu šance, světla nebo podmínek; místo se pořád kontroluje. U sazenice odpovídající se `trees` a bez stromu první `grow` strom spustí |
 
 #### Příkazy bran
 
