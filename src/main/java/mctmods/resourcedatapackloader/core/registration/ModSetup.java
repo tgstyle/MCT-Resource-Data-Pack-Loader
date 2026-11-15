@@ -134,6 +134,9 @@ import mctmods.resourcedatapackloader.common.weights.ContentWeights;
 import mctmods.resourcedatapackloader.common.weights.PlayerWeights;
 import mctmods.resourcedatapackloader.common.weights.WeightEnforce;
 import mctmods.resourcedatapackloader.common.weights.WeightSync;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeClock;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.core.config.Config;
 import mctmods.resourcedatapackloader.core.integration.blastplaster.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.core.integration.forgemultipartcbe.CbmpRubicParts;
@@ -183,6 +186,10 @@ public class ModSetup {
         MinecraftForge.EVENT_BUS.register(ContentColumns.class);
         MinecraftForge.EVENT_BUS.register(ContentPairedDoors.class);
         if (ContentLeafDecay.load()) { MinecraftForge.EVENT_BUS.register(LeafDecays.class); }
+        MinecraftForge.EVENT_BUS.register(ContentTreeStore.class);
+        MinecraftForge.EVENT_BUS.register(ContentTreeClock.class);
+        MinecraftForge.EVENT_BUS.register(ContentTreeEvents.class);
+        MinecraftForge.TERRAIN_GEN_BUS.register(ContentTreeEvents.class);
         MinecraftForge.EVENT_BUS.register(ContentBoneMealFlowers.class);
         MinecraftForge.EVENT_BUS.register(ContentCarry.class);
         MinecraftForge.EVENT_BUS.register(PlayerWeights.class);

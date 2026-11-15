@@ -249,13 +249,13 @@ public final class ContentParser {
         return new SaplingDef(
                 strings(entry, "soil"),
                 Math.max(1, Json.getInt(entry, "stages", 2)),
-                Math.max(1, Json.getInt(entry, "chance", 7)),
+                Math.max(1, Json.getInt(entry, "chance", ContentParserTrees.SAPLING_CHANCE)),
                 Math.max(0, Json.getInt(entry, "light", 9)),
                 Json.getString(entry, "structure", ""),
                 picks(entry, "structures", "structure"),
                 Json.getString(entry, "log", "minecraft:log"),
                 Json.getString(entry, "leaves", "minecraft:leaves"),
-                Math.max(1, Json.getInt(entry, "height", 4)));
+                Math.max(1, Json.getInt(entry, "height", 4)), ContentParserTrees.growth(entry));
     }
 
     private static BlockVariant blockVariant(ResourceLocation key, String name, int meta, JsonObject json) {

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.common.blocks.plant;
 import mctmods.resourcedatapackloader.common.blocks.ContentSetup;
 import mctmods.resourcedatapackloader.common.blocks.IContentBlock;
 import mctmods.resourcedatapackloader.common.blocks.IContentSoil;
+import mctmods.resourcedatapackloader.common.util.plant.PlantWater;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockDef;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVariant;
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.GrowthDef;
@@ -136,15 +137,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }
         if (growth.breaksNeighbors && crowded(world, pos)) { return false; }
         if (!growth.needsWater) { return true; }
-        for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) {
-            for (int step = 1; step <= growth.waterRange; step++) {
-                BlockPos side = below.offset(facing, step);
-                if (world.getBlockState(side).getMaterial() == Material.WATER) { return true; }
-                if (world.getBlockState(side).getBlock().isAir(world.getBlockState(side), world, side)) { continue; }
-                break;
-            }
-        }
-        return false;
+        return PlantWater.near(world, below, growth.waterRange);
     }
 
     private boolean crowded(World world, BlockPos pos) {

@@ -9,6 +9,9 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SneakGrowDe
 import mctmods.resourcedatapackloader.common.util.BlockMatches;
 import mctmods.resourcedatapackloader.common.util.ItemMatch;
 import mctmods.resourcedatapackloader.common.util.entity.PlayerPersisted;
+import mctmods.resourcedatapackloader.common.util.plant.DynamicTrees;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeStore;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import com.google.gson.JsonElement;
@@ -61,7 +64,6 @@ public final class ContentSneakGrow {
     private static final EntityEquipmentSlot[] SLOT_VALUES = {EntityEquipmentSlot.HEAD, EntityEquipmentSlot.CHEST, EntityEquipmentSlot.LEGS, EntityEquipmentSlot.FEET, EntityEquipmentSlot.MAINHAND, EntityEquipmentSlot.OFFHAND};
     private static final GameType[] GAME_TYPES = {GameType.SURVIVAL, GameType.CREATIVE, GameType.ADVENTURE};
     private static final String PART = "growth.sneak";
-    private static final String DYNAMIC_SAPLING = "com.ferreusveritas.dynamictrees.blocks.BlockDynamicSapling";
     private static final String OFF = "rdplSneakOff";
     private static final int BONEMEAL_EVENT = 2005;
     private static final long NEVER = Long.MIN_VALUE / 2;
@@ -241,7 +243,7 @@ public final class ContentSneakGrow {
     }
 
     private static boolean sapling(Block block, WorldServer world, BlockPos pos) {
-        return block instanceof BlockSapling || block instanceof ContentSaplingBlock || TREE_SAPLING.matches(block, world, pos) || block.getClass().getName().startsWith(DYNAMIC_SAPLING);
+        return block instanceof BlockSapling || block instanceof ContentSaplingBlock || TREE_SAPLING.matches(block, world, pos) || DynamicTrees.isSapling(block);
     }
 
     private static boolean plant(Block block, WorldServer world, BlockPos pos) {
@@ -325,7 +327,7 @@ public final class ContentSneakGrow {
         Block block = state.getBlock();
         if (block == Blocks.AIR || listed(def.except, block, world, pos)) { return false; }
         boolean plain = dirt && block == Blocks.DIRT && state.getValue(BlockDirt.VARIANT) == BlockDirt.DirtType.DIRT;
-        if (!plain && !(def.blocks == null ? plant(block, world, pos) : listed(def.blocks, block, world, pos))) { return false; }
+        if (!plain && ContentTreeStore.get(world, pos.toLong()) == null && !(def.blocks == null ? plant(block, world, pos) : listed(def.blocks, block, world, pos))) { return false; }
         if (world.rand.nextFloat() >= def.chance) { return false; }
         if (plain) { return world.setBlockState(pos, Blocks.GRASS.getDefaultState()); }
         if (def.mode == SneakGrowDef.TICK) { return tick(world, pos, state, def.ticks); }
@@ -333,6 +335,7 @@ public final class ContentSneakGrow {
     }
 
     private static boolean bonemeal(WorldServer world, BlockPos pos, IBlockState state, boolean sapling) {
+        if (ContentTreeEvents.sneak(world, pos, state, true)) { return true; }
         Block block = state.getBlock();
         if (!(block instanceof IGrowable) || ContentGrowSwitch.stopped(world, pos, block, sapling ? GrowSwitchDef.SAPLINGS : GrowSwitchDef.CROPS)) { return false; }
         IGrowable growable = (IGrowable) block;
@@ -347,7 +350,7 @@ public final class ContentSneakGrow {
         for (int index = 0; index < ticks; index++) {
             IBlockState now = world.getBlockState(pos);
             if (now.getBlock() != block) { break; }
-            block.randomTick(world, pos, now, world.rand);
+            if (!ContentTreeEvents.sneak(world, pos, now, false)) { block.randomTick(world, pos, now, world.rand); }
         }
         return true;
     }

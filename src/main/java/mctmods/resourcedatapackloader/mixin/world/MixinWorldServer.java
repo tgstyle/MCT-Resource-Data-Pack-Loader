@@ -22,6 +22,7 @@ import mctmods.resourcedatapackloader.common.util.ticks.CubeSplitTickSet;
 import mctmods.resourcedatapackloader.common.util.world.Coords;
 import static mctmods.resourcedatapackloader.common.util.world.Coords.cubeToMinBlock;
 import mctmods.resourcedatapackloader.common.util.world.CubePos;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeEvents;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.NotRubicWorldException;
 import static mctmods.resourcedatapackloader.core.util.ReflectionUtil.cast;
@@ -100,6 +101,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         rdpl$immediateTickDepth++;
         try { original.call(block, worldIn, pos, state, rand); }
         finally { rdpl$immediateTickDepth--; }
+    }
+
+    @WrapOperation(method = "updateBlocks", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;randomTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V")) private void rdpl$treeRandomTick(Block block, World worldIn, BlockPos pos, IBlockState state, Random random, Operation<Void> original) {
+        if (!ContentTreeEvents.randomTick((WorldServer) (Object) this, pos, state, random)) { original.call(block, worldIn, pos, state, random); }
     }
 
     @Inject(method = "getPendingBlockUpdates(Lnet/minecraft/world/gen/structure/StructureBoundingBox;Z)Ljava/util/List;", at = @At("HEAD"), cancellable = true) private void rdpl$answerFromTheIndex(StructureBoundingBox structureBB, boolean remove, CallbackInfoReturnable<List<NextTickListEntry>> cir) {
@@ -275,7 +280,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         IBlockState state = ebs.get(localX, localY, localZ);
         Block block = state.getBlock();
         this.profiler.startSection("randomTick");
-        if (block.getTickRandomly()) { block.randomTick((World) (Object) this, new BlockPos(localX + chunkBlockX, localY + ebs.getYLocation(), localZ + chunkBlockZ), state, this.rand); }
+        if (block.getTickRandomly()) {
+            BlockPos pos = new BlockPos(localX + chunkBlockX, localY + ebs.getYLocation(), localZ + chunkBlockZ);
+            if (!ContentTreeEvents.randomTick((WorldServer) (Object) this, pos, state, this.rand)) { block.randomTick((World) (Object) this, pos, state, this.rand); }
+        }
         this.profiler.endSection();
     }
 

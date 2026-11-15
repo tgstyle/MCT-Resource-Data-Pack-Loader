@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.common.pack.loading.ContentRegistry;
 import mctmods.resourcedatapackloader.common.pack.loading.PackManager;
 import mctmods.resourcedatapackloader.common.pack.loading.parsers.ContentParser;
 import mctmods.resourcedatapackloader.common.util.BlockMatches;
+import mctmods.resourcedatapackloader.common.util.plant.DynamicTrees;
 import mctmods.resourcedatapackloader.common.util.worldgen.PackGeneration;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 import mctmods.resourcedatapackloader.core.util.Summary;
@@ -26,7 +27,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public final class ContentLeafDecay {
-    private static final String DYNAMIC_LEAVES = "com.ferreusveritas.dynamictrees.blocks.BlockDynamicLeaves";
     private static final String BLOCKS = "blocks";
     private static final String TAG = "tag";
     private static final String ALL = "all";
@@ -34,8 +34,6 @@ public final class ContentLeafDecay {
     private static final int MOST_TICKS = 1200;
     private static final List<LeafDecayRule> RULES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
-    private static volatile boolean resolved;
-    @Nullable private static volatile Class<?> dynamicLeaves;
 
     private ContentLeafDecay() {}
 
@@ -85,20 +83,10 @@ public final class ContentLeafDecay {
         RULES.add(new LeafDecayRule(blocks, tags, all, group(key, except, EXCEPT + "." + BLOCKS), tags(key, except, EXCEPT + "." + TAG), Json.names(json, "dimensions"), min, max));
     }
 
-    @Nullable private static Class<?> dynamicLeaves() {
-        if (!resolved) {
-            try { dynamicLeaves = Class.forName(DYNAMIC_LEAVES, false, ContentLeafDecay.class.getClassLoader()); }
-            catch (ClassNotFoundException | LinkageError absent) { dynamicLeaves = null; }
-            resolved = true;
-        }
-        return dynamicLeaves;
-    }
-
     static boolean qualifies(IBlockState state, World world, BlockPos pos) {
         Block block = state.getBlock();
         if (!(block instanceof BlockLeaves) || !block.isLeaves(state, world, pos)) { return false; }
-        Class<?> dynamic = dynamicLeaves();
-        if (dynamic != null && dynamic.isInstance(block)) { return false; }
+        if (DynamicTrees.isLeaves(block)) { return false; }
         Collection<IProperty<?>> keys = state.getPropertyKeys();
         return keys.contains(BlockLeaves.DECAYABLE) && keys.contains(BlockLeaves.CHECK_DECAY) && state.getValue(BlockLeaves.DECAYABLE);
     }

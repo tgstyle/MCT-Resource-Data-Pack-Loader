@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.common.pack.definitions.blocks.BlockVarian
 import mctmods.resourcedatapackloader.common.pack.definitions.blocks.SaplingDef;
 import mctmods.resourcedatapackloader.common.rules.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGenerator;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.ContentTreeGrowth;
+import mctmods.resourcedatapackloader.common.worldgen.feature.tree.TreeRecorder;
 import mctmods.resourcedatapackloader.core.util.ContentLog;
 
 import java.util.Objects;
@@ -82,11 +84,23 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random rand) {
         if (world.isRemote || ContentGrowSwitch.skips(world, pos, this, rand)) { return; }
         super.updateTick(world, pos, state, rand);
+        if (clocked()) {
+            ContentTreeGrowth.plant((WorldServer) world, pos, state, String.valueOf(getRegistryName()));
+            return;
+        }
         if (!world.isAreaLoaded(pos, 1)) { return; }
         if (world.getLightFromNeighbors(pos.up()) < sapling.light) { return; }
+        if (sapling.growth.growing() && ContentTreeGrowth.conditions((WorldServer) world, pos, sapling.growth) != null) { return; }
         if (rand.nextInt(Math.max(1, sapling.chance)) != 0) { return; }
         advance(world, pos, state, rand);
     }
+
+    @Override public void onBlockAdded(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        super.onBlockAdded(world, pos, state);
+        if (world instanceof WorldServer && clocked() && !TreeRecorder.recording()) { ContentTreeGrowth.plant((WorldServer) world, pos, state, String.valueOf(getRegistryName())); }
+    }
+
+    private boolean clocked() { return sapling.growth.growing() && sapling.growth.timed(); }
 
     @Override public boolean canGrow(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, boolean isClient) { return true; }
 
@@ -100,10 +114,18 @@ import net.minecraftforge.fml.relauncher.SideOnly;
             world.setBlockState(pos, state.withProperty(stage, current + 1), 4);
             return;
         }
-        generate(world, pos, rand);
+        generate(world, pos, state, rand);
     }
 
-    private void generate(World world, BlockPos pos, Random rand) {
+    private void generate(World world, BlockPos pos, IBlockState state, Random rand) {
+        if (sapling.growth.growing() && !TreeRecorder.recording() && world instanceof WorldServer) {
+            ContentTreeGrowth.start((WorldServer) world, pos, state, String.valueOf(getRegistryName()), sapling.growth, random -> place(world, pos, random));
+            return;
+        }
+        place(world, pos, rand);
+    }
+
+    private void place(World world, BlockPos pos, Random rand) {
         if (sapling.usesStructure()) {
             placeStructure(world, pos, rand);
             return;

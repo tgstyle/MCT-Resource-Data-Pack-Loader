@@ -16,7 +16,10 @@ public final class SaplingDef {
     public final String leaves;
     public final int height;
 
-    public SaplingDef(List<String> soil, int stages, int chance, int light, String structure, List<PickDef> structures, String log, String leaves, int height) {
+    public final TreeGrowthDef growth;
+
+    public SaplingDef(List<String> soil, int stages, int chance, int light, String structure, List<PickDef> structures, String log, String leaves, int height, TreeGrowthDef growth) {
+        this.growth = growth;
         this.soil = soil;
         this.stages = stages;
         this.chance = chance;

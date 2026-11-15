@@ -90,7 +90,7 @@ public final class ContentImprint implements IContentShape {
         return holds(states, wood, canopies);
     }
 
-    @Nullable private static Template template(World world, String named) {
+    @Nullable public static Template template(World world, String named) {
         if (!(world instanceof WorldServer)) { return null; }
         WorldServer server = (WorldServer) world;
         return server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(named));
@@ -113,8 +113,8 @@ public final class ContentImprint implements IContentShape {
         if (named == null || named.isEmpty()) { return null; }
         Template loaded = template(world, named);
         if (loaded == null) { return null; }
-        Rotation rotation = turn(random);
-        mirror(random);
+        Rotation rotation = Turns.turn(shape.turns, random);
+        Turns.mirror(shape.mirrors, random);
         BlockPos span = loaded.transformedSize(rotation);
         int cornerX = within(x, x - span.getX() / 2, span.getX());
         int cornerZ = within(z, z - span.getZ() / 2, span.getZ());
@@ -142,10 +142,10 @@ public final class ContentImprint implements IContentShape {
             ContentLog.LOGGER.error("Worldgen {} places structure '{}', which could not be loaded, so nothing generates", key, named);
             return false;
         }
-        Rotation rotation = turn(random);
+        Rotation rotation = Turns.turn(shape.turns, random);
         PlacementSettings settings = new PlacementSettings();
         settings.setRotation(rotation);
-        Mirror mirror = mirror(random);
+        Mirror mirror = Turns.mirror(shape.mirrors, random);
         settings.setMirror(mirror);
         settings.setIntegrity(shape.integrity / (float) ShapeDef.FULL_INTEGRITY);
         long seed = shape.respawn == null ? 0L : random.nextLong();
@@ -171,22 +171,6 @@ public final class ContentImprint implements IContentShape {
     }
 
     private ITemplateProcessor onlyOverReplaceable(BlockRotationProcessor rotating) { return (holder, at, info) -> { Template.BlockInfo processed = rotating.processBlock(holder, at, info); return placer.occupied(holder, at.getX(), at.getY(), at.getZ()) ? null : processed; }; }
-
-    private Rotation turn(Random random) {
-        String named = PickDef.pick(shape.turns, random, "");
-        if (ShapeDef.NO_TURN.equals(named)) { return Rotation.NONE; }
-        if (ShapeDef.QUARTER.equals(named)) { return Rotation.CLOCKWISE_90; }
-        if (ShapeDef.HALF.equals(named)) { return Rotation.CLOCKWISE_180; }
-        if (ShapeDef.THREEQUARTER.equals(named)) { return Rotation.COUNTERCLOCKWISE_90; }
-        return Turns.ALL[random.nextInt(Turns.ALL.length)];
-    }
-
-    private Mirror mirror(Random random) {
-        String named = PickDef.pick(shape.mirrors, random, "");
-        if (ShapeDef.LEFTRIGHT.equals(named)) { return Mirror.LEFT_RIGHT; }
-        if (ShapeDef.FRONTBACK.equals(named)) { return Mirror.FRONT_BACK; }
-        return Mirror.NONE;
-    }
 
     private static int within(int origin, int start, int span) {
         if (span >= 16) { return start; }
